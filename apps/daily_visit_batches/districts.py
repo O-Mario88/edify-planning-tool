@@ -93,11 +93,19 @@ def district_type_for_staff(responsible_id, district):
     if district is None:
         return PRIMARY
     from apps.accounts.models import StaffProfile
+    from apps.core.request_cache import memoize
 
+    # One read per person per request: pricing a day asks this for every
+    # member, from the batch, the pricing input and the route alike.
     profile = (
-        StaffProfile.objects.filter(Q(user_id=responsible_id) | Q(id=responsible_id))
-        .select_related("user")
-        .first()
+        memoize(
+            ("district_type_profile", responsible_id),
+            lambda: StaffProfile.objects.filter(
+                Q(user_id=responsible_id) | Q(id=responsible_id)
+            )
+            .select_related("user")
+            .first(),
+        )
         if responsible_id
         else None
     )

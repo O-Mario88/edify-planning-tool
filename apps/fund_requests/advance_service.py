@@ -86,8 +86,14 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
             ]
         ).delete()
 
+        # One advance per line at most (uniq_advance_per_budget_line), read
+        # together rather than one query a line.
+        advances = {
+            adv.budget_line_id: adv
+            for adv in AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
+        }
         for line in lines:
-            adv = AdvanceRequest.objects.filter(budget_line=line).first()
+            adv = advances.get(line.id)
             # month/week: activity.planned_month/.planned_week are only
             # populated when a caller happens to pass them explicitly at
             # schedule time and are otherwise silently wrong — activity.month

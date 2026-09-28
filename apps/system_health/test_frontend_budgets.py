@@ -123,7 +123,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: filling a phone's rows of controls, indenting a heading's wrapped
     #: caption, filter slots from the row's width with an × Clear, and pinning
     #: a table's identity at its measured tick column.
-    JS_GZIP_KB = 134
+    #:
+    #: Raised to 136 on 2026-09-28 (133.7 to 135.3 KB, +1.2%) for
+    #: drawer-background.js opening every drawer's frame on the click, with a
+    #: loading body, instead of showing nothing until the server answers
+    #: (owner: "even loading is very slow"). Comments were cut to fit.
+    JS_GZIP_KB = 136
     INLINE_SCRIPT_KB = 40
 
     @classmethod

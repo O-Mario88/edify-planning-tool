@@ -77,12 +77,16 @@ def _purpose_workflow_profiles(purposes) -> dict:
     purpose resolves to an activity type, and the activity type to the one
     standard-support Catalogue item that prices it.
     """
-    from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+    from apps.activity_catalogue.services import resolve_items_for_workflow_kinds
 
+    purposes = list(purposes)
+    items = resolve_items_for_workflow_kinds(
+        [purpose_activity_type(value) for value, _label in purposes]
+    )
     profiles = {}
     for value, label in purposes:
         workflow_kind = purpose_activity_type(value)
-        item = resolve_item_for_workflow_kind(workflow_kind)
+        item = items.get(workflow_kind)
         if item is None:
             # No single costing for this purpose. Say so in the profile so
             # the drawer can disable the option with a reason, instead of
@@ -673,8 +677,13 @@ def planning_dashboard_view(request):
     # page's primers have a store to fill whether or not a middleware opened one.
     from apps.core.request_cache import scoped
 
+    # A table refresh swaps the rows alone (school_table.html): no KPI strip,
+    # no filter menus. Those are computed for the whole page only.
+    table_only = request.headers.get("HX-Target") == "schools-table-container"
     with scoped():
-        data = PlanningDashboardService.get_dashboard_data(request.user, filters)
+        data = PlanningDashboardService.get_dashboard_data(
+            request.user, filters, summary=not table_only
+        )
 
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset
@@ -720,7 +729,7 @@ def planning_dashboard_view(request):
     # under their Program Lead — the same shape as the grouped list.
     from apps.planning.owner_groups import owner_filter_groups
 
-    owner_groups = owner_filter_groups(_planning_schools)
+    owner_groups = [] if table_only else owner_filter_groups(_planning_schools)
     partners = assignable_partners()
 
     # Pagination pages list
@@ -788,8 +797,6 @@ def planning_dashboard_view(request):
         "clusters": data.get("clusters", []),
         "kpis": data["kpis"],
         "kpi_strip_items": data.get("kpi_strip_items", []),
-        "cluster_planning": data["cluster_planning"],
-        "core_summary": data["core_summary"],
         "total_count": data["total_count"],
         "scheduled_activities": scheduled_activities,
         # Options
@@ -870,7 +877,7 @@ def planning_dashboard_view(request):
     }
 
     # If the target is only the school table
-    if request.headers.get("HX-Target") == "schools-table-container":
+    if table_only:
         context["is_planning_htmx_table"] = True
         return render(request, "partials/planning/school_table.html", context)
 
@@ -995,6 +1002,15 @@ def _cluster_need_groups(ssa_need) -> list[dict]:
 
 @require_any_page_permission("planning", "visit_requests")
 def schedule_modal_view(request):
+    from apps.ssa.recommendation_engine import rankings_held
+
+    # Opening the drawer writes nothing, and asks the school's SSA ranking
+    # from three places: rank it once.
+    with rankings_held():
+        return _schedule_modal(request)
+
+
+def _schedule_modal(request):
     if not _may_open_schedule_drawer(request.user):
         return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 

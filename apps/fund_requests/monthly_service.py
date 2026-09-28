@@ -44,6 +44,13 @@ def sync_monthly_drafts_for_activity(activity: Activity, *, prior_buckets=()) ->
     those buckets is what clears an old owner's/month's draft when a scheduled
     activity is reassigned or moved.
     """
+    sync_monthly_drafts_for_activities([activity], prior_buckets=prior_buckets)
+
+
+def sync_monthly_drafts_for_activities(activities, *, prior_buckets=()) -> None:
+    """`sync_monthly_drafts_for_activity` for several activities at once, each
+    owner-month refreshed once — a day's visit batch shares one owner and one
+    month, so per-member syncs rebuilt the same draft once per school."""
     periods = {
         (owner, fy, int(month))
         for owner, fy, month, _week_start in prior_buckets
@@ -52,7 +59,7 @@ def sync_monthly_drafts_for_activity(activity: Activity, *, prior_buckets=()) ->
     periods.update(
         (owner, fy, int(month))
         for owner, fy, month in ActivityScheduleCostLine.objects.filter(
-            activity=activity
+            activity_id__in=[activity.pk for activity in activities]
         ).values_list("responsible_user", "fiscal_year", "month")
         if owner and fy and month
     )
@@ -134,4 +141,4 @@ def sync_monthly_drafts_for_activity(activity: Activity, *, prior_buckets=()) ->
             )
 
 
-__all__ = ["sync_monthly_drafts_for_activity"]
+__all__ = ["sync_monthly_drafts_for_activity", "sync_monthly_drafts_for_activities"]

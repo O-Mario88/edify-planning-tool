@@ -5,15 +5,12 @@ from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import ActivityStatus, SsaIntervention
-from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.activities.models import Activity
 from apps.partners.models import PartnerAssignment
 from apps.accounts.models import StaffProfile
 from apps.ssa.models import SsaRecord
 from apps.ssa.presentation import build_ssa_score_summary
-from apps.core_schools.models import CoreActivitySlot
-from apps.core_schools.services import CORE_SLOT_DONE_STATUSES
 
 
 class PlanningReadinessService:
@@ -155,7 +152,7 @@ class ClusterRecommendationService:
 
 class PlanningDashboardService:
     @staticmethod
-    def get_dashboard_data(principal, filters: dict):
+    def get_dashboard_data(principal, filters: dict, *, summary: bool = True):
         fy = filters.get("fy") or get_operational_fy()
         district_id = filters.get("district")
         sub_county_id = filters.get("sub_county")
@@ -814,6 +811,22 @@ class PlanningDashboardService:
             else:
                 s["clusterName"] = "—"
 
+        rows = {
+            "schools": schools_data,
+            "clusters": paginated_clusters,
+            "total_count": total_schools_count,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total_schools_count + per_page - 1) // per_page,
+            "active_tab": active_tab,
+        }
+        if not summary:
+            # A table refresh — a filter, a search keystroke, the list catching
+            # up after a save — renders the rows alone. The strip below is
+            # twenty queries over the whole portfolio that it never shows
+            # (2026-09-28).
+            return {**rows, "kpis": {}, "kpi_strip_items": []}
+
         # 5. Compute KPI Cards Metrics
         #
         # Same set as the rows above, so the headline and the list cannot
@@ -1083,136 +1096,4 @@ class PlanningDashboardService:
             ),
         )
 
-        # 6. Cluster Planning List
-        clusters_in_scope = Cluster.objects.filter(
-            id__in=scoped_cluster_ids, deleted_at__isnull=True
-        ).select_related("district")
-        cluster_planning_data = []
-        for c in clusters_in_scope[:3]:
-            member_schools = School.objects.filter(
-                cluster_id=c.id, deleted_at__isnull=True
-            )
-            member_records = (
-                SsaRecord.objects.filter(
-                    school__in=member_schools,
-                    verification_status="confirmed",
-                    deleted_at__isnull=True,
-                )
-                .prefetch_related("scores")
-                .order_by("school_id", "-date_of_ssa")
-            )
-
-            latest_recs = {}
-            for r in member_records:
-                if r.school_id not in latest_recs:
-                    latest_recs[r.school_id] = r
-
-            tot_score = sum(
-                r.average_score for r in latest_recs.values() if r.average_score
-            )
-            rec_cnt = sum(1 for r in latest_recs.values() if r.average_score)
-            avg_ssa = round(tot_score / rec_cnt * 10) if rec_cnt > 0 else 0
-
-            # Find weakest interventions
-            interv_sums = {}
-            interv_counts = {}
-            for r in latest_recs.values():
-                for score in r.scores.all():
-                    interv_sums[score.intervention] = (
-                        interv_sums.get(score.intervention, 0) + score.score
-                    )
-                    interv_counts[score.intervention] = (
-                        interv_counts.get(score.intervention, 0) + 1
-                    )
-
-            interv_averages = []
-            for code, label in SsaIntervention.choices:
-                if code in interv_sums:
-                    avg_val = interv_sums[code] / interv_counts[code]
-                    interv_averages.append((code, label, avg_val))
-
-            interv_averages.sort(key=lambda x: x[2])
-            weakest_intervs = [item[1] for item in interv_averages[:4]]
-
-            cluster_planning_data.append(
-                {
-                    "id": c.id,
-                    "name": c.name,
-                    "avg_ssa": avg_ssa,
-                    "weakest_interventions": weakest_intervs,
-                    "school_count": member_schools.count(),
-                }
-            )
-
-        # 7. Core Schools Summary counts
-        core_schools_qs = schools_qs.filter(school_type="core")
-        core_no_ssa = core_schools_qs.exclude(current_fy_ssa_status="done").count()
-        core_1st_visit_pending = (
-            core_schools_qs.exclude(
-                activities__activity_type="school_visit",
-                activities__status__in=["completed", "ia_verified"],
-                activities__fy=fy,
-            )
-            .distinct()
-            .count()
-        )
-
-        core_1st_training_pending = (
-            core_schools_qs.exclude(
-                activities__activity_type__in=[
-                    "training",
-                    "school_improvement_training",
-                    "cluster_training",
-                ],
-                activities__status__in=["completed", "ia_verified"],
-                activities__fy=fy,
-            )
-            .distinct()
-            .count()
-        )
-
-        # Real signal: the school's 2nd-sequence visit/training slot on its
-        # active Core Plan (CoreActivitySlot), not yet in a "done" status.
-        # Schools with no Core Plan (or no 2nd slot yet) simply don't count —
-        # an honest zero, not a fabricated offset of the 1st-round count.
-        core_school_op_ids = list(core_schools_qs.values_list("school_id", flat=True))
-        core_2nd_visit_pending = (
-            CoreActivitySlot.objects.filter(
-                core_plan__school_id__in=core_school_op_ids,
-                activity_type="visit",
-                sequence_number=2,
-            )
-            .exclude(status__in=CORE_SLOT_DONE_STATUSES)
-            .count()
-        )
-        core_2nd_training_pending = (
-            CoreActivitySlot.objects.filter(
-                core_plan__school_id__in=core_school_op_ids,
-                activity_type="training",
-                sequence_number=2,
-            )
-            .exclude(status__in=CORE_SLOT_DONE_STATUSES)
-            .count()
-        )
-
-        core_summary = {
-            "no_ssa": core_no_ssa,
-            "first_visit_pending": core_1st_visit_pending,
-            "first_training_pending": core_1st_training_pending,
-            "second_visit_pending": core_2nd_visit_pending,
-            "second_training_pending": core_2nd_training_pending,
-        }
-
-        return {
-            "schools": schools_data,
-            "clusters": paginated_clusters,
-            "kpis": kpis,
-            "kpi_strip_items": kpi_strip_items,
-            "cluster_planning": cluster_planning_data,
-            "core_summary": core_summary,
-            "total_count": total_schools_count,
-            "page": page,
-            "per_page": per_page,
-            "total_pages": (total_schools_count + per_page - 1) // per_page,
-            "active_tab": active_tab,
-        }
+        return {**rows, "kpis": kpis, "kpi_strip_items": kpi_strip_items}

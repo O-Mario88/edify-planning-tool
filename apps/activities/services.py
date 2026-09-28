@@ -975,8 +975,8 @@ def _apply_schedule_cost_snapshot(
     Save (for example, an admin scheduling work for a CCEO)."""
     from apps.budget.costing_service import apply_to_activity
     from apps.activities.models import ActivityScheduleCostLine
-    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
-    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activity
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activities
 
     # Re-pricing may move a line to another staff member or another week. Keep
     # the old buckets too, so empty draft requests are removed instead of
@@ -1019,11 +1019,17 @@ def _apply_schedule_cost_snapshot(
         apply_to_activity(
             activity, _costing_input(activity, data), responsible_user_id=responsible
         )
+        repriced_here = [activity]
     else:
         # Batch writes load their own instances, so serialize the saved total.
         activity.refresh_from_db(fields=["est_cost_cents", "cost_missing"])
-    sync_weekly_requests_for_activity(activity, prior_buckets=prior_buckets)
-    sync_monthly_drafts_for_activity(activity, prior_buckets=prior_buckets)
+        # The batch re-priced this activity with the rest of its day and
+        # rebuilt that day's weekly request and monthly draft. What remains
+        # is the weeks and months its old lines sat in; had the batch left
+        # the activity unpriced, its lines are those old lines.
+        repriced_here = []
+    sync_weekly_requests_for_activities(repriced_here, prior_buckets=prior_buckets)
+    sync_monthly_drafts_for_activities(repriced_here, prior_buckets=prior_buckets)
 
 
 # A client school's package is one visit and one training per fiscal year.

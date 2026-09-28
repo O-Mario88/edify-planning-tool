@@ -202,7 +202,7 @@ def schedule_visits(
             list(
                 batch.activities.filter(deleted_at__isnull=True)
                 .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-                .select_related("school")
+                .select_related(*_MEMBER_DISTRICT_RELATIONS)
             )
             if batch
             else []
@@ -298,6 +298,10 @@ def schedule_visits(
         return {"batchId": batch.id, "activities": new_activities}
 
 
+# What member_district() reads, for loading a day's members in one query.
+_MEMBER_DISTRICT_RELATIONS = ("school__district", "cluster__district", "event_district")
+
+
 def member_district(activity):
     """The district a member activity happens in: school first, then the
     cluster's district, then the event's own district. None means home —
@@ -373,7 +377,7 @@ def attach_activity_to_batch(
         list(
             batch.activities.filter(deleted_at__isnull=True)
             .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-            .select_related("school")
+            .select_related(*_MEMBER_DISTRICT_RELATIONS)
         )
         if batch
         else []
@@ -495,7 +499,7 @@ def reschedule_within_batch(
             list(
                 batch.activities.filter(deleted_at__isnull=True)
                 .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-                .select_related("school")
+                .select_related(*_MEMBER_DISTRICT_RELATIONS)
             )
             if batch
             else []
@@ -551,21 +555,34 @@ def _recalculate_and_write_lines(
     """Recompute the batch's shared pool, split it across every active member
     activity, and re-price each one via the existing apply_to_activity writer
     (date derivation, catalogue provenance, advance-request sync — all reused
-    unchanged), then resync each activity's weekly fund request."""
+    unchanged), then resync the day's weekly fund request and monthly draft."""
+    from apps.budget.costing_service import rate_cards_held
+
+    # Every member prices against the same published cards: read them once.
+    with rate_cards_held():
+        _write_day_lines(batch, catalogue, responsible_user_id)
+
+
+def _write_day_lines(
+    batch: DailyVisitBatch, catalogue, responsible_user_id: str
+) -> None:
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
         _rate_card,
         apply_to_activity,
     )
-    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
-    from apps.fund_requests.weekly_service import trigger_generate_for_activity
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import trigger_generate_for_activities
 
     catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
     rates, _settings_by_key = _rate_card(catalogue)
 
+    # The districts come with the members: member_district() and the pricing
+    # input read each one, and fetching them lazily cost two queries a member.
     activities = list(
         batch.activities.filter(deleted_at__isnull=True)
         .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related(*_MEMBER_DISTRICT_RELATIONS)
         .order_by("id")
     )
     n = len(activities)
@@ -682,11 +699,16 @@ def _recalculate_and_write_lines(
             responsible_user_id=responsible_user_id,
             precomputed_cost=cost,
         )
-        trigger_generate_for_activity(activity, responsible_user_id=responsible_user_id)
-        # The weekly request is only half the funding picture — the monthly
-        # draft FundRequest must follow the re-priced lines too, exactly as
-        # _apply_schedule_cost_snapshot does on the solo-pricing path.
-        sync_monthly_drafts_for_activity(activity)
+
+    # The weekly request and the monthly draft follow the re-priced lines,
+    # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.
+    # Both are totals over the owner's week and month, which every member of
+    # the day shares, so each is rebuilt once, after the last member is
+    # priced. Rebuilt per member, the same two requests were regenerated once
+    # for every school already on the day, and the fifth visit of a day took
+    # twice as long to save as the first (2026-09-28).
+    trigger_generate_for_activities(activities, responsible_user_id=responsible_user_id)
+    sync_monthly_drafts_for_activities(activities)
 
     _sync_route_batch(batch)
 
