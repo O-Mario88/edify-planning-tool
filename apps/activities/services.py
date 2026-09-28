@@ -998,6 +998,17 @@ def _apply_schedule_cost_snapshot(
         batch_poolable,
         remove_school,
     )
+    from apps.activities.pair_costing import is_uncosted_pair_training
+
+    if is_uncosted_pair_training(activity):
+        _price_pair_training_at_zero(
+            activity,
+            data,
+            responsible=responsible,
+            prior_buckets=prior_buckets,
+            principal=principal,
+        )
+        return
 
     pooled = (
         bool(responsible)
@@ -1030,6 +1041,50 @@ def _apply_schedule_cost_snapshot(
         repriced_here = []
     sync_weekly_requests_for_activities(repriced_here, prior_buckets=prior_buckets)
     sync_monthly_drafts_for_activities(repriced_here, prior_buckets=prior_buckets)
+
+
+def _price_pair_training_at_zero(
+    activity: Activity, data: dict, *, responsible, prior_buckets, principal
+) -> None:
+    """An in-school Training with its School Visit costs nothing: the visit is
+    the journey and carries the visit cost (apps.activities.pair_costing).
+
+    Written through the same writer as any price, so its finance locks still
+    refuse a Training whose money has moved. A pair scheduled before
+    2026-09-28 has its cost on the Training and none on the visit; the visit
+    is priced here as the Training drops to 0, so the day's money moves
+    rather than vanishing."""
+    from apps.activities.pair_costing import MOVABLE_STATUSES
+    from apps.budget.costing import ActivityCost
+    from apps.budget.costing_service import apply_to_activity
+    from apps.daily_visit_batches.services import remove_school
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activities
+
+    if activity.daily_visit_batch_id:
+        remove_school(activity_id=activity.id)
+        activity.refresh_from_db(fields=["daily_visit_batch"])
+    apply_to_activity(
+        activity,
+        _costing_input(activity, data),
+        responsible_user_id=responsible,
+        precomputed_cost=ActivityCost(),
+    )
+    sync_weekly_requests_for_activities([activity], prior_buckets=prior_buckets)
+    sync_monthly_drafts_for_activities([activity], prior_buckets=prior_buckets)
+
+    visit = (
+        Activity.objects.filter(
+            id=activity.paired_school_visit_id,
+            deleted_at__isnull=True,
+            scheduled_date__isnull=False,
+            status__in=MOVABLE_STATUSES,
+        )
+        .exclude(schedule_cost_lines__isnull=False)
+        .first()
+    )
+    if visit is not None:
+        _apply_schedule_cost_snapshot(visit, {}, principal=principal)
 
 
 # A client school's package is one visit and one training per fiscal year.
@@ -2043,42 +2098,10 @@ def create(
             principal=principal,
             owner_id=data.get("responsibleStaffId"),
         )
-    if school is not None and not cluster_id:
-        # A Partner-supported school keeps its staff owner and stays plannable,
-        # but the support handed to the Partner is the Partner's to deliver:
-        # staff may directly plan Data Gathering, Content Gathering and Donor
-        # Visits there (owner, 2026-09-23). Checked here, in the one funnel
-        # every staff school activity passes through, so the drawer, the bulk
-        # paths and a crafted API request all meet the same rule. Schools with
-        # no live Partner support return before the catalogue is read.
-        from apps.planning.partner_school_policy import (
-            ORIGIN_CORE,
-            ORIGIN_SCHOOL,
-            PartnerSupportedSchoolPlanningPolicy,
-        )
-
-        PartnerSupportedSchoolPlanningPolicy.assert_direct_staff_activity_allowed(
-            school,
-            catalogue_item,
-            activity_type=activity_type,
-            planning_origin=ORIGIN_CORE if core_slot_verified else ORIGIN_SCHOOL,
-            delivery_channel=(
-                "partner"
-                if _resolved_executor_type(data) in PARTNER_EXECUTOR_TYPES
-                else "staff"
-            ),
-            fy=fy,
-            project_id=data.get("projectId"),
-            principal=principal,
-        )
-    elif cluster_id and data.get("invitedSchoolIds"):
-        # Cluster Planning stays open to Partner-supported schools; each is
-        # there because it was ticked by name, never by membership alone.
-        from apps.planning.partner_school_policy import (
-            assert_cluster_invitations_allowed,
-        )
-
-        assert_cluster_invitations_allowed(data["invitedSchoolIds"], principal)
+    # A Partner-supported school is planned like any other school (owner,
+    # 2026-09-28, lifting the 2026-09-23 lock that let staff plan only Data
+    # Gathering, Content Gathering and Donor Visits there; see
+    # apps.planning.partner_school_policy).
     # Whose approval this needs, if anyone's. Set only for a request-only role
     # at a school somebody else owns; everything below that reads it is the
     # request path (apps.planning.visit_requests).

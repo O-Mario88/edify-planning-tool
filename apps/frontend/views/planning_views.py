@@ -901,15 +901,15 @@ def planning_dashboard_view(request):
     return render(request, "pages/planning/index.html", context)
 
 
-def _partner_support_drawer_context(school, principal, *, project_id="") -> dict:
+def _partner_support_drawer_context(school, principal) -> dict:
     """What the Schedule drawer says about a Partner supporting the school.
 
     Two reads, both bounded: the responsibility resolver for this one school,
     and the Partner's live plans there in the operational year (six at most).
     Every plan the school has — staff or Partner — is the existing-plan note's
-    (school_planning_badges.existing_plan_warning), not repeated here. The
-    locked purposes come from the same policy the create service enforces, so
-    the drawer cannot offer what the save refuses.
+    (school_planning_badges.existing_plan_warning), not repeated here. Nothing
+    is locked: a Partner-supported school is planned like any other (owner,
+    2026-09-28; apps.planning.partner_school_policy).
     """
     from apps.activities.models import Activity
     from apps.partners.support_responsibility import SchoolSupportResponsibilityService
@@ -918,8 +918,6 @@ def _partner_support_drawer_context(school, principal, *, project_id="") -> dict
     context = {
         "enabled": support_visibility_enabled(principal),
         "responsible": None,
-        "locked_purposes": [],
-        "lock_reason": "",
         "partner_plans": [],
     }
     if not context["enabled"] or school is None:
@@ -1261,13 +1259,9 @@ def _schedule_modal(request):
 
     outreach_only = school.school_type in OUTREACH_ONLY_SCHOOL_TYPES
     project_id = request.GET.get("project_id", "")
-    # Partner support (owner, 2026-09-23): the school stays plannable, but the
-    # support a Partner delivers is theirs. The drawer names the Partner, shows
-    # what is already planned, and offers only the purposes the service will
-    # accept — the same policy, so nothing offered here is refused on save.
-    partner_support = _partner_support_drawer_context(
-        school, request.user, project_id=project_id
-    )
+    # Partner support: the drawer names the Partner and shows what it has
+    # already planned; every purpose stays open (owner, 2026-09-28).
+    partner_support = _partner_support_drawer_context(school, request.user)
     from apps.activity_catalogue.services import recommend_activities
 
     catalogue_recommendations = recommend_activities(
@@ -1284,11 +1278,6 @@ def _schedule_modal(request):
     )
     if outreach_only:
         primary_catalogue_items, other_catalogue_items = [], []
-        first_catalogue_item = None
-    if partner_support["locked_purposes"]:
-        # The SSA's top pick is support the Partner now delivers. Pinning it
-        # would override the whitelisted purpose the planner chooses, so the
-        # costing item is derived from the purpose on save instead.
         first_catalogue_item = None
 
     # Resolve focus recommendations
@@ -1499,13 +1488,10 @@ def _schedule_modal(request):
             in (
                 *(locked_visit_purposes if visit_locked_every_year else ()),
                 *package_locked_purposes,
-                *partner_support["locked_purposes"],
             )
             else recommended_visit_purpose
         ),
         "partner_support": partner_support,
-        "partner_locked_purposes": partner_support["locked_purposes"],
-        "partner_locked_purposes_json": json.dumps(partner_support["locked_purposes"]),
         "catalogue_recommendations": catalogue_recommendations,
         "primary_catalogue_items": primary_catalogue_items,
         "other_catalogue_items": other_catalogue_items,

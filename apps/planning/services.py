@@ -663,6 +663,10 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
     planner makes one decision.  The outer transaction guarantees that an
     entitlement, validation or costing failure on either record leaves
     neither behind.
+
+    Both land on the same day. The School Visit carries the visit cost and
+    the Training costs nothing (owner, 2026-09-28; see
+    apps.activities.pair_costing).
     """
     from apps.activities.models import Activity
     from apps.activities.services import create as create_activity
@@ -723,6 +727,11 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
         },
         principal,
         training_course=course,
+        # The School Visit below is the journey and carries its cost; the
+        # Training is part of that visit and is not priced. Pricing it also
+        # ran it through the group-session gate, which asked for a
+        # participant count the in-school drawer never collects.
+        skip_cost_snapshot=True,
     )
     training = Activity.objects.select_for_update().get(id=training_result["id"])
 
@@ -752,11 +761,6 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
             or (f"Complete the school visit and {course.display_name} training."),
         },
         principal,
-        # The Training is the financial owner of this one school mission. The
-        # companion Visit exists so staff can submit the required SVE- record
-        # and visit evidence at the same time; pricing it again would double
-        # the staff day pool or the partner visit lump sum.
-        skip_cost_snapshot=True,
         # The course decided the mission's intervention, including none for an
         # administrative course; the companion visit must not name another.
         ssa_default_focus=False,

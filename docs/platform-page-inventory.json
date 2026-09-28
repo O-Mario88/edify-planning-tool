@@ -3379,66 +3379,6 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3114,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/clusters/<str:cluster_id>",
-        "/districts/<str:district_id>",
-        "/partners/<str:partner_id>",
-        "/projects/<str:project_id>",
-        "/schools/<str:school_id>",
-        "/staff/<str:user_id>"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Profile Activities",
-      "purpose": "Reusable profile activities interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "open"
-      ],
-      "tables": 0,
-      "template": "partials/components/profile_activities.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4037,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/clusters/<str:cluster_id>",
-        "/districts/<str:district_id>",
-        "/partners/<str:partner_id>",
-        "/projects/<str:project_id>",
-        "/schools/<str:school_id>",
-        "/staff/<str:user_id>"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 4,
-      "kind": "application-partial",
-      "name": "Profile Activity Table",
-      "purpose": "Reusable profile activity table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/components/profile_activity_table.html",
-      "variants": [
-        "{{ row.status_tone }}"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
       "bytes": 3100,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -4104,15 +4044,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9184,
+      "bytes": 5413,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard",
-        "/dashboard/whos-online"
+        "/dashboard"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": " Whos Online",
       "purpose": "Reusable  whos online interface primitive",
@@ -4127,14 +4066,11 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 5590,
+      "accessibility_requirements": [],
+      "bytes": 2395,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard",
-        "/dashboard/whos-online"
+        "/dashboard"
       ],
       "findings": [],
       "forms": 0,
@@ -4144,9 +4080,7 @@
       "purpose": "Reusable  whos online row interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty",
-        "open"
+        "default"
       ],
       "tables": 0,
       "template": "partials/dashboards/_whos_online_row.html",
@@ -8341,32 +8275,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 3918,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": "Cluster Planning Status",
-      "purpose": "Reusable cluster planning status interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "partials/my_plan/cluster_planning_status.html",
-      "variants": [
-        "{{ row.meeting.tone }}",
-        "{{ row.training.tone }}"
-      ]
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 7339,
       "deprecated_alternatives": [],
@@ -8536,27 +8444,6 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/filters.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 5373,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/my-plan"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": "Group Trainings",
-      "purpose": "Reusable group trainings interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "partials/my_plan/group_trainings.html",
       "variants": []
     },
     {
@@ -8864,7 +8751,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2167,
+      "bytes": 1901,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9050,33 +8937,6 @@
       "tables": 0,
       "template": "partials/oversight/_lens_tabs.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [],
-      "bytes": 3500,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": " Monitor Row",
-      "purpose": "Reusable  monitor row interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/oversight/_monitor_row.html",
-      "variants": [
-        "{{ gap.tone }}",
-        "{{ row.visit_tone }}"
-      ]
     },
     {
       "accessibility_requirements": [
@@ -9425,39 +9285,6 @@
       "tables": 1,
       "template": "partials/oversight/flagged_schools.html",
       "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 11013,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/country-planning-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
-      "kind": "application-partial",
-      "name": "Monitor Workspace",
-      "purpose": "Reusable monitor workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 2,
-      "template": "partials/oversight/monitor_workspace.html",
-      "variants": [
-        "danger",
-        "executive",
-        "info",
-        "success",
-        "warning"
-      ]
     },
     {
       "accessibility_requirements": [
@@ -10326,7 +10153,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 33959,
+      "bytes": 31483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -33469,32 +33296,30 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:partials/oversight/monitor_workspace.html",
         "template:pages/oversight/country_planning.html",
         "template:partials/oversight/cd_workspace.html",
         "test:referenced-by-automated-test",
         "permission:country_planning_oversight"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "fragment-owned-by-parent",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET {{ lens_base_url }}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 2 contextual summary/summaries",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -33502,13 +33327,13 @@
       "notifications": false,
       "page_id": "UI-PAGE-3CB2AE6648",
       "page_title": "Country Oversight",
-      "page_type": "interaction-fragment",
+      "page_type": "planning-or-creation",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
       ],
       "permission_key": "country_planning_oversight",
-      "primary_action": "Country Planning Oversight",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "primary_action": "Complete planning form",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
       "purpose": "What the country has planned, how it is distributed, and who must act.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -33542,20 +33367,19 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 1,
         "type": "in-page-tabs"
       },
       "templates": [
-        "partials/oversight/monitor_workspace.html",
         "pages/oversight/country_planning.html",
         "partials/oversight/cd_workspace.html"
       ],
@@ -33563,9 +33387,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -35548,104 +35370,6 @@
       },
       "templates": [
         "partials/dashboards/admin/_planning_progress_body.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.6,
-      "backend_module": "apps.frontend.views.dashboard_views",
-      "backend_view": "apps.frontend.views.dashboard_views.whos_online_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": false,
-      "evidence": [
-        "template:partials/dashboards/_whos_online.html",
-        "test:referenced-by-automated-test",
-        "permission:dashboard"
-      ],
-      "filters": "canvas-level shared filter bar",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET /dashboard/whos-online"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-948548FD70",
-      "page_title": "Whos Online",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "dashboard",
-      "primary_action": "Whos Online",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Who's Online for another period (owner, 2026-09-28: \"add the filter of day, week, month, quarter and FY\"). The panel's filter and its pager ask here instead of rebuilding the dashboard around it.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "BUSINESS_TRANSFORMATION",
-        "CCEO",
-        "CD",
-        "HR",
-        "IA",
-        "MFI_ADMIN",
-        "MFI_OFFICER",
-        "PARTNER",
-        "PL",
-        "PROJECT_COORDINATOR",
-        "RPL",
-        "RVP"
-      ],
-      "route": "/dashboard/whos-online",
-      "route_name": "whos_online",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.admin_ops.services",
-        "apps.cce_leadership.models",
-        "apps.core.scoping",
-        "apps.geography.models",
-        "apps.notifications.models",
-        "apps.notifications.services",
-        "apps.schools.models"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": true,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/dashboards/_whos_online.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -64033,7 +63757,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /partner-oversight/withdraw/review",
-        "GET /partners/create"
+        "GET /partners/create",
+        "GET /partner-oversight/allowance-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -83922,7 +83647,6 @@
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
-        "template:partials/oversight/monitor_workspace.html",
         "template:partials/oversight/coverage_workspace.html",
         "test:referenced-by-automated-test",
         "permission:team_planning_oversight"
@@ -83934,11 +83658,10 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
-        "GET {{ lens_base_url }}",
         "GET {{ row.detail_url }}"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": true,
@@ -83995,7 +83718,7 @@
         "loading": true
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-scroll",
+      "table_pattern": "shared-table-container-or-parent-fragment",
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
@@ -84005,7 +83728,6 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
-        "partials/oversight/monitor_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -84013,7 +83735,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
         "text-[15px]"
       ]
     },
@@ -99393,7 +99114,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.country_planning_oversight_view",
-      "kind": "partial",
+      "kind": "page",
       "methods": [
         "GET"
       ],
@@ -99402,7 +99123,6 @@
       "route": "/country-planning-oversight/",
       "route_name": "country_planning_oversight",
       "templates": [
-        "partials/oversight/monitor_workspace.html",
         "pages/oversight/country_planning.html",
         "partials/oversight/cd_workspace.html"
       ]
@@ -99704,20 +99424,6 @@
       "route_name": "planning_progress_fragment",
       "templates": [
         "partials/dashboards/admin/_planning_progress_body.html"
-      ]
-    },
-    {
-      "callback": "apps.frontend.views.dashboard_views.whos_online_view",
-      "kind": "partial",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "dashboard",
-      "required_permissions": [],
-      "route": "/dashboard/whos-online",
-      "route_name": "whos_online",
-      "templates": [
-        "partials/dashboards/_whos_online.html"
       ]
     },
     {
@@ -107307,7 +107013,6 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
-        "partials/oversight/monitor_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ]
     },
@@ -107912,30 +107617,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 540,
+    "accessibility_contract_pass": 539,
     "activity_states": 24,
-    "all_routes": 1310,
+    "all_routes": 1309,
     "api_routes": 360,
-    "component_templates": 519,
-    "full_pages": 259,
-    "mobile_contract_pass": 540,
+    "component_templates": 513,
+    "full_pages": 260,
+    "mobile_contract_pass": 539,
     "nonvisual_actions": 273,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 551,
+      "interaction-fragment": 549,
       "operational-queue": 151,
-      "planning-or-creation": 11,
+      "planning-or-creation": 12,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 278,
-    "permission_gated": 822,
+    "partials_and_drawers": 276,
+    "permission_gated": 821,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 838,
+    "routed_surfaces": 837,
     "scheduled_jobs": 31,
     "severity_counts": {
       "critical": 0,
@@ -107943,8 +107648,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 540,
-    "test_referenced": 731,
-    "theme_contract_pass": 540
+    "tablet_contract_pass": 539,
+    "test_referenced": 730,
+    "theme_contract_pass": 539
   }
 }

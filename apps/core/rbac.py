@@ -202,11 +202,8 @@ class Permission(str, Enum):
     #   MONITORING_COUNTRY Partner Monitoring for the whole country
     #   RETURN_RESOLVE     decide what happens to work a Partner handed back
     #   REASSIGN           give handed-back work to another Partner
-    #   SCHOOL_DIRECT_PLAN plan the whitelisted direct staff activities
-    #                      (Data Gathering, Content Gathering, Donor Visit)
-    #                      at a Partner-supported school
-    #   SCHOOL_CLUSTER_PLAN invite a Partner-supported school, by name, to a
-    #                      Cluster Meeting or Group Training
+    #   SCHOOL_DIRECT_PLAN  retired 2026-09-28 with the Partner-supported
+    #   SCHOOL_CLUSTER_PLAN school lock; kept so stored grants resolve
     PARTNER_SUPPORT_VIEW = "partnerSupport.view"
     PARTNER_MONITORING_VIEW = "partnerMonitoring.view"
     PARTNER_MONITORING_COUNTRY = "partnerMonitoring.country"
@@ -910,10 +907,13 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
 # Granted to exactly the roles that already reach each surface, so the new keys
 # name an authority rather than widen one: the Planning and Cluster pages'
 # readers see the Responsible column; the Partner Oversight roles monitor; the
-# roles that hand work to a Partner resolve and reassign what comes back; the
-# roles that schedule a school visit plan the whitelisted direct activities;
-# the roles that plan a cluster's programme invite a Partner-supported school
-# to it. Admin inherits every key through the matrix above.
+# roles that hand work to a Partner resolve and reassign what comes back. Admin
+# inherits every key through the matrix above.
+#
+# PARTNER_SCHOOL_DIRECT_PLAN and PARTNER_SCHOOL_CLUSTER_PLAN gate nothing since
+# the owner lifted the Partner-supported school lock (2026-09-28,
+# apps.planning.partner_school_policy). The keys stay so stored role grants
+# keep resolving.
 _PARTNER_SUPPORT_GRANTS: dict[EdifyRole, tuple[Permission, ...]] = {
     EdifyRole.CCEO: (
         P.PARTNER_SUPPORT_VIEW,
