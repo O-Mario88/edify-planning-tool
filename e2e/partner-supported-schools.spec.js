@@ -3,7 +3,8 @@
 // Partner support changes delivery responsibility, not school ownership. The
 // eight journeys below walk that rule through the pages people use: the
 // school stays on Planning with its owner beside the Partner's name, staff
-// plan only the whitelisted direct work there, Cluster Planning stays open,
+// plan any purpose there (the 2026-09-23 lock to Data Gathering, Content
+// Gathering and Donor Visit was lifted on 2026-09-28), Cluster Planning stays open,
 // Partner work runs through the Partner's own My Plan, IA and payment, and
 // Partner Monitoring shows each Partner's work in its own table.
 //
@@ -201,19 +202,20 @@ test.describe('Partner-supported schools — journeys', () => {
     await shoot(page, 'j2-my-plan', testInfo);
   });
 
-  test('J3 · other direct support is explained in the drawer and refused by the server', async ({ page, context }, testInfo) => {
+  test('J3 · every other purpose stays open, in the drawer and on the server', async ({ page, context }, testInfo) => {
+    // Owner, 2026-09-28: "yes remove the partner-supported school lock too".
+    // The drawer still names the Partner; it no longer greys purposes out,
+    // and the server plans what it used to refuse.
     const [hope] = data.handovers;
     await signIn(page, 'cceo@edify.org', PASSWORD);
     const row = await planningRow(page, hope);
     await (await rowAction(row, `Schedule activity for ${hope.name}`)).click();
     const drawer = page.locator('#drawer-container');
-    await expect(drawer.locator('[data-partner-lock-reason]')).toContainText(
-      'Staff may directly plan Data Gathering, Content Gathering, or Donor Visits',
-    );
-    for (const locked of ['in_school_training', 'training_follow_up', 'social_visit']) {
-      await expect(drawer.locator(`#purpose_of_visit option[value="${locked}"]`)).toBeDisabled();
-    }
-    await shoot(page, 'j3-locked-purposes', testInfo);
+    await expect(drawer.locator('[data-partner-support-notice]')).toContainText(hope.partner);
+    await expect(drawer.locator('[data-partner-lock-reason]')).toHaveCount(0);
+    await expect(drawer.locator('#purpose_of_visit option[data-purpose-locked="partner"]')).toHaveCount(0);
+    await expect(drawer.locator('#purpose_of_visit option[value="social_visit"]')).toBeEnabled();
+    await shoot(page, 'j3-open-purposes', testInfo);
 
     const before = fixture('inspect', hope.school_id).activities.length;
     const csrf = (await context.cookies()).find(c => c.name === 'csrftoken');
@@ -222,14 +224,14 @@ test.describe('Partner-supported schools — journeys', () => {
         school_id: hope.school_id,
         scheduled_date: days[3].date,
         purpose_of_visit: 'social_visit',
-        activity_purpose_text: 'Manipulated request',
+        activity_purpose_text: 'E2E social visit at a Partner-supported school',
         require_catalogue: 'yes',
       },
       headers: { 'X-CSRFToken': csrf ? csrf.value : '', 'HX-Request': 'true' },
     });
-    expect(response.status()).toBe(400);
-    expect(await response.text()).toContain(`supported by ${hope.partner}`);
-    expect(fixture('inspect', hope.school_id).activities.length).toBe(before);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).not.toContain(`supported by ${hope.partner}`);
+    expect(fixture('inspect', hope.school_id).activities.length).toBe(before + 1);
   });
 
   test('J4 · Cluster Planning adds the Partner-supported school by name', async ({ page }, testInfo) => {

@@ -119,11 +119,7 @@ onPurposeChange() {
   if (!this.showFollowUpPicker) { this.sourceActivityId = ''; }
   if (this.showSsaDataGathering || (this.showFollowUpPicker && this.followUpRequiresTraining)) { this.focusIntervention = ''; }
 },
-plannedParticipants: '',
-{% comment %}Purposes a Partner-supported school keeps for its Partner (owner,
-2026-09-23) — the server's list, so the existing-plan note never offers a
-purpose the save would refuse.{% endcomment %}
-lockedPurposes: {{ partner_locked_purposes_json|default:'[]' }}
+plannedParticipants: ''
 }"
 x-init="ensureTrainingActivity()"
 >
@@ -139,19 +135,15 @@ x-init="ensureTrainingActivity()"
 {% endif %}
 
 {% if partner_support.responsible.is_partner and not reschedule_mode %}
-{% comment %}The school stays in the planner's portfolio and on this drawer;
-what changes is who delivers the support a Partner has taken on (owner,
-2026-09-23). Named, with the Partner's live plans, so nobody schedules on top
-of them without seeing them first. Every plan the school has, staff or
-Partner, is in the existing-plan note below.{% endcomment %}
+{% comment %}The school stays in the planner's portfolio and every purpose
+stays open (owner, 2026-09-28). The Partner is named, with its live plans, so
+nobody schedules on top of them without seeing them first. Every plan the
+school has, staff or Partner, is in the existing-plan note below.{% endcomment %}
 <div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-partner-support-notice>
   <p class="font-bold">This school is supported by {% if partner_support.responsible.needs_review %}more than one Partner ({{ partner_support.responsible.responsible_name }}){% else %}{{ partner_support.responsible.responsible_name }}{% endif %}.</p>
   {% for plan in partner_support.partner_plans %}
   <p class="mt-1 font-medium">Existing Partner activity: {{ plan.label }} {{ plan.status_label|lower }} for {{ plan.date_label }}.</p>
   {% endfor %}
-  {% if partner_support.locked_purposes %}
-  <p class="mt-1 font-medium" data-partner-lock-reason>{{ partner_support.lock_reason }}</p>
-  {% endif %}
 </div>
 {% endif %}
 
@@ -208,7 +200,7 @@ Partner, is in the existing-plan note below.{% endcomment %}
   <div class="flex flex-wrap gap-2">
     <button type="button" class="btn btn-secondary h-8" @click="listOpen = !listOpen" :aria-expanded="listOpen.toString()" data-existing-plan-action="view">View Existing Plans</button>
     <button type="button" class="btn btn-secondary h-8" @click="shown = false" data-existing-plan-action="continue">Continue Planning</button>
-    <button type="button" class="btn btn-secondary h-8" x-show="!lockedPurposes.includes('training_follow_up')" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); shown = false" data-existing-plan-action="follow-up">Plan as Follow-Up</button>
+    <button type="button" class="btn btn-secondary h-8" @click="purposeOfVisit = 'training_follow_up'; onPurposeChange(); shown = false" data-existing-plan-action="follow-up">Plan as Follow-Up</button>
     <button type="button" class="btn btn-secondary h-8" @click="requestClose()" data-existing-plan-action="cancel">Cancel</button>
   </div>
 </div>
@@ -298,7 +290,7 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select a purpose…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}" {% if value in partner_locked_purposes %}disabled data-purpose-locked="partner"{% elif value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in partner_locked_purposes %} — delivered by the Partner{% elif value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
+    <option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
     {% endfor %}
   </select>
   {% if outreach_only_note %}
