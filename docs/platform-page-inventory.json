@@ -3379,6 +3379,66 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 3114,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Profile Activities",
+      "purpose": "Reusable profile activities interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/components/profile_activities.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4037,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Profile Activity Table",
+      "purpose": "Reusable profile activity table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/components/profile_activity_table.html",
+      "variants": [
+        "{{ row.status_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 3100,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -8275,6 +8335,32 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3918,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Cluster Planning Status",
+      "purpose": "Reusable cluster planning status interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/cluster_planning_status.html",
+      "variants": [
+        "{{ row.meeting.tone }}",
+        "{{ row.training.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 7339,
       "deprecated_alternatives": [],
@@ -8444,6 +8530,27 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/filters.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 5373,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Group Trainings",
+      "purpose": "Reusable group trainings interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/group_trainings.html",
       "variants": []
     },
     {
@@ -8751,7 +8858,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1901,
+      "bytes": 2167,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -8937,6 +9044,33 @@
       "tables": 0,
       "template": "partials/oversight/_lens_tabs.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 3500,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Monitor Row",
+      "purpose": "Reusable  monitor row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_row.html",
+      "variants": [
+        "{{ gap.tone }}",
+        "{{ row.visit_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9285,6 +9419,39 @@
       "tables": 1,
       "template": "partials/oversight/flagged_schools.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 11013,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Monitor Workspace",
+      "purpose": "Reusable monitor workspace interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 2,
+      "template": "partials/oversight/monitor_workspace.html",
+      "variants": [
+        "danger",
+        "executive",
+        "info",
+        "success",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10153,7 +10320,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32159,
+      "bytes": 33959,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -33296,30 +33463,32 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/oversight/monitor_workspace.html",
         "template:pages/oversight/country_planning.html",
         "template:partials/oversight/cd_workspace.html",
         "test:referenced-by-automated-test",
         "permission:country_planning_oversight"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "canvas-level shared filter bar",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
+      "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET {{ lens_base_url }}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "kpi_count": "runtime-registered; 2 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -33327,13 +33496,13 @@
       "notifications": false,
       "page_id": "UI-PAGE-3CB2AE6648",
       "page_title": "Country Oversight",
-      "page_type": "planning-or-creation",
+      "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
       ],
       "permission_key": "country_planning_oversight",
-      "primary_action": "Complete planning form",
-      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "primary_action": "Country Planning Oversight",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "What the country has planned, how it is distributed, and who must act.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -33367,19 +33536,20 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-scroll",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 1,
         "type": "in-page-tabs"
       },
       "templates": [
+        "partials/oversight/monitor_workspace.html",
         "pages/oversight/country_planning.html",
         "partials/oversight/cd_workspace.html"
       ],
@@ -33387,7 +33557,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -63757,8 +63929,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /partner-oversight/withdraw/review",
-        "GET /partners/create",
-        "GET /partner-oversight/allowance-drawer"
+        "GET /partners/create"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -83647,6 +83818,7 @@
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
+        "template:partials/oversight/monitor_workspace.html",
         "template:partials/oversight/coverage_workspace.html",
         "test:referenced-by-automated-test",
         "permission:team_planning_oversight"
@@ -83658,10 +83830,11 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
+        "GET {{ lens_base_url }}",
         "GET {{ row.detail_url }}"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": true,
@@ -83718,7 +83891,7 @@
         "loading": true
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
+      "table_pattern": "shared-table-scroll",
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
@@ -83728,6 +83901,7 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
+        "partials/oversight/monitor_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -83735,6 +83909,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[12px]",
         "text-[15px]"
       ]
     },
@@ -99114,7 +99289,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.country_planning_oversight_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -99123,6 +99298,7 @@
       "route": "/country-planning-oversight/",
       "route_name": "country_planning_oversight",
       "templates": [
+        "partials/oversight/monitor_workspace.html",
         "pages/oversight/country_planning.html",
         "partials/oversight/cd_workspace.html"
       ]
@@ -107013,6 +107189,7 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
+        "partials/oversight/monitor_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ]
     },
@@ -107621,8 +107798,8 @@
     "activity_states": 24,
     "all_routes": 1309,
     "api_routes": 360,
-    "component_templates": 513,
-    "full_pages": 260,
+    "component_templates": 519,
+    "full_pages": 259,
     "mobile_contract_pass": 539,
     "nonvisual_actions": 273,
     "page_types": {
@@ -107630,13 +107807,13 @@
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 549,
+      "interaction-fragment": 550,
       "operational-queue": 151,
-      "planning-or-creation": 12,
+      "planning-or-creation": 11,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 276,
+    "partials_and_drawers": 277,
     "permission_gated": 821,
     "permission_keys": 127,
     "roles": 15,
