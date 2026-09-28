@@ -190,6 +190,29 @@ class TheYearAgainstItsTarget(MonitorFixture):
         self.assertEqual(anna.partner_schools, 2)
 
 
+class VisitsCountForThePlanner(MonitorFixture):
+    """A visit is counted for the officer who planned it, at any school, as
+    My Plan counts it (owner, 2026-09-28)."""
+
+    def test_a_visit_at_a_colleague_s_school_is_the_planner_s(self):
+        Activity.objects.create(
+            school=self.ben_school,
+            activity_type="school_visit",
+            status="scheduled",
+            delivery_type="staff",
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.anna.id,
+        )
+        monitor = planning_monitor(self.cd_user, fy=FY)
+        anna = self._officer(monitor, self.anna)
+        ben = self._officer(monitor, self.ben)
+        self.assertEqual((anna.core_visits, anna.client_visits), (2, 3))
+        self.assertEqual(ben.staff_visits, 0)
+        # The school is still visited, whoever planned it.
+        self.assertEqual(ben.schools_with_visit, 1)
+
+
 class CoverageAndGaps(MonitorFixture):
     def test_unique_schools_training_and_gaps(self):
         anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)

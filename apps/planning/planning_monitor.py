@@ -166,6 +166,11 @@ class OfficerMonitor:
     visits_target: int = DEFAULT_VISITS_TARGET
     target_is_set: bool = False
     schools: list = field(default_factory=list)
+    # The visits this officer planned — theirs, at any school — split by the
+    # school's type, and those already delivered (`_count_planned_visits`).
+    planned_core: int = 0
+    planned_client: int = 0
+    planned_done: int = 0
 
     # ── Portfolio ──
     @property
@@ -191,11 +196,11 @@ class OfficerMonitor:
 
     @property
     def core_visits(self) -> int:
-        return sum(s.staff_visits for s in self.schools if s.is_core)
+        return self.planned_core
 
     @property
     def client_visits(self) -> int:
-        return sum(s.staff_visits for s in self.schools if not s.is_core)
+        return self.planned_client
 
     @property
     def staff_visits(self) -> int:
@@ -203,7 +208,7 @@ class OfficerMonitor:
 
     @property
     def visits_done(self) -> int:
-        return sum(s.staff_visits_done for s in self.schools)
+        return self.planned_done
 
     @property
     def visit_progress(self) -> int | None:
@@ -432,6 +437,8 @@ def planning_monitor(
             lead.officers.append(officer)
         officer.schools.append(school)
 
+    _count_planned_visits(officers.values(), directory, fy)
+
     for lead in leads.values():
         lead.officers.sort(key=lambda o: (o.key == UNASSIGNED_KEY, o.name.casefold()))
     ordered = sorted(
@@ -539,6 +546,51 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
             school.in_school_training = True
             if done:
                 school.training_done = True
+
+
+def _count_planned_visits(officers, directory: dict, fy: str) -> None:
+    """Each officer's own staff visits in the year, wherever they are.
+
+    Counted by the officer who planned them — the responsible officer, in
+    either id space — as My Plan and Team Plan count them, not by who owns the
+    school: a CCEO's visit at a colleague's school is still one of the CCEO's
+    560 (owner, 2026-09-28: "the PL are seeing exactly the number ... planned
+    by the CCEO"). Core or client by the school's type.
+    """
+    from apps.activities.models import Activity
+    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
+
+    by_key = {officer.key: officer for officer in officers}
+    ids = {
+        owner_id
+        for owner_id, entry in directory.items()
+        if entry["officer_id"] in by_key
+    }
+    if not ids:
+        return
+    delivered = _delivered_statuses()
+    rows = (
+        _live(
+            Activity.objects.filter(
+                responsible_staff_id__in=ids, fy=fy, activity_type__in=VISIT_TYPES
+            )
+        )
+        .exclude(delivery_type="partner")
+        .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
+        .values("responsible_staff_id", "school__school_type", "status")
+        .annotate(n=Count("id"))
+    )
+    for row in rows:
+        entry = directory.get(str(row["responsible_staff_id"]))
+        officer = by_key.get(entry["officer_id"]) if entry else None
+        if officer is None:
+            continue
+        if row["school__school_type"] in CORE_TYPES:
+            officer.planned_core += row["n"]
+        else:
+            officer.planned_client += row["n"]
+        if row["status"] in delivered:
+            officer.planned_done += row["n"]
 
 
 def _count_partner_handovers(schools: dict, school_ids) -> None:
