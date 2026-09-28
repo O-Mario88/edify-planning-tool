@@ -677,8 +677,13 @@ def planning_dashboard_view(request):
     # page's primers have a store to fill whether or not a middleware opened one.
     from apps.core.request_cache import scoped
 
+    # A table refresh swaps the rows alone (school_table.html): no KPI strip,
+    # no filter menus. Those are computed for the whole page only.
+    table_only = request.headers.get("HX-Target") == "schools-table-container"
     with scoped():
-        data = PlanningDashboardService.get_dashboard_data(request.user, filters)
+        data = PlanningDashboardService.get_dashboard_data(
+            request.user, filters, summary=not table_only
+        )
 
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset
@@ -724,7 +729,7 @@ def planning_dashboard_view(request):
     # under their Program Lead — the same shape as the grouped list.
     from apps.planning.owner_groups import owner_filter_groups
 
-    owner_groups = owner_filter_groups(_planning_schools)
+    owner_groups = [] if table_only else owner_filter_groups(_planning_schools)
     partners = assignable_partners()
 
     # Pagination pages list
@@ -792,8 +797,6 @@ def planning_dashboard_view(request):
         "clusters": data.get("clusters", []),
         "kpis": data["kpis"],
         "kpi_strip_items": data.get("kpi_strip_items", []),
-        "cluster_planning": data["cluster_planning"],
-        "core_summary": data["core_summary"],
         "total_count": data["total_count"],
         "scheduled_activities": scheduled_activities,
         # Options
@@ -874,7 +877,7 @@ def planning_dashboard_view(request):
     }
 
     # If the target is only the school table
-    if request.headers.get("HX-Target") == "schools-table-container":
+    if table_only:
         context["is_planning_htmx_table"] = True
         return render(request, "partials/planning/school_table.html", context)
 
