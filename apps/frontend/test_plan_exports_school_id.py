@@ -118,14 +118,13 @@ class MyPlanExportTest(_ExportFixture):
         self.assertIn("(V1)", by_school["EXP-CORE-3"][2])
 
     def test_the_csv_carries_it_too(self):
-        day = _weekday_ahead(3)
-        self._visit(self.client_school, on=day)
+        visit = self._visit(self.client_school)
         self.client.force_login(self.user)
 
-        # The visit's own year, as for the workbook above: three days ahead is
-        # already the next fiscal year in the last days of September.
+        # Exported for the fiscal year the visit is scheduled in — the next
+        # one in the last days of September.
         body = self.client.get(
-            f"/my-plan?export=csv&period=fy&fy={get_operational_fy(day)}"
+            f"/my-plan?export=csv&period=fy&fy={visit.fy}"
         ).content.decode()
         rows = list(csv.reader(io.StringIO(body)))
 
