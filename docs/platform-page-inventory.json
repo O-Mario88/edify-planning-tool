@@ -10153,7 +10153,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 32159,
+      "bytes": 31483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
