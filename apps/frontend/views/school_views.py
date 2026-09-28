@@ -1248,6 +1248,9 @@ def add_to_cluster_drawer_view(request, school_id):
 
         verb = "moved to" if is_change else "added to"
         message = f"{school.name} {verb} {cluster.name}."
+        from apps.clusters.membership_history import open_membership
+
+        membership = open_membership(school.id)
         if request.headers.get("HX-Request") != "true":
             # The full-page fallback: a plain form post lands back on the
             # directory with the outcome, not on a bare toast fragment.
@@ -1258,7 +1261,12 @@ def add_to_cluster_drawer_view(request, school_id):
         response = render(
             request,
             "partials/schools/toast_success.html",
-            {"message": message},
+            {
+                "message": message,
+                # Undo a move made by mistake (owner, 2026-09-28).
+                "undo_kind": "cluster" if membership else "",
+                "undo_ids": membership.id if membership else "",
+            },
         )
         response["HX-Trigger"] = (
             f"schools-updated, cluster-schools-updated-{cluster.id}"
@@ -1388,6 +1396,9 @@ def assign_to_project_drawer_view(request, school_id):
         # focus, and the Client=1/Core=4 Project portfolio limit.
         from apps.projects.services import assign_school as assign_project_school
 
+        already_enrolled = ProjectSchoolAssignment.objects.filter(
+            project=project, school=school
+        ).exists()
         try:
             assign_project_school(
                 project.id,
@@ -1476,10 +1487,23 @@ def assign_to_project_drawer_view(request, school_id):
             },
         )
 
+        # Undo an enrolment made by mistake (owner, 2026-09-28) — only one
+        # this press made, never an enrolment that was already there.
+        enrolment_id = (
+            ""
+            if already_enrolled
+            else ProjectSchoolAssignment.objects.filter(project=project, school=school)
+            .values_list("id", flat=True)
+            .first()
+        )
         response = render(
             request,
             "partials/schools/toast_success.html",
-            {"message": f"{school.name} assigned to {project.name}."},
+            {
+                "message": f"{school.name} assigned to {project.name}.",
+                "undo_kind": "project" if enrolment_id else "",
+                "undo_ids": enrolment_id or "",
+            },
         )
         response["HX-Trigger"] = "schools-updated"
         return response

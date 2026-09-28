@@ -192,15 +192,21 @@ class TheBulkDrawerAddsAWholeCohortTest(_Fixture):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            ProjectSchoolAssignment.objects.filter(
-                project=self.project, school=self.second
-            ).exists()
+        enrolment = ProjectSchoolAssignment.objects.get(
+            project=self.project, school=self.second
         )
         self.assertIn(
             f"project-schools-updated-{self.project.id}",
             response.headers["HX-Trigger"],
         )
+        # The confirmation offers to undo exactly what this press added
+        # (owner, 2026-09-28), not the school that was already in.
+        self.assertContains(response, 'hx-post="/planning/undo"')
+        self.assertContains(response, enrolment.id)
+        earlier = ProjectSchoolAssignment.objects.get(
+            project=self.project, school=self.school
+        )
+        self.assertNotContains(response, earlier.id)
 
     def test_a_school_outside_the_portfolio_is_dropped(self):
         self.client.post(
