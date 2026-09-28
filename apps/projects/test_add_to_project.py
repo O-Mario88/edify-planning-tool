@@ -239,11 +239,12 @@ class AddToProjectTest(ProjectFixture):
                 HTTP_HX_REQUEST="true",
             )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            ProjectSchoolAssignment.objects.filter(
-                project=self.project, school=self.school
-            ).exists()
+        enrolment = ProjectSchoolAssignment.objects.get(
+            project=self.project, school=self.school
         )
+        # Added by mistake? The confirmation can undo it (owner, 2026-09-28).
+        self.assertContains(response, 'hx-post="/planning/undo"')
+        self.assertContains(response, enrolment.id)
         # The coordinator is told, and the act is audited with previous/new.
         self.assertTrue(
             Notification.objects.filter(

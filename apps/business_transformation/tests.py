@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
+from apps.core.fy import get_fy_date_range, get_operational_fy
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity
 from apps.activity_catalogue.models import ActivityCatalogueItem
@@ -314,11 +315,16 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
         self.assertNotContains(response, "Plan support for")
 
     def test_performance_uses_confirmed_baseline_and_latest_ssa(self):
+        # The portfolio reads the running year's confirmed SSAs, so both are
+        # filed under it and dated inside it, the baseline first — on
+        # 1 October "tomorrow" or "last week" is not always that year.
+        fy = get_operational_fy()
+        first_day = max(timezone.now() - timedelta(days=10), get_fy_date_range(fy)[0])
         for index, score in enumerate((3.0, 6.0), start=1):
             record = SsaRecord.objects.create(
                 school=self.school,
-                date_of_ssa=timezone.now() + timedelta(days=index),
-                fy="2026",
+                date_of_ssa=first_day + timedelta(hours=index),
+                fy=fy,
                 quarter=f"Q{index}",
                 verification_status="confirmed",
                 verified_by_user_id=self.bt_user.id,
@@ -1234,7 +1240,8 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.school.save(update_fields=["enrollment"])
         self._register_and_disburse("LN-METRIC")
 
-        metrics = services.portfolio_metrics(self.bt_user, fy="2026")
+        # The year the loan is disbursed in (today): from 1 October, FY2027.
+        metrics = services.portfolio_metrics(self.bt_user, fy=get_operational_fy())
 
         self.assertEqual(metrics["loansDisbursed"], 1)
         self.assertEqual(metrics["valueDisbursed"], Decimal("12000000"))
@@ -1251,7 +1258,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self._register_and_disburse("LN-STUDENT-REACH-1")
         self._register_and_disburse("LN-STUDENT-REACH-2")
 
-        metrics = services.portfolio_metrics(self.bt_user, fy="2026")
+        metrics = services.portfolio_metrics(self.bt_user, fy=get_operational_fy())
 
         self.assertEqual(metrics["loansDisbursed"], 2)
         self.assertEqual(metrics["schoolsImpacted"], 1)
@@ -1267,7 +1274,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             active_role=EdifyRole.REGIONAL_VICE_PRESIDENT.value,
         )
 
-        context = services.workspace_context(rvp, {"fy": "2026"})
+        context = services.workspace_context(rvp, {"fy": get_operational_fy()})
 
         self.assertFalse(context["summary_only"])
         self.assertEqual(context["metrics"]["loansDisbursed"], 1)

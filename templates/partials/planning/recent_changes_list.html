@@ -1,0 +1,37 @@
+{% comment %}
+The Recent changes list. Its own partial because an Undo answers with it: the
+row that was undone leaves, and a row the Partner scheduled in the meantime
+now says so instead of offering a button that would fail.
+{% endcomment %}
+<div id="recent-changes-list" data-recent-changes>
+{% if changes %}
+<ul class="divide-y divide-[var(--edify-border)]" role="list">
+{% for change in changes %}
+<li class="flex items-start justify-between gap-3 py-2.5" data-change-kind="{{ change.kind }}">
+<div class="min-w-0 space-y-0.5">
+<p class="text-[13px] font-bold text-slate-800">{{ change.summary }}</p>
+<p class="edify-text-caption text-slate-500">{{ change.kind_label }} · {{ change.made_at|timesince }} ago</p>
+{% if change.can_undo %}
+<p class="edify-text-caption text-slate-500">{{ change.effect }}</p>
+{% else %}
+<p class="edify-text-caption text-amber-700" data-undo-blocked>{{ change.blocked }}</p>
+{% endif %}
+</div>
+{% if change.can_undo %}
+<button
+type="button"
+hx-post="/planning/undo"
+hx-vals='{"kind": "{{ change.kind|escapejs }}", "ids": "{{ change.id|escapejs }}", "source": "drawer"}'
+hx-target="#recent-changes-list"
+hx-swap="outerHTML"
+aria-label="Undo: {{ change.summary }}"
+class="edify-action-button secondary h-8 shrink-0"
+>Undo</button>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% else %}
+{% include "components/empty_state.html" with message="Nothing to undo." hint="Schools you assign to a partner, add to a project or put in a cluster show here for a week." compact="true" tone="neutral" %}
+{% endif %}
+</div>

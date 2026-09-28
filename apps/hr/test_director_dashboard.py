@@ -19,6 +19,7 @@ from django.test import TestCase
 
 from apps.accounts.hr_dashboard_service import HRDashboardService
 from apps.accounts.models import StaffProfile, User
+from apps.core.fy import get_operational_fy
 from apps.hr.models import (
     ComplianceRequirement,
     EmployeeComplianceRecord,
@@ -228,9 +229,13 @@ class DirectorDashboardTest(TestCase):
             severity="critical",
             description="Collision.",
         )
+        # This year's review, now overdue. Named by its year: undated, a
+        # review counts in the year it falls due, and in October's first days
+        # three days ago is the year just closed.
         PerformanceReview.objects.create(
             staff=self.officer_sp,
             period="FY",
+            fy=get_operational_fy(),
             due_date=date.today() - timedelta(days=3),
         )
         titles = [item["title"] for item in self.data()["attention"]]

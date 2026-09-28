@@ -277,7 +277,9 @@ class RedactionTests(SimpleTestCase):
 class ReportFixture(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.fy = get_operational_fy()
+        # The report of the year its evidence is in: the follow-ups are ten
+        # days old, so in October's first days that is the year just closed.
+        cls.fy = get_operational_fy(timezone.now() - timedelta(days=10))
         cls.ug = Region.objects.create(name="Report Central", country="Uganda")
         cls.ke = Region.objects.create(name="Report Coast", country="Kenya")
         cls.ug_district = District.objects.create(name="Report Wakiso", region=cls.ug)

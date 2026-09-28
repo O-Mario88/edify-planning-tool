@@ -140,6 +140,12 @@ class BulkAssignmentTests(TestCase):
         self.assertContains(saved, "added to")
         self.school_other.refresh_from_db()
         self.assertEqual(self.school_other.cluster_id, far.id)
+        # Picked the wrong cluster? The confirmation can undo it (owner,
+        # 2026-09-28).
+        from apps.clusters.membership_history import open_membership
+
+        self.assertContains(saved, 'hx-post="/planning/undo"')
+        self.assertContains(saved, open_membership(self.school_other.id).id)
 
     def test_create_new_cluster_multi_sub_counties(self):
         self.client.force_login(self.user)

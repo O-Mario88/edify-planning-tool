@@ -3305,6 +3305,7 @@ def project_bulk_assign_drawer_view(request, project_id):
         reason = (request.POST.get("reason") or "").strip()
         schools = writable.filter(id__in=request.POST.getlist("school_ids"))
         assigned, duplicates, refused = [], [], []
+        assigned_ids = []
         for school in schools:
             if ProjectSchoolAssignment.objects.filter(
                 project=project, school=school
@@ -3325,7 +3326,16 @@ def project_bulk_assign_drawer_view(request, project_id):
                 refused.append(f"{school.name}: {exc}")
                 continue
             assigned.append(school.name)
+            assigned_ids.append(school.id)
 
+        # The enrolments this press made, for the confirmation's Undo (owner,
+        # 2026-09-28). Schools already in the cohort were skipped above, so
+        # every row here is new.
+        enrolment_ids = list(
+            ProjectSchoolAssignment.objects.filter(
+                project=project, school_id__in=assigned_ids
+            ).values_list("id", flat=True)
+        )
         message = f"Added {len(assigned)} school(s) to {project.name}."
         if duplicates:
             message += f" {len(duplicates)} already in the cohort."
@@ -3334,7 +3344,13 @@ def project_bulk_assign_drawer_view(request, project_id):
             more = f" and {len(refused) - 3} more" if len(refused) > 3 else ""
             message += f" Skipped {len(refused)}: {shown}{more}."
         response = render(
-            request, "partials/schools/toast_success.html", {"message": message}
+            request,
+            "partials/schools/toast_success.html",
+            {
+                "message": message,
+                "undo_kind": "project",
+                "undo_ids": ",".join(enrolment_ids),
+            },
         )
         response["HX-Trigger"] = (
             f"project-schools-updated-{project.id}, schools-updated"

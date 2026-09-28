@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **835**
-- All registered routes: **1307**
+- Routed product surfaces: **837**
+- All registered routes: **1309**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **515**
-- Full pages: **259**
+- Shared component templates: **513**
+- Full pages: **260**
 - Partials and drawers: **276**
-- Permission-gated surfaces: **819**
-- Referenced by automated tests: **728**
+- Permission-gated surfaces: **821**
+- Referenced by automated tests: **730**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -253,7 +253,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E49086D072 | /country-budget/history/<str:budget_id> | FY | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6C0C6DD33B | /country-budget/plan-sources | Country Budget Plan Sources | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EFEA0EEA3D | /country-budget/return | Country Budget Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-15D0AB1EB0 | /country-planning-oversight/send | Country Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -668,11 +668,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-C5319ED208 | /planning/fiscal-years | Fiscal Year Planning | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-91F811FE66 | /planning/recent-changes | Planning Recent Changes | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-70E52CFA17 | /planning/route-preview | Planning Route Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-739AAF8574 | /planning/schedule | Schedule Activity - Edify Command Center | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CB5D63ABE3 | /planning/schedule-action | Planning Schedule Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2AF2FF5ECA | /planning/schedule-modal | Planning Schedule Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C597B8F97C | /planning/schedule/schools | Planning Schedule School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-17DF3D301E | /planning/undo | Planning Undo | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4F8B7694FF | /planning/visit-requests | Visit Requests - Edify Planning Tool | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C8A20A3C2A | /planning/visit-requests/<str:activity_id>/<str:decision> | Visit Request Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8354F50663 | /policies | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
