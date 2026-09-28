@@ -363,7 +363,9 @@ class PortfolioPlanningTest(PortfolioFixture):
             school = self._school(f"PF-BULK-{index}", f"Bulk {index}", self.cceo_2)
             self._activity(school=school, day=_fy_day(1, 12), owner=self.cceo_2)
 
-        with self.assertNumQueries(7):
+        # 8: one read of the fiscal-year policy, so the operational year also
+        # counts plans already dated into the next one (owner, 2026-09-28).
+        with self.assertNumQueries(8):
             country_portfolio(self.ia.user, fy=FY)
 
 

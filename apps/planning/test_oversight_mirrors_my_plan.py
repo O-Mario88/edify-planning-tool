@@ -336,6 +336,70 @@ class PlanningOversightMirrorsMyPlanTest(MirrorFixture):
                 self.assertEqual(expected - self._ids_under(groups, profile), set())
 
 
+class TheTablesCountWhatMyPlanCountsTest(MirrorFixture):
+    """Owner, 2026-09-28: "a cceo may have 300 visits planned but the PL is
+    seeing like 100 ... make sure the PL are seeing exactly the number ...
+    planned by the CCEO". Every visit on an officer's My Plan is a visit on
+    the lead's Team Plan tables, and nothing else is."""
+
+    def _tables(self, person):
+        self.client.force_login(self.pl_user)
+        response = self.client.get(
+            "/team-planning-oversight/", {"fy": self.fy, "owner": person.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        [group] = response.context["panel_groups"]
+        return {
+            key: {item.activity_id for item in group[key]}
+            for key in (
+                "client_school_visits",
+                "core_school_visits",
+                "cluster_meetings",
+                "planned_trainings",
+            )
+        }
+
+    def test_training_follow_ups_and_core_trained_visits_are_visits(self):
+        follow_up = self._activity(
+            "training_follow_up_visit", self.james.id, school=self.client_school
+        )
+        trained_school = self._school(
+            "MIR-8", "Mirror Trained", self.james_user.id, school_type="core_trained"
+        )
+        trained_visit = self._activity(
+            "school_visit", self.james.id, school=trained_school
+        )
+        tables = self._tables(self.james)
+
+        self.assertIn(follow_up.id, tables["client_school_visits"])
+        self.assertNotIn(follow_up.id, tables["planned_trainings"])
+        self.assertIn(trained_visit.id, tables["client_school_visits"])
+        self.assertNotIn(trained_visit.id, tables["core_school_visits"])
+        # Trainings stay trainings.
+        in_school_training, cluster_training = self.james_work[3], self.james_work[5]
+        self.assertIn(in_school_training.id, tables["planned_trainings"])
+        self.assertIn(cluster_training.id, tables["planned_trainings"])
+
+    def test_the_visit_count_is_my_plan_s_visit_count(self):
+        from apps.core.activity_types import VISIT_TYPES
+
+        self._activity(
+            "training_follow_up_visit", self.james.id, school=self.client_school
+        )
+        tables = self._tables(self.james)
+        context = get_frontend_context(self.james_user, {"fy": self.fy, "period": "fy"})
+        my_plan_visits = {
+            row["id"]
+            for key in ("school_visits", "core_school_visits")
+            for row in context[key]
+            if row["activity_type"] in VISIT_TYPES
+        }
+        oversight_visits = tables["client_school_visits"] | tables["core_school_visits"]
+        self.assertTrue(my_plan_visits)
+        self.assertEqual(my_plan_visits - oversight_visits, set())
+        self.assertFalse(oversight_visits & tables["planned_trainings"])
+
+
 class ClusterOversightMirrorsMyPlanTest(MirrorFixture):
     """Cluster Oversight lists each person's meetings and group trainings."""
 

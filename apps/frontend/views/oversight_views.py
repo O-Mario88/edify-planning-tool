@@ -843,6 +843,7 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     from apps.core.activity_types import (
         CLUSTER_MEETING_TYPES,
         TRAINING_TYPES,
+        VISIT_TYPES,
     )
 
     if (
@@ -882,23 +883,34 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             )
 
             atype = str(item.activity_type or "").lower()
-            if (
+            # The canonical groupings first, the ones My Plan and the family
+            # strip above read (owner, 2026-09-28: "a cceo may have 300 visits
+            # planned but the PL is seeing like 100"). Matching on the word
+            # "training" filed every Training Follow Up VISIT under trainings,
+            # so a lead read fewer visits than the officer had planned; and
+            # "core" in the school type made a Core Trained school's visits
+            # core visits, where My Plan (school_type == "core") does not.
+            is_visit = atype in VISIT_TYPES and not item.is_in_school_training
+            is_training = not is_visit and (
                 item.is_in_school_training
                 or atype in TRAINING_TYPES
-                or "training" in atype
+                or (atype not in CLUSTER_MEETING_TYPES and "training" in atype)
                 or bool(item.training_name and item.training_name != "—")
-            ):
+            )
+            if is_training:
                 planned_trainings.append(item)
                 if item.cluster_id and (
                     not item.school_id
                     or item.school_name in ("Unknown School", "Unknown", "")
                 ):
                     all_cluster_training_items.append(item)
-            elif atype in CLUSTER_MEETING_TYPES or "meeting" in atype:
+            elif not is_visit and (
+                atype in CLUSTER_MEETING_TYPES or "meeting" in atype
+            ):
                 cluster_meetings.append(item)
             else:
                 stype = str(item.school_type or "").lower()
-                if "core" in stype or atype.startswith("core_"):
+                if stype == "core" or atype.startswith("core_"):
                     core_school_visits.append(item)
                 else:
                     client_school_visits.append(item)
@@ -1290,9 +1302,11 @@ def team_planning_oversight_view(request):
             else None,
             date_start=period["date_start"],
             date_end=period["date_end"],
+            fys=_plan_period(period).get("fys"),
         )
         context = {
             **period,
+            "period_label": _plan_period_label(period),
             "active_oversight_view": "coverage",
             "lens_tabs": lens_tabs,
             "lens_base_url": TEAM_OVERSIGHT_PATH,
