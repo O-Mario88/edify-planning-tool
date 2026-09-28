@@ -1,0 +1,16 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Recent changes (owner, 2026-09-28: "create a function for users to undo plans
+done by mistake"). The planner's own partner assignments, project schools and
+cluster moves from the last week, wherever they were made, each with an Undo
+or the reason it can no longer be undone. Read from the rows themselves by
+apps.planning.undo, so nothing has to have been recorded for it at the time.
+{% endcomment %}
+
+{% block drawer_title %}Recent changes{% endblock %}
+{% block drawer_subtitle %}Your partner, project and cluster changes from the last {{ window_days }} days. Undo one made by mistake.{% endblock %}
+
+{% block drawer_body %}
+{% include "partials/planning/recent_changes_list.html" %}
+{% endblock %}
