@@ -153,6 +153,51 @@ test.describe('Responsive contract — behaviours', () => {
     }
   });
 
+  test('a table that fits only once pinned holds still', async ({ browser, baseURL, browserName, isMobile }) => {
+    // Owner, 2026-09-28: "the cluster expanded detail (list of schools) are
+    // shaking on some computers". Pinning caps the identity; a table a few
+    // pixels over its region fitted once capped, let go, overflowed again,
+    // and flipped state every frame. Built here at exactly that width so the
+    // test does not depend on which schools the seed data holds.
+    onlyChromiumDesktop({ browserName, isMobile });
+    const { context, page } = await openAs(browser, baseURL, { ...DESKTOP_CONTEXT, deviceScaleFactor: 1.5 }, { width: 1366, height: 800 }, 'cceo@edify.org');
+    try {
+      await page.goto('/my-plan');
+      const states = await page.evaluate(async () => {
+        const host = document.createElement('div');
+        host.style.inlineSize = '400px';
+        host.innerHTML = '<table data-shake-probe data-mobile-table="scroll"><thead><tr><th>Name</th><th>Value</th></tr></thead>'
+          + '<tbody><tr><td><span style="display:inline-block;inline-size:300px">A very long school name that is capped when pinned</span></td>'
+          + '<td><span style="display:inline-block;inline-size:60px">42</span></td></tr></tbody></table>';
+        document.querySelector('main').prepend(host);
+        const frame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+        let region = null;
+        for (let i = 0; i < 40 && !region; i += 1) {
+          await wait(50);
+          region = host.querySelector('.edify-table-scroll-region');
+        }
+        if (!region) return ['no region'];
+        const table = region.querySelector('table');
+        // Squeeze the region to just under the table's unpinned width.
+        region.dataset.scrollState = 'none';
+        host.style.inlineSize = `${Math.floor(table.getBoundingClientRect().width) - 6}px`;
+        for (let i = 0; i < 10; i += 1) await frame();
+        const seen = [];
+        for (let i = 0; i < 20; i += 1) {
+          await frame();
+          seen.push(region.dataset.scrollState);
+        }
+        return seen;
+      });
+      expect(states.length).toBe(20);
+      expect(new Set(states).size, states.join(' ')).toBe(1);
+      expect(states[0]).not.toBe('none');
+    } finally {
+      await context.close();
+    }
+  });
+
   test('a drawer on a phone is a sheet from the bottom edge; a tablet keeps the card', async ({ browser, baseURL, browserName, isMobile }) => {
     onlyChromiumDesktop({ browserName, isMobile });
     const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'cceo@edify.org');
