@@ -796,7 +796,7 @@ class AdminOpsDashboardService:
     """
 
     @staticmethod
-    def summary(principal) -> dict:
+    def summary(principal, *, presence_filters: dict | None = None) -> dict:
         _require_admin(principal)
         today = timezone.localdate()
         open_incidents = SystemIncident.objects.exclude(
@@ -852,5 +852,5 @@ class AdminOpsDashboardService:
                 )[:5]
             ),
             "recent_incidents": list(open_incidents.order_by("-last_detected_at")[:5]),
-            "presence": presence_summary(),
+            "presence": presence_summary(**(presence_filters or {})),
         }

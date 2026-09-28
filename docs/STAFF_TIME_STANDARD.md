@@ -117,6 +117,30 @@ standard:
 A feature that needs to break one of these constraints is out of scope for
 this platform.
 
+**Owner exception, 2026-09-28: Who's Online.** The owner asked for Who's
+Online to show "how long the user spend on the planning tool, which part of
+the tool they accessed and for how long, working on what, how many times they
+logged in, when they logged in", by day, week, month, quarter and FY. Shown
+the conflict with rule 1, the owner chose to change the rule for that table.
+The exception is exactly this:
+
+- **Where:** the Who's Online table only (Admin Platform Operations, the
+  Country Director's Operations view, a Programme Lead's dashboard), and its
+  `/dashboard/whos-online` refresh.
+- **Who reads it:** the Admin and the Country Director (the country) and a
+  Programme Lead (their own reporting line). Nobody else.
+- **What it holds:** presence time from the once-a-minute presence beat
+  (`apps/accounts/presence.py`, model `PresenceTime`: person, day, part of the
+  tool, task, seconds), and sign-in times from `LoginEvent`. It is a separate
+  record, not the interaction measurement of §4. It carries labels only
+  ("My Plan", "Scheduling an activity") — no URLs, identifiers, payloads or
+  addresses — and is kept so that a financial year reads whole.
+- **What does not change:** the §4 measurement (`interaction_event`,
+  `InteractionDay`, the role percentiles) stays aggregate, and rules 2–4
+  still hold everywhere, including here: presence time is not ranked, is not
+  a target and does not feed a review. Extending named minutes to any other
+  surface needs the owner's decision again.
+
 ## 6. Data handling
 
 - Events store: actor id, role, timestamp, HTTP method, resolved route

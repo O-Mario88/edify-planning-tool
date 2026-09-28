@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **837**
-- All registered routes: **1309**
+- Routed product surfaces: **838**
+- All registered routes: **1310**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **24**
 - Shared component templates: **519**
 - Full pages: **259**
-- Partials and drawers: **277**
-- Permission-gated surfaces: **821**
-- Referenced by automated tests: **730**
+- Partials and drawers: **278**
+- Permission-gated surfaces: **822**
+- Referenced by automated tests: **731**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -275,6 +275,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D2C1ACA82A | /dashboard/pl-urgent-schools | Pl Urgent Schools Page | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6756CED269 | /dashboard/pl-week-send/<str:activity_id>/ | Dashboard Pl Week Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-063B2154FF | /dashboard/planning-progress | Planning Progress Fragment | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-948548FD70 | /dashboard/whos-online | Whos Online | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-44FBA5501A | /data-quality/duplicates | Duplicate Review | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3804BD9D07 | /data-quality/issue/<str:issue_id>/action | Data Quality Issue Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-02AC0DDFB9 | /data-repair | Data Repair Center | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

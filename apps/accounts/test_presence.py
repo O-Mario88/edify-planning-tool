@@ -333,7 +333,9 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn("admin-presence-light--online", html)
         self.assertIn('data-presence="offline"', html)
         self.assertIn("admin-presence-light--offline", html)
-        self.assertIn("never signed in", html)
+        # Never signed in: a dash in the figures, said in words beside them.
+        self.assertIn('title="Never signed in">—</span>', html)
+        self.assertIn("Never signed in", html)
         self.assertIn("data-admin-logins", html)
         self.assertIn("1 today", html)
 

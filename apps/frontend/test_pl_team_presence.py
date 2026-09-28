@@ -32,7 +32,12 @@ class ProgrammeLeadTeamPresenceTest(SimpleTestCase):
     def test_the_lead_s_roster_is_never_built_without_a_scope(self):
         source = (ROOT / "apps/frontend/views/dashboard_views.py").read_text()
         block = source.split("def _program_lead_dashboard", 1)[1].split("\ndef ", 1)[0]
-        self.assertIn("presence_summary(only_user_ids=team_user_ids(user))", block)
+        # The period filter (owner, 2026-09-28) rides along; the scope stays.
+        self.assertIn(
+            "presence_summary(\n            only_user_ids=team_user_ids(user), "
+            "**presence_filters(request)\n        )",
+            block,
+        )
         # Built for the views that show it, not on every tab the Lead opens.
         self.assertIn('if view in ("week", "team"):', block)
         self.assertNotIn("presence_summary()", block)

@@ -4,41 +4,68 @@
   what they were working on and which part of the system. One table for the
   Admin's Platform Operations view and the Country Director's Operations
   view. CCEOs fold under their Program Lead, everyone else under their role,
-  so a country roster reads as a dozen groups and not a hundred rows; a
-  group opens by itself when somebody in it is online.
+  so a country roster reads as a dozen groups and not a hundred rows.
 
-  Sign-ins (owner, 2026-09-16) is each person's own column: when they last
-  signed in and how many times, which the header only had as a country total.
-  It is not the Duration column — that is the sitting, which keeps growing
-  after the sign-in that started it. With `staff_links` the cell links to that
-  person's user record, where their history lives; the Country Director's copy
-  of this table leaves it as plain text, because the admin panel is not theirs
-  to open.
+  Sign-ins (owner, 2026-09-16) is each person's own column. With `staff_links`
+  the cell links to that person's user record, where their history lives; the
+  Country Director's copy of this table leaves it as plain text, because the
+  admin panel is not theirs to open.
+
+  A record of time, not only a sitting (owner, 2026-09-28): "how long the user
+  spend on the planning tool, which part of the tool they accessed and for how
+  long, working on what, how many times they logged in, when they logged in",
+  for a day, week, month, quarter or FY. Duration is the time on the tool in
+  the chosen period; the two columns after it say what on and where, with the
+  minutes; tapping a person opens every sign-in time and the time under each
+  part of the tool. The owner chose to show named minutes here and only here
+  (docs/STAFF_TIME_STANDARD.md §5).
+
+  The filter and the pager fetch the panel alone from /dashboard/whos-online
+  (`presence_fragment` is that response: the panel without its host).
 
   Expects `presence` (apps.accounts.presence.presence_summary). With
   `presence_scope_label` the caption says whose roster this is: the Programme
   Lead's copy holds their reporting line only (owner, 2026-09-22), and every
   number in it counts that team rather than the country.
 {% endcomment %}
+{% if not presence_fragment %}<div class="presence-host" data-presence-host data-pager-fragment="/dashboard/whos-online">{% endif %}
 <section class="presence-panel" aria-labelledby="presence-title" data-admin-presence>
   <header class="presence-panel__header">
     <div>
       <h2 id="presence-title">Who's Online</h2>
-      <p class="presence-panel__caption">{{ presence.online_count }} of {{ presence.people_count }} {% if presence_scope_label %}in {{ presence_scope_label }} {% endif %}online in the last {{ presence.window_minutes }} min · {{ presence.logins_today }} sign-in{{ presence.logins_today|pluralize }} today · {{ presence.logins_this_week }} this week</p>
+      <p class="presence-panel__caption">{{ presence.online_count }} of {{ presence.people_count }} {% if presence_scope_label %}in {{ presence_scope_label }} {% endif %}online now · {{ presence.period.label|capfirst }}: {{ presence.period_time_label }} on the tool · {{ presence.period_logins }} sign-in{{ presence.period_logins|pluralize }}</p>
     </div>
     <span class="presence-legend" aria-hidden="true"><i class="admin-presence-light admin-presence-light--online"></i> online <i class="admin-presence-light admin-presence-light--offline"></i> offline</span>
   </header>
+  <form class="edify-filter-bar presence-choose" aria-label="Who's Online period"
+        hx-get="/dashboard/whos-online" hx-target="closest [data-presence-host]" hx-swap="innerHTML" hx-trigger="change">
+    <label class="edify-filter-field">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Period</span>
+      <select name="presence_period" aria-label="Period">
+        {% for key, label in presence.period_options %}
+        <option value="{{ key }}"{% if key == presence.period.key %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-filter-field">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Date</span>
+      <input type="date" name="presence_on" value="{{ presence.period.on|date:'Y-m-d' }}" aria-label="A day in the period">
+    </label>
+    {% if not presence.period.is_default %}
+    <button type="button" class="presence-choose__reset" hx-get="/dashboard/whos-online" hx-target="closest [data-presence-host]" hx-swap="innerHTML">Clear filters</button>
+    {% endif %}
+  </form>
   <div class="presence-table-wrap">
     {% paginate presence.groups "presence_groups_page" as presence_groups_pager %}
     <table class="presence-table">
       <thead>
         <tr>
           <th scope="col" class="presence-table__status"><span class="sr-only">Status</span></th>
-          <th scope="col">Staff name</th>
-          <th scope="col">Sign-ins</th>
-          <th scope="col">Duration</th>
-          <th scope="col">Working on what</th>
-          <th scope="col">Part of the system accessed</th>
+          <th scope="col" class="presence-table__name">Staff name</th>
+          <th scope="col" class="presence-table__signins" title="Sign-ins in the period · the last one">Sign-ins · last</th>
+          <th scope="col" class="presence-table__duration">Duration</th>
+          <th scope="col" class="presence-table__working">Working on what</th>
+          <th scope="col" class="presence-table__section">Part of the system accessed</th>
         </tr>
       </thead>
       {% for group in presence_groups_pager.rows %}
@@ -48,6 +75,7 @@
             <button type="button" class="presence-group__toggle" data-presence-toggle aria-expanded="false" aria-controls="presence-group-{{ forloop.counter }}">
               <span class="presence-group__chevron" aria-hidden="true"></span>
               <span class="presence-group__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
+              <span class="presence-group__time" title="Time on the tool, {{ presence.period.label }}">{{ group.period_time_label }}</span>
               <span class="presence-group__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i>{{ group.online }} of {{ group.total }} online</span>
             </button>
           </td>
@@ -65,15 +93,31 @@
     (function () {
       /* Every group starts folded and one opens at a time (owner,
          2026-09-25: details expand only when their row is tapped, and close
-         when another is tapped or the same one is tapped again). The toggle
-         is plain DOM so the table works with or without Alpine on the page. */
+         when another is tapped or the same one is tapped again). A person's
+         details follow the same rule inside their group. The toggles are
+         plain DOM so the table works with or without Alpine on the page. */
       document.querySelectorAll('[data-admin-presence]:not([data-presence-bound])').forEach(function (table) {
         table.setAttribute('data-presence-bound', '');
         var groups = Array.prototype.slice.call(table.querySelectorAll('tbody.presence-group'));
+        var people = Array.prototype.slice.call(table.querySelectorAll('tr[data-presence-person]'));
+        /* The platform plans a table's columns from the rows it can see, and
+           a folded panel shows none, so the figures were planned to their
+           headings' width and cut. Opening rows asks for a fresh plan. */
+        function refit() {
+          if (window.EdifyMicroUX && window.EdifyMicroUX.enhance) window.EdifyMicroUX.enhance(table);
+        }
+        function setPerson(row, open) {
+          var detail = document.getElementById(row.getAttribute('data-presence-person'));
+          var toggle = row.querySelector('[data-presence-person-toggle]');
+          if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          row.classList.toggle('is-open', open);
+          if (detail) detail.hidden = !open;
+        }
         function setOpen(group, open) {
           var toggle = group.querySelector('[data-presence-toggle]');
           if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
           group.toggleAttribute('data-collapsed', !open);
+          if (!open) group.querySelectorAll('tr[data-presence-person]').forEach(function (row) { setPerson(row, false); });
         }
         groups.forEach(function (group) {
           var toggle = group.querySelector('[data-presence-toggle]');
@@ -83,9 +127,22 @@
             var open = toggle.getAttribute('aria-expanded') !== 'true';
             groups.forEach(function (other) { if (other !== group) setOpen(other, false); });
             setOpen(group, open);
+            refit();
+          });
+        });
+        people.forEach(function (row) {
+          row.addEventListener('click', function (event) {
+            var own = event.target.closest('[data-presence-person-toggle]');
+            if (own) event.preventDefault();
+            else if (event.target.closest('a, input, select, textarea, label')) return;
+            var open = !row.classList.contains('is-open');
+            people.forEach(function (other) { if (other !== row) setPerson(other, false); });
+            setPerson(row, open);
+            refit();
           });
         });
       });
     })();
   </script>
 </section>
+{% if not presence_fragment %}</div>{% endif %}

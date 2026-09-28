@@ -68,6 +68,7 @@ SECTION_PREFIXES: tuple[tuple[str, str], ...] = (
 # Verbs in an action path, first match wins. The path is the write or drawer
 # request the person last made on the page.
 ACTION_PATTERNS: tuple[tuple[str, str], ...] = (
+    (r"whos-online", "Checking who is online"),
     (r"reschedul", "Rescheduling an activity"),
     (r"schedul", "Scheduling an activity"),
     (r"assign-partner|assign_partner|partner-modal", "Assigning a school to a partner"),

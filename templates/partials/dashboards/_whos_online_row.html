@@ -1,30 +1,73 @@
-<tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}">
+<tr class="presence-row{% if is_lead %} presence-row--lead{% endif %}" data-presence="{% if person.online %}online{% else %}offline{% endif %}" data-presence-person="presence-person-{{ person.id }}">
   <td class="presence-table__status"><i class="admin-presence-light {% if person.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" title="{% if person.online %}Online{% else %}Offline{% endif %}"></i><span class="sr-only">{% if person.online %}Online{% else %}Offline{% endif %}</span></td>
-  <td class="presence-table__name"><strong>{{ person.name }}</strong><small>{{ person.active_role|default:"—" }}{% if is_lead %} · lead{% endif %}</small></td>
+  <td class="presence-table__name">
+    <a href="#presence-person-{{ person.id }}" role="button" class="presence-person__toggle" data-presence-person-toggle aria-expanded="false" aria-controls="presence-person-{{ person.id }}" title="Sign-in times and time by part of the tool">
+      <strong>{{ person.name }}</strong><small>{{ person.active_role|default:"—" }}{% if is_lead %} · lead{% endif %}</small>
+    </a>
+  </td>
   <td class="presence-table__signins">
     {% if person.last_login_at %}
       {% if staff_links %}
-      <a href="/admin-panel/users/{{ person.id }}" class="presence-signin" title="{{ person.name }} last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} sign-in{{ person.login_count|pluralize }} recorded">
-        {{ person.last_login_at|date:"j M, H:i" }}<small>{{ person.logins_today }} today · {{ person.logins_this_week }} this week</small>
-      </a>
+      <a href="/admin-panel/users/{{ person.id }}" class="presence-signin" title="{{ person.name }}: {{ person.period_logins }} sign-in{{ person.period_logins|pluralize }} {{ presence.period.label }} · last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} recorded">
       {% else %}
-      <span class="presence-signin" title="Last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} sign-in{{ person.login_count|pluralize }} recorded">
-        {{ person.last_login_at|date:"j M, H:i" }}<small>{{ person.logins_today }} today · {{ person.logins_this_week }} this week</small>
-      </span>
+      <span class="presence-signin" title="{{ person.period_logins }} sign-in{{ person.period_logins|pluralize }} {{ presence.period.label }} · last signed in {{ person.last_login_at|date:'j M Y, H:i' }} · {{ person.login_count }} recorded">
       {% endif %}
+        {% if person.period_logins %}{{ person.period_logins }}<small>{{ person.period_last_login_label }}</small>{% else %}0<small>{{ person.last_login_at|date:"d/m" }}</small>{% endif %}
+      {% if staff_links %}</a>{% else %}</span>{% endif %}
     {% else %}
-      <span class="presence-signin presence-signin--never">never signed in</span>
+      <span class="presence-signin presence-signin--never" title="Never signed in">—</span>
     {% endif %}
   </td>
   <td class="presence-table__duration">
     {% if person.online %}
-      <span class="presence-duration presence-duration--online" title="Online since {{ person.online_since|date:'j M Y, H:i' }}">{{ person.duration_label }}</span>
+      <span class="presence-duration presence-duration--online" title="Time on the tool {{ presence.period.label }} · online since {{ person.online_since|date:'j M Y, H:i' }} ({{ person.duration_label }})">{{ person.period_time_label }}</span>
     {% elif person.last_seen_at %}
-      <span class="presence-duration" title="Last sitting {{ person.duration_label }} · last seen {{ person.last_seen_at|date:'j M Y, H:i' }}">{{ person.duration_label }}<small>last seen {{ person.last_seen_at|timesince }} ago</small></span>
+      <span class="presence-duration" title="Time on the tool {{ presence.period.label }} · last seen {{ person.last_seen_at|date:'j M Y, H:i' }} ({{ person.last_seen_label }} ago)">{{ person.period_time_label }}</span>
     {% else %}
-      <span class="presence-duration presence-duration--never">never signed in</span>
+      <span class="presence-duration presence-duration--never" title="Never signed in">—</span>
     {% endif %}
   </td>
-  <td class="presence-table__working">{{ person.working_on }}</td>
-  <td class="presence-table__section">{{ person.section }}</td>
+  <td class="presence-table__working">
+    {% if person.online %}<span class="presence-now">Now: {{ person.working_on }}</span>{% endif %}
+    {% for task in person.period_tasks|slice:":2" %}<span class="presence-spent">{{ task.working_on }} <b>{{ task.label }}</b></span>{% empty %}{% if not person.online %}<span class="presence-spent presence-spent--none">{% if person.last_seen_at %}Nothing {{ presence.period.label }}{% else %}Never signed in{% endif %}</span>{% endif %}{% endfor %}
+    {% if person.period_tasks|length > 2 %}<span class="presence-more">+{{ person.period_tasks|length|add:"-2" }} more</span>{% endif %}
+  </td>
+  <td class="presence-table__section">
+    {% for part in person.period_sections|slice:":3" %}<span class="presence-spent">{{ part.section }} <b>{{ part.label }}</b></span>{% empty %}{% if person.online %}<span class="presence-spent">{{ person.section }}</span>{% else %}<span class="presence-spent presence-spent--none">—</span>{% endif %}{% endfor %}
+    {% if person.period_sections|length > 3 %}<span class="presence-more">+{{ person.period_sections|length|add:"-3" }} more</span>{% endif %}
+  </td>
+</tr>
+<tr class="presence-detail" id="presence-person-{{ person.id }}" hidden>
+  <td colspan="6">
+    <section class="presence-detail__cols" aria-label="{{ person.name }}, {{ presence.period.label }}">
+      <section class="presence-detail__block">
+        <h3>Sign-ins · {{ presence.period.label }}</h3>
+        {% if person.period_login_times %}
+        <ol class="presence-detail__times">
+          {% for at in person.period_login_times %}<li>{{ at|date:"D j M Y, H:i" }}</li>{% endfor %}
+        </ol>
+        {% if person.period_logins > person.period_login_times|length %}<p class="presence-detail__note">{{ person.period_logins }} in all; the latest {{ person.period_login_times|length }} are listed.</p>{% endif %}
+        {% else %}
+        <p class="presence-detail__note">No sign-ins in this period.{% if person.last_login_at %} Last signed in {{ person.last_login_at|date:"D j M Y, H:i" }}.{% endif %}</p>
+        {% endif %}
+      </section>
+      <section class="presence-detail__block">
+        <h3>Time on the tool · {{ person.period_time_label }}</h3>
+        {% if person.period_sections %}
+        <ul class="presence-detail__parts">
+          {% for part in person.period_sections %}
+          <li>
+            <span class="presence-detail__part"><strong>{{ part.section }}</strong> <b>{{ part.label }}</b></span>
+            <ul class="presence-detail__tasks">
+              {% for task in part.tasks %}<li>{{ task.working_on }} <b>{{ task.label }}</b></li>{% endfor %}
+            </ul>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="presence-detail__note">No time recorded in this period.</p>
+        {% endif %}
+      </section>
+    </section>
+  </td>
 </tr>

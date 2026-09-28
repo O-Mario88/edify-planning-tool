@@ -4104,14 +4104,15 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5413,
+      "bytes": 9184,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard"
+        "/dashboard",
+        "/dashboard/whos-online"
       ],
       "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
+      "forms": 1,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": " Whos Online",
       "purpose": "Reusable  whos online interface primitive",
@@ -4126,11 +4127,14 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 2395,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5590,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard"
+        "/dashboard",
+        "/dashboard/whos-online"
       ],
       "findings": [],
       "forms": 0,
@@ -4140,7 +4144,9 @@
       "purpose": "Reusable  whos online row interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "empty",
+        "open"
       ],
       "tables": 0,
       "template": "partials/dashboards/_whos_online_row.html",
@@ -35542,6 +35548,104 @@
       },
       "templates": [
         "partials/dashboards/admin/_planning_progress_body.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.whos_online_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/dashboards/_whos_online.html",
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /dashboard/whos-online"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-948548FD70",
+      "page_title": "Whos Online",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Whos Online",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Who's Online for another period (owner, 2026-09-28: \"add the filter of day, week, month, quarter and FY\"). The panel's filter and its pager ask here instead of rebuilding the dashboard around it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/dashboard/whos-online",
+      "route_name": "whos_online",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.admin_ops.services",
+        "apps.cce_leadership.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.notifications.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/dashboards/_whos_online.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -99603,6 +99707,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.dashboard_views.whos_online_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/dashboard/whos-online",
+      "route_name": "whos_online",
+      "templates": [
+        "partials/dashboards/_whos_online.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.duplicate_review_view",
       "kind": "page",
       "methods": [
@@ -107794,30 +107912,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 539,
+    "accessibility_contract_pass": 540,
     "activity_states": 24,
-    "all_routes": 1309,
+    "all_routes": 1310,
     "api_routes": 360,
     "component_templates": 519,
     "full_pages": 259,
-    "mobile_contract_pass": 539,
+    "mobile_contract_pass": 540,
     "nonvisual_actions": 273,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 550,
+      "interaction-fragment": 551,
       "operational-queue": 151,
       "planning-or-creation": 11,
       "record-detail": 25,
       "report": 36
     },
-    "partials_and_drawers": 277,
-    "permission_gated": 821,
+    "partials_and_drawers": 278,
+    "permission_gated": 822,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 837,
+    "routed_surfaces": 838,
     "scheduled_jobs": 31,
     "severity_counts": {
       "critical": 0,
@@ -107825,8 +107943,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 539,
-    "test_referenced": 730,
-    "theme_contract_pass": 539
+    "tablet_contract_pass": 540,
+    "test_referenced": 731,
+    "theme_contract_pass": 540
   }
 }
