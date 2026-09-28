@@ -603,10 +603,13 @@ class PartnerTeamWorkspaceTest(PartnerOversightFixture):
 
     def test_overdue_count_uses_the_same_deadline_as_assignment_details(self):
         assignment = self.assign()
+        handed_over = timezone.now() - timedelta(days=12)
         PartnerAssignment.objects.filter(id=assignment.id).update(
-            created_at=timezone.now() - timedelta(days=12)
+            created_at=handed_over
         )
-        items = svc.build_items(self.pl_user, fy=self.fy)
+        # Read in the year it was handed over, which in October's first days
+        # is the year just closed.
+        items = svc.build_items(self.pl_user, fy=get_operational_fy(handed_over))
         self.assertEqual(svc.summarize(items)["overdue"], 1)
 
     def test_cceo_partner_scope_does_not_expand_to_supervised_staff(self):

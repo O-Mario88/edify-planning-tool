@@ -32,6 +32,7 @@ from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
 from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from apps.core.fy import get_fy_date_range, get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.impact import evidence_services as ev
@@ -123,16 +124,23 @@ class EvidenceFixture(TestCase):
             name=f"School {code}", school_id=code, region=region, district=district
         )
 
-    def _onetest(self, *, status="evidence_uploaded", school=None, owner=None):
+    def _onetest(
+        self,
+        *,
+        status="evidence_uploaded",
+        school=None,
+        owner=None,
+        delivered=date(2026, 2, 10),
+    ):
         owner = owner or self.cceo
         return Activity.objects.create(
             activity_type="school_visit",
             costing_profile_snapshot="ONETEST",
             status=status,
             school=school or self.school,
-            fy="2026",
-            planned_date=date(2026, 2, 9),
-            actual_delivery_date=date(2026, 2, 10),
+            fy=get_operational_fy(delivered),
+            planned_date=delivered - timedelta(days=1),
+            actual_delivery_date=delivered,
             responsible_staff_id=owner.staff_profile.id,
             delivery_type="staff",
         )
@@ -364,11 +372,23 @@ class OneTestTests(EvidenceFixture):
     def test_a_delivered_onetest_without_results_is_a_to_do_until_recorded(self):
         from apps.impact.evidence_todos import evidence_todos
 
-        activity = self._onetest()
+        # A OneTest of the running year: the to-do covers this financial year
+        # (onetest_visits_without_results), so from 1 October a February
+        # visit is last year's. Delivered a week ago, or on the year's first
+        # day while the year is younger than that.
         today = timezone.localdate()
+        delivered = max(
+            today - timedelta(days=7), get_fy_date_range(get_operational_fy())[0].date()
+        )
+        activity = self._onetest(delivered=delivered)
         ids = [r["id"] for r in evidence_todos(self.cceo, CCEO, today)]
         self.assertIn(f"onetest-results-{activity.id}", ids)
-        ev.record(self.cceo, ev.LEARNING, _learning(), source_activity=activity)
+        ev.record(
+            self.cceo,
+            ev.LEARNING,
+            _learning(assessed_on=delivered.isoformat()),
+            source_activity=activity,
+        )
         ids = [r["id"] for r in evidence_todos(self.cceo, CCEO, today)]
         self.assertNotIn(f"onetest-results-{activity.id}", ids)
 
@@ -566,7 +586,7 @@ class StoryReviewTests(EvidenceFixture):
 
 class SchoolEvidencePageTests(EvidenceFixture):
     def test_each_tab_renders_its_register_and_filters(self):
-        ev.record(self.ia, ev.LEARNING, {**_learning(), "school_id": "EV-UG-1"})
+        row = ev.record(self.ia, ev.LEARNING, {**_learning(), "school_id": "EV-UG-1"})
         self.client.force_login(self.ia2)
         for tab, text in (
             ("learning", "Learning results"),
@@ -578,7 +598,11 @@ class SchoolEvidencePageTests(EvidenceFixture):
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, text)
                 self.assertContains(response, 'name="status"')
-        response = self.client.get("/ia/school-evidence/", {"tab": "learning"})
+        # The register of the result's own year: the page opens on the running
+        # year, which from 1 October is not February 2026's.
+        response = self.client.get(
+            "/ia/school-evidence/", {"tab": "learning", "fy": row.fy}
+        )
         self.assertContains(response, "School EV-UG-1")
         self.assertContains(response, ">Verify<")
         self.assertContains(response, 'name="subject"')

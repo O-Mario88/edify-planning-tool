@@ -365,8 +365,10 @@ class TargetReconciliationTest(OwnershipFixture):
             StrategicPriorityCycle,
         )
 
-        cycle = StrategicPriorityCycle.objects.create(
-            financial_year=FY, title=f"FY{FY} cycle"
+        # FY2027's cycle is reference data (apps.hr.apps), so from 1 October
+        # the running year's cycle is already there.
+        cycle, _ = StrategicPriorityCycle.objects.get_or_create(
+            financial_year=FY, defaults={"title": f"FY{FY} cycle"}
         )
         priority = StrategicPriority.objects.create(
             cycle=cycle,
