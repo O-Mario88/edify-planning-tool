@@ -1,0 +1,24 @@
+{% comment %}
+One save confirmation card — what saved_toast.html appends to the toast
+container, and what an Undo from the card replaces it with.
+
+A card that carries an Undo (owner, 2026-09-28: "create a function for users
+to undo plans done by mistake") stays up longer than the eight seconds a plain
+confirmation does: it is the moment the mistake is most likely to be noticed,
+and a button that disappears while the planner is reading the sentence is no
+button at all. The same change stays undoable for a week from Recent changes
+on the Planning page.
+{% endcomment %}
+<div
+  x-data="{ show: true }"
+  x-show="show"
+  x-init="setTimeout(() => show = false, {% if undo_ids %}20000{% else %}8000{% endif %})"
+  x-transition
+  data-planning-saved-toast
+  data-undo-toast
+  class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if tone == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}"
+>
+  <span>{{ message }}{% if plan_url %} <a href="{{ plan_url }}" class="underline font-bold">{{ plan_link_label|default:"Open My Plan" }}</a>{% endif %}</span>
+  {% if undo_ids %}{% include "partials/planning/undo_button.html" %}{% endif %}
+  <button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100 -my-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center text-[16px]" aria-label="Dismiss notification">&times;</button>
+</div>

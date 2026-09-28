@@ -15334,6 +15334,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/planning/recent-changes",
+   "route_name": "planning_recent_changes",
+   "view": "apps.frontend.views.undo_views.recent_changes_drawer_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/planning/route-preview",
    "route_name": "planning_route_preview",
    "view": "apps.frontend.views.planning_views.route_preview_view"
@@ -15405,6 +15422,23 @@
    "route": "/planning/schedule/schools",
    "route_name": "planning_schedule_school_options",
    "view": "apps.frontend.views.planning_views.schedule_school_options_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/undo",
+   "route_name": "planning_undo",
+   "view": "apps.frontend.views.undo_views.undo_change_view"
   },
   {
    "page_permission": "visit_requests",
@@ -18182,27 +18216,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 413,
-  "Admin": 1016,
+  "Accountant": 415,
+  "Admin": 1018,
   "BusinessTransformationOfficer": 234,
-  "CCEO": 542,
-  "CountryDirector": 772,
+  "CCEO": 544,
+  "CountryDirector": 774,
   "HumanResources": 332,
-  "ImpactAssessment": 636,
+  "ImpactAssessment": 638,
   "MfiLoanOfficer": 130,
   "MfiPartnerAdmin": 133,
   "PartnerAdmin": 221,
   "PartnerFieldOfficer": 221,
-  "Program Lead": 627,
-  "ProjectCoordinator": 453,
+  "Program Lead": 629,
+  "ProjectCoordinator": 455,
   "RegionalProgramLead": 323,
   "RegionalVicePresident": 375
  },
  "summary": {
   "page_keys_declared": 179,
   "page_keys_in_navigation": 196,
-  "routes_guarded": 1113,
-  "routes_total": 1307,
+  "routes_guarded": 1115,
+  "routes_total": 1309,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

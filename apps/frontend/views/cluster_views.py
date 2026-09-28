@@ -1458,11 +1458,16 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         # districts are what keep it to this cluster's area (and country).
         served_district_q = Q()
     if request.method == "POST":
+        from apps.clusters.membership_history import open_membership
+
         school_ids = request.POST.getlist("school_ids")
         user = request.user
 
         assigned_schools = []
         skipped_schools = []
+        # The memberships this press opened, for the confirmation's Undo
+        # (owner, 2026-09-28).
+        membership_ids = []
         for sid in school_ids:
             # Allow assignment if school is in a covered sub-county OR (for
             # district-level clusters with no covered sub-counties) in the
@@ -1489,6 +1494,9 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # — not duplicated here.
             assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
             assigned_schools.append(school.name)
+            membership = open_membership(school.id)
+            if membership is not None:
+                membership_ids.append(membership.id)
 
         msg = (
             f"Successfully assigned {len(assigned_schools)} schools to {cluster.name}."
@@ -1499,7 +1507,13 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
                 f"{', '.join(skipped_schools)}."
             )
         response = render(
-            request, "partials/schools/toast_success.html", {"message": msg}
+            request,
+            "partials/schools/toast_success.html",
+            {
+                "message": msg,
+                "undo_kind": "cluster",
+                "undo_ids": ",".join(membership_ids),
+            },
         )
         response["HX-Trigger"] = (
             f"cluster-schools-updated-{cluster.id}, schools-updated"

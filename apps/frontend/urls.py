@@ -48,6 +48,7 @@ from .views import (
     priority_views,
     target_distribution_views,
     today_views,
+    undo_views,
 )
 
 app_name = "frontend"
@@ -744,6 +745,14 @@ urlpatterns = [
         planning_views.bulk_action_view,
         name="planning_bulk_action",
     ),
+    # Undo a partner, project or cluster change made by mistake (owner,
+    # 2026-09-28): the save confirmation's Undo and the Recent changes drawer.
+    path(
+        "planning/recent-changes",
+        undo_views.recent_changes_drawer_view,
+        name="planning_recent_changes",
+    ),
+    path("planning/undo", undo_views.undo_change_view, name="planning_undo"),
     path(
         "planning/route-preview",
         planning_views.route_preview_view,

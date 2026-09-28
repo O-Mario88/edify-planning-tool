@@ -2108,6 +2108,36 @@ class FrontendViewsTestCase(TestCase):
             ).exists()
         )
 
+    def test_bulk_assign_partner_confirmation_undoes_the_whole_batch(self):
+        """Owner, 2026-09-28: a school handed to the wrong partner can be taken
+        back. The bulk handoff answers with a confirmation (it used to reload
+        the page) whose Undo carries every handover the press made."""
+        from apps.partners.models import Partner, PartnerAssignment
+
+        partner = Partner.objects.create(name="Wrong Partner", active_status=True)
+        self.client.force_login(self.cceo_user)
+        response = self.client.post(
+            "/planning/bulk-action",
+            {
+                "action": "partner",
+                "school_ids": [self.school.school_id],
+                "partner_id": partner.id,
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        handover = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        body = response.content.decode()
+        self.assertIn('hx-post="/planning/undo"', body)
+        self.assertIn(handover.id, body)
+        self.assertIn("planning-saved", response["HX-Trigger"])
+
+        undone = self.client.post(
+            "/planning/undo", {"kind": "partner", "ids": handover.id}
+        )
+        self.assertEqual(undone.status_code, 200, undone.content)
+        self.assertIn(b"Undone", undone.content)
+        self.assertFalse(PartnerAssignment.objects.filter(id=handover.id).exists())
+
     def test_bulk_assign_partner_without_partner_id_returns_clean_error(self):
         """The bulk toolbar's 'Assign Partner' button used to submit with no
         partner_id at all, which get_object_or_404 turned into an unhandled
