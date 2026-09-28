@@ -300,9 +300,19 @@ def build_work_plan_context(user, params) -> dict:
     operational_fy = get_operational_fy(today)
 
     options = fy_options(today)
-    fy = params.get("fy") or operational_fy
+    # The Work Plan opens on the year being planned (owner, 2026-09-28: "we
+    # want the work plan for next FY that is fy27 populated since people have
+    # already planned for next FY"): once the next fiscal year is open for
+    # planning (apps.planning.fy_policy), it is the page's year; the year still
+    # running stays one choice away in the selector.
+    from apps.planning.fy_policy import next_open_fy
+
+    default_fy = next_open_fy(at=today) or operational_fy
+    if default_fy not in options:
+        default_fy = operational_fy
+    fy = params.get("fy") or default_fy
     if fy not in options:
-        fy = operational_fy
+        fy = default_fy
     fy_int = int(fy)
 
     view = params.get("view") or "month"
