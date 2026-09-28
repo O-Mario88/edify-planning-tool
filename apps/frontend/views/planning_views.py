@@ -1724,31 +1724,32 @@ def schedule_action_view(request):
         # "Donor Visit" at a school whose top pick was an in-school training
         # created -- and costed, and reported -- an in_school_training.
         #
-        # Only a genuine conflict counts. A governed item may carry a broader
-        # kind than the purpose's own (an SSA-recommended curriculum title is
-        # `training` while "In-school Training" derives `in_school_training`),
-        # and several governed items can share one kind -- which is exactly
-        # why the drawer posts the visible recommendation instead of letting
-        # the ambiguity-safe resolver refuse. So the pin is only overridden
-        # when its kind is the signature kind of a DIFFERENT purpose, i.e.
-        # when the planner demonstrably named something else.
-        if catalogue_item_id and not cluster_id:
+        # The pin stays only when it is a catalogue row of the purpose's own
+        # kind: several governed items can share one kind, which is why the
+        # drawer posts the visible recommendation instead of letting the
+        # ambiguity-safe resolver refuse. Any other pin is replaced by the
+        # purpose's own costing. It used to be replaced only when its kind was
+        # another purpose's, so a School Visit the SSA ranks first (no
+        # purpose's kind) stayed under every purpose: a Donor Visit, a Content
+        # Gathering visit or SSA Support saved as a school_visit and used the
+        # client school's one support visit (2026-09-28; the visit gate counts
+        # its pools by activity type).
+        #
+        # In-school Training is not reconciled: its item is the course chosen
+        # in its own picker and validated above, and a course of another kind
+        # (`training`, `cluster_training`) is still delivered in school.
+        if (
+            catalogue_item_id
+            and not cluster_id
+            and purpose_of_visit != "in_school_training"
+        ):
             from apps.activity_catalogue.models import ActivityCatalogueItem
             from apps.activity_catalogue.services import (
                 resolve_item_for_workflow_kind,
             )
-            from apps.partners.purposes import PURPOSE_ACTIVITY_TYPES
 
-            purpose_of_kind = {
-                kind: purpose for purpose, kind in PURPOSE_ACTIVITY_TYPES.items()
-            }
             pinned = ActivityCatalogueItem.objects.filter(id=catalogue_item_id).first()
-            conflicting = (
-                pinned is not None
-                and pinned.workflow_kind != activity_type
-                and purpose_of_kind.get(pinned.workflow_kind)
-                not in (None, purpose_of_visit)
-            )
+            conflicting = pinned is not None and pinned.workflow_kind != activity_type
             if conflicting:
                 resolved = resolve_item_for_workflow_kind(activity_type)
                 if resolved is None:
