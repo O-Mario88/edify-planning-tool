@@ -1155,13 +1155,13 @@ def create_assignment(**fields):
 
 
 def _assert_school_takes_partner_work(school) -> None:
-    """Core Graduate and Champion schools are staff-delivered.
+    """Champion schools are staff-delivered.
 
     Owner, 2026-09-21: Programme schools "can receive all the activities
     (visit, trainings) client schools should receive but cannot be assigned
-    to partner". Core Trained left that list on 2026-09-28 ("treat core
-    trained just like client schools"); the other two take only donor and
-    story visits, which no partner delivers. The
+    to partner". Core Trained and Core Graduate left that list on 2026-09-28
+    and are planned like client schools; Champion takes only donor and story
+    visits, which no partner delivers. The
     drawers grey the control and the visit gate carries the sentence; this is
     the same refusal at the one creation door, so a bulk path or an API client
     cannot walk around it.

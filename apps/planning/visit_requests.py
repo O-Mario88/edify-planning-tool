@@ -163,23 +163,19 @@ def approve(activity_id: str, principal, note: str = "") -> Activity:
     with transaction.atomic():
         a = _decidable(activity_id, principal)
         # The school's own visit rule applies here, not when the request was
-        # filed: a client school takes CLIENT_VISIT_CAP follow-up visits a year
-        # (owner, 2026-09-15; the cap went from one to two on 2026-09-17).
+        # filed: a client-rule school takes one staff support visit and one
+        # SSA Support a year (owner, 2026-09-28).
         if a.school_id and a.activity_type != "core_visit":
             from apps.planning.visit_gate import (
                 assert_staff_may_schedule_visit,
-                is_gated_visit,
+                client_visit_pool,
                 rule_for,
             )
 
-            if is_gated_visit(
-                rule_for(a.school.school_type),
-                a.activity_type,
-                a.catalogue_item,
-                a.purpose_type,
-            ):
+            pool = client_visit_pool(a.activity_type, a.catalogue_item, a.purpose_type)
+            if rule_for(a.school.school_type) == "client" and pool is not None:
                 assert_staff_may_schedule_visit(
-                    a.school, a.fy, exclude_activity_id=a.id
+                    a.school, a.fy, pool=pool, exclude_activity_id=a.id
                 )
         a.status = "scheduled" if a.scheduled_date else "planned"
         a.owner_decided_at = timezone.now()

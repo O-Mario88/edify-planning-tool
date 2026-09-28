@@ -3,9 +3,10 @@
 * Core Trained schools are planned from the Planning page and the cluster
   lists like client schools, without the Core package.
 * Champion and Core Graduate schools leave the Planning page and the cluster
-  lists for their own tables on Core Schools; they receive no training or
-  assessment and are planned only for a Donor Visit or a Content/Story
-  Collection visit.
+  lists for their own tables on Core Schools. Champion schools receive no
+  training or assessment and are planned only for a Donor Visit or a
+  Content/Story Collection visit; Core Graduate schools follow the client
+  rule for their visits since 2026-09-28.
 * A cluster meeting a school is invited to is training planned for it: the
   Training badge and the Planning training filters read it as planned.
 """
@@ -93,8 +94,8 @@ class SchoolTypePlanningTest(BadgeFixture):
         with self.assertRaises(BadRequest):
             set_invited_schools(session, [self.grace.id])
 
-    def test_only_donor_and_story_visits_are_planned_for_them(self):
-        for school in (self.victory, self.grace):
+    def test_only_donor_and_story_visits_are_planned_for_champions(self):
+        for school in (self.victory,):
             for kind in (
                 "training",
                 "in_school_training",
@@ -109,10 +110,20 @@ class SchoolTypePlanningTest(BadgeFixture):
             for kind in ("donor_visit", "story_gathering_visit"):
                 assert_outreach_activity_allowed(school, kind)
 
-    def test_client_and_core_trained_schools_are_unaffected(self):
-        for school in (self.hope, self.trained):
+    def test_client_core_trained_and_graduate_schools_are_unaffected(self):
+        """Owner, 2026-09-28: Core Graduate follows the client rule — the
+        support visit, SSA Support, and donor and story visits."""
+        for school in (self.hope, self.trained, self.grace):
             assert_outreach_activity_allowed(school, "in_school_training")
             assert_outreach_activity_allowed(school, "school_visit")
+        for kind in (
+            "in_school_training",
+            "school_visit_ssa_collection",
+            "donor_visit",
+            "story_gathering_visit",
+        ):
+            with self.subTest(kind=kind):
+                _assert_schedule_entitlement(kind, self.grace, FY, {})
 
     def test_the_schedule_drawer_offers_only_the_two_visits(self):
         self.client.force_login(self.user)

@@ -98,9 +98,11 @@ class EveryRowCarriesItsTwoRulesTest(_Fixture):
             self.assertEqual(row.visits_allowed, CLIENT_VISIT_CAP, row.school_id)
             self.assertTrue(row.can_schedule, row.school_id)
 
-    def test_only_champion_and_graduate_rows_refuse_a_partner(self):
+    def test_only_champion_rows_refuse_a_partner(self):
+        """Core Trained and Core Graduate are planned like client schools,
+        partner work included (owner, 2026-09-28)."""
         for row in programme_schools(self.user).rows:
-            if row.school_type == "core_trained":
+            if row.school_type in ("core_trained", "core_graduate"):
                 self.assertEqual(row.partner_reason, "", row.school_id)
             else:
                 self.assertIn(
