@@ -566,13 +566,13 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
-    def test_accept_recommendation_of_a_follow_up_does_not_wait_for_the_visit(self):
-        """A client school's visit allowance stopped refusing on 2026-09-21.
+    def test_accept_recommendation_of_a_follow_up_waits_for_the_year_s_visit(self):
+        """A client school takes one staff support visit a year (owner,
+        2026-09-28). The fixture's school has had it, so accepting a follow-up
+        recommendation is refused in the rule's own words and the
+        recommendation stays proposed until the visit is released."""
+        from apps.core.exceptions import BadRequest
 
-        The supervisor used to be turned away here while this year's visits
-        stood — the fixture's two are exactly the allowance — and the
-        recommendation stayed proposed. It now goes through on the spot, and
-        the school simply carries a third visit."""
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
@@ -581,11 +581,18 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         )
         self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
 
+        with self.assertRaises(BadRequest) as ctx:
+            FieldDebriefService.accept_recommendation(self.pl, d.id)
+        self.assertIn("staff support visit", str(ctx.exception.detail))
+        d.refresh_from_db()
+        self.assertNotEqual(d.recommendation_status, RecommendationStatus.ACCEPTED)
+        self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
+
+        self._release_visit_entitlement()
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         d.refresh_from_db()
         self.assertEqual(d.recommendation_status, RecommendationStatus.ACCEPTED)
         self.assertEqual(d.recommendation_accepted_activity_id, activity.id)
-        self.assertEqual(Activity.objects.filter(school=self.school).count(), 3)
 
     def test_accept_recommendation_is_audited_as_planning_not_scheduling(self):
         self._release_visit_entitlement()

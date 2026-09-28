@@ -325,7 +325,7 @@ class CorePackageSchedulingService:
         scheduled_for: date,
         is_partner_delivery: bool,
     ) -> CoreActivitySlot:
-        """Lock a slot for this core support. Two caps, and nothing else.
+        """Lock a slot for this core support. One condition, and nothing else.
 
         Owner, 2026-09-17: "Lift all FY restriction and package restrictions.
         Only block staff visit schedule after 2 scheduling and block partner
@@ -338,10 +338,11 @@ class CorePackageSchedulingService:
         ninth piece of core support could not be planned at all even when the
         school needed it.
 
-        What remains is the split the package exists to protect. Staff deliver
-        at most two visits and two trainings on a package; the rest is the
-        partner's, and the partner's own two are counted by the visit gate.
-        Those two caps are the policy; the dates are the planner's.
+        Owner, 2026-09-28, lifting the rest: "staff may plan more core
+        schools visits but only if the partner has not planned." Staff take
+        a third or later visit on the package only while the partner has no
+        core visit planned at the school; the partner side and the trainings
+        are no longer capped. The dates are the planner's.
         """
         if activity_type not in {"visit", "training"}:
             raise BadRequest("Core support must be a visit or a training.")
@@ -354,38 +355,36 @@ class CorePackageSchedulingService:
                 "package support. Plan its work from the Planning page."
             )
 
-        if is_partner_delivery and activity_type == "visit":
-            # The partner side of the package is two visits, the mirror of
-            # STAFF_CAP below (owner, 2026-09-15).
-            from apps.planning.visit_gate import assert_partner_may_schedule_visit
+        if not is_partner_delivery and activity_type == "visit":
+            # Owner, 2026-09-28: "staff may plan more core schools visits but
+            # only if the partner has not planned." Staff hold two visits on
+            # the package while a partner core visit is planned at the school;
+            # with none planned they may fill it. Trainings are not capped.
+            # Counted on the PACKAGE, not on a fiscal year: a package's work
+            # can land in more than one, and a cap that counted
+            # `fy=current_fy` would reset itself across the boundary.
+            from apps.planning.visit_gate import CORE_STAFF_VISIT_CAP, visit_gate
 
-            assert_partner_may_schedule_visit(school, plan.fy)
-
-        if not is_partner_delivery:
-            # Counted on the PACKAGE, not on a fiscal year. With the year
-            # restriction lifted a package's work can land in more than one,
-            # and a cap that counted `fy=current_fy` would have reset itself
-            # the moment somebody planned across the boundary.
-            STAFF_CAP = 2
-            # Counted in Python through `is_allocated`, which normalises the
-            # status: the column holds "Scheduled" and "Evidence Uploaded"
-            # while the allocated set is lowercase, so a DB `status__in`
-            # would silently match none of them.
-            staff_taken = sum(
-                1
-                for slot in CoreActivitySlot.objects.filter(
-                    core_plan=plan,
-                    activity_type=activity_type,
-                    owner="staff",
-                ).exclude(sequence_number=sequence_number)
-                if cls.is_allocated(slot)
-            )
-            if staff_taken >= STAFF_CAP:
-                raise BadRequest(
-                    f"Staff may deliver at most {STAFF_CAP} core {activity_type}s "
-                    f"on this package ({staff_taken} already scheduled). The "
-                    "remaining support is delivered by a partner."
+            if visit_gate(school, plan.fy).partner_visits:
+                # Counted in Python through `is_allocated`, which normalises
+                # the status: the column holds "Scheduled" and "Evidence
+                # Uploaded" while the allocated set is lowercase, so a DB
+                # `status__in` would silently match none of them.
+                staff_taken = sum(
+                    1
+                    for slot in CoreActivitySlot.objects.filter(
+                        core_plan=plan,
+                        activity_type=activity_type,
+                        owner="staff",
+                    ).exclude(sequence_number=sequence_number)
+                    if cls.is_allocated(slot)
                 )
+                if staff_taken >= CORE_STAFF_VISIT_CAP:
+                    raise BadRequest(
+                        f"Staff may deliver at most {CORE_STAFF_VISIT_CAP} core "
+                        f"visits on this package ({staff_taken} already "
+                        "scheduled) while the partner has visits planned here."
+                    )
 
         return cls._free_slot(plan, activity_type, sequence_number)
 

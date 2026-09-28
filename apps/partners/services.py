@@ -19,16 +19,6 @@ if TYPE_CHECKING:
     from .models import PartnerMember
 
 
-# Core package slot types are governed by the nine-slot CorePlan (a partner
-# may legitimately hold several slots for one school) — the default
-# one-activity allowance applies to non-core partner work only.
-_CORE_EXEMPT_TYPES = {
-    "core_visit",
-    "core_training",
-    "core_assessment_visit",
-}
-
-
 def _assert_partner_directory_manager(principal) -> None:
     """Partner-directory membership is a people-administration decision.
 
@@ -90,53 +80,17 @@ def assert_partner_activity_allowance(
     *,
     exclude_activity_id: str | None = None,
 ) -> None:
-    """Enforce the default partner activity allowance (§F): one non-core
-    activity per partner per school per FY; more requires an auditable
-    PartnerActivityAllowance grant.
+    """The partner activity allowance, lifted (owner, 2026-09-28).
 
-    ``exclude_activity_id``: the activity already linked to the assignment
-    being (re)scheduled. An assignment must never be blocked by ITS OWN
-    activity — counting it made every re-schedule read as a second activity
-    and dead-ended the partner on work the school was already allowed."""
-    if not partner_id or not school_id or activity_type in _CORE_EXEMPT_TYPES:
-        return
-    from django.utils import timezone
-
-    from apps.activities.models import Activity
-
-    from .models import PartnerActivityAllowance
-
-    used_qs = (
-        Activity.objects.filter(
-            assigned_partner_id=partner_id,
-            school_id=school_id,
-            fy=fy,
-            delivery_type="partner",
-            deleted_at__isnull=True,
-        )
-        .exclude(status__in=["cancelled", "rejected"])
-        .exclude(activity_type__in=_CORE_EXEMPT_TYPES)
-    )
-    if exclude_activity_id:
-        used_qs = used_qs.exclude(id=exclude_activity_id)
-    used = used_qs.count()
-    grants = PartnerActivityAllowance.objects.filter(
-        partner_id=partner_id, school_id=school_id, fy=fy
-    )
-    extra = 0
-    today = timezone.now().date()
-    for grant in grants:
-        if grant.expires_at and grant.expires_at < today:
-            continue
-        if grant.activity_type and grant.activity_type != activity_type:
-            continue
-        extra += grant.additional_activities
-    if used >= 1 + extra:
-        raise BadRequest(
-            "Partner activity allowance reached for this school this FY "
-            f"({used} used, {1 + extra} allowed). Grant an additional "
-            "allowance (with a reason) to schedule more partner work here."
-        )
+    This refused a second non-core partner activity per partner per school per
+    FY unless a PartnerActivityAllowance grant allowed more (§F). The owner
+    kept it on 2026-09-27 and lifted it the next day: "lift all restrictions.
+    the only restriction is for client schools to have one visit from the
+    staff." A partner may now be given as much work at a school as it is
+    asked to deliver. The callers keep calling this seam, so the rule has one
+    place to return to if it is asked for again.
+    """
+    return None
 
 
 def _serialize(p: Partner) -> dict:
@@ -1201,24 +1155,27 @@ def create_assignment(**fields):
 
 
 def _assert_school_takes_partner_work(school) -> None:
-    """Core Trained, Core Graduate and Champion schools are staff-delivered.
+    """Core Graduate and Champion schools are staff-delivered.
 
-    Owner, 2026-09-21: they "can receive all the activities (visit, trainings)
-    client schools should receive but cannot be assigned to partner". The
+    Owner, 2026-09-21: Programme schools "can receive all the activities
+    (visit, trainings) client schools should receive but cannot be assigned
+    to partner". Core Trained left that list on 2026-09-28 ("treat core
+    trained just like client schools"); the other two take only donor and
+    story visits, which no partner delivers. The
     drawers grey the control and the visit gate carries the sentence; this is
     the same refusal at the one creation door, so a bulk path or an API client
     cannot walk around it.
     """
     from apps.core.exceptions import BadRequest
     from apps.planning.visit_gate import (
-        PROGRAMME_SCHOOL_TYPES,
+        OUTREACH_ONLY_SCHOOL_TYPES,
         programme_school_partner_refusal,
     )
 
     if school is None:
         return
     school_type = getattr(school, "school_type", "")
-    if school_type in PROGRAMME_SCHOOL_TYPES:
+    if school_type in OUTREACH_ONLY_SCHOOL_TYPES:
         raise BadRequest(
             programme_school_partner_refusal(
                 getattr(school, "name", "This school"), school_type

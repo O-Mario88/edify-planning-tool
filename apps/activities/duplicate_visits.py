@@ -609,12 +609,12 @@ def existing_same_day_core_visit(
 
 
 def assert_not_duplicate_core_visit(school, **kwargs) -> None:
-    existing = existing_same_day_core_visit(school, **kwargs)
-    if existing is None:
-        return
-    day = kwargs["day"]
-    raise BadRequest(
-        f"{school.name} already has a core visit on {day:%-d %b %Y} for this "
-        "intervention by the same person. Open that visit instead, or choose "
-        "another day or intervention."
-    )
+    """Lifted (owner, 2026-09-28: "lift all restrictions").
+
+    A second core visit the same day, for the same intervention, by the same
+    person used to be refused (2026-09-27). The owner lifted it with every
+    other scheduling restriction but the client school's one staff visit.
+    `existing_same_day_core_visit` still answers the question for anyone who
+    wants to show it; the scheduling doors keep calling this seam.
+    """
+    return None
