@@ -59,6 +59,28 @@ class FiscalYearBoundaryTest(TestCase):
         self.assertEqual(get_quarter_for_date(datetime.date(2026, 12, 31)), "Q1")
         self.assertEqual(get_operational_fy(datetime.date(2027, 9, 30)), "2027")
 
+    def test_a_scheduled_date_is_read_on_its_own_calendar_day(self):
+        """A date picked in the app arrives as local midnight — 1 October in
+        Nairobi is 30 September 21:00 UTC. It is filed under the day it names,
+        not the UTC day before (a core visit on 1 October 2026 went to FY2026
+        Q4, and the first days of January, April and July to the quarter
+        before)."""
+        for day, fy, quarter in (
+            ((2026, 9, 30), "2026", "Q4"),
+            ((2026, 10, 1), "2027", "Q1"),
+            ((2027, 1, 1), "2027", "Q2"),
+            ((2027, 4, 1), "2027", "Q3"),
+            ((2027, 7, 1), "2027", "Q4"),
+        ):
+            midnight = timezone.make_aware(datetime.datetime(*day))
+            with self.subTest(day=day):
+                self.assertEqual(get_operational_fy(midnight), fy)
+                self.assertEqual(get_quarter_for_date(midnight), quarter)
+                # Stored and read back, it is the same instant in UTC.
+                in_utc = midnight.astimezone(datetime.timezone.utc)
+                self.assertEqual(get_operational_fy(in_utc), fy)
+                self.assertEqual(get_quarter_for_date(in_utc), quarter)
+
     def test_fy2027_is_open_and_fy2026_still_available(self):
         at = timezone.make_aware(datetime.datetime(2026, 9, 20, 10))
         self.assertTrue(fy_policy.is_planning_open("2026", at=at))

@@ -119,7 +119,14 @@ def _as_utc(at: date | datetime | None) -> datetime:
     if isinstance(at, datetime):
         if at.tzinfo is None:
             return at.replace(tzinfo=timezone.utc)
-        return at.astimezone(timezone.utc)
+        # An aware datetime is read on the calendar day it names where the
+        # platform works. A date picked in the app is stored as local midnight,
+        # and 1 October 00:00 in Nairobi is 30 September 21:00 UTC: read in
+        # UTC, a visit on the new year's first day was filed under the old
+        # year, and 1 January, April and July under the quarter before.
+        from django.utils import timezone as dj_timezone
+
+        at = dj_timezone.localtime(at).date()
     return datetime(at.year, at.month, at.day, tzinfo=timezone.utc)
 
 
