@@ -17,10 +17,25 @@ As in 0057, 0058 and 0060, the historical models only decide whether there is
 anything to do, so on a database with no such pairs (a fresh install, the
 test database) the live code is never reached.
 
+This runs in App Platform's pre-deploy job, which is stopped at 30 minutes
+and fails the whole deployment. Re-pricing a pair is some 300 queries, and
+production's pairs ran past that limit in one transaction: the deployments
+of 46fea0d, eb26575 and 7189780 each failed in this job and were rolled back
+(2026-09-28). So the migration is not atomic. Each pair commits on its own,
+no pair is started after BUDGET_SECONDS, and whatever is left is printed for
+the command's --apply. A deployment stopped anyway keeps the pairs it moved,
+and the next one carries on from there.
+
 Reverse is a no-op.
 """
 
+import time
+
 from django.db import migrations
+
+#: Well inside the pre-deploy job's 30 minutes, which also covers the job's
+#: start-up and the other migrations.
+BUDGET_SECONDS = 20 * 60
 
 
 def move_costs(apps, schema_editor):
@@ -33,11 +48,18 @@ def move_costs(apps, schema_editor):
     if not ids:
         return
     print(f"\nMoving the cost of {len(ids)} in-school Training(s) to their visits:")
-    result = move_pair_costs_to_visits(ids)
+    result = move_pair_costs_to_visits(ids, deadline=time.monotonic() + BUDGET_SECONDS)
     print(f"Moved {len(result['moved'])}, kept {len(result['skipped'])}.")
+    if result["left"]:
+        print(
+            f"{len(result['left'])} not reached in {BUDGET_SECONDS // 60} minutes: "
+            "run `python manage.py move_in_school_training_cost_to_visit --apply`."
+        )
 
 
 class Migration(migrations.Migration):
+    atomic = False
+
     dependencies = [
         ("accounts", "0031_staffprofile_google_drive_folder_url"),
         ("activities", "0060_refile_fy_boundary_rows"),

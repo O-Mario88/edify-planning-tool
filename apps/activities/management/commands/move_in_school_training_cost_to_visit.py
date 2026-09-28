@@ -1,8 +1,9 @@
 """List, and with --apply move, in-school Training costs onto their School Visits.
 
-Migration 0061 moves them once on deploy; this command shows what is left
-afterwards (a pair whose money had already moved is kept as it was). The rule
-is ``apps.activities.pair_costing``.
+Migration 0061 moves them once on deploy, as many as fit in the pre-deploy
+job's time; this command shows what is left afterwards (a pair whose money
+had already moved is kept as it was) and moves the rest. The rule is
+``apps.activities.pair_costing``.
 """
 
 from django.core.management.base import BaseCommand
