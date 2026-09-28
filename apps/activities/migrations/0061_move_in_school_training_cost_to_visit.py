@@ -13,7 +13,7 @@ visit takes the visit cost, joining that day's visit pool. A pair whose money
 has already moved is kept as it was and printed; the
 ``move_in_school_training_cost_to_visit`` command lists what is left.
 
-As in 0057 and 0058, the historical models only decide whether there is
+As in 0057, 0058 and 0060, the historical models only decide whether there is
 anything to do, so on a database with no such pairs (a fresh install, the
 test database) the live code is never reached.
 
@@ -40,7 +40,7 @@ def move_costs(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0031_staffprofile_google_drive_folder_url"),
-        ("activities", "0059_activity_facilitating_partner"),
+        ("activities", "0060_refile_fy_boundary_rows"),
         ("activity_catalogue", "0014_mapping_review"),
         ("audit", "0008_domain_event_aggregate_id_width"),
         ("budget", "0022_group_training_meals_rate"),

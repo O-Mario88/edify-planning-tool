@@ -1,6 +1,6 @@
 """List, and with --apply move, in-school Training costs onto their School Visits.
 
-Migration 0060 moves them once on deploy; this command shows what is left
+Migration 0061 moves them once on deploy; this command shows what is left
 afterwards (a pair whose money had already moved is kept as it was). The rule
 is ``apps.activities.pair_costing``.
 """

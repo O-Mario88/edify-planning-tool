@@ -22,7 +22,7 @@ companion visit (the Core Schools training drawer, a partner's dated
 assignment) is still the only record of its journey and keeps the visit cost.
 
 ``find_pair_trainings_carrying_cost`` and ``move_pair_costs_to_visits`` move
-pairs scheduled before the change (activities migration 0060, and the
+pairs scheduled before the change (activities migration 0061, and the
 ``move_in_school_training_cost_to_visit`` command for a dry run).
 """
 
