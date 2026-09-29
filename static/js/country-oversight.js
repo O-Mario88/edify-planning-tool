@@ -142,7 +142,7 @@
     }
   };
 
-  function config(payload, root, onPick) {
+  function config(payload, root, onPick, width) {
     var S = window.EdifyChartSystem;
     var share = payload.form === 'share';
     var stacked = payload.form === 'stacked' || share;
@@ -162,7 +162,10 @@
     var cfg;
     if (stacked) {
       cfg = forms.stackedBar(share);
-      cfg.chart = Object.assign({}, cfg.chart, { height: Math.max(170, rows * 38 + 70), events: events });
+      /* On a narrow plot the legend under the bars takes three or four lines;
+         the chart grows by them, so the rows keep their spacing. */
+      var legendLines = width && width < 520 ? 48 : 0;
+      cfg.chart = Object.assign({}, cfg.chart, { height: Math.max(160, rows * 34 + 64) + legendLines, events: events });
       if (share) {
         cfg.tooltip = Object.assign({}, cfg.tooltip, {
           y: {
@@ -180,7 +183,7 @@
       }
     } else {
       cfg = forms.groupedColumns();
-      cfg.chart = Object.assign({}, cfg.chart, { height: 250, events: events });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 220, events: events });
       cfg.tooltip = Object.assign({}, cfg.tooltip, {
         y: { formatter: function (value) { return value == null ? '' : value.toLocaleString(); } }
       });
@@ -202,7 +205,7 @@
     var cfg;
     if (form === 'funnel') {
       cfg = forms.groupedColumns();
-      cfg.chart = Object.assign({}, cfg.chart, { height: 285 });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 250 });
       cfg.colors = [c('total'), c('staff'), c('partner')];
       cfg.series = payload.series.map(function (s) { return { name: s.name, data: s.data.slice() }; });
       cfg.xaxis = Object.assign({}, cfg.xaxis, { categories: payload.categories.map(wrap) });
@@ -214,7 +217,7 @@
       };
       cfg.plotOptions = { bar: { columnWidth: '72%', borderRadius: 2, borderRadiusApplication: 'end', dataLabels: { position: 'top' } } };
       cfg.tooltip = Object.assign({}, cfg.tooltip, { y: { formatter: function (v) { return v == null ? 'N/A — direct to IA' : v.toLocaleString(); } } });
-      if (width && width < 480) {
+      if (width && width < 400) {
         /* Six stages side by side do not fit a phone: their names ran into
            each other. On a narrow plot the stages read down the side, a bar
            each, on the stacked bars' axes (names at the left, whole counts
@@ -243,7 +246,7 @@
     }
     if (form === 'trend') {
       cfg = forms.stageLines(4);
-      cfg.chart = Object.assign({}, cfg.chart, { height: 285 });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 250 });
       cfg.colors = [c('planned'), c('exec'), c('verified'), c('closed')];
       cfg.stroke = Object.assign({}, cfg.stroke, { dashArray: [6, 0, 0, 0] });
       cfg.series = payload.series.map(function (s) { return { name: s.name, data: s.data.slice() }; });
@@ -262,7 +265,7 @@
     }
     if (form === 'donut') {
       cfg = forms.stageRing(payload.center_caption);
-      cfg.chart = Object.assign({}, cfg.chart, { height: 190 });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 170 });
       cfg.series = payload.parts.map(function (p) { return p.value; });
       cfg.labels = payload.parts.map(function (p) { return p.label; });
       cfg.colors = payload.parts.map(function (p, index) {
@@ -282,7 +285,7 @@
     }
     if (form === 'age') {
       cfg = forms.groupedColumns();
-      cfg.chart = Object.assign({}, cfg.chart, { height: 190 });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 165 });
       cfg.colors = [c('overdue')];
       cfg.series = [{ name: 'Overdue activities', data: payload.data.slice() }];
       /* "1–2 days" on two lines, so four groups fit a narrow card. */
@@ -300,7 +303,7 @@
     if (form === 'gauge') {
       var tone = { on_track: 'success', at_risk: 'danger' }[payload.status] || '';
       cfg = forms.stageDial(tone);
-      cfg.chart = Object.assign({}, cfg.chart, { height: 170 });
+      cfg.chart = Object.assign({}, cfg.chart, { height: 160 });
       if (!tone) { cfg.colors = [c('planned')]; }
       cfg.series = [payload.share == null ? 0 : payload.share];
       if (payload.share == null) {
@@ -367,7 +370,7 @@
           this.$refs.plot.dataset.empty = payload.empty ? 'true' : 'false';
           this.chart = window.EdifyChartSystem.renderDetached(this.$refs.plot, config(payload, root, function (key) {
             window.dispatchEvent(new CustomEvent('cpo-open-lead', { detail: key }));
-          }));
+          }, this.$refs.plot.clientWidth));
         }
       };
     });
