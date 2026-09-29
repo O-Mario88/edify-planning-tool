@@ -7,14 +7,14 @@
   "with_metric_key": 0,
   "with_drilldown": 0,
   "labels_in_several_modules": 0,
-  "breakdown_rows": 540,
-  "registered_metrics": 553,
-  "rendered_summaries": 161,
-  "context_summaries": 161,
+  "breakdown_rows": 543,
+  "registered_metrics": 560,
+  "rendered_summaries": 162,
+  "context_summaries": 162,
   "headline_summaries": 0,
   "unclassified_summaries": 0,
   "legacy_summary_surfaces": 0,
-  "shared_component_surfaces": 161,
+  "shared_component_surfaces": 162,
   "registered_payload_groups": 35,
   "source_items_in_registered_payloads": 197,
   "payload_groups_over_six": 12,
@@ -11611,6 +11611,62 @@
   {
    "audit_id": "KPI-SOURCE-640",
    "kind": "breakdown-row",
+   "module": "apps/staff_activity/services.py",
+   "line": 807,
+   "label": null,
+   "keys": [
+    "count",
+    "key",
+    "label",
+    "share"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-641",
+   "kind": "breakdown-row",
+   "module": "apps/staff_activity/services.py",
+   "line": 847,
+   "label": null,
+   "keys": [
+    "count",
+    "day",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-642",
+   "kind": "breakdown-row",
+   "module": "apps/staff_activity/services.py",
+   "line": 868,
+   "label": null,
+   "keys": [
+    "count",
+    "key",
+    "label",
+    "share"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-643",
+   "kind": "breakdown-row",
    "module": "apps/system_health/kpi_inventory.py",
    "line": 808,
    "label": "probe-{\u2026}",
@@ -11626,7 +11682,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-641",
+   "audit_id": "KPI-SOURCE-644",
    "kind": "breakdown-row",
    "module": "apps/system_health/page_inventory.py",
    "line": 1394,
@@ -11643,7 +11699,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-642",
+   "audit_id": "KPI-SOURCE-645",
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
    "line": 69,
@@ -11666,7 +11722,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-643",
+   "audit_id": "KPI-SOURCE-646",
    "kind": "breakdown-row",
    "module": "apps/system_health/portfolio_access_health.py",
    "line": 67,
@@ -11689,7 +11745,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-644",
+   "audit_id": "KPI-SOURCE-647",
    "kind": "breakdown-row",
    "module": "apps/system_health/school_closure_health.py",
    "line": 26,
@@ -11712,7 +11768,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-645",
+   "audit_id": "KPI-SOURCE-648",
    "kind": "breakdown-row",
    "module": "apps/system_health/ui_quality.py",
    "line": 235,
@@ -11733,7 +11789,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-646",
+   "audit_id": "KPI-SOURCE-649",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 1031,
@@ -11759,7 +11815,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-647",
+   "audit_id": "KPI-SOURCE-650",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1184,
@@ -11776,7 +11832,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-648",
+   "audit_id": "KPI-SOURCE-651",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 1112,
@@ -11800,7 +11856,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-649",
+   "audit_id": "KPI-SOURCE-652",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1303,
@@ -11817,7 +11873,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-650",
+   "audit_id": "KPI-SOURCE-653",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 267,
@@ -11840,7 +11896,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-651",
+   "audit_id": "KPI-SOURCE-654",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 742,
@@ -11861,7 +11917,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-652",
+   "audit_id": "KPI-SOURCE-655",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 750,
@@ -11882,7 +11938,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-653",
+   "audit_id": "KPI-SOURCE-656",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 758,
@@ -11903,7 +11959,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-654",
+   "audit_id": "KPI-SOURCE-657",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 766,
@@ -11924,7 +11980,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-655",
+   "audit_id": "KPI-SOURCE-658",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 783,
@@ -11945,7 +12001,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-656",
+   "audit_id": "KPI-SOURCE-659",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 840,
@@ -11967,7 +12023,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-657",
+   "audit_id": "KPI-SOURCE-660",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 849,
@@ -11989,7 +12045,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-658",
+   "audit_id": "KPI-SOURCE-661",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 858,
@@ -12011,7 +12067,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-659",
+   "audit_id": "KPI-SOURCE-662",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 867,
@@ -12033,7 +12089,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-660",
+   "audit_id": "KPI-SOURCE-663",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 876,
@@ -12055,7 +12111,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-661",
+   "audit_id": "KPI-SOURCE-664",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 917,
@@ -12072,7 +12128,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-662",
+   "audit_id": "KPI-SOURCE-665",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 251,
@@ -12094,7 +12150,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-663",
+   "audit_id": "KPI-SOURCE-666",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 898,
@@ -12117,7 +12173,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-664",
+   "audit_id": "KPI-SOURCE-667",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1340,
@@ -12135,7 +12191,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-665",
+   "audit_id": "KPI-SOURCE-668",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1392,
@@ -12152,7 +12208,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-666",
+   "audit_id": "KPI-SOURCE-669",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 347,
@@ -12176,7 +12232,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-667",
+   "audit_id": "KPI-SOURCE-670",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1335,
@@ -12193,7 +12249,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-668",
+   "audit_id": "KPI-SOURCE-671",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1337,
@@ -12210,7 +12266,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-669",
+   "audit_id": "KPI-SOURCE-672",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1270,
@@ -14918,7 +14974,7 @@
   {
    "audit_id": "KPI-SURFACE-098",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 259,
+   "line": 249,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14955,7 +15011,7 @@
   {
    "audit_id": "KPI-SURFACE-099",
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 293,
+   "line": 283,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -16544,6 +16600,32 @@
   },
   {
    "audit_id": "KPI-SURFACE-158",
+   "template": "templates/partials/staff_activity/_workspace.html",
+   "line": 8,
+   "source_pattern": "shared-component",
+   "items_expression": "kpi_items",
+   "presentation": "context",
+   "page_type": "operational",
+   "route": "/staff-activity",
+   "page_title": "Staff Activity",
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ],
+   "page_purpose": "How your team uses the platform How staff across the country use the platform : active time, the parts they use, and the meaningful work they complete.",
+   "primary_action": "Staff Activity",
+   "previous_presentation": "independent KPI tile grid",
+   "new_prominent_kpi_limit": 0,
+   "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
+   "accessibility_result": "Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
+   "recommendation": "convert",
+   "reason": "All metric summaries use the shared responsive performance strip.",
+   "replacement_pattern": "compact performance strip",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SURFACE-159",
    "template": "templates/partials/targets/my_body.html",
    "line": 8,
    "source_pattern": "shared-component",
@@ -16572,7 +16654,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-159",
+   "audit_id": "KPI-SURFACE-160",
    "template": "templates/partials/targets/project_priorities.html",
    "line": 28,
    "source_pattern": "shared-component",
@@ -16601,7 +16683,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-160",
+   "audit_id": "KPI-SURFACE-161",
    "template": "templates/partials/targets/strategic_priority_overview.html",
    "line": 32,
    "source_pattern": "shared-component",
@@ -16630,7 +16712,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-161",
+   "audit_id": "KPI-SURFACE-162",
    "template": "templates/partials/targets/team/body.html",
    "line": 4,
    "source_pattern": "shared-component",
@@ -40491,6 +40573,284 @@
     "apps.impact.models.ImpactReport"
    ],
    "filter_behaviour": "fixed_context"
+  },
+  {
+   "audit_id": "KPI-REG-554",
+   "kpi_id": "staff_activity_staff_expected",
+   "metric_registry_id": "staff_activity_staff_expected",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Staff Expected",
+   "definition": "Staff with at least one expected working day in the period so far: a weekday that is not a public holiday and not approved leave.",
+   "value_type": "count",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "people whose expected working days in the elapsed period > 0",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "How many people were expected to use the platform?",
+   "user_decision": "How many people were expected to use the platform?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:123",
+   "source_models": [
+    "apps.accounts.models.User",
+    "apps.accounts.models.Leave",
+    "apps.accounts.models.PublicHoliday"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-555",
+   "kpi_id": "staff_activity_staff_active",
+   "metric_registry_id": "staff_activity_staff_active",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Staff Active",
+   "definition": "Staff who signed in or had active time in the period.",
+   "value_type": "count",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "people with a sign-in or active seconds in the period",
+   "denominator": "Staff Expected",
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "How many people used the platform?",
+   "user_decision": "How many people used the platform?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:127",
+   "source_models": [
+    "apps.accounts.models.LoginEvent",
+    "apps.accounts.models.PresenceTime"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-556",
+   "kpi_id": "staff_activity_no_login",
+   "metric_registry_id": "staff_activity_no_login",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "No Login",
+   "definition": "Staff with an expected working day in the period who neither signed in nor had active time. Leave and holidays are not counted.",
+   "value_type": "count",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "expected people with no sign-in and no active time",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "Who may need a check-in because they have not used the platform?",
+   "user_decision": "Who may need a check-in because they have not used the platform?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "primary-decision-kpi",
+   "recommendation": "retain",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "primary KPI group",
+   "priority": "high",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:129",
+   "source_models": [
+    "apps.accounts.models.LoginEvent",
+    "apps.accounts.models.PresenceTime",
+    "apps.accounts.models.Leave"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-557",
+   "kpi_id": "staff_activity_total_active_time",
+   "metric_registry_id": "staff_activity_total_active_time",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Total Active Time",
+   "definition": "Active platform time in the period: the server credits the gap between two activity beats only when it is within the idle threshold, once per person whatever the number of tabs or devices.",
+   "value_type": "status",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "sum of PresenceTime seconds in the period (plus the pending beat)",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "How much active time did the staff spend on the platform?",
+   "user_decision": "How much active time did the staff spend on the platform?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:135",
+   "source_models": [
+    "apps.accounts.models.PresenceTime"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-558",
+   "kpi_id": "staff_activity_median_active_time",
+   "metric_registry_id": "staff_activity_median_active_time",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Median Active Time",
+   "definition": "The median active time of the staff who were active in the period.",
+   "value_type": "status",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "median of active seconds over active staff",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "What is a typical person's active time?",
+   "user_decision": "What is a typical person's active time?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:139",
+   "source_models": [
+    "apps.accounts.models.PresenceTime"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-559",
+   "kpi_id": "staff_activity_meaningful_actions",
+   "metric_registry_id": "staff_activity_meaningful_actions",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Meaningful Actions",
+   "definition": "Successful governed workflow actions in the period, read from the audit chain through apps.staff_activity.registry \u2014 never page views.",
+   "value_type": "count",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "successful AuditLog rows whose action is a registered meaningful action",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "How much operational work did the staff complete on the platform?",
+   "user_decision": "How much operational work did the staff complete on the platform?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "outcome-kpi",
+   "recommendation": "retain-or-relocate-to-analytics",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "analytics headline or contextual reference",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:141",
+   "source_models": [
+    "apps.audit.models.AuditLog"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-560",
+   "kpi_id": "staff_activity_open_follow_ups",
+   "metric_registry_id": "staff_activity_open_follow_ups",
+   "page": "staff_activity",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Open Follow-ups",
+   "definition": "Manager follow-ups about the listed staff that are not yet resolved.",
+   "value_type": "count",
+   "period": "point_in_time",
+   "scope": "The staff in the reader's scope \u2014 a Programme Lead's supervised officers, or the country's internal staff for the Country Director and the Admin \u2014 narrowed by the page's role, Programme Lead, status and search filters",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "StaffUsageFollowUp rows in an open status",
+   "denominator": null,
+   "date_basis": "record_created",
+   "finance_stage": null,
+   "primary_home": "staff_activity",
+   "approved_contextual_pages": [],
+   "user_question": "How many staff follow-ups are still open?",
+   "user_decision": "How many staff follow-ups are still open?",
+   "user_action": "The table below the strip lists the staff it counts, one row each.",
+   "drill_down": null,
+   "metric_class": "primary-decision-kpi",
+   "recommendation": "retain",
+   "reason": "Staff Activity Log, added 2026-09-29; follows the page's Day/Week/Month/Quarter/FY period.",
+   "replacement_pattern": "primary KPI group",
+   "priority": "high",
+   "implementation_status": "completed",
+   "service": "apps.staff_activity.services.activity_log",
+   "source_location": "apps/frontend/views/staff_activity_views.py:147",
+   "source_models": [
+    "apps.staff_activity.models.StaffUsageFollowUp"
+   ],
+   "filter_behaviour": "filtered"
   }
  ],
  "payload_groups": [
@@ -40772,7 +41132,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1151,
+   "line": 1127,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -40798,7 +41158,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1571,
+   "line": 1547,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

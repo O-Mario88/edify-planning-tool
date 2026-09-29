@@ -1,0 +1,124 @@
+{% load table_pagination row_actions %}
+{% comment %}
+  The log's filters, summary strip, table and Team Insights — one fragment, so
+  a filter change swaps them together and they never disagree.
+{% endcomment %}
+<div id="staff-activity-workspace" class="space-y-4">
+
+  {% include "components/context_metrics.html" with items=kpi_items variant="executive" density="compact" title="Staff activity at a glance" %}
+
+  <form id="sal-filters-form" class="edify-filter-bar sal-choose" data-component="filter-toolbar" aria-label="Staff activity filters"
+        method="get" action="/staff-activity"
+        hx-get="/staff-activity" hx-target="#staff-activity-workspace" hx-swap="outerHTML" hx-push-url="true"
+        hx-trigger="change, submit">
+    <input type="hidden" name="period" value="{{ log.period.key }}">
+    <div class="edify-filter-field sal-period">
+      <span class="edify-filter-label">Period</span>
+      <nav data-edify-tablist aria-label="Period">
+        {% for link in period_links %}
+        <a href="{{ link.href }}" data-edify-tab{% if link.active %} aria-current="page" aria-pressed="true"{% else %} aria-pressed="false"{% endif %}
+           hx-get="{{ link.href }}" hx-target="#staff-activity-workspace" hx-swap="outerHTML" hx-push-url="true">{{ link.label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+    <label class="edify-filter-field">
+      <span class="edify-filter-label">Date</span>
+      <input type="date" name="on" value="{{ log.period.on|date:'Y-m-d' }}" aria-label="A day in the period">
+    </label>
+    {% if log.role_options|length > 1 %}
+    <label class="edify-filter-field">
+      <span class="edify-filter-label">Role</span>
+      <select name="role" aria-label="Role">
+        <option value="">All roles</option>
+        {% for key, label in log.role_options %}<option value="{{ key }}"{% if key == log.filters.role %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if log.scope.mode == "country" and log.program_lead_options %}
+    <label class="edify-filter-field">
+      <span class="edify-filter-label">Program Lead</span>
+      <select name="pl" aria-label="Program Lead">
+        <option value="">All PLs</option>
+        {% for id, name in log.program_lead_options %}<option value="{{ id }}"{% if id == log.filters.program_lead %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label class="edify-filter-field">
+      <span class="edify-filter-label">Status</span>
+      <select name="status" aria-label="Usage status">
+        <option value="">All staff</option>
+        {% for key, label in log.status_options %}<option value="{{ key }}"{% if key == log.filters.status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if has_filters %}
+    <a href="/staff-activity" class="sal-clear" aria-label="Clear filters" title="Clear filters"
+       hx-get="/staff-activity" hx-target="#staff-activity-workspace" hx-swap="outerHTML" hx-push-url="true">×</a>
+    {% endif %}
+  </form>
+
+  <div class="sal-layout">
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-main" aria-labelledby="sal-table-title">
+      <header class="sal-tablehead">
+        <h2 id="sal-table-title">{% if log.scope.mode == "team" %}Your team{% else %}Staff by Program Lead{% endif %}</h2>
+        <span class="sal-caption">{{ log.people|length }} of {{ log.total_people }} staff · {{ log.period.label|capfirst }} · active time excludes idle tabs (after {{ log.idle_minutes }} minutes untouched)</span>
+      </header>
+      {% if log.scope.mode == "team" %}
+        {% paginate log.people "staff_page" as pager %}
+      {% else %}
+        {% paginate log.groups "staff_page" as pager %}
+      {% endif %}
+      <div class="sal-scroll" data-table-scroll-region tabindex="0" aria-label="Staff activity; scroll sideways for more columns">
+        <table class="sal-table" data-table-fit="scroll">
+          <caption class="sr-only">Staff activity, {{ log.period.label }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Staff</th>
+              <th scope="col">Role</th>
+              <th scope="col">Supervisor</th>
+              <th scope="col">Region</th>
+              <th scope="col" class="sal-num">Logins</th>
+              <th scope="col" title="First active time in the period">First<br>Active</th>
+              <th scope="col" title="Most recent active time in the period">Last<br>Active</th>
+              <th scope="col" class="sal-num" title="Active time, deduplicated across tabs and devices; idle and background tabs excluded">Active<br>Time</th>
+              <th scope="col" class="sal-num" title="Meaningful workflow actions completed">Actions</th>
+              <th scope="col" class="sal-num" title="Distinct schools with a meaningful action">Schools</th>
+              <th scope="col">Last Page</th>
+              <th scope="col">Last Meaningful Action</th>
+              <th scope="col">Status</th>
+              <th scope="col">Usage</th>
+              <th scope="col" title="Open manager follow-ups">Follow-up</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          {% if log.scope.mode == "team" %}
+          <tbody>
+            {% for person in pager.rows %}{% include "partials/staff_activity/_person_row.html" %}{% empty %}
+            <tr><td colspan="16" class="sal-empty">Nobody matches these filters.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% else %}
+          {% for group in pager.rows %}
+          <tbody data-sal-group="{{ group.kind }}">
+            <tr class="edify-group-head">
+              <th colspan="16" scope="colgroup">
+                <span class="edify-cell-row sal-grouphead">
+                  <span class="edify-group-head__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
+                  <span class="edify-group-head__count">{{ group.total }} staff · {{ group.online }} online · {{ group.active_label }} active · {{ group.actions }} action{{ group.actions|pluralize }}{% if group.no_login %} · {{ group.no_login }} no login{% endif %}</span>
+                </span>
+              </th>
+            </tr>
+            {% if group.lead %}{% with person=group.lead %}{% include "partials/staff_activity/_person_row.html" %}{% endwith %}{% endif %}
+            {% for person in group.members %}{% include "partials/staff_activity/_person_row.html" %}{% endfor %}
+          </tbody>
+          {% empty %}
+          <tbody><tr><td colspan="16" class="sal-empty">Nobody matches these filters.</td></tr></tbody>
+          {% endfor %}
+          {% endif %}
+        </table>
+      </div>
+      {% include "components/table_pager.html" with pager=pager param="staff_page" %}
+    </section>
+
+    {% include "partials/staff_activity/_insights.html" with insights=log.insights %}
+  </div>
+</div>

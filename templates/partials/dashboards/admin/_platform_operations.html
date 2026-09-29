@@ -34,9 +34,8 @@
   </section>
 
   {% with presence=admin_ops.presence %}
-  <div class="admin-panel admin-panel--presence">
-    {% include "partials/dashboards/_whos_online.html" with staff_links=True %}
-  </div>
+  {% comment %}Who's Online became the Staff Activity Log (owner,
+  2026-09-29), a page of its own: /staff-activity.{% endcomment %}
 
   <section class="admin-panel" aria-labelledby="admin-ops-logins-title" data-admin-logins>
     <header class="admin-panel__header">

@@ -208,6 +208,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
+    # Staff Activity Log (owner, 2026-09-29), replacing Who's Online: a
+    # Programme Lead reads the people they supervise, the Country Director the
+    # country grouped by Programme Lead, the Admin the country for technical
+    # support only (docs/STAFF_TIME_STANDARD.md §5).
+    "staff_activity": {PL, CD, ADMIN},
     # The Accountant read clusters as a section of Team Oversight until the
     # section moved here (2026-09-23), and keeps that reading (owner,
     # 2026-09-23: "give them the access"). The data stays scoped by
@@ -827,6 +832,7 @@ ICONS.update(
         "team_planning_oversight": ICONS["planning"],
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
+        "staff_activity": ICONS["users"],
         "cluster_oversight": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
@@ -1775,6 +1781,12 @@ SIDEBAR_ITEMS = [
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
+            },
+            {
+                "label": "Staff Activity",
+                "url": "/staff-activity",
+                "page_key": "staff_activity",
+                "visible_to": {PL, CD, ADMIN},
             },
             {
                 # Read-only watching of a coordinator's project work. It sits
@@ -3286,6 +3298,7 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
         "core_schools_oversight",
         "partner_oversight",
         "project_monitoring",
+        "staff_activity",
     )
     oversight_items = [
         item

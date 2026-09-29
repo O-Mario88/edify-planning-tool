@@ -309,39 +309,14 @@ class PresenceSurfaceTest(TestCase):
         self.cceo.refresh_from_db()
         self.assertEqual(self.cceo.last_seen_at, first)
 
-    def test_the_admin_dashboard_shows_who_is_online_and_the_sign_in_counts(self):
-        User.objects.filter(pk=self.cceo.pk).update(last_seen_at=timezone.now())
+    def test_the_admin_dashboard_keeps_the_sign_in_counts_without_the_table(self):
+        """Who's Online became the Staff Activity Log (owner, 2026-09-29):
+        the Admin's operations view keeps its sign-in counts, and the table
+        of people is the log's."""
         LoginEvent.objects.create(user=self.cceo, role="CCEO")
         self.client.force_login(self.admin)
         html = self.client.get("/dashboard?view=operations").content.decode()
-        self.assertIn("data-admin-presence", html)
-        self.assertIn("Cara", html)
-        # The columns the owner listed on 2026-09-28, in order, each heading
-        # on one line (2026-09-29: "NO Wrapping"). The other parts accessed
-        # are each person's other lines, with their own time.
-        headings = [
-            "Staff name",
-            "Title",
-            "# of logins",
-            "Login day, date &amp; time",
-            "Page accessed",
-            "Working on what",
-            "Duration online",
-            "Overall time",
-        ]
-        positions = [html.index(f">{heading}</th>") for heading in headings]
-        self.assertEqual(positions, sorted(positions))
-        # The Admin's copy links each person's sign-ins to their own record.
-        self.assertIn(f'href="/admin-panel/users/{self.cceo.id}"', html)
-        # Cara is online: a pulsing green light. Root, who has never signed in,
-        # is offline with a grey one.
-        self.assertIn('data-presence="online"', html)
-        self.assertIn("admin-presence-light--online", html)
-        self.assertIn('data-presence="offline"', html)
-        self.assertIn("admin-presence-light--offline", html)
-        # Never signed in: a dash in the figures, said in words beside them.
-        self.assertIn('title="Never signed in">—</span>', html)
-        self.assertIn("Never signed in", html)
+        self.assertNotIn("data-admin-presence", html)
         self.assertIn("data-admin-logins", html)
         self.assertIn("1 today", html)
 
@@ -361,30 +336,12 @@ class PresenceSurfaceTest(TestCase):
         self.assertEqual(self.cceo.last_seen_path, "/planning")
         self.assertEqual(self.cceo.last_seen_action, "GET /planning/schedule-modal")
 
-    def test_the_country_director_sees_the_same_table(self):
+    def test_the_country_director_s_operations_view_no_longer_draws_the_table(self):
         cd = _user("clara", "CountryDirector")
-        pl = _user("paula", "Program Lead")
-        StaffSupervisorAssignment.objects.create(
-            supervisor=pl.staff_profile, supervisee=self.cceo.staff_profile
-        )
-        User.objects.filter(pk=self.cceo.pk).update(last_seen_at=timezone.now())
         self.client.force_login(cd)
         html = self.client.get("/dashboard?view=operations").content.decode()
-        self.assertIn("data-admin-presence", html)
-        self.assertIn("Who's Online", html)
-        self.assertIn("Cara", html)
-        self.assertIn('data-presence="online"', html)
-        self.assertIn(">Page accessed</th>", html)
-        # The same logins column, but as plain text: the admin panel is not
-        # the Country Director's to open, so it is never linked here.
-        self.assertIn("># of logins</th>", html)
-        self.assertNotIn("/admin-panel/users/", html)
-        # Cara folds under Paula, whose own row leads the group.
-        self.assertIn("PL · Paula", html)
-        self.assertIn("presence-row--lead", html)
-        self.assertIn(
-            'data-presence-group="program_lead" data-presence-online="1"', html
-        )
+        self.assertNotIn("data-admin-presence", html)
+        self.assertNotIn("Who's Online", html)
 
 
 class ProgrammeLeadReadsTheirOwnTeamTest(TestCase):

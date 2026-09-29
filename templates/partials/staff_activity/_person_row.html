@@ -1,0 +1,40 @@
+{% load row_actions %}
+<tr class="sal-person{% if person.status_key == 'online' %} sal-person--online{% endif %}" data-sal-person="{{ person.id }}">
+  <td>
+    <span class="sal-who">
+      <span class="sal-avatar" aria-hidden="true">{{ person.initials }}</span>
+      <button type="button" class="sal-name" data-sal-toggle="{{ person.id }}" aria-expanded="false" aria-controls="sal-detail-{{ person.id }}">{{ person.name }}</button>
+    </span>
+  </td>
+  <td title="{{ person.active_role }}">{{ person.title }}</td>
+  <td>{{ person.supervisor|default:"—" }}</td>
+  <td>{{ person.region|default:"—" }}</td>
+  <td class="sal-num">{{ person.logins }}</td>
+  <td class="sal-num">{{ person.first_active_label }}</td>
+  <td class="sal-num">{{ person.last_active_label }}</td>
+  <td class="sal-num"><strong>{{ person.active_label }}</strong></td>
+  <td class="sal-num">{{ person.actions }}{% if person.failed %} <span class="sal-failed" title="{{ person.failed }} failed">· {{ person.failed }} failed</span>{% endif %}</td>
+  <td class="sal-num">{{ person.schools }}</td>
+  <td title="{{ person.last_task }}">{{ person.last_page }}</td>
+  <td>{% if person.last_action %}{{ person.last_action }} · {{ person.last_action_label }}{% else %}—{% endif %}</td>
+  <td><span class="sal-state sal-state--{{ person.status_key }}"><i class="sal-dot sal-dot--{{ person.status_key }}" role="img" aria-label="{{ person.status_label }}"></i>{{ person.status_label }}</span></td>
+  <td><span class="sal-usage sal-usage--{{ person.usage_tone }}"{% if person.suggestions %} title="{% for s in person.suggestions %}{{ s.reason }}{% if not forloop.last %}; {% endif %}{% endfor %}"{% endif %}>{{ person.usage_label }}</span></td>
+  <td>{% if person.open_follow_ups %}<span class="sal-usage sal-usage--watch">{{ person.open_follow_ups|length }} open</span>{% else %}—{% endif %}</td>
+  <td>
+    {% row_actions person.name %}
+    <button type="button" class="row-menu__item" role="menuitem" data-sal-toggle="{{ person.id }}">View details</button>
+    {% if log.scope.can_follow_up %}
+    <button type="button" class="row-menu__item" role="menuitem"
+            hx-get="/staff-activity/people/{{ person.id }}/follow-up?period={{ log.period.key }}&on={{ log.period.on|date:'Y-m-d' }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>
+    {% endif %}
+    {% endrow_actions %}
+  </td>
+</tr>
+<tr class="sal-detailrow" id="sal-detail-{{ person.id }}" hidden>
+  <td colspan="16">
+    <section class="sal-detail" data-table-detail data-src="/staff-activity/people/{{ person.id }}?period={{ log.period.key }}&amp;on={{ log.period.on|date:'Y-m-d' }}" aria-label="{{ person.name }}: activity detail">
+      <p class="sal-loading">Loading {{ person.name }}'s activity…</p>
+    </section>
+  </td>
+</tr>

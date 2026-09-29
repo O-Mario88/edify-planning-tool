@@ -390,22 +390,6 @@ def _program_lead_dashboard(request, avatar_initials: str):
 
         context.update(country_map_context(fy))
         context.update(_pl_map_context(user, fy, {}))
-    if view in ("week", "team"):
-        # Who's Online, over this Lead's reporting line and nobody else's
-        # (owner, 2026-09-22). On the main dashboard as well as Team since
-        # 2026-09-24 — "put it on the main dashboard so they can monitor their
-        # team working"; the main dashboard's first view has been This Week
-        # since 2026-09-26. Built only for the views that show it: the Lead's other
-        # views ask different questions and should not pay a roster query for
-        # a panel they do not draw.
-        from apps.accounts.presence import presence_summary, team_user_ids
-
-        from apps.accounts.presence import presence_filters
-
-        context["presence"] = presence_summary(
-            only_user_ids=team_user_ids(user), **presence_filters(request)
-        )
-        context["presence_scope_label"] = "your team"
     if tab_swap:
         response = render(
             request,
@@ -683,18 +667,10 @@ def dashboard_view(request):
                 ),
             ],
         )
-        if deferred_body:
-            pass  # the body brings its own map or presence when it arrives
-        elif dashboard_view == "map":
+        if dashboard_view == "map" and not deferred_body:
             from apps.analytics.country_map_context import country_map_context
 
             context.update(country_map_context(fy))
-        else:
-            # Who is using the system (owner, 2026-09-15): the Admin's Who's
-            # Online table, on the CD's Operations view as well.
-            from apps.accounts.presence import presence_filters, presence_summary
-
-            context["presence"] = presence_summary(**presence_filters(request))
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
             response = render(
                 request,
@@ -1675,37 +1651,16 @@ def program_lead_dashboard_view(request):
 
 @require_page_permission("dashboard")
 def whos_online_view(request):
-    """Who's Online for another period (owner, 2026-09-28: "add the filter of
-    day, week, month, quarter and FY"). The panel's filter and its pager ask
-    here instead of rebuilding the dashboard around it.
+    """Who's Online became the Staff Activity Log (owner, 2026-09-29). Its old
+    address — an open tab's pager, a bookmark — goes to the log."""
+    from django.shortcuts import redirect
 
-    The readers are the dashboards that draw the panel: the Admin (country,
-    with links to each user record), the Country Director (country) and a
-    Programme Lead (their own reporting line and nobody else's).
-    """
-    from django.http import HttpResponseForbidden
-
-    from apps.accounts.presence import (
-        presence_filters,
-        presence_summary,
-        team_user_ids,
-    )
-
-    role = request.user.active_role
-    context = {"presence_fragment": True}
-    if role == "Admin":
-        context["staff_links"] = True
-        context["presence"] = presence_summary(**presence_filters(request))
-    elif role == "CountryDirector":
-        context["presence"] = presence_summary(**presence_filters(request))
-    elif role == "Program Lead":
-        context["presence"] = presence_summary(
-            only_user_ids=team_user_ids(request.user), **presence_filters(request)
-        )
-        context["presence_scope_label"] = "your team"
-    else:
-        return HttpResponseForbidden("Who's Online is for the Admin, CD and PLs.")
-    return render(request, "partials/dashboards/_whos_online.html", context)
+    destination = "/staff-activity"
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = destination
+        return response
+    return redirect(destination)
 
 
 # ── Program Lead Command Dashboard — drill-downs + inline approve ────────────

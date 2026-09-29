@@ -1,0 +1,45 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+{% comment %}
+  Staff Activity Log (owner, 2026-09-29) — replaces the Who's Online table.
+
+  Who uses the platform, how long they actively use it, which parts, and the
+  meaningful work they complete — for a Programme Lead's team, or the country
+  grouped by Programme Lead for the Country Director. Active time is measured
+  by the server and excludes idle and background tabs; it is a management and
+  adoption signal, never a performance score (apps.staff_activity.services).
+
+  The summary strip, the Team Insights panel and the table answer the same
+  filters. A row opens its person's detail, fetched only then.
+{% endcomment %}
+
+{% block title %}Staff Activity Log · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20260929sal5">{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1600px] mx-auto" data-staff-activity>
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-header__title edify-page-title">Staff Activity Log</h1>
+      <p class="edify-page-header__description">{% if log.scope.mode == "team" %}How your team uses the platform{% else %}How staff across the country use the platform{% endif %}: active time, the parts they use, and the meaningful work they complete.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/staff-activity/export?{{ query }}" class="edify-action-button secondary h-9" download>
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export
+      </a>
+      {% if log.scope.can_follow_up %}
+      <button type="button" class="edify-action-button primary h-9"
+              hx-get="/staff-activity/follow-ups" hx-target="#drawer-container" hx-swap="innerHTML">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M3 12h12M3 19h8m9-5l-3 3-2-2"/></svg>
+        Follow-up Queue{% if follow_up_count %} <span class="sal-count" aria-label="{{ follow_up_count }} open">{{ follow_up_count }}</span>{% endif %}
+      </button>
+      {% endif %}
+    </div>
+  </header>
+
+  {% include "partials/staff_activity/_workspace.html" %}
+</div>
+<script defer src="{% static 'js/staff-activity.js' %}?v=20260929sal1"></script>
+{% endblock %}

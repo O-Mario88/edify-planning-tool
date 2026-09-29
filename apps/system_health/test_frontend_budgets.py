@@ -128,7 +128,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: drawer-background.js opening every drawer's frame on the click, with a
     #: loading body, instead of showing nothing until the server answers
     #: (owner: "even loading is very slow"). Comments were cut to fit.
-    JS_GZIP_KB = 136
+    #:
+    #: Raised to 138 on 2026-09-29 (135.9 to 137.1 KB, +0.9%) for
+    #: staff-activity-beat.js (1.1 KB gzipped, deferred): the Staff Activity
+    #: Log counts active time only while a page is visible, focused and in
+    #: use, which needs a beat from the page itself (owner: replace Who's
+    #: Online with an accurate activity log). Its comments were cut to fit.
+    JS_GZIP_KB = 138
     INLINE_SCRIPT_KB = 40
 
     @classmethod

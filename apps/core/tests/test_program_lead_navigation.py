@@ -57,6 +57,8 @@ EXPECTED_PL_SIDEBAR = [
             ("Core School Oversight", "/core-schools-oversight/"),
             ("Partner Oversight", "/partner-oversight/"),
             ("Project Monitoring", "/projects/monitoring"),
+            # Staff Activity Log (owner, 2026-09-29), replacing Who's Online.
+            ("Staff Activity", "/staff-activity"),
         ],
     ),
     (

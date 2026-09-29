@@ -3851,6 +3851,8 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     # ── PL alignment · T ──
     "apps.flags.escalation_todos:pl_escalation_todos",
     # ── end T ──
+    # ── Staff Activity Log (owner, 2026-09-29) ──
+    "apps.staff_activity.todos:follow_up_todos",
     # ── PL alignment · C1 ──
     "apps.cce_leadership.todos:coaching_todos",
     # ── end C1 ──

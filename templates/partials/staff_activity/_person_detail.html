@@ -1,0 +1,107 @@
+{% comment %}
+  One person's activity, opened from their row (§7.4): sign-in history, time
+  by part of the tool, the meaningful-action timeline, the period trend and
+  manager follow-ups. Fetched only when the row opens.
+{% endcomment %}
+<div class="sal-top">
+  <span class="sal-avatar sal-avatar--lg" aria-hidden="true">{{ person.initials }}</span>
+  <div class="sal-ident">
+    <h3>{{ person.name }} <span class="sal-state sal-state--{{ person.status_key }}"><i class="sal-dot sal-dot--{{ person.status_key }}" role="img" aria-label="{{ person.status_label }}"></i>{{ person.status_label }}</span></h3>
+    <p>{{ person.title }}{% if person.region %} · {{ person.region }}{% endif %}{% if person.supervisor %} · Reports to {{ person.supervisor }}{% endif %}</p>
+  </div>
+  <dl class="sal-figures">
+    <div><dt>Logins</dt><dd>{{ person.logins }}</dd></div>
+    <div><dt>Active time</dt><dd>{{ person.active_label }}</dd></div>
+    <div><dt>Meaningful actions</dt><dd>{{ person.actions }}</dd></div>
+    <div><dt>Schools acted on</dt><dd>{{ person.schools }}</dd></div>
+  </dl>
+  {% if can_follow_up %}
+  <button type="button" class="edify-action-button secondary h-8"
+          hx-get="/staff-activity/people/{{ person.id }}/follow-up?period={{ detail.period.key }}&on={{ detail.period.on|date:'Y-m-d' }}"
+          hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>
+  {% endif %}
+  <button type="button" class="sal-close" data-sal-toggle="{{ person.id }}" aria-label="Close {{ person.name }}'s detail">×</button>
+</div>
+
+{% if person.suggestions %}
+<p class="sal-suggest" role="note"><strong>Follow-up suggested:</strong> {% for s in person.suggestions %}{{ s.reason }}{% if not forloop.last %}; {% endif %}{% endfor %}. A suggestion is an offer to talk, not a judgement of performance.</p>
+{% endif %}
+
+<div class="sal-quads">
+  <article class="sal-box" aria-labelledby="sal-signins-{{ person.id }}">
+    <h4 id="sal-signins-{{ person.id }}">Sign-in history</h4>
+    <p class="sal-sub">{% if detail.session_total > detail.sessions|length %}Latest {{ detail.sessions|length }} of {{ detail.session_total }} sessions{% else %}{{ detail.session_total }} session{{ detail.session_total|pluralize }}{% endif %} · {{ detail.period.label }}</p>
+    {% if detail.sessions %}
+    <ol class="sal-sessions">
+      {% for s in detail.sessions %}
+      <li{% if s.current %} class="sal-sessions__current"{% endif %}>
+        <span class="sal-sessions__when"><i class="sal-dot {% if s.current %}sal-dot--online{% else %}sal-dot--offline{% endif %}" aria-hidden="true"></i>{{ s.at_label }} · {{ s.device }}</span>
+        <span class="sal-sessions__nums">Active {{ s.active_label }} · Idle {{ s.idle_label }} · Span {{ s.span_label }}</span>
+        <span class="sal-sessions__end">{{ s.ended }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="sal-none">No sessions in this period.</p>
+    {% endif %}
+  </article>
+
+  <article class="sal-box" aria-labelledby="sal-modules-{{ person.id }}">
+    <h4 id="sal-modules-{{ person.id }}">Time by module</h4>
+    <p class="sal-sub">{{ detail.tasks }} task{{ detail.tasks|pluralize }} across {{ detail.modules|length }} part{{ detail.modules|length|pluralize }} of the platform</p>
+    {% if detail.modules %}
+    <ul class="sal-modlist sal-modlist--detail">
+      <li class="sal-modlist__head" aria-hidden="true"><span>Module</span><span>Share</span><span>Active</span><span>Actions</span></li>
+      {% for m in detail.modules %}
+      <li><span class="sal-modlist__name">{{ m.label }}</span><span class="sal-meter" aria-label="{{ m.share }}% of active time"><span style="inline-size: {{ m.share }}%"></span></span><span class="sal-modlist__pct">{{ m.time }}</span><span class="sal-modlist__pct">{{ m.actions }} action{{ m.actions|pluralize }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="sal-none">No active time in this period.</p>
+    {% endif %}
+  </article>
+
+  <article class="sal-box" aria-labelledby="sal-done-{{ person.id }}">
+    <h4 id="sal-done-{{ person.id }}">Meaningful actions</h4>
+    <p class="sal-sub">{% if detail.timeline_total > detail.timeline|length %}Latest {{ detail.timeline|length }} of {{ detail.timeline_total }}{% else %}{{ detail.timeline_total }} action{{ detail.timeline_total|pluralize }}{% endif %} · page views are not actions</p>
+    {% if detail.timeline %}
+    <ol class="sal-timeline">
+      {% for a in detail.timeline %}
+      <li class="{% if a.ok %}sal-timeline__ok{% else %}sal-timeline__fail{% endif %}">
+        <span class="sal-timeline__at">{{ a.at_label }}</span>
+        <span class="sal-timeline__what">{% if a.link %}<a href="{{ a.link }}">{{ a.label }}</a>{% else %}{{ a.label }}{% endif %}</span>
+        <span class="sal-timeline__where">{{ a.module }}{% if not a.ok %} · Failed{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="sal-none">No meaningful actions in this period.</p>
+    {% endif %}
+  </article>
+
+  <article class="sal-box" aria-labelledby="sal-trend-{{ person.id }}">
+    <h4 id="sal-trend-{{ person.id }}">Period trend</h4>
+    <p class="sal-sub">Signed in on {{ detail.login_days }} day{{ detail.login_days|pluralize }} · active time and actions</p>
+    {% if detail.trend %}
+    <ol class="sal-bars" aria-label="Active time by {{ detail.period.key|default:'day' }}">
+      {% for t in detail.trend %}
+      <li title="{{ t.label }}: {{ t.time }} active, {{ t.actions }} action{{ t.actions|pluralize }}">
+        <span class="sal-bars__col"><span style="block-size: {{ t.height }}%"></span></span>
+        <span class="sal-bars__day">{{ t.label }}</span>
+        <span class="sr-only">{{ t.time }} active, {{ t.actions }} actions</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+    <h4 class="sal-subhead">Manager follow-up</h4>
+    {% if detail.follow_ups %}
+    <ul class="sal-follows">
+      {% for fu in detail.follow_ups %}
+      <li><a href="/staff-activity/follow-ups/{{ fu.id }}" hx-get="/staff-activity/follow-ups/{{ fu.id }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ fu.get_trigger_display }}</a> · {{ fu.get_status_display }} · due {{ fu.due_date|date:"j M" }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="sal-none">No follow-ups.</p>
+    {% endif %}
+  </article>
+</div>
