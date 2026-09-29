@@ -15,8 +15,8 @@ _SOURCE = "apps.frontend.views.staff_activity_views:_kpi_items"
 _LOCATION = "apps/frontend/views/staff_activity_views.py"
 _ROLES = ("Program Lead", "CountryDirector", "Admin")
 _SCOPE = (
-    "The staff in the reader's scope — a Programme Lead's supervised officers, "
-    "or the country's internal staff for the Country Director and the Admin — "
+    "The CCEOs and Programme Leads in the reader's scope — a Programme Lead's "
+    "supervised officers, or the country's for the Country Director and the Admin — "
     "narrowed by the page's role, Programme Lead, status and search filters"
 )
 

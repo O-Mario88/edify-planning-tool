@@ -154,6 +154,8 @@ with it, unchanged in kind:
   themselves), the Country Director (the country, grouped by Programme Lead)
   and the Admin (the country, for technical support; no follow-ups). A staff
   member sees a follow-up sent to them, never the log.
+- **Whom it lists:** CCEOs and Programme Leads only (owner, 2026-09-29: "they
+  are the focus"); no other role's time is shown.
 - **What it measures:** *active* time — the server credits the gap between two
   beats only when it is within the idle threshold (5 minutes,
   `settings.STAFF_ACTIVITY`); the browser beats only while the page is

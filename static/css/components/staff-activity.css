@@ -390,3 +390,32 @@
 .sal-picked .sal-figures { gap: 0.4rem 1rem; }
 .sal-picked .sal-box { padding: 0.6rem 0.65rem; }
 .sal-picked .sal-avatar--lg { inline-size: 2rem; block-size: 2rem; }
+
+/* Compact rows (owner, 2026-09-29: "reduce the space between the rows to
+   make the table smaller"). The name is a link-like button, not a 28px table
+   control, so the platform's control size is taken off it; its tap area
+   stays generous through ::after on touch screens. */
+:root table.sal-table.sal-table tbody :is(td, th):not(#sal-none) {
+  padding-block: 0.2rem !important;
+}
+:root table.sal-table.sal-table .sal-name:not(#sal-none) {
+  min-block-size: 0 !important;
+  block-size: auto !important;
+  padding: 0 !important;
+  line-height: 1.3 !important;
+  position: relative;
+}
+@media (pointer: coarse) {
+  .sal-table .sal-name::after { content: ""; position: absolute; inset: -0.6rem -0.25rem; }
+}
+.sal-table .sal-avatar { inline-size: 1.4rem; block-size: 1.4rem; font-size: var(--edify-text-micro-size); }
+/* The Actions trigger keeps the platform's 24px; its cell gives up its
+   padding so the trigger, not the padding, sets the row's height. */
+:root table.sal-table.sal-table tbody tr.sal-person > td:last-child:not(#sal-none) { padding-block: 0 !important; }
+/* consistency.css fixes every table row at 2rem (!important); this table's
+   rows are 1.6rem, the Actions trigger's 24px plus a hairline. */
+:root :is(main, .drawer-body) table.sal-table.sal-table tbody tr:not(#sal-none) { block-size: 1.6rem !important; }
+/* Status leads the row (owner, 2026-09-29), in the cell the platform treats
+   as the row's identity; it stays a dot and a word side by side. */
+:root table.sal-table.sal-table .sal-state:not(#sal-none) { display: inline-flex !important; align-items: center; gap: 0.4rem; }
+.sal-dot--offline { background: #94a3b8; }

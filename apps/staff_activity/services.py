@@ -46,21 +46,12 @@ COUNTRY_DIRECTOR = "CountryDirector"
 ADMIN = "Admin"
 CCEO = "CCEO"
 
-# The staff whose platform use the log covers: the organisation's own people.
-# Partner and MFI accounts belong to other organisations, and the Admin
-# account is technical.
-INTERNAL_ROLES = (
-    CCEO,
-    PROGRAM_LEAD,
-    "RegionalProgramLead",
-    COUNTRY_DIRECTOR,
-    "RegionalVicePresident",
-    "ImpactAssessment",
-    "Accountant",
-    "HumanResources",
-    "ProjectCoordinator",
-    "BusinessTransformationOfficer",
-)
+# The staff whose platform use the log covers (owner, 2026-09-29: "restrict
+# roles to CCEO and PL since they are the focus to make sure they are using
+# the system; the rest of the roles don't have to be added"): the field
+# officers and their Programme Leads. Leadership, finance, HR, IA, BT and
+# coordinator accounts are not listed, nor partner, MFI or Admin accounts.
+INTERNAL_ROLES = (CCEO, PROGRAM_LEAD)
 
 ROLE_FILTER_LABELS = {
     CCEO: "CCEO",
@@ -115,7 +106,7 @@ def viewer_scope(user) -> dict | None:
     role = getattr(user, "active_role", "") or ""
     own = getattr(user, "id", None)
     if role == PROGRAM_LEAD:
-        ids = team_user_ids(user)
+        ids = _tracked(team_user_ids(user))
         ids.discard(own)
         return {"mode": "team", "role": role, "ids": ids, "can_follow_up": True}
     if role in (COUNTRY_DIRECTOR, ADMIN):
@@ -128,9 +119,19 @@ def viewer_scope(user) -> dict | None:
     return None
 
 
+def _tracked(ids) -> set[str]:
+    """The ids among these whose role the log covers (INTERNAL_ROLES)."""
+    from apps.accounts.models import User
+
+    return set(
+        User.objects.filter(
+            id__in=list(ids), active_role__in=INTERNAL_ROLES
+        ).values_list("id", flat=True)
+    )
+
+
 def country_roster_ids(user) -> set[str]:
-    """Every active internal staff member in the reader's country, not the
-    reader themselves."""
+    """Every active CCEO and Programme Lead in the reader's country."""
     from apps.accounts.models import StaffProfile, User
 
     country = (

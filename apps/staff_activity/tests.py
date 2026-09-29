@@ -80,6 +80,7 @@ class Team(TestCase):
     def setUp(self):
         self.director = _user("clara", "CountryDirector")
         self.admin = _user("root", "Admin")
+        self.accountant = _user("abby", "Accountant")
         self.lead = _user("lena", "Program Lead")
         self.other_lead = _user("olive", "Program Lead")
         self.mina = _user("mina")
@@ -224,6 +225,10 @@ class WhoReadsWhomTest(Team):
         self.assertIn("Otto", names)
         self.assertNotIn("Clara", names)  # not the reader
         self.assertNotIn("Root", names)  # the Admin account is technical
+        # CCEOs and PLs only (owner, 2026-09-29).
+        self.assertEqual(
+            {p["active_role"] for p in log["people"]}, {"CCEO", "Program Lead"}
+        )
         lena = next(g for g in log["groups"] if g["label"] == "Lena")
         self.assertEqual(lena["lead"]["name"], "Lena")
         self.assertEqual({p["name"] for p in lena["members"]}, {"Mina", "Max"})
