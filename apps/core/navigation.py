@@ -208,6 +208,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
+    # Staff Activity Log (owner, 2026-09-29), replacing Who's Online: a
+    # Programme Lead reads the people they supervise, the Country Director the
+    # country grouped by Programme Lead, the Admin the country for technical
+    # support only (docs/STAFF_TIME_STANDARD.md §5).
+    "staff_activity": {PL, CD, ADMIN},
     # The country map and, under it, the country portfolio (owner,
     # 2026-09-28: the portfolio left Country Oversight's tabs for the map
     # page). The same readers as Country Oversight.
@@ -843,6 +848,7 @@ ICONS.update(
         "team_planning_oversight": ICONS["planning"],
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
+        "staff_activity": ICONS["users"],
         "country_map": ICONS["coverage"],
         "planning_monitor": ICONS["team_targets"],
         "cluster_oversight": ICONS["clusters"],
@@ -1817,6 +1823,12 @@ SIDEBAR_ITEMS = [
                 "url": "/country-map/",
                 "page_key": "country_map",
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
+            },
+            {
+                "label": "Staff Activity",
+                "url": "/staff-activity",
+                "page_key": "staff_activity",
+                "visible_to": {PL, CD, ADMIN},
             },
             {
                 # Read-only watching of a coordinator's project work. It sits

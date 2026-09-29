@@ -1783,6 +1783,37 @@ def create(
     training_course=None,
     ssa_default_focus: bool = True,
 ) -> dict:
+    """Create and cost one governed Activity (see `_create`).
+
+    The create prices the activity, attaches it to its day's batch and
+    re-prices that day: each step resolved the same published rate cards and
+    read the same rate rows again, nine queries for values a create never
+    changes. They are held for this one create (rate_cards_held), never for
+    the request, so a request that edits the catalogue first still prices
+    against the edit.
+    """
+    from apps.budget.costing_service import rate_cards_held
+
+    with rate_cards_held():
+        return _create(
+            data,
+            principal,
+            skip_cost_snapshot=skip_cost_snapshot,
+            core_slot_verified=core_slot_verified,
+            training_course=training_course,
+            ssa_default_focus=ssa_default_focus,
+        )
+
+
+def _create(
+    data: dict,
+    principal,
+    *,
+    skip_cost_snapshot: bool = False,
+    core_slot_verified: bool = False,
+    training_course=None,
+    ssa_default_focus: bool = True,
+) -> dict:
     """Create and cost one governed Activity.
 
     Catalogue eligibility, SSA recommendation lineage, frequency, scope,

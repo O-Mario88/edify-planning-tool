@@ -156,15 +156,6 @@ def _dashboard_context(request, snapshot, filters) -> dict:
         ),
         "lens_tabs": country_lens_tabs("coverage"),
         "active_oversight_view": "coverage",
-        # Who's Online sits under the planning tab for the readers of the
-        # table (apps.frontend.views.dashboard_views.whos_online_view).
-        "show_whos_online": (getattr(request.user, "active_role", "") or "")
-        in ("CountryDirector", "Admin"),
-        # The panel's own period and page, kept in the address by its filter
-        # and pager, so a reload opens it where it was.
-        "presence_query": urlencode(
-            [(k, v) for k, v in request.GET.items() if k.startswith("presence_")]
-        ),
         "columns": svc.TABLE_COLUMNS,
         "no_lead_key": NO_LEAD_KEY,
         "more_open": bool(

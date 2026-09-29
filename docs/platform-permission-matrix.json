@@ -17738,6 +17738,159 @@
    "view": "apps.frontend.views.staff_views.staff_directory_view"
   },
   {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity",
+   "route_name": "staff_activity",
+   "view": "apps.frontend.views.staff_activity_views.staff_activity_view"
+  },
+  {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/staff-activity/beat",
+   "route_name": "staff_activity_beat",
+   "view": "apps.frontend.views.staff_activity_views.staff_activity_beat_view"
+  },
+  {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity/export",
+   "route_name": "staff_activity_export",
+   "view": "apps.frontend.views.staff_activity_views.staff_activity_export_view"
+  },
+  {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity/follow-ups",
+   "route_name": "staff_activity_follow_ups",
+   "view": "apps.frontend.views.staff_activity_views.follow_up_queue_view"
+  },
+  {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/staff-activity/follow-ups/<str:follow_up_id>",
+   "route_name": "staff_activity_follow_up",
+   "view": "apps.frontend.views.staff_activity_views.follow_up_detail_view"
+  },
+  {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/staff-activity/follow-ups/<str:follow_up_id>/<slug:action>",
+   "route_name": "staff_activity_follow_up_transition",
+   "view": "apps.frontend.views.staff_activity_views.follow_up_transition_view"
+  },
+  {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity/people/<str:person_id>",
+   "route_name": "staff_activity_person",
+   "view": "apps.frontend.views.staff_activity_views.staff_activity_person_view"
+  },
+  {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity/people/<str:person_id>/follow-up",
+   "route_name": "staff_activity_follow_up_new",
+   "view": "apps.frontend.views.staff_activity_views.follow_up_new_view"
+  },
+  {
+   "page_permission": "staff_activity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/staff-activity/people/<str:person_id>/follow-up/send",
+   "route_name": "staff_activity_follow_up_create",
+   "view": "apps.frontend.views.staff_activity_views.follow_up_create_view"
+  },
+  {
    "page_permission": "staff",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18597,27 +18750,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 418,
-  "Admin": 1044,
-  "BusinessTransformationOfficer": 235,
-  "CCEO": 547,
-  "CountryDirector": 797,
-  "HumanResources": 333,
-  "ImpactAssessment": 661,
-  "MfiLoanOfficer": 131,
-  "MfiPartnerAdmin": 134,
-  "PartnerAdmin": 222,
-  "PartnerFieldOfficer": 222,
-  "Program Lead": 635,
-  "ProjectCoordinator": 461,
-  "RegionalProgramLead": 327,
-  "RegionalVicePresident": 396
+  "Accountant": 421,
+  "Admin": 1053,
+  "BusinessTransformationOfficer": 238,
+  "CCEO": 550,
+  "CountryDirector": 806,
+  "HumanResources": 336,
+  "ImpactAssessment": 664,
+  "MfiLoanOfficer": 134,
+  "MfiPartnerAdmin": 137,
+  "PartnerAdmin": 225,
+  "PartnerFieldOfficer": 225,
+  "Program Lead": 644,
+  "ProjectCoordinator": 464,
+  "RegionalProgramLead": 330,
+  "RegionalVicePresident": 399
  },
  "summary": {
-  "page_keys_declared": 182,
-  "page_keys_in_navigation": 199,
-  "routes_guarded": 1141,
-  "routes_total": 1335,
+  "page_keys_declared": 183,
+  "page_keys_in_navigation": 200,
+  "routes_guarded": 1150,
+  "routes_total": 1344,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

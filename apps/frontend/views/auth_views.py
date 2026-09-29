@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
-from apps.accounts.presence import record_login
+from apps.accounts.presence import record_login, record_logout
 from django.contrib.auth import (
     authenticate,
     login as django_login,
@@ -692,6 +692,7 @@ def mfa_app_remove_view(request):
 
 @require_POST
 def logout_view(request):
+    record_logout(request, request.user)
     django_logout(request)
     messages.success(request, "Logged out successfully.")
     return redirect("/login")

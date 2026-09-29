@@ -1,0 +1,52 @@
+{% comment %}
+  One follow-up: what it is about, the snapshot the manager saw, its history,
+  and the steps open to the reader. Shared by the drawer and the page.
+{% endcomment %}
+<div class="sal-fu space-y-4 text-[12px] text-slate-600">
+  <dl class="sal-snapshot">
+    <div><dt>About</dt><dd>{% firstof follow_up.subject.name follow_up.subject.email %}</dd></div>
+    <div><dt>Topic</dt><dd>{{ follow_up.get_trigger_display }}</dd></div>
+    <div><dt>Status</dt><dd>{{ follow_up.get_status_display }}</dd></div>
+    <div><dt>Priority</dt><dd>{{ follow_up.get_priority_display }}</dd></div>
+    <div><dt>Due</dt><dd>{{ follow_up.due_date|date:"D j M Y" }}</dd></div>
+    <div><dt>From</dt><dd>{{ follow_up.created_by.name|default:"—" }}</dd></div>
+    <div><dt>To</dt><dd>{% firstof follow_up.assignee.name follow_up.assignee.email %}</dd></div>
+    <div><dt>Period</dt><dd>{{ follow_up.snapshot.period|default:"—" }}</dd></div>
+  </dl>
+  {% if follow_up.snapshot and not is_subject %}
+  <p class="sal-sub">When sent: {{ follow_up.snapshot.logins }} login{{ follow_up.snapshot.logins|pluralize }} · {{ follow_up.snapshot.active }} active · {{ follow_up.snapshot.actions }} meaningful action{{ follow_up.snapshot.actions|pluralize }} · {{ follow_up.snapshot.schools }} school{{ follow_up.snapshot.schools|pluralize }}</p>
+  {% endif %}
+  <blockquote class="sal-quote">{{ follow_up.note|linebreaksbr }}</blockquote>
+  {% if follow_up.resolution %}<p><strong>Resolution:</strong> {{ follow_up.resolution }}</p>{% endif %}
+
+  <section aria-labelledby="sal-fu-history">
+    <h4 id="sal-fu-history" class="sal-subhead">History</h4>
+    <ol class="sal-timeline">
+      {% for h in follow_up.history_rows %}
+      <li class="sal-timeline__ok">
+        <span class="sal-timeline__at">{{ h.at|date:"d/m H:i" }}</span>
+        <span class="sal-timeline__what">{{ h.by_name }} · {{ h.status_label }}</span>
+        {% if h.note %}<span class="sal-timeline__where">{{ h.note }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% if actions %}
+  <form method="post" class="space-y-3" id="sal-fu-step">
+    {% csrf_token %}
+    <div id="sal-fu-step-errors" aria-live="polite"></div>
+    <div class="space-y-1">
+      <label for="sal-fu-step-note" class="block edify-text-caption font-semibold text-slate-600">Note <span class="font-normal text-slate-500">(needed for some steps)</span></label>
+      <textarea id="sal-fu-step-note" name="note" rows="3" maxlength="4000" class="w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px]"></textarea>
+    </div>
+    <div class="sal-steps">
+      {% for a in actions %}
+      <button type="submit" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8"
+              formaction="/staff-activity/follow-ups/{{ follow_up.id }}/{{ a.key }}"
+              hx-post="/staff-activity/follow-ups/{{ follow_up.id }}/{{ a.key }}" hx-include="closest form" hx-target="#sal-fu-step-errors">{{ a.label }}</button>
+      {% endfor %}
+    </div>
+  </form>
+  {% endif %}
+</div>

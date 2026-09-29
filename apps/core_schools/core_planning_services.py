@@ -1340,6 +1340,15 @@ class CorePlanningService:
             verification_status="confirmed",
         ).order_by("school_id", "-date_of_ssa", "-created_at"):
             latest_confirmed_ssa_by_school.setdefault(rec.school_id, rec)
+        # Each latest record's lowest intervention score, read for the whole
+        # page at once (it was one query per school row).
+        lowest_score_by_record = {}
+        latest_ids = [rec.id for rec in latest_confirmed_ssa_by_school.values()]
+        if latest_ids:
+            for score in SsaScore.objects.filter(ssa_record_id__in=latest_ids).order_by(
+                "ssa_record_id", "score"
+            ):
+                lowest_score_by_record.setdefault(score.ssa_record_id, score)
 
         queue_data = []
         iterator = (
@@ -1423,7 +1432,7 @@ class CorePlanningService:
                 weakest_intervention = "Assessment Required"
                 next_recommended = "Assessment Required"
             else:
-                lowest_score = latest_ssa.scores.order_by("score").first()
+                lowest_score = lowest_score_by_record.get(latest_ssa.id)
                 if lowest_score:
                     weakest_intervention = dict(SsaIntervention.choices).get(
                         lowest_score.intervention, lowest_score.intervention

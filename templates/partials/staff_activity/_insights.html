@@ -1,0 +1,62 @@
+{% comment %}
+  Team Insights (the reference's side panel): live status, where the active
+  time went, the last seven days and the devices — over the rows the table
+  lists, so every figure answers the same filters.
+{% endcomment %}
+<aside class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-aside" aria-labelledby="sal-insights-title">
+  <header class="sal-aside__head">
+    <h2 id="sal-insights-title">Team Insights</h2>
+    <p>{{ log.period.label|capfirst }}</p>
+  </header>
+
+  <section class="sal-aside__part" aria-labelledby="sal-live-title">
+    <h3 id="sal-live-title">Online now</h3>
+    <div class="sal-live">
+      <p class="sal-live__big"><strong>{{ insights.online }}</strong> online now</p>
+      <ul class="sal-legend">
+        {% for s in insights.status %}
+        <li><i class="sal-dot sal-dot--{{ s.key }}" aria-hidden="true"></i>{{ s.label }} <span>{{ s.count }} ({{ s.share }}%)</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <p class="sal-note">Online is not proof of work; it means a recent active beat.</p>
+  </section>
+
+  <section class="sal-aside__part" aria-labelledby="sal-modules-title">
+    <h3 id="sal-modules-title">Active time by module</h3>
+    {% if insights.modules %}
+    <ul class="sal-modlist">
+      {% for m in insights.modules %}
+      <li><span class="sal-modlist__name">{{ m.label }}</span><span class="sal-meter"><span style="inline-size: {{ m.share }}%"></span></span><span class="sal-modlist__pct">{{ m.share }}%</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="sal-none">No active time in this period.</p>
+    {% endif %}
+  </section>
+
+  <section class="sal-aside__part" aria-labelledby="sal-teamtrend-title">
+    <h3 id="sal-teamtrend-title">Active staff, last 7 days</h3>
+    <ol class="sal-bars sal-bars--team">
+      {% for d in insights.trend %}
+      <li title="{{ d.day|date:'D j M' }}: {{ d.count }} active">
+        <span class="sal-bars__n">{{ d.count }}</span>
+        <span class="sal-bars__col"><span style="block-size: {{ d.height }}%"></span></span>
+        <span class="sal-bars__day">{{ d.label }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="sal-aside__part" aria-labelledby="sal-devices-title">
+    <h3 id="sal-devices-title">Device split</h3>
+    {% if insights.device_total %}
+    <ul class="sal-devices">
+      {% for d in insights.devices %}<li><strong>{{ d.share }}%</strong> {{ d.label }}</li>{% endfor %}
+    </ul>
+    <p class="sal-split" aria-hidden="true">{% for d in insights.devices %}<span class="sal-split__{{ d.key }}" style="inline-size: {{ d.share }}%"></span>{% endfor %}</p>
+    {% else %}
+    <p class="sal-none">No sign-ins in this period.</p>
+    {% endif %}
+  </section>
+</aside>

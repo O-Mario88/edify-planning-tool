@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **863**
-- All registered routes: **1335**
+- Routed product surfaces: **872**
+- All registered routes: **1344**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **569**
+- Shared component templates: **576**
 - Full pages: **262**
-- Partials and drawers: **298**
-- Permission-gated surfaces: **847**
-- Referenced by automated tests: **756**
+- Partials and drawers: **302**
+- Permission-gated surfaces: **856**
+- Referenced by automated tests: **765**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -292,7 +292,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D2C1ACA82A | /dashboard/pl-urgent-schools | Pl Urgent Schools Page | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6756CED269 | /dashboard/pl-week-send/<str:activity_id>/ | Dashboard Pl Week Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-063B2154FF | /dashboard/planning-progress | Planning Progress Fragment | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-948548FD70 | /dashboard/whos-online | Whos Online | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-948548FD70 | /dashboard/whos-online | Whos Online | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-44FBA5501A | /data-quality/duplicates | Duplicate Review | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3804BD9D07 | /data-quality/issue/<str:issue_id>/action | Data Quality Issue Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-02AC0DDFB9 | /data-repair | Data Repair Center | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -831,6 +831,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-8387F7ABC9 | /ssa/verification/ | IA SSA Verification Queue | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4F5469B895 | /ssa/verification/<str:record_id>/return-drawer | Ssa Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3B44A1E272 | /staff | People Directory · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A4545B113B | /staff-activity | Staff Activity | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CAB88635F4 | /staff-activity/beat | Staff Activity Beat | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-1B70B750E4 | /staff-activity/export | Staff Activity Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4A333FA412 | /staff-activity/follow-ups | Staff Activity Follow Ups | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4A8E1F18FC | /staff-activity/follow-ups/<str:follow_up_id> | Follow-up · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6B1807D775 | /staff-activity/follow-ups/<str:follow_up_id>/<slug:action> | Staff Activity Follow Up Transition | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-65DDC55B21 | /staff-activity/people/<str:person_id> | Staff Activity Person | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-2B01C49342 | /staff-activity/people/<str:person_id>/follow-up | Staff Activity Follow Up New | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-FB59FE4C41 | /staff-activity/people/<str:person_id>/follow-up/send | Staff Activity Follow Up Create | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7F963ACD27 | /staff/<str:user_id> | Staff Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-37C6B437D7 | /strategic-priorities | Priority Setting Dashboard · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8EA7B066B3 | /strategic-priorities/action | Strategic Priority Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

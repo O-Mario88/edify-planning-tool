@@ -52,9 +52,28 @@ def resolve_scheduling_user(staff_or_user_id: str | None):
     """
     if not staff_or_user_id:
         return None
-    return User.objects.filter(
-        Q(id=staff_or_user_id) | Q(staff_profile__id=staff_or_user_id)
-    ).first()
+    # The profile rides along: every caller goes on to read the user's
+    # staff_profile_id, which was one more query each time.
+    return (
+        User.objects.filter(
+            Q(id=staff_or_user_id) | Q(staff_profile__id=staff_or_user_id)
+        )
+        .select_related("staff_profile")
+        .first()
+    )
+
+
+def _live_profile(user):
+    """The user's StaffProfile unless it is soft-deleted — what
+    ``StaffProfile.objects.filter(user=user).first()`` returns — read from the
+    user when resolve_scheduling_user already loaded it."""
+    if user is None:
+        return None
+    missing = object()
+    loaded = user._state.fields_cache.get("staff_profile", missing)
+    if loaded is missing:
+        return StaffProfile.objects.filter(user=user).first()
+    return loaded if loaded is not None and loaded.deleted_at is None else None
 
 
 def canonical_staff_identity(staff_or_user_id: str | None) -> str | None:
@@ -132,7 +151,7 @@ class SchedulingPolicyService:
         if public_holiday:
             blockers.append(f"This date is a public holiday: {public_holiday.name}.")
 
-        sp = StaffProfile.objects.filter(user=user).first() if user else None
+        sp = _live_profile(user)
 
         h_blocks = CalendarBlock.objects.filter(
             is_active=True, start_date__lte=d, end_date__gte=d

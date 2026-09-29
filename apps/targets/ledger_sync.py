@@ -115,6 +115,8 @@ def refresh_many(users, fy: str) -> None:
     )
     if not marks:
         return
+    global _generation
+    _generation += 1  # marks remembered before this clear no longer stand
     dirty = {owner for _id, owner, _at in marks}
     stale = [u for u in users if ids_of[u.id] & dirty]
     TargetAchievementService.rebuild_many(stale, fy)
@@ -145,9 +147,97 @@ def _changed(owner_field, date_field, relevant=None):
         instance._ledger_was = current
         if relevant is not None and not (relevant(current[2]) or relevant(was_type)):
             return
-        mark({was_owner, current[0]}, {_fy_of(was_date), _fy_of(current[1])})
+        owners = {was_owner, current[0]}
+        fys = {_fy_of(was_date), _fy_of(current[1])}
+        if _already_marked(instance, owners, fys):
+            return
+        mark(owners, fys)
+        _remember_mark(instance, owners, fys)
 
     return handler
+
+
+# ── One mark per row per transaction ─────────────────────────────────────────
+# Within one web request (and only there — see _row_marks), scheduling one
+# visit saves its Activity five times (create, catalogue
+# snapshot, plan alignment, batch, cost) and each save upserted the same mark.
+# The first upsert is enough while its transaction is still open: the row
+# commits with every later change to the activity, and the rebuild reads the
+# activity as committed. So a save repeats the upsert only when the owner or
+# year changed, or when the transaction holding the first mark has ended or
+# lost it to a savepoint rollback.
+#
+# "Still open" is read from Django's own bookkeeping: the first mark queues a
+# no-op on_commit sentinel, and Django drops it from `run_on_commit` on commit,
+# on rollback, and when the savepoint it was queued in rolls back. A
+# `refresh_many` in the same transaction clears marks, so it also ends every
+# remembered mark (_generation).
+_generation = 0
+
+
+def _mark_key(owners, fys):
+    return (
+        frozenset(str(o) for o in owners if o),
+        frozenset(str(fy) for fy in fys if fy),
+    )
+
+
+def _row_marks():
+    """Remembered marks by row, for the request in hand, or None outside a
+    request (commands, jobs and direct service calls mark on every save, as
+    before). Kept per request, not on the instance: the pricing steps re-read
+    the Activity, so later saves come from other copies of the same row."""
+    from apps.core.request_cache import store
+
+    bucket = store()
+    if bucket is None:
+        return None
+    return bucket.setdefault("targets.ledger_sync.row_marks", {})
+
+
+def _row(instance):
+    return (instance._meta.label, instance.pk)
+
+
+def _already_marked(instance, owners, fys) -> bool:
+    from django.db import transaction
+
+    connection = transaction.get_connection()
+    marks = _row_marks()
+    if marks is None or not connection.in_atomic_block or instance.pk is None:
+        return False
+    remembered = marks.get(_row(instance))
+    if remembered is None:
+        return False
+    key, sentinel, generation = remembered
+    if key != _mark_key(owners, fys) or generation != _generation:
+        return False
+    return any(
+        callback is sentinel for _sids, callback, _robust in connection.run_on_commit
+    )
+
+
+def _remember_mark(instance, owners, fys) -> None:
+    from django.db import transaction
+
+    connection = transaction.get_connection()
+    marks = _row_marks()
+    if marks is None:
+        return
+    if not connection.in_atomic_block or instance.pk is None:
+        marks.pop(_row(instance), None)
+        return
+    # Entries whose transaction has ended are dead weight; drop them so the
+    # dict never outlives more than the transaction in hand.
+    live = {id(callback) for _sids, callback, _robust in connection.run_on_commit}
+    for row in [r for r, (_k, s, _g) in marks.items() if id(s) not in live]:
+        del marks[row]
+
+    def sentinel():
+        return None
+
+    transaction.on_commit(sentinel)
+    marks[_row(instance)] = (_mark_key(owners, fys), sentinel, _generation)
 
 
 def _credited_activity_type(activity_type) -> bool:

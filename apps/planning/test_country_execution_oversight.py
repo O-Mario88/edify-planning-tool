@@ -1314,56 +1314,19 @@ class CountryOversightHomeTest(World):
         # The former command dashboard still answers when a link names a view.
         self.assertEqual(client.get("/dashboard?view=operations").status_code, 200)
 
-    def test_whos_online_sits_under_the_planning_tab(self):
+    def test_whos_online_became_the_staff_activity_log(self):
+        """Who's Online sat under the planning tab from 2026-09-28; on
+        2026-09-29 it became the Staff Activity Log, a page of its own."""
         director = (
             self.as_user(self.cd_user)
             .get("/country-planning-oversight/")
             .content.decode()
         )
-        self.assertIn('hx-get="/dashboard/whos-online"', director)
-        reviewer = (
-            self.as_user(self.ia_user)
-            .get("/country-planning-oversight/")
-            .content.decode()
-        )
-        self.assertNotIn('hx-get="/dashboard/whos-online"', reviewer)
-        execution = (
-            self.as_user(self.cd_user)
-            .get("/country-planning-oversight/?view=execution")
-            .content.decode()
-        )
-        self.assertNotIn('hx-get="/dashboard/whos-online"', execution)
-        operations = (
-            self.as_user(self.cd_user)
-            .get("/dashboard?view=operations")
-            .content.decode()
-        )
-        self.assertNotIn('hx-get="/dashboard/whos-online"', operations)
-
-    def test_whos_online_filters_in_place_and_reopens_where_it_was(self):
-        body = (
-            self.as_user(self.cd_user)
-            .get(
-                "/country-planning-oversight/?presence_period=week&presence_groups_page=2&fy="
-                + FY
-            )
-            .content.decode()
-        )
-        # The panel's filter and pager swap into the host that loads it.
-        self.assertIn(
-            '<div class="presence-host" data-presence-host data-pager-fragment="/dashboard/whos-online"',
-            body,
-        )
-        self.assertIn(
-            'hx-get="/dashboard/whos-online?presence_period=week&amp;presence_groups_page=2"',
-            body,
-        )
-        panel = self.as_user(self.cd_user).get(
-            "/dashboard/whos-online?presence_period=week"
-        )
-        self.assertContains(panel, "data-admin-presence")
+        self.assertNotIn("/dashboard/whos-online", director)
+        old = self.as_user(self.cd_user).get("/dashboard/whos-online")
+        self.assertEqual(old["Location"], "/staff-activity")
         self.assertEqual(
-            self.as_user(self.ia_user).get("/dashboard/whos-online").status_code, 403
+            self.as_user(self.cd_user).get("/staff-activity").status_code, 200
         )
 
     def test_the_country_map_carries_the_portfolio(self):

@@ -14,6 +14,8 @@ context (contextvars), so callers don't thread it through.
 
 from __future__ import annotations
 
+import copy
+
 import logging
 from typing import Any
 
@@ -34,6 +36,82 @@ logger = logging.getLogger("edify.audit")
 # next sequence, causing the later insert to lose its audit event to the unique
 # constraint. The fixed key is private to this application/database.
 _AUDIT_CHAIN_LOCK_ID = 0x4544494659415544  # "EDIFYAUD", signed-bigint safe
+
+
+ACTING_FOR_MEMO = "audit.acting_for"
+
+
+def _acting_for(actor_id) -> dict | None:
+    """The cover this actor is standing in, as audit payload, or None.
+
+    One scheduled visit writes several audit rows for the same actor; the
+    cover is read once per request (two queries a row before). A cover or
+    staff-profile write in the request drops the memo (register).
+    """
+    from apps.core.request_cache import memoize
+
+    found = memoize(
+        (ACTING_FOR_MEMO, str(actor_id)), lambda: _read_acting_for(actor_id)
+    )
+    return copy.deepcopy(found) if found else None
+
+
+def _read_acting_for(actor_id) -> dict | None:
+    from django.utils import timezone
+
+    from apps.accounts.models import StaffProfile, TemporaryCoverageAssignment
+
+    now = timezone.now()
+    sp = StaffProfile.objects.filter(user_id=actor_id).first()
+    if not sp:
+        return None
+    cov = (
+        TemporaryCoverageAssignment.objects.filter(
+            covering_staff=sp,
+            start_datetime__lte=now,
+            end_datetime__gte=now,
+            status="active",
+        )
+        .select_related("original_staff__user", "leave_request")
+        .first()
+    )
+    if not cov:
+        return None
+    return {
+        "acting_for": {
+            "staff_profile_id": cov.original_staff.id,
+            "user_id": cov.original_staff.user.id,
+            "name": cov.original_staff.user.name,
+        },
+        "reason": "Leave Coverage",
+        "leave_request_id": cov.leave_request.id,
+    }
+
+
+def _forget_acting_for(sender=None, **kwargs) -> None:
+    from apps.core.request_cache import store
+
+    bucket = store()
+    if bucket:
+        for key in [
+            k for k in bucket if isinstance(k, tuple) and k[0] == ACTING_FOR_MEMO
+        ]:
+            del bucket[key]
+
+
+def register() -> None:
+    from django.db.models.signals import post_delete, post_save
+
+    from apps.accounts.models import StaffProfile, TemporaryCoverageAssignment
+
+    for model in (StaffProfile, TemporaryCoverageAssignment):
+        for signal in (post_save, post_delete):
+            signal.connect(
+                _forget_acting_for,
+                sender=model,
+                weak=False,
+                dispatch_uid=f"audit-acting-for-{model._meta.label}-{id(signal)}",
+            )
 
 
 def log(
@@ -59,41 +137,13 @@ def log(
     try:
         if actor_id:
             try:
-                from apps.accounts.models import (
-                    TemporaryCoverageAssignment,
-                    StaffProfile,
-                )
-                from django.utils import timezone
-
-                now = timezone.now()
-                sp = StaffProfile.objects.filter(user_id=actor_id).first()
-                if sp:
-                    cov = (
-                        TemporaryCoverageAssignment.objects.filter(
-                            covering_staff=sp,
-                            start_datetime__lte=now,
-                            end_datetime__gte=now,
-                            status="active",
-                        )
-                        .select_related("original_staff__user", "leave_request")
-                        .first()
-                    )
-                    if cov:
-                        if not payload:
-                            payload = {}
-                        elif not isinstance(payload, dict):
-                            payload = {"original_payload": payload}
-                        payload.update(
-                            {
-                                "acting_for": {
-                                    "staff_profile_id": cov.original_staff.id,
-                                    "user_id": cov.original_staff.user.id,
-                                    "name": cov.original_staff.user.name,
-                                },
-                                "reason": "Leave Coverage",
-                                "leave_request_id": cov.leave_request.id,
-                            }
-                        )
+                acting_for = _acting_for(actor_id)
+                if acting_for:
+                    if not payload:
+                        payload = {}
+                    elif not isinstance(payload, dict):
+                        payload = {"original_payload": payload}
+                    payload.update(acting_for)
             except Exception as e:
                 logger.error("Failed to intercept audit for coverage: %s", e)
 

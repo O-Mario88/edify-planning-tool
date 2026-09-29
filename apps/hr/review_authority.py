@@ -140,6 +140,74 @@ def is_reviewer_of(staff_profile, principal) -> bool:
     return principal_profile_id in _covering_for(reviewers)
 
 
+def reviewable_by(staff_profiles, principal) -> set:
+    """The ids among these StaffProfiles whose manager channels this principal
+    may write: `is_reviewer_of` for a whole list in three queries.
+
+    HR Today asked `is_reviewer_of` once per overdue conversation, two or
+    three queries each, so a Country Director's page grew with headcount.
+    Same rules: the resolved reviewers, or anyone covering one of them now,
+    never the person themself.
+    """
+    from apps.accounts.models import (
+        StaffProfile,
+        StaffSupervisorAssignment,
+        TemporaryCoverageAssignment,
+    )
+
+    principal_profile_id = getattr(principal, "staff_profile_id", None) or getattr(
+        getattr(principal, "staff_profile", None), "id", None
+    )
+    if not principal_profile_id:
+        return set()
+    expected_by_staff = {}
+    for profile in staff_profiles:
+        user = getattr(profile, "user", None)
+        expected = REVIEWER_ROLE_FOR.get(getattr(user, "active_role", ""), ())
+        if expected and profile.id != principal_profile_id:
+            expected_by_staff[profile.id] = expected
+    if not expected_by_staff:
+        return set()
+    supervisors_by_staff: dict = {}
+    for supervisee_id, supervisor_id in StaffSupervisorAssignment.objects.filter(
+        supervisee_id__in=list(expected_by_staff)
+    ).values_list("supervisee_id", "supervisor_id"):
+        supervisors_by_staff.setdefault(supervisee_id, []).append(supervisor_id)
+    live_role = dict(
+        StaffProfile.objects.filter(
+            id__in={s for ids in supervisors_by_staff.values() for s in ids},
+            user__is_active=True,
+            user__deleted_at__isnull=True,
+            onboarding_state__in=LIVE_STATES,
+        ).values_list("id", "user__active_role")
+    )
+    reviewers_by_staff = {
+        staff_id: {
+            s
+            for s in supervisors_by_staff.get(staff_id, ())
+            if live_role.get(s) in expected
+        }
+        for staff_id, expected in expected_by_staff.items()
+    }
+    now = timezone.now()
+    covered = set(
+        TemporaryCoverageAssignment.objects.filter(
+            original_staff_id__in={
+                r for ids in reviewers_by_staff.values() for r in ids
+            },
+            covering_staff_id=principal_profile_id,
+            status="active",
+            start_datetime__lte=now,
+            end_datetime__gte=now,
+        ).values_list("original_staff_id", flat=True)
+    )
+    return {
+        staff_id
+        for staff_id, reviewers in reviewers_by_staff.items()
+        if principal_profile_id in reviewers or reviewers & covered
+    }
+
+
 def assert_reviewer(staff_profile, principal, action: str = "assess") -> None:
     from apps.core.exceptions import Forbidden
 

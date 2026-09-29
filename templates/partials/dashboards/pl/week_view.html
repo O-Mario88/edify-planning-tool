@@ -71,13 +71,4 @@
        data-pl-past-due-autoload></div>
   {% endif %}
 
-  {% comment %}Who's Online for this Lead's team, on the main dashboard
-  (owner, 2026-09-24: "so they can be able to monitor their team working").
-  The same scoped panel the Team view draws; the view builds `presence` over
-  the reporting line only, so a Lead never sees anyone else's staff.{% endcomment %}
-  {% if presence %}
-  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" data-pl-presence>
-    {% include "partials/dashboards/_whos_online.html" %}
-  </div>
-  {% endif %}
 </div>
