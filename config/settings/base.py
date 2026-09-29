@@ -576,6 +576,17 @@ else:
             "LOCATION": (
                 f"edify-tests-{os.getpid()}" if _is_testing else "edify-pm-locmem-cache"
             ),
+            # Django's default is 300 entries per process, after which a third
+            # is dropped. Dashboards cache one entry per person, role and
+            # filter set (27 KB on average, 90 KB at most on the dev copy), so
+            # a busy five minutes evicted live figures and rebuilt them from
+            # the database. 2,000 entries is at most ~200 MB a worker; the web
+            # instance has 4 GB for its four workers since 2026-09-29.
+            "OPTIONS": {
+                "MAX_ENTRIES": _as_int(
+                    os.environ.get("LOCMEM_CACHE_MAX_ENTRIES"), 2000
+                ),
+            },
         }
     }
 
