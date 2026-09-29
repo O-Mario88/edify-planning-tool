@@ -234,8 +234,8 @@ database read. More workers are what spread rendering across the CPU. A
 deploy's first request also used to wait seven seconds of imports (now paid
 at boot by `config/warmup.py`). A worker is about 200 MB, so the 1 GB
 instance runs two comfortably and the Dockerfile's default of three with
-headroom to spare. Set `WEB_CONCURRENCY` to 2 on the live spec (3 on a 2 GB
-instance). Keep `REDIS_URL` unset only while the instance count is one; the
+headroom to spare. Set `WEB_CONCURRENCY` to 2 on a 1 GB instance, 3 on 2 GB;
+production runs 4 on its 4 GB instance since 2026-09-29. Keep `REDIS_URL` unset only while the instance count is one; the
 per-process cache is fine at one instance and wrong at two.
 
 ## 3a-ter. Peak load: requests are bounded before they reach the database
@@ -261,8 +261,10 @@ Size it against the database, not the web tier:
 `WEB_CONCURRENCY × WEB_MAX_CONCURRENT_REQUESTS × instances`, plus the
 scheduler's connection and a few for migrations and the console, must stay
 under the cluster's connection limit (`SHOW max_connections;` minus the
-reserved slots). With the 1 GB database (about 22 usable connections),
-2 workers × 6 = 12 leaves room for everything else. Behind a DigitalOcean
+reserved slots). Production (2026-09-29) has a 4 GB database with 97
+connections and a 40-connection `edify_web` pool, and runs 4 workers × 10 = 40.
+On the old 1 GB database (about 22 usable connections), 2 workers × 6 = 12 left
+room for everything else. Behind a DigitalOcean
 connection pool (PgBouncer, transaction mode) set `DB_USE_PGBOUNCER=true`
 and the limit rises with the pool size. Set `WEB_MAX_CONCURRENT_REQUESTS=0`
 only to switch the guard off while diagnosing.
