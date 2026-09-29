@@ -1,0 +1,17 @@
+{% comment %}An officer's delivery channels: staff delivery, then each Partner
+organisation delivering in their portfolio. Partner work has no PL stage.{% endcomment %}
+{% for row in rows %}
+<tr data-level="3" x-show="open && owners['{{ parent }}']">
+  <th scope="row" class="cpo-namecell" data-leaf>
+    <span>{{ row.name }}</span>{% if row.is_staff %}<span class="cpo-hint"><span>delivered by staff</span></span>{% else %}<span class="cpo-hint"><span>direct to IA</span></span>{% endif %}
+  </th>
+  {% include "partials/country_execution/_cells.html" with cells=row.cells %}
+  <td class="cpo-actcell">
+    <div class="cpo-acts">
+      <button type="button" class="cpo-view"
+              hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;owner={{ parent }}&amp;partner_key={{ row.key }}&amp;stage=due&amp;{{ query }}"
+              hx-target="#drawer-container" hx-swap="innerHTML" aria-label="View {{ row.name }} for this officer">View</button>
+    </div>
+  </td>
+</tr>
+{% endfor %}

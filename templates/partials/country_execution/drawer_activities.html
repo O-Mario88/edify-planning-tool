@@ -1,0 +1,17 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}The records behind a figure: every KPI card, backlog slice, row
+"View" and shortcut opens this, filtered to exactly what it counted.{% endcomment %}
+{% block drawer_title %}{{ title }}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet cxo-sheet">
+  <p class="cpo-muted">{{ subtitle }}</p>
+  {% if may_follow_up and follow_up_query %}
+  <p><button type="button" class="cpo-ask" hx-get="/country-planning-oversight/execution/follow-up?{{ follow_up_query }}" hx-target="#drawer-container" hx-swap="innerHTML">Follow Up with PL</button></p>
+  {% endif %}
+  {% if may_see_schools %}
+  {% include "partials/country_execution/_activity_rows.html" with listing=listing pager_target="drawer" %}
+  {% else %}
+  <p class="cpo-muted">{{ listing.total }} activities. Activity rows are not shown for your role.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% load table_pagination %}{% comment %}
+The Execution & Completion body: six figures, the funnel and the trend, the
+on-time, backlog, age and forecast readings with the Director's shortcuts, the
+hierarchy table, and the issues, recent movements and follow-ups under it.
+Every figure comes from one fold (apps.planning.country_execution.service), so
+a card is the table's total and a chart's bar is a table's row.
+{% endcomment %}
+<div id="cxo-workspace" class="cpo-workspace cxo-workspace">
+
+  <p class="cpo-notice" role="note">
+    <strong>{{ header.window_label }}</strong> · work whose approved scheduled date falls in the period.
+    {% if header.integrity.tracked %}
+    Plan at the start of the period: {{ header.integrity.original }} · added since {{ header.integrity.added }} · moved in {{ header.integrity.moved_in }} · moved out {{ header.integrity.moved_out }} · cancelled {{ header.integrity.cancelled }} · executable now {{ header.integrity.current }}.
+    {% elif header.integrity.tracking_since %}
+    The original plan of a period is recorded from {{ header.integrity.tracking_since|date:"j M Y" }}; this period began earlier, so its figures are the current plan.
+    {% endif %}
+    {% if locked %}
+    <span class="cxo-locked">This period ended and was locked on {{ locked.0.taken_at|date:"j M Y" }}{% if locked|length > 1 %} (revised {{ locked|length|add:"-1" }}×){% endif %}; the figures below are live.
+      <button type="button" class="cpo-link" hx-get="/country-planning-oversight/execution/snapshots/{{ locked.0.id }}" hx-target="#drawer-container" hx-swap="innerHTML">View the locked figures</button></span>
+    {% endif %}
+  </p>
+
+  <section class="cpo-metrics cxo-metrics" aria-label="Execution summary">
+    {% for card in kpis %}
+    <button type="button" class="cpo-metric cxo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.key }}"
+            hx-get="{{ card.href }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            aria-label="{{ card.label }}: {{ card.value }}{% if card.note %}, {{ card.note }}{% endif %}. Open the activities behind it.">
+      <span class="cpo-glyph cxo-glyph" data-tone="{{ card.tone }}">{% include "partials/country_execution/_glyph.html" with name=card.icon %}</span>
+      <span class="cxo-label">{{ card.label }}</span>
+      <span class="cxo-figure">{{ card.value }}</span>
+      <span class="cxo-metric-note">{{ card.note }}</span>
+      {% if card.share is not None %}
+      <span class="cpo-meter cxo-meter" aria-hidden="true"><span class="cpo-meter-fill" style="inline-size: {{ card.meter }}%"></span></span>
+      {% endif %}
+    </button>
+    {% endfor %}
+  </section>
+
+  {% if targets.status == "ok" %}
+  <p class="cpo-info" role="note">
+    <strong>Targets</strong> for the people in this selection, {{ header.window_label }}: planned output {{ targets.target }} · validated actual {{ targets.achieved }} · remaining gap {{ targets.gap }}{% if targets.pct is not None %} · {{ targets.pct }}% achieved{% endif %}.
+    The same figures My Targets, Team Targets and CD Analytics read from the canonical target ledger; only IA-verified work earns credit, and nothing here recalculates performance.
+  </p>
+  {% elif targets.status == "week" %}
+  <p class="cpo-info" role="note"><strong>Targets</strong> are set by month: a week has none of its own. Choose the month to read planned output against validated actual.</p>
+  {% elif targets.status == "none" %}
+  <p class="cpo-info" role="note"><strong>Targets:</strong> none are set in My Targets for the people in this selection for {{ header.window_label }}, so there is no planned output to read against. Validated credits still count in the canonical target ledger.</p>
+  {% elif targets.status == "people_only" %}
+  <p class="cpo-info" role="note"><strong>Targets</strong> are held by people, not by region, delivery channel, Partner or activity type, so they are not shown for this filter. Clear it, or choose a Programme Lead or CCEO, to read planned output against validated actual.</p>
+  {% endif %}
+
+  <section class="cxo-charts" aria-label="Execution charts">
+    <figure class="cpo-chart cxo-chart" x-data="cpxChart('cxo-funnel-data', 'funnel')" data-no-titlebar aria-labelledby="cxo-funnel-name">
+      <h2 class="cpo-chart-name" id="cxo-funnel-name" data-no-titlebar>Execution Funnel
+        <span class="cxo-hint" title="Partner work goes straight to IA: it has no PL review stage.">Staff and Partner</span></h2>
+      {{ charts.funnel|json_script:"cxo-funnel-data" }}
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: due, started, evidence submitted, PL reviewed (staff only), IA verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
+      <details class="cpo-chart-data">
+        <summary>View chart data</summary>
+        <div class="cpo-tscroll">
+          {% paginate charts.funnel.table "funnel_page" as funnel_pager %}
+          <table class="cpo-mini">
+            <thead><tr><th scope="col">Stage</th><th scope="col">Total</th><th scope="col">Staff</th><th scope="col">Partner</th></tr></thead>
+            <tbody>{% for row in funnel_pager.rows %}<tr><th scope="row">{{ row.0 }}</th><td>{{ row.1 }}</td><td>{{ row.2 }}</td><td>{{ row.3 }}</td></tr>{% endfor %}</tbody>
+          </table>
+          {% include "components/table_pager.html" with pager=funnel_pager param="funnel_page" %}
+        </div>
+      </details>
+    </figure>
+    <figure class="cpo-chart cxo-chart" x-data="cpxChart('cxo-trend-data', 'trend')" data-no-titlebar aria-labelledby="cxo-trend-name">
+      <h2 class="cpo-chart-name" id="cxo-trend-name" data-no-titlebar>Planned vs Executed vs Verified
+        <span class="cxo-hint">{% if window.period == "week" %}Daily{% elif window.period == "month" %}Weekly{% elif window.period == "quarter" %}Monthly{% else %}Quarterly{% endif %}, cumulative</span></h2>
+      {{ charts.trend|json_script:"cxo-trend-data" }}
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Planned, execution completed, IA verified and fully closed work, cumulative through {{ header.window_label }}. The figures are in the table under the chart."></div>
+      <details class="cpo-chart-data">
+        <summary>View chart data</summary>
+        <div class="cpo-tscroll">
+          {% paginate charts.trend.table "trend_page" as trend_pager %}
+          <table class="cpo-mini">
+            <thead><tr><th scope="col">Period</th>{% for s in charts.trend.series %}<th scope="col">{{ s.name }}</th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for row in trend_pager.rows %}
+              <tr><th scope="row">{{ row.label }}</th>{% for value in row.cells %}<td>{% if value is None %}—{% else %}{{ value }}{% endif %}</td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% include "components/table_pager.html" with pager=trend_pager param="trend_page" %}
+        </div>
+      </details>
+    </figure>
+  </section>
+
+  <section class="cxo-readings" aria-label="On-time, backlog, age and forecast">
+    <figure class="cpo-chart cxo-reading" x-data="cpxChart('cxo-ontime-data', 'donut')" data-no-titlebar aria-labelledby="cxo-ontime-name">
+      <h2 class="cpo-chart-name" id="cxo-ontime-name" data-no-titlebar>On-Time Execution</h2>
+      {{ charts.on_time|json_script:"cxo-ontime-data" }}
+      <div class="cpo-plot cxo-ring" x-ref="plot" role="img" aria-label="On-time execution: {% for part in charts.on_time.parts %}{{ part.label }} {{ part.value }}{% if not forloop.last %}, {% endif %}{% endfor %}."></div>
+      <ul class="cxo-legend">
+        {% for part in charts.on_time.parts %}<li><span class="cxo-swatch" data-part="ontime-{{ forloop.counter }}"></span>{{ part.label }}<strong>{{ part.value }}</strong></li>{% endfor %}
+      </ul>
+    </figure>
+    <figure class="cpo-chart cxo-reading" x-data="cpxChart('cxo-backlog-data', 'donut')" data-no-titlebar aria-labelledby="cxo-backlog-name">
+      <h2 class="cpo-chart-name" id="cxo-backlog-name" data-no-titlebar>Backlog by Owner</h2>
+      {{ charts.backlog|json_script:"cxo-backlog-data" }}
+      <div class="cpo-plot cxo-ring" x-ref="plot" role="img" aria-label="Open past-due work by who holds the next action: {% for part in charts.backlog.parts %}{{ part.label }} {{ part.value }}{% if not forloop.last %}, {% endif %}{% endfor %}."></div>
+      <ul class="cxo-legend">
+        {% for part in charts.backlog.parts %}
+        <li><button type="button" class="cxo-legend-link" hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;blocker={{ part.key }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML"><span class="cxo-swatch" data-part="owner-{{ part.key }}"></span>{{ part.label }}<strong>{{ part.value }}</strong></button></li>
+        {% endfor %}
+      </ul>
+    </figure>
+    <figure class="cpo-chart cxo-reading" x-data="cpxChart('cxo-age-data', 'age')" data-no-titlebar aria-labelledby="cxo-age-name">
+      <h2 class="cpo-chart-name" id="cxo-age-name" data-no-titlebar>Overdue by Age</h2>
+      {{ charts.age|json_script:"cxo-age-data" }}
+      <div class="cpo-plot cxo-bars" x-ref="plot" role="img" aria-label="Overdue work by days past its scheduled date: {% for row in charts.age.rows %}{{ row.0 }} {{ row.1 }}{% if not forloop.last %}, {% endif %}{% endfor %}."></div>
+      <p class="cxo-foot">Days past the approved scheduled date.</p>
+    </figure>
+    <figure class="cpo-chart cxo-reading" x-data="cpxChart('cxo-forecast-data', 'gauge')" data-no-titlebar aria-labelledby="cxo-forecast-name">
+      <h2 class="cpo-chart-name" id="cxo-forecast-name" data-no-titlebar>Completion Forecast
+        <span class="cxo-hint" title="Decision support only: it changes no target, plan, performance or reminder.">Decision support</span></h2>
+      {{ charts.forecast|json_script:"cxo-forecast-data" }}
+      <div class="cpo-plot cxo-gauge" x-ref="plot" role="img" aria-label="Completion forecast: {{ charts.forecast.label }}. {{ charts.forecast.text }}"></div>
+      <p class="cxo-verdict" data-state="{{ charts.forecast.status }}">{{ charts.forecast.label }}</p>
+      <p class="cxo-foot">{{ charts.forecast.text }}</p>
+    </figure>
+    <section class="cpo-chart cxo-reading cxo-shortcuts" data-no-titlebar aria-labelledby="cxo-shortcuts-name">
+      <h2 class="cpo-chart-name" id="cxo-shortcuts-name" data-no-titlebar>Quick Actions</h2>
+      {% if may_follow_up %}
+      <button type="button" class="cxo-shortcut cxo-shortcut--primary"
+              hx-get="/country-planning-oversight/execution/follow-up?{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">
+        {% include "partials/country_execution/_glyph.html" with name="send" %}Send Reminder to PL</button>
+      {% endif %}
+      <button type="button" class="cxo-shortcut"
+              hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;stage=overdue&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">
+        {% include "partials/country_execution/_glyph.html" with name="alert" %}View Overdue Activities</button>
+      <a class="cxo-shortcut" href="/country-planning-oversight/?{{ query }}&amp;table=partner#cxo-table"
+         hx-get="/country-planning-oversight/execution/table?table=partner&amp;{{ query }}" hx-target="#cxo-table" hx-swap="outerHTML">
+        {% include "partials/country_execution/_glyph.html" with name="people" %}View Partner Execution</a>
+      {% if may_export %}
+      <a class="cxo-shortcut" href="/country-planning-oversight/execution/export?{{ query }}" download>
+        {% include "partials/country_execution/_glyph.html" with name="download" %}Download Report</a>
+      {% endif %}
+    </section>
+  </section>
+
+  {% include "partials/country_execution/_table.html" %}
+
+  <section class="cxo-lower" aria-label="Issues, recent activity and follow-ups">
+    <section class="cpo-chart cxo-list" data-no-titlebar aria-labelledby="cxo-issues-name">
+      <h2 class="cpo-chart-name" id="cxo-issues-name" data-no-titlebar>Top Execution Issues</h2>
+      {% if issues %}
+      {% paginate issues "issues_page" as issues_pager %}
+      <table class="cxo-small" data-table-fit="scroll">
+        <thead><tr><th scope="col">Issue</th><th scope="col">Count</th><th scope="col">%</th></tr></thead>
+        <tbody>
+          {% for row in issues_pager.rows %}
+          <tr><th scope="row"><span>{{ row.label }}</span></th><td>{{ row.count }}</td><td>{% if row.share is None %}—{% else %}{{ row.share }}%{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=issues_pager param="issues_page" %}
+      {% else %}
+      <p class="cpo-muted">Nothing past its date is open in this selection.</p>
+      {% endif %}
+    </section>
+    <section class="cpo-chart cxo-list" data-no-titlebar aria-labelledby="cxo-recent-name">
+      <h2 class="cpo-chart-name" id="cxo-recent-name" data-no-titlebar>Recent Activity</h2>
+      {% if recent %}
+      {% paginate recent "recent_page" as recent_pager %}
+      <table class="cxo-small" data-table-fit="scroll">
+        <thead><tr><th scope="col">Date</th><th scope="col">Activity</th><th scope="col">Details</th></tr></thead>
+        <tbody>
+          {% for row in recent_pager.rows %}
+          <tr><td><span>{{ row.date|date:"j M Y" }}</span></td><th scope="row">{{ row.what }}</th><td>{{ row.detail }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=recent_pager param="recent_page" %}
+      {% else %}
+      <p class="cpo-muted">No verification, return, submission or follow-up in the last two weeks.</p>
+      {% endif %}
+    </section>
+    {% include "partials/country_execution/followups_panel.html" %}
+  </section>
+
+  <p class="cpo-info" role="note">
+    Stages are the platform's own: a CCEO's staff work is verified when its Programme Lead approves it; Partner work and a Lead's own work are verified by Impact Assessment. Overdue is read against the approved scheduled date and names the stage and who holds the next action. Values are for oversight only; verified achievement and performance are credited in the canonical target ledger.
+  </p>
+</div>

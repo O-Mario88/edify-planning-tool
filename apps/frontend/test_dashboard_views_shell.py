@@ -199,9 +199,11 @@ class DashboardViewRenderTest(TestCase):
 
     def test_leadership_dashboards_open_on_the_map(self):
         # The Program Lead's dashboard opens on This Week (owner, 2026-09-26;
-        # Today from 2026-09-14); Map is the next of its views.
+        # Today from 2026-09-14); Map is the next of its views. The Country
+        # Director's dashboard is Country Oversight (owner, 2026-09-28); the
+        # map view still answers when a link names it.
         for user, url in (
-            (self.cd, "/dashboard"),
+            (self.cd, "/dashboard?view=map"),
             (self.pl, "/dashboard?view=map"),
             (self.rvp, "/dashboard"),
             (self.ia, "/ia/dashboard/?view=map"),
@@ -351,18 +353,29 @@ class DashboardViewRenderTest(TestCase):
         )
 
     def test_a_chosen_view_is_remembered_per_role(self):
-        response = self._get(self.cd, "/dashboard?view=operations")
-        cookie = response.cookies.get(f"{VIEW_COOKIE_PREFIX}cd")
+        response = self._get(self.rvp, "/dashboard?view=operations")
+        cookie = response.cookies.get(f"{VIEW_COOKIE_PREFIX}rvp")
         self.assertIsNotNone(cookie)
         self.assertEqual(cookie.value, "operations")
         html = self.client.get("/dashboard").content.decode()
         self.assertNotIn("subregionMap()", html)
-        self.assertIn("Country Program Leads Performance", html)
+        self.assertIn("Country Directors Performance", html)
         # A view nobody asked for sets no cookie.
         response = self.client.get("/dashboard?view=map")
-        self.assertEqual(response.cookies[f"{VIEW_COOKIE_PREFIX}cd"].value, "map")
+        self.assertEqual(response.cookies[f"{VIEW_COOKIE_PREFIX}rvp"].value, "map")
         response = self._get(self.pl, "/dashboard")
         self.assertNotIn(f"{VIEW_COOKIE_PREFIX}pl", response.cookies)
+
+    def test_the_country_directors_dashboard_is_country_oversight(self):
+        """Owner, 2026-09-28: Country Oversight is the Country Director's
+        main dashboard, whatever view they last chose on the command
+        dashboard; a link that names Map or Operations still opens it."""
+        self.client.cookies[f"{VIEW_COOKIE_PREFIX}cd"] = "operations"
+        response = self._get(self.cd, "/dashboard")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/country-planning-oversight/")
+        html = self.client.get("/dashboard?view=operations").content.decode()
+        self.assertIn("Country Program Leads Performance", html)
 
     def test_a_tab_click_swaps_the_rail_and_the_view_together(self):
         """The rail travels with the panel, so the highlight can never lag:

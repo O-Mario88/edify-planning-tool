@@ -38,6 +38,7 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # (owner, 2026-09-21).
     "programme_schools": (DAILY, 19),
     "country_planning_oversight": (DAILY, 20),
+    "country_map": (DAILY, 21),
     "todos": (DAILY, 28),
     "my_actions": (DAILY, 30),
     # Each week: requests, approvals, team and portfolio work.

@@ -1,0 +1,7 @@
+{% comment %}Every activity due in the selection, the oldest past-due first: its
+stage, how far past its date, and who holds the next action.{% endcomment %}
+{% if not may_see_schools %}
+<p class="cpo-muted cxo-pad">Activity rows are not shown for your role; the figures above include every activity.</p>
+{% else %}
+{% include "partials/country_execution/_activity_rows.html" with listing=activities pager_target="table" %}
+{% endif %}

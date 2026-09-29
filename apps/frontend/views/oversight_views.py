@@ -37,6 +37,7 @@ from apps.planning.action_service import ActionError
 # Lead's page would be a scope change dressed up as a redirect.
 TEAM_OVERSIGHT_PATH = "/team-planning-oversight/"
 COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
+COUNTRY_MAP_PATH = "/country-map/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
 
 
@@ -375,6 +376,94 @@ def _lens_tabs(
     # A strip of one is furniture: it costs the first table row its place above
     # the fold and chooses nothing.
     return tabs if len(tabs) > 1 else []
+
+
+#: Query parameters only the Country Plan (activity) lens reads. A link that
+#: carries one of them was made on that lens.
+_ACTIVITY_PLAN_PARAMS = frozenset(
+    {
+        "lead",
+        "risk",
+        "activity_type",
+        "executor_type",
+        "context",
+        "status",
+        "district_id",
+        "partner_id",
+    }
+)
+
+
+def _names_activity_plan(request) -> bool:
+    import re
+
+    keys = set(request.GET.keys())
+    if keys & _ACTIVITY_PLAN_PARAMS:
+        return True
+    return any(re.match(r"^g\d+_page", key) for key in keys)
+
+
+def country_lens_tabs(active: str) -> list[dict]:
+    """Country Oversight's two stages (owner, 2026-09-28): planning general
+    oversight, and execution & completion. The activity plan, the planning
+    monitor and the portfolio stay reachable from the rows' menus and links,
+    and the portfolio lives on the Map page."""
+    return [
+        {
+            "key": key,
+            "label": label,
+            "short": short,
+            "href": href,
+            "is_active": key == active,
+        }
+        for key, label, short, href in (
+            (
+                "coverage",
+                "Country General Planning Oversight",
+                "General Planning",
+                COUNTRY_OVERSIGHT_PATH,
+            ),
+            (
+                "execution",
+                "Country Execution & Completion Oversight",
+                "Execution & Completion",
+                f"{COUNTRY_OVERSIGHT_PATH}?view=execution",
+            ),
+        )
+    ]
+
+
+@require_page_permission("country_map")
+def country_map_view(request):
+    """The Country Map (owner, 2026-09-28): the country shaded by delivery,
+    backlog or money, and under it the country portfolio — every school under
+    the Programme Lead and the CCEO who hold it — when there is one.
+
+    The portfolio used to be a Country Oversight tab; Country Oversight keeps
+    its two stages (planning, and execution & completion) and the portfolio
+    reads beside the map. Read-only, like both of them.
+    """
+    from apps.analytics.country_map_context import country_map_context
+
+    period = _period_filters(request)
+    portfolio = _portfolio_context(request, period, base_url=COUNTRY_MAP_PATH)
+    context = {
+        **period,
+        **portfolio,
+        "active_oversight_view": "portfolio",
+        "lens_tabs": [],
+        "lens_base_url": COUNTRY_MAP_PATH,
+        "portfolio_is_country": True,
+        "fy_options": fy_options(),
+        "has_portfolio": bool(portfolio["portfolio_totals"].get("schools")),
+    }
+    if (
+        request.headers.get("HX-Request") == "true"
+        and (request.headers.get("HX-Target") or "") == "oversight-workspace"
+    ):
+        return render(request, "partials/oversight/portfolio_workspace.html", context)
+    context.update(country_map_context(period["fy"]))
+    return render(request, "pages/oversight/country_map.html", context)
 
 
 def _portfolio_context(request, period: dict, *, base_url: str) -> dict:
@@ -1544,7 +1633,7 @@ def country_planning_oversight_view(request):
     # one format rather than a second one (owner, 2026-09-16). The country
     # reader holds every lens by definition: this route is already gated on
     # `country_planning_oversight`.
-    requested_view = (request.GET.get("view") or "planning").strip().lower()
+    requested_view = (request.GET.get("view") or "").strip().lower()
     if requested_view == "clusters":
         query = request.GET.copy()
         query.pop("view", None)
@@ -1553,12 +1642,35 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
+    # The page opens on the planning-coverage dashboard (owner, 2026-09-28):
+    # the year's obligation against the plan, by Programme Lead. The activity
+    # plan it used to open on is the "Country Plan" lens, and a link carrying
+    # that lens's own filters (a Lead tab, a risk, an activity type) still
+    # lands there, so no bookmark changes meaning.
+    if not requested_view and _names_activity_plan(request):
+        requested_view = "plan"
+    if requested_view == "execution":
+        from apps.frontend.views.country_execution_views import execution_page
+
+        return execution_page(request)
+    if requested_view == "portfolio":
+        # The country portfolio lives on the Country Map page (owner,
+        # 2026-09-28); an old link keeps its filters on the way there.
+        query = request.GET.copy()
+        query.pop("view", None)
+        destination = COUNTRY_MAP_PATH + ("?" + query.urlencode() if query else "")
+        response = redirect(destination + "#country-portfolio")
+        if request.headers.get("HX-Request") == "true":
+            response["HX-Redirect"] = destination + "#country-portfolio"
+        return response
+    if requested_view not in {"plan", "planning", "portfolio", "monitor"}:
+        from apps.frontend.views.country_oversight_views import coverage_page
+
+        return coverage_page(request)
     active_view = (
         requested_view if requested_view in {"portfolio", "monitor"} else "planning"
     )
-    lens_tabs = _lens_tabs(
-        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "monitor", "portfolio"}
-    )
+    lens_tabs = country_lens_tabs(active_view)
 
     if active_view == "monitor":
         context = {

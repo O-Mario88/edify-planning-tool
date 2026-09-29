@@ -29,6 +29,11 @@ BAND = "F7FAFC"
 XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
+#: Above this many rows in any sheet the workbook is streamed (see
+#: `_streamed_workbook`): same look, a fraction of the memory.
+STREAM_ROWS = 5_000
+
+
 def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     """A styled workbook as a download.
 
@@ -38,6 +43,16 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     """
     from openpyxl import Workbook
     from openpyxl.utils import get_column_letter
+
+    if any(
+        isinstance(spec.get("rows"), (list, tuple)) and len(spec["rows"]) > STREAM_ROWS
+        for spec in sheets or []
+    ):
+        workbook = _streamed_workbook(sheets)
+        response = HttpResponse(content_type=XLSX_CONTENT_TYPE)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        workbook.save(response)
+        return response
 
     workbook = Workbook()
     workbook.remove(workbook.active)
@@ -156,6 +171,106 @@ def style_body(sheet, number_formats: dict[int, str] | None = None) -> None:
             style.alignmentId = alignment_id
         for column, number_format in formats.items():
             sheet.cell(row_index, column).number_format = number_format
+
+
+def _streamed_workbook(sheets: list[dict]):
+    """The same workbook, written row by row instead of held in memory.
+
+    An in-memory sheet keeps an object per cell: the Country Planning
+    Oversight export at 50,000 schools is a million cells, ~500 MB and 12 s
+    inside a web worker (2026-09-28). openpyxl's write-only mode streams each
+    row to the file as it is appended; every cell carries the style indices
+    `style_header` and `style_body` give an in-memory sheet — header, bands,
+    rules, alignment, number formats — and the sheet keeps its widths, frozen
+    heading, filter and hidden gridlines.
+    """
+    from openpyxl import Workbook
+    from openpyxl.cell import WriteOnlyCell
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.styles.cell_style import StyleArray
+    from openpyxl.utils import get_column_letter
+
+    workbook = Workbook(write_only=True)
+    for spec in sheets:
+        sheet = workbook.create_sheet(_sheet_title(spec.get("title") or "Export"))
+        headers = list(spec.get("headers") or [])
+        rows = spec.get("rows") or []
+        formats = spec.get("number_formats") or {}
+        width = max([len(headers), *(len(row) for row in rows)] or [0])
+
+        # Everything written ahead of the rows must be set before the first.
+        widths = spec.get("widths") or _widths_for(headers)
+        for index, column_width in enumerate(widths, start=1):
+            sheet.column_dimensions[get_column_letter(index)].width = column_width
+        sheet.sheet_view.showGridLines = False
+        if headers:
+            sheet.freeze_panes = "A2"
+            sheet.row_dimensions[1].height = 28
+
+        def styled(value, **styles):
+            cell = WriteOnlyCell(sheet, value)
+            for name, style in styles.items():
+                setattr(cell, name, style)
+            return cell
+
+        if headers:
+            font = Font(color="FFFFFF", bold=True, size=10)
+            fill = PatternFill("solid", fgColor=HEADER_FILL)
+            alignment = Alignment(vertical="center")
+            border = Border(bottom=Side(style="medium", color=HEADER_RULE))
+            sheet.append(
+                [
+                    styled(
+                        value, fill=fill, font=font, alignment=alignment, border=border
+                    )
+                    for value in headers
+                ]
+            )
+            if rows:
+                sheet.auto_filter.ref = f"A1:{get_column_letter(width)}{len(rows) + 1}"
+
+        # Register each body style once and copy its indices into every cell,
+        # as style_body does; a date keeps the format its value gave it.
+        band = []
+        for banded in (False, True):
+            probe = styled(
+                None,
+                fill=PatternFill("solid", fgColor=BAND if banded else "FFFFFF"),
+                border=Border(bottom=Side(style="thin", color=ROW_RULE)),
+                alignment=Alignment(vertical="top", wrap_text=True),
+            )
+            band.append(
+                (probe._style.fillId, probe._style.borderId, probe._style.alignmentId)
+            )
+        format_ids = {}
+        for column, number_format in formats.items():
+            probe = styled(None)
+            probe.number_format = number_format
+            format_ids[column] = probe._style.numFmtId
+
+        # The body starts on row 2; without a heading, row 1 is a body row
+        # left unstyled, as style_body leaves it.
+        for row_index, row in enumerate(rows, start=2 if headers else 1):
+            values = list(row)
+            values += [None] * (width - len(values))
+            if row_index < 2:
+                sheet.append(values)
+                continue
+            fill_id, border_id, alignment_id = band[row_index % 2 == 0]
+            cells = []
+            for column, value in enumerate(values, start=1):
+                cell = WriteOnlyCell(sheet, value)
+                style = cell._style
+                if style is None:  # unstyled until now, as in style_body
+                    style = cell._style = StyleArray()
+                style.fillId = fill_id
+                style.borderId = border_id
+                style.alignmentId = alignment_id
+                if column in format_ids:
+                    style.numFmtId = format_ids[column]
+                cells.append(cell)
+            sheet.append(cells)
+    return workbook
 
 
 def _sheet_title(title: str) -> str:

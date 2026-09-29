@@ -173,6 +173,63 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="planning_followup_sweep",
+        description=(
+            "Closes the Country Director's planning follow-ups whose gap has "
+            "reached zero, re-read through the Country Planning Oversight "
+            "coverage service."
+        ),
+        cron="hourly :35 Africa/Nairobi",
+        cron_kwargs={"minute": 35},
+        expected_runtime_seconds=60,
+        max_interval_minutes=180,
+        idempotent=True,
+        idempotency_note=(
+            "Resolution re-reads the gap, so a second run finds nothing left "
+            "to close; an open follow-up only has its live figure refreshed."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="planning_oversight_warm",
+        description=(
+            "Rebuilds the Country Planning Oversight figures for each Country "
+            "Director's country (the year, and windows read in the last hour) "
+            "so the page is served from a snapshot rather than built on open."
+        ),
+        cron="every 4 min",
+        cron_kwargs={"minute": "*/4"},
+        expected_runtime_seconds=30,
+        max_interval_minutes=20,
+        idempotent=True,
+        idempotency_note=(
+            "Read-only: rebuilds and republishes cached figures; a second run "
+            "replaces the first run's snapshot with an identical or newer one."
+        ),
+        retryable=False,
+        max_retries=0,
+    ),
+    JobSpec(
+        name="execution_period_snapshots",
+        description=(
+            "Locks the Country Execution & Completion Oversight figures of each "
+            "week, month, quarter and financial year that has just ended, so a "
+            "later correction never silently rewrites a closed period."
+        ),
+        cron="daily 00:20 Africa/Nairobi",
+        cron_kwargs={"hour": 0, "minute": 20},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note=(
+            "A period is locked once: a second run finds its snapshot and skips "
+            "it; the unique (country, period, version) constraint holds a race."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="escalation_sla_sweep",
         description="Re-notifies the RVP about CD escalations past their severity SLA.",
         cron="daily 07:00 Africa/Nairobi",

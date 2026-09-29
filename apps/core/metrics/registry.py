@@ -1226,6 +1226,294 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         drilldown="/country-planning-oversight/",
         refresh_events=("activity_scheduled", "partner_assignment_created"),
     ),
+    # ── Country Planning Oversight: the annual obligation against the plan ──
+    # Six shares, each against a requirement the governed policy defines
+    # (apps.planning.country_oversight.policy): 4 visit slots and 4 training
+    # slots per Core-family school, 1 and 1 per Client-family school, Core
+    # staff slots before Client, staff ceilings as capacity. Every one is a
+    # field of the same fold the table and the four charts read.
+    MetricSpec(
+        key="cpo_staff_visit_planning",
+        label="Staff Visit Planning",
+        definition=(
+            "Staff-planned visit slots against the visit slots internal staff "
+            "are expected to deliver: two per Core-family school, plus the "
+            "Client slots each owner's remaining staff capacity covers."
+        ),
+        question="Have staff planned the visits their capacity is meant to cover?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Required staff visit slots (2 per Core-family school + allocated Client slots)",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("activities.Activity", "schools.School"),
+        numerator="Visit slots claimed by dated, scheduled-or-later staff visits",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_staff_visit_planning",
+        refresh_events=("activity_scheduled", "activity_cancelled"),
+    ),
+    MetricSpec(
+        key="cpo_partner_planning",
+        label="Partner Planning",
+        definition=(
+            "Visit slots assigned to a Partner against the slots Partners are "
+            "required to deliver: two per Core-family school, plus the Client "
+            "slots staff capacity does not cover. Assigned is not planned; the "
+            "Partner-scheduled figure beside it is."
+        ),
+        question="Have the Partner slots been handed to a Partner, and dated?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Required Partner visit slots",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("partners.PartnerAssignment", "activities.Activity"),
+        numerator="Partner slots held by an undated handover or a dated Partner visit",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_partner_planning",
+        refresh_events=("partner_assignment_created", "partner_scheduled"),
+    ),
+    MetricSpec(
+        key="cpo_total_visit_coverage",
+        label="Total Visit Coverage",
+        definition=(
+            "Visit slots planned by staff or scheduled by a Partner against the "
+            "year's whole visit requirement, four slots per Core-family school "
+            "and one per Client-family school (4C + L)."
+        ),
+        question="How much of the year's visit obligation is on the calendar?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Total required visit slots (4C + L)",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("activities.Activity", "schools.School"),
+        numerator="Staff-planned slots plus Partner-scheduled slots",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_total_visit_coverage",
+        refresh_events=("activity_scheduled", "partner_scheduled"),
+    ),
+    MetricSpec(
+        key="cpo_training_planning",
+        label="Training Planning",
+        definition=(
+            "School-training slots with a dated training planned against the "
+            "requirement: four per Core-family school and one per Client-family "
+            "school. A cluster session fills one slot for each school on its "
+            "planned roster, never for the rest of the cluster."
+        ),
+        question="How much of the year's training obligation is planned?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Required school-training slots (4C + L)",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("activities.Activity", "activities.ClusterActivityAttendance"),
+        numerator="Training slots filled by in-school trainings and planned rosters",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_training_planning",
+        refresh_events=("activity_scheduled", "cluster_invitations_changed"),
+    ),
+    MetricSpec(
+        key="cpo_cluster_membership",
+        label="Cluster Membership",
+        definition=(
+            "Eligible schools with an active cluster, against every eligible "
+            "school. A school with more than one cluster record counts once."
+        ),
+        question="How much of the portfolio can be reached through a cluster?",
+        category=Category.READINESS,
+        unit=Unit.PERCENT,
+        denominator="Eligible portfolio schools",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("schools.School", "clusters.Cluster"),
+        numerator="Eligible schools whose cluster is active",
+        date_basis=DateBasis.NOT_TIME_BOUND,
+        period=Period.POINT_IN_TIME,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_cluster_membership",
+        refresh_events=("school_cluster_changed",),
+    ),
+    MetricSpec(
+        key="cpo_cluster_meeting_planning",
+        label="Cluster Meeting Planning",
+        definition=(
+            "Eligible schools on the planned roster of a dated cluster meeting, "
+            "against every eligible school; the share of clustered schools is "
+            "shown beside it. Membership alone never counts as a planned meeting."
+        ),
+        question="Which schools will actually be convened this period?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Eligible portfolio schools",
+        service="apps.planning.country_oversight.service.kpis",
+        source_models=("activities.Activity", "activities.ClusterActivityAttendance"),
+        numerator="Schools named on a planned cluster meeting's roster",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's country portfolio",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_cluster_meeting_planning",
+        refresh_events=("activity_scheduled", "cluster_invitations_changed"),
+    ),
+    # ── Country Execution & Completion Oversight (owner, 2026-09-28): did the
+    # planned work happen, and at which completion level it stands. One fold
+    # of the platform's own activity states (country_execution.stages); the
+    # six figures are the table's country total.
+    MetricSpec(
+        key="cxo_activities_due",
+        label="Activities Due",
+        definition=(
+            "Valid activities whose approved scheduled date falls in the "
+            "selected period; cancelled and deferred work is counted apart."
+        ),
+        question="How much work was committed to this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity",),
+        numerator="Live activities scheduled in the period",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=due",
+        refresh_events=(
+            "activity_scheduled",
+            "activity_rescheduled",
+            "activity_cancelled",
+        ),
+    ),
+    MetricSpec(
+        key="cxo_started",
+        label="Started",
+        definition=(
+            "Due activities that have entered the canonical execution-started "
+            "state, of the activities due."
+        ),
+        question="Has the committed work begun?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Activities due in the period",
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity",),
+        numerator="Due activities started, in the field or beyond",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=started",
+        refresh_events=("activity_started",),
+    ),
+    MetricSpec(
+        key="cxo_execution_completed",
+        label="Execution Completed",
+        definition=(
+            "Due activities whose implementer recorded the actuals, met the "
+            "evidence requirement and submitted them, of the activities due; "
+            "not necessarily reviewed or verified."
+        ),
+        question="Did the field work happen and reach review?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Activities due in the period",
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity",),
+        numerator="Due activities submitted to the Programme Lead or IA, or beyond",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=executed",
+        refresh_events=("activity_submitted",),
+    ),
+    MetricSpec(
+        key="cxo_ia_verified",
+        label="IA Verified",
+        definition=(
+            "Due activities verified — by the Programme Lead for a CCEO's staff "
+            "work, by Impact Assessment for Partner work and a Lead's own — of "
+            "the activities due. The level at which verified delivery counts."
+        ),
+        question="How much of the committed work is verified programme delivery?",
+        category=Category.OUTCOME,
+        unit=Unit.PERCENT,
+        denominator="Activities due in the period",
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity",),
+        numerator="Due activities in a verified state (verified, accountant-confirmed or closed)",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=verified",
+        refresh_events=("activity_verified", "activity_returned"),
+    ),
+    MetricSpec(
+        key="cxo_fully_closed",
+        label="Fully Closed",
+        definition=(
+            "Due activities closed through the governed closure — evidence, "
+            "Salesforce, verification and, where money moved, accounts and "
+            "payment — of the activities due."
+        ),
+        question="How much verified work is also closed in programme and finance?",
+        category=Category.FINANCE,
+        unit=Unit.PERCENT,
+        denominator="Activities due in the period",
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity", "activities.ActivityClosure"),
+        numerator="Due activities in the closed state",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=closed",
+        refresh_events=("activity_closed",),
+    ),
+    MetricSpec(
+        key="cxo_overdue",
+        label="Overdue Activities",
+        definition=(
+            "Due activities past their approved scheduled date that have not "
+            "reached their expected stage, each named by its stage and by who "
+            "holds the next action; verified work awaiting closure is not overdue."
+        ),
+        question="Which committed work is late, and who holds it?",
+        category=Category.RISK,
+        unit=Unit.PERCENT,
+        denominator="Activities due in the period",
+        service="apps.planning.country_execution.service.kpis",
+        source_models=("activities.Activity",),
+        numerator="Due activities past their date at an unfinished stage",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="The reader's country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=overdue",
+        refresh_events=("activity_started", "activity_submitted", "activity_verified"),
+    ),
     # The Regional Programme Lead's three headline tiles. The country family
     # cannot be reused for them: a tile labelled "Country Planned Activities"
     # on a page bounded to one region states something untrue (owner,

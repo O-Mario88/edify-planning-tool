@@ -546,7 +546,11 @@ class ScaleGateTest(TestCase):
         return client
 
     def test_cd_dashboard_is_scale_invariant_over_schools(self):
-        self._assert_scale_invariant("/dashboard", client=self._cd_client())
+        # The Country Director's /dashboard opens Country Oversight (owner,
+        # 2026-09-28; its own 50,000-school suite is
+        # apps.planning.test_country_oversight_scale). The command dashboard
+        # this gate was written for still answers when a link names its view.
+        self._assert_scale_invariant("/dashboard?view=map", client=self._cd_client())
 
     # No /my-plan gate for the CD: that role is redirected off the page (a
     # CD is not field staff, so there is no plan to show), and the dashboard
@@ -656,7 +660,8 @@ class ScaleGateTest(TestCase):
         same page."""
         User = get_user_model()
         client = self._cd_client()
-        before = self._measure("/dashboard", client=client)
+        # The command dashboard (see the gate above).
+        before = self._measure("/dashboard?view=map", client=client)
 
         added = 8
         for i in range(added):
@@ -669,7 +674,7 @@ class ScaleGateTest(TestCase):
                 is_active=True,
             )
             StaffProfile.objects.create(id=f"scale-roster-sp-{i}", user=u, title="CCEO")
-        after = self._measure("/dashboard", client=client)
+        after = self._measure("/dashboard?view=map", client=client)
 
         per_person = (after["queries"] - before["queries"]) / added
         # The designed per-person cost, measured rather than guessed (a first

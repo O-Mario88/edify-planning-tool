@@ -1,0 +1,45 @@
+{% comment %}Required-slot completion school by school (spec §16): the obligation
+the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 of
+2 · Partner 1 of 2". Worst first, a page at a time.{% endcomment %}
+{% if not may_see_schools %}
+<p class="cpo-muted cxo-pad">School-level rows are not shown for your role; the figures above include every school.</p>
+{% else %}
+{% if schools.as_year %}<p class="cpo-notice cxo-pad" role="note">A week has no phased requirement: each school's slots are read for the year.</p>{% endif %}
+<div class="cpo-tscroll" data-mobile-table="scroll">
+  <table class="cpo-table cxo-table">
+    <thead>
+      <tr>
+        <th scope="col" class="cpo-namecol">School</th>
+        <th scope="col">CCEO</th>
+        <th scope="col" title="Required visit slots">Visits Required</th>
+        <th scope="col" title="Visit slots with planned work">Visits Planned</th>
+        <th scope="col" title="Visit slots filled by verified work">Visits Verified</th>
+        <th scope="col">Staff</th>
+        <th scope="col">Partner</th>
+        <th scope="col" title="Verified of required training slots">Training</th>
+        <th scope="col" title="On a planned cluster meeting's roster">Meeting</th>
+        <th scope="col">Remaining</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in schools.rows %}
+      <tr data-level="1">
+        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}{% if row.code %} · {{ row.code }}{% endif %}</span></span></th>
+        <td>{{ row.owner }}</td>
+        <td>{{ row.visit_slots }}</td>
+        <td>{{ row.visits_planned }}</td>
+        <td>{{ row.visits_verified }} of {{ row.visit_slots }}</td>
+        <td>{{ row.staff.0 }} of {{ row.staff.1 }}</td>
+        <td>{{ row.partner.0 }} of {{ row.partner.1 }}</td>
+        <td>{{ row.training.0 }} of {{ row.training.1 }}</td>
+        <td>{% if row.meeting %}Yes{% else %}<span class="cpo-none">No</span>{% endif %}</td>
+        <td>{% if row.gap %}<span class="cpo-alert">{{ row.remaining }}</span>{% else %}{{ row.remaining }}{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="10" class="cpo-empty">No school in this selection.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/country_execution/_pager.html" with pager=schools target="table" %}
+{% endif %}

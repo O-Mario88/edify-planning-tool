@@ -131,6 +131,20 @@ class LensAccessTest(TestCase):
             status="active",
         )
 
+    def _a_school(self, owner) -> School:
+        """One school in the country portfolio, so the map carries it."""
+        region = Region.objects.create(name="Portfolio Region", country="Uganda")
+        district = District.objects.create(name="Portfolio District", region=region)
+        return School.objects.create(
+            school_id="LENS-PORTFOLIO-1",
+            name="Portfolio School",
+            school_type="client",
+            region=region,
+            district=district,
+            account_owner_id=owner.staff_profile.id,
+            account_owner_status="matched",
+        )
+
     def _sign_in(self, email, role):
         user = User.objects.create_user(
             email=email, name=email, roles=[role], active_role=role, password="x"
@@ -222,24 +236,29 @@ class LensAccessTest(TestCase):
         for lens in ("Country Portfolio", "Team Portfolio", "Cluster Performance"):
             self.assertNotIn(lens, body, lens)
 
-    def test_the_country_director_reads_the_same_two_lenses(self):
-        self._sign_in("lens-cd@edify.org", "CountryDirector")
+    def test_the_country_director_reads_the_portfolio_on_the_country_map(self):
+        """The portfolio left Country Oversight's tabs for the Country Map
+        (owner, 2026-09-28): Country Oversight keeps its two stages, and an
+        old portfolio link lands on the map's portfolio."""
+        director = self._sign_in("lens-cd@edify.org", "CountryDirector")
+        self._a_school(director)
 
-        for view, marker in (("portfolio", "Country portfolio"),):
-            with self.subTest(view=view):
-                response = self.client.get(f"/country-planning-oversight/?view={view}")
-                self.assertEqual(response.status_code, 200)
-                self.assertIn(marker, response.content.decode())
+        response = self.client.get("/country-map/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Country portfolio", response.content.decode())
+        legacy = self.client.get("/country-planning-oversight/?view=portfolio")
+        self.assertEqual(legacy.status_code, 302)
+        self.assertTrue(legacy["Location"].startswith("/country-map/"))
+        self.assertTrue(legacy["Location"].endswith("#country-portfolio"))
 
     def test_the_country_directors_lenses_carry_the_budget(self):
         """Owner: "CD should also have the same country oversight with all
         plans reflecting on the budget"."""
-        self._sign_in("lens-cd-budget@edify.org", "CountryDirector")
+        director = self._sign_in("lens-cd-budget@edify.org", "CountryDirector")
         self._a_cluster()
+        self._a_school(director)
 
-        portfolio = self.client.get(
-            "/country-planning-oversight/?view=portfolio"
-        ).content.decode()
+        portfolio = self.client.get("/country-map/").content.decode()
         clusters = self.client.get("/cluster-oversight/").content.decode()
 
         self.assertIn("Portfolio Planned Budget", portfolio)

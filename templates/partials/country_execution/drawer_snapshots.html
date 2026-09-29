@@ -1,0 +1,51 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}The country's locked periods (spec §22): each week, month, quarter
+and financial year as it stood when it ended. The figures are the original
+snapshot's; a period with revisions says so and lists them when opened.{% endcomment %}
+{% block drawer_title %}Period Snapshots{% endblock %}
+{% block drawer_subtitle %}{{ country }} · locked when each period ends{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet cxo-sheet">
+  <p class="cpo-muted">Each week, month, quarter and financial year of {{ country }} is locked the night after it ends, with its figures as they stood at the close. A later correction changes the live figures, never a locked period: a revision is recorded beside the original, with its reason, who made it and when.</p>
+  <label class="cpo-field">
+    <span class="cpo-caption">Period type</span>
+    <select name="type" hx-get="/country-planning-oversight/execution/snapshots" hx-target="#drawer-container" hx-swap="innerHTML" hx-trigger="change">
+      <option value="">All periods</option>
+      {% for key, label in types %}
+      <option value="{{ key }}"{% if period_type == key %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if periods.total %}
+  <div class="cpo-tscroll">
+    <table class="cpo-table cxo-table cxo-snapshots" data-table-fit="scroll">
+      <thead>
+        <tr>
+          <th scope="col" class="cpo-namecol">Period</th>
+          <th scope="col">Due</th>
+          <th scope="col" title="Execution completed">Executed</th>
+          <th scope="col" title="IA verified">Verified</th>
+          <th scope="col">Overdue</th>
+          <th scope="col"><span class="sr-only">Open</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for period in periods.rows %}{% with s=period.original f=period.original.figures %}
+        <tr data-level="1">
+          <th scope="row" class="cpo-namecell" data-leaf title="Locked {{ s.taken_at|date:'j M Y' }}"><span>{{ s.period_label }}{% if period.versions|length > 1 %} · revised{% endif %}</span></th>
+          <td>{{ f.due }}</td>
+          <td>{{ f.executed }}</td>
+          <td>{{ f.verified }}</td>
+          <td>{% if f.overdue %}<span class="cpo-alert">{{ f.overdue }}</span>{% else %}0{% endif %}</td>
+          <td><button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots/{{ s.id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="View the locked figures of {{ s.period_label }}">View</button></td>
+        </tr>
+        {% endwith %}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/country_execution/_pager.html" with pager=periods target="snapshots" %}
+  {% else %}
+  <p class="cpo-empty">No {% if period_type %}{{ period_type|lower }} {% endif %}period has been locked yet. A period is locked the night after it ends (and up to {{ grace_days }} days later if the close was missed).</p>
+  {% endif %}
+</div>
+{% endblock %}

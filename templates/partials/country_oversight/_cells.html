@@ -1,0 +1,14 @@
+{% comment %}One row's figures, formatted on the server. Coverage shares are
+the server's; their colour follows the same thresholds as the cards.{% endcomment %}
+<td>{{ cells.schools }}</td>
+<td>{{ cells.core_schools }}</td>
+<td>{{ cells.client_schools }}</td>
+<td>{{ cells.visit_slots }}</td>
+<td>{{ cells.staff }}</td>
+<td>{{ cells.partner_assigned }}</td>
+<td>{{ cells.partner_scheduled }}</td>
+<td>{{ cells.unallocated }}</td>
+<td class="cpo-cover"><span>{{ cells.training }}</span> <span class="cpo-pct" data-tone="{{ cells.training_tone }}">{% if cells.training_share is None %}(—){% else %}({{ cells.training_share }}%){% endif %}</span></td>
+<td>{{ cells.unclustered }}</td>
+<td class="cpo-cover"><span>{{ cells.meeting }}</span> <span class="cpo-pct" data-tone="{{ cells.meeting_tone }}">{% if cells.meeting_share is None %}(—){% else %}({{ cells.meeting_share }}%){% endif %}</span></td>
+<td>{% if followups %}<span class="cpo-alert">{{ followups }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>

@@ -266,12 +266,18 @@ class RoleDashboardsTest(TestCase):
     # ── HTTP smoke for all three roles ───────────────────────────────────────
     def test_dashboards_render_over_http_for_each_role(self):
         c = Client()
-        for user, marker in [
-            (self.cd, "Country Director Dashboard"),
-            (self.hr, "HR Director Dashboard"),
-            (self.rvp, "Regional Vice President Dashboard"),
+        # The Country Director's /dashboard opens Country Oversight (owner,
+        # 2026-09-28); the command dashboard answers when a link names it.
+        for user, url, marker in [
+            (self.cd, "/dashboard?view=map", "Country Director Dashboard"),
+            (self.hr, "/dashboard", "HR Director Dashboard"),
+            (self.rvp, "/dashboard", "Regional Vice President Dashboard"),
         ]:
             c.force_login(user)
-            resp = c.get("/dashboard")
+            resp = c.get(url)
             self.assertEqual(resp.status_code, 200, user.email)
             self.assertIn(marker, resp.content.decode())
+        c.force_login(self.cd)
+        home = c.get("/dashboard", follow=True)
+        self.assertEqual(home.redirect_chain, [("/country-planning-oversight/", 302)])
+        self.assertIn("Country General Planning Oversight", home.content.decode())

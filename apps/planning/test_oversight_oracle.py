@@ -2075,10 +2075,16 @@ class PageOracleTest(OracleFixture):
         return rendered
 
     def test_country_planning_oversight(self):
+        # The Country Plan lens: the activity plan whose optimised code this
+        # oracle freezes. The page opens on the planning-coverage dashboard
+        # since 2026-09-28, which reads none of the frozen functions.
         urls = [
-            ("/country-planning-oversight/", False),
-            ("/country-planning-oversight/", True),
-            (f"/country-planning-oversight/?period=month&month={TODAY.month}", False),
+            ("/country-planning-oversight/?view=plan", False),
+            ("/country-planning-oversight/?view=plan", True),
+            (
+                f"/country-planning-oversight/?view=plan&period=month&month={TODAY.month}",
+                False,
+            ),
             (
                 f"/country-planning-oversight/?program_lead={self.pl_b.id}"
                 f"&lead={self.pl_b.id}",

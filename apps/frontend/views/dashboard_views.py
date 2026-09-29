@@ -561,6 +561,18 @@ def dashboard_view(request):
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
+    # The Country Director's dashboard is Country Oversight (owner,
+    # 2026-09-28): planning coverage and execution & completion, with Who's
+    # Online under the planning tab. The former command dashboard's Map and
+    # Operations views still answer when a link names them, and the map has
+    # its own page (/country-map/).
+    if (
+        role == "CountryDirector"
+        and (request.GET.get("view") or "").strip().lower() not in ("map", "operations")
+        and request.headers.get("HX-Request") != "true"
+    ):
+        return redirect("/country-planning-oversight/")
+
     # The Regional Programme Lead's home: the Regional Lead for
     # Christ-Centered Education's coaching and reporting view over their
     # region's country programmes (owner, 2026-09-12).
@@ -689,12 +701,8 @@ def dashboard_view(request):
             from apps.analytics.country_map_context import country_map_context
 
             context.update(country_map_context(fy))
-        else:
-            # Who is using the system (owner, 2026-09-15): the Admin's Who's
-            # Online table, on the CD's Operations view as well.
-            from apps.accounts.presence import presence_filters, presence_summary
-
-            context["presence"] = presence_summary(**presence_filters(request))
+        # Who's Online moved under Country Oversight's planning tab, the
+        # Country Director's dashboard (owner, 2026-09-28).
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
             response = render(
                 request,
