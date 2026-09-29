@@ -77,28 +77,34 @@
   white-space: nowrap;
 }
 .presence-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--edify-border); vertical-align: middle; }
-/* The columns (owner, 2026-09-28): Staff name, Title, # of logins, Last
-   login, Page accessed, Working on what, Duration online, Other parts
-   accessed, Overall time. One line each, as every record table reads; the
-   figures are tabular and never cut. */
-.presence-table__name { white-space: nowrap; }
+/* The columns (owner, 2026-09-28): Staff name, Title, # of logins, Login day,
+   date & time, Page accessed, Working on what, Duration online, Overall time.
+   Every heading and cell on one line and none cut (owner, 2026-09-29: "NO
+   Wrapping and everything should be accurate"): the table is marked
+   data-table-fit="scroll", so micro-ux.js does not shorten its columns, and
+   a table wider than its box scrolls sideways in .presence-table-wrap. */
+.presence-table :is(th, td) { white-space: nowrap; }
+/* A person's lines read as one block: a rule between people, none between
+   one person's own lines. */
+.presence-table tbody tr.presence-row:not(.presence-row--last) > td { border-bottom-color: transparent; }
 .presence-person__name .admin-presence-light { margin-inline-end: 0.6rem; vertical-align: -0.05rem; }
 .presence-person__name { color: var(--edify-text); font-weight: 620; }
 .presence-row--lead .presence-person__name { font-weight: 720; }
 .presence-row[data-presence="offline"] .presence-person__name { color: var(--edify-text-muted); font-weight: 560; }
-.presence-table__role { white-space: nowrap; color: var(--edify-text-muted); font-weight: 600; }
-.presence-table :is(.presence-table__logins, .presence-table__login, .presence-table__online, .presence-table__total) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.presence-table__role { color: var(--edify-text-muted); font-weight: 600; }
+/* Figures line up digit under digit, the times at the column's end so a
+   person's durations can be read down and added. */
+.presence-table :is(.presence-table__logins, .presence-table__login, .presence-table__online, .presence-table__total) { font-variant-numeric: tabular-nums; }
+.presence-table :is(.presence-table__online, .presence-table__total) { text-align: end; }
 .presence-table td.presence-table__logins { font-weight: 650; color: var(--edify-text); }
+.presence-table td.presence-table__online { color: var(--edify-text); font-weight: 600; }
 .presence-table__total b { font-weight: 720; color: var(--edify-text); }
 .presence-signin { color: inherit; text-decoration: none; }
 a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: underline; }
 .presence-muted { color: var(--edify-text-subtle); }
-/* The platform inks every pill in a table as body text; an offline row's
-   task stays muted with the rest of its row. */
-:root table.presence-table.presence-table.presence-table.presence-table .edify-cell-pill.presence-muted { color: var(--edify-text-subtle) !important; }
 .presence-live { color: var(--edify-success-text); font-weight: 700; }
 
-/* Whoever is online is green across the whole row (owner, 2026-09-28), with
+/* Whoever is online is green across their rows (owner, 2026-09-28), with
    a green edge on the name so the row still reads as live when the table is
    scrolled sideways. consistency.css flattens every cell of a plain table to
    the table surface (background-color and box-shadow, !important, at
@@ -120,6 +126,21 @@ a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: unde
 /* A Programme Lead's team, or a role, heads its rows with the platform's
    group heading (components.css .edify-group-head); nothing under it folds. */
 .presence-table .edify-group-head .admin-presence-light { width: 0.55rem; height: 0.55rem; }
+/* The heading's box stays at the table's start while the table scrolls
+   sideways, as the pinned name column does — which it can only do while it
+   is as wide as its words, not the row. Two platform rules say otherwise,
+   both !important: consistency.css makes a cell's .edify-cell-row a
+   full-width flex row, and responsive-system.css caps the first thing in a
+   scrolled row's first cell at the identity measure with an ellipsis. A
+   heading is neither a record line nor a name; the never-matching id
+   outranks both for it alone. */
+.presence-table .presence-group-head { position: sticky; inset-inline-start: 0.75rem; }
+.presence-table .edify-group-head > th > .presence-group-head:not(#presence-group-head-none) {
+  display: inline-flex !important;
+  align-items: center;
+  max-inline-size: none !important;
+  overflow: visible !important;
+}
 
 /* The period filter (owner, 2026-09-28): day, week, month, quarter, FY and a
    day inside it. One compact row under the caption. */
@@ -128,56 +149,5 @@ a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: unde
 .presence-choose select,
 .presence-choose input { font-size: var(--edify-text-micro-size); }
 
-/* Time in the period: what on and where, each with its minutes. The pieces
-   run on one line after a middle dot, as the row's other cells do. */
-.presence-spent b,
-.presence-detail b { font-weight: 650; color: var(--edify-text); font-variant-numeric: tabular-nums; margin-inline-start: 0.2rem; }
-.presence-table td .presence-spent + .presence-spent::before { content: "· "; color: var(--edify-text-subtle); margin-inline-start: 0.25rem; }
-/* Every other part is listed and none is cut (owner, 2026-09-29: "everything
-   should be visible"): the list wraps between parts, each part and its time
-   on one line. The platform holds a cell to one line and shortens the widest
-   text (consistency.css, micro-ux.js, !important); this outranks it for this
-   one column, as the detail row below does for its breakdown. */
-:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts,
-:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts.edify-cell.edify-cell {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  max-inline-size: none !important;
-  min-inline-size: 12rem;
-}
-:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts .presence-spent {
-  display: inline-block;
-  max-inline-size: none !important;
-  overflow: visible !important;
-  white-space: nowrap !important;
-}
-
-/* Under each person, always shown: every sign-in in the period and the time
-   under each part of the tool, with its tasks. */
-:is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td,
-:is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td.edify-cell.edify-cell {
-  white-space: normal !important;
-  overflow: visible !important;
-  max-inline-size: none !important;
-  padding: 0.6rem 0.9rem 0.8rem !important;
-  background: var(--edify-surface-muted);
-}
-/* Everything in a table cell is held to one line by the platform
-   (consistency.css and mobile-micro-ux.css, both !important). The detail row
-   is not a record but the record's breakdown — prose and lists — so it
-   wraps; the selector outranks those two for this row only. */
-:is(main, .drawer-surface) table.presence-table tr.presence-detail > td :is(.presence-detail__cols, .presence-detail__cols *) { white-space: normal !important; }
-.presence-detail__cols > * { min-width: 0; }
-.presence-detail__cols { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 2fr); gap: 0.75rem 1.5rem; }
-.presence-detail__block h3 { margin: 0 0 0.35rem; font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--edify-text-subtle); }
-.presence-detail__times { margin: 0; padding: 0; list-style: none; columns: 2 10rem; column-gap: 1rem; font-variant-numeric: tabular-nums; color: var(--edify-text); }
-.presence-detail__times li { break-inside: avoid; padding: 0.1rem 0; }
-.presence-detail__note { margin: 0.25rem 0 0; color: var(--edify-text-subtle); }
-.presence-detail__parts { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; }
-.presence-detail__part strong { color: var(--edify-text); font-weight: 650; }
-.presence-detail__tasks { margin: 0.1rem 0 0; padding: 0 0 0 0.9rem; list-style: disc; color: var(--edify-text-muted); }
-
-@media (max-width: 640px) {
-  .presence-detail__cols { grid-template-columns: 1fr; }
-}
+/* The time columns' headings sit over their figures, at the column's end. */
+.presence-table thead th:is(.presence-table__online, .presence-table__total) { text-align: end; }

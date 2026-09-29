@@ -176,7 +176,7 @@ def record_login(request, user) -> None:
     sign-in it records."""
     from django.db import DatabaseError
 
-    from .models import LoginEvent, User
+    from .models import LoginEvent
 
     now = timezone.now()
     try:
@@ -187,11 +187,20 @@ def record_login(request, user) -> None:
             ip=client_address(request),
             user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:256],
         )
-        User.objects.filter(pk=user.pk).update(
-            last_seen_at=now,
-            online_since=now,
-            last_seen_path="/dashboard",
-            last_seen_action="",
+        # A sign-in starts a sitting on the Dashboard it lands on. The beat
+        # before it — the end of the last sitting, or a page on another
+        # device — is credited as the next beat would have credited it: a
+        # sitting's final beat was lost whenever it ended in a sign-in.
+        _next_beat(
+            user.pk,
+            {
+                "last_seen_at": now,
+                "online_since": now,
+                "last_seen_path": "/dashboard",
+                "last_seen_action": "",
+            },
+            previous=user,
+            now=now,
         )
     except (DatabaseError, ValueError):  # pragma: no cover - defensive
         logger.exception(
@@ -202,7 +211,13 @@ def record_login(request, user) -> None:
 # Requests that say nothing about what a person is doing: the browser's
 # machinery, and what the page reports on its own (the defect beacon posts
 # whenever a script throws, and read as "Viewing Support · client defect").
+# Signing in and out too: record_login has already put the person on the
+# Dashboard the sign-in lands on, and the sign-in's own POST replaced it, so
+# the minutes after every sign-in went to "Sign-in · Signing in" (and a
+# two-step code to "Verifying work").
 _UNTRACKED_PREFIXES = (
+    "/login",
+    "/logout",
     "/api/",
     "/static/",
     "/media/",
@@ -258,8 +273,6 @@ def touch_presence(user, request=None) -> None:
     from django.db import DatabaseError
     from django.db.models import Case, F, Q, Value, When
 
-    from .models import User
-
     if not getattr(user, "is_authenticated", False):
         return
     # A session request carries the User; an API request the AuthPrincipal,
@@ -287,39 +300,46 @@ def touch_presence(user, request=None) -> None:
     footprint = request_footprint(request)
     if footprint:
         values["last_seen_path"], values["last_seen_action"] = footprint
-    # The beat before this one, as the request loaded it (no extra read). The
-    # time since it belongs to the page and task it recorded (owner,
-    # 2026-09-28: how long, on which part, working on what).
-    previous_seen = getattr(user, "last_seen_at", None)
-    previous_path = getattr(user, "last_seen_path", None) or ""
-    previous_action = getattr(user, "last_seen_action", None) or ""
+    try:
+        _next_beat(user_pk, values, previous=user, now=now)
+    except DatabaseError:
+        return
+
+
+def _next_beat(user_pk, values: dict, *, previous, now) -> None:
+    """Write a beat, and credit the time since the one before it to the page
+    and task that one recorded (owner, 2026-09-28: how long, on which part,
+    working on what). *previous* is the person as the request loaded them, so
+    the beat before costs no extra read."""
+    from .models import User
+
+    previous_seen = getattr(previous, "last_seen_at", None)
+    previous_path = getattr(previous, "last_seen_path", None) or ""
+    previous_action = getattr(previous, "last_seen_action", None) or ""
     if is_untracked_path(previous_path):
         # Recorded before these requests were left out (production stored
         # "/sw.js" until 2026-09-28): no part of the tool to credit, as when
         # no page was recorded at all.
         previous_path = ""
-    try:
-        rows = User.objects.filter(pk=user_pk)
-        # Guarded on the beat it read, so two requests at once cannot both
-        # credit the same minutes: the second finds the beat moved and only
-        # updates the presence.
-        won = (
-            rows.filter(last_seen_at=previous_seen).update(**values)
-            if previous_seen and previous_path
-            else 0
-        )
-        if not won:
-            rows.update(**values)
-            return
-        credit_presence_time(
-            user_pk,
-            previous_seen,
-            previous_path,
-            previous_action,
-            seconds=_credit_for((now - previous_seen).total_seconds()),
-        )
-    except DatabaseError:
+    rows = User.objects.filter(pk=user_pk)
+    # Guarded on the beat it read, so two requests at once cannot both
+    # credit the same minutes: the second finds the beat moved and only
+    # updates the presence.
+    won = (
+        rows.filter(last_seen_at=previous_seen).update(**values)
+        if previous_seen and previous_path
+        else 0
+    )
+    if not won:
+        rows.update(**values)
         return
+    credit_presence_time(
+        user_pk,
+        previous_seen,
+        previous_path,
+        previous_action,
+        seconds=_credit_for((now - previous_seen).total_seconds()),
+    )
 
 
 def _credit_for(gap: float) -> int:
@@ -378,12 +398,81 @@ def format_minutes(seconds: float | None) -> str:
     """Time on the tool, in hours and minutes (owner, 2026-09-28: "show
     minutes"). Never days: a financial year's hours read as hours."""
     seconds = int(seconds or 0)
-    if seconds <= 0:
-        return "0m"
-    if seconds < 60:
-        return "<1m"
-    hours, minutes = divmod(seconds // 60, 60)
+    return _minutes_label(seconds // 60, seconds)
+
+
+def _minutes_label(minutes: int, seconds: float) -> str:
+    """Whole minutes as the table writes them: "<1m" for time that is less
+    than a minute, "0m" for none."""
+    if minutes <= 0:
+        return "<1m" if seconds > 0 else "0m"
+    hours, minutes = divmod(minutes, 60)
     return f"{hours}h {minutes:02d}m" if hours else f"{minutes}m"
+
+
+def _share_minutes(seconds: list[int]) -> list[int]:
+    """Whole minutes for each of a person's tasks that add up to the person's
+    own whole minutes, so the Duration column sums to the Overall time as the
+    table shows them, not only as they are stored (owner, 2026-09-29: "sum up
+    the overall time"). Each task keeps its whole minutes, and the minutes its
+    leftover seconds make up go to the tasks with the most left over (the
+    largest-remainder method): a task shows its time to the minute below or
+    above, never further off."""
+    minutes = [s // 60 for s in seconds]
+    spare = sum(seconds) // 60 - sum(minutes)
+    most_left = sorted(
+        range(len(seconds)), key=lambda i: (-(seconds[i] % 60), -seconds[i], i)
+    )
+    for i in most_left[:spare]:
+        minutes[i] += 1
+    return minutes
+
+
+def _since_last_beat(
+    row: dict, *, now, period: dict | None
+) -> tuple[tuple | None, int]:
+    """The (part, task) of the person's last beat and the seconds since it,
+    when that beat falls inside the period.
+
+    touch_presence credits the time since a beat when the next one comes, so
+    the record always lags the person by one beat: up to ten minutes for
+    someone reading a page, and the final-beat credit for someone who has
+    left. Counted here as the next beat will count it (``_credit_for``), a
+    total read in the middle of a sitting is the total the record will hold,
+    and it does not jump when the next beat lands (owner, 2026-09-29: "we
+    want the actual calculation of how long a person spent doing what they
+    are doing")."""
+    from .presence_labels import describe
+
+    last_seen = row["last_seen_at"]
+    path = row["last_seen_path"] or ""
+    if not (period and last_seen and path) or is_untracked_path(path):
+        return None, 0
+    if not period["start"] <= timezone.localtime(last_seen).date() <= period["end"]:
+        return None, 0
+    described = describe(path, row["last_seen_action"] or "")
+    # The keys credit_presence_time writes, so the two meet in one row.
+    key = (described["section"][:64], described["working_on"][:128])
+    return key, _credit_for((now - last_seen).total_seconds())
+
+
+def _with_time_since_last_beat(spent: dict | None, key: tuple, seconds: int) -> dict:
+    spent = spent or {}
+    tasks = dict(spent.get("tasks") or {})
+    tasks[key] = tasks.get(key, 0) + seconds
+    return {"seconds": spent.get("seconds", 0) + seconds, "tasks": tasks}
+
+
+def _short_task(section: str, working_on: str) -> str:
+    """What was done, beside the page it was done on: "Viewing My Plan" beside
+    "My Plan" reads "Viewing", and "Viewing Team Oversight · week" beside
+    "Team Oversight" reads "Viewing · week"."""
+    viewing = f"Viewing {section}"
+    if working_on == viewing:
+        return "Viewing"
+    if working_on.startswith(f"{viewing} · "):
+        return "Viewing" + working_on[len(viewing) :]
+    return working_on
 
 
 def _person(
@@ -394,6 +483,7 @@ def _person(
     logins: dict | None = None,
     spent: dict | None = None,
     signins: dict | None = None,
+    period: dict | None = None,
 ) -> dict:
     from .presence_labels import describe
 
@@ -416,6 +506,9 @@ def _person(
     # is when that sitting began.
     signin = (logins or {}).get(row["id"]) or {}
     last_login = signin.get("last_at")
+    current, pending = _since_last_beat(row, now=now, period=period)
+    if current:
+        spent = _with_time_since_last_beat(spent, current, pending)
     person = {
         **row,
         "online": online,
@@ -450,20 +543,18 @@ def _person(
         # went and what on, and the sign-ins inside the period.
         **_period_figures(spent, signins, now=now),
     }
-    # Owner, 2026-09-28: the page, what they are doing on it, then "other
-    # part of the system accessed, duration of access" — every other part
-    # the period's time went to.
-    current = person["section"]
-    # Beside its own column the page need not be said twice: "Dashboard" and
-    # "Viewing Dashboard" read as "Dashboard" and "Viewing".
-    person["working_label"] = (
-        "Viewing"
-        if person["working_on"] == f"Viewing {current}"
-        else person["working_on"]
-    )
-    person["other_sections"] = [
-        part for part in person["period_sections"] if part["section"] != current
-    ]
+    # The table's lines (owner, 2026-09-29: "NO Wrapping and everything
+    # should be accurate"): one per page and task in the period, each with
+    # its own time, so the Duration column adds up to the Overall time. The
+    # page the person is on — or was last on — leads; the rest follow,
+    # longest first. Nobody is left without a line: no time reads "—".
+    person["rows"] = sorted(
+        (
+            {**task, "current": (task["section"], task["working_on"]) == current}
+            for task in person["period_tasks"]
+        ),
+        key=lambda task: not task["current"],
+    ) or [{"section": "", "working_on": "", "seconds": 0, "current": False}]
     # Login day, date and time: the period's latest, else the last ever.
     person["login_at"] = person["period_last_login"] or last_login
     return person
@@ -485,41 +576,36 @@ def _period_figures(spent: dict | None, signins: dict | None, *, now) -> dict:
     spent = spent or {}
     signins = signins or {}
     seconds = spent.get("seconds", 0)
-    sections = sorted(
-        (
-            {
-                "section": section,
-                "seconds": total,
-                "label": format_minutes(total),
-            }
-            for section, total in (spent.get("sections") or {}).items()
-        ),
-        key=lambda item: (-item["seconds"], item["section"]),
-    )
     tasks = sorted(
         (
             {
                 "working_on": working_on,
+                "working_label": _short_task(section, working_on),
                 "section": section,
                 "seconds": total,
-                "label": format_minutes(total),
             }
             for (section, working_on), total in (spent.get("tasks") or {}).items()
         ),
-        key=lambda item: (-item["seconds"], item["working_on"]),
+        key=lambda item: (-item["seconds"], item["section"], item["working_on"]),
     )
-    for item in sections:
-        item["tasks"] = [task for task in tasks if task["section"] == item["section"]]
+    for task, minutes in zip(tasks, _share_minutes([t["seconds"] for t in tasks])):
+        task["minutes"] = minutes
+        task["label"] = _minutes_label(minutes, task["seconds"])
+    minutes = sum(task["minutes"] for task in tasks)
     return {
         "period_seconds": seconds,
-        "period_time_label": format_minutes(seconds),
-        "period_sections": sections,
+        "period_minutes": minutes,
+        "period_time_label": _minutes_label(minutes, seconds),
         "period_tasks": tasks,
         "period_logins": signins.get("count", 0),
         "period_first_login": signins.get("first"),
         "period_last_login": signins.get("last"),
         "period_last_login_label": _when_label(signins.get("last"), now=now),
         "period_login_times": signins.get("times", []),
+        # Every sign-in time listed, on the login cell (latest first).
+        "period_login_times_label": ", ".join(
+            _when_label(at, now=now) for at in signins.get("times", [])
+        ),
     }
 
 
@@ -643,8 +729,13 @@ def presence_groups(people: list[dict]) -> list[dict]:
         everyone = ([g["lead"]] if g["lead"] else []) + g["members"]
         g["total"] = len(everyone)
         g["online"] = sum(1 for p in everyone if p["online"])
+        # The minutes the rows show, added up: a heading that rounded its own
+        # seconds could read a minute more than its people.
         g["period_seconds"] = sum(p.get("period_seconds", 0) for p in everyone)
-        g["period_time_label"] = format_minutes(g["period_seconds"])
+        g["period_minutes"] = sum(p.get("period_minutes", 0) for p in everyone)
+        g["period_time_label"] = _minutes_label(
+            g["period_minutes"], g["period_seconds"]
+        )
         g["open"] = g["online"] > 0
         out.append(g)
     out.sort(key=lambda g: (g["order"][0], -g["online"], g["order"][1]))
@@ -745,14 +836,9 @@ def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> d
     for row in spent_rows.values("user_id", "section", "working_on").annotate(
         total=Sum("seconds")
     ):
-        spent = spent_by_user.setdefault(
-            row["user_id"], {"seconds": 0, "sections": {}, "tasks": {}}
-        )
+        spent = spent_by_user.setdefault(row["user_id"], {"seconds": 0, "tasks": {}})
         total = row["total"] or 0
         spent["seconds"] += total
-        spent["sections"][row["section"]] = (
-            spent["sections"].get(row["section"], 0) + total
-        )
         spent["tasks"][(row["section"], row["working_on"])] = total
 
     def person(row, *, online):
@@ -763,6 +849,7 @@ def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> d
             logins=logins_by_user,
             spent=spent_by_user.get(row["id"]),
             signins=signins_by_user.get(row["id"]),
+            period=chosen,
         )
 
     roster = User.objects.filter(is_active=True, deleted_at__isnull=True)
@@ -841,7 +928,10 @@ def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> d
         "period_options": PRESENCE_PERIODS,
         "period_logins": sum(p["period_logins"] for p in everyone),
         "period_seconds": sum(p["period_seconds"] for p in everyone),
-        "period_time_label": format_minutes(sum(p["period_seconds"] for p in everyone)),
+        "period_time_label": _minutes_label(
+            sum(p["period_minutes"] for p in everyone),
+            sum(p["period_seconds"] for p in everyone),
+        ),
         "online": online,
         "online_count": len(online),
         "offline": offline,

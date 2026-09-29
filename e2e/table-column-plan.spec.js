@@ -18,10 +18,12 @@
  *    table, with no scroll to reach it.
  *
  * My Plan's tables became record tables on 2026-09-19 and a record table
- * scrolls instead of taking a plan (micro-ux.js, 2026-09-20), so the journey
- * reads the Country Director's operations dashboard, whose Who's Online table
- * takes a plan at 1440px. Nothing in it folds (owner, 2026-09-29: "everything
- * should be visible"), so every row is there to plan from on first paint.
+ * scrolls instead of taking a plan (micro-ux.js, 2026-09-20). Who's Online
+ * took the plan on the Country Director's operations dashboard until
+ * 2026-09-29, when it too began to scroll rather than shorten a word (owner:
+ * "NO Wrapping and everything should be accurate"). The journey now reads the
+ * People Directory, which the Country Director opens and which takes a plan
+ * at 1440px.
  *
  * Asserted on the rendered geometry, not the plan: a heading that fits its
  * own box, and a control the reader can actually get to.
@@ -33,13 +35,12 @@ test('planned columns show their headings and keep their controls reachable', as
   test.setTimeout(120_000);
   await signIn(page, 'cd@edify.org', 'edify', { acceptRequiredAgreements: false });
   await page.setViewportSize({ width: 1440, height: 950 });
-  await page.goto('/dashboard?view=operations');
-  await expect(page.locator('main table').first()).toBeVisible();
-  await expect(page.locator('[data-admin-presence] tr.presence-row').first()).toBeVisible();
+  await page.goto('/staff');
+  await expect(page.locator('main table tbody tr').first()).toBeVisible();
   await page.waitForTimeout(600);
 
   const planned = page.locator('main table.edify-table--truncate');
-  expect(await planned.count(), 'the operations tables take a column plan at 1440px').toBeGreaterThan(0);
+  expect(await planned.count(), 'the People Directory takes a column plan at 1440px').toBeGreaterThan(0);
 
   const report = await planned.evaluateAll((tables) =>
     tables.map((table) => {

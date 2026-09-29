@@ -4104,7 +4104,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7270,
+      "bytes": 7550,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4129,7 +4129,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5687,
+      "bytes": 4724,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4143,8 +4143,7 @@
       "purpose": "Reusable  whos online row interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 0,
       "template": "partials/dashboards/_whos_online_row.html",
