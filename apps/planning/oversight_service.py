@@ -382,6 +382,16 @@ def build_items(
     )
     partner_names = _partner_names([a.assigned_partner_id for a in activities])
 
+    # The course lookup only when a training here has no intervention of its
+    # own — older rows — so a page of linked work spends no query on it.
+    if any(
+        a.activity_type in TRAINING_TYPES
+        and not (a.focus_intervention or a.purpose_intervention)
+        for a in activities
+    ):
+        from apps.activity_catalogue.training_intervention import fixed_interventions
+
+        fixed_interventions(fresh=True)
     items = [_activity_item(a, directory, costs, partner_names) for a in activities]
     items += [_assignment_item(pa, directory) for pa in assignments]
 
@@ -488,6 +498,7 @@ _ACTIVITY_COLUMNS = (
     "cluster_id",
     "project_id",
     "training_course_id",
+    "catalogue_item_id",
     "focus_intervention",
     "purpose_intervention",
     "support_rationale",
@@ -1080,6 +1091,26 @@ class _StaffDirectory:
         ) if supervisor_id else ""
 
 
+def course_intervention(activity) -> str:
+    """The SSA intervention a training's course is fixed to, for a training
+    saved without one (owner, 2026-09-29: "make sure the SSA interventions
+    are linked to every training"). The course — ``training_course`` for an
+    in-school delivery, else the catalogue item — owns the association; a
+    course that moves no single intervention (an orientation, "Other")
+    answers "".
+    """
+    from apps.activity_catalogue.training_intervention import fixed_interventions
+
+    fixed = fixed_interventions()
+    for course_id in (
+        getattr(activity, "training_course_id", None),
+        getattr(activity, "catalogue_item_id", None),
+    ):
+        if course_id and fixed.get(course_id):
+            return fixed[course_id]
+    return ""
+
+
 def _activity_item(
     activity, directory: _StaffDirectory, costs, partner_names
 ) -> PlanningOversightItem:
@@ -1177,7 +1208,10 @@ def _activity_item(
         non_school_context=activity.venue or "",
         activity_type=activity.activity_type,
         target_intervention=(
-            activity.focus_intervention or activity.purpose_intervention or ""
+            activity.focus_intervention
+            or activity.purpose_intervention
+            or (course_intervention(activity) if is_training else "")
+            or ""
         ),
         operational_rationale=(
             activity.support_rationale or activity.activity_purpose_text or ""
@@ -1403,12 +1437,57 @@ def _export_school_id(item) -> str:
     return code
 
 
+def _label(value) -> str:
+    return str(value or "").replace("_", " ").strip().title()
+
+
+def _intervention_label(value) -> str:
+    """The SSA intervention's own label ("Exposure to the Word of God"),
+    not its stored key."""
+    if not value:
+        return ""
+    from apps.core.enums import SsaIntervention
+
+    try:
+        return str(SsaIntervention(value).label)
+    except ValueError:
+        return _label(value)
+
+
+def _training_name(item) -> str:
+    name = item.training_name or ""
+    return "" if name == "—" else name
+
+
+#: The table each exported row is on, in the page's order (owner,
+#: 2026-09-29: the export carries the page's columns — the Training Name
+#: and the SSA intervention of every training — and a School ID on every
+#: school row, a cluster training listed once per invited school as the
+#: "Schools with Planned Training" table lists it).
+EXPORT_STREAMS = (
+    ("client_school_visits", "Client School Visit"),
+    ("core_school_visits", "Core School Visit"),
+    ("cluster_meetings", "Cluster Meeting"),
+    ("planned_trainings", "Training"),
+)
+
 EXPORT_COLUMNS = (
     ("Financial year", lambda i: i.fy),
+    ("Table", lambda i: getattr(i, "export_table", "")),
     ("School ID", _export_school_id),
-    ("Planned date", lambda i: i.planned_date.isoformat() if i.planned_date else ""),
+    ("School name", lambda i: i.school_name if i.school_id else ""),
+    ("District", lambda i: i.district_name),
+    ("Cluster", lambda i: i.cluster_name),
     ("Activity type", lambda i: i.activity_type),
-    ("Context", lambda i: i.context_label),
+    ("Training name", _training_name),
+    ("SSA intervention", lambda i: _intervention_label(i.target_intervention)),
+    (
+        "Purpose of visit",
+        lambda i: "" if i.purpose_of_visit == "—" else i.purpose_of_visit,
+    ),
+    ("Planned date", lambda i: i.planned_date.isoformat() if i.planned_date else ""),
+    ("Delivery type", lambda i: i.delivery_type),
+    ("Participants", lambda i: i.participants or ""),
     ("Planning stage", lambda i: i.stage),
     ("Planned by", lambda i: i.planned_by_name),
     ("Operational owner", lambda i: i.operational_owner_name),
@@ -1417,12 +1496,11 @@ EXPORT_COLUMNS = (
     ("Managing staff", lambda i: i.managing_staff_name),
     ("Supervising PL", lambda i: i.supervising_pl_name),
     ("Partner", lambda i: i.partner_name),
-    ("Intervention", lambda i: i.target_intervention),
     ("Planned cost (UGX)", lambda i: i.planned_cost),
     ("Activity status", lambda i: i.activity_status),
     ("Assignment status", lambda i: i.assignment_status),
-    ("Evidence", lambda i: i.evidence_status),
-    ("Salesforce", lambda i: i.salesforce_status),
+    ("Salesforce ID", lambda i: i.salesforce_id),
+    ("Evidence", lambda i: i.evidence_label or i.evidence_status),
     ("IA", lambda i: i.ia_status),
     ("Finance", lambda i: i.finance_status),
     ("Risks", lambda i: "; ".join(r["key"] for r in i.risks)),
@@ -1431,16 +1509,26 @@ EXPORT_COLUMNS = (
 
 
 def export_rows(items):
-    """Header row then one row per item, in the order the page shows them.
+    """Header row then one row per item, in the order given.
 
-    Built from the same items the page rendered, so an export cannot contain a
-    row the viewer could not see or a total the page did not show. No evidence
-    files or free-text notes are included — an export is a plan, not a record
-    store.
+    The views hand it the rows of the page's four tables
+    (``stream_rows``), so an export cannot contain a row the viewer could not
+    see or a total the page did not show. No evidence files or free-text
+    notes are included — an export is a plan, not a record store.
     """
     yield [label for label, _ in EXPORT_COLUMNS]
     for item in items:
         yield [getter(item) for _, getter in EXPORT_COLUMNS]
+
+
+def stream_rows(owner_groups):
+    """The rows of each person's four tables, in the page's order, each
+    marked with the table it is on."""
+    for group in owner_groups:
+        for key, table in EXPORT_STREAMS:
+            for item in group.get(key, ()):
+                item.export_table = table
+                yield item
 
 
 # ── Folds ────────────────────────────────────────────────────────────────────

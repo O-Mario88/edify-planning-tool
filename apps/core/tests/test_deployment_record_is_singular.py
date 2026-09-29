@@ -29,7 +29,7 @@ class DeploymentRecordsDescribeOneAppTest(SimpleTestCase):
 
     def test_the_verified_topology_keeps_migrations_out_of_web_boot(self):
         text = (ROOT / ".do" / "README.md").read_text(encoding="utf-8")
-        self.assertIn("1 × `apps-s-1vcpu-1gb-fixed`", text)
+        self.assertIn("1 × `apps-s-2vcpu-4gb`", text)
         self.assertIn("pre-deploy job `migrate`", text)
         self.assertIn("managed PostgreSQL 16", text)
         self.assertIn("RUN_MIGRATIONS=false", text)

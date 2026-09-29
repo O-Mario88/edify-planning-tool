@@ -835,6 +835,13 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "SSA interventions needing urgent attention")
         self.assertContains(response, "(3.5/10)")
         self.assertContains(response, self.cluster.name)
+        # The cluster the school belongs to has its own column, linked to the
+        # cluster (owner, 2026-09-29).
+        self.assertContains(
+            response, '<th scope="col" class="school-plan-table__cluster">Cluster</th>'
+        )
+        self.assertContains(response, f'href="/clusters/{self.cluster.id}"')
+        self.assertContains(response, "data-cluster-column")
         self.assertContains(response, "Plot 12, Kampala Road")
         self.assertContains(response, "School Type:")
         self.assertContains(response, "Staff Name:")
@@ -868,6 +875,8 @@ class FrontendViewsTestCase(TestCase):
         # details link to the school profile.
         self.assertTemplateUsed(response, "components/school_plan_table_head.html")
         self.assertContains(response, 'class="school-plan-table"')
+        # The cluster's own list needs no Cluster column: every row is in it.
+        self.assertNotContains(response, "school-plan-table__cluster")
         self.assertContains(response, 'class="school-plan-table__name-toggle"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
