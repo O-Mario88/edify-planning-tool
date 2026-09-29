@@ -271,6 +271,7 @@
       var prev = cell.previousElementSibling;
       var identity = row && (cell === row.firstElementChild ||
         (prev === row.firstElementChild && prev.querySelector('input[type="checkbox"], input[type="radio"], .edify-table-choice')));
+      var named = false;
       if (identity && !cell.hasAttribute('x-text') && !cell.hasAttribute('x-html')) {
         var lead = [];
         for (var node = cell.firstChild; node && node.nodeType !== 1; node = node.nextSibling) lead.push(node);
@@ -279,11 +280,18 @@
           name.className = 'edify-cell-name';
           cell.insertBefore(name, lead[0]);
           lead.forEach(function (n) { name.appendChild(n); });
+          named = true;
         }
       }
-      var hiddenChildren = read.hidden;
+      /* The read phase flagged the children the cell had then. The name span
+         is written in front of them, so it takes a flag of its own (never
+         hidden: it is the row's name) and every read flag moves up one. The
+         toggle is always forced: `toggle(name, undefined)` is a plain toggle,
+         and a plain toggle on a name with no flag hid the name (2026-09-29). */
+      var hiddenChildren = read.hidden.slice();
+      if (named) hiddenChildren.unshift(false);
       Array.from(cell.children).forEach(function (child, index) {
-        child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);
+        child.classList.toggle('edify-cell-hidden', Boolean(hiddenChildren[index]));
       });
       Array.from(cell.children).forEach(function (child) {
         if (child.matches('div.rounded-pill, div.rounded-full')) child.classList.add('edify-cell-mark');

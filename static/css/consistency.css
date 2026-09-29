@@ -3393,10 +3393,14 @@ main table tbody > tr:only-child > td[colspan] > :is(
    excluded because display on those belongs to the script. So is the name
    a scrolling table pins (responsive-system.css): an inline box ignores the
    identity measure, and a plain-text name then pinned the whole width of a
-   phone. `:where()` keeps this rule's weight unchanged. */
+   phone. So is a child micro-ux marks `edify-cell-hidden` — one the page
+   hides, such as a phone-only label: at this rule's weight (about 0,12,4)
+   putting it on the line out-ranked the hide rule (0,5,3, "A child the page
+   hides at this width stays hidden") and showed it at every width
+   (2026-09-29). `:where()` keeps this rule's weight unchanged. */
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
-  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]):not(:where(.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody > tr > :first-child > :first-child)) {
+  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]):not(:where(.edify-cell-hidden, .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody > tr > :first-child > :first-child)) {
   display: inline !important;
   margin-block: 0 !important;
 }
