@@ -1996,6 +1996,49 @@ def schedule_action_view(request):
 
 
 @require_page_permission("planning")
+def bulk_assign_partner_drawer_view(request):
+    """Assign the schools ticked on a cluster's school list to one partner
+    (owner, 2026-09-29: "On Cluster School list, add checkbox on the first
+    column so that the staff can be able to select the schools they want to
+    assign to partners"). It posts to the Planning page's bulk partner
+    action, so the scope, gate and duplicate rules are that action's."""
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to assign to partner."
+        )
+    from apps.core.scoping import resolve_user_scope, school_queryset
+    from apps.planning.visit_gate import visit_gate
+
+    codes = [c.strip() for c in request.GET.getlist("school_ids") if c.strip()]
+    schools = list(
+        school_queryset(resolve_user_scope(request.user), direct_only=True)
+        .filter(deleted_at__isnull=True, school_id__in=codes)
+        .order_by("name")
+    )
+    rows = []
+    for school in schools:
+        gate = visit_gate(school)
+        rows.append(
+            {
+                "school": school,
+                "ok": gate.can_assign_partner,
+                "reason": "" if gate.can_assign_partner else gate.assign_reason,
+            }
+        )
+    return render(
+        request,
+        "partials/clusters/bulk_assign_partner_drawer.html",
+        {
+            "rows": rows,
+            "assignable": [r for r in rows if r["ok"]],
+            "outside_scope": len(set(codes)) - len(schools),
+            "partners": assignable_partners(),
+            "drawer_size": "sm",
+        },
+    )
+
+
+@require_page_permission("planning")
 def assign_partner_modal_view(request):
     if not RolePermissionService.can_assign_to_partner(request.user):
         return HttpResponseForbidden(
@@ -2621,8 +2664,11 @@ def bulk_action_view(request):
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
         )
+        from apps.planning.visit_gate import visit_gate
+
         created_ids = []
         skipped = 0
+        gated: list[str] = []
         try:
             with transaction.atomic():
                 for s in schools:
@@ -2630,6 +2676,11 @@ def bulk_action_view(request):
                     # assigned a second time (owner, 2026-09-24).
                     if PartnerAssignment.has_open_assignment(s, partner):
                         skipped += 1
+                        continue
+                    # The single Assign's own gate (visit_gate): a school
+                    # it would refuse is left, not assigned (2026-09-29).
+                    if not visit_gate(s).can_assign_partner:
+                        gated.append(s.name)
                         continue
                     result = recommend_activities(
                         school=s,
@@ -2680,6 +2731,11 @@ def bulk_action_view(request):
             message += (
                 f" {skipped} {'were' if skipped != 1 else 'was'} already waiting "
                 "with this partner and left as they were."
+            )
+        if gated:
+            message += (
+                f" Not assigned (their support is not open to a partner now): "
+                f"{', '.join(gated)}."
             )
         return _saved_without_leaving(
             message,

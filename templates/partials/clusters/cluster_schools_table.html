@@ -10,12 +10,30 @@
 </div>
 
 {% if schools %}
+  {% comment %}Tick the schools, then Assign to partner (owner, 2026-09-29: "On
+  Cluster School list, add checkbox on the first column so that the staff can
+  be able to select the schools they want to assign to partners"). A school
+  its gate keeps from a partner has no box; its row menu says why.{% endcomment %}
+  <div{% if can_assign_partner %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable{% endif %}>
+  {% if can_assign_partner %}
+  <div class="school-directory-listbar" x-cloak x-show="selectedSchools.length > 0">
+    <div class="school-directory-listbar__bulk" aria-live="polite">
+      <strong><span x-text="selectedSchools.length"></span> selected</strong>
+      <form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+        <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+        <button type="submit" data-cluster-assign-selected>Assign to partner</button>
+      </form>
+      <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
+    </div>
+  </div>
+  {% endif %}
   <div class="school-plan-table-scroll"><table class="school-plan-table"{% if schools.0.supportRule %} data-support-column{% endif %} aria-label="Schools in cluster" x-data="{ openSchoolId: null }" @keydown.escape.window="openSchoolId = null">
     <caption class="sr-only">School planning statuses</caption>
-          {% include "components/school_plan_table_head.html" with support=schools.0.supportRule %}
+          {% include "components/school_plan_table_head.html" with support=schools.0.supportRule selectable=can_assign_partner %}
     <tbody>
     {% for s in schools %}
       <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
+        {% if can_assign_partner %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
         <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
         <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
           <button type="button" class="school-plan-table__name-toggle" title="{{ s.name }}" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
@@ -63,7 +81,7 @@
           </td>
       </tr>
       <tr id="cluster-school-details-{{ s.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ s.id }}'" x-cloak>
-        <td colspan="{% if s.supportRule %}6{% else %}5{% endif %}">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
+        <td colspan="{% if s.supportRule %}{% if can_assign_partner %}7{% else %}6{% endif %}{% elif can_assign_partner %}6{% else %}5{% endif %}">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
                 <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
                 <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
                 <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>
@@ -82,6 +100,7 @@
     {% endfor %}
     </tbody>
   </table></div>
+  </div>
 {% else %}
   <div class="px-6 py-10 text-center text-slate-400 font-bold">
     <p class="italic">This cluster has no schools yet.</p>

@@ -852,6 +852,11 @@ urlpatterns = [
         name="planning_assign_partner_modal",
     ),
     path(
+        "planning/bulk-assign-partner-drawer",
+        planning_views.bulk_assign_partner_drawer_view,
+        name="planning_bulk_assign_partner_drawer",
+    ),
+    path(
         "planning/assign-partner-action",
         planning_views.assign_partner_action_view,
         name="planning_assign_partner_action",
