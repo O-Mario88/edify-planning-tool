@@ -146,3 +146,93 @@ class LedgerSyncTest(RosterFixture, TestCase):
             set(TargetLedgerDirty.objects.values_list("owner_id", "fy")),
             {(self.users[2].id, FY), (self.users[3].id, PREVIOUS_FY)},
         )
+
+
+class OneMarkPerRowPerTransactionTest(RosterFixture, TestCase):
+    """Within a request, scheduling one visit saves its Activity five times;
+    the mark is upserted once while its transaction is open (2026-09-29)."""
+
+    def setUp(self):
+        from apps.core import request_cache
+
+        super().setUp()
+        self.activity = self._activity(
+            self.users[1].id, self._visit_type(), date(2026, 5, 5), "scheduled"
+        )
+        TargetLedgerDirty.objects.all().delete()
+        request_cache.begin()
+        self.addCleanup(request_cache.end)
+
+    def _mark_writes(self, fn):
+        with CaptureQueriesContext(connection) as queries:
+            fn()
+        return [
+            q
+            for q in queries.captured_queries
+            if q["sql"].startswith("INSERT") and "target_ledger_dirty" in q["sql"]
+        ]
+
+    def _marked(self, user):
+        return TargetLedgerDirty.objects.filter(owner_id=user.id, fy=FY).exists()
+
+    def test_repeat_saves_of_one_row_mark_once(self):
+        from apps.activities.models import Activity
+
+        def resave():
+            self.activity.save()
+            self.activity.save()
+            # A fresh copy of the same row, as the pricing steps read it.
+            Activity.objects.get(pk=self.activity.pk).save()
+
+        self.assertEqual(len(self._mark_writes(resave)), 1)
+        self.assertTrue(self._marked(self.users[1]))
+
+    def test_a_new_owner_is_marked(self):
+        self.activity.save()
+        self.activity.responsible_staff_id = self.users[2].id
+        self.assertEqual(len(self._mark_writes(self.activity.save)), 1)
+        self.assertTrue(self._marked(self.users[2]))
+
+    def test_a_mark_lost_to_a_savepoint_rollback_is_written_again(self):
+        from django.db import transaction
+
+        from apps.activities.models import Activity
+
+        class Undo(Exception):
+            pass
+
+        try:
+            with transaction.atomic():
+                moved = Activity.objects.get(pk=self.activity.pk)
+                moved.responsible_staff_id = self.users[2].id
+                moved.save()
+                raise Undo
+        except Undo:
+            pass
+        self.assertFalse(TargetLedgerDirty.objects.exists())
+        again = Activity.objects.get(pk=self.activity.pk)
+        again.responsible_staff_id = self.users[2].id
+        again.save()
+        self.assertTrue(self._marked(self.users[1]))
+        self.assertTrue(self._marked(self.users[2]))
+
+    def test_a_refresh_between_saves_ends_the_remembered_mark(self):
+        self.activity.status = "completed"
+        self.activity.save()
+        ledger_sync.refresh_many(self.users, FY)
+        self.assertFalse(TargetLedgerDirty.objects.exists())
+        self.activity.status = "ia_verified"
+        self.activity.save()
+        self.assertTrue(self._marked(self.users[1]))
+
+    def test_outside_a_request_every_save_marks(self):
+        from apps.core import request_cache
+
+        request_cache.end()
+        self.addCleanup(request_cache.begin)
+
+        def resave():
+            self.activity.save()
+            self.activity.save()
+
+        self.assertEqual(len(self._mark_writes(resave)), 2)

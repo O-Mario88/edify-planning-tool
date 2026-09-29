@@ -222,6 +222,60 @@ class MilestonePlanProgressTest(TestCase):
         self.assertEqual(row["verified"], Decimal("1"))
         self.assertEqual(row["completed"], 1)
 
+    def test_extra_milestones_add_no_queries(self):
+        """Every milestone's figures come from two shared aggregates
+        (2026-09-29); they were two or three queries per milestone."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self._visit(self.a, "completed")
+        more = []
+        for code in ("M-X1", "M-X2"):
+            ms = _milestone(
+                self.cycle, self.priority, code=code, title=code, target="3"
+            )
+            MilestoneActivityRule.objects.create(
+                milestone=ms,
+                catalogue_item=self.visit_item,
+                counting_basis="UNIQUE_SCHOOLS_SUPPORTED",
+            )
+            more.append(ms)
+        with CaptureQueriesContext(connection) as one:
+            milestone_plan_progress([self.schools_ms])
+        with CaptureQueriesContext(connection) as three:
+            out = milestone_plan_progress([self.schools_ms, *more])
+        self.assertEqual(len(three), len(one))
+        for ms in (self.schools_ms, *more):
+            self.assertEqual(out[ms.id]["completed"], 1)
+
+    def test_a_school_type_rule_does_not_hide_school_less_work(self):
+        """Batched together, one milestone's school condition must not drop
+        another milestone's activities that have no school."""
+        typed = _milestone(
+            self.cycle, self.priority, code="M-TYPED", title="Typed", target="2"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=typed,
+            catalogue_item=self.visit_item,
+            counting_basis="UNIQUE_SCHOOLS_SUPPORTED",
+            school_type="client",
+        )
+        self.a.school_type = "client"
+        self.a.save(update_fields=["school_type"])
+        self.b.school_type = "core"
+        self.b.save(update_fields=["school_type"])
+        self._visit(self.a, "completed")
+        self._visit(self.b, "completed")  # not a client school
+        Activity.objects.create(
+            activity_type="cluster_meeting",
+            status="completed",
+            catalogue_item=self.meeting_item,
+            fy="2026",
+        )
+        out = milestone_plan_progress([typed, self.meetings_ms])
+        self.assertEqual(out[typed.id]["completed"], 1)
+        self.assertEqual(out[self.meetings_ms.id]["completed"], 1)
+
     def test_a_milestone_with_no_rule_has_no_entry(self):
         """No plan to link to is reported as absence, not as 0%."""
         out = milestone_plan_progress([self.unlinked_ms])

@@ -43,6 +43,7 @@ SECTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("/evidence", "Evidence"),
     ("/ia", "Impact Assessment"),
     ("/team-planning-oversight", "Team Oversight"),
+    ("/staff-activity", "Staff Activity"),
     ("/priorities", "Priorities"),
     ("/targets", "Targets"),
     ("/messages", "Messages"),
@@ -68,7 +69,8 @@ SECTION_PREFIXES: tuple[tuple[str, str], ...] = (
 # Verbs in an action path, first match wins. The path is the write or drawer
 # request the person last made on the page.
 ACTION_PATTERNS: tuple[tuple[str, str], ...] = (
-    (r"whos-online", "Checking who is online"),
+    (r"staff-activity/.*follow-up", "Following up with staff"),
+    (r"whos-online|staff-activity/people", "Reviewing staff activity"),
     (r"reschedul", "Rescheduling an activity"),
     (r"schedul", "Scheduling an activity"),
     (r"assign-partner|assign_partner|partner-modal", "Assigning a school to a partner"),

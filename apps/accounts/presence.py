@@ -48,6 +48,41 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 ONLINE_WINDOW = timedelta(minutes=10)
+# The session key a sign-in's LoginEvent id is kept under, so every beat of
+# that session is credited to it.
+LOGIN_EVENT_SESSION_KEY = "_edify_login_event"
+_ACTIVITY_DEFAULTS = {
+    "HEARTBEAT_SECONDS": 60,
+    "IDLE_SECONDS": 300,
+    "ONLINE_SECONDS": 120,
+}
+
+
+def activity_setting(name: str) -> int:
+    """One of settings.STAFF_ACTIVITY's thresholds (seconds)."""
+    from django.conf import settings
+
+    configured = getattr(settings, "STAFF_ACTIVITY", None) or {}
+    return int(configured.get(name) or _ACTIVITY_DEFAULTS[name])
+
+
+def device_category(user_agent: str | None) -> str:
+    """Mobile, tablet or desktop, from the browser's own description. Recorded
+    once per sign-in; nothing finer (no model, no browser version)."""
+    agent = (user_agent or "").lower()
+    if not agent:
+        return ""
+    if (
+        "ipad" in agent
+        or "tablet" in agent
+        or ("android" in agent and "mobi" not in agent)
+    ):
+        return "tablet"
+    if "mobi" in agent or "iphone" in agent or "android" in agent:
+        return "mobile"
+    return "desktop"
+
+
 # What the last beat of a sitting is worth: the page after it was read for a
 # while that no request can show (the telemetry method's final-action credit).
 FINAL_BEAT_SECONDS = 30
@@ -180,13 +215,19 @@ def record_login(request, user) -> None:
 
     now = timezone.now()
     try:
-        LoginEvent.objects.create(
+        agent = request.META.get("HTTP_USER_AGENT") or ""
+        event = LoginEvent.objects.create(
             user=user,
             at=now,
             role=getattr(user, "active_role", "") or "",
             ip=client_address(request),
-            user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:256],
+            user_agent=agent[:256],
+            device=device_category(agent),
+            last_active_at=now,
         )
+        session = getattr(request, "session", None)
+        if session is not None:
+            session[LOGIN_EVENT_SESSION_KEY] = event.pk
         # A sign-in starts a sitting on the Dashboard it lands on. The beat
         # before it — the end of the last sitting, or a page on another
         # device — is credited as the next beat would have credited it: a
@@ -198,6 +239,7 @@ def record_login(request, user) -> None:
                 "online_since": now,
                 "last_seen_path": "/dashboard",
                 "last_seen_action": "",
+                "last_seen_login_id": event.pk,
             },
             previous=user,
             now=now,
@@ -206,6 +248,60 @@ def record_login(request, user) -> None:
         logger.exception(
             "presence: sign-in was not recorded for %s", getattr(user, "pk", None)
         )
+    else:
+        # Signing in is the activity a "no login" follow-up waits for.
+        try:
+            from apps.staff_activity.follow_ups import resolve_by_activity
+
+            resolve_by_activity(user, "login")
+        except Exception:  # pragma: no cover - never break a sign-in
+            logger.exception("staff activity: follow-up resolution failed")
+
+
+def record_logout(request, user) -> None:
+    """Close the session a sign-out ends: the time since its last beat is
+    credited as the next beat would have credited it, the sign-in is marked
+    ended, and the person stops reading as online at once. Never lets a
+    bookkeeping failure break the sign-out."""
+    from django.db import DatabaseError
+
+    from .models import LoginEvent, User
+
+    if not getattr(user, "is_authenticated", False):
+        return
+    now = timezone.now()
+    session = getattr(request, "session", None)
+    login_id = session.get(LOGIN_EVENT_SESSION_KEY) if session is not None else None
+    try:
+        previous_seen = getattr(user, "last_seen_at", None)
+        previous_path = getattr(user, "last_seen_path", "") or ""
+        rows = User.objects.filter(pk=user.pk)
+        # Guarded like a beat, and the page cleared, so the next sign-in has
+        # no beat before it to credit twice.
+        won = (
+            rows.filter(last_seen_at=previous_seen).update(
+                last_seen_at=now, last_seen_path="", last_seen_action=""
+            )
+            if previous_seen and previous_path and not is_untracked_path(previous_path)
+            else 0
+        )
+        if won:
+            credit_presence_time(
+                user.pk,
+                previous_seen,
+                previous_path,
+                getattr(user, "last_seen_action", "") or "",
+                seconds=_credit_for((now - previous_seen).total_seconds()),
+                login_id=getattr(user, "last_seen_login_id", None),
+            )
+        else:
+            rows.update(last_seen_path="", last_seen_action="")
+        if login_id:
+            LoginEvent.objects.filter(pk=login_id, ended_at__isnull=True).update(
+                ended_at=now
+            )
+    except DatabaseError:  # pragma: no cover - defensive
+        logger.exception("presence: sign-out was not recorded for %s", user.pk)
 
 
 # Requests that say nothing about what a person is doing: the browser's
@@ -228,6 +324,8 @@ _UNTRACKED_PREFIXES = (
     "/manifest",
     "/robots.txt",
     "/support/client-defect",
+    # The activity heartbeat names the page it was sent from itself.
+    "/staff-activity/beat",
 )
 _READ_METHODS = ("GET", "HEAD", "OPTIONS")
 
@@ -265,11 +363,14 @@ def request_footprint(request) -> tuple[str, str] | None:
     return page[:255], action[:255]
 
 
-def touch_presence(user, request=None) -> None:
+def touch_presence(user, request=None, *, footprint=None) -> None:
     """Mark the person as seen now, on this page, doing this. One UPDATE; the
     caller throttles reads to once a minute and sends every write. A touch
     after a gap longer than the online window starts a new sitting. Inside a
-    request whose transaction has already failed, it does nothing."""
+    request whose transaction has already failed, it does nothing.
+
+    *footprint* is (page, action) when the caller knows them better than the
+    request does: the activity heartbeat is sent from the page it names."""
     from django.db import DatabaseError
     from django.db.models import Case, F, Q, Value, When
 
@@ -297,9 +398,13 @@ def touch_presence(user, request=None) -> None:
             default=F("online_since"),
         ),
     }
-    footprint = request_footprint(request)
+    footprint = footprint or request_footprint(request)
     if footprint:
         values["last_seen_path"], values["last_seen_action"] = footprint
+    session = getattr(request, "session", None)
+    login_id = session.get(LOGIN_EVENT_SESSION_KEY) if session is not None else None
+    if login_id:
+        values["last_seen_login_id"] = str(login_id)[:30]
     try:
         _next_beat(user_pk, values, previous=user, now=now)
     except DatabaseError:
@@ -316,6 +421,7 @@ def _next_beat(user_pk, values: dict, *, previous, now) -> None:
     previous_seen = getattr(previous, "last_seen_at", None)
     previous_path = getattr(previous, "last_seen_path", None) or ""
     previous_action = getattr(previous, "last_seen_action", None) or ""
+    previous_login = getattr(previous, "last_seen_login_id", None)
     if is_untracked_path(previous_path):
         # Recorded before these requests were left out (production stored
         # "/sw.js" until 2026-09-28): no part of the tool to credit, as when
@@ -339,21 +445,27 @@ def _next_beat(user_pk, values: dict, *, previous, now) -> None:
         previous_path,
         previous_action,
         seconds=_credit_for((now - previous_seen).total_seconds()),
+        login_id=previous_login,
     )
 
 
 def _credit_for(gap: float) -> int:
-    """Seconds a gap between two beats is worth: all of it inside a sitting,
-    the final-beat credit when the sitting had ended in between."""
+    """Seconds a gap between two beats is worth: all of it while the person
+    was active (beats at most the idle threshold apart), the final-beat
+    credit when they had gone idle or left in between. An open tab nobody
+    touched is not active use (Staff Activity Log, 2026-09-29)."""
     if gap <= 0:
         return 0
-    if gap <= ONLINE_WINDOW.total_seconds():
+    if gap <= activity_setting("IDLE_SECONDS"):
         return int(gap)
     return FINAL_BEAT_SECONDS
 
 
-def credit_presence_time(user_pk, at, path: str, action: str, *, seconds: int) -> None:
-    """Add seconds to the person's day, part of the tool and task at ``at``."""
+def credit_presence_time(
+    user_pk, at, path: str, action: str, *, seconds: int, login_id=None
+) -> None:
+    """Add seconds to the person's day, part of the tool and task at ``at``,
+    and to the sign-in session they were spent in."""
     from django.db import IntegrityError, transaction
     from django.db.models import F
 
@@ -362,6 +474,17 @@ def credit_presence_time(user_pk, at, path: str, action: str, *, seconds: int) -
 
     if seconds <= 0 or is_untracked_path(path):
         return
+    if login_id:
+        from django.db.models import DateTimeField, Value
+        from django.db.models.functions import Coalesce, Greatest
+
+        from .models import LoginEvent
+
+        until = Value(at + timedelta(seconds=seconds), output_field=DateTimeField())
+        LoginEvent.objects.filter(pk=login_id).update(
+            active_seconds=F("active_seconds") + seconds,
+            last_active_at=Greatest(Coalesce(F("last_active_at"), F("at")), until),
+        )
     described = describe(path, action)
     slot = {
         "user_id": user_pk,
@@ -911,18 +1034,26 @@ def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> d
         for offset in range(13, -1, -1)
     ]
     # Eight weeks of weekly counts, Monday to Sunday.
-    weekly = []
-    for back in range(7, -1, -1):
-        start = week_start - timedelta(weeks=back)
-        start_dt = week_start_dt - timedelta(weeks=back)
-        weekly.append(
-            {
-                "week_start": start,
-                "count": events.filter(
-                    at__gte=start_dt, at__lt=start_dt + timedelta(weeks=1)
-                ).count(),
-            }
-        )
+    # All eight weeks in one conditional aggregate (they were eight COUNTs).
+    week_counts = events.aggregate(
+        **{
+            f"w{back}": Count(
+                "id",
+                filter=Q(
+                    at__gte=week_start_dt - timedelta(weeks=back),
+                    at__lt=week_start_dt - timedelta(weeks=back - 1),
+                ),
+            )
+            for back in range(7, -1, -1)
+        }
+    )
+    weekly = [
+        {
+            "week_start": week_start - timedelta(weeks=back),
+            "count": week_counts[f"w{back}"],
+        }
+        for back in range(7, -1, -1)
+    ]
     return {
         "period": chosen,
         "period_options": PRESENCE_PERIODS,

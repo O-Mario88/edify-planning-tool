@@ -4,23 +4,23 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 794,
-   "none": 286,
-   "page-tested": 1375,
-   "request-tested": 1178
+   "none": 287,
+   "page-tested": 1390,
+   "request-tested": 1184
   },
   "by_kind": {
-   "button": 1252,
+   "button": 1262,
    "disclosure": 67,
-   "field": 1251,
-   "link": 996,
+   "field": 1258,
+   "link": 1001,
    "tab": 67
   },
-  "controls": 3633,
-  "high_consequence": 197,
-  "state_changing": 435,
-  "templates_scanned": 595,
+  "controls": 3655,
+  "high_consequence": 198,
+  "state_changing": 437,
+  "templates_scanned": 602,
   "unresolved_destinations": 0,
-  "untested": 286,
+  "untested": 287,
   "untested_state_changing": 23
  },
  "templates": {
@@ -308,6 +308,8 @@
     "/ssa/upload/history/",
     "/ssa/verification/",
     "/staff",
+    "/staff-activity",
+    "/staff-activity/follow-ups/<str:follow_up_id>",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/succession-planning",
@@ -572,6 +574,7 @@
     "/schools",
     "/ssa",
     "/staff",
+    "/staff-activity",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/succession-planning",
@@ -780,6 +783,9 @@
     "/schools/create-drawer",
     "/settings/activity-catalogue/new",
     "/ssa/verification/<str:record_id>/return-drawer",
+    "/staff-activity/follow-ups",
+    "/staff-activity/follow-ups/<str:follow_up_id>",
+    "/staff-activity/people/<str:person_id>/follow-up",
     "/team-planning-oversight/detail",
     "/team-targets/day",
     "/team-targets/matrix",
@@ -1261,6 +1267,8 @@
     "/ssa/upload/history/",
     "/ssa/verification/",
     "/staff",
+    "/staff-activity",
+    "/staff-activity/follow-ups/<str:follow_up_id>",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/succession-planning",
@@ -1620,6 +1628,8 @@
     "/ssa/upload/history/",
     "/ssa/verification/",
     "/staff",
+    "/staff-activity",
+    "/staff-activity/follow-ups/<str:follow_up_id>",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/succession-planning",
@@ -1748,7 +1758,6 @@
     "/dashboard/pl-drilldown",
     "/dashboard/pl-urgent-schools",
     "/dashboard/planning-progress",
-    "/dashboard/whos-online",
     "/data-quality/duplicates",
     "/debriefs",
     "/disbursements/detail",
@@ -1854,6 +1863,7 @@
     "/ssa/upload/<str:batch_id>/result/",
     "/ssa/upload/history/",
     "/ssa/verification/",
+    "/staff-activity",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/target-distribution",
@@ -2166,6 +2176,8 @@
     "/ssa/upload/history/",
     "/ssa/verification/",
     "/staff",
+    "/staff-activity",
+    "/staff-activity/follow-ups/<str:follow_up_id>",
     "/staff/<str:user_id>",
     "/strategic-priorities",
     "/succession-planning",
@@ -4562,6 +4574,16 @@
     "RVP"
    ]
   },
+  "pages/staff_activity/index.html": {
+   "pages": [
+    "/staff-activity"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
   "pages/system_health/index.html": {
    "pages": [
     "/system-health"
@@ -6187,50 +6209,6 @@
     "/strategic-priorities",
     "/target-distribution",
     "/target-distribution/team"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "BUSINESS_TRANSFORMATION",
-    "CCEO",
-    "CD",
-    "HR",
-    "IA",
-    "MFI_ADMIN",
-    "MFI_OFFICER",
-    "PARTNER",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
-  },
-  "partials/dashboards/_whos_online.html": {
-   "pages": [
-    "/dashboard",
-    "/dashboard/whos-online"
-   ],
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN",
-    "BUSINESS_TRANSFORMATION",
-    "CCEO",
-    "CD",
-    "HR",
-    "IA",
-    "MFI_ADMIN",
-    "MFI_OFFICER",
-    "PARTNER",
-    "PL",
-    "PROJECT_COORDINATOR",
-    "RPL",
-    "RVP"
-   ]
-  },
-  "partials/dashboards/_whos_online_row.html": {
-   "pages": [
-    "/dashboard",
-    "/dashboard/whos-online"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -9772,6 +9750,108 @@
     "RVP"
    ]
   },
+  "partials/staff_activity/_follow_up_body.html": {
+   "pages": [
+    "/staff-activity/follow-ups/<str:follow_up_id>"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
+  },
+  "partials/staff_activity/_follow_up_drawer.html": {
+   "pages": [
+    "/staff-activity/follow-ups/<str:follow_up_id>"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
+  },
+  "partials/staff_activity/_follow_up_list.html": {
+   "pages": [
+    "/staff-activity/follow-ups"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
+  "partials/staff_activity/_follow_up_new_drawer.html": {
+   "pages": [
+    "/staff-activity/people/<str:person_id>/follow-up"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
+  "partials/staff_activity/_follow_up_queue_drawer.html": {
+   "pages": [
+    "/staff-activity/follow-ups"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
+  "partials/staff_activity/_person_detail.html": {
+   "pages": [
+    "/staff-activity/people/<str:person_id>"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
+  "partials/staff_activity/_person_row.html": {
+   "pages": [
+    "/staff-activity"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
+  "partials/staff_activity/_workspace.html": {
+   "pages": [
+    "/staff-activity"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL"
+   ]
+  },
   "partials/targets/area_drawer.html": {
    "pages": [
     "/my-targets/area-drawer"
@@ -10025,9 +10105,9 @@
   }
  },
  "controls": [
-  {"accessible_name": "Keep this page open", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-312418232715", "kind": "button", "line": 1143, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
-  {"accessible_name": "Open sign in", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-CA67DE56C61B", "kind": "link", "line": 1144, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "base.html"},
-  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DA69FD4ED621", "kind": "button", "line": 1160, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
+  {"accessible_name": "Keep this page open", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-312418232715", "kind": "button", "line": 1147, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
+  {"accessible_name": "Open sign in", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-CA67DE56C61B", "kind": "link", "line": 1148, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "base.html"},
+  {"accessible_name": "Dismiss notification", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-DA69FD4ED621", "kind": "button", "line": 1164, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "base.html"},
   {"accessible_name": "Data context {{ freshness|default:\"Live to current filters\" }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F43BB5A63B9D", "kind": "disclosure", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_decision_frame.html"},
   {"accessible_name": "{{ action_label }}→", "destination": "{{ action_href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E98DADB80B7E", "kind": "link", "line": 32, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "components/analytics_decision_frame.html"},
   {"accessible_name": "Data details · {{ engine.record_count }} records", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-26C6E0BD5314", "kind": "disclosure", "line": 3, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "components/analytics_provenance.html"},
@@ -11354,6 +11434,8 @@
   {"accessible_name": "Previous staff page", "destination": "?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-EFECCD967963", "kind": "link", "line": 133, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/staff/index.html"},
   {"accessible_name": "Page {{ num }}", "destination": "?q={{ search }}&tab={{ active_tab }}&page={{ num }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A4ECC68619F8", "kind": "link", "line": 142, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/staff/index.html"},
   {"accessible_name": "Next staff page", "destination": "?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-2D4709F222ED", "kind": "link", "line": 147, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/staff/index.html"},
+  {"accessible_name": "Export", "destination": "/staff-activity/export?{{ query }}", "destination_route": "/staff-activity/export", "evidence": "request-tested", "high_consequence": false, "id": "INT-3C7502B9B333", "kind": "link", "line": 28, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/staff_activity/index.html"},
+  {"accessible_name": "Follow-up Queue {{ follow_up_count }}", "destination": "/staff-activity/follow-ups", "destination_route": "/staff-activity/follow-ups", "evidence": "page-tested", "high_consequence": false, "id": "INT-F8E9B81FAE79", "kind": "button", "line": 33, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/staff_activity/index.html"},
   {"accessible_name": "Open queue", "destination": "{{ c.resolution_link }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E5CB53254890", "kind": "link", "line": 280, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/system_health/index.html"},
   {"accessible_name": "Region & District Setup", "destination": "/admin-panel/region-district-setup", "destination_route": "/admin-panel/region-district-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-5869A6CDE1AB", "kind": "link", "line": 957, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/system_health/index.html"},
   {"accessible_name": "Submit MSCS", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-07A20E208CAA", "kind": "button", "line": 21, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/targets/index.html"},
@@ -11958,10 +12040,6 @@
   {"accessible_name": "Open Data Quality", "destination": "/country-planning-oversight/drawer?kind=dq&{{ query }}", "destination_route": "/country-planning-oversight/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-B0B125092D66", "kind": "button", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/workspace.html"},
   {"accessible_name": "{{ card.accessible_description }} Open the schools behind it.", "destination": "/country-planning-oversight/drawer?kind=kpi&metric={{ card.metric_key }}&{{ query }}", "destination_route": "/country-planning-oversight/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-34395D4B8C09", "kind": "button", "line": 26, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/workspace.html"},
   {"accessible_name": "{{ tab.description }}", "destination": "{{ tab.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B84CCA6CBE20", "kind": "tab", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/_view_tabs_nav.html"},
-  {"accessible_name": "Period", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-36D3B16CE4EB", "kind": "field", "line": 58, "method": "", "selector": "select[name=presence_period]", "state_changing": false, "tag": "select", "template": "partials/dashboards/_whos_online.html"},
-  {"accessible_name": "A day in the period", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-98DED6D85E29", "kind": "field", "line": 66, "method": "", "selector": "input[name=presence_on]", "state_changing": false, "tag": "input", "template": "partials/dashboards/_whos_online.html"},
-  {"accessible_name": "Clear filters", "destination": "/dashboard/whos-online", "destination_route": "/dashboard/whos-online", "evidence": "request-tested", "high_consequence": false, "id": "INT-BB471381B89A", "kind": "button", "line": 69, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/dashboards/_whos_online.html"},
-  {"accessible_name": "{{ person.name }}'s user record · {{ person.login_count }} login{{ person.login_count|pluralize }} recorded", "destination": "/admin-panel/users/{{ person.id }}", "destination_route": "/admin-panel/users/<str:user_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9AD68116F0AF", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/_whos_online_row.html"},
   {"accessible_name": "{{ incident.reference }} · {{ incident.title }}", "destination": "/admin-ops/incidents/{{ incident.id }}", "destination_route": "/admin-ops/incidents/<str:incident_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-03BA6C161B1A", "kind": "link", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/_platform_operations.html"},
   {"accessible_name": "All incidents", "destination": "/admin-ops/incidents", "destination_route": "/admin-ops/incidents", "evidence": "request-tested", "high_consequence": false, "id": "INT-7CBAA866BBA2", "kind": "link", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/operations.html"},
   {"accessible_name": "Open incident desk→", "destination": "/admin-ops/incidents", "destination_route": "/admin-ops/incidents", "evidence": "request-tested", "high_consequence": false, "id": "INT-0BA9BEEC923D", "kind": "link", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/operations.html"},
@@ -11988,18 +12066,18 @@
   {"accessible_name": "{{ impact_findings.latest.title }}", "destination": "/ia/impact-reports/{{ impact_findings.latest.report_id }}/", "destination_route": "/ia/impact-reports/<str:report_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-2AC7BBCEAAEB", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/_impact_findings.html"},
   {"accessible_name": "Respond", "destination": "/ia/impact-reports/{{ row.report_id }}/#recommendations", "destination_route": "/ia/impact-reports/<str:report_id>/", "evidence": "request-tested", "high_consequence": false, "id": "INT-1EDA9B4445E4", "kind": "link", "line": 35, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/_impact_findings.html"},
   {"accessible_name": "{{ d.name }}", "destination": "/analytics/country-director?fy={{ fy }}&district={{ d.id }}", "destination_route": "/analytics/country-director", "evidence": "request-tested", "high_consequence": false, "id": "INT-A18CC0D5C1B5", "kind": "link", "line": 60, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/map_view.html"},
-  {"accessible_name": "Approve", "destination": "/dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}", "destination_route": "/dashboard/cd-approve", "evidence": "request-tested", "high_consequence": true, "id": "INT-0B17C794DF19", "kind": "button", "line": 126, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Reason for returning this request", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-54FEEFE39745", "kind": "field", "line": 131, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Return", "destination": "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}", "destination_route": "/dashboard/cd-return", "evidence": "request-tested", "high_consequence": true, "id": "INT-9E560565325D", "kind": "button", "line": 132, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Review", "destination": "/fund-approvals", "destination_route": "/fund-approvals", "evidence": "request-tested", "high_consequence": false, "id": "INT-85DD578EC703", "kind": "link", "line": 134, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Open", "destination": "/country-budget/", "destination_route": "/country-budget/", "evidence": "request-tested", "high_consequence": false, "id": "INT-5F3955A6C8CE", "kind": "link", "line": 154, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Open fund requests →", "destination": "/fund-requests/weekly", "destination_route": "/fund-requests/weekly", "evidence": "request-tested", "high_consequence": false, "id": "INT-4DC8D8E8643A", "kind": "link", "line": 273, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Open verification analytics →", "destination": "/ia/analytics/", "destination_route": "/ia/analytics/", "evidence": "request-tested", "high_consequence": false, "id": "INT-01D4798C3605", "kind": "link", "line": 283, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "{{ c.count|intcomma }} {{ c.label }} {{ c.helper }}", "destination": "{{ c.link }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B67EBD2836FE", "kind": "link", "line": 335, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "View all priority schools", "destination": "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}", "destination_route": "/analytics/country-director/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-6037701FC8AE", "kind": "link", "line": 411, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Inspect", "destination": "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}", "destination_route": "/analytics/country-director/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-C20730858AAB", "kind": "link", "line": 437, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "Country Field Intelligence (last {{ field_debrief_intel.days }} days) Open Field Debriefs → {{ field_debrief_intel.total }} Debriefs Filed {{ field_debrief_inte", "destination": "/debriefs", "destination_route": "/debriefs", "evidence": "request-tested", "high_consequence": false, "id": "INT-A283BE2F998F", "kind": "link", "line": 451, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
-  {"accessible_name": "{{ q.label }} {{ q.helper }}", "destination": "{{ q.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DF07A7D648EC", "kind": "link", "line": 486, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Approve", "destination": "/dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}", "destination_route": "/dashboard/cd-approve", "evidence": "request-tested", "high_consequence": true, "id": "INT-0B17C794DF19", "kind": "button", "line": 124, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Reason for returning this request", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-54FEEFE39745", "kind": "field", "line": 129, "method": "", "selector": "input[name=reason]", "state_changing": false, "tag": "input", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Return", "destination": "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}", "destination_route": "/dashboard/cd-return", "evidence": "request-tested", "high_consequence": true, "id": "INT-9E560565325D", "kind": "button", "line": 130, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Review", "destination": "/fund-approvals", "destination_route": "/fund-approvals", "evidence": "request-tested", "high_consequence": false, "id": "INT-85DD578EC703", "kind": "link", "line": 132, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Open", "destination": "/country-budget/", "destination_route": "/country-budget/", "evidence": "request-tested", "high_consequence": false, "id": "INT-5F3955A6C8CE", "kind": "link", "line": 152, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Open fund requests →", "destination": "/fund-requests/weekly", "destination_route": "/fund-requests/weekly", "evidence": "request-tested", "high_consequence": false, "id": "INT-4DC8D8E8643A", "kind": "link", "line": 271, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Open verification analytics →", "destination": "/ia/analytics/", "destination_route": "/ia/analytics/", "evidence": "request-tested", "high_consequence": false, "id": "INT-01D4798C3605", "kind": "link", "line": 281, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "{{ c.count|intcomma }} {{ c.label }} {{ c.helper }}", "destination": "{{ c.link }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B67EBD2836FE", "kind": "link", "line": 333, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "View all priority schools", "destination": "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}", "destination_route": "/analytics/country-director/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-6037701FC8AE", "kind": "link", "line": 409, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Inspect", "destination": "/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}", "destination_route": "/analytics/country-director/drilldown", "evidence": "request-tested", "high_consequence": false, "id": "INT-C20730858AAB", "kind": "link", "line": 435, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "Country Field Intelligence (last {{ field_debrief_intel.days }} days) Open Field Debriefs → {{ field_debrief_intel.total }} Debriefs Filed {{ field_debrief_inte", "destination": "/debriefs", "destination_route": "/debriefs", "evidence": "request-tested", "high_consequence": false, "id": "INT-A283BE2F998F", "kind": "link", "line": 449, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
+  {"accessible_name": "{{ q.label }} {{ q.helper }}", "destination": "{{ q.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DF07A7D648EC", "kind": "link", "line": 484, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/cd/operations.html"},
   {"accessible_name": "{{ item.action }} →", "destination": "{{ item.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D95BDEFF96D0", "kind": "link", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/hr/body.html"},
   {"accessible_name": "{{ group.label }} {{ group.count }}", "destination": "/hr-today#queue-{{ group.key }}", "destination_route": "/hr-today", "evidence": "request-tested", "high_consequence": false, "id": "INT-F33C0734D752", "kind": "link", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/hr/body.html"},
   {"accessible_name": "Workforce planning →", "destination": "/workforce-planning", "destination_route": "/workforce-planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-9F1EC1CC2DD8", "kind": "link", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/hr/operations.html"},
@@ -13550,6 +13628,30 @@
   {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-A4D6BBE3348C", "kind": "tab", "line": 149, "method": "", "selector": "#sp-breakdown-tab-staff", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Cluster", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-436AC2D543ED", "kind": "tab", "line": 150, "method": "", "selector": "#sp-breakdown-tab-cluster", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
   {"accessible_name": "Partner", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-34494CC41AAA", "kind": "tab", "line": 151, "method": "", "selector": "#sp-breakdown-tab-partner", "state_changing": false, "tag": "button", "template": "partials/ssa/performance_workspace.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9E67AF29A48F", "kind": "field", "line": 41, "method": "", "selector": "#sal-fu-step-note", "state_changing": false, "tag": "textarea", "template": "partials/staff_activity/_follow_up_body.html"},
+  {"accessible_name": "{{ a.label }}", "destination": "/staff-activity/follow-ups/{{ follow_up.id }}/{{ a.key }}", "destination_route": "/staff-activity/follow-ups/<str:follow_up_id>/<slug:action>", "evidence": "request-tested", "high_consequence": false, "id": "INT-4DB23B09B1B1", "kind": "button", "line": 45, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/staff_activity/_follow_up_body.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4D24A8ABC5AC", "kind": "button", "line": 7, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_follow_up_drawer.html"},
+  {"accessible_name": "· {{ fu.get_trigger_display }}", "destination": "/staff-activity/follow-ups/{{ fu.id }}", "destination_route": "/staff-activity/follow-ups/<str:follow_up_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-F6E6E822DB8D", "kind": "link", "line": 5, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_follow_up_list.html"},
+  {"accessible_name": "Choose… {{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9FFA17259F9B", "kind": "field", "line": 39, "method": "", "selector": "#sal-fu-trigger", "state_changing": false, "tag": "select", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "What you would like {{ assignee.name }} to check with {{ person.name }} What you would like to talk about, and how you can help", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AD6D2585027C", "kind": "field", "line": 46, "method": "", "selector": "#sal-fu-note", "state_changing": false, "tag": "textarea", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "{{ due|date:'Y-m-d' }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AB3B1FCAA322", "kind": "field", "line": 53, "method": "", "selector": "#sal-fu-due", "state_changing": false, "tag": "input", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2208F47B4665", "kind": "field", "line": 58, "method": "", "selector": "#sal-fu-priority", "state_changing": false, "tag": "select", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2A1592013929", "kind": "button", "line": 66, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "Send follow-up", "destination": "/staff-activity/people/{{ person.id }}/follow-up/send", "destination_route": "/staff-activity/people/<str:person_id>/follow-up/send", "evidence": "request-tested", "high_consequence": true, "id": "INT-F9F6C71439F0", "kind": "button", "line": 67, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/staff_activity/_follow_up_new_drawer.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-4015A3020C5E", "kind": "button", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_follow_up_queue_drawer.html"},
+  {"accessible_name": "Follow up", "destination": "/staff-activity/people/{{ person.id }}/follow-up?period={{ detail.period.key }}&on={{ detail.period.on|date:'Y-m-d' }}", "destination_route": "/staff-activity/people/<str:person_id>/follow-up", "evidence": "request-tested", "high_consequence": false, "id": "INT-88758FD102AB", "kind": "button", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_person_detail.html"},
+  {"accessible_name": "Close {{ person.name }}'s detail", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-388B414FC860", "kind": "button", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_person_detail.html"},
+  {"accessible_name": "{{ a.label }}", "destination": "{{ a.link }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F8F77654D760", "kind": "link", "line": 72, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_person_detail.html"},
+  {"accessible_name": "{{ fu.get_trigger_display }}", "destination": "/staff-activity/follow-ups/{{ fu.id }}", "destination_route": "/staff-activity/follow-ups/<str:follow_up_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-60331DFD0A82", "kind": "link", "line": 100, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_person_detail.html"},
+  {"accessible_name": "{{ person.name }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-27FFBC95BE50", "kind": "button", "line": 7, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_person_row.html"},
+  {"accessible_name": "View details", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0F1919AADABC", "kind": "button", "line": 25, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_person_row.html"},
+  {"accessible_name": "Follow up", "destination": "/staff-activity/people/{{ person.id }}/follow-up?period={{ log.period.key }}&on={{ log.period.on|date:'Y-m-d' }}", "destination_route": "/staff-activity/people/<str:person_id>/follow-up", "evidence": "request-tested", "high_consequence": false, "id": "INT-3E31FCDCEDFE", "kind": "button", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/staff_activity/_person_row.html"},
+  {"accessible_name": "{{ link.label }}", "destination": "{{ link.href }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E548985115DD", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_workspace.html"},
+  {"accessible_name": "A day in the period", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-112B496529B3", "kind": "field", "line": 26, "method": "", "selector": "input[name=on]", "state_changing": false, "tag": "input", "template": "partials/staff_activity/_workspace.html"},
+  {"accessible_name": "Role", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-588EE4D56E21", "kind": "field", "line": 31, "method": "", "selector": "select[name=role]", "state_changing": false, "tag": "select", "template": "partials/staff_activity/_workspace.html"},
+  {"accessible_name": "Program Lead", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D0B48B6941D7", "kind": "field", "line": 40, "method": "", "selector": "select[name=pl]", "state_changing": false, "tag": "select", "template": "partials/staff_activity/_workspace.html"},
+  {"accessible_name": "Usage status", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FF366A28D906", "kind": "field", "line": 48, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "partials/staff_activity/_workspace.html"},
+  {"accessible_name": "Clear filters", "destination": "/staff-activity", "destination_route": "/staff-activity", "evidence": "request-tested", "high_consequence": false, "id": "INT-2E86C328C054", "kind": "link", "line": 54, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/staff_activity/_workspace.html"},
   {"accessible_name": "Enter SF ID →", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-1B6FDE59C6FC", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/targets/area_drawer.html"},
   {"accessible_name": "Fix →", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-2FDB7F088132", "kind": "link", "line": 63, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/targets/area_drawer.html"},
   {"accessible_name": "Open My Plan →", "destination": "/my-plan", "destination_route": "/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-034A7AF396F7", "kind": "link", "line": 88, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/targets/area_drawer.html"},

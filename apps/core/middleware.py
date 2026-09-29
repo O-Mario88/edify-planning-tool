@@ -575,7 +575,14 @@ class SlidingSessionMiddleware:
         # opened over htmx) touches as well, so "what they were working on"
         # names the action and not only the page it happened on — writes are
         # a small fraction of requests, and each is one UPDATE.
-        if slid or self._is_action(request):
+        # A request the page made on its own — a poll, or anything from a tab
+        # nobody has touched within the idle threshold — says nothing about
+        # the person working (Staff Activity Log, 2026-09-29). The activity
+        # script marks those (static/js/staff-activity-beat.js).
+        background = request.headers.get("X-Edify-Background") == "1" or getattr(
+            request, "_edify_presence_touched", False
+        )
+        if not background and (slid or self._is_action(request)):
             user = getattr(request, "user", None)
             if user is not None and getattr(user, "is_authenticated", False):
                 from apps.accounts.presence import touch_presence

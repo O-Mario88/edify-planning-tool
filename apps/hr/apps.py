@@ -42,6 +42,9 @@ class HrConfig(AppConfig):
         from .accountability_cache import register
 
         register()
+        from .team_roster import register as register_team_memo
+
+        register_team_memo()
         from apps.core import reference_data
 
         reference_data.register(

@@ -1013,8 +1013,15 @@ def _build_fund_requests_context(request):
 
     # 6. Monthly Preview
     monthly_weeks = []
+    # One read for the month's weeks (it was one per week). wfr_qs is ordered,
+    # so the first row kept per week is the one .first() returned.
+    first_wfr_by_week = {}
+    for row in wfr_qs.filter(
+        week_start_date__in=[wk["start"] for wk in weeks_in_month]
+    ).order_by(*(wfr_qs.query.order_by or ("pk",)), "pk"):
+        first_wfr_by_week.setdefault(row.week_start_date, row)
     for wk in weeks_in_month:
-        wfr = wfr_qs.filter(week_start_date=wk["start"]).first()
+        wfr = first_wfr_by_week.get(wk["start"])
         monthly_weeks.append(
             {
                 "label": wk["label"],
