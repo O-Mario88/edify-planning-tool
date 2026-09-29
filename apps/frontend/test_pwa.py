@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 from pathlib import Path
 from unittest import mock
 
@@ -179,6 +180,52 @@ class ServiceWorkerTest(TestCase):
 
         with mock.patch.dict(os.environ, {"RELEASE_SHA": "abcdef1234567890"}):
             self.assertEqual(static_version(), "abcdef123456")
+
+
+class ServiceWorkerEscapesTest(TestCase):
+    """The worker's JavaScript lives in Python string literals, and the
+    backslashes in its regexes are JavaScript's escapes, not Python's.
+
+    Written in a plain string, the upload drawer's route pattern made
+    production's pre-deploy job print "SyntaxWarning: invalid escape sequence"
+    for pwa_views.py (2026-09-29). A future Python refuses to compile it, and
+    the module -- worker, manifest and offline pages alike -- stops importing.
+    """
+
+    SOURCE = Path(settings.BASE_DIR) / "apps/frontend/views/pwa_views.py"
+
+    def _worker(self, backend):
+        with override_settings(
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {"BACKEND": backend},
+            }
+        ):
+            return self.client.get("/sw.js").content.decode()
+
+    def test_the_view_module_compiles_with_warnings_as_errors(self):
+        # compile() reads the source every time. An import can be answered
+        # from a cached .pyc and would then warn about nothing.
+        source = self.SOURCE.read_text(encoding="utf-8")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            compile(source, str(self.SOURCE), "exec")
+
+    def test_the_regexes_reach_the_browser_as_written(self):
+        for backend in (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            "django.contrib.staticfiles.storage.StaticFilesStorage",
+        ):
+            with self.subTest(backend=backend):
+                self.assertIn(
+                    r"const DRAWER_PATH = /^\/activities\/([A-Za-z0-9_-]{1,64})\/evidence$/;",
+                    self._worker(backend),
+                )
+        # Only the hashed build precaches the fallback page's assets.
+        self.assertIn(
+            r'html.matchAll(/(?:href|src)="(\/static\/[^"]+)"/g)',
+            self._worker("whitenoise.storage.CompressedManifestStaticFilesStorage"),
+        )
 
 
 class PwaHeadTest(SimpleTestCase):
