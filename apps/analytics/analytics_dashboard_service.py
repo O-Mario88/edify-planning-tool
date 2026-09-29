@@ -1107,11 +1107,24 @@ class AnalyticsDashboardService:
         active_staff = StaffProfile.objects.filter(
             deleted_at__isnull=True
         ).select_related("user")
-        for st in active_staff[:5]:
-            completed_cnt = activities_qs.filter(
-                responsible_staff_id=st.id, status__in=ACHIEVED_STATUSES
-            ).count()
-            planned_cnt = activities_qs.filter(responsible_staff_id=st.id).count()
+        leaderboard_staff = list(active_staff[:5])
+        # Both counts for all five in one grouped read (it was two per person).
+        leader_counts = {
+            row["responsible_staff_id"]: row
+            for row in activities_qs.filter(
+                responsible_staff_id__in=[st.id for st in leaderboard_staff]
+            )
+            .order_by()
+            .values("responsible_staff_id")
+            .annotate(
+                planned=Count("id"),
+                completed=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+            )
+        }
+        for st in leaderboard_staff:
+            counts = leader_counts.get(st.id, {})
+            completed_cnt = counts.get("completed", 0)
+            planned_cnt = counts.get("planned", 0)
             ach_pct = (
                 round((completed_cnt / planned_cnt * 100)) if planned_cnt > 0 else 0
             )

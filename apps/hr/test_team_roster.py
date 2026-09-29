@@ -502,3 +502,35 @@ class RosterQueryBudgetTests(RosterFixture):
         # Measured at 30 against this fixture (2026-09-13); a ceiling, never a
         # target.
         self.assertLessEqual(self._cost(5), 40)
+
+
+class TeamMembersMemoTests(RosterFixture):
+    """One lead's team is read once per request (2026-09-29): the dashboard,
+    To-Do builders and debrief feed all ask for it in the same request."""
+
+    def setUp(self):
+        from apps.core import request_cache
+
+        request_cache.begin()
+        self.addCleanup(request_cache.end)
+
+    def test_the_second_ask_in_a_request_costs_nothing(self):
+        first = team_roster.team_member_ids(self.pl)
+        with CaptureQueriesContext(connection) as ctx:
+            again = team_roster.team_member_ids(self.pl)
+        self.assertEqual(again, first)
+        self.assertEqual(len(ctx), 0)
+
+    def test_a_roster_write_in_the_request_is_seen(self):
+        before = set(team_roster.team_member_ids(self.pl))
+        _, newcomer = _person("newcomer", "CCEO")
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=newcomer
+        )
+        self.assertEqual(
+            set(team_roster.team_member_ids(self.pl)), before | {newcomer.id}
+        )
+
+    def test_the_caller_cannot_change_the_memo(self):
+        team_roster.team_members(self.pl).clear()
+        self.assertEqual(len(team_roster.team_members(self.pl)), len(self.officers))

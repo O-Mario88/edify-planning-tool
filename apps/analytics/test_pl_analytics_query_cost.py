@@ -12,9 +12,8 @@ other:
 
 * `cceo_performance` genuinely scales with the team, so the test measures the
   *slope* — queries added per additional CCEO — against a one-CCEO and a
-  five-CCEO team. Four became one. It is deliberately not asserted as zero;
-  see the test for why folding the team into one statement is not obviously
-  correct without production query plans.
+  five-CCEO team. Four became one, and since 2026-09-29 none: the team is
+  one statement (see the test for the plan that was checked first).
 
 * `activity_tracking` never scaled with the team at all — its loop is over six
   fixed cards — so a scaling assertion would pass on the unfixed code and
@@ -101,32 +100,28 @@ class PLAnalyticsDoesNotFanOutPerCceoTest(TestCase):
         # the team is empty, and the tests would pass on the old code too.
         self.assertEqual(len(resolve_pl_scope(self.pl, {}).cceos), 5)
 
-    def test_cceo_performance_costs_at_most_one_query_per_cceo(self):
-        """Four round trips per CCEO became one. Not zero — be precise.
+    def test_cceo_performance_does_not_grow_with_the_team(self):
+        """Four round trips per CCEO became one (2026-09), then none (2026-09-29).
 
         Each CCEO's activity set is `responsible_staff OR school in <ref>`, and
-        `school_ref` is a *subquery* on the unfiltered path (see
-        `_resolve_pl_scope_uncached`), not a literal id set. Folding the whole
-        team into a single grouped statement would mean either materialising
-        that subquery per CCEO or emitting 4N conditional aggregates in one
-        SQL text — the first changes semantics, the second trades round trips
-        for a statement that grows with the team. Neither is obviously right
-        without production query plans, which this audit does not yet have.
+        `school_ref` is a subquery on the unfiltered path. The whole team is
+        now one statement of 4N conditional aggregates, each ANDing its own
+        CCEO's condition, so the figures are the per-CCEO ones. The plan was
+        checked before folding: every school_ref subquery is evaluated once
+        (loops=1) and the team's activities are scanned once — 2 ms for a
+        five-CCEO team on the dev copy, where the per-CCEO form was one index
+        scan per officer.
 
-        So the honest invariant is the slope: one query per CCEO, not four.
-        With four the growth from one CCEO to five was +16 statements; with one
-        it is +4. The assertion below pins the slope, so a regression to
-        per-metric counting fails even though the absolute number is free to
-        move as panels change.
+        The slope is therefore zero: a five-CCEO team costs what a one-CCEO
+        team costs.
         """
         one = self._count_queries("cceo_performance", 1)
         five = self._count_queries("cceo_performance", 5)
-        slope = (five - one) / 4
-        self.assertLessEqual(
-            slope,
-            1.0,
-            f"cceo_performance costs {slope} queries per additional CCEO "
-            f"({one} for one, {five} for five); it must be at most one",
+        self.assertEqual(
+            five,
+            one,
+            f"cceo_performance costs {one} queries for one CCEO and {five} "
+            "for five; it must not grow with the team",
         )
 
     def test_activity_tracking_issues_one_aggregate_per_card_not_two(self):

@@ -21,6 +21,7 @@ from apps.hr.review_authority import (
     is_oversight,
     is_reviewer_of,
     reviewer_for,
+    reviewable_by,
     reviewees_of,
 )
 
@@ -158,3 +159,64 @@ class ReviewAuthorityTests(TestCase):
             days_charged=5,
             status="approved",
         )
+
+
+class ReviewableByMatchesIsReviewerOfTests(ReviewAuthorityTests):
+    """HR Today asks `reviewable_by` for a whole list instead of calling
+    `is_reviewer_of` per person (2026-09-29): same answers, fixed cost."""
+
+    # The inherited single-profile tests already ran on the parent class.
+    test_the_program_lead_reviews_their_own_cceo = None
+    test_another_program_lead_may_not = None
+    test_the_country_director_reviews_pl_ia_and_accountant = None
+    test_hr_oversees_and_never_conducts = None
+    test_nobody_reviews_themselves = None
+    test_a_deactivated_manager_holds_nothing = None
+    test_authority_moves_to_an_active_cover_and_only_for_its_window = None
+    test_reviewees_lists_only_the_people_this_role_reviews = None
+
+    def _profiles(self):
+        return list(StaffProfile.objects.select_related("user"))
+
+    def _principals(self):
+        return [self.cd, self.pl, self.pl2, self.cceo, self.ia, self.acct, self.hr]
+
+    def _assert_same_answers(self):
+        profiles = self._profiles()
+        for principal in self._principals():
+            with self.subTest(principal=principal.email):
+                expected = {p.id for p in profiles if is_reviewer_of(p, principal)}
+                self.assertEqual(reviewable_by(profiles, principal), expected)
+
+    def test_the_list_answer_is_the_per_person_answer(self):
+        self._assert_same_answers()
+        self.assertEqual(reviewable_by(self._profiles(), self.pl), {self.cceo_sp.id})
+
+    def test_cover_counts_in_the_list_answer_too(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        now = timezone.now()
+        TemporaryCoverageAssignment.objects.create(
+            leave_request=self._leave_for(self.pl_sp),
+            original_staff=self.pl_sp,
+            covering_staff=self.pl2_sp,
+            start_datetime=now - timedelta(days=1),
+            end_datetime=now + timedelta(days=1),
+            status="active",
+        )
+        self._assert_same_answers()
+        self.assertIn(self.cceo_sp.id, reviewable_by(self._profiles(), self.pl2))
+
+    def test_the_cost_does_not_grow_with_the_list(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        profiles = self._profiles()
+        with CaptureQueriesContext(connection) as one:
+            reviewable_by(profiles[:1], self.cd)
+        with CaptureQueriesContext(connection) as every:
+            reviewable_by(profiles, self.cd)
+        self.assertLessEqual(len(every), 3)
+        self.assertLessEqual(len(one), len(every))

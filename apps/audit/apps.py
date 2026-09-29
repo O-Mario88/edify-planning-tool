@@ -6,3 +6,8 @@ class AuditConfig(AppConfig):
     name = "apps.audit"
     label = "audit"
     verbose_name = "Edify Audit"
+
+    def ready(self):
+        from .services import register
+
+        register()
