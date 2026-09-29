@@ -2,7 +2,7 @@
 {% load frontend_filters %}
 
 {% block drawer_title %}Facilitated by{% endblock %}
-{% block drawer_subtitle %}{{ act.activity_name_snapshot|default:act.get_activity_type_display }}{% if act.cluster %} · {{ act.cluster.name }}{% elif act.school %} · {{ act.school.name }}{% endif %}{% if act.scheduled_date %} · {{ act.scheduled_date|date:"j M Y" }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% firstof act.activity_name_snapshot act.get_activity_type_display %}{% if act.cluster %} · {{ act.cluster.name }}{% elif act.school %} · {{ act.school.name }}{% endif %}{% if act.scheduled_date %} · {{ act.scheduled_date|date:"j M Y" }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form

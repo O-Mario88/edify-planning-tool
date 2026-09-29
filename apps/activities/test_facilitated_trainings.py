@@ -315,6 +315,24 @@ class FacilitatedTrainingTest(APITestCase):
             ).exists()
         )
 
+    def test_facilitating_is_not_assigning_the_school_to_the_partner(self):
+        """Owner, 2026-09-29: "facilitated by partner does not mean assigning
+        the school to the partner. Staff still have to assign the school to
+        the partner for follow up and other activities." The training stays
+        the officer's: no handover, no partner delivery, no allowance used."""
+        activity = self._schedule(facilitatingPartnerId=self.partner.id)
+        self.assertEqual(activity.delivery_type, "staff")
+        self.assertIsNone(activity.assigned_partner_id)
+        self.assertFalse(
+            PartnerAssignment.objects.filter(partner=self.partner).exists()
+        )
+        # Changing the facilitator later assigns nothing either.
+        activity_services.set_facilitator(activity.id, "", self.cceo)
+        activity_services.set_facilitator(activity.id, self.partner.id, self.cceo)
+        self.assertFalse(
+            PartnerAssignment.objects.filter(partner=self.partner).exists()
+        )
+
     def test_facilitated_by_blank_is_staff(self):
         activity = self._schedule(facilitatingPartnerId="")
         self.assertIsNone(activity.facilitating_partner_id)

@@ -17,7 +17,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 111 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 42 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 105 | 34 | 3 | 8 | 10 | 26 | 80 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 106 | 35 | 3 | 8 | 10 | 26 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 62 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 54 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 109 | 29 | 3 | 5 | 6 | 18 | 80 |
@@ -33,7 +33,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-16` | Government Requirements | ✓ | 1 | 53 | 17 | 2 | 4 | 1 | 5 | 29 |
 | `journey-17` | Loan | ✓ | 1 | 46 | 25 | 11 | 7 | 3 | 17 | 37 |
 | `journey-18` | Repeat borrower and student reach | ✓ | 1 | 49 | 21 | 9 | 6 | 1 | 9 | 33 |
-| `journey-19` | Cross-role security | ✓ | 4 | 45 | 11 | 2 | 2 | 0 | 1 | 86 |
+| `journey-19` | Cross-role security | ✓ | 4 | 46 | 12 | 2 | 2 | 0 | 1 | 86 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-22` | Financial-year rollover | ✓ | 1 | 54 | 17 | 0 | 0 | 1 | 3 | 86 |
@@ -93,8 +93,8 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+43 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+95 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+22 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py` _+96 more_ |
+| Models written | `accounts.PresenceTime`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker` _+23 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
@@ -413,8 +413,8 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Permissions checked | `ia.verify`, `payment.act` |
 | Page gates checked | `disbursements`, `school_directory`, `weekly_fund_request_disburse` |
 | Object-level guards | `apps/core/scoping.py::assert_may_write_school` |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/staff_matching.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+35 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `geography.District`, `geography.Region`, `schools.School`, `sessions.Session` |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/accounts/staff_matching.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+36 more_ |
+| Models written | `accounts.PresenceTime`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `geography.District`, `geography.Region`, `schools.School`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `unauthorized_page_access` |
 | Metrics computed in the run | — |

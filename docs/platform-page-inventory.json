@@ -858,7 +858,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1222,
+      "bytes": 1666,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/facilitator",

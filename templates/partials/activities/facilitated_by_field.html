@@ -20,4 +20,8 @@ current facilitating partner id).
     <option value="{{ p.id }}"{% if p.id == selected %} selected{% endif %}>{{ p.name }}</option>
     {% endfor %}
   </select>
+  {% comment %}Owner, 2026-09-29: "facilitated by partner does not mean
+  assigning the school to the partner. Staff still have to assign the school
+  to the partner for follow up and other activities."{% endcomment %}
+  <p class="edify-text-caption text-slate-500" data-facilitation-not-assignment>A partner facilitating this training is not assigned the school. Assign the school to a partner separately for follow-ups and other support.</p>
 </div>
