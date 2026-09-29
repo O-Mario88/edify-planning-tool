@@ -769,13 +769,14 @@ def _unlink_closed_conversations(principal, items: list[HRException]) -> None:
         return
     from apps.core.fy import get_operational_fy
     from apps.hr.models import PerformanceReview
-    from apps.hr.review_authority import is_reviewer_of
+    from apps.hr.review_authority import reviewable_by
 
     own = getattr(principal, "staff_profile_id", None) or getattr(
         getattr(principal, "staff_profile", None), "id", None
     )
     ids = {i.url[len(_CONVERSATION_URL) :] for i in linked}
-    profiles = StaffProfile.objects.filter(id__in=ids).select_related("user")
+    profiles = list(StaffProfile.objects.filter(id__in=ids).select_related("user"))
+    reviewable = reviewable_by(profiles, principal)
     functional = set(
         PerformanceReview.objects.filter(
             staff_id__in=ids,
@@ -787,7 +788,7 @@ def _unlink_closed_conversations(principal, items: list[HRException]) -> None:
     openable = {
         p.id
         for p in profiles
-        if p.id == own or p.id in functional or is_reviewer_of(p, principal)
+        if p.id == own or p.id in functional or p.id in reviewable
     }
     for item in linked:
         if item.url[len(_CONVERSATION_URL) :] not in openable:
