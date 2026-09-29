@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 672,
-  "templates": 251,
-  "distinct_titles": 641,
+  "titled_cards": 673,
+  "templates": 252,
+  "distinct_titles": 642,
   "with_card_key": 13,
-  "untitled_surfaces": 593,
-  "untitled_chrome": 154,
+  "untitled_surfaces": 594,
+  "untitled_chrome": 155,
   "untitled_nested": 230,
   "untitled_headless": 209,
   "templates_with_same_title_twice": 0,
@@ -920,7 +920,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 337,
+   "line": 338,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 372,
+   "line": 373,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 395,
+   "line": 396,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2759,6 +2759,20 @@
     [
      5,
      1
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/projects/monitoring.html",
+   "line": 88,
+   "title": "My project allocations",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     3,
+     0
     ]
    ]
   },

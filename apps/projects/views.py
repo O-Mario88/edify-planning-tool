@@ -145,9 +145,9 @@ class ProjectSchoolsRemoveView(APIView):
     required_permissions = ASSIGN
 
     def delete(self, request: Request, project_id: str, school_id: str) -> Response:
-        # The caller is passed so the service can hold the owner's rule: only
-        # the project's coordinator removes a school (2026-09-24). Without it
-        # any holder of activity.assign could empty any project.
+        # The caller is passed so the service can hold the rule: the staff
+        # member who added the school or the project's coordinator withdraws
+        # it, and only before its project work began (brief, 2026-09-29).
         body = request.data if isinstance(request.data, dict) else {}
         return Response(
             services.remove_school(
@@ -155,6 +155,7 @@ class ProjectSchoolsRemoveView(APIView):
                 school_id,
                 request.user,
                 reason=str(body.get("reason") or ""),
+                reason_code=str(body.get("reasonCode") or ""),
             )
         )
 

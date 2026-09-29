@@ -30,6 +30,7 @@ from .views import (
     finance_views,
     partner_views,
     extended_views,
+    project_capacity_views,
     message_views,
     core_schools_views,
     impact_views,
@@ -2528,6 +2529,29 @@ urlpatterns = [
         "projects/monitoring/resolve/submit",
         extended_views.project_monitoring_resolve_submit_view,
         name="project_monitoring_resolve_submit",
+    ),
+    # School allocations per staff member and project, and withdrawing a
+    # school before its project work begins (brief, 2026-09-29). Above the
+    # <str:project_id> detail route, which would read "capacity" as an id.
+    path(
+        "projects/capacity",
+        project_capacity_views.project_capacity_view,
+        name="project_capacity",
+    ),
+    path(
+        "projects/capacity/set",
+        project_capacity_views.project_capacity_set_view,
+        name="project_capacity_set",
+    ),
+    path(
+        "projects/capacity/withdraw",
+        project_capacity_views.project_withdraw_school_view,
+        name="project_withdraw_school",
+    ),
+    path(
+        "projects/capacity/<str:capacity_id>/edit",
+        project_capacity_views.project_capacity_edit_view,
+        name="project_capacity_edit",
     ),
     path(
         "projects/<str:project_id>/staff/assign",
