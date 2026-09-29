@@ -128,17 +128,17 @@ a card is the table's total and a chart's bar is a table's row.
       {% if may_follow_up %}
       <button type="button" class="cxo-shortcut cxo-shortcut--primary"
               hx-get="/country-planning-oversight/execution/follow-up?{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">
-        {% include "partials/country_execution/_glyph.html" with name="send" %}Send Reminder to PL</button>
+        {% include "partials/country_execution/_glyph.html" with name="send" %}<span class="cxo-shortcut-label">Send Reminder to PL</span></button>
       {% endif %}
       <button type="button" class="cxo-shortcut"
               hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;stage=overdue&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">
-        {% include "partials/country_execution/_glyph.html" with name="alert" %}View Overdue Activities</button>
+        {% include "partials/country_execution/_glyph.html" with name="alert" %}<span class="cxo-shortcut-label">View Overdue Activities</span></button>
       <a class="cxo-shortcut" href="/country-planning-oversight/?{{ query }}&amp;table=partner#cxo-table"
          hx-get="/country-planning-oversight/execution/table?table=partner&amp;{{ query }}" hx-target="#cxo-table" hx-swap="outerHTML">
-        {% include "partials/country_execution/_glyph.html" with name="people" %}View Partner Execution</a>
+        {% include "partials/country_execution/_glyph.html" with name="people" %}<span class="cxo-shortcut-label">View Partner Execution</span></a>
       {% if may_export %}
       <a class="cxo-shortcut" href="/country-planning-oversight/execution/export?{{ query }}" download>
-        {% include "partials/country_execution/_glyph.html" with name="download" %}Download Report</a>
+        {% include "partials/country_execution/_glyph.html" with name="download" %}<span class="cxo-shortcut-label">Download Report</span></a>
       {% endif %}
     </section>
   </section>
@@ -150,11 +150,11 @@ a card is the table's total and a chart's bar is a table's row.
       <h2 class="cpo-chart-name" id="cxo-issues-name" data-no-titlebar>Top Execution Issues</h2>
       {% if issues %}
       {% paginate issues "issues_page" as issues_pager %}
-      <table class="cxo-small" data-table-fit="scroll">
+      <table class="cxo-small cxo-small--issues" data-table-fit="scroll">
         <thead><tr><th scope="col">Issue</th><th scope="col">Count</th><th scope="col">%</th></tr></thead>
         <tbody>
           {% for row in issues_pager.rows %}
-          <tr><th scope="row"><span>{{ row.label }}</span></th><td>{{ row.count }}</td><td>{% if row.share is None %}—{% else %}{{ row.share }}%{% endif %}</td></tr>
+          <tr><th scope="row" title="{{ row.label }}"><span>{{ row.label }}</span></th><td>{{ row.count }}</td><td>{% if row.share is None %}—{% else %}{{ row.share }}%{% endif %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -167,11 +167,11 @@ a card is the table's total and a chart's bar is a table's row.
       <h2 class="cpo-chart-name" id="cxo-recent-name" data-no-titlebar>Recent Activity</h2>
       {% if recent %}
       {% paginate recent "recent_page" as recent_pager %}
-      <table class="cxo-small" data-table-fit="scroll">
+      <table class="cxo-small cxo-small--recent" data-table-fit="scroll">
         <thead><tr><th scope="col">Date</th><th scope="col">Activity</th><th scope="col">Details</th></tr></thead>
         <tbody>
           {% for row in recent_pager.rows %}
-          <tr><td><span>{{ row.date|date:"j M Y" }}</span></td><th scope="row">{{ row.what }}</th><td>{{ row.detail }}</td></tr>
+          <tr><td><span>{{ row.date|date:"j M Y" }}</span></td><th scope="row">{{ row.what }}</th><td title="{{ row.detail }}">{{ row.detail }}</td></tr>
           {% endfor %}
         </tbody>
       </table>
