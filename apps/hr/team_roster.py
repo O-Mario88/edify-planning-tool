@@ -70,6 +70,23 @@ def team_members(principal) -> list:
     Programme Lead also leads that lead's officers while the cover is active.
     """
 
+    from apps.core.request_cache import memoize
+
+    profile_id = _profile_id(principal)
+    if not profile_id:
+        return []
+    # One lead's team is asked for by the dashboard, the To-Do builders and the
+    # debrief feed in the same request; read it once per request. A roster
+    # write in the request drops the memo (_forget_team_members).
+    return list(
+        memoize((TEAM_MEMO, profile_id), lambda: _read_team_members(profile_id))
+    )
+
+
+TEAM_MEMO = "hr.team_roster.team_members"
+
+
+def _read_team_members(profile_id) -> list:
     from apps.accounts.models import (
         StaffProfile,
         StaffSupervisorAssignment,
@@ -77,9 +94,6 @@ def team_members(principal) -> list:
     )
     from apps.core.rbac import EdifyRole
 
-    profile_id = _profile_id(principal)
-    if not profile_id:
-        return []
     now = timezone.now()
     covered = TemporaryCoverageAssignment.objects.filter(
         covering_staff_id=profile_id,
@@ -109,6 +123,41 @@ def team_members(principal) -> list:
         .select_related("user")
         .order_by("user__name")
     )
+
+
+def _forget_team_members(sender=None, **kwargs) -> None:
+    """Drop every memoised team when a roster input is written mid-request."""
+    from apps.core.request_cache import store
+
+    bucket = store()
+    if bucket:
+        for key in [k for k in bucket if isinstance(k, tuple) and k[0] == TEAM_MEMO]:
+            del bucket[key]
+
+
+def register() -> None:
+    from django.contrib.auth import get_user_model
+    from django.db.models.signals import post_delete, post_save
+
+    from apps.accounts.models import (
+        StaffProfile,
+        StaffSupervisorAssignment,
+        TemporaryCoverageAssignment,
+    )
+
+    for model in (
+        StaffProfile,
+        StaffSupervisorAssignment,
+        TemporaryCoverageAssignment,
+        get_user_model(),
+    ):
+        for signal in (post_save, post_delete):
+            signal.connect(
+                _forget_team_members,
+                sender=model,
+                weak=False,
+                dispatch_uid=f"team-roster-memo-{model._meta.label}-{id(signal)}",
+            )
 
 
 def team_member_ids(principal) -> list[str]:
