@@ -44,7 +44,14 @@
        computed on the server, and the bar's length IS the row's total. With
        `share` the parts are the server's percentages of 100. The legend sits
        under the plot, a hairline marks the value axis, and the parts carry no
-       printed value: the tooltip and the data table under the chart do. */
+       printed value: the tooltip and the data table under the chart do.
+
+       The shared tooltip of a five-part bar draws one group per part, the
+       fifth being apexcharts-tooltip-series-group-4 (the name is written with
+       a space after it: Tailwind's scanner, which builds the CSS index from
+       static/js, drops a name that runs into punctuation). The name holds the
+       legacy class pattern "p-4", and the route audit checks every class on a
+       page against that index. */
     stackedBar: function (share, opts) {
       var S = window.EdifyChartSystem;
       return S.formBase({
