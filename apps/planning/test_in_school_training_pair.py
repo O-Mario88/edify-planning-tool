@@ -142,6 +142,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIn('name="facilitating_partner_id"', html)
         self.assertIn("Pair Facilitator Org", html)
 
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
         result = schedule_in_school_training_pair(
             {**self.payload(), "facilitatingPartnerId": partner.id}, self.user
         )
@@ -150,6 +151,25 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertEqual(training.facilitating_partner_id, partner.id)
         self.assertEqual(training.delivery_type, "staff")
         self.assertIsNone(visit.facilitating_partner_id)
+        # The facilitation fee comes from the rate card, on the Training
+        # only, and it is the partner's.
+        fee = ActivityScheduleCostLine.objects.get(
+            activity=training, line_item_type="facilitation"
+        )
+        self.assertGreater(fee.amount, 0)
+        self.assertEqual(fee.partner_id, partner.id)
+        self.assertEqual(
+            ActivityScheduleCostLine.objects.filter(activity=training).count(), 1
+        )
+        self.assertFalse(
+            ActivityScheduleCostLine.objects.filter(
+                activity=visit, line_item_type="facilitation"
+            ).exists()
+        )
+        # The fee is not visit cost stranded on the Training.
+        from apps.activities.pair_costing import find_pair_trainings_carrying_cost
+
+        self.assertNotIn(training.id, find_pair_trainings_carrying_cost())
 
     def test_administrative_course_does_not_invent_an_ssa_intervention(self):
         result = schedule_in_school_training_pair(

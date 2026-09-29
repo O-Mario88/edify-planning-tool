@@ -408,3 +408,65 @@ class FacilitatedTrainingTest(APITestCase):
         self.assertEqual(saved.status_code, 200, saved.content)
         activity.refresh_from_db()
         self.assertEqual(activity.facilitating_partner_id, self.partner.id)
+
+    # -- the partner's side (owner, 2026-09-29) ------------------------------
+    # "Once the partner has been selected to facilitate, it should create an
+    # activity on the partner side ... a table for training facilitation ...
+    # each facilitation fetches the facilitation fee from the database ...
+    # and also help the partner make the invoices."
+
+    def test_the_partner_sees_each_facilitation_with_its_fee(self):
+        from apps.planning.partner_oversight_service import partner_facilitations
+
+        activity = self._schedule(facilitatingPartnerId=self.partner.id)
+        fee = self._fee_line(activity).amount
+        self.assertGreater(fee, 0)
+        [row] = partner_facilitations(self.partner_user)
+        self.assertEqual(row.activity_id, activity.id)
+        self.assertEqual(row.fee, fee)
+        self.assertEqual(row.cluster_name, "Fac Cluster")
+        self.assertEqual(row.invoice_instalment, "advance")
+        self.assertEqual(row.invoice_label, "Ready to invoice (50% advance)")
+        # Staff see nothing here; it is the partner's own list.
+        self.assertEqual(partner_facilitations(self.cceo), [])
+
+        # The fee is in the partner's period invoice, as its own category.
+        basis = invoice_basis(self.partner_user, "month", date(2026, 7, 1), "advance")
+        [item] = [i for i in basis["items"] if i["activity"].id == activity.id]
+        self.assertEqual(item["planned"], fee)
+        self.assertEqual(item["category"], "Training Facilitation Fee")
+
+    def test_the_balance_is_offered_once_the_advance_is_paid_and_verified(self):
+        from apps.planning.partner_oversight_service import partner_facilitations
+
+        activity = self._schedule(facilitatingPartnerId=self.partner.id)
+        fee = self._fee_line(activity).amount
+        PartnerPaymentService.pay_partner(
+            activity,
+            self.partner.name,
+            fee // 2,
+            "bank",
+            "REF-FAC-ADV",
+            self.accountant.id,
+            payment_type=PartnerPayment.TYPE_ADVANCE,
+            notify_partner=False,
+        )
+        [row] = partner_facilitations(self.partner_user)
+        self.assertEqual(row.invoice_instalment, "")
+        self.assertTrue(row.invoice_label.startswith("50% advance"))
+        Activity.objects.filter(id=activity.id).update(status="ia_verified")
+        [row] = partner_facilitations(self.partner_user)
+        self.assertEqual(row.invoice_instalment, "clearance")
+
+    def test_the_partners_my_plan_lists_training_facilitation(self):
+        activity = self._schedule(facilitatingPartnerId=self.partner.id)
+        self.client.force_login(self.partner_user)
+        html = self.client.get("/my-plan").content.decode()
+        self.assertIn("Training Facilitation", html)
+        self.assertIn(f'data-facilitation="{activity.id}"', html)
+        self.assertIn("Ready to invoice (50% advance)", html)
+        self.assertIn(
+            "/partner/invoices/new?period_kind=month&amp;instalment=advance"
+            "&amp;anchor=2026-07-20",
+            html,
+        )

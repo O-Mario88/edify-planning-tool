@@ -99,7 +99,11 @@
   {% endif %}
   {% endfor %}
 
-  {% if plan_total == 0 %}
+  {% if training_facilitations %}
+  {% include "partials/my_plan/training_facilitations.html" %}
+  {% endif %}
+
+  {% if plan_total == 0 and not training_facilitations %}
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center">
     <p class="text-[13px] font-semibold text-slate-500">Nothing on your plan yet — schedule assigned work from <a href="/partner/assigned-schools" class="font-bold edify-primary-text">Assigned Schools</a> or <a href="/partner/assigned-activities" class="font-bold edify-primary-text">Assigned Activities</a>.</p>
   </div>

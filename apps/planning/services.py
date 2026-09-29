@@ -780,6 +780,12 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
         },
     }
     visit.save(update_fields=["ssa_alignment", "recommendation_source", "updated_at"])
+    if training.facilitating_partner_id and training.scheduled_date:
+        # A partner facilitator's fee is the Training's one line (owner,
+        # 2026-09-29); the visit keeps the day's cost.
+        from apps.activities.services import reprice_activity
+
+        reprice_activity(training, principal)
 
     return {
         **training_result,

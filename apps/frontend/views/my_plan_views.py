@@ -254,6 +254,11 @@ def my_plan_view(request):
         context = partner_plan_context(request.user)
         context["is_partner_viewer"] = True
         context["partner_invoice_tracker"] = partner_payment_tracker(request.user)
+        # The trainings it facilitates, each with its fee and invoice (owner,
+        # 2026-09-29; partner_oversight_service.partner_facilitations).
+        from apps.planning.partner_oversight_service import partner_facilitations
+
+        context["training_facilitations"] = partner_facilitations(request.user)
         return render(request, "pages/partner/my_plan.html", context)
 
     # Which of the reader's clusters have a group training and a cluster
