@@ -59,6 +59,8 @@ IA_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/ia/dashboard/"),
+            # Under the Dashboard (owner, 2026-09-29).
+            ("Planning Monitor", "/planning-monitor/"),
             ("Planning", "/planning"),
             ("School Directory", "/schools"),
             ("Calendar", "/calendar"),

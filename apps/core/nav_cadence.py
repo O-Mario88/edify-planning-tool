@@ -24,6 +24,9 @@ DAILY, WEEKLY, MONTHLY, CYCLE, REFERENCE = range(len(TIERS))
 DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # Every day: home, the day's queue and the person's own plan.
     "dashboard": (DAILY, 0),
+    # Under the Dashboard: the monitor the CD, PL and IA read daily
+    # (owner, 2026-09-29).
+    "planning_monitor": (DAILY, 1),
     "planning": (DAILY, 2),
     "my_plan": (DAILY, 4),
     "schools": (DAILY, 6),
@@ -237,6 +240,7 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
         "users": (DAILY, 2),
         "uploads": (DAILY, 3),
         "planning": (DAILY, 4),
+        "planning_monitor": (DAILY, 5),
         "admin_support_queue": (DAILY, 13),
         "admin_incidents": (DAILY, 15),
         "system_health": (DAILY, 18),

@@ -294,6 +294,12 @@ class RolloutFixture(TestCase):
             catalogue_item=cls.camp,
             day=TODAY - timedelta(days=30),
         )
+        # A training that predates the course link (2026-09-29): saving it
+        # now stamps the camp's intervention, so the legacy row is written
+        # the way older data holds it — with none — for the unnamed row.
+        Activity.objects.filter(id=cls.t9.id).update(
+            focus_intervention=None, purpose_intervention=None
+        )
 
         # SSA collection: a cluster review at L, a visit at B1, a partner
         # hand-over at B2.
