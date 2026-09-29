@@ -36,12 +36,9 @@ EXPECTED_PL_SIDEBAR = [
     (
         "DAILY",
         [
+            # The Staff Activity Log and the Planning Monitor moved onto the
+            # Dashboard (owner, 2026-09-29): no sidebar entry of their own.
             ("Dashboard", "/dashboard"),
-            # Staff Activity Log (owner, 2026-09-29), replacing Who's Online,
-            # directly below the Dashboard.
-            ("Staff Activity", "/staff-activity"),
-            # Under the Dashboard (owner, 2026-09-29).
-            ("Planning Monitor", "/planning-monitor/"),
             ("Planning", "/planning"),
             ("My Plan", "/my-plan"),
             ("School Directory", "/schools"),
@@ -140,6 +137,9 @@ class ProgramLeadSidebarTest(SimpleTestCase):
             "/policy-compliance",
             "/projects",
             "/priorities",
+            # On the dashboard now (owner, 2026-09-29).
+            "/planning-monitor/",
+            "/staff-activity",
         ):
             with self.subTest(url=gone):
                 self.assertNotIn(gone, urls)

@@ -2,7 +2,9 @@
 The Actions cell of the week's tables (owner, 2026-09-26): Verify when the
 officer has completed the work — evidence uploaded, Salesforce ID entered —
 or Send to <officer> when they have not. `row.action` is set by
-apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none.
+apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none;
+`row.send_name` is the row's own officer, so Everyone's lists, which hold
+several, address each one.
 {% endcomment %}
 {% if row.action == "verify" %}
 <button type="button"
@@ -10,7 +12,7 @@ apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none.
         hx-target="#drawer-container"
         hx-swap="innerHTML"
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-2xs transition-colors cursor-pointer"
-        title="{{ person.first_name }} completed this — review the evidence and Salesforce ID, then verify or return it">
+        title="{{ row.send_name }} completed this — review the evidence and Salesforce ID, then verify or return it">
   <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
   Verify
 </button>
@@ -21,14 +23,14 @@ apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none.
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shadow-2xs transition-colors cursor-pointer"
         title="Remind {{ row.owner }} to complete this: upload the evidence and enter the Salesforce ID">
   <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-  Send to {{ person.send_name }}
+  Send to {{ row.send_name }}
 </button>
 {% elif row.action == "sent" %}
 <button type="button" disabled
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
         title="Reminder sent to {{ row.owner }}{% if row.sent_on %} on {{ row.sent_on|date:'D j M' }}{% endif %}; it stays until they complete, reschedule or cancel this">
   <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-  Sent to {{ person.send_name }}{% if row.sent_on %} · {{ row.sent_on|date:"D j M" }}{% endif %}
+  Sent to {{ row.send_name }}{% if row.sent_on %} · {{ row.sent_on|date:"D j M" }}{% endif %}
 </button>
 {% elif row.action == "own" %}
 <div class="row-menu" x-data="rowMenu"

@@ -520,6 +520,61 @@ class PLWeekTest(TestCase):
         self.assertEqual(row["action"], "own")
         self.assertEqual(person["send_name"], "")
 
+    def test_everyone_is_every_person_s_lists_and_tables(self):
+        # Owner, 2026-09-29: "get rid of the ui of everyone tab ... and use
+        # the normal tables other tabs (me, CCEO1, CCEO2) has".
+        amos_late = self._act(self.a1_sp, self.s1, LAST_MONDAY)
+        mine_late = self._act(self.pl_sp, self.s2, LAST_MONDAY + timedelta(days=1))
+        beth = self._act(self.a2_sp, self.s2, MONDAY, status="submitted_to_pl")
+        amos = self._act(self.a1_sp, self.s1, THURSDAY)
+        self._act(self.a1_sp, self.s1, MONDAY, atype="cluster_meeting")
+        self._act(self.b1_sp, self.s3, MONDAY)  # another lead's officer
+        week = self._week()
+        person = week["person"]
+        self.assertEqual(person["key"], EVERYONE)
+        self.assertEqual(person["listing"], OVERDUE)
+        self.assertEqual(
+            [(item["key"], item["count"]) for item in person["lists"]],
+            [(OVERDUE, 2), (DUE_THIS_WEEK, 3)],
+        )
+        # Last week's, everyone's, in date order; the lead's own keeps its menu.
+        overdue = self._table(person, "visits")
+        self.assertEqual([r["id"] for r in overdue], [amos_late.id, mine_late.id])
+        self.assertEqual(
+            [(r["owner"], r["action"], r["send_name"]) for r in overdue],
+            [("Amos Field", "send", "Amos"), (self.pl.name, "own", "")],
+        )
+        week = self._week(listing=DUE_THIS_WEEK)
+        person = week["person"]
+        visits = self._table(person, "visits")
+        self.assertEqual([r["id"] for r in visits], [beth.id, amos.id])
+        self.assertEqual(
+            [(r["action"], r["send_name"]) for r in visits],
+            [("verify", "Beth"), ("send", "Amos")],
+        )
+        self.assertEqual(
+            [(t["key"], t["count"]) for t in person["tables"]],
+            [("visits", 2), ("trainings", 0), ("meetings", 1)],
+        )
+        # The figures are everyone's added up.
+        self.assertEqual(
+            (person["planned"], person["awaiting_you"], person["overdue_count"]),
+            (3, 1, 2),
+        )
+
+    def test_everyone_names_who_is_on_leave(self):
+        Leave.objects.create(
+            staff=self.a1_sp,
+            type="personal_time_off",
+            start_date="2026-09-23",
+            end_date="2026-09-24",
+            days=2,
+            status="approved",
+        )
+        self.assertEqual(
+            self._week()["person"]["leave"], ["Amos Field (Wed 23 Sep – Thu 24 Sep)"]
+        )
+
     def test_a_reminder_already_sent_says_so_instead_of_sending_twice(self):
         activity = self._act(self.a1_sp, self.s1, MONDAY)
         Notification.objects.create(
@@ -656,9 +711,14 @@ class PLWeekTest(TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["dashboard_view"], "week")
-        self.assertContains(response, "data-pl-week-everyone")
+        # The tables every other tab draws, not the day board (owner,
+        # 2026-09-29), under the Planning Monitor.
+        self.assertContains(response, 'data-pl-week-person="everyone"')
+        self.assertContains(response, 'data-pl-week-table="visits"')
+        self.assertNotContains(response, "data-pl-week-everyone")
         self.assertContains(response, "Hill School")
-        self.assertContains(response, "Leadership Attention")
+        self.assertContains(response, 'id="planning-monitor"')
+        self.assertNotContains(response, "Leadership Attention")
         self.assertNotContains(response, "Stranger School")
 
     def test_a_week_tab_swaps_the_week_panel_alone(self):

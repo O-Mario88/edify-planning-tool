@@ -390,6 +390,18 @@ def _program_lead_dashboard(request, avatar_initials: str):
 
         context.update(country_map_context(fy))
         context.update(_pl_map_context(user, fy, {}))
+    if view == "week":
+        # The Planning Monitor and the Staff Activity Log, carried on This
+        # Week (owner, 2026-09-29). Each section fetches its page's fragment
+        # after the week paints, on the filters a link carried for it.
+        from apps.frontend.views import dashboard_embed
+
+        context["pl_monitor_query"] = dashboard_embed.carried_query(
+            request, dashboard_embed.PLANNING_MONITOR
+        )
+        context["pl_staff_activity_query"] = dashboard_embed.carried_query(
+            request, dashboard_embed.STAFF_ACTIVITY
+        )
     if tab_swap:
         response = render(
             request,
