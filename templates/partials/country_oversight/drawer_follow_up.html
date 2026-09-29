@@ -1,0 +1,91 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}Follow Up with PL (owner spec §20): the Country Director asks a
+Programme Lead to follow up a planning gap with their CCEO. Prefilled from
+the live figures; the Director chooses the kind of follow-up, the due date,
+the priority and writes the instruction. Sending changes no plan, target,
+activity or portfolio, and does not notify the CCEO.{% endcomment %}
+{% block drawer_title %}Follow Up with PL{% endblock %}
+{% block drawer_subtitle %}{{ lead_name|default:"Programme Lead" }}{% if cceo_name %} · {{ cceo_name }}{% endif %}{% if school_name %} · {{ school_name }}{% endif %}{% endblock %}
+{% block drawer_body %}
+<form class="cpo-sheet" hx-post="/country-planning-oversight/follow-up" hx-target="#cpo-fu-result" hx-swap="innerHTML"
+      x-data="{ issue: '{{ issue_key }}' }">
+  {% csrf_token %}
+  {% for key, value in filters.params.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+  <input type="hidden" name="lead" value="{{ scope.lead_key }}">
+  <input type="hidden" name="owner" value="{{ scope.cceo_key }}">
+  <input type="hidden" name="school" value="{{ scope.school_id }}">
+
+  {% if error %}<p class="cpo-notice cpo-notice--attention" role="alert">{{ error }}</p>{% endif %}
+
+  <section aria-labelledby="cpo-f-ctx">
+    <h3 class="cpo-sub" id="cpo-f-ctx">What the follow-up is about</h3>
+    <dl class="cpo-facts">
+      <div><dt>Program Lead</dt><dd>{{ lead_name|default:"—" }}</dd></div>
+      <div><dt>Affected CCEO</dt><dd>{% if cceo_name %}{{ cceo_name }}{% else %}The Lead's whole team{% endif %}</dd></div>
+      <div><dt>Country</dt><dd>{{ country }}</dd></div>
+      <div><dt>Region</dt><dd>{{ region_name|default:"All regions in scope" }}</dd></div>
+      <div><dt>Period</dt><dd>{{ window.label }}</dd></div>
+      {% if school_name %}<div><dt>School</dt><dd>{{ school_name }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  <section aria-labelledby="cpo-f-metric">
+    <h3 class="cpo-sub" id="cpo-f-metric">Planning metric, as it stands</h3>
+    <ul class="cpo-needs" role="list">
+      {% for row in issues %}
+      <li class="cpo-need{% if not row.remaining %} is-clear{% endif %}" x-show="issue === '{{ row.key }}' || issue === 'school_gap' || issue === 'other'"{% if row.key != issue_key and issue_key != "school_gap" and issue_key != "other" %} style="display: none"{% endif %}>
+        <div class="cpo-need-copy">
+          <p class="cpo-need-name">{{ row.label }}</p>
+          <p class="cpo-need-figs">Required {{ row.required }} · planned {{ row.planned }} · <strong>{{ row.remaining }} remaining</strong></p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if affected %}
+    <p class="cpo-muted">Affected schools: {{ total_affected }}{% if total_affected > affected|length %} — the first {{ affected|length }}:{% endif %}
+      {% for school in affected %}{{ school.name }} ({{ school.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+    {% if existing %}
+    <p class="cpo-muted">Already open for this scope:</p>
+    {% include "partials/country_oversight/_followup_list.html" with followups=existing %}
+    <p class="cpo-muted">Sending the same kind again reminds the Lead on the open record; the earlier instruction is kept.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="cpo-f-ask" class="cpo-form">
+    <h3 class="cpo-sub" id="cpo-f-ask">The ask</h3>
+    <label class="cpo-field">
+      <span class="cpo-caption">Follow-up type <span aria-hidden="true">*</span></span>
+      <select name="issue" x-model="issue" required>
+        {% for item in all_issues %}
+        <option value="{{ item.key }}"{% if item.key == issue_key %} selected{% endif %}{% if item.key == "school_gap" and not scope.school_id %} disabled{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="cpo-pair">
+      <label class="cpo-field">
+        <span class="cpo-caption">Due date <span aria-hidden="true">*</span></span>
+        <input type="date" name="due_date" value="{{ default_due|date:'Y-m-d' }}" min="{% now 'Y-m-d' %}" required>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Priority <span aria-hidden="true">*</span></span>
+        <select name="priority" required>
+          {% for value, label in priorities %}<option value="{{ value }}"{% if value == "normal" %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="cpo-field">
+      <span class="cpo-caption">Instruction to the Programme Lead <span aria-hidden="true">*</span></span>
+      <textarea name="instruction" rows="4" required maxlength="2000" placeholder="What should the Lead follow up with their CCEO, and by when?"></textarea>
+    </label>
+    <p class="cpo-muted">The Lead gets a To-Do and a notification that open Team Oversight on {% if cceo_name %}{{ cceo_name }}{% else %}their team{% endif %}. Nothing in any plan changes.</p>
+  </section>
+
+  <div id="cpo-fu-result" aria-live="polite"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Send to {{ lead_name|default:"the Programme Lead" }}</button>
+  </div>
+</form>
+{% endblock %}

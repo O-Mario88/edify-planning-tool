@@ -76,9 +76,23 @@ from apps.planning.action_models import (  # noqa: E402
     TeamAction,
 )
 from apps.planning.fy_policy_models import FiscalYearPlanningPolicy  # noqa: E402
+from apps.planning.followup_models import (  # noqa: E402
+    FollowUpPriority,
+    FollowUpStatus,
+    PlanningOversightFollowUp,
+)
+from apps.planning.execution_snapshot_models import (  # noqa: E402
+    ExecutionPeriodSnapshot,
+    SnapshotKind,
+)
 
 __all__ = [
+    "ExecutionPeriodSnapshot",
+    "SnapshotKind",
     "FiscalYearPlanningPolicy",
+    "FollowUpPriority",
+    "FollowUpStatus",
+    "PlanningOversightFollowUp",
     "MonthlyPlan",
     "MonthlyPlanActivity",
     "TeamAction",

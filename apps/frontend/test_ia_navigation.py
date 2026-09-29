@@ -76,6 +76,7 @@ IA_SIDEBAR = [
         [
             ("Planning Oversight", "/team-planning-oversight/"),
             ("Country Oversight", "/country-planning-oversight/"),
+            ("Country Map", "/country-map/"),
             ("Cluster Oversight", "/cluster-oversight/"),
             ("Core School Oversight", "/core-schools-oversight/"),
             ("Partner Oversight", "/partner-oversight/"),

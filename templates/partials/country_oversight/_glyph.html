@@ -1,0 +1,33 @@
+{% comment %}The six summary marks, drawn in currentColor so each takes its
+card's tone. `name` is the card's `icon`.{% endcomment %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{% if name == "staff" %}
+  <circle cx="9" cy="8" r="3.2" fill="currentColor" stroke="none"/>
+  <path d="M3.2 19.5c0-3.3 2.6-5.6 5.8-5.6s5.8 2.3 5.8 5.6z" fill="currentColor" stroke="none"/>
+  <circle cx="16.6" cy="9.2" r="2.5" fill="currentColor" stroke="none" opacity=".72"/>
+  <path d="M15.3 13.9c3.1-.3 5.5 1.8 5.5 5.1h-4.4" fill="currentColor" stroke="none" opacity=".72"/>
+{% elif name == "partner" %}
+  <path d="M2.5 9.5 6 6l3.2 2.2L12 6.4l2.8 1.8L18 6l3.5 3.5-2.2 2.2"/>
+  <path d="m7.4 12.6 3 3a1.5 1.5 0 0 0 2.1 0l.3-.3 1 1a1.5 1.5 0 0 0 2.1 0l2.6-2.6"/>
+  <path d="m4.7 11.7 2.7 2.7M12 9.8l3.4 3.4"/>
+{% elif name == "target" %}
+  <circle cx="12" cy="12" r="8.5"/>
+  <circle cx="12" cy="12" r="5"/>
+  <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+  <path d="m12 12 6.5-6.5M16 5.5h2.5V8"/>
+{% elif name == "training" %}
+  <path d="M2.5 9.2 12 4.8l9.5 4.4L12 13.6z" fill="currentColor" stroke="none"/>
+  <path d="M6.3 11.2v4.2c0 1.7 2.6 3 5.7 3s5.7-1.3 5.7-3v-4.2"/>
+  <path d="M20.2 9.8v5.4"/>
+{% elif name == "cluster" %}
+  <circle cx="12" cy="6.6" r="3.1" fill="currentColor" stroke="none"/>
+  <circle cx="6.6" cy="16.2" r="3.1" fill="currentColor" stroke="none" opacity=".82"/>
+  <circle cx="17.4" cy="16.2" r="3.1" fill="currentColor" stroke="none" opacity=".82"/>
+{% elif name == "meeting" %}
+  <circle cx="12" cy="7.2" r="2.8" fill="currentColor" stroke="none"/>
+  <circle cx="5.6" cy="9.4" r="2.2" fill="currentColor" stroke="none" opacity=".75"/>
+  <circle cx="18.4" cy="9.4" r="2.2" fill="currentColor" stroke="none" opacity=".75"/>
+  <path d="M7 19.2c0-3 2.2-5.1 5-5.1s5 2.1 5 5.1z" fill="currentColor" stroke="none"/>
+  <path d="M1.8 18c0-2.3 1.6-3.9 3.8-3.9 1 0 1.8.3 2.5.8M22.2 18c0-2.3-1.6-3.9-3.8-3.9-1 0-1.8.3-2.5.8" />
+{% endif %}
+</svg>

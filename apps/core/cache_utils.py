@@ -126,6 +126,24 @@ def snapshot_key(key: str) -> str:
     return f"{build_namespace()}:{key}"
 
 
+def publish_snapshot(key: str, value, *, timeout: int) -> bool:
+    """Store a snapshot that `stampede_safe_get_or_compute(key, ...)` serves.
+
+    For a scheduled job that rebuilds a heavy snapshot before readers ask for
+    it: the new value replaces the old in one write, so a reader is served
+    either one, never an empty slot. Fail-open like every other write here —
+    False when the cache could not be written.
+    """
+    if timeout <= 0:
+        return False
+    try:
+        cache.set(snapshot_key(key), value, timeout=timeout)
+    except Exception:  # noqa: BLE001 - the cache is an optimisation only
+        logger.warning("Cache write failed for %s", key, exc_info=True)
+        return False
+    return True
+
+
 def forget_snapshot(key: str) -> None:
     """Drop the snapshot `stampede_safe_get_or_compute(key, ...)` stored.
 

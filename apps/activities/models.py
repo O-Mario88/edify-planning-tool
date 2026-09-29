@@ -480,6 +480,19 @@ class Activity(SoftDeleteModel):
             ),
         ]
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # Note the day and status this row was read with, so a save that moves
+        # the plan can say from where (apps.activities.schedule_trail). Only
+        # when the fields were loaded anyway: a narrow .only() read must never
+        # pay a query for it.
+        if {"planned_date", "scheduled_date", "status"} <= set(field_names):
+            from apps.activities.schedule_trail import remember
+
+            remember(instance)
+        return instance
+
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
         # Normalize direct model/admin/import writes before Django prepares the
@@ -843,6 +856,10 @@ from .ia_models import (  # noqa: E402 — circular import, must load after Acti
     DuplicateActivity,
     VerificationHistory,
 )
+from .schedule_models import (  # noqa: E402 — circular import, must load after Activity is defined
+    ActivityScheduleChange,
+    ScheduleChangeKind,
+)
 from .closure_models import (  # noqa: E402 — circular import, must load after Activity is defined
     ActivityClosure,
     ClosureChecklist,
@@ -949,4 +966,6 @@ __all__ = [
     "ActivityReopenRequest",
     "AnalyticsPublishRecord",
     "ActivityTimelineEvent",
+    "ActivityScheduleChange",
+    "ScheduleChangeKind",
 ]

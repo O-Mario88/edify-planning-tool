@@ -1,0 +1,38 @@
+{% comment %}A page of activity records (the table's Activities view and every
+drill-down drawer): what, where, whose, due when, at which stage, and who holds
+the next action.{% endcomment %}
+<div class="cpo-tscroll" data-mobile-table="scroll">
+  <table class="cpo-table cxo-table cxo-records">
+    <thead>
+      <tr>
+        <th scope="col" class="cpo-namecol">Activity</th>
+        <th scope="col">School / Cluster</th>
+        <th scope="col">Owner</th>
+        <th scope="col">Channel</th>
+        <th scope="col">Due</th>
+        <th scope="col">Stage</th>
+        <th scope="col">Days Overdue</th>
+        <th scope="col">Waiting On</th>
+        <th scope="col">Last Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in listing.rows %}
+      <tr data-level="1">
+        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.type }}</span></th>
+        <td>{{ row.where }}</td>
+        <td>{{ row.owner }}</td>
+        <td>{{ row.channel }}{% if row.partner %} · {{ row.partner }}{% endif %}</td>
+        <td>{{ row.due|date:"j M Y" }}</td>
+        <td>{{ row.stage }}{% if row.overdue %}<span class="cpo-hint"><span>{{ row.overdue }}</span></span>{% endif %}</td>
+        <td>{% if row.age %}<span class="cpo-alert">{{ row.age }}</span>{% else %}<span class="cpo-none">—</span>{% endif %}</td>
+        <td>{{ row.waiting_on|default:"—" }}</td>
+        <td>{{ row.last_action|date:"j M Y"|default:"—" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="cpo-empty">No activity matches.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/country_execution/_pager.html" with pager=listing target=pager_target %}

@@ -4529,7 +4529,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 86,
+   "line": 78,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4538,7 +4538,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 117,
+   "line": 109,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4547,7 +4547,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 175,
+   "line": 167,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4556,7 +4556,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 251,
+   "line": 243,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4565,7 +4565,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 286,
+   "line": 278,
    "title": "Verification &amp; Data Quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4574,7 +4574,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 337,
+   "line": 329,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4583,7 +4583,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 361,
+   "line": 353,
    "title": "Cluster SSA Comparison",
    "heading_level": 2,
    "has_card_key": false,
@@ -4592,7 +4592,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 413,
+   "line": 405,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4601,7 +4601,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 490,
+   "line": 482,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,

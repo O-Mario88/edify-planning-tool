@@ -3,7 +3,8 @@
 
 {% block title %}Team Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% if request.GET.followup %}
+<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20260929cpo12">{% endif %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
@@ -30,6 +31,14 @@
     </div>
     {% endif %}
   </header>
+
+  {% if request.GET.followup %}
+  {% comment %}A Country Director's planning follow-up this Lead was sent here
+  from (their To-Do and notification link to it): what was asked, the gap,
+  and the Lead's responses. The page below is already on the officer and the
+  period it is about.{% endcomment %}
+  <div hx-get="/planning-follow-ups/{{ request.GET.followup|urlencode }}" hx-trigger="load" hx-swap="outerHTML"><p class="edify-text-caption edify-text-muted">Opening the follow-up…</p></div>
+  {% endif %}
 
   {% comment %}The shared lens strip — the same one Country Planning Oversight
   draws, built once in `_lens_tabs` (owner, 2026-09-16). A reader with a single

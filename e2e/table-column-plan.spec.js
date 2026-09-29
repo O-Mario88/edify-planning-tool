@@ -17,53 +17,86 @@
  *    width of the word "Actions" and its 90px button painted 36px past the
  *    table, with no scroll to reach it.
  *
- * My Plan's tables became record tables on 2026-09-19 and a record table
- * scrolls instead of taking a plan (micro-ux.js, 2026-09-20), so the journey
- * reads the Country Director's operations dashboard, whose Who's Online table
- * takes a plan at 1440px. Its groups start folded (owner, 2026-09-25), and a
- * folded table has only headings to plan from, so the journey opens the
- * first group as a reader does; the panel asks for a fresh plan when a group
- * opens.
+ * The journey used to read a live table that took a plan: My Plan's until it
+ * became a record table (2026-09-19; record tables scroll), then the Who's
+ * Online table on the Country Director's operations dashboard. Who's Online
+ * moved under Country Oversight's planning tab (owner, 2026-09-28), where it
+ * has the page's width and fits or scrolls depending on who was online, so no
+ * live table is a stable subject any more. The plan is exercised here on a
+ * table of the shape that showed both defects — text columns, a strip of six
+ * status pills and an actions column — served with the platform's own
+ * stylesheets and script, in a region narrower than the table.
  *
  * Asserted on the rendered geometry, not the plan: a heading that fits its
  * own box, and a control the reader can actually get to.
  */
+const path = require('path');
 const { test, expect } = require('@playwright/test');
-const { signIn } = require('./helpers/auth');
+const { snapshotServer } = require('./helpers/snapshot-server');
+
+test.use({ video: 'off', trace: 'off', serviceWorkers: 'block' });
+
+const STAGES = ['Planned', 'Scheduled', 'Started', 'Evidence', 'Reviewed', 'Verified'];
+
+function fixture() {
+  const pills = STAGES.map(
+    (stage) => `<span class="rounded-pill bg-emerald-50 text-emerald-700 px-2 py-0.5">${stage}</span>`
+  ).join('');
+  const rows = Array.from({ length: 8 }, (_, n) => `
+    <tr>
+      <td>Kampala Hill Primary School ${n + 1}</td>
+      <td>Mukono</td>
+      <td>12 Oct 2026</td>
+      <td>Follow Up Visit</td>
+      <td>Officer One Namukasa</td>
+      <td>${pills}</td>
+      <td><button type="button" class="btn">Open record</button></td>
+    </tr>`).join('');
+  return `<!doctype html><html class="theme-light"><head>
+<link rel="stylesheet" href="/static/css/design-system.css">
+<link rel="stylesheet" href="/static/css/components.css">
+<link rel="stylesheet" href="/static/css/consistency.css">
+<script defer src="/static/js/micro-ux.js"></script>
+</head><body><main id="main-content"><section style="inline-size: 1100px; padding: 16px">
+<table><thead><tr>
+  <th>School</th><th>District</th><th>Planned date</th><th>Purpose</th><th>Assigned to</th><th>Stages</th><th>Actions</th>
+</tr></thead><tbody>${rows}</tbody></table>
+</section></main></body></html>`;
+}
 
 test('planned columns show their headings and keep their controls reachable', async ({ page }) => {
-  test.setTimeout(120_000);
-  await signIn(page, 'cd@edify.org', 'edify', { acceptRequiredAgreements: false });
-  await page.setViewportSize({ width: 1440, height: 950 });
-  await page.goto('/dashboard?view=operations');
-  await expect(page.locator('main table').first()).toBeVisible();
-  await page
-    .locator('[data-admin-presence] tbody.presence-group:has(tr.presence-row) [data-presence-toggle]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
+  const server = await snapshotServer(path.resolve(__dirname, '..'));
+  try {
+    server.setHtml(fixture());
+    await page.setViewportSize({ width: 1440, height: 950 });
+    await page.goto(server.origin + '/page');
+    await expect(page.locator('main table')).toBeVisible();
+    await page.waitForTimeout(600);
 
-  const planned = page.locator('main table.edify-table--truncate');
-  expect(await planned.count(), 'the operations tables take a column plan at 1440px').toBeGreaterThan(0);
+    const planned = page.locator('main table.edify-table--truncate');
+    expect(await planned.count(), 'a table wider than its region takes a column plan').toBeGreaterThan(0);
 
-  const report = await planned.evaluateAll((tables) =>
-    tables.map((table) => {
-      const wrap = table.parentElement;
-      const room = wrap.getBoundingClientRect().right + (wrap.scrollWidth - wrap.clientWidth);
-      return {
-        clipped: [...table.querySelectorAll('thead th')]
-          .filter((th) => th.scrollWidth > th.clientWidth + 1)
-          .map((th) => th.textContent.trim()),
-        unreachable: [...table.querySelectorAll('tbody tr')]
-          .slice(0, 8)
-          .map((row) => row.querySelector('.row-menu__trigger') || row.querySelector('td:last-child :is(a, button)'))
-          .filter((control) => control && control.getBoundingClientRect().right > room + 1).length,
-      };
-    })
-  );
+    const report = await planned.evaluateAll((tables) =>
+      tables.map((table) => {
+        const wrap = table.parentElement;
+        const room = wrap.getBoundingClientRect().right + (wrap.scrollWidth - wrap.clientWidth);
+        return {
+          clipped: [...table.querySelectorAll('thead th')]
+            .filter((th) => th.scrollWidth > th.clientWidth + 1)
+            .map((th) => th.textContent.trim()),
+          unreachable: [...table.querySelectorAll('tbody tr')]
+            .slice(0, 8)
+            .map((row) => row.querySelector('.row-menu__trigger') || row.querySelector('td:last-child :is(a, button)'))
+            .filter((control) => control && control.getBoundingClientRect().right > room + 1).length,
+        };
+      })
+    );
 
-  for (const table of report) {
-    expect(table.clipped).toEqual([]);
-    expect(table.unreachable).toBe(0);
+    for (const table of report) {
+      expect(table.clipped).toEqual([]);
+      expect(table.unreachable).toBe(0);
+    }
+  } finally {
+    await server.close();
   }
 });

@@ -1,0 +1,32 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}Planning Oversight Data Quality (owner spec §22): every check
+behind the figures, what it means, how many records it found, the first of
+them, and where they are corrected. Impact Assessment corrects through the
+workflow that owns each record — nothing here edits anything.{% endcomment %}
+{% block drawer_title %}Planning Oversight Data Quality{% endblock %}
+{% block drawer_subtitle %}{{ open }} check{{ open|pluralize }} need{{ open|pluralize:"s," }} attention · read {{ built_at|date:"j M Y, g:i A" }} · portfolio as of {{ as_of|date:"j M Y" }}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet">
+  <ul class="cpo-dq" role="list">
+    {% for check in checks %}
+    <li class="cpo-dq-item" data-level="{% if check.count %}{{ check.severity }}{% else %}clear{% endif %}">
+      <details{% if check.count and check.severity != "info" %} open{% endif %}>
+        <summary>
+          <span class="cpo-dq-name">{{ check.label }}</span>
+          <span class="cpo-tag" data-tone="{% if not check.count %}done{% elif check.severity == 'critical' %}back{% elif check.severity == 'warning' %}wait{% else %}seen{% endif %}">{{ check.count }}</span>
+        </summary>
+        <p class="cpo-muted">{{ check.meaning }}</p>
+        {% if check.samples %}
+        <ul class="cpo-dq-samples" role="list">
+          {% for sample in check.samples %}
+          <li>{% if sample.url %}<a href="{{ sample.url }}">{{ sample.label }}</a>{% else %}{{ sample.label }}{% endif %}{% if sample.detail %} <small>{{ sample.detail }}</small>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if check.correct_at %}<p class="cpo-muted">Corrected in: {{ check.correct_at }}</p>{% endif %}
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

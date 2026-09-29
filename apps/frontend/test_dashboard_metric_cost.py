@@ -92,7 +92,11 @@ class DashboardMetricCostTest(TestCase):
             patch("apps.command_center.services.alerts_summary") as summary,
             patch("apps.command_center.services.today") as today,
         ):
-            response = self.client.get("/dashboard")
+            # /dashboard sends the Country Director to Country Oversight
+            # (owner, 2026-09-28); the command dashboard a link names
+            # still answers.
+            self.assertEqual(self.client.get("/dashboard").status_code, 302)
+            response = self.client.get("/dashboard?view=operations")
         self.assertEqual(response.status_code, 200)
         alerts.assert_not_called()
         summary.assert_not_called()
@@ -104,9 +108,15 @@ class DashboardMetricCostTest(TestCase):
         build_metrics.assert_not_called()
 
     def test_the_country_director_branch_does_not_build_them_either(self):
+        # Sent on to Country Oversight before anything is built (owner,
+        # 2026-09-28), and the command dashboard a link names builds none.
         response, build_metrics = self._get_dashboard_as(
             "CountryDirector", "cd-cost@edify.test"
         )
+        self.assertEqual(response.status_code, 302)
+        build_metrics.assert_not_called()
+        with patch(self.TARGET) as build_metrics:
+            response = self.client.get("/dashboard?view=operations")
         self.assertEqual(response.status_code, 200)
         build_metrics.assert_not_called()
 

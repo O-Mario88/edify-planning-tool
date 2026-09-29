@@ -326,7 +326,12 @@ class AnalyticsWorkspaceRenderTest(TestCase):
         self.assertContains(school_response, 'role="tablist"')
 
     def test_the_sub_navigation_stays_off_pages_outside_the_workspace(self):
-        response = self.client.get("/dashboard")
+        # The Country Director's dashboard is Country Oversight (owner,
+        # 2026-09-28): /dashboard sends them there.
+        self.assertEqual(
+            self.client.get("/dashboard")["Location"], "/country-planning-oversight/"
+        )
+        response = self.client.get("/country-planning-oversight/")
         self.assertEqual(response.status_code, 200)
         # The shared head may name this component in native prefetch rules;
         # what must stay absent is the workspace navigation element itself.

@@ -861,6 +861,7 @@
       "bytes": 75977,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/country-map/",
         "/dashboard",
         "/ia/dashboard/"
       ],
@@ -2324,6 +2325,7 @@
       "bytes": 21032,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/country-map/",
         "/dashboard",
         "/ia/dashboard/"
       ],
@@ -4035,6 +4037,1089 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 1692,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/drawer",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Activity Rows",
+      "purpose": "Reusable  activity rows interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/_activity_rows.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1246,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/rows",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Cells",
+      "purpose": "Reusable  cells interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_cells.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2244,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Glyph",
+      "purpose": "Reusable  glyph interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_glyph.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1331,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Heads",
+      "purpose": "Reusable  heads interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_heads.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2701,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/drawer",
+        "/country-planning-oversight/execution/snapshots",
+        "/country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 8,
+      "kind": "application-partial",
+      "name": " Pager",
+      "purpose": "Reusable  pager interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_pager.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1474,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Table",
+      "purpose": "Reusable  table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/_table.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 912,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Drawer Activities",
+      "purpose": "Reusable drawer activities interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/drawer_activities.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 5404,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/follow-up"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Drawer Follow Up",
+      "purpose": "Reusable drawer follow up interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/drawer_follow_up.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 8595,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Drawer Snapshot",
+      "purpose": "Reusable drawer snapshot interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 3,
+      "template": "partials/country_execution/drawer_snapshot.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3026,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/snapshots"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Drawer Snapshots",
+      "purpose": "Reusable drawer snapshots interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/drawer_snapshots.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1860,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/follow-ups-panel"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Followups Panel",
+      "purpose": "Reusable followups panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/followups_panel.html",
+      "variants": [
+        "{{ row.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 7231,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Page",
+      "purpose": "Reusable page interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/page.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2261,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Rows Owners",
+      "purpose": "Reusable rows owners interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/rows_owners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1009,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Rows Partners",
+      "purpose": "Reusable rows partners interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/rows_partners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 436,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Table Activities",
+      "purpose": "Reusable table activities interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_execution/table_activities.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3473,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Table Leads",
+      "purpose": "Reusable table leads interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/table_leads.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2206,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Table Owners",
+      "purpose": "Reusable table owners interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/table_owners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2621,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Table Partners",
+      "purpose": "Reusable table partners interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/table_partners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2411,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/execution/table"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Table Schools",
+      "purpose": "Reusable table schools interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/table_schools.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 14358,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 6,
+      "kind": "application-partial",
+      "name": "Workspace",
+      "purpose": "Reusable workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 4,
+      "template": "partials/country_execution/workspace.html",
+      "variants": [
+        "{{ card.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1028,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Cells",
+      "purpose": "Reusable  cells interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_cells.html",
+      "variants": [
+        "{{ cells.meeting_tone }}",
+        "{{ cells.training_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1878,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Charts",
+      "purpose": "Reusable  charts interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/_charts.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 934,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Drawer Pager",
+      "purpose": "Reusable  drawer pager interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_drawer_pager.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1875,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Figures",
+      "purpose": "Reusable  figures interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_figures.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1429,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Flag Uganda",
+      "purpose": "Reusable  flag uganda interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_flag_uganda.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 836,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer",
+        "/country-planning-oversight/execution/follow-up",
+        "/country-planning-oversight/follow-up"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Followup List",
+      "purpose": "Reusable  followup list interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_followup_list.html",
+      "variants": [
+        "{{ item.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 883,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Gaps",
+      "purpose": "Reusable  gaps interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_gaps.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2069,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Glyph",
+      "purpose": "Reusable  glyph interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_glyph.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 8682,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": " Table",
+      "purpose": "Reusable  table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/_table.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2654,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Uganda Outline",
+      "purpose": "Reusable  uganda outline interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_uganda_outline.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 5376,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/follow-up"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Drawer Follow Up",
+      "purpose": "Reusable drawer follow up interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/drawer_follow_up.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 6514,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 7,
+      "kind": "application-partial",
+      "name": "Drawer Followups",
+      "purpose": "Reusable drawer followups interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/drawer_followups.html",
+      "variants": [
+        "{{ item.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2470,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Drawer Kpi",
+      "purpose": "Reusable drawer kpi interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/drawer_kpi.html",
+      "variants": [
+        "{{ card.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4448,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Drawer Lead",
+      "purpose": "Reusable drawer lead interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/drawer_lead.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4997,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Drawer Owner",
+      "purpose": "Reusable drawer owner interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/drawer_owner.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1849,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Drawer Quality",
+      "purpose": "Reusable drawer quality interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/drawer_quality.html",
+      "variants": [
+        "{% if not check.count %}done{% elif check.severity == "
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 431,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/follow-up/<str:followup_id>/<str:action>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Follow Up Result",
+      "purpose": "Reusable follow up result interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/follow_up_result.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 5589,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning-follow-ups/<str:followup_id>",
+        "/planning-follow-ups/<str:followup_id>/<str:action>"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 4,
+      "kind": "application-partial",
+      "name": "Followup Banner",
+      "purpose": "Reusable followup banner interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/followup_banner.html",
+      "variants": [
+        "{{ card.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2712,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/follow-ups-panel"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Followups Panel",
+      "purpose": "Reusable followups panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/followups_panel.html",
+      "variants": [
+        "{{ item.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 10124,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Page",
+      "purpose": "Reusable page interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/page.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2477,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Rows Owners",
+      "purpose": "Reusable rows owners interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/rows_owners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1154,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Rows Partners",
+      "purpose": "Reusable rows partners interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/rows_partners.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4750,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/schools"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 5,
+      "kind": "application-partial",
+      "name": "Schools",
+      "purpose": "Reusable schools interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/schools.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1606,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/slots"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Slots",
+      "purpose": "Reusable slots interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/slots.html",
+      "variants": [
+        "{% if slot.state == "
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3231,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Workspace",
+      "purpose": "Reusable workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/workspace.html",
+      "variants": [
+        "{{ card.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
@@ -4533,7 +5618,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 34744,
+      "bytes": 34452,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -9029,7 +10114,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 980,
+      "bytes": 1429,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -9043,7 +10128,7 @@
       "kind": "application-partial",
       "name": " Lens Tabs",
       "purpose": "Reusable  lens tabs interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default"
       ],
@@ -9720,7 +10805,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5009,
+      "bytes": 5098,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -9780,6 +10865,7 @@
       "bytes": 9578,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/country-map/",
         "/country-planning-oversight/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -12920,6 +14006,7 @@
       "bytes": 582,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/country-map/",
         "/dashboard",
         "/ia/dashboard/"
       ],
@@ -33469,6 +34556,100 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.country_map_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/oversight/portfolio_workspace.html",
+        "template:pages/oversight/country_map.html",
+        "test:referenced-by-automated-test",
+        "permission:country_map"
+      ],
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ lens_base_url }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-5A9AECA4A2",
+      "page_title": "Country Map",
+      "page_type": "interaction-fragment",
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
+      "permission_key": "country_map",
+      "primary_action": "Country Map",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Country Map (owner, 2026-09-28): the country shaded by delivery, backlog or money, and under it the country portfolio \u2014 every school under the Programme Lead and the CCEO who hold it \u2014 when there is one.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-map/",
+      "route_name": "country_map",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-scroll",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/portfolio_workspace.html",
+        "pages/oversight/country_map.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
@@ -33489,6 +34670,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET {{ lens_base_url }}",
+        "GET /dashboard/whos-online{% if presence_query %}?{{ presence_query }}{% endif %}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
@@ -33504,7 +34686,9 @@
       "page_title": "Country Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
-        "css/pages/oversight-workspace.css"
+        "css/pages/oversight-workspace.css",
+        "css/pages/country-oversight.css",
+        "css/components/presence.css"
       ],
       "permission_key": "country_planning_oversight",
       "primary_action": "Country Planning Oversight",
@@ -33566,6 +34750,840 @@
       "typography_exceptions": [
         "text-[12px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.coverage_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D97FB630D1",
+      "page_title": "Cpo Coverage Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The page as a workbook: the hierarchy, one row per school, and the follow-ups \u2014 the same filters, the same figures, each sheet naming its row grain. ``?format=csv`` answers with the school sheet.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/coverage-export",
+      "route_name": "cpo_coverage_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/drawer_followups.html",
+        "template:partials/country_oversight/drawer_quality.html",
+        "template:partials/country_oversight/drawer_lead.html",
+        "template:partials/country_oversight/drawer_owner.html",
+        "template:partials/country_oversight/drawer_kpi.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/drawer?kind=followups&amp;show=open&amp;{{ query }}",
+        "GET /country-planning-oversight/drawer?kind=followups&amp;show=all&amp;{{ query }}",
+        "GET /country-planning-oversight/execution/follow-up?{{ item.remind_query }}",
+        "GET /country-planning-oversight/follow-up?lead={{ item.record.program_lead_staff_id }}&amp;owner={{ item.record.cceo_staff_id|default:",
+        "POST /country-planning-oversight/follow-up/{{ item.id }}/escalate",
+        "POST /country-planning-oversight/follow-up/{{ item.id }}/close",
+        "POST /country-planning-oversight/follow-up/{{ item.id }}/cancel",
+        "GET /country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=unallocated&amp;{{ query }}",
+        "POST /country-planning-oversight/send",
+        "GET /country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;gap=unallocated&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?gap={{ gap }}&amp;{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B4BC2BE769",
+      "page_title": "Cpo Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Every drawer the page opens: a Lead, an officer, a Partner, a KPI, the follow-ups, and Impact Assessment's data-quality queue.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/drawer",
+      "route_name": "cpo_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/country-planning-oversight/follow-up/{{ item.id }}/escalate",
+        "/country-planning-oversight/follow-up/{{ item.id }}/close",
+        "/country-planning-oversight/send"
+      ],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/drawer_followups.html",
+        "partials/country_oversight/drawer_quality.html",
+        "partials/country_oversight/drawer_lead.html",
+        "partials/country_oversight/drawer_owner.html",
+        "partials/country_oversight/drawer_kpi.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/drawer_activities.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/follow-up?{{ follow_up_query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-726FB0940E",
+      "page_title": "Cpx Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The records behind a figure: KPI cards, backlog slices, age bars, row \"View\" buttons and the shortcuts all open this, filtered to what they counted.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/drawer",
+      "route_name": "cpx_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/drawer_activities.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-58BF5DA655",
+      "page_title": "Cpx Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The tab as a workbook: one row per level, per Partner, per activity and per follow-up \u2014 the same filters and figures, each sheet naming its grain.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/export",
+      "route_name": "cpx_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.follow_up_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/drawer_follow_up.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /country-planning-oversight/execution/follow-up",
+        "GET /country-planning-oversight/execution/follow-up?{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-83E3384A4B",
+      "page_title": "Cpx Follow Up",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Send to",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "GET: the execution Follow Up with PL drawer, prefilled with the live figures. POST: send, or remind on the open follow-up.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/follow-up",
+      "route_name": "cpx_follow_up",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/country-planning-oversight/execution/follow-up"
+      ],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/drawer_follow_up.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.followups_panel_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/followups_panel.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/follow-ups-panel?{{ query }}",
+        "GET /country-planning-oversight/drawer?kind=followups&amp;{{ planning_query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CFF130F018",
+      "page_title": "Cpx Followups Panel",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Followups Panel",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate cpx followups panel within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/follow-ups-panel",
+      "route_name": "cpx_followups_panel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/followups_panel.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.rows_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/rows_owners.html",
+        "template:partials/country_execution/rows_partners.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/drawer?kind=activities&amp;owner={{ row.key }}&amp;stage=due&amp;{{ query }}",
+        "GET /country-planning-oversight/execution/rows?level=owner&amp;key={{ row.key }}&amp;{{ query }}",
+        "GET /country-planning-oversight/execution/drawer?kind=activities&amp;owner={{ parent }}&amp;partner_key={{ row.key }}&amp;stage=due&amp;{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C3457E0D16",
+      "page_title": "Cpx Rows",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Rows",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "A Lead's people, or an officer's delivery channels, as table rows.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/rows",
+      "route_name": "cpx_rows",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/rows_owners.html",
+        "partials/country_execution/rows_partners.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.snapshots_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/drawer_snapshots.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/snapshots",
+        "GET /country-planning-oversight/execution/snapshots/{{ s.id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8664A5A06F",
+      "page_title": "Cpx Snapshots",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Snapshots",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The country's locked periods, the latest first.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/snapshots",
+      "route_name": "cpx_snapshots",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/drawer_snapshots.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.snapshot_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_execution/drawer_snapshot.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/snapshots/{{ version.id }}",
+        "POST /country-planning-oversight/execution/snapshots/{{ snapshot.id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-27C7447FF6",
+      "page_title": "Cpx Snapshot",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Snapshot",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One locked period: its figures, staff and Partner contribution, the hierarchy and the follow-ups open at the close, every version beside it. POST records a revision, where policy permits (snapshots.REVISION_ROLES).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+      "route_name": "cpx_snapshot",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/country-planning-oversight/execution/snapshots/{{ snapshot.id }}"
+      ],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_execution/drawer_snapshot.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.table_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/country_execution/_table.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/execution/table?table={{ key }}&amp;{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B4D7E70702",
+      "page_title": "Cpx Table",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpx Table",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One of the table's five views, swapped in place.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/table",
+      "route_name": "cpx_table",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 2,
+        "type": "segmented-control"
+      },
+      "templates": [
+        "partials/country_execution/_table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -33653,6 +35671,415 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.follow_up_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/drawer_follow_up.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /country-planning-oversight/follow-up"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-6F857A0111",
+      "page_title": "Cpo Follow Up",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Send to",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "GET: the Follow Up with PL drawer, prefilled. POST: send or remind.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/follow-up",
+      "route_name": "cpo_follow_up",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/country-planning-oversight/follow-up"
+      ],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/drawer_follow_up.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.follow_up_action_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/follow_up_result.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-BE4DC27E5B",
+      "page_title": "Cpo Follow Up Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Follow Up Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Country Director closes (with a reason) or cancels a follow-up.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/follow-up/<str:followup_id>/<str:action>",
+      "route_name": "cpo_follow_up_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/follow_up_result.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.followups_panel_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/followups_panel.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/follow-ups-panel?{{ query }}",
+        "GET /country-planning-oversight/drawer?kind=followups&amp;{{ query }}",
+        "GET /country-planning-oversight/drawer?kind=followups&amp;focus={{ item.id }}&amp;{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6E08AE9527",
+      "page_title": "Cpo Followups Panel",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Followups Panel",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The right-hand Open Follow-ups panel, refreshed after a send.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/follow-ups-panel",
+      "route_name": "cpo_followups_panel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/followups_panel.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.rows_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/rows_owners.html",
+        "template:partials/country_oversight/rows_partners.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}",
+        "GET /country-planning-oversight/rows?level=owner&amp;key={{ row.key }}&amp;{{ query }}",
+        "GET /country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-87CFAB10E4",
+      "page_title": "Cpo Rows",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Rows",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "A Lead's people, or an officer's delivery channels, as table rows.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/rows",
+      "route_name": "cpo_rows",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/rows_owners.html",
+        "partials/country_oversight/rows_partners.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.schools_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/schools.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/schools",
+        "GET /country-planning-oversight/follow-up?lead={{ row.lead_key }}&amp;owner={{ row.owner_key }}&amp;school={{ row.id }}&amp;{{ query }}",
+        "GET /country-planning-oversight/slots?school={{ row.id }}&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?{{ list_query }}&amp;page={{ page|add:"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-253268D31D",
+      "page_title": "Cpo Schools",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Schools",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The schools behind a row or a figure \u2014 one page of them, worst first.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/schools",
+      "route_name": "cpo_schools",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/schools.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -33734,6 +36161,86 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.slots_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/country_oversight/slots.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /team-planning-oversight/detail?activity_id={{ slot.activity_id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EB2A1BB141",
+      "page_title": "Cpo Slots",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Cpo Slots",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One school's requirement slots and the activity filling each.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/slots",
+      "route_name": "cpo_slots",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/slots.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": []
     },
@@ -69784,6 +72291,186 @@
       ]
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.followup_detail_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/country_oversight/followup_banner.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /planning-follow-ups/{{ followup.id }}/acknowledge",
+        "POST /planning-follow-ups/{{ followup.id }}/ask",
+        "POST /planning-follow-ups/{{ followup.id }}/waiting",
+        "POST /planning-follow-ups/{{ followup.id }}/return"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-436E67D76F",
+      "page_title": "Planning Followup Detail",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Planning Followup Detail",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The follow-up as the Programme Lead reads it on Team Oversight.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/planning-follow-ups/<str:followup_id>",
+      "route_name": "planning_followup_detail",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning-follow-ups/{{ followup.id }}/ask",
+        "/planning-follow-ups/{{ followup.id }}/waiting",
+        "/planning-follow-ups/{{ followup.id }}/return"
+      ],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/followup_banner.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.followup_lead_action_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/country_oversight/followup_banner.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /planning-follow-ups/{{ followup.id }}/acknowledge",
+        "POST /planning-follow-ups/{{ followup.id }}/ask",
+        "POST /planning-follow-ups/{{ followup.id }}/waiting",
+        "POST /planning-follow-ups/{{ followup.id }}/return"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-E57F627F7E",
+      "page_title": "Planning Followup Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Planning Followup Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Acknowledge, ask the CCEO, say what it waits on, or return it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/planning-follow-ups/<str:followup_id>/<str:action>",
+      "route_name": "planning_followup_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning-follow-ups/{{ followup.id }}/ask",
+        "/planning-follow-ups/{{ followup.id }}/waiting",
+        "/planning-follow-ups/{{ followup.id }}/return"
+      ],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/country_oversight/followup_banner.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -83934,6 +86621,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
+        "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}",
         "GET {{ lens_base_url }}",
         "GET {{ row.detail_url }}"
       ],
@@ -83943,12 +86631,13 @@
       "mobile_status": "pass-automated-contract",
       "modals": true,
       "module": "frontend",
-      "notifications": false,
+      "notifications": true,
       "page_id": "UI-PAGE-EA89AC9A38",
       "page_title": "Planning Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
-        "css/pages/oversight-workspace.css"
+        "css/pages/oversight-workspace.css",
+        "css/pages/country-oversight.css"
       ],
       "permission_key": "team_planning_oversight",
       "primary_action": "Export",
@@ -84011,7 +86700,7 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
-      "todos": false,
+      "todos": true,
       "typography_exceptions": [
         "text-[12px]",
         "text-[15px]"
@@ -84311,7 +87000,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /team-planning-oversight/"
+        "GET /team-planning-oversight/",
+        "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -84319,12 +87009,13 @@
       "mobile_status": "pass-automated-contract",
       "modals": true,
       "module": "frontend",
-      "notifications": false,
+      "notifications": true,
       "page_id": "UI-PAGE-040D721C96",
       "page_title": "Team Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
-        "css/pages/oversight-workspace.css"
+        "css/pages/oversight-workspace.css",
+        "css/pages/country-oversight.css"
       ],
       "permission_key": "team_targets",
       "primary_action": "Export",
@@ -84383,7 +87074,7 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
-      "todos": false,
+      "todos": true,
       "typography_exceptions": []
     },
     {
@@ -84409,7 +87100,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /team-planning-oversight/"
+        "GET /team-planning-oversight/",
+        "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -84417,12 +87109,13 @@
       "mobile_status": "pass-automated-contract",
       "modals": true,
       "module": "frontend",
-      "notifications": false,
+      "notifications": true,
       "page_id": "UI-PAGE-87A552B53C",
       "page_title": "Team Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
-        "css/pages/oversight-workspace.css"
+        "css/pages/oversight-workspace.css",
+        "css/pages/country-oversight.css"
       ],
       "permission_key": "team_targets",
       "primary_action": "Export",
@@ -84481,7 +87174,7 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
-      "todos": false,
+      "todos": true,
       "typography_exceptions": []
     },
     {
@@ -88094,6 +90787,49 @@
         "max_interval_minutes": 180,
         "max_retries": 2,
         "name": "school_action_sweep",
+        "retryable": true
+      },
+      {
+        "cron": "hourly :35 Africa/Nairobi",
+        "cron_kwargs": {
+          "minute": 35
+        },
+        "description": "Closes the Country Director's planning follow-ups whose gap has reached zero, re-read through the Country Planning Oversight coverage service.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "Resolution re-reads the gap, so a second run finds nothing left to close; an open follow-up only has its live figure refreshed.",
+        "idempotent": true,
+        "max_interval_minutes": 180,
+        "max_retries": 2,
+        "name": "planning_followup_sweep",
+        "retryable": true
+      },
+      {
+        "cron": "every 4 min",
+        "cron_kwargs": {
+          "minute": "*/4"
+        },
+        "description": "Rebuilds the Country Planning Oversight figures for each Country Director's country (the year, and windows read in the last hour) so the page is served from a snapshot rather than built on open.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "Read-only: rebuilds and republishes cached figures; a second run replaces the first run's snapshot with an identical or newer one.",
+        "idempotent": true,
+        "max_interval_minutes": 20,
+        "max_retries": 0,
+        "name": "planning_oversight_warm",
+        "retryable": false
+      },
+      {
+        "cron": "daily 00:20 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 0,
+          "minute": 20
+        },
+        "description": "Locks the Country Execution & Completion Oversight figures of each week, month, quarter and financial year that has just ended, so a later correction never silently rewrites a closed period.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "A period is locked once: a second run finds its snapshot and skips it; the unique (country, period, version) constraint holds a race.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "execution_period_snapshots",
         "retryable": true
       },
       {
@@ -99392,6 +102128,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.country_map_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_map",
+      "required_permissions": [],
+      "route": "/country-map/",
+      "route_name": "country_map",
+      "templates": [
+        "partials/oversight/portfolio_workspace.html",
+        "pages/oversight/country_map.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.country_planning_oversight_view",
       "kind": "partial",
       "methods": [
@@ -99408,6 +102159,149 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.country_oversight_views.coverage_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/coverage-export",
+      "route_name": "cpo_coverage_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/drawer",
+      "route_name": "cpo_drawer",
+      "templates": [
+        "partials/country_oversight/drawer_followups.html",
+        "partials/country_oversight/drawer_quality.html",
+        "partials/country_oversight/drawer_lead.html",
+        "partials/country_oversight/drawer_owner.html",
+        "partials/country_oversight/drawer_kpi.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/drawer",
+      "route_name": "cpx_drawer",
+      "templates": [
+        "partials/country_execution/drawer_activities.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/export",
+      "route_name": "cpx_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.follow_up_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/follow-up",
+      "route_name": "cpx_follow_up",
+      "templates": [
+        "partials/country_execution/drawer_follow_up.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.followups_panel_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/follow-ups-panel",
+      "route_name": "cpx_followups_panel",
+      "templates": [
+        "partials/country_execution/followups_panel.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.rows_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/rows",
+      "route_name": "cpx_rows",
+      "templates": [
+        "partials/country_execution/rows_owners.html",
+        "partials/country_execution/rows_partners.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.snapshots_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/snapshots",
+      "route_name": "cpx_snapshots",
+      "templates": [
+        "partials/country_execution/drawer_snapshots.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.snapshot_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+      "route_name": "cpx_snapshot",
+      "templates": [
+        "partials/country_execution/drawer_snapshot.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.table_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/table",
+      "route_name": "cpx_table",
+      "templates": [
+        "partials/country_execution/_table.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.country_planning_export_view",
       "kind": "export",
       "methods": [
@@ -99420,6 +102314,78 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.country_oversight_views.follow_up_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/follow-up",
+      "route_name": "cpo_follow_up",
+      "templates": [
+        "partials/country_oversight/drawer_follow_up.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.follow_up_action_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/follow-up/<str:followup_id>/<str:action>",
+      "route_name": "cpo_follow_up_action",
+      "templates": [
+        "partials/country_oversight/follow_up_result.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.followups_panel_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/follow-ups-panel",
+      "route_name": "cpo_followups_panel",
+      "templates": [
+        "partials/country_oversight/followups_panel.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.rows_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/rows",
+      "route_name": "cpo_rows",
+      "templates": [
+        "partials/country_oversight/rows_owners.html",
+        "partials/country_oversight/rows_partners.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.schools_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/schools",
+      "route_name": "cpo_schools",
+      "templates": [
+        "partials/country_oversight/schools.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.country_planning_send_action_view",
       "kind": "action",
       "methods": [
@@ -99430,6 +102396,20 @@
       "route": "/country-planning-oversight/send",
       "route_name": "country_planning_oversight_send",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.slots_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/slots",
+      "route_name": "cpo_slots",
+      "templates": [
+        "partials/country_oversight/slots.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.oversight_views.country_planning_team_view",
@@ -105019,6 +107999,34 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.country_oversight_views.followup_detail_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/planning-follow-ups/<str:followup_id>",
+      "route_name": "planning_followup_detail",
+      "templates": [
+        "partials/country_oversight/followup_banner.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.followup_lead_action_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/planning-follow-ups/<str:followup_id>/<str:action>",
+      "route_name": "planning_followup_action",
+      "templates": [
+        "partials/country_oversight/followup_banner.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.planning_views.assign_partner_action_view",
       "kind": "action",
       "methods": [
@@ -107912,39 +110920,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 540,
+    "accessibility_contract_pass": 557,
     "activity_states": 24,
-    "all_routes": 1310,
+    "all_routes": 1329,
     "api_routes": 360,
-    "component_templates": 519,
+    "component_templates": 564,
     "full_pages": 259,
-    "mobile_contract_pass": 540,
+    "mobile_contract_pass": 557,
     "nonvisual_actions": 273,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 551,
+      "interaction-fragment": 568,
       "operational-queue": 151,
       "planning-or-creation": 11,
       "record-detail": 25,
-      "report": 36
+      "report": 38
     },
-    "partials_and_drawers": 278,
-    "permission_gated": 822,
+    "partials_and_drawers": 295,
+    "permission_gated": 841,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 838,
-    "scheduled_jobs": 31,
+    "routed_surfaces": 857,
+    "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 540,
-    "test_referenced": 731,
-    "theme_contract_pass": 540
+    "tablet_contract_pass": 557,
+    "test_referenced": 750,
+    "theme_contract_pass": 557
   }
 }

@@ -1,0 +1,100 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}Follow Up with PL for execution (owner spec 2026-09-28 §17): the
+Country Director asks a Programme Lead to follow up work that has not started,
+evidence that is late, reviews waiting, Partner delivery or incomplete slots.
+Prefilled with the live figures; the Director chooses the type, due date and
+priority and writes the instruction. Sending changes no activity, plan, target
+or achievement, and does not contact the CCEO.{% endcomment %}
+{% block drawer_title %}Follow Up with PL{% endblock %}
+{% block drawer_subtitle %}{{ lead_name|default:"Choose a Programme Lead" }}{% if cceo_name %} · {{ cceo_name }}{% endif %}{% if partner_name %} · {{ partner_name }}{% endif %} · {{ window.label }}{% endblock %}
+{% block drawer_body %}
+<form class="cpo-sheet" hx-post="/country-planning-oversight/execution/follow-up" hx-target="#cxo-fu-result" hx-swap="innerHTML"
+      x-data="{ issue: '{{ issue_key }}' }">
+  {% csrf_token %}
+  {% for key, value in filters.params.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+  <input type="hidden" name="cceo" value="{{ scope.cceo_key }}">
+  <input type="hidden" name="partner_key" value="{{ scope.partner_key }}">
+  <input type="hidden" name="activity" value="{{ scope.activity_id }}">
+
+  {% if error %}<p class="cpo-notice cpo-notice--attention" role="alert">{{ error }}</p>{% endif %}
+
+  <section aria-labelledby="cxo-f-who">
+    <h3 class="cpo-sub" id="cxo-f-who">Who it goes to</h3>
+    {% if scope.lead_key %}
+    <input type="hidden" name="lead" value="{{ scope.lead_key }}">
+    <dl class="cpo-facts">
+      <div><dt>Program Lead</dt><dd>{{ lead_name|default:"—" }}</dd></div>
+      <div><dt>CCEO</dt><dd>{% if cceo_name %}{{ cceo_name }}{% else %}The Lead's whole team{% endif %}</dd></div>
+      {% if partner_name %}<div><dt>Partner</dt><dd>{{ partner_name }}</dd></div>{% endif %}
+      <div><dt>Period</dt><dd>{{ window.label }}</dd></div>
+    </dl>
+    {% else %}
+    <label class="cpo-field">
+      <span class="cpo-caption">Program Lead <span aria-hidden="true">*</span></span>
+      <select name="lead" required
+              hx-get="/country-planning-oversight/execution/follow-up?{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="this">
+        <option value="">Choose a Programme Lead</option>
+        {% for lead in leads %}<option value="{{ lead.key }}">{{ lead.name }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </section>
+
+  {% if issues %}
+  <section aria-labelledby="cxo-f-now">
+    <h3 class="cpo-sub" id="cxo-f-now">Execution, as it stands</h3>
+    <ul class="cpo-needs" role="list">
+      {% for row in issues %}
+      <li class="cpo-need{% if not row.open %} is-clear{% endif %}">
+        <div class="cpo-need-copy">
+          <p class="cpo-need-name">{{ row.label }}</p>
+          <p class="cpo-need-figs"><strong>{{ row.open }}</strong> open{% if row.manual %} · closed by you when settled{% endif %}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if existing %}
+    <p class="cpo-muted">Already open for this Lead:</p>
+    {% include "partials/country_oversight/_followup_list.html" with followups=existing %}
+    <p class="cpo-muted">Sending the same kind again reminds the Lead on the open record; the earlier instruction is kept.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="cxo-f-ask" class="cpo-form">
+    <h3 class="cpo-sub" id="cxo-f-ask">The ask</h3>
+    <label class="cpo-field">
+      <span class="cpo-caption">Follow-up type <span aria-hidden="true">*</span></span>
+      <select name="issue" x-model="issue" required>
+        {% for item in all_issues %}
+        <option value="{{ item.key }}"{% if item.key == issue_key %} selected{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="cpo-pair">
+      <label class="cpo-field">
+        <span class="cpo-caption">Due date <span aria-hidden="true">*</span></span>
+        <input type="date" name="due_date" value="{{ default_due|date:'Y-m-d' }}" min="{% now 'Y-m-d' %}" required>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Priority <span aria-hidden="true">*</span></span>
+        <select name="priority" required>
+          {% for value, label in priorities %}<option value="{{ value }}"{% if value == "normal" %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="cpo-field">
+      <span class="cpo-caption">Instruction to the Programme Lead <span aria-hidden="true">*</span></span>
+      <textarea name="instruction" rows="4" required maxlength="2000" placeholder="What should the Lead take up with their team, and by when?"></textarea>
+    </label>
+    <p class="cpo-muted">The Lead gets a To-Do and a notification that open Team Oversight. Nothing in any activity, plan or target changes, and the CCEO is not contacted.</p>
+  </section>
+
+  <div id="cxo-fu-result" aria-live="polite"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8"{% if not scope.lead_key %} disabled{% endif %}>Send to {{ lead_name|default:"the Programme Lead" }}</button>
+  </div>
+</form>
+{% endblock %}

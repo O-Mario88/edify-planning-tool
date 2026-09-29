@@ -1,0 +1,62 @@
+{% comment %}The schools behind a figure, one page at a time, worst first.
+Each opens into its requirement slots and the activity filling each.{% endcomment %}
+{% if withheld %}
+<p class="cpo-muted">School-level rows are not part of this role's reading of the country. The figures above are.</p>
+{% else %}
+<div class="cpo-schools" id="cpo-schools-{{ gap|default:'all' }}">
+  <form class="cpo-inline" hx-get="/country-planning-oversight/schools" hx-target="closest .cpo-schools" hx-swap="outerHTML" hx-trigger="change">
+    {% for key, value in request.GET.items %}{% if key != "gap" and key != "page" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+    <label class="cpo-caption" for="cpo-show-{{ gap|default:'all' }}">Show</label>
+    <select id="cpo-show-{{ gap|default:'all' }}" name="gap">
+      <option value=""{% if not gap %} selected{% endif %}>Every school</option>
+      {% for key, label in gap_options %}<option value="{{ key }}"{% if key == gap %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <span class="cpo-muted">{{ total }} school{{ total|pluralize }}</span>
+  </form>
+  {% if rows %}
+  <div class="cpo-tscroll">
+    <table class="cpo-mini cpo-school-list">
+      <thead>
+        <tr><th scope="col">School</th><th scope="col">Staff</th><th scope="col">Partner</th><th scope="col">Training</th><th scope="col">Meeting</th><th scope="col">Remaining</th><th scope="col">Action</th></tr>
+      </thead>
+      {% for row in rows %}
+      <tbody x-data="{ slots: false }">
+        <tr>
+          <th scope="row"><a href="/schools/{{ row.code }}" title="{{ row.family }} · {{ row.type }} · held by {{ row.owner }}{% if row.clustered %} · {{ row.cluster }}{% else %} · unclustered{% endif %}">{{ row.name }}</a><span class="cpo-hint">{{ row.code }} · {{ row.type }}{% if not row.clustered %} · <span class="cpo-alert">unclustered</span>{% endif %}</span></th>
+          <td>{{ row.staff_planned }} / {{ row.staff_slots }}{% if row.deficit %} <span class="cpo-flagged">{{ row.deficit }} over capacity</span>{% endif %}</td>
+          <td>{{ row.partner_assigned }} / {{ row.partner_slots }}{% if row.partner_assigned %} <span class="cpo-hint">{{ row.partner_scheduled }} scheduled</span>{% endif %}</td>
+          <td>{{ row.training_planned }} / {{ row.training_slots }}</td>
+          <td>{% if row.meeting_planned %}Planned{% elif row.clustered %}<span class="cpo-alert">None</span>{% else %}—{% endif %}</td>
+          <td>{% if row.remaining %}<span class="cpo-alert">{{ row.remaining }}</span>{% else %}0{% endif %}</td>
+          <td>
+            <div class="cpo-acts">
+              <button type="button" class="cpo-view" @click="slots = !slots; if (slots && !$refs.slots.dataset.loaded) { $refs.slots.dataset.loaded = '1'; htmx.trigger($refs.slots, 'cpo-load'); }" :aria-expanded="slots ? 'true' : 'false'">Slots</button>
+              {% if may_follow_up and row.lead_key != "__no_lead__" %}
+              <button type="button" class="cpo-view" title="{% if row.followed_up %}A follow-up is already open for this school{% else %}Follow Up with PL on this school{% endif %}"
+                      hx-get="/country-planning-oversight/follow-up?lead={{ row.lead_key }}&amp;owner={{ row.owner_key }}&amp;school={{ row.id }}&amp;{{ query }}"
+                      hx-target="#drawer-container" hx-swap="innerHTML">{% if row.followed_up %}Followed up{% else %}Follow Up{% endif %}</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        <tr x-show="slots" x-cloak>
+          <td colspan="7" class="cpo-slotcell">
+            <div x-ref="slots" hx-get="/country-planning-oversight/slots?school={{ row.id }}&amp;{{ query }}" hx-trigger="cpo-load" hx-swap="innerHTML"><p class="cpo-muted">Reading the slots…</p></div>
+          </td>
+        </tr>
+      </tbody>
+      {% endfor %}
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <nav class="cpo-pager edify-pagination-scope" aria-label="School pages">
+    {% if page > 1 %}<button type="button" class="cpo-view" hx-get="/country-planning-oversight/schools?{{ list_query }}&amp;page={{ page|add:'-1' }}" hx-target="closest .cpo-schools" hx-swap="outerHTML">Previous</button>{% endif %}
+    <span class="cpo-muted">Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}<button type="button" class="cpo-view" hx-get="/country-planning-oversight/schools?{{ list_query }}&amp;page={{ page|add:'1' }}" hx-target="closest .cpo-schools" hx-swap="outerHTML">Next</button>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <p class="cpo-muted">{% if gap %}No school in this selection has this gap.{% else %}No school in this selection.{% endif %}</p>
+  {% endif %}
+</div>
+{% endif %}

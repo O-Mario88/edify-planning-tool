@@ -134,7 +134,11 @@ class SidebarSettingsWiringTest(TestCase):
                 )
 
     def test_the_control_renders_on_a_real_page(self):
-        response = self.client.get("/dashboard")
+        # The Country Director's dashboard (owner, 2026-09-28).
+        response = self.client.get("/dashboard", follow=True)
+        self.assertEqual(
+            response.redirect_chain, [("/country-planning-oversight/", 302)]
+        )
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
         self.assertIn("app-sidebar__settings-trigger", body)

@@ -266,3 +266,71 @@ class WorkbookStylingCostTest(SimpleTestCase):
                 }
 
         self.assertEqual(build(excel.style_body), build(frozen_style_body))
+
+
+class StreamedWorkbookTest(SimpleTestCase):
+    """A sheet over STREAM_ROWS is streamed rather than held in memory (the
+    Country Planning Oversight export at 50,000 schools held ~500 MB); it
+    must read back as the same workbook, cell for cell and style for style."""
+
+    SHEETS = [
+        {
+            "title": "Plan",
+            "headers": ["School", "Date", "Cost", "Note"],
+            "rows": [
+                ["A", None, 1000, "short"],
+                ["B", "2026-01-02", 2000],
+                ["C", None, 3000, None],
+                ["D", None, 4000, "x"],
+            ],
+            "number_formats": {3: "#,##0"},
+        },
+        {"title": "Summary", "headers": ["B"], "rows": [["two"]]},
+    ]
+
+    def _read(self, response):
+        from openpyxl import load_workbook
+
+        book = load_workbook(io.BytesIO(response.content))
+        out = {}
+        for name in book.sheetnames:
+            sheet = book[name]
+            out[name] = {
+                "cells": [
+                    [
+                        (
+                            cell.value,
+                            cell.fill.fgColor.rgb,
+                            cell.font.b,
+                            cell.border.bottom.style,
+                            cell.alignment.vertical,
+                            cell.alignment.wrap_text,
+                            cell.number_format,
+                        )
+                        for cell in row
+                    ]
+                    for row in sheet.iter_rows()
+                ],
+                "freeze": sheet.freeze_panes,
+                "filter": sheet.auto_filter.ref,
+                "gridlines": sheet.sheet_view.showGridLines,
+                "widths": {
+                    key: dim.width for key, dim in sheet.column_dimensions.items()
+                },
+                "header_height": sheet.row_dimensions[1].height,
+            }
+        return out
+
+    def test_a_streamed_workbook_reads_back_as_the_held_one(self):
+        from unittest import mock
+
+        from apps.core import excel
+
+        held = self._read(workbook_response("plan.xlsx", self.SHEETS))
+        with mock.patch.object(excel, "STREAM_ROWS", 2):
+            with mock.patch.object(
+                excel, "_streamed_workbook", wraps=excel._streamed_workbook
+            ) as streamed:
+                response = workbook_response("plan.xlsx", self.SHEETS)
+        streamed.assert_called_once()
+        self.assertEqual(self._read(response), held)

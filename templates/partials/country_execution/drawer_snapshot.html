@@ -1,0 +1,117 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}One locked period (spec §22): its figures as they stood at the
+close — the original plan and how it moved, the four completion levels,
+overdue and carryover, staff and Partner contribution, the Lead → CCEO →
+Partner hierarchy and the follow-ups then open — with every version of it
+listed. The page never changes a locked row; a revision is a new one.{% endcomment %}
+{% block drawer_title %}{{ snapshot.period_label }} · locked{% endblock %}
+{% block drawer_subtitle %}{{ snapshot.country }} · {% if snapshot.is_revision %}revision {{ snapshot.version|add:"-1" }}{% else %}original snapshot{% endif %}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet cxo-sheet">
+  <p class="cpo-muted">{% if snapshot.is_revision %}Recorded {{ snapshot.taken_at|date:"j M Y, H:i" }} by {{ snapshot.taken_by_name|default:"—" }}{% else %}Locked {{ snapshot.taken_at|date:"j M Y, H:i" }} by the nightly close{% endif %} · read as of {{ snapshot.as_of|date:"j M Y" }}, the day after the period ended, so work due in it and not done by then is overdue · stage rules {{ snapshot.stage_policy }}</p>
+  {% if snapshot.is_revision %}<p class="cpo-notice" role="note"><strong>Reason for the revision:</strong> {{ snapshot.reason }}</p>{% endif %}
+  {% if flash %}<p class="cpo-notice{% if not flash_ok %} cpo-notice--attention{% endif %}" role="status">{{ flash }}</p>{% endif %}
+
+  {% if versions|length > 1 %}
+  <nav class="cpo-inline" aria-label="Versions of this period">
+    {% for version in versions %}
+    {% if version.id == snapshot.id %}
+    <span class="cpo-view" aria-current="true"><strong>{% if version.is_revision %}Revision {{ version.version|add:"-1" }}{% else %}Original{% endif %}</strong></span>
+    {% else %}
+    <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots/{{ version.id }}" hx-target="#drawer-container" hx-swap="innerHTML">{% if version.is_revision %}Revision {{ version.version|add:"-1" }} · {{ version.taken_at|date:"j M Y" }}{% else %}Original · {{ version.taken_at|date:"j M Y" }}{% endif %}</button>
+    {% endif %}
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  <h3 class="cpo-sub">The plan</h3>
+  <dl class="cpo-figs cpo-figs--tight">
+    <div><dt>Original committed plan</dt><dd>{% if f.original_plan is None %}Not recorded — the period began before the schedule trail did{% else %}{{ f.original_plan }}{% endif %}</dd></div>
+    {% if f.plan_tracked %}
+    <div><dt>Added after the start</dt><dd>{{ f.added }}</dd></div>
+    <div><dt>Rescheduled in</dt><dd>{{ f.rescheduled_in }}</dd></div>
+    <div><dt>Rescheduled out</dt><dd>{{ f.rescheduled_out }}</dd></div>
+    <div><dt>Cancelled from the plan</dt><dd>{{ f.plan_cancelled }}</dd></div>
+    {% endif %}
+    <div><dt>Current executable plan</dt><dd>{{ f.current_plan }}</dd></div>
+    <div><dt>Unique schools</dt><dd>{{ f.unique_schools }}</dd></div>
+  </dl>
+
+  <h3 class="cpo-sub">Completion at the close</h3>
+  <dl class="cpo-figs cpo-figs--tight">
+    <div><dt>Started</dt><dd>{{ f.started }}</dd></div>
+    <div><dt>Started on time</dt><dd>{{ f.on_time }}</dd></div>
+    <div><dt>Execution completed</dt><dd>{{ f.executed }}</dd></div>
+    <div><dt>PL reviewed (staff work that needs it)</dt><dd>{{ f.pl_reviewed }} of {{ f.pl_applicable }}</dd></div>
+    <div><dt>IA verified</dt><dd>{{ f.verified }}</dd></div>
+    <div><dt>Fully closed</dt><dd>{{ f.closed }}</dd></div>
+    <div><dt>Overdue</dt><dd>{{ f.overdue }}</dd></div>
+    <div><dt>Carryover (not verified by the end)</dt><dd>{{ f.carryover }}</dd></div>
+    <div><dt>Carried forward to a later period</dt><dd>{{ f.carried_forward }}</dd></div>
+    <div><dt>Returned for correction</dt><dd>{{ f.returned }}</dd></div>
+    <div><dt>Cancelled</dt><dd>{{ f.cancelled }}</dd></div>
+    <div><dt>Verified, closure open</dt><dd>{{ f.finance_open }}</dd></div>
+    {% if f.slots %}
+    <div><dt>Visit slots verified</dt><dd>{{ f.slots.visits_verified }} of {{ f.slots.visit_slots }}</dd></div>
+    <div><dt>Training slots verified</dt><dd>{{ f.slots.trainings_verified }} of {{ f.slots.training_slots }}</dd></div>
+    <div><dt>Required slots remaining</dt><dd>{{ f.slots.remaining }}</dd></div>
+    {% endif %}
+  </dl>
+
+  <h3 class="cpo-sub">Staff and Partner contribution</h3>
+  <div class="cpo-tscroll">
+    <table class="cpo-table cxo-table" data-table-fit="scroll">
+      <thead><tr><th scope="col" class="cpo-namecol">Delivery</th><th scope="col">Due</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
+      <tbody>
+        {% with c=snapshot.channels.staff %}<tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>Staff</span></th><td>{{ c.due }}</td><td>{{ c.executed }}</td><td>{{ c.verified }}</td><td>{{ c.closed }}</td><td>{{ c.overdue }}</td></tr>{% endwith %}
+        {% with c=snapshot.channels.partner %}<tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>Partner</span></th><td>{{ c.due }}</td><td>{{ c.executed }}</td><td>{{ c.verified }}</td><td>{{ c.closed }}</td><td>{{ c.overdue }}</td></tr>{% endwith %}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="cpo-sub">Programme Leads, CCEOs and Partners</h3>
+  <div class="cpo-tscroll">
+    <table class="cpo-table cxo-table" data-table-fit="scroll">
+      <thead><tr><th scope="col" class="cpo-namecol">Lead / Owner</th><th scope="col">Due</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
+      <tbody>
+        {% for lead in hierarchy.rows %}
+        <tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>{{ lead.name }}</span></th><td>{{ lead.figures.due }}</td><td>{{ lead.figures.executed }}</td><td>{{ lead.figures.verified }}</td><td>{{ lead.figures.closed }}</td><td>{{ lead.figures.overdue }}</td></tr>
+        {% for owner in lead.owners %}
+        <tr data-level="2"><th scope="row" class="cpo-namecell" data-leaf><span>{{ owner.name }}</span></th><td>{{ owner.figures.due }}</td><td>{{ owner.figures.executed }}</td><td>{{ owner.figures.verified }}</td><td>{{ owner.figures.closed }}</td><td>{{ owner.figures.overdue }}</td></tr>
+        {% for partner in owner.partners %}
+        <tr data-level="3"><th scope="row" class="cpo-namecell" data-leaf><span>{{ partner.name }}</span></th><td>{{ partner.figures.due }}</td><td>{{ partner.figures.executed }}</td><td>{{ partner.figures.verified }}</td><td>{{ partner.figures.closed }}</td><td>{{ partner.figures.overdue }}</td></tr>
+        {% endfor %}
+        {% endfor %}
+        {% empty %}
+        <tr><td colspan="6" class="cpo-empty">No work was due in this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/country_execution/_pager.html" with pager=hierarchy target="snapshot" param="page" list_query=hierarchy_query %}
+
+  <h3 class="cpo-sub">Follow-ups open at the close</h3>
+  {% if follow_ups.total %}
+  <table class="cxo-small" data-table-fit="scroll">
+    <thead><tr><th scope="col">Programme Lead</th><th scope="col">About</th><th scope="col">Open</th><th scope="col">Sent</th><th scope="col">Due</th></tr></thead>
+    <tbody>
+      {% for item in follow_ups.rows %}
+      <tr><th scope="row"><span>{{ item.lead }}</span></th><td>{% firstof item.activity item.partner item.cceo "The team" %}</td><td>{{ item.open }}</td><td>{{ item.sent }}</td><td>{{ item.due }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/country_execution/_pager.html" with pager=follow_ups target="snapshot" param="fu_page" list_query=follow_ups_query %}
+  {% else %}
+  <p class="cpo-muted">No execution follow-up was open.</p>
+  {% endif %}
+
+  {% if may_revise %}
+  <form class="cpo-form" hx-post="/country-planning-oversight/execution/snapshots/{{ snapshot.id }}" hx-target="#drawer-container" hx-swap="innerHTML">
+    {% csrf_token %}
+    <p class="cpo-muted">Recording a revision reads this period again from the live figures and keeps it beside the original, which is never changed.</p>
+    <label class="cpo-field"><span class="cpo-caption">Reason for the revision <span aria-hidden="true">*</span></span><textarea name="reason" rows="2" required></textarea></label>
+    <button type="submit" class="cpo-view">Record a revision</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

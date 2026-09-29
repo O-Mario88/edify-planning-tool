@@ -368,7 +368,11 @@ class PresenceSurfaceTest(TestCase):
         )
         User.objects.filter(pk=self.cceo.pk).update(last_seen_at=timezone.now())
         self.client.force_login(cd)
-        html = self.client.get("/dashboard?view=operations").content.decode()
+        # Who's Online sits under Country Oversight's planning tab, the
+        # Country Director's dashboard (owner, 2026-09-28), loaded with it.
+        oversight = self.client.get("/country-planning-oversight/").content.decode()
+        self.assertIn('hx-get="/dashboard/whos-online"', oversight)
+        html = self.client.get("/dashboard/whos-online").content.decode()
         self.assertIn("data-admin-presence", html)
         self.assertIn("Who's Online", html)
         self.assertIn("Cara", html)

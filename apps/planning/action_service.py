@@ -183,6 +183,47 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "why": "Partner-delivered work has stalled and asking the partner "
         "directly has not moved it.",
     },
+    # ── Planning gaps a Programme Lead asks a CCEO to close ─────────────────
+    # Sent from a Country Director's planning follow-up (apps.planning.
+    # country_oversight.followups.ask_cceo), one school at a time. Each is
+    # settled by re-reading the school's requirement slots through the same
+    # coverage service Country Planning Oversight counts with, so the action
+    # closes when the page stops showing the gap — see
+    # `_planning_gap_still_holds`.
+    "planning_visit_gap": {
+        "action": "Plan the school's outstanding staff visits",
+        "route": "/planning/schedule-modal?school_id={school_ref}",
+        "why": "Some of the visit slots staff are expected to deliver at the "
+        "school this year have no staff visit planned.",
+    },
+    "planning_school_gap": {
+        "action": "Plan the school's outstanding visits",
+        "route": "/planning/schedule-modal?school_id={school_ref}",
+        "why": "Some of the school's visit slots for the year are held by "
+        "nobody — neither planned by staff nor handed to a Partner.",
+    },
+    "planning_partner_gap": {
+        "action": "Arrange the school's Partner visits",
+        "route": "/planning/assign-partner-modal?school_id={school_ref}",
+        "why": "The school's Partner visit slots have not been handed to a " "Partner.",
+    },
+    "planning_training_gap": {
+        "action": "Plan the school's training",
+        "route": "/planning/schedule-modal?school_id={school_ref}",
+        "why": "The school's training slots for the year are not all planned.",
+    },
+    "planning_cluster_gap": {
+        "action": "Put the school in an active cluster",
+        "route": "/schools/{school_pk}",
+        "why": "The school has no active cluster, so it cannot be convened or "
+        "trained with one.",
+    },
+    "planning_meeting_gap": {
+        "action": "Invite the school to a planned cluster meeting",
+        "route": "/clusters",
+        "why": "The school is in a cluster but on no planned cluster meeting's "
+        "roster.",
+    },
     # Team-level asks a Country Director sends to a Program Lead. These name a
     # team condition rather than one record, so they route to the PL's own
     # oversight page where the detail lives.
@@ -232,6 +273,20 @@ PARTNER_OVERSIGHT_RISK_KEYS = frozenset(
 # slots are the record, so the sweep can settle these by counting allocated
 # slots — no second definition of "the package is done".
 CORE_OVERSIGHT_RISK_KEYS = frozenset({"core_package_behind", "core_assessment_missing"})
+
+# School planning gaps from Country Planning Oversight's follow-ups. The key
+# names the school and the year (`planning_gap|<issue>|school|<id>|<fy>`), so
+# the sweep can re-read exactly that school's slots.
+PLANNING_GAP_KEYS = frozenset(
+    {
+        "planning_visit_gap",
+        "planning_school_gap",
+        "planning_partner_gap",
+        "planning_training_gap",
+        "planning_cluster_gap",
+        "planning_meeting_gap",
+    }
+)
 
 # Team-level asks. "The backlog is cleared" is a judgement about a body of
 # work rather than a fact about one record, so a human closes these and the
@@ -950,6 +1005,9 @@ def condition_still_holds(action: TeamAction) -> bool:
     if action.issue_type in CORE_OVERSIGHT_RISK_KEYS:
         return _core_condition_still_holds(action)
 
+    if action.issue_type in PLANNING_GAP_KEYS:
+        return _planning_gap_still_holds(action)
+
     has_ssa = SsaRecord.objects.filter(
         school_id=action.school_id,
         fy=action.fy,
@@ -1012,6 +1070,18 @@ def _oversight_risk_still_holds(action: TeamAction) -> bool:
     if item is None:
         return False
     return any(risk["key"] == action.issue_type for risk in item.risks)
+
+
+def _planning_gap_still_holds(action: TeamAction) -> bool:
+    """Is the school's planning gap still open? Read from its requirement slots.
+
+    A school that has left the eligible portfolio (closed, merged) has no gap
+    left to close, so the action closes with it.
+    """
+    from apps.planning.country_oversight.followups import school_gap_open
+
+    fy = action.fy or ""
+    return school_gap_open(action.school_id, fy, action.issue_type)
 
 
 def _partner_risk_still_holds(action: TeamAction) -> bool:
