@@ -893,7 +893,9 @@ class RollupTest(World):
         from apps.planning.country_oversight.coverage import FactsTable, SchoolRecord
 
         dataset = self.dataset()
-        restored = pickle.loads(pickle.dumps(dataset, pickle.HIGHEST_PROTOCOL))
+        # nosec B301 - the bytes are the ones this test just made, pickled the
+        # way Django's cache pickles the dataset; nothing untrusted is read.
+        restored = pickle.loads(pickle.dumps(dataset, pickle.HIGHEST_PROTOCOL))  # nosec B301
         self.assertIsInstance(restored.facts, FactsTable)
         self.assertEqual(restored.facts, dataset.facts)
         self.assertTrue(
@@ -911,7 +913,7 @@ class RollupTest(World):
         )
         rollup = svc.rollup_of(dataset)
         self.assertSameTree(
-            svc.fold(pickle.loads(pickle.dumps(rollup)), filters),
+            svc.fold(pickle.loads(pickle.dumps(rollup)), filters),  # nosec B301
             svc.fold(dataset, filters),
             "rollup pickled",
         )

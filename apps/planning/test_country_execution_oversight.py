@@ -562,7 +562,9 @@ class ExecutionWarmTest(ExecutionWorld):
         import pickle
 
         dataset = self.dataset()
-        restored = pickle.loads(pickle.dumps(dataset, pickle.HIGHEST_PROTOCOL))
+        # nosec B301 - the bytes are the ones this test just made, pickled the
+        # way Django's cache pickles the dataset; nothing untrusted is read.
+        restored = pickle.loads(pickle.dumps(dataset, pickle.HIGHEST_PROTOCOL))  # nosec B301
         self.assertIsInstance(restored.records, ds.RecordTable)
         self.assertEqual(list(restored.records), list(dataset.records))
         self.assertTrue(all(isinstance(r, ds.ActivityRecord) for r in restored.records))
