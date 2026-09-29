@@ -18,9 +18,10 @@ type, never a new one:
   Schools page counts), split by delivery channel;
 * a Champion school's outreach visits (donor and story visits — the only
   visits the platform lets anyone plan for one);
-* a Client or Core Trained school's support visit (``visit_gate``'s follow-up
-  visit: not a donor, story, social or invitation visit, not the companion
-  visit an in-school training creates, not an item the CD exempted).
+* a Client, Core Trained or Core Graduate school's support visit
+  (``visit_gate``'s follow-up visit: not a donor, story, social or invitation
+  visit, not the companion visit an in-school training creates, not an item
+  the CD exempted).
 
 A training slot is filled by a training at the school itself, or by a cluster
 session whose *planned roster* names the school — never because the school is
@@ -179,11 +180,15 @@ def window_for(
 
 # ── Facts ────────────────────────────────────────────────────────────────────
 #: How each governed school type's visit slots are filled (see module doc).
+#: Every governed type needs a rule: a type left out has a visit slot nothing
+#: can fill. Core Graduate follows the client rule for its visits (owner,
+#: 2026-09-28, PR #163 — policy.GOVERNED_FAMILY_DECISIONS).
 VISIT_RULE_BY_TYPE = {
     "core": "core_package",
     "champion": "outreach",
     "client": "follow_up",
     "core_trained": "follow_up",
+    "core_graduate": "follow_up",
 }
 
 # Positions in a partner's count list.
@@ -821,9 +826,14 @@ def claims_for(
     else:
         # One flexible slot: staff hold it if they plan the school at all,
         # else the Partner who dated it, else the Partner it was handed to.
-        if st and channel != "partner":
-            claims.staff = _first_in(sb, si)
-            claims.cum_staff = 1 if (sb + si) else 0
+        # A channel filter reads the holder's claim or nothing: it never hands
+        # a slot staff hold to a Partner, so a Partner's work there claims no
+        # slot on the Partner view either (read the school's own staff plan,
+        # not the channel's zeroed copy).
+        if school.staff[2]:
+            if channel != "partner":
+                claims.staff = _first_in(sb, si)
+                claims.cum_staff = 1 if (sb + si) else 0
         elif (p[P_SCHED_T] or p[P_PEND_T]) and channel != "staff":
             claims.partner_scheduled = _first_in(p[P_SCHED_B], p[P_SCHED_I])
             claims.partner_assigned = max(
