@@ -944,6 +944,8 @@ def cluster_detail_view(request, cluster_id):
         # visit roles for any school (owner, 2026-09-21), the Accountant to
         # ask — see RolePermissionService.can_open_schedule_drawer.
         "can_schedule": RolePermissionService.can_open_schedule_drawer(request.user),
+        # Ticking schools to assign to a partner (owner, 2026-09-29).
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         # Bulk scheduling is a planner's act, not a requester's (owner,
         # 2026-09-21): one press writes activities at five or more schools,
         # and a visit request is decided one school at a time.

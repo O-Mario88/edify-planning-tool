@@ -3173,21 +3173,33 @@ def partner_bulk_withdrawal_view(request):
             [(row["assignment_id"], row["school"], row["mode"]) for row in plan],
             data,
         )
+        any_done = any(o.outcome != bulk_withdrawal.SKIPPED for o in outcomes)
+        message = bulk_withdrawal.summary(outcomes)
+        left = [o for o in outcomes if o.outcome == bulk_withdrawal.SKIPPED]
+        if left:
+            message += " Not withdrawn: " + "; ".join(
+                f"{o.school or 'a school'} ({o.message})" for o in left
+            )
         if request.headers.get("HX-Request") != "true":
             return _action_response(
-                request,
-                bulk_withdrawal.summary(outcomes),
-                ok=any(o.outcome != bulk_withdrawal.SKIPPED for o in outcomes),
-                fallback=PARTNER_OVERSIGHT_PATH,
+                request, message, ok=any_done, fallback=PARTNER_OVERSIGHT_PATH
             )
+        if any_done:
+            # Done: the drawer closes and the page reloads with the summary,
+            # so the tables show where every school now stands.
+            from django.contrib import messages as flash
+            from django.http import HttpResponse
+
+            flash.success(request, message)
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "close-drawer"
+            response["HX-Refresh"] = "true"
+            return response
+        # Nothing moved: the drawer stays open with each school's reason.
         return render(
             request,
             "partials/oversight/bulk_withdrawal_result.html",
-            {
-                "outcomes": outcomes,
-                "summary": bulk_withdrawal.summary(outcomes),
-                "any_done": any(o.outcome != bulk_withdrawal.SKIPPED for o in outcomes),
-            },
+            {"outcomes": outcomes, "summary": message},
         )
 
     from apps.partners.models import Partner

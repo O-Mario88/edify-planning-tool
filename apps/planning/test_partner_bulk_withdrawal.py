@@ -41,6 +41,23 @@ class PartnerBulkWithdrawalTest(PageFixture):
             HTTP_HX_REQUEST="true",
         )
 
+    def _flash(self) -> str:
+        from django.contrib.messages import get_messages
+
+        page = self.client.get("/partner-oversight/")
+        return " ".join(str(m) for m in get_messages(page.wsgi_request)) or (
+            page.content.decode()
+        )
+
+    def test_nothing_withdrawn_keeps_the_drawer_open_with_the_reasons(self):
+        theirs = self.assign(cceo=self.rival_cceo, school=self.rival_school)
+        self.sign_in(self.pl_user)
+        response = self._post([theirs.id])
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("data-drawer-stay-open", body)
+        self.assertIn("not in your team", body)
+
     def test_the_tables_offer_a_tick_for_withdrawable_rows(self):
         first = self.assign()
         self.sign_in(self.pl_user)
@@ -73,8 +90,10 @@ class PartnerBulkWithdrawalTest(PageFixture):
         self.assertIn("Withdraw 2 schools", drawer)
 
         response = self._post([first.id, second.id])
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Withdrew 2 schools", response.content.decode())
+        # Done: the drawer closes and the page reloads with the summary.
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response["HX-Refresh"], "true")
+        self.assertIn("Withdrew 2 schools", self._flash())
         self.assertEqual(
             PartnerAssignmentWithdrawal.objects.filter(
                 assignment_id__in=[first.id, second.id]
@@ -94,7 +113,8 @@ class PartnerBulkWithdrawalTest(PageFixture):
         ).content.decode()
         self.assertIn("Request to Program Lead", drawer)
 
-        body = self._post([open_work.id, scheduled.id]).content.decode()
+        self._post([open_work.id, scheduled.id])
+        body = self._flash()
         self.assertIn("Withdrew 1 school", body)
         self.assertIn("sent 1 to your Program Lead", body)
         # The scheduled one is only asked: its activity is untouched.
@@ -106,7 +126,8 @@ class PartnerBulkWithdrawalTest(PageFixture):
         theirs = self.assign(cceo=self.rival_cceo, school=self.rival_school)
         self.sign_in(self.pl_user)
 
-        body = self._post([mine.id, theirs.id]).content.decode()
+        self._post([mine.id, theirs.id])
+        body = self._flash()
         self.assertIn("1 not withdrawn", body)
         self.assertIn("not in your team", body)
         self.assertFalse(

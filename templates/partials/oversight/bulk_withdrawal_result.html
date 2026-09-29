@@ -1,10 +1,11 @@
-{% comment %}What a bulk withdrawal did, school by school (2026-09-29).{% endcomment %}
-<div class="space-y-2" role="status" data-bulk-withdrawal-result>
-  <p class="pill pill-{% if any_done %}success{% else %}danger{% endif %}">{{ summary }}</p>
+{% comment %}A bulk withdrawal that moved nothing (2026-09-29): the drawer stays
+open with each school's reason. One that moved anything closes and reloads
+the page with the summary instead.{% endcomment %}
+<div class="edify-note space-y-2" data-tone="danger" role="alert" data-drawer-stay-open data-bulk-withdrawal-result>
+  <p class="edify-note__title">{{ summary }}</p>
   <ul class="space-y-1 text-sm">
     {% for o in outcomes %}
-    <li data-outcome="{{ o.outcome }}"><strong>{{ o.school|default:"Unknown school" }}</strong> — {% if o.outcome == 'withdrawn' %}{{ o.message|default:"Withdrawn." }}{% elif o.outcome == 'requested' %}Sent to your Program Lead.{% else %}{{ o.message }}{% endif %}</li>
+    <li data-outcome="{{ o.outcome }}"><strong>{{ o.school|default:"Unknown school" }}</strong> — {{ o.message }}</li>
     {% endfor %}
   </ul>
-  {% if any_done %}<button type="button" class="btn btn-secondary h-8" onclick="window.location.reload()">Done — refresh the page</button>{% endif %}
 </div>
