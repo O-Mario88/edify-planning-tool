@@ -99,8 +99,10 @@ class ProjectBulkWithdrawTest(_Fixture):
         page = self.client.get(f"/projects/{self.project.id}").content.decode()
         self.assertIn("data-project-bulk-withdraw", page)
         self.assertIn(f'value="{self.schools[0].id}" x-model="selected"', page)
-        # Work has begun: no tick.
+        # Work has begun: the box is greyed with the reason, never tickable.
         self.assertNotIn(f'value="{self.schools[2].id}" x-model="selected"', page)
+        self.assertIn("data-project-leave-locked", page)
+        self.assertIn("cannot be withdrawn:", page)
 
         ticked = [s.id for s in self.schools[:3]]
         drawer = self.client.get(

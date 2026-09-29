@@ -295,6 +295,15 @@ def mark_withdrawable(user, project, rows) -> bool:
         allowed = enrolment is not None and capacity.may_withdraw(user, enrolment)
         row["can_withdraw"] = bool(allowed and block is None)
         row["withdraw_block"] = block.title if (allowed and block) else ""
+        # Why the box is greyed: a state or ownership lock says so (owner's
+        # rule, 2026-09-27: such locks stay visible, greyed, with a reason).
+        row["withdraw_reason"] = (
+            ""
+            if row["can_withdraw"]
+            else row["withdraw_block"]
+            or "Only the officer who added it, or the Project Coordinator, "
+            "can withdraw it"
+        )
         any_withdrawable = any_withdrawable or row["can_withdraw"]
     return any_withdrawable
 

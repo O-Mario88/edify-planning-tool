@@ -228,7 +228,10 @@ may withdraw it and its project work has not begun.{% endcomment %}
   <tbody>
     {% for row in portfolio_pager.rows %}
     <tr>
-      {% if can_bulk_withdraw %}<td class="school-plan-table__select">{% if row.can_withdraw %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" value="{{ row.school_id }}" x-model="selected" data-project-leave-pick><span class="sr-only">Select {{ row.school_name }} to withdraw</span></label>{% endif %}</td>{% endif %}
+      {% comment %}Every row carries a box, so a page whose schools are all locked
+      still pins the tick beside the identity rather than an empty column; a
+      locked one is greyed with its reason.{% endcomment %}
+      {% if can_bulk_withdraw %}<td class="school-plan-table__select">{% if row.can_withdraw %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" value="{{ row.school_id }}" x-model="selected" data-project-leave-pick><span class="sr-only">Select {{ row.school_name }} to withdraw</span></label>{% else %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}" title="{{ row.withdraw_reason }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" disabled data-project-leave-locked><span class="sr-only">{{ row.school_name }} cannot be withdrawn: {{ row.withdraw_reason }}</span></label>{% endif %}</td>{% endif %}
       <td data-record-title data-label="School">{% school_identity row.school_name row.school_id %}<span class="edify-text-caption block">{{ row.school_code }}</span></td>
       <td data-label="Geography">{{ row.geography|default:"—" }}</td>
       <td data-label="School owner">{{ row.school_owner }}</td>

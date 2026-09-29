@@ -53,8 +53,11 @@ verification.{% endcomment %}
   </div>
 </nav>
 
+{% comment %}Everyone on the lead's dashboard is drawn as one person's lists and
+tables, every person's work together (owner, 2026-09-29); the day board is
+the officer's own My week.{% endcomment %}
 <div id="pl-week-content" role="tabpanel" tabindex="0" aria-labelledby="pl-week-tab-{{ week.who }}" data-pl-week-who="{{ week.who }}">
-  {% if week.who == "everyone" %}
+  {% if week.who == "everyone" and week.solo %}
     {% include "partials/dashboards/pl/_week_everyone.html" %}
   {% elif week.who == "partners" %}
     {% include "partials/dashboards/pl/_week_partners.html" with partners=week.partners %}

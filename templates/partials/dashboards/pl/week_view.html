@@ -5,31 +5,28 @@
   person, last week's unfinished work first, and a Partners tab for strict
   monitoring of partner work. It opens the dashboard.
 
-  Leadership Attention stays on top: at most four things that need the lead
-  now, drawn from every responsibility. The heading always renders; a quiet
-  day says so rather than filling the band with green "all clear" cards.
+  The Planning Monitor stays on top, in Leadership Attention's place (owner,
+  2026-09-29: the monitor and the Staff Activity Log moved here from the
+  sidebar, "since the content in them are not big"): each person's year
+  against their 280 or 560 visits, and its execution and completion. The
+  section fetches /planning-monitor/'s fragment once the week has painted;
+  every request inside it carries X-Edify-Embed, so the page answers with the
+  monitor and its tabs, never a history entry
+  (apps.frontend.views.dashboard_embed).
   {% endcomment %}
-  <section aria-labelledby="pl-attention-title" data-pl-attention>
-    <h2 id="pl-attention-title" class="rpl-section-title">Leadership Attention</h2>
-    {% if leadership_attention %}
-    <div class="rpl-attention-grid" data-count="{{ leadership_attention|length }}">
-      {% for a in leadership_attention %}
-      <article class="rpl-attention" data-tone="{{ a.tone }}">
-        <span class="pl-attention__responsibility">{{ a.responsibility }}</span>
-        <h3 class="rpl-attention__title">{{ a.title }}</h3>
-        <span class="rpl-attention__body">{{ a.body }}</span>
-        <a href="{{ a.url }}" class="rpl-attention__link">{{ a.action }} <span aria-hidden="true">&rarr;</span></a>
-      </article>
-      {% endfor %}
+  <section id="planning-monitor" class="space-y-3" aria-labelledby="pl-monitor-title"
+           data-pl-monitor data-oversight-workspace
+           data-dashboard-embed="/planning-monitor/" data-embed-target="#oversight-workspace"
+           hx-headers='{"X-Edify-Embed": "dashboard"}'>
+    <h2 id="pl-monitor-title" class="rpl-section-title">Planning Monitor</h2>
+    <div id="oversight-workspace" hx-get="/planning-monitor/?{{ pl_monitor_query }}" hx-trigger="load" hx-swap="innerHTML">
+      {% include "partials/dashboards/pl/_embed_loading.html" with label="Loading the Planning Monitor…" %}
     </div>
-    {% else %}
-    {% include "components/empty_state.html" with message="Nothing needs your attention right now." hint="Escalations, Country Director flags, Regional Lead feedback, officers at risk, leave conflicts and late partner work appear here as they arise." compact="true" %}
-    {% endif %}
   </section>
 
   {% comment %}The week itself. Its own tabs and arrows swap this panel alone
-  (HX-Target pl-week-panel), so the attention band above and the lists below
-  stay where they are.{% endcomment %}
+  (HX-Target pl-week-panel), so the monitor above and the lists below stay
+  where they are.{% endcomment %}
   <section id="pl-week-panel" class="plwk" aria-label="This week" data-pl-week-panel>
     {% include "partials/dashboards/pl/week_panel.html" %}
   </section>
@@ -46,6 +43,22 @@
       {% include "partials/dashboards/what_needs_you_now.html" %}
     </div>
   </details>
+
+  {% comment %}The Staff Activity Log, the team's use of the platform (owner,
+  2026-09-29: moved here from the sidebar with the Planning Monitor). It
+  fetches /staff-activity's workspace once the week has painted; the
+  workspace brings its own heading, Export and Follow-up Queue, and every
+  request inside it carries X-Edify-Embed (apps.frontend.views.dashboard_embed).
+  {% endcomment %}
+  <section id="staff-activity" class="space-y-3" aria-labelledby="pl-staff-activity-title"
+           data-pl-staff-activity data-staff-activity
+           data-dashboard-embed="/staff-activity" data-embed-target="#staff-activity-workspace" data-embed-swap="outerHTML"
+           hx-headers='{"X-Edify-Embed": "dashboard"}'>
+    <div id="staff-activity-workspace" hx-get="/staff-activity?{{ pl_staff_activity_query }}" hx-trigger="load" hx-swap="outerHTML">
+      <h2 id="pl-staff-activity-title" class="rpl-section-title">Staff Activity</h2>
+      {% include "partials/dashboards/pl/_embed_loading.html" with label="Loading your team's activity…" %}
+    </div>
+  </section>
 
   {% comment %}The team's past-due plans pop up by themselves (owner,
   2026-09-24) while any of them has not been sent to its officer. Once a

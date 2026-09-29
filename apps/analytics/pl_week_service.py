@@ -24,7 +24,9 @@ A read: it owns no table and writes nothing. Three rules keep it honest.
   leaves both lists (owner, 2026-09-26): once verified, or with Impact
   Assessment, it is gone, so each list is only what still needs someone.
   Every row past its day is overdue and drawn in red. Older past-due work
-  stays in the backlog, All overdue plans.
+  stays in the backlog, All overdue plans. Everyone's tab is the same two
+  lists and three tables over the lead's and every officer's work together
+  (owner, 2026-09-29), in place of the day board it used to draw.
 * Officers' tabs hold the work they deliver themselves; partner-delivered
   work is the Partners tab's, read from Partner Monitoring's own items so the
   two pages cannot disagree about a partner.
@@ -524,21 +526,27 @@ class PLWeek:
 
         this_week: dict[str, list[dict]] = defaultdict(list)
         overdue: dict[str, list[dict]] = defaultdict(list)
+        # Everyone's lists: the same rows, every person's, in date order.
+        everyone_week: list[dict] = []
+        everyone_overdue: list[dict] = []
         for activity in activities:
             key = owner_of.get(activity.responsible_staff_id)
             if key is None:
                 continue
             row = _row(activity, self.today, columns.get(activity.id, EMPTY_COLUMNS))
+            row["person"] = key
             if key == ME and row["state"] == "awaiting_you":
                 row["state_label"] = OWN_AWAITING_LABEL
                 row["awaiting_you"] = False
             day = row["day"]
             if day and day >= self.start:
                 this_week[key].append(row)
+                everyone_week.append(row)
             elif row["open"] and day and day < self.today:
                 # Last week's work that is not verified or with IA: still the
                 # officer's to complete, or the lead's to verify.
                 overdue[key].append(row)
+                everyone_overdue.append(row)
 
         leave = self._leave()
         # The officer's overdue work of any age is the past-due table above
@@ -648,6 +656,24 @@ class PLWeek:
                 spans=leave.get(person["staff_id"], []),
                 overdue_label=data["overdue_label"],
             )
+        elif not self.solo:
+            # Everyone (owner, 2026-09-29: "get rid of the ui of everyone tab
+            # ... and use the normal tables other tabs have"): the lead's and
+            # every officer's work in one person's lists and tables, the
+            # Executor column naming whose each row is.
+            data["person"] = self.person(
+                _everyone(people),
+                week_rows=everyone_week,
+                overdue_rows=everyone_overdue,
+                spans=[],
+                overdue_label=data["overdue_label"],
+            )
+            data["person"]["leave"] = [
+                f"{p['name']} ({max(b, self.start):%a %-d %b} – "
+                f"{min(e, self.end):%a %-d %b})"
+                for p in people
+                for b, e in leave.get(p["staff_id"], [])
+            ]
         return data
 
     def person(self, person, *, week_rows, overdue_rows, spans, overdue_label) -> dict:
@@ -679,6 +705,14 @@ class PLWeek:
                 send_until=send_until,
             )
         }
+        # Who each row's Send to and Verify name: the row's own officer, so
+        # Everyone's lists, which hold several, address each one.
+        first_names = {p["key"]: p["first_name"] for p in self.people}
+        for r in rows:
+            if r["id"] in built:
+                built[r["id"]]["send_name"] = (
+                    "" if r["person"] == ME else first_names.get(r["person"], "")
+                )
         tables = []
         for key, title in TABLES:
             ids = [r["id"] for r in rows if r["table"] == key]
@@ -855,6 +889,26 @@ class PLWeek:
         if self.start.year == self.end.year:
             return f"{self.start:%-d %b} – {self.end:%-d %b %Y}"
         return f"{self.start:%-d %b %Y} – {self.end:%-d %b %Y}"
+
+
+def _everyone(people: list[dict]) -> dict:
+    """Everyone's tab as one person: the lead and every officer, their week's
+    figures added up."""
+    total = {
+        key: sum(p[key] for p in people)
+        for key in ("planned", "done", "closed", "behind", "awaiting_you")
+    }
+    return {
+        "key": EVERYONE,
+        "name": "Everyone",
+        "full_name": "Everyone",
+        "first_name": "",
+        "staff_id": None,
+        "is_me": False,
+        "is_everyone": True,
+        "overdue_count": sum(p["overdue_count"] for p in people),
+        **total,
+    }
 
 
 # ── Partner rows ─────────────────────────────────────────────────────────────

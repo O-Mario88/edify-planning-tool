@@ -1719,11 +1719,14 @@ SIDEBAR_ITEMS = [
             },
             {
                 # Directly under the Dashboard for the people who follow
-                # planning and delivery every day (owner, 2026-09-29).
+                # planning and delivery every day (owner, 2026-09-29). The
+                # Programme Lead reads it on their dashboard instead, in place
+                # of Leadership Attention (owner, 2026-09-29: "the content in
+                # them are not big"), so it is not in their sidebar.
                 "label": "Planning Monitor",
                 "url": "/planning-monitor/",
                 "page_key": "planning_monitor",
-                "visible_to": {CD, PL, IA},
+                "visible_to": {CD, IA},
             },
             {
                 "label": "Planning",
@@ -1825,10 +1828,12 @@ SIDEBAR_ITEMS = [
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
             },
             {
+                # The Programme Lead reads their team's log on the dashboard
+                # (owner, 2026-09-29), so it is not in their sidebar.
                 "label": "Staff Activity",
                 "url": "/staff-activity",
                 "page_key": "staff_activity",
-                "visible_to": {PL, CD, ADMIN},
+                "visible_to": {CD, ADMIN},
             },
             {
                 # Read-only watching of a coordinator's project work. It sits

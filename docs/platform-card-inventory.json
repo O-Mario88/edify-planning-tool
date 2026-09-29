@@ -4,10 +4,10 @@
   "templates": 251,
   "distinct_titles": 641,
   "with_card_key": 13,
-  "untitled_surfaces": 593,
+  "untitled_surfaces": 594,
   "untitled_chrome": 155,
   "untitled_nested": 230,
-  "untitled_headless": 208,
+  "untitled_headless": 209,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
   "ambiguous_titles": 1
@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 256,
+   "line": 259,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 275,
+   "line": 278,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -7215,7 +7215,7 @@
   },
   {
    "template": "templates/partials/staff_activity/_workspace.html",
-   "line": 60,
+   "line": 61,
    "title": "Your teamStaff by Program Lead",
    "heading_level": 2,
    "has_card_key": false,

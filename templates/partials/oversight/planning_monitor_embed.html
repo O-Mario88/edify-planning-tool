@@ -1,0 +1,27 @@
+{% comment %}
+The Planning Monitor as the Programme Lead's dashboard carries it (owner,
+2026-09-29: moved onto the dashboard in place of Leadership Attention, and
+out of the sidebar, "since the content in them are not big"). The same two
+tabs and workspaces as /planning-monitor/. The tabs travel with the workspace,
+so the one marked is always the one shown.
+
+Every request made inside it carries X-Edify-Embed (the dashboard section's
+hx-headers), which planning_monitor_view answers with this fragment and no
+history entry; static/js/dashboard-embed.js keeps the links htmx does not own
+(the figures' drill-downs, the pager) inside it too.
+{% endcomment %}
+<div class="space-y-4">
+  <div class="edify-view-toolbar">
+    <nav data-edify-tablist aria-label="Planning Monitor views">
+      <a href="/planning-monitor/?view=planning" data-edify-tab{% if active_oversight_view != "execution" %} aria-current="page"{% endif %}
+         hx-get="/planning-monitor/?view=planning" hx-target="#oversight-workspace" hx-swap="innerHTML">Planning</a>
+      <a href="/planning-monitor/?view=execution" data-edify-tab{% if active_oversight_view == "execution" %} aria-current="page"{% endif %}
+         hx-get="/planning-monitor/?view=execution" hx-target="#oversight-workspace" hx-swap="innerHTML">Execution &amp; Completion</a>
+    </nav>
+  </div>
+  {% if active_oversight_view == "execution" %}
+    {% include "partials/oversight/execution_workspace.html" %}
+  {% else %}
+    {% include "partials/oversight/monitor_workspace.html" %}
+  {% endif %}
+</div>

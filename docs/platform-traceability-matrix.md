@@ -51,7 +51,7 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
 | Routes / API | `GET /my-targets`, `GET /performance-conversation` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+42 more_ |
+| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+40 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py` _+103 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+19 more_ |
@@ -91,7 +91,7 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `CCEO`, `CountryDirector`, `HumanResources`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator` |
 | Routes / API | `POST /activities/{id}/closure/close`, `POST /activities/{id}/start/action`, `POST /finance/actions/confirm_accountability`, `POST /fund-requests/advances/{id}/pl-approve`, `POST /fund-requests/weekly/{id}/approve`, `POST /fund-requests/weekly/{id}/confirm`, `POST /fund-requests/weekly/{id}/confirm-receipt`, `POST /fund-requests/weekly/{id}/disburse` _+4 more_ |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
-| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+44 more_ |
+| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+42 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+96 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+22 more_ |
@@ -211,7 +211,7 @@ Steps: Leave request → Approval → Calendar block → Access transfer → To-
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /leave/approvals` |
 | Permissions checked | — |
-| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+39 more_ |
+| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+37 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py`, `apps/core/audit_hash.py`, `apps/core/calendar_policy.py`, `apps/core/client_ip.py` _+44 more_ |
 | Models written | `accounts.Leave`, `accounts.LeaveBalance`, `accounts.LeaveTypePolicy`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.TemporaryCoverageAssignment`, `accounts.User`, `audit.AuditLog`, `audit.DomainEventLog`, `geography.District`, `geography.Region` _+3 more_ |
@@ -311,7 +311,7 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /team-planning-oversight/` |
 | Permissions checked | `data.export` |
-| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+37 more_ |
+| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+35 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+48 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |

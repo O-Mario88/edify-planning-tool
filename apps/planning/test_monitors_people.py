@@ -253,46 +253,79 @@ class ThePlanningMonitorPage(PeopleFixture):
     "move the on its own page and add it to the side bar and place it below
     the Dashboard. Do the same for PL")."""
 
+    #: What the Programme Lead's dashboard section sends with its requests
+    #: (the monitor moved onto their dashboard, owner 2026-09-29).
+    EMBED = {"HTTP_HX_REQUEST": "true", "HTTP_X_EDIFY_EMBED": "dashboard"}
+
     def test_both_tabs_for_the_cd_and_the_lead(self):
-        for user in (self.cd_user, self.lead_user):
+        for user, headers in ((self.cd_user, {}), (self.lead_user, self.EMBED)):
             self.client.force_login(user)
             for view, marker in (
                 ("planning", "data-planning-monitor"),
                 ("execution", "data-execution-monitor"),
             ):
                 with self.subTest(role=user.active_role, view=view):
-                    response = self.client.get(f"/planning-monitor/?view={view}")
+                    response = self.client.get(
+                        f"/planning-monitor/?view={view}", **headers
+                    )
                     self.assertEqual(response.status_code, 200)
                     self.assertContains(response, marker)
                     self.assertContains(response, "Execution &amp; Completion")
 
+    def test_the_dashboard_section_gets_the_tabs_and_no_history_entry(self):
+        self.client.force_login(self.lead_user)
+        response = self.client.get("/planning-monitor/?view=execution", **self.EMBED)
+        self.assertEqual(response["HX-Push-Url"], "false")
+        body = response.content.decode()
+        self.assertNotIn("<html", body)
+        # The tabs travel with the workspace, the shown one marked.
+        self.assertIn('hx-get="/planning-monitor/?view=planning"', body)
+        self.assertRegex(
+            body, r'aria-current="page"\s+hx-get="/planning-monitor/\?view=execution"'
+        )
+
     def test_a_lead_reads_their_own_team(self):
         self.client.force_login(self.lead_user)
-        body = self.client.get("/planning-monitor/").content.decode()
+        body = self.client.get("/planning-monitor/", **self.EMBED).content.decode()
         # Each person heads their row: "<name> <role>".
         self.assertIn(">Cara <span", body)
         self.assertNotIn(">Eve <span", body)
+
+    def test_a_lead_opening_the_page_lands_on_their_dashboard(self):
+        self.client.force_login(self.lead_user)
+        response = self.client.get("/planning-monitor/?view=execution&list=overdue")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            "/dashboard?pm=view%3Dexecution%26list%3Doverdue#planning-monitor",
+        )
+        dashboard = self.client.get(response["Location"].split("#")[0])
+        self.assertContains(
+            dashboard, 'hx-get="/planning-monitor/?view=execution&amp;list=overdue"'
+        )
+        # An htmx request is moved, not swapped.
+        moved = self.client.get("/planning-monitor/", HTTP_HX_REQUEST="true")
+        self.assertEqual(moved["HX-Redirect"], "/dashboard#planning-monitor")
 
     def test_a_cceo_has_no_page(self):
         self.client.force_login(self.cara_user)
         self.assertNotEqual(self.client.get("/planning-monitor/").status_code, 200)
 
     def test_the_sidebar_lists_it_right_under_the_dashboard(self):
-        for user in (self.cd_user, self.lead_user):
-            with self.subTest(role=user.active_role):
-                self.client.force_login(user)
-                body = self.client.get("/planning-monitor/").content.decode()
-                dashboard = body.index(
-                    'href="{}"'.format(
-                        "/country-planning-oversight/"
-                        if user is self.cd_user
-                        else "/dashboard"
-                    )
-                )
-                monitor = body.index('href="/planning-monitor/"')
-                self.assertLess(dashboard, monitor)
-                between = body[dashboard:monitor]
-                self.assertNotIn('href="/planning"', between)
+        self.client.force_login(self.cd_user)
+        body = self.client.get("/planning-monitor/").content.decode()
+        dashboard = body.index('href="/country-planning-oversight/"')
+        monitor = body.index('href="/planning-monitor/"')
+        self.assertLess(dashboard, monitor)
+        between = body[dashboard:monitor]
+        self.assertNotIn('href="/planning"', between)
+
+    def test_the_leads_sidebar_does_not_list_it(self):
+        # It is on their dashboard (owner, 2026-09-29).
+        self.client.force_login(self.lead_user)
+        body = self.client.get("/dashboard").content.decode()
+        self.assertIn('id="planning-monitor"', body)
+        self.assertNotIn('href="/planning-monitor/"', body)
 
     def test_old_monitor_links_open_the_page(self):
         self.client.force_login(self.cd_user)

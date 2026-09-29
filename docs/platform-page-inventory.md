@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **576**
-- Full pages: **262**
-- Partials and drawers: **302**
+- Shared component templates: **579**
+- Full pages: **261**
+- Partials and drawers: **303**
 - Permission-gated surfaces: **856**
 - Referenced by automated tests: **765**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -684,7 +684,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5F1957110F | /planning | Planning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-436E67D76F | /planning-follow-ups/<str:followup_id> | Planning Followup Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E57F627F7E | /planning-follow-ups/<str:followup_id>/<str:action> | Planning Followup Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-46B09EFCBC | /planning-monitor/ | Planning Monitor · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-46B09EFCBC | /planning-monitor/ | Planning Monitor | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2460A9454D | /planning/assign-partner-action | Planning Assign Partner Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

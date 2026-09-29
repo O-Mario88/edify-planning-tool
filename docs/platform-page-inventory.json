@@ -5724,6 +5724,27 @@
     },
     {
       "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 645,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Embed Loading",
+      "purpose": "Reusable  embed loading interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/_embed_loading.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 3657,
@@ -5750,7 +5771,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4351,
+      "bytes": 4442,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -5776,7 +5797,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5585,
+      "bytes": 5776,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -5879,7 +5900,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4451,
+      "bytes": 4693,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6319,7 +6340,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3914,
+      "bytes": 4127,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6343,25 +6364,24 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3806,
+      "bytes": 4752,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Week View",
       "purpose": "Reusable week view interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "loading",
         "error"
       ],
       "tables": 0,
       "template": "partials/dashboards/pl/week_view.html",
-      "variants": [
-        "{{ a.tone }}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -10868,6 +10888,29 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 1546,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning-monitor/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Planning Monitor Embed",
+      "purpose": "Reusable planning monitor embed interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/planning_monitor_embed.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 9578,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -13465,6 +13508,29 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1651,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Embed Head",
+      "purpose": "Reusable  embed head interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_embed_head.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "announced dynamic state"
       ],
@@ -13653,7 +13719,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7646,
+      "bytes": 7733,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -72786,6 +72852,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/oversight/planning_monitor_embed.html",
         "template:pages/oversight/planning_monitor.html",
         "test:referenced-by-automated-test",
         "permission:planning_monitor"
@@ -72794,8 +72861,11 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /planning-monitor/?view=planning",
+        "GET /planning-monitor/?view=execution"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -72804,14 +72874,14 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-46B09EFCBC",
-      "page_title": "Planning Monitor \u00b7 Edify",
-      "page_type": "planning-or-creation",
+      "page_title": "Planning Monitor",
+      "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
       ],
       "permission_key": "planning_monitor",
-      "primary_action": "Complete planning form",
-      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "primary_action": "Planning Monitor",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Planning Monitor, a page of its own under the Dashboard (owner, 2026-09-29: \"move the [monitor] on its own page and add it to the side bar and place it below the Dashboard. Do the same for PL\").",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -72849,15 +72919,16 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 3,
+        "type": "segmented-control"
       },
       "templates": [
+        "partials/oversight/planning_monitor_embed.html",
         "pages/oversight/planning_monitor.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -86212,7 +86283,7 @@
       "permission_key": "staff_activity",
       "primary_action": "Staff Activity",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "How your team uses the platform How staff across the country use the platform : active time, the parts they use, and the meaningful work they complete.",
+      "purpose": "The log. A Programme Lead reads their team's on their dashboard's This Week (owner, 2026-09-29; apps.frontend.views.dashboard_embed): the dashboard section's requests get the workspace with its own heading and actions, and the page opened on its own sends the Lead there.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -109615,7 +109686,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.planning_monitor_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -109624,6 +109695,7 @@
       "route": "/planning-monitor/",
       "route_name": "planning_monitor",
       "templates": [
+        "partials/oversight/planning_monitor_embed.html",
         "pages/oversight/planning_monitor.html"
       ]
     },
@@ -112718,8 +112790,8 @@
     "activity_states": 24,
     "all_routes": 1344,
     "api_routes": 360,
-    "component_templates": 576,
-    "full_pages": 262,
+    "component_templates": 579,
+    "full_pages": 261,
     "mobile_contract_pass": 567,
     "nonvisual_actions": 277,
     "page_types": {
@@ -112727,13 +112799,13 @@
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 579,
+      "interaction-fragment": 580,
       "operational-queue": 152,
-      "planning-or-creation": 13,
+      "planning-or-creation": 12,
       "record-detail": 25,
       "report": 39
     },
-    "partials_and_drawers": 302,
+    "partials_and_drawers": 303,
     "permission_gated": 856,
     "permission_keys": 127,
     "roles": 15,
