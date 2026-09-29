@@ -1,0 +1,25 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}The Follow-up Queue: what waits on the reader, and what they sent.{% endcomment %}
+{% block drawer_title %}Follow-up Queue{% endblock %}
+{% block drawer_subtitle %}{{ queue.open_count }} open follow-up{{ queue.open_count|pluralize }}{% endblock %}
+{% block drawer_body %}
+<div class="space-y-4 text-[12px] text-slate-600">
+  <section aria-labelledby="sal-q-mine">
+    <h4 id="sal-q-mine" class="sal-subhead">Waiting on you</h4>
+    {% include "partials/staff_activity/_follow_up_list.html" with rows=queue.to_me empty="Nothing is waiting on you." %}
+  </section>
+  <section aria-labelledby="sal-q-sent">
+    <h4 id="sal-q-sent" class="sal-subhead">Sent by you</h4>
+    {% include "partials/staff_activity/_follow_up_list.html" with rows=queue.from_me empty="You have no open follow-ups." %}
+  </section>
+  {% if queue.recent_closed %}
+  <section aria-labelledby="sal-q-closed">
+    <h4 id="sal-q-closed" class="sal-subhead">Recently resolved</h4>
+    {% include "partials/staff_activity/_follow_up_list.html" with rows=queue.recent_closed empty="" %}
+  </section>
+  {% endif %}
+</div>
+<div class="drawer-footer">
+  <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+</div>
+{% endblock %}

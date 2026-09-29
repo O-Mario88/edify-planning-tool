@@ -1,0 +1,9 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% block drawer_title %}Follow-up: {{ follow_up.get_trigger_display }}{% endblock %}
+{% block drawer_subtitle %}{% firstof follow_up.subject.name follow_up.subject.email %} · {{ follow_up.get_status_display }}{% endblock %}
+{% block drawer_body %}
+{% include "partials/staff_activity/_follow_up_body.html" %}
+<div class="drawer-footer">
+  <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% if rows %}
+<ul class="sal-follows sal-follows--queue">
+  {% for fu in rows %}
+  <li{% if fu.overdue %} class="sal-follows__late"{% endif %}>
+    <a href="/staff-activity/follow-ups/{{ fu.id }}">{% firstof fu.subject.name fu.subject.email %} · {{ fu.get_trigger_display }}</a>
+    <span>{{ fu.get_status_display }} · {% if fu.overdue %}overdue since{% else %}due{% endif %} {{ fu.due_date|date:"j M" }}{% if fu.assignee_id != fu.subject_id %} · with {{ fu.assignee.name }}{% endif %}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% elif empty %}
+<p class="sal-none">{{ empty }}</p>
+{% endif %}

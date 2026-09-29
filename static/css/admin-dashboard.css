@@ -233,6 +233,9 @@
 .admin-status.s-orange { color: var(--edify-warning-text); background: var(--edify-warning-light); }
 .admin-status.s-red { color: var(--edify-danger-text); background: var(--edify-danger-light); }
 .admin-status.s-blue { color: var(--edify-info-text); background: var(--edify-info-light); }
+/* Green lived in presence.css until Who's Online became the Staff Activity
+   Log (2026-09-29); the status chips it colours are the Admin's own. */
+.admin-status.s-green { color: var(--edify-success-text); background: var(--edify-success-light); }
 
 .admin-empty { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 .admin-empty span { display: block; font-weight: 540; }

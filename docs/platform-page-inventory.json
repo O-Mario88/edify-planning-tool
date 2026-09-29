@@ -5186,55 +5186,6 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 7550,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/whos-online"
-      ],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
-      "kind": "application-partial",
-      "name": " Whos Online",
-      "purpose": "Reusable  whos online interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default",
-        "empty"
-      ],
-      "tables": 1,
-      "template": "partials/dashboards/_whos_online.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 4724,
-      "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/whos-online"
-      ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "application-partial",
-      "name": " Whos Online Row",
-      "purpose": "Reusable  whos online row interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "partials/dashboards/_whos_online_row.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [],
       "bytes": 3543,
       "deprecated_alternatives": [],
@@ -5284,7 +5235,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3182,
+      "bytes": 3176,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -5615,7 +5566,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 34452,
+      "bytes": 34306,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6252,7 +6203,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8962,
+      "bytes": 8320,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6390,7 +6341,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4335,
+      "bytes": 3806,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -13412,6 +13363,218 @@
       "tables": 0,
       "template": "partials/ssa/score_group_columns.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3094,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/follow-ups/<str:follow_up_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Follow Up Body",
+      "purpose": "Reusable  follow up body interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_follow_up_body.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 505,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/follow-ups/<str:follow_up_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Follow Up Drawer",
+      "purpose": "Reusable  follow up drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_follow_up_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 590,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/follow-ups"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Follow Up List",
+      "purpose": "Reusable  follow up list interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_follow_up_list.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 4359,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/people/<str:person_id>/follow-up"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Follow Up New Drawer",
+      "purpose": "Reusable  follow up new drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_follow_up_new_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1293,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/follow-ups"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Follow Up Queue Drawer",
+      "purpose": "Reusable  follow up queue drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_follow_up_queue_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2775,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Insights",
+      "purpose": "Reusable  insights interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_insights.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6355,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity/people/<str:person_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Person Detail",
+      "purpose": "Reusable  person detail interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_person_detail.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2506,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Person Row",
+      "purpose": "Reusable  person row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_person_row.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 7646,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": " Workspace",
+      "purpose": "Reusable  workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/staff_activity/_workspace.html",
+      "variants": [
+        "executive"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -34721,7 +34884,6 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /dashboard/whos-online{% if presence_query %}?{{ presence_query }}{% endif %}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
@@ -34738,8 +34900,7 @@
       "page_type": "planning-or-creation",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
-        "css/pages/country-oversight.css",
-        "css/components/presence.css"
+        "css/pages/country-oversight.css"
       ],
       "permission_key": "country_planning_oversight",
       "primary_action": "Complete planning form",
@@ -36981,7 +37142,6 @@
       "page_title": "Dashboard",
       "page_type": "interaction-fragment",
       "per_page_css": [
-        "css/components/presence.css",
         "css/components/pl-week.css",
         "css/admin-dashboard.css"
       ],
@@ -38111,33 +38271,30 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.whos_online_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:partials/dashboards/_whos_online.html",
         "test:referenced-by-automated-test",
         "permission:dashboard"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET /dashboard/whos-online"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
@@ -38148,9 +38305,9 @@
       "permission_key": "dashboard",
       "primary_action": "Whos Online",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Who's Online for another period (owner, 2026-09-28: \"add the filter of day, week, month, quarter and FY\"). The panel's filter and its pager ask here instead of rebuilding the dashboard around it.",
+      "purpose": "Who's Online became the Staff Activity Log (owner, 2026-09-29). Its old address \u2014 an open tab's pager, a bookmark \u2014 goes to the log.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -38187,24 +38344,22 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "partials/dashboards/_whos_online.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -85482,6 +85637,766 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.staff_activity_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/staff_activity/_workspace.html",
+        "template:pages/staff_activity/index.html",
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /staff-activity",
+        "GET {{ link.href }}",
+        "GET /staff-activity/follow-ups"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-A4545B113B",
+      "page_title": "Staff Activity",
+      "page_type": "interaction-fragment",
+      "per_page_css": [
+        "css/components/staff-activity.css"
+      ],
+      "permission_key": "staff_activity",
+      "primary_action": "Staff Activity",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "How your team uses the platform How staff across the country use the platform : active time, the parts they use, and the meaningful work they complete.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity",
+      "route_name": "staff_activity",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/staff-activity"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 2,
+        "type": "segmented-control"
+      },
+      "templates": [
+        "partials/staff_activity/_workspace.html",
+        "pages/staff_activity/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.staff_activity_beat_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CAB88635F4",
+      "page_title": "Staff Activity Beat",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Staff Activity Beat",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "A beat from a page that is visible, focused and was used within the idle threshold (static/js/staff-activity-beat.js). It carries no time \u2014 the server's clock decides how much of the gap since the last beat was active \u2014 only the page it was sent from, so a person reading or filling a long form keeps counting without making requests of their own.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/staff-activity/beat",
+      "route_name": "staff_activity_beat",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.staff_activity_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-1B70B750E4",
+      "page_title": "Staff Activity Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "staff_activity",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Operate staff activity export within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity/export",
+      "route_name": "staff_activity_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.follow_up_queue_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/staff_activity/_follow_up_queue_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4A333FA412",
+      "page_title": "Staff Activity Follow Ups",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "staff_activity",
+      "primary_action": "Staff Activity Follow Ups",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Follow-up Queue (header button): sent to me, sent by me.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity/follow-ups",
+      "route_name": "staff_activity_follow_ups",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/staff_activity/_follow_up_queue_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.follow_up_detail_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/staff_activity/_follow_up_drawer.html",
+        "template:pages/staff_activity/follow_up.html",
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": true,
+      "page_id": "UI-PAGE-4A8E1F18FC",
+      "page_title": "Follow-up \u00b7 Edify",
+      "page_type": "interaction-fragment",
+      "per_page_css": [
+        "css/components/staff-activity.css"
+      ],
+      "permission_key": "dashboard",
+      "primary_action": "Staff Activity Follow Up",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "One follow-up, for every party to it \u2014 the staff member it was sent to, the manager, the Country Director. A drawer from the log; a page from a notification or the To-Do list.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/staff-activity/follow-ups/<str:follow_up_id>",
+      "route_name": "staff_activity_follow_up",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html",
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/staff_activity/_follow_up_drawer.html",
+        "pages/staff_activity/follow_up.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": true,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.follow_up_transition_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6B1807D775",
+      "page_title": "Staff Activity Follow Up Transition",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Staff Activity Follow Up Transition",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate staff activity follow up transition within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/staff-activity/follow-ups/<str:follow_up_id>/<slug:action>",
+      "route_name": "staff_activity_follow_up_transition",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.staff_activity_person_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/staff_activity/_person_detail.html",
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET /staff-activity/people/{{ person.id }}/follow-up?period={{ detail.period.key }}&on={{ detail.period.on|date:",
+        "GET /staff-activity/follow-ups/{{ fu.id }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-65DDC55B21",
+      "page_title": "Staff Activity Person",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "staff_activity",
+      "primary_action": "Staff Activity Person",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate staff activity person within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity/people/<str:person_id>",
+      "route_name": "staff_activity_person",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/staff_activity/_person_detail.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.follow_up_new_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/staff_activity/_follow_up_new_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /staff-activity/people/{{ person.id }}/follow-up/send"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-2B01C49342",
+      "page_title": "Staff Activity Follow Up New",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "staff_activity",
+      "primary_action": "Send follow-up",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Follow Up drawer for one person (\u00a79.2).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity/people/<str:person_id>/follow-up",
+      "route_name": "staff_activity_follow_up_new",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/staff-activity/people/{{ person.id }}/follow-up/send"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/staff_activity/_follow_up_new_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_activity_views",
+      "backend_view": "apps.frontend.views.staff_activity_views.follow_up_create_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:staff_activity"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-FB59FE4C41",
+      "page_title": "Staff Activity Follow Up Create",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "staff_activity",
+      "primary_action": "Staff Activity Follow Up Create",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate staff activity follow up create within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "PL"
+      ],
+      "route": "/staff-activity/people/<str:person_id>/follow-up/send",
+      "route_name": "staff_activity_follow_up_create",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.staff_activity.models",
+        "apps.staff_activity.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
@@ -90628,6 +91543,7 @@
       "apps.search",
       "apps.security",
       "apps.ssa",
+      "apps.staff_activity",
       "apps.staff_setup",
       "apps.system_health",
       "apps.targets",
@@ -102825,7 +103741,7 @@
     },
     {
       "callback": "apps.frontend.views.dashboard_views.whos_online_view",
-      "kind": "partial",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -102833,9 +103749,7 @@
       "required_permissions": [],
       "route": "/dashboard/whos-online",
       "route_name": "whos_online",
-      "templates": [
-        "partials/dashboards/_whos_online.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.extended_views.duplicate_review_view",
@@ -110156,6 +111070,126 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.staff_activity_views.staff_activity_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity",
+      "route_name": "staff_activity",
+      "templates": [
+        "partials/staff_activity/_workspace.html",
+        "pages/staff_activity/index.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.staff_activity_beat_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/staff-activity/beat",
+      "route_name": "staff_activity_beat",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.staff_activity_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity/export",
+      "route_name": "staff_activity_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.follow_up_queue_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity/follow-ups",
+      "route_name": "staff_activity_follow_ups",
+      "templates": [
+        "partials/staff_activity/_follow_up_queue_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.follow_up_detail_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/staff-activity/follow-ups/<str:follow_up_id>",
+      "route_name": "staff_activity_follow_up",
+      "templates": [
+        "partials/staff_activity/_follow_up_drawer.html",
+        "pages/staff_activity/follow_up.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.follow_up_transition_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/staff-activity/follow-ups/<str:follow_up_id>/<slug:action>",
+      "route_name": "staff_activity_follow_up_transition",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.staff_activity_person_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity/people/<str:person_id>",
+      "route_name": "staff_activity_person",
+      "templates": [
+        "partials/staff_activity/_person_detail.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.follow_up_new_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity/people/<str:person_id>/follow-up",
+      "route_name": "staff_activity_follow_up_new",
+      "templates": [
+        "partials/staff_activity/_follow_up_new_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.staff_activity_views.follow_up_create_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "staff_activity",
+      "required_permissions": [],
+      "route": "/staff-activity/people/<str:person_id>/follow-up/send",
+      "route_name": "staff_activity_follow_up_create",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.staff_views.staff_profile_view",
       "kind": "page",
       "methods": [
@@ -111070,30 +112104,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 558,
+    "accessibility_contract_pass": 562,
     "activity_states": 24,
-    "all_routes": 1330,
+    "all_routes": 1339,
     "api_routes": 360,
-    "component_templates": 566,
+    "component_templates": 573,
     "full_pages": 261,
-    "mobile_contract_pass": 558,
-    "nonvisual_actions": 273,
+    "mobile_contract_pass": 562,
+    "nonvisual_actions": 277,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 567,
+      "interaction-fragment": 575,
       "operational-queue": 151,
       "planning-or-creation": 13,
       "record-detail": 25,
-      "report": 38
+      "report": 39
     },
-    "partials_and_drawers": 294,
-    "permission_gated": 842,
+    "partials_and_drawers": 298,
+    "permission_gated": 851,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 858,
+    "routed_surfaces": 867,
     "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
@@ -111101,8 +112135,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 558,
-    "test_referenced": 751,
-    "theme_contract_pass": 558
+    "tablet_contract_pass": 562,
+    "test_referenced": 760,
+    "theme_contract_pass": 562
   }
 }
