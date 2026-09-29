@@ -1,0 +1,70 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+  Follow Up (§9.2). The manager sees what prompted it, picks what it is about,
+  and writes a note, a due date and a priority. On the Country Director's
+  route the follow-up goes to the person's Programme Lead (§9.3).
+{% endcomment %}
+
+{% block drawer_title %}Follow up: {{ person.name }}{% endblock %}
+{% block drawer_subtitle %}{% if via_manager %}Sent to {{ assignee.name }}, {{ person.name }}'s Program Lead, to follow up with them.{% else %}Sent to {{ person.name }}.{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/staff-activity/people/{{ person.id }}/follow-up/send"
+      hx-post="/staff-activity/people/{{ person.id }}/follow-up/send"
+      hx-target="#sal-fu-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <input type="hidden" name="period" value="{{ detail.period.key }}">
+  <input type="hidden" name="on" value="{{ detail.period.on|date:'Y-m-d' }}">
+  <div id="sal-fu-errors" aria-live="polite"></div>
+
+  <dl class="sal-snapshot">
+    <div><dt>Period</dt><dd>{{ detail.period.label|capfirst }}</dd></div>
+    <div><dt>Logins</dt><dd>{{ person.logins }}</dd></div>
+    <div><dt>Active time</dt><dd>{{ person.active_label }}</dd></div>
+    <div><dt>Meaningful actions</dt><dd>{{ person.actions }}</dd></div>
+    <div><dt>Schools acted on</dt><dd>{{ person.schools }}</dd></div>
+    <div><dt>Failed actions</dt><dd>{{ person.failed }}</dd></div>
+    <div><dt>Usage</dt><dd>{{ person.usage_label }}</dd></div>
+    <div><dt>Open follow-ups</dt><dd>{{ person.open_follow_ups|length }}</dd></div>
+  </dl>
+  {% if person.suggestions %}
+  <p class="sal-suggest">{% for s in person.suggestions %}{{ s.reason }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="sal-fu-trigger" class="block edify-text-caption font-semibold text-slate-600">About <span class="text-rose-500">*</span></label>
+    <select id="sal-fu-trigger" name="trigger" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+      <option value="">Choose…</option>
+      {% for key, label in triggers %}<option value="{{ key }}"{% if key == suggested %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label for="sal-fu-note" class="block edify-text-caption font-semibold text-slate-600">Note <span class="text-rose-500">*</span></label>
+    <textarea id="sal-fu-note" name="note" rows="4" required maxlength="4000"
+              placeholder="{% if via_manager %}What you would like {{ assignee.name }} to check with {{ person.name }}{% else %}What you would like to talk about, and how you can help{% endif %}"
+              class="w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] sm:text-[13px]"></textarea>
+  </div>
+  <div class="sal-formpair">
+    <div class="space-y-1">
+      <label for="sal-fu-due" class="block edify-text-caption font-semibold text-slate-600">Due date <span class="text-rose-500">*</span></label>
+      <input id="sal-fu-due" name="due_date" type="date" required value="{{ due|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}"
+             class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+    </div>
+    <div class="space-y-1">
+      <label for="sal-fu-priority" class="block edify-text-caption font-semibold text-slate-600">Priority <span class="text-rose-500">*</span></label>
+      <select id="sal-fu-priority" name="priority" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+        {% for key, label in priorities %}<option value="{{ key }}"{% if key == "normal" %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <p class="edify-text-caption text-slate-500">A follow-up is support. It does not change anyone's performance record.</p>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Send follow-up</button>
+  </div>
+</form>
+{% endblock %}

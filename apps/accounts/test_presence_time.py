@@ -373,91 +373,15 @@ class SummaryForAPeriodTest(TestCase):
 
 
 class WhosOnlineEndpointTest(TestCase):
-    """The filter and the pager fetch the panel alone; its readers are the
-    Admin and the Country Director (the country) and a Programme Lead (their
-    own reporting line)."""
+    """Who's Online became the Staff Activity Log (owner, 2026-09-29). Its old
+    address — an open tab's pager, a bookmark — goes to the log."""
 
-    def setUp(self):
-        self.admin = _user("root", "Admin")
-        self.director = _user("clara", "CountryDirector")
-        self.lead = _user("lena", "Program Lead")
-        self.mine = _user("mina")
-        self.other_lead = _user("olive", "Program Lead")
-        self.theirs = _user("otto")
-        StaffSupervisorAssignment.objects.create(
-            supervisor=self.lead.staff_profile, supervisee=self.mine.staff_profile
-        )
-        StaffSupervisorAssignment.objects.create(
-            supervisor=self.other_lead.staff_profile,
-            supervisee=self.theirs.staff_profile,
-        )
-        today = timezone.localdate()
-        for person in (self.mine, self.theirs):
-            PresenceTime.objects.create(
-                user=person,
-                day=today,
-                section="My Plan",
-                working_on="Scheduling an activity",
-                seconds=1500,
-            )
-            LoginEvent.objects.create(user=person, role="CCEO")
-
-    def _get(self, user, query=""):
-        self.client.force_login(user)
-        return self.client.get(f"/dashboard/whos-online{query}", HTTP_HX_REQUEST="true")
-
-    def test_the_admin_reads_the_country_with_links_to_each_record(self):
-        response = self._get(self.admin)
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode()
-        self.assertIn("Mina", html)
-        self.assertIn("Otto", html)
-        self.assertIn(f'href="/admin-panel/users/{self.mine.id}"', html)
-        # The panel alone: the host it swaps into is the page's.
-        self.assertNotIn('class="presence-host"', html)
-        self.assertIn("data-admin-presence", html)
-
-    def test_the_country_director_reads_the_country_without_links(self):
-        html = self._get(self.director).content.decode()
-        self.assertIn("Mina", html)
-        self.assertIn("Otto", html)
-        self.assertNotIn("/admin-panel/users/", html)
-
-    def test_a_programme_lead_reads_their_own_team_only(self):
-        html = self._get(self.lead).content.decode()
-        self.assertIn("Mina", html)
-        self.assertNotIn("Otto", html)
-        self.assertIn("in your team", html)
-
-    def test_other_roles_are_refused(self):
-        self.assertEqual(self._get(self.mine).status_code, 403)
-
-    def test_the_period_is_the_one_asked_for(self):
-        month = timezone.localdate().strftime("%B %Y")
-        html = self._get(self.admin, "?presence_period=month").content.decode()
-        self.assertIn(f"{month}:", html)
-        self.assertIn('<option value="month" selected>', html)
-        # The month's page, task and time, each in its own cell.
-        self.assertIn(">My Plan</span></td>", html)
-        self.assertIn(">Scheduling an activity</span></td>", html)
-        self.assertIn(">25m</span></td>", html)
-
-    def test_every_detail_is_shown_and_nothing_folds(self):
-        """Owner, 2026-09-29: "everything should be visible" and "NO
-        Wrapping": no toggles, no detail rows of lists, headings on one line."""
-        html = self._get(self.lead, "?presence_period=month").content.decode()
-        self.assertIn('<tr class="edify-group-head">', html)
-        self.assertNotIn("aria-expanded", html)
-        self.assertNotIn("presence-detail", html)
-        self.assertNotIn("<br>", html)
-        self.assertIn('data-table-fit="scroll"', html)
-        self.assertIn(">Scheduling an activity</span></td>", html)
-
-    def test_the_dashboard_panel_is_a_fragment_host_for_the_pager(self):
-        self.client.force_login(self.admin)
-        html = self.client.get("/dashboard?view=operations").content.decode()
-        self.assertIn('data-pager-fragment="/dashboard/whos-online"', html)
-        self.assertIn('hx-get="/dashboard/whos-online"', html)
+    def test_the_old_address_goes_to_the_staff_activity_log(self):
+        self.client.force_login(_user("clara", "CountryDirector"))
+        response = self.client.get("/dashboard/whos-online")
+        self.assertRedirects(response, "/staff-activity", fetch_redirect_response=False)
+        fragment = self.client.get("/dashboard/whos-online", HTTP_HX_REQUEST="true")
+        self.assertEqual(fragment["HX-Redirect"], "/staff-activity")
 
 
 class TidyTableTest(TestCase):
@@ -527,39 +451,6 @@ class TidyTableTest(TestCase):
         # The sitting is the name's title; Overall is the lines added up.
         self.assertEqual(cara["duration_label"], "40m")
         self.assertEqual(cara["period_time_label"], "37m")
-
-    def test_the_rows_read_in_the_owner_s_order_and_online_is_green(self):
-        self.client.force_login(self.admin)
-        html = self.client.get(
-            f"/dashboard/whos-online?presence_on={self.on}", HTTP_HX_REQUEST="true"
-        ).content.decode()
-        marker = f'data-presence-person="presence-person-{self.cara.id}"'
-        start = html.rindex("<tr", 0, html.index(marker))
-        block = html[start:].split("</tbody>")[0]
-        row = block.split("</tr>")[0]
-        # Online: the rows are marked, and the light sits in the name.
-        self.assertIn('<tr class="presence-row" data-presence="online"', html)
-        self.assertIn("admin-presence-light--online", row)
-        cells = [
-            "Cara",
-            ">CCEO<",
-            ">1</a>",
-            f"{timezone.localtime(self.now - timedelta(minutes=2)).strftime('%a').upper()} ",
-            ">My Plan</span>",
-            ">Viewing</span>",
-            ">2m</span>",
-            "<b>37m</b>",
-        ]
-        positions = [row.index(cell) for cell in cells]
-        self.assertEqual(positions, sorted(positions))
-        # Her other lines: the page, the task and its time, with her name for
-        # screen readers only, and every one of them green.
-        self.assertEqual(block.count('data-presence="online"'), 3)
-        self.assertEqual(block.count('<span class="sr-only">Cara</span>'), 2)
-        for cell in (">Scheduling an activity</span>", ">25m</span>", ">10m</span>"):
-            self.assertIn(cell, block)
-        # A lead's title is the short one, PL.
-        self.assertIn(">PL<", html)
 
     def test_the_service_worker_is_not_a_part_of_the_tool(self):
         from apps.accounts.presence import request_footprint
