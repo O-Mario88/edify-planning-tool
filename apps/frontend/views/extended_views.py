@@ -3014,6 +3014,11 @@ def project_detail_view(request, project_id):
     from apps.projects.portfolio import portfolio_rows
 
     portfolio = portfolio_rows(project)
+    # Which rows this reader may tick to withdraw (owner, 2026-09-29): their
+    # own enrolments or, for the coordinator, any, while no work has begun.
+    from apps.frontend.views.project_capacity_views import mark_withdrawable
+
+    can_bulk_withdraw = mark_withdrawable(request.user, project, portfolio)
     staff_assignments = (
         project.staff_assignments.filter(is_active=True)
         .select_related("staff__user")
@@ -3164,6 +3169,7 @@ def project_detail_view(request, project_id):
         "project": project,
         "school_assignments": school_assignments,
         "project_portfolio": portfolio,
+        "can_bulk_withdraw": can_bulk_withdraw,
         "schools_needing_planning": schools_needing_planning,
         "staff_assignments": staff_assignments,
         "staff_options": staff_options,

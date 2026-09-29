@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **584**
+Components and application partials: **585**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -508,6 +508,7 @@ Components and application partials: **584**
 | `partials/projects/bulk_assign_drawer.html` | application-partial | Reusable bulk assign drawer interface primitive | danger, warning; default, error, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /projects/<str:project_id>/schools/bulk-assign-drawer | 0 |
 | `partials/projects/bulk_partner_drawer.html` | application-partial | Reusable bulk partner drawer interface primitive | warning; default, empty, disabled | explicit responsive contract | accessible name and label | /projects/planning/bulk-partner | 0 |
 | `partials/projects/bulk_schedule_drawer.html` | application-partial | Reusable bulk schedule drawer interface primitive | warning; default, empty, error, disabled | inherits containing page contract | accessible name and label | /projects/planning/bulk-schedule | 0 |
+| `partials/projects/bulk_withdraw_drawer.html` | application-partial | Reusable bulk withdraw drawer interface primitive | danger, warning; default, empty, error, disabled, open | explicit responsive contract | accessible name and label, announced dynamic state | /projects/<str:project_id>/schools/bulk-withdraw | 0 |
 | `partials/projects/capacity_drawer.html` | application-partial | Reusable capacity drawer interface primitive | danger, warning; default, error, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /projects/capacity/<str:capacity_id>/edit<br>/projects/capacity/set | 0 |
 | `partials/projects/create_project_drawer.html` | application-partial | Reusable create project drawer interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /projects/create | 0 |
 | `partials/projects/edit_project_drawer.html` | application-partial | Reusable edit project drawer interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /projects/<str:project_id>/edit | 0 |

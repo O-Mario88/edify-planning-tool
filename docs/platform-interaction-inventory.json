@@ -5,20 +5,20 @@
   "by_evidence": {
    "browser-rendered": 791,
    "none": 286,
-   "page-tested": 1403,
-   "request-tested": 1198
+   "page-tested": 1410,
+   "request-tested": 1200
   },
   "by_kind": {
-   "button": 1274,
+   "button": 1279,
    "disclosure": 67,
-   "field": 1264,
+   "field": 1268,
    "link": 1006,
    "tab": 67
   },
-  "controls": 3678,
-  "high_consequence": 199,
-  "state_changing": 440,
-  "templates_scanned": 607,
+  "controls": 3687,
+  "high_consequence": 200,
+  "state_changing": 441,
+  "templates_scanned": 608,
   "unresolved_destinations": 0,
   "untested": 286,
   "untested_state_changing": 23
@@ -761,6 +761,7 @@
     "/priorities/ssa-mapping/rules/<str:mapping_id>/review",
     "/projects/<str:project_id>/edit",
     "/projects/<str:project_id>/schools/bulk-assign-drawer",
+    "/projects/<str:project_id>/schools/bulk-withdraw",
     "/projects/capacity/<str:capacity_id>/edit",
     "/projects/capacity/set",
     "/projects/capacity/withdraw",
@@ -9399,6 +9400,19 @@
     "PROJECT_COORDINATOR"
    ]
   },
+  "partials/projects/bulk_withdraw_drawer.html": {
+   "pages": [
+    "/projects/<str:project_id>/schools/bulk-withdraw"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ]
+  },
   "partials/projects/capacity_drawer.html": {
    "pages": [
     "/projects/capacity/<str:capacity_id>/edit",
@@ -11301,7 +11315,11 @@
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5DA3CCDA63A0", "kind": "field", "line": 164, "method": "", "selector": "textarea[name=reason]", "state_changing": false, "tag": "textarea", "template": "pages/projects/detail.html"},
   {"accessible_name": "Add School", "destination": "/projects/{{ project.id }}/schools/assign", "destination_route": "/projects/<str:project_id>/schools/assign", "evidence": "page-tested", "high_consequence": false, "id": "INT-139172A53A2D", "kind": "button", "line": 166, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/projects/detail.html"},
   {"accessible_name": "Add schools to {{ project.name }}", "destination": "/projects/{{ project.id }}/schools/bulk-assign-drawer", "destination_route": "/projects/<str:project_id>/schools/bulk-assign-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-92F435D26760", "kind": "button", "line": 187, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/detail.html"},
-  {"accessible_name": "View Profile", "destination": "{{ row.school_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C6288C09FC90", "kind": "link", "line": 226, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/detail.html"},
+  {"accessible_name": "Withdraw selected", "destination": "/projects/{{ project.id }}/schools/bulk-withdraw", "destination_route": "/projects/<str:project_id>/schools/bulk-withdraw", "evidence": "request-tested", "high_consequence": false, "id": "INT-AF0DEA9AD68A", "kind": "button", "line": 219, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/detail.html"},
+  {"accessible_name": "Clear", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F5665A16B7C8", "kind": "button", "line": 221, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/detail.html"},
+  {"accessible_name": "{{ row.school_id }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1E9A6B7E6829", "kind": "field", "line": 234, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "pages/projects/detail.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B3E9C269C047", "kind": "field", "line": 234, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "pages/projects/detail.html"},
+  {"accessible_name": "View Profile", "destination": "{{ row.school_url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C6288C09FC90", "kind": "link", "line": 246, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/detail.html"},
   {"accessible_name": "New Project", "destination": "/projects/create", "destination_route": "/projects/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-A213C4B902D5", "kind": "button", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/projects/index.html"},
   {"accessible_name": "Add Eligible Schools", "destination": "/projects/planning", "destination_route": "/projects/planning", "evidence": "request-tested", "high_consequence": false, "id": "INT-7743F5B053FA", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/projects/index.html"},
   {"accessible_name": "FY {{ opt }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3972E2FCD185", "kind": "field", "line": 57, "method": "", "selector": "#project-fy-filter", "state_changing": false, "tag": "select", "template": "pages/projects/index.html"},
@@ -13471,6 +13489,11 @@
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-9C68E808F1DF", "kind": "field", "line": 17, "method": "", "selector": "#bulk-schedule-date", "state_changing": false, "tag": "input", "template": "partials/projects/bulk_schedule_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-49C194314B12", "kind": "button", "line": 34, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/bulk_schedule_drawer.html"},
   {"accessible_name": "Schedule {{ assignments|length }} activit{{ assignments|length|pluralize:\"y,ies\" }}", "destination": "/projects/planning/bulk-schedule", "destination_route": "/projects/planning/bulk-schedule", "evidence": "request-tested", "high_consequence": false, "id": "INT-DEFFA44A0455", "kind": "button", "line": 35, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/projects/bulk_schedule_drawer.html"},
+  {"accessible_name": "Choose a reason {{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FEAC2DB5ECE2", "kind": "field", "line": 42, "method": "", "selector": "#bulk-leave-reason", "state_changing": false, "tag": "select", "template": "partials/projects/bulk_withdraw_drawer.html"},
+  {"accessible_name": "{{ values.reason_other }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FD50279639CC", "kind": "field", "line": 50, "method": "", "selector": "#bulk-leave-reason-other", "state_changing": false, "tag": "textarea", "template": "partials/projects/bulk_withdraw_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F4EEC750207A", "kind": "button", "line": 53, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/bulk_withdraw_drawer.html"},
+  {"accessible_name": "Withdraw {{ withdrawable|length }} school{{ withdrawable|length|pluralize }}", "destination": "/projects/{{ project.id }}/schools/bulk-withdraw", "destination_route": "/projects/<str:project_id>/schools/bulk-withdraw", "evidence": "request-tested", "high_consequence": true, "id": "INT-A154855C750D", "kind": "button", "line": 54, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/projects/bulk_withdraw_drawer.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A268B5E39886", "kind": "button", "line": 59, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/projects/bulk_withdraw_drawer.html"},
   {"accessible_name": "Choose a project {{ p.name }} ({{ p.code }})", "destination": "/projects/capacity/set", "destination_route": "/projects/capacity/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-51EAEADC2284", "kind": "field", "line": 34, "method": "POST", "selector": "#capacity-set-project", "state_changing": true, "tag": "select", "template": "partials/projects/capacity_drawer.html"},
   {"accessible_name": "Choose a staff member Choose the project first {{ staff.user.name }} — already allocated, edit from the table", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-23B61265CDD9", "kind": "field", "line": 44, "method": "", "selector": "#capacity-set-staff", "state_changing": false, "tag": "select", "template": "partials/projects/capacity_drawer.html"},
   {"accessible_name": "{{ values.max_schools }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D0A49504F1E5", "kind": "field", "line": 55, "method": "", "selector": "#capacity-max", "state_changing": false, "tag": "input", "template": "partials/projects/capacity_drawer.html"},

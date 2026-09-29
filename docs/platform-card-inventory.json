@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 238,
+   "line": 259,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 257,
+   "line": 278,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,

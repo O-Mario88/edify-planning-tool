@@ -2549,6 +2549,11 @@ urlpatterns = [
         name="project_withdraw_school",
     ),
     path(
+        "projects/<str:project_id>/schools/bulk-withdraw",
+        project_capacity_views.project_bulk_withdraw_view,
+        name="project_bulk_withdraw",
+    ),
+    path(
         "projects/capacity/<str:capacity_id>/edit",
         project_capacity_views.project_capacity_edit_view,
         name="project_capacity_edit",
