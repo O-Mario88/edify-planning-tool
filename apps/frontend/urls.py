@@ -613,6 +613,11 @@ urlpatterns = [
     # figure, one school's requirement slots, the Country Director's "Follow
     # Up with PL", and the page's workbook. All read one canonical service.
     path("country-map/", oversight_views.country_map_view, name="country_map"),
+    path(
+        "planning-monitor/",
+        oversight_views.planning_monitor_view,
+        name="planning_monitor",
+    ),
     # Country Execution & Completion Oversight — the second Country Oversight
     # tab (/country-planning-oversight/?view=execution) and its drill-downs.
     path(

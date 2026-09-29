@@ -1,8 +1,9 @@
 {% extends base_template %}
-{% load frontend_filters %}
+{% load static frontend_filters %}
 
 {% block title %}Planning — Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/fullcalendar.html" %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/planning-cluster-column.css' %}?v=20260929cluster2">{% endblock %}
 
 {% block shell_content %}
 <div

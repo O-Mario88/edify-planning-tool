@@ -15556,6 +15556,22 @@
    "view": "apps.frontend.views.country_oversight_views.followup_lead_action_view"
   },
   {
+   "page_permission": "planning_monitor",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/planning-monitor/",
+   "route_name": "planning_monitor",
+   "view": "apps.frontend.views.oversight_views.planning_monitor_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18514,26 +18530,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 418,
-  "Admin": 1038,
+  "Admin": 1039,
   "BusinessTransformationOfficer": 235,
   "CCEO": 545,
-  "CountryDirector": 794,
+  "CountryDirector": 795,
   "HumanResources": 333,
-  "ImpactAssessment": 658,
+  "ImpactAssessment": 659,
   "MfiLoanOfficer": 131,
   "MfiPartnerAdmin": 134,
   "PartnerAdmin": 222,
   "PartnerFieldOfficer": 222,
-  "Program Lead": 632,
+  "Program Lead": 633,
   "ProjectCoordinator": 456,
-  "RegionalProgramLead": 326,
-  "RegionalVicePresident": 395
+  "RegionalProgramLead": 327,
+  "RegionalVicePresident": 396
  },
  "summary": {
-  "page_keys_declared": 180,
-  "page_keys_in_navigation": 197,
-  "routes_guarded": 1135,
-  "routes_total": 1329,
+  "page_keys_declared": 181,
+  "page_keys_in_navigation": 198,
+  "routes_guarded": 1136,
+  "routes_total": 1330,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

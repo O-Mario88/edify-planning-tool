@@ -212,6 +212,13 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # 2026-09-28: the portfolio left Country Oversight's tabs for the map
     # page). The same readers as Country Oversight.
     "country_map": {CD, RVP, IA, ADMIN},
+    # The Planning Monitor, a page of its own under the Dashboard (owner,
+    # 2026-09-29: "move the [monitor] on its own page and add it to the side
+    # bar and place it below the Dashboard. Do the same for PL"): each
+    # Programme Lead's and CCEO's plan against their 280 or 560, and its
+    # execution and completion — the country for the CD, IA and RVP, a
+    # Lead's own team for the PL, the region for the RPL.
+    "planning_monitor": {PL, IA, CD, RVP, RPL, ADMIN},
     # The Accountant read clusters as a section of Team Oversight until the
     # section moved here (2026-09-23), and keeps that reading (owner,
     # 2026-09-23: "give them the access"). The data stays scoped by
@@ -832,6 +839,7 @@ ICONS.update(
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
         "country_map": ICONS["coverage"],
+        "planning_monitor": ICONS["team_targets"],
         "cluster_oversight": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
@@ -1696,6 +1704,14 @@ SIDEBAR_ITEMS = [
                     MFI_OFFICER: "/mfi-portal/dashboard",
                     BUSINESS_TRANSFORMATION: "/business-transformation/overview",
                 },
+            },
+            {
+                # Directly under the Dashboard for the people who follow
+                # planning and delivery every day (owner, 2026-09-29).
+                "label": "Planning Monitor",
+                "url": "/planning-monitor/",
+                "page_key": "planning_monitor",
+                "visible_to": {CD, PL, IA},
             },
             {
                 "label": "Planning",

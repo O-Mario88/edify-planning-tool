@@ -16,6 +16,9 @@
 </button>
 
   </div></td>
+  {% comment %}The cluster the school belongs to (owner, 2026-09-29), linked to
+  the cluster; a school outside any cluster says so.{% endcomment %}
+  <td data-label="Cluster" class="school-plan-table__cluster">{% if school.cluster and school.cluster != "—" and school.clusterName != "Cluster missing" %}<a href="/clusters/{{ school.cluster }}" class="hover:underline" title="{{ school.clusterName }}">{{ school.clusterName }}</a>{% elif school.clusterName == "Cluster missing" %}<span class="edify-text-muted">Cluster missing</span>{% else %}<span class="edify-text-muted">Not clustered</span>{% endif %}</td>
   {% include "components/school_planning_badges.html" with badges=school.planningBadges layout="cells" %}
   {% if school.supportRule %}{% include "partials/planning/support_cell.html" %}{% endif %}
   <td data-label="Actions" class="school-plan-table__actions">
@@ -60,7 +63,7 @@
 </tr>
 <tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="{% if school.supportRule %}6{% else %}5{% endif %}">
+  <td colspan="{% if school.supportRule %}7{% else %}6{% endif %}">
     {% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ school.id }}" class="edify-text-caption hover:underline">Open {{ school.name }} school profile</a>{% endif %}
     <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>

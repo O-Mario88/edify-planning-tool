@@ -1,12 +1,14 @@
 {% load frontend_filters school_identity table_pagination %}
 {% comment %}
-The Planning Monitor (owner, 2026-09-28): each CCEO's year against the visits
-it should hold — 560 unless the CD set the officer's own target, two at each
-Core school and the rest at Client and Core Trained schools, with the client
-schools beyond that the partner's — the schools planned for training through
-group trainings and cluster meetings, the schools not clustered or not
-planned for, and the schools in Special Projects. Planned and delivered side
-by side, so the same table follows execution as it happens.
+The Planning Monitor (owner, 2026-09-28, 2026-09-29): each person's year
+against the visits it should hold — 280 for a Programme Lead, 560 for a CCEO,
+two at each Core school and the rest at Client and Core Trained schools — the
+schools they have handed to partners and the partner activities scheduled,
+the schools planned for training through group trainings and cluster
+meetings, the schools not clustered or not planned for, and the schools in
+Special Projects. The rows are the people (apps.planning.monitor_roster), so
+someone who holds no school on the directory is still followed. Delivery is
+followed on the Execution & Completion Monitor beside it.
 
 Read-only, like every supervision lens: the acting is done through the people
 it names. Every number is folded from the school rows under it
@@ -55,9 +57,9 @@ and every gap count opens the list of the schools behind it.
     </label>
     {% if monitor_gap %}
     <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">CCEO</span>
-      <select name="officer" aria-label="CCEO">
-        <option value="">Every CCEO</option>
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Staff</span>
+      <select name="officer" aria-label="Staff">
+        <option value="">Everyone</option>
         {% for officer in monitor.officer_options %}
         <option value="{{ officer.id }}" {% if monitor_officer == officer.id %}selected{% endif %}>{{ officer.name }}</option>
         {% endfor %}
@@ -68,22 +70,23 @@ and every gap count opens the list of the schools behind it.
 
   <section class="card p-0 overflow-hidden" aria-labelledby="monitor-cceo-title">
     <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="monitor-cceo-title">CCEO planning against target · FY {{ fy }}</h3>
-      <span class="tabular-nums">{{ monitor_totals.officer_count }} CCEO{{ monitor_totals.officer_count|pluralize }} · {{ monitor_totals.school_count|intcomma }} schools</span>
+      <h3 id="monitor-cceo-title">Planning against target · FY {{ fy }}</h3>
+      <span class="tabular-nums">{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_totals.staff_visits|intcomma }} of {{ monitor_totals.visits_target|intcomma }} visits planned</span>
     </header>
-    <p class="px-4 pt-3 edify-text-caption edify-text-muted">Each CCEO plans {{ default_visits_target }} visits a year unless the Country Director set their own target: two at each Core school, the rest at Client and Core Trained schools. Client schools beyond those visits are the partner's. Training counts a school invited to a group training or cluster meeting, or given an in-school training. Champion and Core Graduate schools are followed on Programme Schools.</p>
+    <p class="px-4 pt-3 edify-text-caption edify-text-muted">A Programme Lead plans {{ pl_visits_target }} visits a year and a CCEO {{ default_visits_target }}: two at each Core school, the rest at Client and Core Trained schools. Visits count every visit and SSA Support the person planned, as Team Plan lists them. Partner schools are the schools each person handed to a partner; partner activities are those the partner has dated, with handovers still awaiting a date. Training counts a school invited to a group training or cluster meeting, or given an in-school training.</p>
     {% if monitor.leads %}
     <div class="overflow-x-auto mt-2">
       <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-monitor-table>
-        <caption class="sr-only">Each CCEO's schools, visits planned against their target, partner share, training coverage, planning gaps and delivery, grouped by Programme Lead.</caption>
+        <caption class="sr-only">Each Programme Lead's and CCEO's schools, visits planned against their target, partner work, training coverage and planning gaps, grouped by Programme Lead.</caption>
         <thead>
           <tr>
-            <th scope="col" class="px-3 py-2">CCEO</th>
+            <th scope="col" class="px-3 py-2">Staff</th>
             <th scope="col" class="px-3 py-2 text-right">Schools</th>
             <th scope="col" class="px-3 py-2 text-right">Visits planned</th>
             <th scope="col" class="px-3 py-2 text-right">Core visits</th>
             <th scope="col" class="px-3 py-2 text-right">Client visits</th>
-            <th scope="col" class="px-3 py-2 text-right">With a partner</th>
+            <th scope="col" class="px-3 py-2 text-right">Partner<br>schools</th>
+            <th scope="col" class="px-3 py-2 text-right">Partner<br>activities</th>
             <th scope="col" class="px-3 py-2 text-right">Schools visited</th>
             <th scope="col" class="px-3 py-2 text-right">Training planned</th>
             <th scope="col" class="px-3 py-2 text-right">Not clustered</th>
@@ -91,16 +94,14 @@ and every gap count opens the list of the schools behind it.
             <th scope="col" class="px-3 py-2 text-right">No training</th>
             <th scope="col" class="px-3 py-2 text-right">Neither</th>
             <th scope="col" class="px-3 py-2 text-right">In projects</th>
-            <th scope="col" class="px-3 py-2 text-right">Visits delivered</th>
-            <th scope="col" class="px-3 py-2 text-right">Schools trained</th>
           </tr>
         </thead>
         <tbody>
           {% for lead in monitor.leads %}
           <tr class="edify-group-head">
-            <th colspan="15" scope="colgroup">
+            <th colspan="14" scope="colgroup">
               <span class="edify-group-head__label">{{ lead.name }}</span>
-              <span class="edify-group-head__count">{{ lead.officer_count }} CCEO{{ lead.officer_count|pluralize }} · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
+              <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
             </th>
           </tr>
           {% for officer in lead.officers %}
@@ -119,7 +120,7 @@ and every gap count opens the list of the schools behind it.
       </table>
     </div>
     {% else %}
-    {% include "components/empty_state.html" with message="No Core, Client or Core Trained schools in your scope." %}
+    {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
     {% endif %}
   </section>
 
@@ -132,12 +133,12 @@ and every gap count opens the list of the schools behind it.
     </header>
     <div class="overflow-x-auto">
       <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
-        <caption class="sr-only">Schools: {{ monitor_gap_label|lower }}, with their CCEO, cluster and planning state.</caption>
+        <caption class="sr-only">Schools: {{ monitor_gap_label|lower }}, with the staff who hold them, cluster and planning state.</caption>
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">School</th>
             <th scope="col" class="px-3 py-2">Type</th>
-            <th scope="col" class="px-3 py-2">CCEO</th>
+            <th scope="col" class="px-3 py-2">Staff</th>
             <th scope="col" class="px-3 py-2">District</th>
             <th scope="col" class="px-3 py-2">Cluster</th>
             <th scope="col" class="px-3 py-2">Visit</th>
@@ -150,7 +151,7 @@ and every gap count opens the list of the schools behind it.
           <tr>
             <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{% school_identity school.name school.code %}</a></td>
             <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% else %}Client{% endif %}</td>
-            <td class="px-3 py-2" data-label="CCEO">{{ school.officer_name }}</td>
+            <td class="px-3 py-2" data-label="Staff">{{ school.officer_name }}</td>
             <td class="px-3 py-2" data-label="District">{{ school.district|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Cluster">{% if school.clustered and school.cluster_url %}<a href="{{ school.cluster_url }}" class="hover:underline">{{ school.cluster_name|default:"Cluster" }}</a>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not clustered</span>{% endif %}</td>
             <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>

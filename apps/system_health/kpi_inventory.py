@@ -503,6 +503,13 @@ def _registered_metrics() -> list[dict]:
             "RegionalVicePresident",
             "Admin",
         ),
+        # The Planning Monitor's own page (owner, 2026-09-29).
+        "planning_monitor": (
+            "CountryDirector",
+            "Program Lead",
+            "ImpactAssessment",
+            "Admin",
+        ),
         "partner_oversight": ("Program Lead", "CountryDirector", "Admin"),
         "business_transformation": (
             "BusinessTransformationOfficer",
