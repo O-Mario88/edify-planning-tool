@@ -199,7 +199,9 @@ def record_login(request, user) -> None:
         )
 
 
-# Requests that say nothing about what a person is doing.
+# Requests that say nothing about what a person is doing: the browser's
+# machinery, and what the page reports on its own (the defect beacon posts
+# whenever a script throws, and read as "Viewing Support · client defect").
 _UNTRACKED_PREFIXES = (
     "/api/",
     "/static/",
@@ -210,8 +212,18 @@ _UNTRACKED_PREFIXES = (
     "/sw.js",
     "/manifest",
     "/robots.txt",
+    "/support/client-defect",
 )
 _READ_METHODS = ("GET", "HEAD", "OPTIONS")
+
+
+def is_untracked_path(path: str | None) -> bool:
+    """A path that is not a page a person works on. A file (the service
+    worker, a manifest, a map) is the browser's machinery: "/sw.js" read as a
+    part of the tool called "Sw.Js" and was credited the minutes of whoever's
+    browser fetched it."""
+    path = path or ""
+    return path.startswith(_UNTRACKED_PREFIXES) or "." in path.rsplit("/", 1)[-1]
 
 
 def request_footprint(request) -> tuple[str, str] | None:
@@ -223,10 +235,7 @@ def request_footprint(request) -> tuple[str, str] | None:
     if request is None:
         return None
     path = request.path or "/"
-    # A file (the service worker, a manifest, a map) is the browser's
-    # machinery, not a page: "/sw.js" read as a part of the tool called
-    # "Sw.Js" and was credited the minutes of whoever's browser fetched it.
-    if path.startswith(_UNTRACKED_PREFIXES) or "." in path.rsplit("/", 1)[-1]:
+    if is_untracked_path(path):
         return None
     htmx = request.headers.get("HX-Request") == "true"
     current = request.headers.get("HX-Current-URL") or ""
@@ -284,6 +293,11 @@ def touch_presence(user, request=None) -> None:
     previous_seen = getattr(user, "last_seen_at", None)
     previous_path = getattr(user, "last_seen_path", None) or ""
     previous_action = getattr(user, "last_seen_action", None) or ""
+    if is_untracked_path(previous_path):
+        # Recorded before these requests were left out (production stored
+        # "/sw.js" until 2026-09-28): no part of the tool to credit, as when
+        # no page was recorded at all.
+        previous_path = ""
     try:
         rows = User.objects.filter(pk=user_pk)
         # Guarded on the beat it read, so two requests at once cannot both
@@ -326,7 +340,7 @@ def credit_presence_time(user_pk, at, path: str, action: str, *, seconds: int) -
     from .models import PresenceTime
     from .presence_labels import describe
 
-    if seconds <= 0:
+    if seconds <= 0 or is_untracked_path(path):
         return
     described = describe(path, action)
     slot = {
@@ -391,7 +405,12 @@ def _person(
         duration = (last_seen - since).total_seconds()
     else:
         duration = None
-    described = describe(row["last_seen_path"] or "", row["last_seen_action"] or "")
+    # A page stored before the browser's machinery was left out is no page.
+    described = (
+        {"section": "—", "working_on": "—"}
+        if is_untracked_path(row["last_seen_path"])
+        else describe(row["last_seen_path"] or "", row["last_seen_action"] or "")
+    )
     # This person's own sign-ins. Distinct from `last_seen_at`, which is the
     # last page they touched and keeps moving through a sitting; `last_login_at`
     # is when that sitting began.

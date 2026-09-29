@@ -9,7 +9,10 @@ test('indexed selectors preserve live layouts and theme styling',async({page,bro
  test.setTimeout(180000);
  await signIn(page,'admin@edify.org','edify',{acceptRequiredAgreements:false});
  const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
- const files=['main','design-system','components','pages','platform','consistency','drawers','components/mobile-micro-ux','components/interactions','components/mobile-patterns'];
+ // Every stylesheet scripts/build_indexed_css.cjs compiles. The source step below disables every /build/css/ link, so a
+ // compiled file missing here is simply switched off: responsive-system.css was, and its pinned-name cap then read as a
+ // difference the moment Who's Online showed its rows unfolded (2026-09-29).
+ const files=['main','design-system','components','pages','platform','consistency','drawers','components/mobile-micro-ux','components/interactions','components/mobile-patterns','components/responsive-system'];
  for(const route of ['/analytics','/schools','/projects/planning','/dashboard?view=operations','/leave/calendar']){
   await page.goto(route,{waitUntil:'networkidle'});
   // Inline !important wins over component-specific transition rules.

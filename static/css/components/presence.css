@@ -56,9 +56,11 @@
 .presence-legend { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 .presence-legend .admin-presence-light { margin-inline-start: 0.35rem; }
 
-.presence-table-wrap { overflow-x: auto; max-height: 34rem; overflow-y: auto; }
+/* Every row shows (owner, 2026-09-29: "everything should be visible"): the
+   table is as tall as its people, and only a narrow screen scrolls it sideways. */
+.presence-table-wrap { overflow-x: auto; }
 .presence-table { width: 100%; border-collapse: collapse; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
-.presence-table th {
+.presence-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -80,12 +82,10 @@
    accessed, Overall time. One line each, as every record table reads; the
    figures are tabular and never cut. */
 .presence-table__name { white-space: nowrap; }
-.presence-person__toggle .admin-presence-light { margin-inline-end: 0.6rem; vertical-align: -0.05rem; }
-.presence-person__toggle { color: var(--edify-text); font-weight: 620; text-decoration: none; cursor: pointer; }
-.presence-person__toggle:hover { text-decoration: underline; }
-.presence-person__toggle:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: 2px; border-radius: 0.25rem; }
-.presence-row--lead .presence-person__toggle { font-weight: 720; }
-.presence-row[data-presence="offline"] .presence-person__toggle { color: var(--edify-text-muted); font-weight: 560; }
+.presence-person__name .admin-presence-light { margin-inline-end: 0.6rem; vertical-align: -0.05rem; }
+.presence-person__name { color: var(--edify-text); font-weight: 620; }
+.presence-row--lead .presence-person__name { font-weight: 720; }
+.presence-row[data-presence="offline"] .presence-person__name { color: var(--edify-text-muted); font-weight: 560; }
 .presence-table__role { white-space: nowrap; color: var(--edify-text-muted); font-weight: 600; }
 .presence-table :is(.presence-table__logins, .presence-table__login, .presence-table__online, .presence-table__total) { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .presence-table td.presence-table__logins { font-weight: 650; color: var(--edify-text); }
@@ -117,26 +117,9 @@ a.presence-signin:hover, a.presence-signin:focus-visible { text-decoration: unde
 }
 .presence-table__empty { padding: 1.4rem; text-align: center; color: var(--edify-text-subtle); font-weight: 600; }
 
-.presence-group__row td { padding: 0; background: var(--edify-surface-muted); }
-.presence-group__toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.45rem 0.6rem;
-  border: 0;
-  background: transparent;
-  color: var(--edify-text);
-  font: inherit;
-  font-weight: 700;
-  text-align: start;
-  cursor: pointer;
-}
-.presence-group__chevron { width: 0.45rem; height: 0.45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s ease; opacity: .7; }
-.presence-group__toggle[aria-expanded="false"] .presence-group__chevron { transform: rotate(-45deg); }
-.presence-group__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.presence-group__count { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; color: var(--edify-text-muted); white-space: nowrap; }
-tbody.presence-group[data-collapsed] .presence-row { display: none; }
+/* A Programme Lead's team, or a role, heads its rows with the platform's
+   group heading (components.css .edify-group-head); nothing under it folds. */
+.presence-table .edify-group-head .admin-presence-light { width: 0.55rem; height: 0.55rem; }
 
 /* The period filter (owner, 2026-09-28): day, week, month, quarter, FY and a
    day inside it. One compact row under the caption. */
@@ -147,17 +130,31 @@ tbody.presence-group[data-collapsed] .presence-row { display: none; }
 
 /* Time in the period: what on and where, each with its minutes. The pieces
    run on one line after a middle dot, as the row's other cells do. */
-.presence-group__time { font-weight: 650; color: var(--edify-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .presence-spent b,
 .presence-detail b { font-weight: 650; color: var(--edify-text); font-variant-numeric: tabular-nums; margin-inline-start: 0.2rem; }
-.presence-table td :is(.presence-spent, .presence-more) + :is(.presence-spent, .presence-more)::before { content: "· "; color: var(--edify-text-subtle); margin-inline-start: 0.25rem; }
-.presence-more { color: var(--edify-text-subtle); }
+.presence-table td .presence-spent + .presence-spent::before { content: "· "; color: var(--edify-text-subtle); margin-inline-start: 0.25rem; }
+/* Every other part is listed and none is cut (owner, 2026-09-29: "everything
+   should be visible"): the list wraps between parts, each part and its time
+   on one line. The platform holds a cell to one line and shortens the widest
+   text (consistency.css, micro-ux.js, !important); this outranks it for this
+   one column, as the detail row below does for its breakdown. */
+:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts,
+:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts.edify-cell.edify-cell {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-inline-size: none !important;
+  min-inline-size: 12rem;
+}
+:is(main, .drawer-body) table.presence-table tbody tr.presence-row > td.presence-table__parts .presence-spent {
+  display: inline-block;
+  max-inline-size: none !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
 
-/* A person's row opens their detail: every sign-in in the period and the
-   time under each part of the tool. One at a time, like the groups. */
-.presence-row[data-presence-person] { cursor: pointer; }
-.presence-row.is-open > td { background: var(--edify-surface-muted); }
-tbody.presence-group[data-collapsed] .presence-detail { display: none; }
+/* Under each person, always shown: every sign-in in the period and the time
+   under each part of the tool, with its tasks. */
 :is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td,
 :is(main, .drawer-body) table.presence-table tbody tr.presence-detail > td.edify-cell.edify-cell {
   white-space: normal !important;
