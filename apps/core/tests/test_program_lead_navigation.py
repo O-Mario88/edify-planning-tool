@@ -40,6 +40,8 @@ EXPECTED_PL_SIDEBAR = [
             # Staff Activity Log (owner, 2026-09-29), replacing Who's Online,
             # directly below the Dashboard.
             ("Staff Activity", "/staff-activity"),
+            # Under the Dashboard (owner, 2026-09-29).
+            ("Planning Monitor", "/planning-monitor/"),
             ("Planning", "/planning"),
             ("My Plan", "/my-plan"),
             ("School Directory", "/schools"),

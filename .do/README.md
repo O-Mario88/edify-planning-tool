@@ -34,26 +34,30 @@ them.
 
 ## What is provisioned
 
-Rebuilt and verified in the DigitalOcean control panel on 2026-09-08. This is
+Rebuilt and verified in the DigitalOcean control panel on 2026-09-08; the web
+service, database and pool were upsized there on 2026-09-29. This is
 evidence, not an input spec; export the live spec again before every change.
 
 - app `edify-production`, id `fcd3a30a-9687-4c23-ad76-d54345d4bcfa`, region
   `fra1`
-- service `edify-planning-tool` — 1 × `apps-s-1vcpu-1gb-fixed` ($10/month),
-  health check `GET /api/health/ready`, one Gunicorn worker
+- service `edify-planning-tool` — 1 × `apps-s-2vcpu-4gb` ($50/month; 2 shared
+  vCPUs, 4 GB), autoscale off, health check `GET /api/health/ready`,
+  `WEB_CONCURRENCY=4` Gunicorn workers, `WEB_MAX_CONCURRENT_REQUESTS=10`
 - worker `scheduler` — 1 × `apps-s-1vcpu-0.5gb` ($5/month),
   `python manage.py runscheduler`
 - pre-deploy job `migrate` — `python manage.py migrate_locked --noinput`; it is
   billed only for the seconds it runs
 - managed PostgreSQL 16 cluster `edify-production-db`, id
-  `63eb66af-dbc5-490f-bae6-885525c15718`, one 1-GiB primary with 10 GiB storage
-  ($15.15/month), bound to the app as `db`
+  `63eb66af-dbc5-490f-bae6-885525c15718`, one Basic primary with 2 vCPU, 4 GB
+  RAM, 60 GiB storage and a 97-connection limit ($60.90/month), bound to the
+  app as `db`; PgBouncer pool `edify_web` (transaction mode, size 40)
 - private Spaces bucket `edify-production-private-fra` in `fra1` ($5/month)
 - `edifyplanning.app` is PRIMARY and `www.edifyplanning.app` is an ALIAS; DNS
   remains at GoDaddy, with `www` targeting
   `edify-production-jct7s.ondigitalocean.app`
 
-The recurring total is **$35.15/month before tax**. Do not add a standby,
+The recurring total is **$120.90/month before tax** (it was $35.15 before the
+2026-09-29 upsize). Do not add a standby,
 staging app, managed cache, dedicated egress IP, or paid log destination without
 an explicit budget increase.
 
@@ -65,16 +69,19 @@ web-container startup when changing instance counts.
 
 ### Web connection pooling (2026-09-20)
 
-The production database has 22 usable server connections. The `edify_web`
-transaction pool targets `defaultdb`, retains the connecting user's privileges,
-and is capped at 10 server connections. This uses the existing managed cluster.
+The production database has 97 server connections (22 before the 2026-09-29
+upsize). The `edify_web` transaction pool targets `defaultdb`, retains the
+connecting user's privileges, and is capped at 40 server connections (was 10).
+This uses the existing managed cluster.
 
 Enable it on **the web component only** with `DB_USE_PGBOUNCER=true`,
 `DB_POOL_NAME=edify_web`, and `DB_POOL_PORT=25061`. The existing managed
 `DATABASE_URL` binding retains its host, credentials and TLS configuration;
 only the database/pool name and port are overridden. Set
-`WEB_MAX_CONCURRENT_REQUESTS=6` explicitly so enabling pooling does not also
-double application concurrency. Keep `DB_CONN_MAX_AGE=0` for ASGI.
+`WEB_MAX_CONCURRENT_REQUESTS` explicitly (10 since 2026-09-29, 6 before) so
+enabling pooling does not also double application concurrency. Keep
+`WEB_CONCURRENCY × WEB_MAX_CONCURRENT_REQUESTS` at or under the pool size:
+4 × 10 = 40. Keep `DB_CONN_MAX_AGE=0` for ASGI.
 
 The runtime role's defaults in `defaultdb` must retain `statement_timeout=30s`,
 `lock_timeout=10s`, and `idle_in_transaction_session_timeout=60s`, because

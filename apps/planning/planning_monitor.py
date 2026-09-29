@@ -17,10 +17,17 @@ Owner, 2026-09-28:
   need to Monitor planning and later execution in real time just like the PLs
   are doing."
 
-So, per CCEO, for one fiscal year:
+Owner, 2026-09-29: "PL plans for maximum of 280 and CCEO 560 ... fetch the
+right data based on what people have planned." The rows are the people
+(apps.planning.monitor_roster): every Programme Lead and every CCEO in the
+reader's scope, whether or not the directory lists a school under them.
 
-* **The visit target** — the officer's own ``StaffTargetProfile.visits_target``
-  when the CD has set one, else ``DEFAULT_VISITS_TARGET`` (560).
+So, per person, for one fiscal year:
+
+* **The visit target** — 280 for a Programme Lead, 560 for a CCEO.
+* **Visits planned** — the staff visits the person planned, wherever they
+  are: every visit type and SSA Support, as Team Plan lists them, in any live
+  state (a plan returned for correction is still their plan).
 * **Core visits** — two staff visits a year at each Core school
   (``CORE_STAFF_VISITS_PER_SCHOOL``): the target is 2 × Core schools.
 * **Client visits** — the rest of the target, at client and Core Trained
@@ -53,11 +60,22 @@ from dataclasses import dataclass, field
 
 from django.db.models import Count, Q
 
-from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import SSA_TYPES, TRAINING_TYPES, VISIT_TYPES
 from apps.core.metrics import percentage
+from apps.planning.monitor_roster import (
+    CCEO_VISITS_TARGET,
+    PL_VISITS_TARGET,
+    ROLE_CCEO,
+    ROLE_PL,
+    VISITS_TARGET_BY_ROLE,
+)
 
-#: The visits a CCEO plans in a year when no target has been set for them.
-DEFAULT_VISITS_TARGET = 560
+#: The visits a CCEO plans in a year.
+DEFAULT_VISITS_TARGET = CCEO_VISITS_TARGET
+
+#: What counts as a planned visit: every visit type, and SSA Support — the
+#: rows Team Plan files under Client and Core School Visits.
+PLANNED_VISIT_TYPES = tuple(str(t) for t in (*VISIT_TYPES, *SSA_TYPES))
 #: Staff visits a year at each Core school (two of the package's four; the
 #: partner delivers the other two).
 CORE_STAFF_VISITS_PER_SCHOOL = 2
@@ -164,13 +182,30 @@ class OfficerMonitor:
     lead_id: str
     lead_name: str
     visits_target: int = DEFAULT_VISITS_TARGET
-    target_is_set: bool = False
+    role: str = ROLE_CCEO
+    ids: frozenset = field(default_factory=frozenset)
     schools: list = field(default_factory=list)
     # The visits this officer planned — theirs, at any school — split by the
     # school's type, and those already delivered (`_count_planned_visits`).
     planned_core: int = 0
     planned_client: int = 0
     planned_done: int = 0
+    # The partner work this person hands over and monitors
+    # (`_count_partner_work`, owner 2026-09-29): schools with a partner, the
+    # partner's dated activities, those delivered, and handovers the partner
+    # has not dated yet.
+    partner_assigned_schools: int = 0
+    partner_scheduled: int = 0
+    partner_delivered: int = 0
+    partner_awaiting: int = 0
+
+    @property
+    def is_lead(self) -> bool:
+        return self.role == ROLE_PL
+
+    @property
+    def role_label(self) -> str:
+        return {ROLE_PL: "Programme Lead", ROLE_CCEO: "CCEO"}.get(self.role, "")
 
     # ── Portfolio ──
     @property
@@ -277,6 +312,18 @@ class OfficerMonitor:
         return _gap_cells(self)
 
 
+#: OfficerMonitor's plain counts a lead's and the country's rows add up.
+SUMMED_FIELDS = (
+    "planned_core",
+    "planned_client",
+    "planned_done",
+    "partner_assigned_schools",
+    "partner_scheduled",
+    "partner_delivered",
+    "partner_awaiting",
+)
+
+
 @dataclass
 class LeadMonitor:
     """A Programme Lead's column: their CCEOs, and the sums of them."""
@@ -295,6 +342,7 @@ class LeadMonitor:
             raise AttributeError(attr)
         if isinstance(getattr(OfficerMonitor, attr, None), property) or attr in (
             "visits_target",
+            *SUMMED_FIELDS,
         ):
             return self._sum(attr)
         raise AttributeError(attr)
@@ -384,9 +432,6 @@ def planning_monitor(
             "account_owner_id",
         )
     )
-    if not rows:
-        return empty
-
     directory = _staff_directory({r["account_owner_id"] for r in rows})
     clusters = _cluster_names({r["cluster_id"] for r in rows})
     schools: dict[str, SchoolState] = {}
@@ -407,42 +452,31 @@ def planning_monitor(
             lead_name=owner["lead_name"] if owner else NO_LEAD_LABEL,
         )
 
-    school_ids = queryset.values("id")
-    _count_activities(schools, school_ids, fy)
-    _count_partner_handovers(schools, school_ids)
-    _count_cluster_sessions(schools, school_ids, fy)
-    _mark_projects(schools, school_ids)
+    if schools:
+        school_ids = queryset.values("id")
+        _count_activities(schools, school_ids, fy)
+        _count_partner_handovers(schools, school_ids)
+        _count_cluster_sessions(schools, school_ids, fy)
+        _mark_projects(schools, school_ids)
 
-    targets = _visit_targets({s.officer_id for s in schools.values()}, fy)
-    officers: dict[tuple[str, str], OfficerMonitor] = {}
-    leads: dict[str, LeadMonitor] = {}
+    officers, leads = _people(principal, schools)
+    if not officers:
+        return empty
     for school in schools.values():
-        lead = leads.get(school.lead_id)
-        if lead is None:
-            lead = leads[school.lead_id] = LeadMonitor(
-                key=school.lead_id, name=school.lead_name
-            )
-        officer_key = (school.lead_id, school.officer_id)
-        officer = officers.get(officer_key)
-        if officer is None:
-            target = targets.get(school.officer_id)
-            officer = officers[officer_key] = OfficerMonitor(
-                key=school.officer_id,
-                name=school.officer_name,
-                lead_id=school.lead_id,
-                lead_name=school.lead_name,
-                visits_target=target or DEFAULT_VISITS_TARGET,
-                target_is_set=bool(target),
-            )
-            lead.officers.append(officer)
+        officer = officers[school.officer_id]
+        # The school follows its officer to the team the roster files them
+        # under, so a school and its officer never sit under two Leads.
+        school.lead_id, school.lead_name = officer.lead_id, officer.lead_name
         officer.schools.append(school)
 
-    _count_planned_visits(officers.values(), directory, fy)
+    _count_planned_visits(officers.values(), fy)
+    _count_partner_work(officers.values(), fy)
 
-    for lead in leads.values():
-        lead.officers.sort(key=lambda o: (o.key == UNASSIGNED_KEY, o.name.casefold()))
+    # The roster's order: each Lead, then their CCEOs by name; the country's
+    # CCEOs with no Lead, and schools with no officer, last.
     ordered = sorted(
-        leads.values(), key=lambda g: (g.key == NO_LEAD_KEY, g.name.casefold())
+        (lead for lead in leads.values() if lead.officers),
+        key=lambda g: (g.key == NO_LEAD_KEY, g.key == UNASSIGNED_KEY),
     )
     lead_options = [
         {"id": lead.key, "name": lead.name, "count": lead.school_count}
@@ -481,6 +515,96 @@ def planning_monitor(
     }
 
 
+def _people(principal, schools: dict) -> tuple[dict, dict]:
+    """Every person the reader follows, and a row for whoever else holds a
+    school in scope.
+
+    The roster (apps.planning.monitor_roster) comes first, so a Lead or a
+    CCEO who holds no school is still a row with their plan against their
+    target. An owner the roster does not name — a CCEO whose Lead is outside
+    this reader's teams, or someone in another role — keeps a row under the
+    Lead the directory files them with, so no school in scope drops out of
+    the totals. Schools with no owner are one "Unassigned" row with no
+    target: nobody is planning against it.
+    """
+    from apps.planning.monitor_roster import monitor_roster, roles_of
+    from apps.planning.portfolio_service import (
+        NO_LEAD_KEY,
+        NO_LEAD_LABEL,
+        UNASSIGNED_KEY,
+        UNASSIGNED_LABEL,
+    )
+
+    officers: dict[str, OfficerMonitor] = {}
+    leads: dict[str, LeadMonitor] = {}
+
+    def lead_for(key, name):
+        lead = leads.get(key)
+        if lead is None:
+            lead = leads[key] = LeadMonitor(key=key, name=name)
+        return lead
+
+    def add(lead, key, name, role, ids, target):
+        officer = officers[key] = OfficerMonitor(
+            key=key,
+            name=name,
+            lead_id=lead.key,
+            lead_name=lead.name,
+            visits_target=target,
+            role=role,
+            ids=frozenset(ids),
+        )
+        lead.officers.append(officer)
+        return officer
+
+    lead_hint = {s.lead_id for s in schools.values()}
+    for team in monitor_roster(principal, lead_ids_hint=lead_hint):
+        lead = lead_for(team.key, team.name)
+        for person in team.people:
+            if person.key not in officers:
+                add(
+                    lead,
+                    person.key,
+                    person.name,
+                    person.role,
+                    person.ids,
+                    person.visits_target,
+                )
+
+    extra = [
+        s
+        for s in schools.values()
+        if s.officer_id not in officers and s.officer_id != UNASSIGNED_KEY
+    ]
+    roles = roles_of({s.officer_id for s in extra})
+    for school in sorted(extra, key=lambda s: s.officer_name.casefold()):
+        if school.officer_id in officers:
+            continue
+        role = roles.get(school.officer_id, "")
+        lead = lead_for(
+            school.lead_id if school.lead_id in leads else NO_LEAD_KEY,
+            school.lead_name if school.lead_id in leads else NO_LEAD_LABEL,
+        )
+        add(
+            lead,
+            school.officer_id,
+            school.officer_name,
+            role,
+            {school.officer_id},
+            VISITS_TARGET_BY_ROLE.get(role, 0),
+        )
+    if any(s.officer_id == UNASSIGNED_KEY for s in schools.values()):
+        add(
+            lead_for(UNASSIGNED_KEY, UNASSIGNED_LABEL),
+            UNASSIGNED_KEY,
+            UNASSIGNED_LABEL,
+            "",
+            (),
+            0,
+        )
+    return officers, leads
+
+
 def _cluster_names(cluster_ids) -> dict[str, str]:
     from apps.clusters.models import Cluster
 
@@ -491,20 +615,12 @@ def _cluster_names(cluster_ids) -> dict[str, str]:
 
 
 def _live(qs):
-    """Activities that are a plan: not abandoned, not returned for
-    replanning, not a request still waiting on the school's owner."""
-    from apps.planning.school_planning_badges import (
-        AWAITING_VERIFICATION_STATUSES,
-        PLANNED_STATUSES,
-        VERIFIED_STATUSES,
-    )
+    """Activities that are a plan: the statuses Team Plan and My Plan list —
+    planned, being delivered, delivered, and returned for correction (still
+    the person's plan). Cancelled, rejected and abandoned work is not."""
+    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
 
-    return qs.filter(
-        deleted_at__isnull=True,
-        status__in=PLANNED_STATUSES
-        | AWAITING_VERIFICATION_STATUSES
-        | VERIFIED_STATUSES,
-    )
+    return qs.filter(deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES)
 
 
 def _delivered_statuses():
@@ -524,12 +640,15 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
     delivered = _delivered_statuses()
     rows = (
         _live(Activity.objects.filter(school_id__in=school_ids, fy=fy))
-        .filter(Q(activity_type__in=VISIT_TYPES) | Q(activity_type__in=TRAINING_TYPES))
+        .filter(
+            Q(activity_type__in=PLANNED_VISIT_TYPES)
+            | Q(activity_type__in=TRAINING_TYPES)
+        )
         .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
         .values("school_id", "activity_type", "delivery_type", "status")
         .annotate(n=Count("id"))
     )
-    visit_types = {str(t) for t in VISIT_TYPES}
+    visit_types = set(PLANNED_VISIT_TYPES)
     for row in rows:
         school = schools.get(row["school_id"])
         if school is None:
@@ -548,41 +667,38 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
                 school.training_done = True
 
 
-def _count_planned_visits(officers, directory: dict, fy: str) -> None:
-    """Each officer's own staff visits in the year, wherever they are.
+def _count_planned_visits(officers, fy: str) -> None:
+    """Each person's own staff visits in the year, wherever they are.
 
-    Counted by the officer who planned them — the responsible officer, in
+    Counted by the person who planned them — the responsible officer, in
     either id space — as My Plan and Team Plan count them, not by who owns the
     school: a CCEO's visit at a colleague's school is still one of the CCEO's
     560 (owner, 2026-09-28: "the PL are seeing exactly the number ... planned
-    by the CCEO"). Core or client by the school's type.
+    by the CCEO"). Core or client by the school's type. SSA Support and a
+    Lead's visit accompanying a CCEO count, as Team Plan lists them among the
+    school visits; a partner's delivery does not.
     """
     from apps.activities.models import Activity
-    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
 
-    by_key = {officer.key: officer for officer in officers}
-    ids = {
-        owner_id
-        for owner_id, entry in directory.items()
-        if entry["officer_id"] in by_key
-    }
-    if not ids:
+    by_id = {i: officer for officer in officers for i in officer.ids}
+    if not by_id:
         return
     delivered = _delivered_statuses()
     rows = (
         _live(
             Activity.objects.filter(
-                responsible_staff_id__in=ids, fy=fy, activity_type__in=VISIT_TYPES
+                responsible_staff_id__in=list(by_id),
+                fy=fy,
+                activity_type__in=PLANNED_VISIT_TYPES,
+                school_id__isnull=False,
             )
         )
         .exclude(delivery_type="partner")
-        .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
         .values("responsible_staff_id", "school__school_type", "status")
         .annotate(n=Count("id"))
     )
     for row in rows:
-        entry = directory.get(str(row["responsible_staff_id"]))
-        officer = by_key.get(entry["officer_id"]) if entry else None
+        officer = by_id.get(str(row["responsible_staff_id"]))
         if officer is None:
             continue
         if row["school__school_type"] in CORE_TYPES:
@@ -591,6 +707,87 @@ def _count_planned_visits(officers, directory: dict, fy: str) -> None:
             officer.planned_client += row["n"]
         if row["status"] in delivered:
             officer.planned_done += row["n"]
+
+
+def _count_partner_work(officers, fy: str) -> None:
+    """Each person's partner work in the year, as Team Plan and Partner
+    Oversight list it.
+
+    * **Schools with a partner** — distinct schools the person has handed to
+      a partner: a handover they assigned or monitor that is not withdrawn or
+      returned, or a partner-delivered activity they monitor this year.
+    * **Scheduled by partners** — partner-delivered activities in the year
+      the person monitors (the responsible officer where no monitor is
+      stamped), and of those, the delivered ones.
+    * **Awaiting the partner's date** — handovers still undated.
+    """
+    from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+
+    by_id = {i: officer for officer in officers for i in officer.ids}
+    if not by_id:
+        return
+    ids = list(by_id)
+    delivered = _delivered_statuses()
+    schools: dict[int, set] = {}
+
+    def owner_of(*candidates):
+        for candidate in candidates:
+            officer = by_id.get(str(candidate or ""))
+            if officer is not None:
+                return officer
+        return None
+
+    for monitor, responsible, school_id, status in _live(
+        Activity.objects.filter(fy=fy, delivery_type="partner").filter(
+            Q(monitored_by_staff_id__in=ids)
+            | Q(monitored_by_staff_id__isnull=True, responsible_staff_id__in=ids)
+        )
+    ).values_list(
+        "monitored_by_staff_id", "responsible_staff_id", "school_id", "status"
+    ):
+        officer = owner_of(monitor, responsible)
+        if officer is None:
+            continue
+        officer.partner_scheduled += 1
+        if status in delivered:
+            officer.partner_delivered += 1
+        if school_id:
+            schools.setdefault(id(officer), set()).add(school_id)
+
+    handovers = (
+        PartnerAssignment.objects.filter(
+            Q(monitoring_staff_id__in=ids)
+            | Q(monitoring_staff_id__isnull=True, assigning_staff_id__in=ids)
+        )
+        .exclude(status__in=_CLOSED_HANDOVER_STATUSES)
+        .filter(
+            Q(status__in=PartnerAssignment.UNSCHEDULED_STATUSES)
+            | Q(scheduled_activity__fy=fy)
+        )
+    )
+    for monitor, assigner, school_id, status in handovers.values_list(
+        "monitoring_staff_id", "assigning_staff_id", "school_id", "status"
+    ):
+        officer = owner_of(monitor, assigner)
+        if officer is None:
+            continue
+        if status in PartnerAssignment.UNSCHEDULED_STATUSES:
+            officer.partner_awaiting += 1
+        if school_id:
+            schools.setdefault(id(officer), set()).add(school_id)
+
+    for officer in officers:
+        officer.partner_assigned_schools = len(schools.get(id(officer), ()))
+
+
+#: Handovers that no longer put a school in a partner's hands.
+_CLOSED_HANDOVER_STATUSES = (
+    "returned_to_staff",
+    "withdrawn",
+    "cancelled",
+    "rejected",
+)
 
 
 def _count_partner_handovers(schools: dict, school_ids) -> None:
@@ -667,24 +864,12 @@ def _mark_projects(schools: dict, school_ids) -> None:
             schools[school_id].in_project = True
 
 
-def _visit_targets(officer_ids, fy: str) -> dict[str, int]:
-    """Each officer's visits target for the year, where the CD has set one."""
-    from apps.accounts.models import StaffTargetProfile
-
-    ids = {i for i in officer_ids if i}
-    if not ids:
-        return {}
-    return {
-        staff_id: target
-        for staff_id, target in StaffTargetProfile.objects.filter(
-            staff_id__in=ids, fy=str(fy), visits_target__gt=0
-        ).values_list("staff_id", "visits_target")
-    }
-
-
 __all__ = [
+    "CCEO_VISITS_TARGET",
     "CORE_STAFF_VISITS_PER_SCHOOL",
     "DEFAULT_VISITS_TARGET",
+    "PL_VISITS_TARGET",
+    "PLANNED_VISIT_TYPES",
     "GAPS",
     "GAP_LABELS",
     "LeadMonitor",

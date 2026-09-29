@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 670,
-  "templates": 249,
-  "distinct_titles": 639,
+  "titled_cards": 671,
+  "templates": 250,
+  "distinct_titles": 640,
   "with_card_key": 13,
-  "untitled_surfaces": 591,
-  "untitled_chrome": 153,
+  "untitled_surfaces": 592,
+  "untitled_chrome": 154,
   "untitled_nested": 230,
   "untitled_headless": 208,
   "templates_with_same_title_twice": 0,
@@ -2526,7 +2526,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 303,
+   "line": 304,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -6487,6 +6487,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/oversight/execution_workspace.html",
+   "line": 67,
+   "title": "Execution &amp; completion \u00b7 FY",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/oversight/flagged_schools.html",
    "line": 21,
    "title": "Flagged schools",
@@ -6497,8 +6506,8 @@
   },
   {
    "template": "templates/partials/oversight/monitor_workspace.html",
-   "line": 69,
-   "title": "CCEO planning against target \u00b7 FY",
+   "line": 71,
+   "title": "Planning against target \u00b7 FY",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",

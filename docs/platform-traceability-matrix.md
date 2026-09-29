@@ -15,28 +15,28 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 112 | 31 | 2 | 2 | 6 | 19 | 75 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 42 | 10 | 1 | 11 | 0 | 0 | 30 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 107 | 35 | 3 | 8 | 10 | 26 | 75 |
-| `journey-04` | Cluster training | ✓ | 1 | 62 | 17 | 1 | 2 | 0 | 1 | 71 |
-| `journey-05` | Partner assignment and payment | ✓ | 1 | 54 | 27 | 2 | 2 | 1 | 4 | 86 |
-| `journey-06` | Special Project | ✓ | 1 | 110 | 29 | 3 | 5 | 6 | 18 | 75 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 82 | 28 | 4 | 10 | 9 | 23 | 75 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 79 | 26 | 3 | 6 | 7 | 18 | 74 |
-| `journey-09` | Leave and temporary coverage | ✓ | 1 | 53 | 15 | 0 | 0 | 1 | 4 | 26 |
-| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 100 | 34 | 2 | 2 | 7 | 25 | 75 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 112 | 31 | 2 | 2 | 6 | 19 | 80 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 42 | 10 | 1 | 11 | 0 | 0 | 29 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 106 | 34 | 3 | 8 | 10 | 26 | 80 |
+| `journey-04` | Cluster training | ✓ | 1 | 63 | 17 | 1 | 2 | 0 | 1 | 76 |
+| `journey-05` | Partner assignment and payment | ✓ | 1 | 54 | 27 | 2 | 2 | 1 | 4 | 91 |
+| `journey-06` | Special Project | ✓ | 1 | 110 | 29 | 3 | 5 | 6 | 18 | 80 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 82 | 28 | 4 | 10 | 9 | 23 | 80 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 79 | 26 | 3 | 6 | 7 | 18 | 79 |
+| `journey-09` | Leave and temporary coverage | ✓ | 1 | 53 | 15 | 0 | 0 | 1 | 4 | 25 |
+| `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 100 | 34 | 2 | 2 | 7 | 25 | 80 |
 | `journey-11` | Professional Development | ✓ | 1 | 44 | 8 | 1 | 9 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 39 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 41 | 7 | 0 | 0 | 0 | 3 | 1 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 57 | 14 | 1 | 9 | 2 | 3 | 26 |
-| `journey-15` | Financial Health | ✓ | 1 | 55 | 17 | 2 | 4 | 1 | 6 | 30 |
-| `journey-16` | Government Requirements | ✓ | 1 | 54 | 17 | 2 | 4 | 1 | 5 | 30 |
-| `journey-17` | Loan | ✓ | 1 | 47 | 25 | 11 | 7 | 3 | 17 | 38 |
-| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 50 | 21 | 9 | 6 | 1 | 9 | 34 |
-| `journey-19` | Cross-role security | ✓ | 4 | 45 | 11 | 2 | 2 | 0 | 1 | 81 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 57 | 14 | 1 | 9 | 2 | 3 | 25 |
+| `journey-15` | Financial Health | ✓ | 1 | 55 | 17 | 2 | 4 | 1 | 6 | 29 |
+| `journey-16` | Government Requirements | ✓ | 1 | 54 | 17 | 2 | 4 | 1 | 5 | 29 |
+| `journey-17` | Loan | ✓ | 1 | 47 | 25 | 11 | 7 | 3 | 17 | 37 |
+| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 50 | 21 | 9 | 6 | 1 | 9 | 33 |
+| `journey-19` | Cross-role security | ✓ | 4 | 45 | 11 | 2 | 2 | 0 | 1 | 86 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 1 | 55 | 17 | 0 | 0 | 1 | 3 | 81 |
+| `journey-22` | Financial-year rollover | ✓ | 1 | 55 | 17 | 0 | 0 | 1 | 3 | 86 |
 
 ## Each requirement in full
 
@@ -51,14 +51,14 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
 | Routes / API | `GET /my-targets`, `GET /performance-conversation` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+41 more_ |
+| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+42 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py` _+102 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+19 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+11 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+67 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
 ### `journey-02` · SSA to school improvement
 
@@ -78,7 +78,7 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Notifications raised | — |
 | Audit actions (evidence) | — |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+22 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+21 more_ |
 
 ### `journey-03` · Standard staff school visit
 
@@ -91,14 +91,14 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `CCEO`, `CountryDirector`, `HumanResources`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator` |
 | Routes / API | `POST /activities/{id}/closure/close`, `POST /activities/{id}/start/action`, `POST /finance/actions/confirm_accountability`, `POST /fund-requests/advances/{id}/pl-approve`, `POST /fund-requests/weekly/{id}/approve`, `POST /fund-requests/weekly/{id}/confirm`, `POST /fund-requests/weekly/{id}/confirm-receipt`, `POST /fund-requests/weekly/{id}/disburse` _+4 more_ |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
-| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+43 more_ |
+| Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+44 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py` _+97 more_ |
-| Models written | `accounts.PresenceTime`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker` _+23 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+96 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+22 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+67 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
 ### `journey-04` · Cluster training
 
@@ -113,12 +113,12 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Permissions checked | `cluster.catchmentManage` |
 | Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py`, `apps/activities/training_history.py`, `apps/admin_ops/detection.py` _+52 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py`, `apps/activities/training_history.py`, `apps/activity_catalogue/training_intervention.py` _+53 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_clusters`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+63 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_clusters`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+68 more_ |
 
 ### `journey-05` · Partner assignment and payment
 
@@ -138,7 +138,7 @@ Steps: Assign → Schedule or Return → My Plan → Start → Evidence → IA r
 | Notifications raised | `partner_scheduled_activity` |
 | Audit actions (evidence) | `activity.closed`, `finance.partner_paid`, `notification.partner_scheduled_activity`, `partner.assigned` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+78 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+83 more_ |
 
 ### `journey-06` · Special Project
 
@@ -151,14 +151,14 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `CountryDirector`, `ImpactAssessment`, `ProjectCoordinator` |
 | Routes / API | `GET /projects/{id}` |
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
-| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools_oversight` _+49 more_ |
+| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools_oversight` _+50 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+100 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+17 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.activity_verified_by_pl`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready` _+10 more_ |
 | Metrics computed in the run | `frontend_views_extended_views_assigned_schools`, `frontend_views_extended_views_assigned_staff` |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+67 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
 ### `journey-07` · Fund overspending and reimbursement
 
@@ -178,7 +178,7 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Notifications raised | `accountability_pl_approved`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready` _+1 more_ |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability` _+15 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+67 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
 ### `journey-08` · Activity canceled after disbursement
 
@@ -198,7 +198,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+66 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+71 more_ |
 
 ### `journey-09` · Leave and temporary coverage
 
@@ -211,14 +211,14 @@ Steps: Leave request → Approval → Calendar block → Access transfer → To-
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /leave/approvals` |
 | Permissions checked | — |
-| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+38 more_ |
+| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+39 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py`, `apps/core/audit_hash.py`, `apps/core/calendar_policy.py`, `apps/core/client_ip.py` _+43 more_ |
 | Models written | `accounts.Leave`, `accounts.LeaveBalance`, `accounts.LeaveTypePolicy`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.TemporaryCoverageAssignment`, `accounts.User`, `audit.AuditLog`, `audit.DomainEventLog`, `geography.District`, `geography.Region` _+3 more_ |
 | Notifications raised | `leave_approved` |
 | Audit actions (evidence) | `hr.coverage_granted`, `hr.coverage_revoked`, `leave.approved`, `notification.leave_approved` |
 | Metrics computed in the run | `frontend_views_leave_views_approved_7_days`, `frontend_views_leave_views_away_this_week`, `frontend_views_leave_views_balance_alerts`, `frontend_views_leave_views_coverage_ready`, `frontend_views_leave_views_critical_conflicts`, `frontend_views_leave_views_pending_approvals` |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+18 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+17 more_ |
 
 ### `journey-10` · Quarterly Performance Conversation
 
@@ -238,7 +238,7 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `performance_window_opened`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed` _+17 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+67 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 
 ### `journey-11` · Professional Development
 
@@ -311,14 +311,14 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /team-planning-oversight/` |
 | Permissions checked | `data.export` |
-| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+36 more_ |
+| Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+37 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+47 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |
 | Metrics computed in the run | `oversight_awaiting_verification`, `oversight_country_activities_at_risk`, `oversight_country_activities_planned`, `oversight_country_planned_budget`, `oversight_execution_progress`, `oversight_partner_awaiting_schedule`, `oversight_region_activities_at_risk`, `oversight_region_activities_planned` _+4 more_ |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+18 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+17 more_ |
 
 ### `journey-15` · Financial Health
 
@@ -338,7 +338,7 @@ Steps: SSA weakness → BT recommendation → Training → Verification → Prac
 | Notifications raised | `bt.case.recommended` |
 | Audit actions (evidence) | `bt.financial_practice.recorded`, `bt.financial_practice.verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated`, `ssa.recommendation_superseded` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+22 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+21 more_ |
 
 ### `journey-16` · Government Requirements
 
@@ -358,7 +358,7 @@ Steps: SSA weakness → Requirement assessment → Registration, tax, or NSSF su
 | Notifications raised | `bt.case.recommended` |
 | Audit actions (evidence) | `bt.compliance.assessment_recorded`, `bt.compliance.assessment_verified`, `bt.ssa_recommendations_created`, `notification.bt.case.recommended`, `ssa.recommendation_generated` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+22 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_reach`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `cpo_cluster_membership`, `cpo_staff_visit_planning` _+21 more_ |
 
 ### `journey-17` · Loan
 
@@ -378,7 +378,7 @@ Steps: Funding Facility → MFI loan entry → Enrolment → Purpose → Disburs
 | Notifications raised | `bt.loan.disbursed`, `bt.loan.salesforce_confirmed`, `bt.loan.submitted` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+9 more_ |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+30 more_ |
+| Metrics whose sources it moves | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+29 more_ |
 
 ### `journey-18` · Repeat borrower and student reach
 
@@ -398,7 +398,7 @@ Steps: Second loan → Loan count increases → Unique school does not duplicate
 | Notifications raised | `bt.loan.disbursed` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+1 more_ |
 | Metrics computed in the run | `bt_active_portfolio`, `bt_amount_overdue`, `bt_collection_rate`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_par30`, `bt_positive_impact` _+5 more_ |
-| Metrics whose sources it moves | `bt_active_portfolio`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_positive_impact`, `bt_salesforce_backlog`, `bt_schools_financed`, `bt_use_verified` _+26 more_ |
+| Metrics whose sources it moves | `bt_active_portfolio`, `bt_defaulted_portfolio`, `bt_edtech_share`, `bt_new_loans`, `bt_positive_impact`, `bt_salesforce_backlog`, `bt_schools_financed`, `bt_use_verified` _+25 more_ |
 
 ### `journey-19` · Cross-role security
 
@@ -418,7 +418,7 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Notifications raised | — |
 | Audit actions (evidence) | `unauthorized_page_access` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+73 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+78 more_ |
 
 ### `journey-20` · Offline field activity
 
@@ -450,7 +450,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |
 | Metrics computed in the run | — |
-| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+73 more_ |
+| Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_budget`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention` _+78 more_ |
 
 ## Requirement sets this matrix does not cover
 

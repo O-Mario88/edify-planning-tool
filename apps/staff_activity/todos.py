@@ -20,6 +20,8 @@ _PRIORITY = {"high": "high", "normal": "medium", "low": "low"}
 
 def follow_up_todos(principal, role, today) -> list[dict]:
     try:
+        from django.db.models import Q
+
         from .follow_ups import sweep_auto_resolutions
         from .models import FollowUpRoute, FollowUpStatus, StaffUsageFollowUp
 
@@ -33,23 +35,19 @@ def follow_up_todos(principal, role, today) -> list[dict]:
             FollowUpStatus.SUPPORT_SCHEDULED,
             FollowUpStatus.WAITING_FOR_STAFF,
         ]
-        rows = list(
-            StaffUsageFollowUp.objects.filter(assignee_id=me, status__in=waiting)
-            .select_related("subject", "created_by")
-            .order_by("due_date")[:50]
-        )
-        # The sender works a follow-up the recipient sent back.
-        rows += list(
-            StaffUsageFollowUp.objects.filter(
-                created_by_id=me, status=FollowUpStatus.RETURNED
-            ).select_related("subject", "created_by")[:50]
+        # One query for the whole list: sent to me, sent back to me, and —
+        # for the Country Director — escalated (the To-Do page has a query
+        # budget; apps/command_center/test_todo_query_budget.py).
+        mine = Q(assignee_id=me, status__in=waiting) | Q(
+            created_by_id=me, status=FollowUpStatus.RETURNED
         )
         if role == "CountryDirector":
-            rows += list(
-                StaffUsageFollowUp.objects.filter(
-                    status=FollowUpStatus.ESCALATED
-                ).select_related("subject", "created_by")[:50]
-            )
+            mine |= Q(status=FollowUpStatus.ESCALATED)
+        rows = list(
+            StaffUsageFollowUp.objects.filter(mine)
+            .select_related("subject", "created_by")
+            .order_by("due_date")[:100]
+        )
         sweep_auto_resolutions(rows)
         out = []
         for fu in rows:
