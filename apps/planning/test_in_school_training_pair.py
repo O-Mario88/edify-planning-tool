@@ -124,6 +124,33 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertEqual(visit.responsible_staff_id, training.responsible_staff_id)
         self.assertEqual(visit.focus_intervention, training.focus_intervention)
 
+    def test_the_training_is_facilitated_and_its_visit_is_not(self):
+        """Owner, 2026-09-29: "Facilitated by" on scheduling training. The
+        school drawer offers it with the course; the named partner lands on
+        the Training only, since the visit is the officer's journey."""
+        from apps.partners.models import Partner
+
+        partner = Partner.objects.create(
+            name="Pair Facilitator Org", active_status=True
+        )
+        client = Client()
+        client.force_login(self.user)
+        html = client.get(
+            f"/planning/schedule-modal?school_id={self.school.school_id}",
+            HTTP_HX_REQUEST="true",
+        ).content.decode("utf-8")
+        self.assertIn('name="facilitating_partner_id"', html)
+        self.assertIn("Pair Facilitator Org", html)
+
+        result = schedule_in_school_training_pair(
+            {**self.payload(), "facilitatingPartnerId": partner.id}, self.user
+        )
+        training = Activity.objects.get(id=result["id"])
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        self.assertEqual(training.facilitating_partner_id, partner.id)
+        self.assertEqual(training.delivery_type, "staff")
+        self.assertIsNone(visit.facilitating_partner_id)
+
     def test_administrative_course_does_not_invent_an_ssa_intervention(self):
         result = schedule_in_school_training_pair(
             self.payload("NEW_SCHOOL_ORIENTATION"), self.user

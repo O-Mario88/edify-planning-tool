@@ -432,6 +432,9 @@ its costing on, so the costing link is derived server-side and never asked for.
   <p id="training-catalogue-help" class="edify-text-caption text-slate-500">After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
 </div>
 </template>
+<template x-if="showTrainingActivityPicker">
+{% include "partials/activities/facilitated_by_field.html" with field_id="school_facilitating_partner_id" %}
+</template>
 {% elif assigning_staff_name %}
 <p class="edify-text-caption text-slate-500">Monitored by <strong>{{ assigning_staff_name }}</strong></p>
 {% endif %}

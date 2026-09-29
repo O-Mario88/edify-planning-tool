@@ -247,3 +247,12 @@ def field_role(user):
         EdifyRole.PARTNER_FIELD_OFFICER.value,
     }
     return "partner" if getattr(user, "active_role", "") in partner_roles else "staff"
+
+
+@register.simple_tag
+def facilitator_partners():
+    """The partners a training's "Facilitated by" may name (owner,
+    2026-09-29): every active partner organisation, by name."""
+    from apps.activities.facilitation import facilitator_partners as partners
+
+    return partners()

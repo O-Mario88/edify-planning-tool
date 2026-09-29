@@ -26,10 +26,15 @@ from apps.accounts.models import StaffSchoolAssignment
 from apps.activities import services as activity_services
 from apps.activities.facilitation import (
     FEE_LINE_TYPE,
+    STAFF_FACILITATOR_LABEL,
     facilitates,
+    facilitator_label,
+    facilitator_partners,
     partner_planned_total,
+    takes_facilitator,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import EdifyRole
 from apps.core.tests.test_partner_and_cluster_flows import PartnerAndClusterFlowTest
 from apps.fund_requests.finance_models import PartnerPayment
@@ -291,3 +296,115 @@ class FacilitatedTrainingTest(APITestCase):
             notify_partner=False,
         )
         self.assertEqual(payment.amount_paid, fee // 2)
+
+    # -- "Facilitated by" (owner, 2026-09-29) --------------------------------
+    # "Scheduling training should have a Facilitated by field ... the list of
+    # partners in the database including the staff ... Allow the staff to
+    # edit the planned activities to add the trainer."
+
+    def test_facilitated_by_names_any_active_partner_on_a_staff_training(self):
+        activity = self._schedule(facilitatingPartnerId=self.partner.id)
+        self.assertEqual(activity.delivery_type, "staff")
+        self.assertEqual(activity.facilitating_partner_id, self.partner.id)
+        self.assertIsNone(activity.assigned_partner_id)
+        self.assertEqual(self._fee_line(activity).partner_id, self.partner.id)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient_id=self.partner_user.id,
+                source_event_type="partner_facilitation_booked",
+            ).exists()
+        )
+
+    def test_facilitated_by_blank_is_staff(self):
+        activity = self._schedule(facilitatingPartnerId="")
+        self.assertIsNone(activity.facilitating_partner_id)
+        self.assertEqual(facilitator_label(activity), STAFF_FACILITATOR_LABEL)
+        self.assertIsNone(self._fee_line(activity).partner_id)
+
+    def test_facilitated_by_is_for_trainings_only(self):
+        for kind in (
+            "cluster_training",
+            "in_school_training",
+            "core_training",
+            "training",
+        ):
+            with self.subTest(kind=kind):
+                self.assertTrue(takes_facilitator(kind))
+        for kind in ("cluster_meeting", "school_visit"):
+            with self.subTest(kind=kind):
+                self.assertFalse(takes_facilitator(kind))
+                with self.assertRaises(BadRequest):
+                    activity_services._requested_facilitator(
+                        {"facilitatingPartnerId": self.partner.id},
+                        self.cceo,
+                        activity_type=kind,
+                    )
+
+    def test_facilitated_by_refuses_an_inactive_partner(self):
+        self.partner.active_status = False
+        self.partner.save(update_fields=["active_status"])
+        with self.assertRaises(BadRequest):
+            activity_services._requested_facilitator(
+                {"facilitatingPartnerId": self.partner.id},
+                self.cceo,
+                activity_type="cluster_training",
+            )
+
+    def test_facilitator_partners_lists_active_partners(self):
+        ids = {p["id"] for p in facilitator_partners()}
+        self.assertIn(self.partner.id, ids)
+        self.partner.active_status = False
+        self.partner.save(update_fields=["active_status"])
+        self.assertNotIn(self.partner.id, {p["id"] for p in facilitator_partners()})
+
+    def test_staff_change_the_facilitator_of_a_planned_training(self):
+        activity = self._schedule()
+        with self.captureOnCommitCallbacks(execute=True):
+            activity_services.set_facilitator(activity.id, self.partner.id, self.cceo)
+        activity.refresh_from_db()
+        self.assertEqual(activity.facilitating_partner_id, self.partner.id)
+        self.assertEqual(activity.delivery_type, "staff")
+        self.assertEqual(self._fee_line(activity).partner_id, self.partner.id)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient_id=self.partner_user.id,
+                source_event_type="partner_facilitation_booked",
+            ).exists()
+        )
+        # Back to Staff: the fee is staff money again.
+        activity_services.set_facilitator(activity.id, "", self.cceo)
+        activity.refresh_from_db()
+        self.assertIsNone(activity.facilitating_partner_id)
+        self.assertIsNone(self._fee_line(activity).partner_id)
+
+    def test_a_started_training_keeps_its_facilitator(self):
+        activity = self._schedule()
+        Activity.objects.filter(id=activity.id).update(status="in_progress")
+        with self.assertRaises(BadRequest):
+            activity_services.set_facilitator(activity.id, self.partner.id, self.cceo)
+
+    def test_a_partner_login_cannot_change_the_facilitator(self):
+        activity = self._schedule()
+        with self.assertRaises((Forbidden, NotFoundError)):
+            activity_services.set_facilitator(
+                activity.id, self.partner.id, self.partner_user
+            )
+
+    def test_the_facilitator_drawer_changes_it(self):
+        activity = self._schedule()
+        self.client.force_login(self.cceo)
+        page = self.client.get(f"/activities/{activity.id}/facilitator")
+        self.assertEqual(page.status_code, 200)
+        html = page.content.decode()
+        self.assertIn("Facilitated by", html)
+        self.assertIn('<option value="">Staff</option>', html)
+        self.assertIn(self.partner.name, html)
+        saved = self.client.post(
+            f"/activities/{activity.id}/facilitator",
+            {"facilitating_partner_id": self.partner.id},
+            format="multipart",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(saved.status_code, 200, saved.content)
+        activity.refresh_from_db()
+        self.assertEqual(activity.facilitating_partner_id, self.partner.id)

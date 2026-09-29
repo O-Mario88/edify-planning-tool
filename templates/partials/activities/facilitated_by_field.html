@@ -1,0 +1,23 @@
+{% load frontend_filters %}
+{% comment %}
+"Facilitated by" on every training form (owner, 2026-09-29): "Add the list of
+partners in the database including the staff. If it is going to be done by
+Edify staff then it should just be Staff." Staff is the blank value; the work
+stays the officer's either way and a partner facilitator is paid only the
+facilitation fee (apps.activities.facilitation).
+
+Include with `field_id` (unique on the page) and optionally `selected` (the
+current facilitating partner id).
+{% endcomment %}
+{% facilitator_partners as facilitators %}
+<div class="space-y-1" data-facilitated-by>
+  <label for="{{ field_id|default:'facilitating_partner_id' }}" class="block edify-text-caption font-semibold text-slate-600">Facilitated by</label>
+  <select name="facilitating_partner_id"
+          id="{{ field_id|default:'facilitating_partner_id' }}"
+          class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+    <option value="">Staff</option>
+    {% for p in facilitators %}
+    <option value="{{ p.id }}"{% if p.id == selected %} selected{% endif %}>{{ p.name }}</option>
+    {% endfor %}
+  </select>
+</div>

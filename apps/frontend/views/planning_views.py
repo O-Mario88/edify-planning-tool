@@ -1926,6 +1926,10 @@ def schedule_action_view(request):
         payload["executorType"] = executor_type
     if partner_id:
         payload["assignedPartnerId"] = partner_id
+    # "Facilitated by" (owner, 2026-09-29): blank is Staff.
+    facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
+    if facilitating_partner_id:
+        payload["facilitatingPartnerId"] = facilitating_partner_id
     if project_id:
         payload["projectId"] = project_id
     if priority_allocation_id:

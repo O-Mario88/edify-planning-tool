@@ -1040,6 +1040,11 @@ urlpatterns = [
         name="start_activity_drawer",
     ),
     path(
+        "activities/<str:activity_id>/facilitator",
+        my_plan_views.facilitator_drawer_view,
+        name="activity_facilitator_drawer",
+    ),
+    path(
         "activities/<str:activity_id>/start/action",
         my_plan_views.start_activity_action,
         name="start_activity_action",

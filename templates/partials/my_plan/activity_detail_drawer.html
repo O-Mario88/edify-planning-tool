@@ -98,6 +98,12 @@ Evidence &amp; SF ID ({{ evidence_list|length }})
 <dt class="edify-text-caption text-slate-500">Rescheduled</dt>
 <dd class="font-medium text-slate-800">{{ act.reschedule_count }} times</dd>
 </div>
+{% if facilitated_by %}
+<div data-facilitated-by-detail>
+<dt class="edify-text-caption text-slate-500">Facilitated by</dt>
+<dd class="font-medium text-slate-800">{{ facilitated_by }}{% if can_change_facilitator %} <button type="button" hx-get="/activities/{{ act.id }}/facilitator" hx-target="#drawer-container" hx-swap="innerHTML" class="ml-1 edify-text-caption font-semibold edify-primary-text hover:underline cursor-pointer">Change</button>{% endif %}</dd>
+</div>
+{% endif %}
 </dl>
 </div>
 </div>

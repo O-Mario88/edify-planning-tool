@@ -748,6 +748,8 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
             "teachersAttended",
             "leadersAttended",
             "otherParticipants",
+            # The Training is facilitated; its companion visit is the journey.
+            "facilitatingPartnerId",
         }
     }
     visit_result = create_activity(

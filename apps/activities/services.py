@@ -919,6 +919,8 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "nights": data.get("nights"),
         "projectId": activity.project_id,
         "fy": activity.fy,
+        # A partner facilitator is paid the facilitation fee (2026-09-29).
+        "facilitated": bool(activity.facilitating_partner_id),
         # Multi-day programme events price per service day.
         "days": (
             (activity.end_date - activity.planned_date).days + 1
@@ -1056,7 +1058,7 @@ def _price_pair_training_at_zero(
     rather than vanishing."""
     from apps.activities.pair_costing import MOVABLE_STATUSES
     from apps.budget.costing import ActivityCost
-    from apps.budget.costing_service import apply_to_activity
+    from apps.budget.costing_service import apply_to_activity, facilitation_fee_for
     from apps.daily_visit_batches.services import remove_school
     from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
     from apps.fund_requests.weekly_service import sync_weekly_requests_for_activities
@@ -1064,11 +1066,18 @@ def _price_pair_training_at_zero(
     if activity.daily_visit_batch_id:
         remove_school(activity_id=activity.id)
         activity.refresh_from_db(fields=["daily_visit_batch"])
+    costing_input = _costing_input(activity, data)
     apply_to_activity(
         activity,
-        _costing_input(activity, data),
+        costing_input,
         responsible_user_id=responsible,
-        precomputed_cost=ActivityCost(),
+        # A partner facilitator is still paid its fee (owner, 2026-09-29):
+        # the Training then carries that one line and nothing else.
+        precomputed_cost=(
+            facilitation_fee_for(costing_input)
+            if activity.facilitating_partner_id
+            else ActivityCost()
+        ),
     )
     sync_weekly_requests_for_activities([activity], prior_buckets=prior_buckets)
     sync_monthly_drafts_for_activities([activity], prior_buckets=prior_buckets)
@@ -1329,6 +1338,32 @@ def _facilitating_partner_for(
         )
     else:
         _assert_active_facilitator(partner_id)
+    return partner_id
+
+
+def _requested_facilitator(data: dict, principal, *, activity_type: str):
+    """The partner named in "Facilitated by", or None for Staff.
+
+    Only staff-run training takes a facilitator, and only staff name one: a
+    partner delivering the work itself, or a partner login scheduling, has no
+    separate facilitator.
+    """
+    from apps.activities.facilitation import takes_facilitator
+    from apps.core.scoping import resolve_partner_ids
+
+    partner_id = (data.get("facilitatingPartnerId") or "").strip() or None
+    if not partner_id:
+        return None
+    if not takes_facilitator(activity_type):
+        raise BadRequest("Only a training takes a Facilitated by partner.")
+    if resolve_partner_ids(principal) or (
+        _resolved_executor_type(data) in PARTNER_EXECUTOR_TYPES
+    ):
+        raise BadRequest(
+            "Facilitated by applies to training Edify staff run. Choose Staff "
+            "delivery, or leave Facilitated by as Staff."
+        )
+    _assert_active_facilitator(partner_id)
     return partner_id
 
 
@@ -2149,6 +2184,12 @@ def create(
             "deliveryType": "staff",
             "executorType": ExecutorType.STAFF,
         }
+    elif data.get("facilitatingPartnerId"):
+        # "Facilitated by" named directly (owner, 2026-09-29): any staff-run
+        # training may name an active partner; blank means Staff.
+        facilitating_partner_id = _requested_facilitator(
+            data, principal, activity_type=activity_type
+        )
     executor_type = _resolved_executor_type(data)
     is_partner = executor_type in PARTNER_EXECUTOR_TYPES
     is_certified_agency_booking = executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY
@@ -4877,6 +4918,68 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
         # correct staff member's weekly request stay in sync with this activity.
         if a.scheduled_date and a.status not in ("cancelled", "rejected"):
             _apply_schedule_cost_snapshot(a, data, principal=principal)
+    return _serialize(a)
+
+
+def set_facilitator(activity_id: str, partner_id, principal) -> dict:
+    """Change who facilitates a planned training (owner, 2026-09-29: "allow
+    the staff to edit the planned activities to add the trainer").
+
+    ``partner_id`` names an active partner, or is blank for Staff. The work
+    stays the officer's either way (apps.activities.facilitation); only the
+    facilitation fee moves, so a dated training is re-priced like a reassign.
+    """
+    from apps.activities.facilitation import (
+        FACILITATOR_EDITABLE_STATUSES,
+        takes_facilitator,
+    )
+    from apps.core.scoping import resolve_partner_ids
+
+    a = _get_for_execution(activity_id, principal)
+    _assert_may_schedule(a, principal)
+    _assert_not_awaiting_owner(a)
+    if resolve_partner_ids(principal):
+        raise Forbidden("Edify staff choose who facilitates a training.")
+    if not takes_facilitator(a.activity_type):
+        raise BadRequest("Only a training takes a Facilitated by partner.")
+    if a.delivery_type == "partner":
+        raise BadRequest(
+            "A partner delivers this training itself, so it has no separate "
+            "facilitator."
+        )
+    if a.status not in FACILITATOR_EDITABLE_STATUSES:
+        raise BadRequest(
+            "This training has started, happened or been withdrawn; its "
+            "facilitator can no longer change."
+        )
+    partner_id = (partner_id or "").strip() or None
+    if partner_id:
+        _assert_active_facilitator(partner_id)
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        previous = a.facilitating_partner_id or None
+        if previous == partner_id:
+            return _serialize(a)
+        a.facilitating_partner_id = partner_id
+        a.save(update_fields=["facilitating_partner_id", "updated_at"])
+        if a.scheduled_date and a.status not in ("cancelled", "rejected"):
+            _apply_schedule_cost_snapshot(a, {}, principal=principal)
+        try:
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="activity.facilitator_changed",
+                subject_kind="Activity",
+                subject_id=a.id,
+                actor_id=getattr(principal, "user_id", None) or "system",
+                actor_role=getattr(principal, "active_role", ""),
+                success=True,
+                payload={"from": previous or "", "to": partner_id or ""},
+            )
+        except Exception:  # pragma: no cover — audit must never block the edit
+            pass
+    if partner_id:
+        _tell_facilitating_partner(a)
     return _serialize(a)
 
 
