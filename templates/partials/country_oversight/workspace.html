@@ -1,0 +1,54 @@
+{% comment %}
+The dashboard's body. Six summary cards, four charts, the Country → Programme
+Lead → CCEO → Partner table and the open follow-ups — every one read from the
+same fold, so a chart's bar is its table row and a card is the table's total.
+{% endcomment %}
+<div id="cpo-workspace" class="cpo-workspace">
+
+  {% if not window.is_annual %}
+  <p class="cpo-notice" role="note">
+    {% if window.has_phased_target %}
+    {{ window.label }}: planned work dated in the period, against the approved phasing of the annual requirement (Q1 20% · Q2 30% · Q3 30% · Q4 20%). Each card also reads the year to date.
+    {% else %}
+    {{ window.label }}: there is no approved weekly phasing, so each card reads the year to date against the annual requirement, and names the week's own planning beside it.
+    {% endif %}
+  </p>
+  {% endif %}
+  {% if unmapped_schools %}
+  <p class="cpo-notice cpo-notice--attention" role="note">
+    {{ unmapped_schools }} school{{ unmapped_schools|pluralize }} {{ unmapped_schools|pluralize:"has,have" }} a type with no approved planning family and {{ unmapped_schools|pluralize:"is,are" }} outside every figure until the product owner decides where {{ unmapped_schools|pluralize:"it belongs,they belong" }}.{% if may_read_quality %}
+    <button type="button" class="cpo-link" hx-get="/country-planning-oversight/drawer?kind=dq&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">Open Data Quality</button>{% endif %}
+  </p>
+  {% endif %}
+
+  <section class="cpo-metrics" aria-label="Country planning summary">
+    {% for card in kpis %}
+    <button type="button" class="cpo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.metric_key }}"
+            hx-get="/country-planning-oversight/drawer?kind=kpi&amp;metric={{ card.metric_key }}&amp;{{ query }}"
+            hx-target="#drawer-container" hx-swap="innerHTML"
+            aria-label="{{ card.accessible_description }} Open the schools behind it."
+            title="{{ card.definition }}">
+      <span class="cpo-metric-top">
+        <span class="cpo-glyph">{% include "partials/country_oversight/_glyph.html" with name=card.icon %}</span>
+        <span class="cpo-metric-name">{{ card.label }}</span>
+      </span>
+      <span class="cpo-metric-figure">
+        <span class="cpo-metric-part">{{ card.part }}</span>
+        <span class="cpo-metric-whole">/ {{ card.whole }}</span>
+        <span class="cpo-metric-share">{% if card.share is None %}—{% else %}{{ card.share }}%{% endif %}</span>
+      </span>
+      <span class="cpo-meter" aria-hidden="true"><span class="cpo-meter-fill" style="inline-size: {{ card.meter }}%"></span></span>
+      <span class="cpo-metric-foot"><strong>{{ card.headline.0 }}</strong> {{ card.headline.1 }}</span>
+      {% if card.extras %}<span class="cpo-metric-extra">{{ card.extras|join:" · " }}</span>{% endif %}
+      {% if card.note %}<span class="cpo-metric-note">{{ card.note }}</span>{% endif %}
+    </button>
+    {% endfor %}
+  </section>
+
+  {% include "partials/country_oversight/_charts.html" %}
+
+  <div class="cpo-lower">
+    {% include "partials/country_oversight/_table.html" %}
+    {% include "partials/country_oversight/followups_panel.html" %}
+  </div>
+</div>

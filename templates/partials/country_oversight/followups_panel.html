@@ -1,0 +1,37 @@
+{% comment %}Open Follow-ups (owner design, 2026-09-28): the newest open
+"Follow Up with PL" records for the year, each with the Lead it is assigned
+to and where it stands. It refreshes itself after a follow-up is sent or
+closed (cpo-followups-changed). View All opens every follow-up.{% endcomment %}
+<aside id="cpo-side" class="cpo-side" aria-labelledby="cpo-side-name"
+       hx-get="/country-planning-oversight/follow-ups-panel?{{ query }}"
+       hx-trigger="cpo-followups-changed from:body" hx-swap="outerHTML">
+  <header class="cpo-side-head" data-no-titlebar data-card-header>
+    <h2 class="cpo-side-name" id="cpo-side-name">Open Follow-ups <span class="cpo-count" aria-label="{{ followups.count }} open">{{ followups.count }}</span></h2>
+    <button type="button" class="cpo-viewall" hx-get="/country-planning-oversight/drawer?kind=followups&amp;{{ query }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">View All</button>
+  </header>
+  {% if followups.rows %}
+  <ul class="cpo-fu" role="list">
+    {% for item in followups.rows %}
+    <li class="cpo-fu-item">
+      <span class="cpo-fu-mail" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>
+      </span>
+      <div class="cpo-fu-copy">
+        <button type="button" class="cpo-fu-title" hx-get="/country-planning-oversight/drawer?kind=followups&amp;focus={{ item.id }}&amp;{{ query }}"
+                hx-target="#drawer-container" hx-swap="innerHTML">{{ item.title }}</button>
+        <p class="cpo-fu-to">To: {{ item.to }} (PL){% if item.reminders %} · reminded {{ item.reminders }}×{% endif %}</p>
+      </div>
+      <span class="cpo-tag" data-tone="{{ item.tone }}">{{ item.status }}</span>
+      <time class="cpo-fu-date{% if item.overdue %} is-late{% endif %}" datetime="{{ item.date|date:'c' }}" title="Due {{ item.due|date:'j M Y' }}">{{ item.date|date:"d M Y" }}</time>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="cpo-fu-empty">No follow-ups are open for this year.{% if may_follow_up %} Use <strong>Follow Up with PL</strong> on a Programme Lead's row, or on a gap in any drawer.{% endif %}</p>
+  {% endif %}
+  <p class="cpo-info" role="note">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path class="cpo-dotmark" d="M12 10.5v6M12 7.2v.1" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <span>All values are for oversight only and are based on planned, assigned, and required records in Edify. They may differ from actual completed activities.</span>
+  </p>
+</aside>

@@ -1,0 +1,29 @@
+{% comment %}
+The execution table (owner design, 2026-09-28): Program Leads, CCEOs,
+Partners, Schools or Activities, one view at a time, each a real table on every
+screen. A Lead's people and an officer's delivery channels arrive when their
+row is opened; the schools and activities are paged, worst first.
+{% endcomment %}
+<section id="cxo-table" class="cpo-drill cxo-drill" aria-labelledby="cxo-table-name">
+  <h2 class="sr-only" id="cxo-table-name" data-no-titlebar>Execution by {{ table_label }}</h2>
+  <div class="cxo-drill-bar">
+    <div data-edify-tablist role="group" aria-label="View execution by">
+      {% for key, label in options.view_tabs %}
+      <button type="button" data-edify-tab aria-pressed="{% if table == key %}true{% else %}false{% endif %}"
+              hx-get="/country-planning-oversight/execution/table?table={{ key }}&amp;{{ query }}"
+              hx-target="#cxo-table" hx-swap="outerHTML">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  {% if table == "cceo" %}
+    {% include "partials/country_execution/table_owners.html" %}
+  {% elif table == "partner" %}
+    {% include "partials/country_execution/table_partners.html" %}
+  {% elif table == "school" %}
+    {% include "partials/country_execution/table_schools.html" %}
+  {% elif table == "activity" %}
+    {% include "partials/country_execution/table_activities.html" %}
+  {% else %}
+    {% include "partials/country_execution/table_leads.html" %}
+  {% endif %}
+</section>

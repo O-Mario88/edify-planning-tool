@@ -1,0 +1,17 @@
+{% comment %}The gaps a follow-up can be about, each with its live figure.
+`follow_query` is the scope (lead / owner) the Follow Up opens with.{% endcomment %}
+<ul class="cpo-needs" role="list">
+  {% for issue in issues %}
+  <li class="cpo-need{% if not issue.remaining %} is-clear{% endif %}">
+    <div class="cpo-need-copy">
+      <p class="cpo-need-name">{{ issue.label }}</p>
+      <p class="cpo-need-figs">{{ issue.planned }} of {{ issue.required }} · <strong>{{ issue.remaining }}</strong> remaining</p>
+    </div>
+    {% if may_follow_up and can_follow_up and issue.remaining %}
+    <button type="button" class="cpo-ask"
+            hx-get="/country-planning-oversight/follow-up?{{ follow_query }}&amp;issue={{ issue.key }}&amp;{{ query }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">Follow Up with PL</button>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>

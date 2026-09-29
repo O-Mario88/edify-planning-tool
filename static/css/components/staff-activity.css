@@ -51,7 +51,7 @@
   align-items: start;
 }
 @media (min-width: 80rem) {
-  .sal-layout { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .sal-layout { grid-template-columns: minmax(0, 1fr) 24rem; }
 }
 .sal-main { min-inline-size: 0; overflow: hidden; }
 .sal-tablehead {
@@ -275,13 +275,13 @@
 .sal-meter > span { display: block; block-size: 100%; border-radius: inherit; background: var(--edify-accent, #285b96); }
 /* Inside the detail's small table the platform's cell rules make every span
    inline text; a meter is a shape. */
-.sal-detail :is(.sal-meter, .sal-meter > span, .sal-bars__col, .sal-bars__col > span):not(#sal-none) { display: block !important; }
+.sal-detail :is(.sal-meter, .sal-meter > span, .sal-bars__col > span):not(#sal-none) { display: block !important; }
 .sal-detail .sal-bars__col:not(#sal-none) { display: flex !important; }
 
 .sal-timeline li {
   position: relative;
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
+  grid-template-columns: 5.75rem minmax(0, 1fr);
   gap: 0 0.5rem;
   padding: 0.3rem 0 0.3rem 0.9rem;
 }
@@ -375,3 +375,12 @@
 .sal-narrow { max-inline-size: 54rem; margin-inline: auto; }
 .sal-modlist--detail li { grid-template-columns: minmax(6rem, 1fr) minmax(3rem, 1fr) 3.5rem 4.5rem; }
 .sal-modlist__head { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 650; }
+.sal-bars--person li { grid-template-rows: minmax(0, 1fr) auto; }
+
+/* The right column: Team Insights, then the opened person's cards stacked
+   (owner, 2026-09-29). */
+.sal-side { display: grid; gap: 1rem; min-inline-size: 0; align-content: start; }
+.sal-picked { padding: 0.9rem 1rem; min-inline-size: 0; }
+.sal-picked .sal-quads { grid-template-columns: minmax(0, 1fr) !important; }
+.sal-picked .sal-top { gap: 0.5rem 1rem; }
+.sal-picked .sal-figures { gap: 0.4rem 1rem; }

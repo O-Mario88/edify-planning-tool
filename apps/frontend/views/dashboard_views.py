@@ -545,6 +545,18 @@ def dashboard_view(request):
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
+    # The Country Director's dashboard is Country Oversight (owner,
+    # 2026-09-28): planning coverage and execution & completion, with Who's
+    # Online under the planning tab. The former command dashboard's Map and
+    # Operations views still answer when a link names them, and the map has
+    # its own page (/country-map/).
+    if (
+        role == "CountryDirector"
+        and (request.GET.get("view") or "").strip().lower() not in ("map", "operations")
+        and request.headers.get("HX-Request") != "true"
+    ):
+        return redirect("/country-planning-oversight/")
+
     # The Regional Programme Lead's home: the Regional Lead for
     # Christ-Centered Education's coaching and reporting view over their
     # region's country programmes (owner, 2026-09-12).

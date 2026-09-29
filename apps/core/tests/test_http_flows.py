@@ -279,8 +279,12 @@ class ExecutiveJourneyFlowTest(BaseFlowTest):
     def test_country_director_dashboard_renders(self):
         u = _user("cd@flow.test", "CountryDirector")
         self.client.force_login(u)
-        r = self.client.get("/dashboard")
+        # Country Oversight is the Country Director's dashboard (owner,
+        # 2026-09-28).
+        r = self.client.get("/dashboard", follow=True)
         self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.redirect_chain, [("/country-planning-oversight/", 302)])
+        self.assertEqual(self.client.get("/dashboard?view=map").status_code, 200)
 
     def test_program_lead_dashboard_renders(self):
         u = _user("pl@flow.test", "Program Lead")

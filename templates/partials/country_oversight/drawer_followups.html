@@ -1,0 +1,72 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}Every "Follow Up with PL" for the year, planning and execution
+together (the consolidated register, spec 2026-09-28 §2): where each stands,
+what was asked (every instruction, oldest first), the gap as it stood and as
+it stands, and the Director's controls. A follow-up whose gap clears closes
+itself; an "Other" ask needs closing by hand, with a reason; one still open
+past its due date can be escalated.{% endcomment %}
+{% block drawer_title %}Follow-ups{% endblock %}
+{% block drawer_subtitle %}{{ fy_label }} · {% if show == "open" %}open{% else %}all this year{% endif %}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet">
+  <nav class="cpo-inline" aria-label="Which follow-ups">
+    <button type="button" class="cpo-view"{% if show == "open" %} aria-current="true"{% endif %} hx-get="/country-planning-oversight/drawer?kind=followups&amp;show=open&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">Open</button>
+    <button type="button" class="cpo-view"{% if show != "open" %} aria-current="true"{% endif %} hx-get="/country-planning-oversight/drawer?kind=followups&amp;show=all&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">All this year</button>
+  </nav>
+  {% for item in items %}
+  <article class="cpo-fu-entry{% if item.id == focus %} is-focus{% endif %}" id="cpo-fu-{{ item.id }}" aria-labelledby="cpo-fu-{{ item.id }}-t" x-data="{ closing: false, escalating: false }">
+    <header class="cpo-fu-entry-head">
+      <h3 class="cpo-fu-entry-name" id="cpo-fu-{{ item.id }}-t">{{ item.title }}</h3>
+      <span class="cpo-tag" data-tone="{{ item.tone }}">{{ item.status }}</span>
+    </header>
+    <p class="cpo-muted">{{ item.module_label }} · to {{ item.to }} (PL){% if item.record.cceo_name %} about {{ item.record.cceo_name }}{% endif %} · {{ item.record.period_label }} · {{ item.record.get_priority_display }} · due {{ item.due|date:"j M Y" }}{% if item.overdue %} <span class="cpo-alert">overdue</span>{% endif %}</p>
+    {% if item.module == "execution" %}
+    <p class="cpo-need-figs">When sent: {{ item.record.remaining_value }} open{% if item.record.live_remaining is not None %} — now {{ item.record.live_remaining }} open{% endif %}{% if item.record.days_overdue %} · oldest {{ item.record.days_overdue }} day{{ item.record.days_overdue|pluralize }} past its date{% endif %}{% if item.record.affected_count %} · {{ item.record.affected_count }} school{{ item.record.affected_count|pluralize }}{% endif %}</p>
+    {% else %}
+    <p class="cpo-need-figs">When sent: {{ item.record.planned_value }} of {{ item.whole_value }} · {{ item.record.remaining_value }} remaining{% if item.record.live_remaining is not None %} — now {{ item.record.live_remaining }} remaining{% endif %}{% if item.record.affected_count %} · {{ item.record.affected_count }} school{{ item.record.affected_count|pluralize }}{% endif %}</p>
+    {% endif %}
+    <ol class="cpo-trail" aria-label="Instructions">
+      {% for entry in item.record.instruction_history %}
+      <li><strong>{{ entry.name }}</strong>: “{{ entry.instruction }}” <small>{{ entry.due }}</small></li>
+      {% endfor %}
+    </ol>
+    {% if item.record.returned_reason %}<p class="cpo-notice cpo-notice--attention">Returned: {{ item.record.returned_reason }}</p>{% endif %}
+    {% if item.asks_sent %}<p class="cpo-muted">{{ item.asks_sent }} school action{{ item.asks_sent|pluralize }} sent to the CCEO — <a href="/actions/sent">Actions Sent</a></p>{% endif %}
+    {% if item.record.linked_note %}<p class="cpo-muted">Lead's note: {{ item.record.linked_note }}</p>{% endif %}
+    {% if item.record.resolution_note %}<p class="cpo-muted">Closed: {{ item.record.resolution_note }}</p>{% endif %}
+    {% if may_follow_up and item.is_open %}
+    <div class="cpo-inline">
+      {% if item.module == "execution" %}
+      <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/follow-up?{{ item.remind_query }}" hx-target="#drawer-container" hx-swap="innerHTML">Remind</button>
+      {% else %}
+      <button type="button" class="cpo-view" hx-get="/country-planning-oversight/follow-up?lead={{ item.record.program_lead_staff_id }}&amp;owner={{ item.record.cceo_staff_id|default:'' }}&amp;school={{ item.record.school_id|default:'' }}&amp;issue={{ item.issue }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">Remind</button>
+      {% endif %}
+      <button type="button" class="cpo-view" @click="closing = !closing" :aria-expanded="closing ? 'true' : 'false'">Close with reason</button>
+      {% if item.overdue and item.record.status != "escalated" %}
+      <button type="button" class="cpo-view" @click="escalating = !escalating" :aria-expanded="escalating ? 'true' : 'false'">Escalate</button>
+      {% endif %}
+    </div>
+    {% if item.overdue and item.record.status != "escalated" %}
+    <form x-show="escalating" x-cloak class="cpo-form" hx-post="/country-planning-oversight/follow-up/{{ item.id }}/escalate" hx-target="#cpo-fu-{{ item.id }}-result" hx-swap="innerHTML">
+      {% csrf_token %}
+      <p class="cpo-muted">Escalating keeps it open, makes it critical and puts it back in {{ item.to }}'s queue.</p>
+      <label class="cpo-field"><span class="cpo-caption">Why escalate? <span aria-hidden="true">*</span></span><textarea name="reason" rows="2" required></textarea></label>
+      <button type="submit" class="cpo-view">Escalate</button>
+    </form>
+    {% endif %}
+    <form x-show="closing" x-cloak class="cpo-form" hx-post="/country-planning-oversight/follow-up/{{ item.id }}/close" hx-target="#cpo-fu-{{ item.id }}-result" hx-swap="innerHTML">
+      {% csrf_token %}
+      <label class="cpo-field"><span class="cpo-caption">Why is it closed? <span aria-hidden="true">*</span></span><textarea name="reason" rows="2" required></textarea></label>
+      <div class="cpo-inline">
+        <button type="submit" class="cpo-view">Close</button>
+        <button type="submit" class="cpo-view" formnovalidate hx-post="/country-planning-oversight/follow-up/{{ item.id }}/cancel" hx-target="#cpo-fu-{{ item.id }}-result">Cancel the follow-up</button>
+      </div>
+    </form>
+    <div id="cpo-fu-{{ item.id }}-result" aria-live="polite"></div>
+    {% endif %}
+  </article>
+  {% empty %}
+  <p class="cpo-muted">{% if show == "open" %}No follow-up is open for this year.{% else %}No follow-up has been sent this year.{% endif %}</p>
+  {% endfor %}
+</div>
+{% endblock %}

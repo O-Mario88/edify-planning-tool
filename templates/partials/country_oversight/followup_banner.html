@@ -1,0 +1,61 @@
+{% comment %}A planning follow-up as the Programme Lead meets it on Team
+Oversight: what the Country Director asked, the gap then and now, and the
+Lead's governed responses — acknowledge, ask the CCEO (school actions through
+the TeamAction workflow, linked here), say what it waits on, or return it.
+The follow-up closes itself when the gap reaches zero. An execution follow-up
+(Country Execution & Completion Oversight) counts open work rather than
+planned slots, and says whether it waits on a team member, the Partner or an
+external dependency.{% endcomment %}
+<section id="cpo-followup-{{ followup.id }}" class="cpo-banner" aria-labelledby="cpo-banner-t" x-data="{ pane: '' }">
+  <header class="cpo-banner-head">
+    <div>
+      <p class="cpo-banner-kicker">Follow-up from {{ followup.assigned_by_name|default:"the Country Director" }} · {{ followup.assigned_at|date:"j M Y" }}{% if followup.reminder_count %} · reminded {{ followup.reminder_count }}×{% endif %}</p>
+      <h2 class="cpo-banner-name" id="cpo-banner-t">{% firstof issue.label followup.issue_type %}{% if followup.cceo_name %} · {{ followup.cceo_name }}{% endif %}{% if followup.school_name %} · {{ followup.school_name }}{% endif %}</h2>
+    </div>
+    <span class="cpo-tag" data-tone="{{ card.tone }}">{{ card.status }}</span>
+  </header>
+  <p class="cpo-banner-ask">“{{ followup.instruction }}”</p>
+  {% if followup.module == "execution" %}
+  <p class="cpo-muted">{{ followup.period_label }}{% if followup.activity_label %} · {{ followup.activity_label }}{% endif %}{% if followup.partner_name %} · {{ followup.partner_name }}{% endif %} · {{ followup.remaining_value }} open when sent{% if followup.live_remaining is not None %}, {{ followup.live_remaining }} now{% endif %}{% if followup.days_overdue %} · oldest {{ followup.days_overdue }} day{{ followup.days_overdue|pluralize }} past its date{% endif %}{% if affected_count %} · {{ affected_count }} school{{ affected_count|pluralize }}{% endif %} · due {{ followup.due_date|date:"j M Y" }} · {{ followup.get_priority_display }}</p>
+  {% else %}
+  <p class="cpo-muted">{{ followup.period_label }} · required {{ card.whole_value }} · planned {{ followup.planned_value }} · {{ followup.remaining_value }} remaining when sent{% if followup.live_remaining is not None %}, {{ followup.live_remaining }} now{% endif %}{% if affected_count %} · {{ affected_count }} school{{ affected_count|pluralize }}{% endif %} · due {{ followup.due_date|date:"j M Y" }} · {{ followup.get_priority_display }}</p>
+  {% endif %}
+  {% if flash %}<p class="cpo-notice{% if not flash_ok %} cpo-notice--attention{% endif %}" role="status">{{ flash }}</p>{% endif %}
+  {% if is_recipient %}
+  <div class="cpo-inline">
+    {% if followup.status == "sent_to_pl" %}
+    <button type="button" class="cpo-view" hx-post="/planning-follow-ups/{{ followup.id }}/acknowledge" hx-target="#cpo-followup-{{ followup.id }}" hx-swap="outerHTML">Acknowledge</button>
+    {% endif %}
+    {% if can_ask %}<button type="button" class="cpo-view" @click="pane = pane === 'ask' ? '' : 'ask'">Ask {{ followup.cceo_name }}</button>{% endif %}
+    <button type="button" class="cpo-view" @click="pane = pane === 'wait' ? '' : 'wait'">Waiting on…</button>
+    <button type="button" class="cpo-view" @click="pane = pane === 'back' ? '' : 'back'">Return for clarification</button>
+  </div>
+  {% if can_ask %}
+  <form x-show="pane === 'ask'" x-cloak class="cpo-form" hx-post="/planning-follow-ups/{{ followup.id }}/ask" hx-target="#cpo-followup-{{ followup.id }}" hx-swap="outerHTML">
+    {% csrf_token %}
+    <p class="cpo-muted">Sends {{ followup.cceo_name }} a school action for each school still in the gap (up to 25, worst first), through the usual school action workflow. Each closes by itself when its school is planned.</p>
+    <label class="cpo-field"><span class="cpo-caption">Note to {{ followup.cceo_name }}</span><textarea name="note" rows="2" placeholder="Optional — the Director's instruction is used if left blank"></textarea></label>
+    <button type="submit" class="cpo-view">Send school actions</button>
+  </form>
+  {% endif %}
+  <form x-show="pane === 'wait'" x-cloak class="cpo-form" hx-post="/planning-follow-ups/{{ followup.id }}/waiting" hx-target="#cpo-followup-{{ followup.id }}" hx-swap="outerHTML">
+    {% csrf_token %}
+    {% if followup.module == "execution" %}
+    <label class="cpo-field"><span class="cpo-caption">Waiting on</span>
+      <select name="waiting_on">
+        <option value="team_member">A team member</option>
+        <option value="partner"{% if followup.partner_id or followup.blocker_owner == "partner" %} selected{% endif %}>The Partner</option>
+        <option value="external">An external dependency — the school, the community, access</option>
+      </select>
+    </label>
+    {% endif %}
+    <label class="cpo-field"><span class="cpo-caption">What is the gap waiting on? <span aria-hidden="true">*</span></span><textarea name="note" rows="2" required></textarea></label>
+    <button type="submit" class="cpo-view">Save</button>
+  </form>
+  <form x-show="pane === 'back'" x-cloak class="cpo-form" hx-post="/planning-follow-ups/{{ followup.id }}/return" hx-target="#cpo-followup-{{ followup.id }}" hx-swap="outerHTML">
+    {% csrf_token %}
+    <label class="cpo-field"><span class="cpo-caption">What needs clarifying? <span aria-hidden="true">*</span></span><textarea name="note" rows="2" required></textarea></label>
+    <button type="submit" class="cpo-view">Return to the Country Director</button>
+  </form>
+  {% endif %}
+</section>

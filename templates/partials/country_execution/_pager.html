@@ -1,0 +1,32 @@
+{% comment %}Page links for a paged execution list: a server-side pagination strip.
+`target` says which list: "table" (the table's own views), "drawer" (an
+activity drill-down), "snapshots" (the locked periods) or "snapshot" (one
+locked period's hierarchy or follow-ups, `param` naming which page moves).
+`list_query` carries everything else the list was asked with.{% endcomment %}
+{% if pager.pages > 1 %}
+<nav class="cxo-pager edify-pagination-scope" aria-label="Pages">
+  <span>{{ pager.total }} in all · page {{ pager.page }} of {{ pager.pages }}</span>
+  {% if pager.page > 1 %}
+  {% if target == "drawer" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/drawer?{{ list_query }}&amp;page={{ pager.page|add:'-1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Previous</button>
+  {% elif target == "snapshots" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots?{{ list_query }}&amp;page={{ pager.page|add:'-1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Previous</button>
+  {% elif target == "snapshot" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots/{{ snapshot.id }}?{{ list_query }}&amp;{{ param }}={{ pager.page|add:'-1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Previous</button>
+  {% else %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/table?table={{ table }}&amp;{{ query }}&amp;page={{ pager.page|add:'-1' }}" hx-target="#cxo-table" hx-swap="outerHTML">Previous</button>
+  {% endif %}
+  {% endif %}
+  {% if pager.page < pager.pages %}
+  {% if target == "drawer" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/drawer?{{ list_query }}&amp;page={{ pager.page|add:'1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Next</button>
+  {% elif target == "snapshots" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots?{{ list_query }}&amp;page={{ pager.page|add:'1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Next</button>
+  {% elif target == "snapshot" %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/snapshots/{{ snapshot.id }}?{{ list_query }}&amp;{{ param }}={{ pager.page|add:'1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Next</button>
+  {% else %}
+  <button type="button" class="cpo-view" hx-get="/country-planning-oversight/execution/table?table={{ table }}&amp;{{ query }}&amp;page={{ pager.page|add:'1' }}" hx-target="#cxo-table" hx-swap="outerHTML">Next</button>
+  {% endif %}
+  {% endif %}
+</nav>
+{% endif %}

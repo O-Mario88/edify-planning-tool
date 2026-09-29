@@ -580,7 +580,7 @@ class PageTest(Team):
             (self.mina, False),
         ):
             self.client.force_login(reader)
-            html = self.client.get("/dashboard").content.decode()
+            html = self.client.get("/dashboard", follow=True).content.decode()
             self.assertEqual(
                 'href="/staff-activity"' in html, offered, reader.active_role
             )

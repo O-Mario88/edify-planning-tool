@@ -12,11 +12,15 @@ added twice (owner, 2026-09-16).
 
 The view returns an empty list when a reader holds only one lens: a tab bar of
 one is furniture, and it costs the first table row its place above the fold.
+
+A lens may carry a `short` label for phones (below 640px): Country Oversight's
+two stage names did not fit a 390px phone side by side, so the second went
+behind the rail's "More". The full name stays the link's accessible name.
 {% endcomment %}
 {% if lens_tabs %}
 <nav data-edify-tablist aria-label="Oversight views">
   {% for tab in lens_tabs %}
-  <a href="{{ tab.href }}" data-edify-tab{% if tab.is_active %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+  <a href="{{ tab.href }}" data-edify-tab{% if tab.is_active %} aria-current="page"{% endif %}{% if tab.short %} aria-label="{{ tab.label }}" title="{{ tab.label }}"{% endif %}>{% if tab.short %}<span class="sm:hidden">{{ tab.short }}</span><span class="hidden sm:inline">{{ tab.label }}</span>{% else %}{{ tab.label }}{% endif %}</a>
   {% endfor %}
 </nav>
 {% endif %}

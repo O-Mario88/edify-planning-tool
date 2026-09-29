@@ -1,0 +1,13 @@
+{% comment %}One row's execution figures, in the table's column order.{% endcomment %}
+<td>{{ cells.due }}</td>
+<td>{{ cells.started }}</td>
+<td>{{ cells.executed }}</td>
+<td>{{ cells.verified }}</td>
+<td>{{ cells.closed }}</td>
+<td>{% if cells.on_time is None %}<span class="cpo-none">—</span>{% else %}{{ cells.on_time }}%{% endif %}</td>
+<td>{% if cells.overdue %}<span class="cpo-alert">{{ cells.overdue }}</span>{% else %}0{% endif %}</td>
+<td>{{ cells.carried_forward }}</td>
+<td>{{ cells.returned }}</td>
+<td>{% if cells.remaining is None %}<span class="cpo-none" title="Required slots are counted for owners, not for a delivery channel">—</span>{% else %}{{ cells.remaining }}{% endif %}</td>
+<td><span class="cxo-outlook" data-state="{{ cells.forecast.status }}"{% if cells.forecast.share is not None %} title="{{ cells.forecast.share }}% projected verified by the period's end"{% endif %}>{{ cells.forecast.label }}</span></td>
+<td>{% if cells.reminders %}<span class="cpo-alert">{{ cells.reminders }}</span>{% elif cells.suggested and may_follow_up %}<span class="cxo-suggest" title="Past-due work the Lead can act on, and no open reminder about it. Nothing is sent unless you send it.">Suggested</span>{% else %}0{% endif %}</td>

@@ -20,7 +20,7 @@
           hx-get="/staff-activity/people/{{ person.id }}/follow-up?period={{ detail.period.key }}&on={{ detail.period.on|date:'Y-m-d' }}"
           hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>
   {% endif %}
-  <button type="button" class="sal-close" data-sal-toggle="{{ person.id }}" aria-label="Close {{ person.name }}'s detail">×</button>
+  <button type="button" class="sal-close" data-sal-close aria-label="Close {{ person.name }}'s detail">×</button>
 </div>
 
 {% if person.suggestions %}
@@ -83,7 +83,7 @@
     <h4 id="sal-trend-{{ person.id }}">Period trend</h4>
     <p class="sal-sub">Signed in on {{ detail.login_days }} day{{ detail.login_days|pluralize }} · active time and actions</p>
     {% if detail.trend %}
-    <ol class="sal-bars" aria-label="Active time by {{ detail.period.key|default:'day' }}">
+    <ol class="sal-bars sal-bars--person" aria-label="Active time by {{ detail.period.key|default:'day' }}">
       {% for t in detail.trend %}
       <li title="{{ t.label }}: {{ t.time }} active, {{ t.actions }} action{{ t.actions|pluralize }}">
         <span class="sal-bars__col"><span style="block-size: {{ t.height }}%"></span></span>

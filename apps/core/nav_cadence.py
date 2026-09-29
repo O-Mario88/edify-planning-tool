@@ -24,6 +24,9 @@ DAILY, WEEKLY, MONTHLY, CYCLE, REFERENCE = range(len(TIERS))
 DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # Every day: home, the day's queue and the person's own plan.
     "dashboard": (DAILY, 0),
+    # Directly below the Dashboard for its readers (owner, 2026-09-29: "move
+    # the staff activity log below the Dashboard").
+    "staff_activity": (DAILY, 1),
     "planning": (DAILY, 2),
     "my_plan": (DAILY, 4),
     "schools": (DAILY, 6),
@@ -38,6 +41,7 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # (owner, 2026-09-21).
     "programme_schools": (DAILY, 19),
     "country_planning_oversight": (DAILY, 20),
+    "country_map": (DAILY, 21),
     "todos": (DAILY, 28),
     "my_actions": (DAILY, 30),
     # Each week: requests, approvals, team and portfolio work.
@@ -230,6 +234,9 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
     # among fifty WEEKLY links and Upload Center 34th, and the owner could not
     # find either on the live site (2026-09-15).
     "ADMIN": {
+        # The Admin's own administration keeps the top (2026-09-15); the
+        # Staff Activity Log is technical support for them, read weekly.
+        "staff_activity": (WEEKLY, 50),
         "todos": (DAILY, 1),
         "users": (DAILY, 2),
         "uploads": (DAILY, 3),

@@ -1,0 +1,17 @@
+{% comment %}Open follow-ups for a scope, newest first.{% endcomment %}
+{% if followups %}
+<ul class="cpo-fu cpo-fu--flush" role="list">
+  {% for item in followups %}
+  <li class="cpo-fu-item">
+    <span class="cpo-fu-mail" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg></span>
+    <div class="cpo-fu-copy">
+      <p class="cpo-fu-title">{{ item.title }}</p>
+      <p class="cpo-fu-to">To: {{ item.to }} (PL) · due {{ item.due|date:"j M" }} · {{ item.remaining }} remaining</p>
+    </div>
+    <span class="cpo-tag" data-tone="{{ item.tone }}">{{ item.status }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="cpo-muted">No open follow-up.</p>
+{% endif %}

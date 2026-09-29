@@ -3782,6 +3782,9 @@ _PL_CATEGORY_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("team-catchup-queue", "Performance & Coaching"),
     ("pd-review-", "Performance & Coaching"),
     ("cdflag-", "Collaboration"),
+    # The Country Director's planning follow-ups: the lead following up
+    # with their officer on a planning gap.
+    ("cpofu-", "Team Leadership"),
     ("cce-feedback-", "Collaboration"),
     ("visitreq-", "Collaboration"),
     # A partner invoice is confirmed in Fund Approvals, a Finance & Budget page.
@@ -3894,6 +3897,8 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     "apps.planning.coverage_todos:missing_training_todos",
     "apps.projects.portfolio_todos:project_school_planning_todos",
     # ── end brief 2026-09-15 ──
+    # Country Planning Oversight: the Country Director's "Follow Up with PL".
+    "apps.planning.country_oversight.todos:followup_todos",
 )
 
 

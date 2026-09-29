@@ -20,6 +20,8 @@ from .views import (
     ownership_views,
     visit_request_views,
     oversight_views,
+    country_execution_views,
+    country_oversight_views,
     partner_review_views,
     budget_views,
     my_plan_views,
@@ -653,6 +655,105 @@ urlpatterns = [
         "country-planning-oversight/export",
         oversight_views.country_planning_export_view,
         name="country_planning_oversight_export",
+    ),
+    # The planning-coverage dashboard's drill-downs (owner, 2026-09-28): rows
+    # a Lead or an officer expands into, the drawers, the schools behind a
+    # figure, one school's requirement slots, the Country Director's "Follow
+    # Up with PL", and the page's workbook. All read one canonical service.
+    path("country-map/", oversight_views.country_map_view, name="country_map"),
+    # Country Execution & Completion Oversight — the second Country Oversight
+    # tab (/country-planning-oversight/?view=execution) and its drill-downs.
+    path(
+        "country-planning-oversight/execution/table",
+        country_execution_views.table_view,
+        name="cpx_table",
+    ),
+    path(
+        "country-planning-oversight/execution/rows",
+        country_execution_views.rows_view,
+        name="cpx_rows",
+    ),
+    path(
+        "country-planning-oversight/execution/drawer",
+        country_execution_views.drawer_view,
+        name="cpx_drawer",
+    ),
+    path(
+        "country-planning-oversight/execution/follow-up",
+        country_execution_views.follow_up_view,
+        name="cpx_follow_up",
+    ),
+    path(
+        "country-planning-oversight/execution/follow-ups-panel",
+        country_execution_views.followups_panel_view,
+        name="cpx_followups_panel",
+    ),
+    path(
+        "country-planning-oversight/execution/export",
+        country_execution_views.export_view,
+        name="cpx_export",
+    ),
+    path(
+        "country-planning-oversight/execution/snapshots",
+        country_execution_views.snapshots_view,
+        name="cpx_snapshots",
+    ),
+    path(
+        "country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+        country_execution_views.snapshot_view,
+        name="cpx_snapshot",
+    ),
+    path(
+        "country-planning-oversight/rows",
+        country_oversight_views.rows_view,
+        name="cpo_rows",
+    ),
+    path(
+        "country-planning-oversight/drawer",
+        country_oversight_views.drawer_view,
+        name="cpo_drawer",
+    ),
+    path(
+        "country-planning-oversight/schools",
+        country_oversight_views.schools_view,
+        name="cpo_schools",
+    ),
+    path(
+        "country-planning-oversight/slots",
+        country_oversight_views.slots_view,
+        name="cpo_slots",
+    ),
+    path(
+        "country-planning-oversight/follow-up",
+        country_oversight_views.follow_up_view,
+        name="cpo_follow_up",
+    ),
+    path(
+        "country-planning-oversight/follow-ups-panel",
+        country_oversight_views.followups_panel_view,
+        name="cpo_followups_panel",
+    ),
+    path(
+        "country-planning-oversight/follow-up/<str:followup_id>/<str:action>",
+        country_oversight_views.follow_up_action_view,
+        name="cpo_follow_up_action",
+    ),
+    path(
+        "country-planning-oversight/coverage-export",
+        country_oversight_views.coverage_export_view,
+        name="cpo_coverage_export",
+    ),
+    # The Programme Lead's side of a planning follow-up, shown on Team
+    # Oversight where the Lead acts on it.
+    path(
+        "planning-follow-ups/<str:followup_id>",
+        country_oversight_views.followup_detail_view,
+        name="planning_followup_detail",
+    ),
+    path(
+        "planning-follow-ups/<str:followup_id>/<str:action>",
+        country_oversight_views.followup_lead_action_view,
+        name="planning_followup_action",
     ),
     path(
         "cluster-oversight/",

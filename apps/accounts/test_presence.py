@@ -342,6 +342,10 @@ class PresenceSurfaceTest(TestCase):
         html = self.client.get("/dashboard?view=operations").content.decode()
         self.assertNotIn("data-admin-presence", html)
         self.assertNotIn("Who's Online", html)
+        # Nor does Country Oversight, where it sat from 2026-09-28: the
+        # table is the Staff Activity Log's now.
+        oversight = self.client.get("/country-planning-oversight/").content.decode()
+        self.assertNotIn("/dashboard/whos-online", oversight)
 
 
 class ProgrammeLeadReadsTheirOwnTeamTest(TestCase):

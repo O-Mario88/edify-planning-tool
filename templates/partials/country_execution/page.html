@@ -1,0 +1,119 @@
+{% comment %}
+Country Execution & Completion Oversight (owner design, 2026-09-28): did the
+planned work happen, on time, was it reviewed, verified and closed — and who
+holds what is still open. The second stage of Country Oversight: the same
+activities, schools, slots, people, Partners and periods as Planning, read
+from the platform's own delivery spine (apps.planning.country_execution).
+The whole of it is one swap target, so every figure describes one selection.
+{% endcomment %}
+<div id="cxo-root" class="cpo-root cxo-root" data-cpo-root data-mobile-family="oversight"
+     x-data="{ period: '{{ filters.period }}' }">
+
+  <header class="edify-page-header cxo-head">
+    <div class="edify-page-header__lead">
+      <nav class="cxo-crumbs" aria-label="Breadcrumb">
+        <a href="/country-planning-oversight/">Country Oversight</a>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span aria-current="page">Execution &amp; Completion</span>
+      </nav>
+      <h1 class="edify-page-header__title edify-page-title cxo-name">Execution &amp; Completion</h1>
+      <p class="edify-page-header__description cxo-lede">Track the implementation and completion of planned visits, trainings and activities across {{ header.country }}.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <button type="button" class="cpo-quiet" hx-get="/country-planning-oversight/execution/snapshots" hx-target="#drawer-container" hx-swap="innerHTML"
+              title="Each week, month, quarter and year, locked as it stood when it ended">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Period Snapshots
+      </button>
+      {% if may_export %}
+      <a class="cpo-export" href="/country-planning-oversight/execution/export?{{ query }}" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
+        Export
+      </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="cpo-lenses">{% include "partials/oversight/_lens_tabs.html" %}</div>
+
+  <form class="cpo-controls cxo-controls" action="/country-planning-oversight/" method="get"
+        hx-get="/country-planning-oversight/" hx-target="#cxo-root" hx-select="#cxo-root" hx-swap="outerHTML"
+        hx-push-url="true" hx-trigger="change" data-edify-filter-row="off" aria-label="Execution filters">
+    <input type="hidden" name="view" value="execution">
+    <div class="cxo-fields">
+      <div class="cpo-field cxo-field--period" role="group" aria-labelledby="cxo-period-caption">
+        <span class="cpo-caption" id="cxo-period-caption">Period</span>
+        <div class="cpo-pair">
+          <select name="period" x-model="period" aria-labelledby="cxo-period-caption">
+            {% for key, label in options.periods %}
+            <option value="{{ key }}"{% if filters.period == key %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <select name="quarter" aria-label="Quarter" x-show="period === 'quarter'"{% if filters.period != "quarter" %} style="display: none"{% endif %}>
+            {% for key, label in options.quarters %}
+            <option value="{{ key }}"{% if filters.quarter == key %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <select name="month" aria-label="Month" x-show="period === 'month'"{% if filters.period != "month" %} style="display: none"{% endif %}>
+            {% for value, label in options.months %}
+            <option value="{{ value }}"{% if filters.month == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input type="week" name="week" aria-label="Week" value="{{ filters.week }}" x-show="period === 'week'"{% if filters.period != "week" %} style="display: none"{% endif %}>
+          <select name="fy" aria-label="Financial year" x-show="period === 'fy'"{% if filters.period != "fy" %} style="display: none"{% endif %}>
+            {% for option in options.fy_options %}
+            <option value="{{ option.value }}"{% if option.value == filters.fy %} selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <label class="cpo-field">
+        <span class="cpo-caption">View by</span>
+        <select name="table">
+          {% for key, label in options.view_by %}
+          <option value="{{ key }}"{% if table == key %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Delivery Channel</span>
+        <select name="channel">
+          <option value="">All</option>
+          {% for key, label in options.channels %}
+          <option value="{{ key }}"{% if filters.channel == key %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Activity Type</span>
+        <select name="activity_type">
+          <option value="">All</option>
+          {% for key, label in options.types %}
+          <option value="{{ key }}"{% if filters.activity_type == key %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Region</span>
+        <select name="region">
+          <option value="">All</option>
+          {% for key, name in options.regions %}
+          <option value="{{ key }}"{% if key == filters.region %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% if filters.program_lead %}<input type="hidden" name="program_lead" value="{{ filters.program_lead }}">{% endif %}
+      {% if filters.cceo %}<input type="hidden" name="cceo" value="{{ filters.cceo }}">{% endif %}
+      {% if filters.partner %}<input type="hidden" name="partner" value="{{ filters.partner }}">{% endif %}
+      <a class="cxo-reset" href="/country-planning-oversight/?view=execution"
+         hx-get="/country-planning-oversight/?view=execution" hx-target="#cxo-root" hx-select="#cxo-root" hx-swap="outerHTML" hx-push-url="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.6"/><path d="M20 4v7h-7"/></svg>
+        Reset Filters
+      </a>
+    </div>
+    <noscript><button type="submit" class="cpo-apply">Apply</button></noscript>
+    {% if narrowed_to %}<p class="cxo-narrowed">Showing {{ narrowed_to }} · <a href="/country-planning-oversight/?{{ unnarrowed_query }}">Show the whole country</a></p>{% endif %}
+  </form>
+
+  {% include "partials/country_execution/workspace.html" %}
+</div>

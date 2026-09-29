@@ -1,0 +1,14 @@
+{% comment %}A row's figures in a drawer, from the same Tally the table row
+shows. `tally` is required; `window` says whether the requirement is phased.{% endcomment %}
+<dl class="cpo-figs">
+  <div><dt>Portfolio</dt><dd>{{ tally.schools }}<small>{{ tally.core_schools }} Core-family · {{ tally.client_schools }} Client-family</small></dd></div>
+  <div><dt>Required visits</dt><dd>{{ tally.visit_slots }}<small>{{ tally.staff_expected }} staff · {{ tally.partner_expected }} Partner</small></dd></div>
+  <div><dt>Staff planned</dt><dd>{{ tally.staff }}<small>{% if tally.staff_share is not None %}{{ tally.staff_share }}% of staff slots · {% endif %}{{ tally.staff_gap }} remaining</small></dd></div>
+  <div><dt>Partner assigned</dt><dd>{{ tally.partner_assigned }}<small>{{ tally.partner_scheduled }} scheduled · {{ tally.assigned_unscheduled }} awaiting</small></dd></div>
+  <div><dt>Remaining (unallocated)</dt><dd>{{ tally.unallocated }}<small>{{ tally.partner_gap }} Partner slots nobody holds</small></dd></div>
+  <div><dt>Capacity deficit</dt><dd{% if tally.deficit %} class="is-late"{% endif %}>{{ tally.deficit }}<small>Core staff slots beyond the ceiling</small></dd></div>
+  <div><dt>Training</dt><dd>{{ tally.training }} / {{ tally.training_slots }}<small>{{ tally.any_training }} schools planned · {{ tally.no_training }} none</small></dd></div>
+  <div><dt>Clusters</dt><dd>{{ tally.clustered }} / {{ tally.schools }}<small>{{ tally.unclustered }} unclustered</small></dd></div>
+  <div><dt>Cluster meetings</dt><dd>{{ tally.meeting_covered }} / {{ tally.schools }}<small>{{ tally.clustered_no_meeting }} clustered with none</small></dd></div>
+  <div><dt>Verified so far</dt><dd>{{ tally.staff_verified|add:tally.partner_verified }}<small>{{ tally.staff_verified }} staff · {{ tally.partner_verified }} Partner (not planned figures)</small></dd></div>
+</dl>

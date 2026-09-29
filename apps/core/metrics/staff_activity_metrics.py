@@ -74,7 +74,7 @@ _AUDIT = ("apps.audit.models.AuditLog",)
 STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     _row(
         "Staff Expected",
-        line=123,
+        line=124,
         definition=(
             "Staff with at least one expected working day in the period so far: "
             "a weekday that is not a public holiday and not approved leave."
@@ -86,7 +86,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Staff Active",
-        line=127,
+        line=128,
         definition="Staff who signed in or had active time in the period.",
         question="How many people used the platform?",
         numerator="people with a sign-in or active seconds in the period",
@@ -96,7 +96,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "No Login",
-        line=129,
+        line=130,
         definition=(
             "Staff with an expected working day in the period who neither signed "
             "in nor had active time. Leave and holidays are not counted."
@@ -108,7 +108,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Total Active Time",
-        line=135,
+        line=136,
         definition=(
             "Active platform time in the period: the server credits the gap between "
             "two activity beats only when it is within the idle threshold, once per "
@@ -121,7 +121,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Median Active Time",
-        line=139,
+        line=140,
         definition="The median active time of the staff who were active in the period.",
         question="What is a typical person's active time?",
         numerator="median of active seconds over active staff",
@@ -130,7 +130,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Meaningful Actions",
-        line=141,
+        line=142,
         definition=(
             "Successful governed workflow actions in the period, read from the audit "
             "chain through apps.staff_activity.registry — never page views."
@@ -142,7 +142,7 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Open Follow-ups",
-        line=147,
+        line=148,
         definition="Manager follow-ups about the listed staff that are not yet resolved.",
         question="How many staff follow-ups are still open?",
         numerator="StaffUsageFollowUp rows in an open status",

@@ -37,6 +37,9 @@ EXPECTED_PL_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/dashboard"),
+            # Staff Activity Log (owner, 2026-09-29), replacing Who's Online,
+            # directly below the Dashboard.
+            ("Staff Activity", "/staff-activity"),
             ("Planning", "/planning"),
             ("My Plan", "/my-plan"),
             ("School Directory", "/schools"),
@@ -57,8 +60,6 @@ EXPECTED_PL_SIDEBAR = [
             ("Core School Oversight", "/core-schools-oversight/"),
             ("Partner Oversight", "/partner-oversight/"),
             ("Project Monitoring", "/projects/monitoring"),
-            # Staff Activity Log (owner, 2026-09-29), replacing Who's Online.
-            ("Staff Activity", "/staff-activity"),
         ],
     ),
     (

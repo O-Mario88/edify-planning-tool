@@ -213,6 +213,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # country grouped by Programme Lead, the Admin the country for technical
     # support only (docs/STAFF_TIME_STANDARD.md §5).
     "staff_activity": {PL, CD, ADMIN},
+    # The country map and, under it, the country portfolio (owner,
+    # 2026-09-28: the portfolio left Country Oversight's tabs for the map
+    # page). The same readers as Country Oversight.
+    "country_map": {CD, RVP, IA, ADMIN},
     # The Accountant read clusters as a section of Team Oversight until the
     # section moved here (2026-09-23), and keeps that reading (owner,
     # 2026-09-23: "give them the access"). The data stays scoped by
@@ -833,6 +837,7 @@ ICONS.update(
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
         "staff_activity": ICONS["users"],
+        "country_map": ICONS["coverage"],
         "cluster_oversight": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
@@ -1687,6 +1692,10 @@ SIDEBAR_ITEMS = [
                 "role_urls": {
                     PARTNER: "/partner/assigned-schools",
                     IA: "/ia/dashboard/",
+                    # Country Oversight is the Country Director's dashboard
+                    # (owner, 2026-09-28): planning coverage and execution &
+                    # completion, with Who's Online under the planning tab.
+                    CD: "/country-planning-oversight/",
                     # An MFI's home is its portal dashboard (/dashboard only
                     # redirected there); one link, not two "Dashboard" rows.
                     MFI_ADMIN: "/mfi-portal/dashboard",
@@ -1777,9 +1786,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "programme_schools",
             },
             {
+                # The Country Director reaches this page as their Dashboard
+                # (owner, 2026-09-28), so it is listed here for the others.
                 "label": "Country Oversight",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
+                "visible_to": {IA, RPL, RVP, ADMIN},
+            },
+            {
+                # The country map, with the country portfolio under it —
+                # the portfolio left Country Oversight's tabs (owner,
+                # 2026-09-28).
+                "label": "Country Map",
+                "url": "/country-map/",
+                "page_key": "country_map",
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
             },
             {
@@ -3294,11 +3314,13 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     oversight_keys = (
         "team_planning_oversight",
         "country_planning_oversight",
+        # The country map carries the country portfolio that was Country
+        # Oversight's third tab (owner, 2026-09-28), so it sits beside it.
+        "country_map",
         "cluster_oversight",
         "core_schools_oversight",
         "partner_oversight",
         "project_monitoring",
-        "staff_activity",
     )
     oversight_items = [
         item

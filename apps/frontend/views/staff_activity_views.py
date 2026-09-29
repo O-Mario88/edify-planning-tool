@@ -19,6 +19,7 @@ from datetime import date
 
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -85,7 +86,7 @@ def staff_activity_view(request):
             "placeholder": "Search staff…",
             "name": "q",
             "value": request.GET.get("q", ""),
-            "attach_to": "sal-filters-form",
+            "attach_to": "sal-choice-form",
             "input_id": "sal-search",
             "autosubmit": True,
         },
@@ -409,14 +410,16 @@ def follow_up_transition_view(request, follow_up_id: str, action: str):
         from django.shortcuts import redirect
 
         messages.error(request, str(error))
-        return redirect(f"/staff-activity/follow-ups/{follow_up_id}")
+        return redirect(
+            reverse("frontend:staff_activity_follow_up", args=[follow_up.pk])
+        )
     if request.headers.get("HX-Request") == "true":
         response = HttpResponse(status=204)
         response["HX-Refresh"] = "true"
         return response
     from django.shortcuts import redirect
 
-    return redirect(f"/staff-activity/follow-ups/{follow_up_id}")
+    return redirect(reverse("frontend:staff_activity_follow_up", args=[follow_up.pk]))
 
 
 # ── The heartbeat ────────────────────────────────────────────────────────────

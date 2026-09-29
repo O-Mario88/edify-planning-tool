@@ -1,9 +1,9 @@
 {% load row_actions %}
-<tr class="sal-person{% if person.status_key == 'online' %} sal-person--online{% endif %}" data-sal-person="{{ person.id }}">
+<tr class="sal-person{% if person.status_key == 'online' %} sal-person--online{% endif %}" data-sal-person="{{ person.id }}" data-sal-src="/staff-activity/people/{{ person.id }}?period={{ log.period.key }}&amp;on={{ log.period.on|date:'Y-m-d' }}">
   <td>
     <span class="sal-who">
       <span class="sal-avatar" aria-hidden="true">{{ person.initials }}</span>
-      <button type="button" class="sal-name" data-sal-toggle="{{ person.id }}" aria-expanded="false" aria-controls="sal-detail-{{ person.id }}">{{ person.name }}</button>
+      <button type="button" class="sal-name" data-sal-toggle="{{ person.id }}" aria-expanded="false" aria-controls="sal-picked">{{ person.name }}</button>
     </span>
   </td>
   <td title="{{ person.active_role }}">{{ person.title }}</td>
@@ -29,12 +29,5 @@
             hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>
     {% endif %}
     {% endrow_actions %}
-  </td>
-</tr>
-<tr class="sal-detailrow" id="sal-detail-{{ person.id }}" hidden>
-  <td colspan="16">
-    <section class="sal-detail" data-table-detail data-src="/staff-activity/people/{{ person.id }}?period={{ log.period.key }}&amp;on={{ log.period.on|date:'Y-m-d' }}" aria-label="{{ person.name }}: activity detail">
-      <p class="sal-loading">Loading {{ person.name }}'s activity…</p>
-    </section>
   </td>
 </tr>

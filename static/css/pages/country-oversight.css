@@ -1,0 +1,1380 @@
+/* Country Planning Oversight — the planning-coverage dashboard (owner design,
+ * 2026-09-28). Loaded by that lens only.
+ *
+ * Class names are prefixed `cpo-` and chosen to match none of the legacy
+ * substring selectors the CSS build indexes (see static/build/css/
+ * selectors.json): no "card", "panel", "tile", "kpi", "badge", "pill",
+ * "chip", "status", "action", "icon", "grid", "filter", "red", "green",
+ * "row-", "w-" or "h-". Tones ride data attributes.
+ *
+ * Tables keep the platform's table system (flat surfaces, pinned 32px rows,
+ * pinned identity column on narrow screens): this sheet sets weights, colours
+ * and indentation inside it, and never fights its !important rules. */
+
+.cpo-root,
+.cpo-sheet,
+.cpo-banner {
+  --cpo-ink: #13233a;
+  --cpo-ink-2: #3a4a5c;
+  --cpo-ink-3: #5f6b78;
+  --cpo-line: #e2e7ec;
+  --cpo-line-2: #d3dae2;
+  --cpo-surface: var(--edify-surface-raised, #fff);
+  --cpo-sunk: #f5f7f9;
+  --cpo-accent: #0f5a47;
+  --cpo-accent-hover: #0b4838;
+  --cpo-accent-soft: #e5f3ec;
+  --cpo-good: #168a5b;
+  --cpo-good-soft: #e3f4ea;
+  --cpo-fair: #e1892a;
+  --cpo-fair-soft: #fdf0de;
+  --cpo-low: #d0433f;
+  --cpo-low-soft: #fbe7e6;
+  --cpo-none: #8c97a3;
+  --cpo-meter-track: #e6ebef;
+  --cpo-info-bg: #eef4fb;
+  --cpo-info-line: #d7e5f4;
+  --cpo-info-ink: #2f6fb5;
+  --cpo-series-1: #0f5a47;
+  --cpo-series-2: #f08a2c;
+  --cpo-series-3: #7bcb96;
+  --cpo-series-4: #3b82f6;
+  --cpo-series-5: #f08a2c;
+  --cpo-series-gap: #c9d1da;
+  --cpo-shadow: 0 1px 2px rgba(16, 31, 46, 0.05), 0 1px 1px rgba(16, 31, 46, 0.03);
+  --cpo-radius: 10px;
+}
+
+.cpo-root {
+  container-type: inline-size;
+  container-name: cpo;
+  max-inline-size: 1880px;
+  margin-inline: auto;
+  padding: 1.25rem clamp(0.75rem, 0.4rem + 1.2vw, 1.75rem) 2rem;
+  color: var(--cpo-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+:root:is(.theme-dark, .theme-blue) :is(.cpo-root, .cpo-sheet, .cpo-banner) {
+  --cpo-ink: var(--edify-text, #e8eef4);
+  --cpo-ink-2: var(--edify-text-muted, #c7d3de);
+  --cpo-ink-3: var(--edify-text-subtle, #a9b8c6);
+  --cpo-line: color-mix(in srgb, var(--edify-border) 70%, transparent);
+  --cpo-line-2: var(--edify-border);
+  --cpo-sunk: color-mix(in srgb, var(--edify-surface) 80%, black);
+  --cpo-accent: #3fbf8f;
+  --cpo-accent-hover: #5cd2a4;
+  --cpo-accent-soft: rgba(63, 191, 143, 0.16);
+  --cpo-good: #4fd19c;
+  --cpo-good-soft: rgba(79, 209, 156, 0.15);
+  --cpo-fair: #f5a95a;
+  --cpo-fair-soft: rgba(245, 169, 90, 0.16);
+  --cpo-low: #ff8a86;
+  --cpo-low-soft: rgba(255, 138, 134, 0.15);
+  --cpo-none: #9aa7b4;
+  --cpo-meter-track: color-mix(in srgb, var(--edify-border) 55%, transparent);
+  --cpo-info-bg: rgba(94, 160, 232, 0.12);
+  --cpo-info-line: rgba(94, 160, 232, 0.35);
+  --cpo-info-ink: #8fc1f5;
+  --cpo-series-1: #2fae83;
+  --cpo-series-2: #f59e4b;
+  --cpo-series-3: #9be0b3;
+  --cpo-series-4: #6aa5f8;
+  --cpo-series-5: #f59e4b;
+  --cpo-series-gap: #5b6b7b;
+  --cpo-shadow: none;
+}
+
+/* ── Heading ───────────────────────────────────────────────────────────── */
+/* The platform page header (components.css) lays out the lead and the
+   controls; this sets the design's pieces inside them. */
+.cpo-root .cpo-head {
+  flex-wrap: nowrap;
+  gap: 1.25rem;
+  margin-block-end: 0;
+  padding-block: 0.25rem 0.1rem;
+}
+.cpo-root .cpo-headline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+.cpo-root .cpo-headside {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+.cpo-flag {
+  inline-size: 4.25rem;
+  block-size: auto;
+  flex: none;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(16, 31, 46, 0.12);
+}
+.cpo-headline-copy { min-inline-size: 0; }
+.cpo-name { margin: 0; }
+.cpo-subline {
+  margin: 0.3rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.55rem;
+  font-size: clamp(0.95rem, 0.85rem + 0.35vw, 1.15rem);
+  color: var(--cpo-ink-2);
+  font-weight: 500;
+}
+.cpo-subline span:first-child { font-weight: 600; color: var(--cpo-ink); }
+.cpo-dot { color: var(--cpo-ink-3); font-size: 0.8em; }
+
+.cpo-motto {
+  position: relative;
+  flex: 0 1 17rem;
+  align-self: stretch;
+  min-block-size: 5.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.cpo-map {
+  position: absolute;
+  inset-block: -0.35rem;
+  inset-inline-start: 0;
+  block-size: calc(100% + 0.7rem);
+  inline-size: auto;
+  fill: currentColor;
+  color: var(--cpo-ink);
+  opacity: 0.06;
+}
+/* The design sets the motto in a script face; the platform has one typeface
+   (apps.core test GlobalFontTest), so it is the platform's, in italic. */
+.cpo-motto-text {
+  position: relative;
+  margin: 0;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.12rem;
+  line-height: 1.15;
+  color: var(--cpo-accent);
+  transform: rotate(-7deg);
+  text-align: start;
+  white-space: nowrap;
+  padding-inline-end: 0.5rem;
+}
+
+.cpo-stamp {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: none;
+}
+.cpo-stamp-copy { text-align: end; }
+.cpo-stamp-label,
+.cpo-stamp-asof {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--cpo-ink-3);
+}
+.cpo-stamp-time {
+  margin: 0.1rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--cpo-ink-2);
+}
+.cpo-refresh {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 999px;
+  color: var(--cpo-ink-2);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.cpo-refresh:hover { background: var(--cpo-sunk); color: var(--cpo-accent); }
+.cpo-refresh:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cpo-refresh svg { inline-size: 1.25rem; block-size: 1.25rem; }
+
+.cpo-lenses:empty { display: none; }
+
+/* ── Filters ───────────────────────────────────────────────────────────── */
+.cpo-controls {
+  background: var(--cpo-surface);
+  border: 1px solid var(--cpo-line);
+  border-radius: var(--cpo-radius);
+  box-shadow: var(--cpo-shadow);
+  padding: 0.8rem 1rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.cpo-fields {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+.cpo-fields--more { grid-template-columns: repeat(4, minmax(0, 1fr)); max-inline-size: 60%; }
+.cpo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-inline-size: 0;
+}
+.cpo-caption {
+  font-size: 0.8rem;
+  color: var(--cpo-ink-2);
+  font-weight: 500;
+}
+.cpo-controls select,
+.cpo-controls input[type="week"] {
+  inline-size: 100%;
+  min-inline-size: 0;
+  block-size: 2.35rem;
+  padding-inline: 0.65rem 1.9rem;
+  border: 1px solid var(--cpo-line-2);
+  border-radius: 6px;
+  background-color: var(--cpo-surface);
+  color: var(--cpo-ink);
+  font-size: 0.875rem;
+}
+.cpo-controls input[type="week"] { padding-inline-end: 0.5rem; }
+.cpo-controls select:focus-visible,
+.cpo-controls input:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 1px; }
+.cpo-pair { display: flex; gap: 0.4rem; min-inline-size: 0; }
+.cpo-pair > * { flex: 1 1 0; min-inline-size: 0; }
+.cpo-go { display: flex; gap: 0.6rem; align-items: end; }
+.cpo-apply,
+.cpo-reset {
+  block-size: 2.5rem;
+  padding-inline: 1.35rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cpo-apply {
+  background: var(--cpo-accent);
+  color: #fff;
+  border: 1px solid var(--cpo-accent);
+  min-inline-size: 8.5rem;
+}
+.cpo-apply:hover { background: var(--cpo-accent-hover); border-color: var(--cpo-accent-hover); }
+:root:is(.theme-dark, .theme-blue) .cpo-apply { color: #062a20; }
+.cpo-reset {
+  background: var(--cpo-surface);
+  color: var(--cpo-ink);
+  border: 1px solid var(--cpo-line-2);
+  min-inline-size: 6.5rem;
+}
+.cpo-reset:hover { background: var(--cpo-sunk); }
+.cpo-apply:focus-visible,
+.cpo-reset:focus-visible,
+.cpo-more:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cpo-more {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0.1rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cpo-accent);
+  cursor: pointer;
+}
+
+/* ── Notes ─────────────────────────────────────────────────────────────── */
+.cpo-notice {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  background: var(--cpo-info-bg);
+  border: 1px solid var(--cpo-info-line);
+  color: var(--cpo-ink-2);
+  font-size: 0.85rem;
+}
+.cpo-notice--attention { background: var(--cpo-fair-soft); border-color: color-mix(in srgb, var(--cpo-fair) 35%, transparent); }
+.cpo-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--cpo-accent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cpo-workspace { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* ── Summary cards ─────────────────────────────────────────────────────── */
+.cpo-metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.cpo-metric,
+.cpo-metric * { white-space: normal; overflow-wrap: anywhere; }
+.cpo-metric {
+  --tone: var(--cpo-good);
+  --tone-soft: var(--cpo-good-soft);
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem 1.1rem 0.95rem;
+  background: var(--cpo-surface);
+  border: 1px solid var(--cpo-line);
+  border-radius: var(--cpo-radius);
+  box-shadow: var(--cpo-shadow);
+  cursor: pointer;
+  min-inline-size: 0;
+  text-align: start;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.cpo-metric:hover { border-color: color-mix(in srgb, var(--tone) 45%, var(--cpo-line)); }
+.cpo-metric:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cpo-metric[data-tone="fair"] { --tone: var(--cpo-fair); --tone-soft: var(--cpo-fair-soft); }
+.cpo-metric[data-tone="low"] { --tone: var(--cpo-low); --tone-soft: var(--cpo-low-soft); }
+.cpo-metric[data-tone="none"] { --tone: var(--cpo-none); --tone-soft: var(--cpo-sunk); }
+.cpo-metric-top { display: flex; align-items: center; gap: 0.75rem; min-inline-size: 0; }
+.cpo-glyph {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--tone-soft);
+  color: var(--cpo-accent);
+}
+.cpo-metric[data-tone="fair"] .cpo-glyph,
+.cpo-metric[data-tone="low"] .cpo-glyph { color: var(--tone); }
+.cpo-glyph svg { inline-size: 1.6rem; block-size: 1.6rem; }
+.cpo-metric-name {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--cpo-ink);
+}
+.cpo-metric-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding-inline-start: 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.cpo-metric-part { font-size: 1.6rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
+.cpo-metric-whole { font-size: 1.6rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
+.cpo-metric-share {
+  margin-inline-start: auto;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--tone);
+}
+.cpo-meter {
+  display: block;
+  block-size: 0.55rem;
+  border-radius: 999px;
+  background: var(--cpo-meter-track);
+  overflow: hidden;
+}
+.cpo-meter-fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--tone);
+  min-inline-size: 0;
+}
+.cpo-metric[data-tone="good"] .cpo-meter-fill { background: var(--cpo-good); }
+.cpo-metric-foot {
+  font-size: 0.9rem;
+  color: var(--cpo-ink-2);
+  line-height: 1.3;
+}
+.cpo-metric-foot strong {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--tone);
+  margin-inline-end: 0.35rem;
+}
+.cpo-metric-extra,
+.cpo-metric-note {
+  font-size: 0.75rem;
+  color: var(--cpo-ink-3);
+  line-height: 1.35;
+  margin-block-start: -0.25rem;
+}
+
+/* ── Charts ────────────────────────────────────────────────────────────── */
+.cpo-charts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.cpo-chart {
+  margin: 0;
+  padding: 1rem 1.1rem 0.6rem;
+  background: var(--cpo-surface);
+  border: 1px solid var(--cpo-line);
+  border-radius: var(--cpo-radius);
+  box-shadow: var(--cpo-shadow);
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cpo-chart-name {
+  margin: 0 0 0.35rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--cpo-ink);
+}
+/* The chart engine redraws a beat after its box changes size (a debounced
+   resize), so for that beat the old, wider drawing sticks out of the card and
+   the workspace scrolls sideways — the full-width execution charts did, going
+   from a tablet's portrait to its landscape. The plot clips that beat
+   sideways only; a tooltip still rises above it. */
+.cpo-plot { min-block-size: 15.5rem; flex: 1 1 auto; overflow-x: clip; }
+.cpo-chart-data { margin-block-start: 0.25rem; }
+.cpo-chart-data > summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--cpo-ink-3);
+  font-weight: 600;
+}
+.cpo-mini { font-size: 0.78rem; }
+
+/* ── Drill-down table and follow-ups ───────────────────────────────────── */
+.cpo-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24rem;
+  gap: 0.9rem;
+  align-items: start;
+}
+.cpo-drill,
+.cpo-side {
+  background: var(--cpo-surface);
+  border: 1px solid var(--cpo-line);
+  border-radius: var(--cpo-radius);
+  box-shadow: var(--cpo-shadow);
+  min-inline-size: 0;
+}
+.cpo-drill-head,
+.cpo-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem 0.7rem;
+}
+.cpo-drill-name,
+.cpo-side-name {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--cpo-ink);
+}
+.cpo-drill-name span { color: var(--cpo-ink-2); margin-inline: 0.15rem; }
+.cpo-drill-tools { display: flex; gap: 0.5rem; align-items: center; flex: none; }
+.cpo-export,
+.cpo-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  block-size: 2.1rem;
+  padding-inline: 0.85rem;
+  border: 1px solid var(--cpo-line-2);
+  border-radius: 6px;
+  background: var(--cpo-surface);
+  color: var(--cpo-ink);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.cpo-export:hover,
+.cpo-quiet:hover { background: var(--cpo-sunk); }
+:is(.cpo-export, .cpo-quiet) svg { inline-size: 1rem; block-size: 1rem; }
+.cpo-tscroll { overflow-x: auto; }
+
+.cpo-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  /* The platform pads every table cell from this token (design-system.css);
+     fourteen columns fit a 1440 px screen at it. */
+  --edify-table-cell-padding-inline: 0.25rem;
+}
+.cpo-table :is(th, td) { text-align: center; white-space: nowrap; }
+.cpo-table thead th {
+  font-weight: 600;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+/* The owner's design sets each heading on two short lines ("Required /
+   Visits") so fourteen columns fit. The break is written into the heading
+   (<br>), so each line still keeps the platform's one-line rule: a heading
+   left to wrap on its own breaks differently at every width, and the
+   responsive contract counts it as a wrap. */
+.cpo-root .cpo-table thead th:not(.cpo-namecol) { min-inline-size: 3.6rem; }
+.cpo-table thead th.cpo-namecol { text-align: start; min-inline-size: 8.75rem; }
+.cpo-table .cpo-namecell {
+  text-align: start;
+  font-weight: 500;
+  color: var(--cpo-ink);
+}
+.cpo-namecell > span { vertical-align: middle; }
+.cpo-table tr[data-level="0"] :is(th, td) { font-weight: 700; color: var(--cpo-ink); }
+.cpo-table tr[data-level="1"] .cpo-namecell { font-weight: 600; }
+.cpo-table tr[data-level="1"][data-open="true"] .cpo-namecell > span:last-child { color: var(--cpo-accent); }
+/* The platform sizes a scrolling table to its content; this one fills its
+   region first, so the two-line headings and short figures can give way
+   before the table scrolls. Indentation is padding on the name cell — the
+   only box the platform leaves a table's cells to set. */
+.cpo-root table.cpo-table.cpo-table { width: 100% !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell { padding-inline-start: 0.6rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell[data-leaf] { padding-inline-start: 2.2rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell { padding-inline-start: 1.9rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell[data-leaf] { padding-inline-start: 3.5rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="3"] .cpo-namecell[data-leaf] { padding-inline-start: 3.9rem !important; }
+.cpo-table tr[data-level="3"] .cpo-namecell { font-weight: 400; color: var(--cpo-ink-2); }
+.cpo-table tr[data-level="placeholder"] { display: none; }
+.cpo-toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-inline-end: 0.35rem;
+  border-radius: 4px;
+  color: var(--cpo-ink-2);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.cpo-toggle svg { inline-size: 0.95rem; block-size: 0.95rem; transition: transform 120ms ease; }
+.cpo-toggle.is-open svg { transform: rotate(90deg); }
+.cpo-toggle:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 1px; }
+.cpo-hint { margin-inline-start: 0.4rem; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 400; }
+.cpo-flagged { margin-inline-start: 0.4rem; font-size: var(--edify-text-micro-size); color: var(--cpo-low); font-weight: 600; }
+/* A row's note sits under its name. Name and note each keep one line, as
+   every table heading does on the platform: a long officer or Partner name
+   widens the name column and the table scrolls in its region, so the Action
+   column stays reachable. A note is a span holding a span: micro-ux marks
+   text-only spans as cell text (inline, one line), so the outer one is left
+   for this sheet to set. */
+.cpo-root .cpo-table.cpo-table tbody th.cpo-namecell,
+.cpo-root .cpo-table.cpo-table tbody th.cpo-namecell span { white-space: nowrap !important; }
+/* The platform sizes buttons in table cells as actions (1.75rem tall, side
+   padding); the row toggles keep that height for touch, and only the width
+   of their chevron, so every level indents by the same small step. */
+.cpo-root table.cpo-table.cpo-table button.cpo-toggle.cpo-toggle.cpo-toggle {
+  padding: 0 !important;
+  min-inline-size: 1.5rem !important;
+  inline-size: 1.5rem !important;
+  margin-inline-end: 0.2rem;
+}
+.cpo-root .cpo-table.cpo-table tbody th.cpo-namecell > span:is(.cpo-hint, .cpo-flagged) {
+  display: block !important;
+  margin-inline-start: 0;
+  line-height: 1.25;
+}
+/* A row that opens carries its chevron inside the name's span, so a pinned
+   name column (a phone, a tablet) keeps chevron and name on the first line
+   and stacks only the note under them; the note lines up under the name. */
+.cpo-root .cpo-table.cpo-table tbody th.cpo-namecell:not([data-leaf]) > span:is(.cpo-hint, .cpo-flagged) {
+  margin-inline-start: 1.7rem;
+}
+.cpo-pct { font-size: var(--edify-text-micro-size); font-weight: 600; margin-inline-start: 0.1rem; }
+.cpo-pct[data-tone="good"] { color: var(--cpo-good); }
+.cpo-pct[data-tone="fair"] { color: var(--cpo-fair); }
+.cpo-pct[data-tone="low"] { color: var(--cpo-low); }
+.cpo-pct[data-tone="none"] { color: var(--cpo-none); }
+.cpo-alert { color: var(--cpo-low); font-weight: 700; }
+.cpo-zero { color: var(--cpo-ink-3); }
+.cpo-none { color: var(--cpo-ink-3); }
+.cpo-empty { text-align: center; color: var(--cpo-ink-3); padding-block: 1rem; }
+.cpo-actcol { min-inline-size: 4.5rem; }
+.cpo-actcell { text-align: start; }
+.cpo-acts { display: inline-flex; align-items: center; gap: 0.25rem; }
+.cpo-ask,
+.cpo-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 1.7rem;
+  padding-inline: 0.8rem;
+  border: 1px solid var(--cpo-line-2);
+  border-radius: 6px;
+  background: var(--cpo-surface);
+  color: var(--cpo-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cpo-ask { padding-inline: 0.6rem; }
+/* Below the width that holds all fourteen columns the button says "Follow
+   Up"; the row it sits on names the Lead, and so does its accessible name. */
+@container cpo (max-width: 1219px) {
+  .cpo-ask-tail { display: none; }
+}
+/* The platform's table action size, with less side padding, so the Action
+   column is the button and its menu and nothing more. */
+.cpo-root .cpo-table.cpo-table tbody td.cpo-actcell .cpo-acts .cpo-ask.cpo-ask.cpo-ask {
+  padding-inline: 0.5rem !important;
+}
+.cpo-view { min-inline-size: 4.5rem; }
+.cpo-ask:hover,
+.cpo-view:hover { border-color: var(--cpo-accent); color: var(--cpo-accent); }
+.cpo-ask:focus-visible,
+.cpo-view:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 1px; }
+.cpo-kebab { display: inline-flex; }
+.cpo-kebab-trigger {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.6rem;
+  block-size: 1.7rem;
+  border-radius: 6px;
+  color: var(--cpo-ink-2);
+  cursor: pointer;
+}
+/* A control in a table cell takes the platform's 24px action box and its
+   padding; the menu's three dots need the whole box. */
+.cpo-root .cpo-kebab-trigger.cpo-kebab-trigger {
+  padding: 0 !important;
+  min-inline-size: 1.75rem !important;
+  inline-size: 1.75rem !important;
+  justify-content: center;
+}
+.cpo-kebab-trigger svg { flex: none; }
+.cpo-kebab-trigger:hover { background: var(--cpo-sunk); }
+.cpo-kebab-trigger:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 1px; }
+.cpo-kebab-trigger svg { inline-size: 1.05rem; block-size: 1.05rem; }
+
+.cpo-count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.7rem;
+  block-size: 1.45rem;
+  padding-inline: 0.45rem;
+  margin-inline-start: 0.4rem;
+  border-radius: 999px;
+  background: var(--cpo-low-soft);
+  color: var(--cpo-low);
+  font-size: 0.8rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.cpo-viewall {
+  border: 0;
+  background: none;
+  color: var(--cpo-accent);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+.cpo-viewall:hover { text-decoration: underline; }
+.cpo-fu { list-style: none; margin: 0; padding: 0 1.1rem; }
+.cpo-fu-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.55rem 0.7rem;
+  align-items: center;
+  padding-block: 0.8rem;
+  border-block-start: 1px solid var(--cpo-line);
+}
+.cpo-fu-item:first-child { border-block-start: 0; }
+.cpo-fu-mail { color: var(--cpo-ink-2); display: grid; place-items: center; }
+.cpo-fu-mail svg { inline-size: 1.35rem; block-size: 1.35rem; }
+.cpo-fu-copy { min-inline-size: 0; }
+.cpo-fu-title {
+  all: unset;
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--cpo-ink);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cpo-fu-title:hover { color: var(--cpo-accent); text-decoration: underline; }
+.cpo-fu-title:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cpo-fu-to { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--cpo-ink-3); }
+.cpo-tag {
+  display: inline-flex;
+  align-items: center;
+  block-size: 1.35rem;
+  padding-inline: 0.55rem;
+  border-radius: 999px;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--cpo-good-soft);
+  color: var(--cpo-good);
+}
+.cpo-tag[data-tone="seen"] { background: rgba(47, 111, 181, 0.12); color: var(--cpo-info-ink); }
+.cpo-tag[data-tone="wait"] { background: var(--cpo-fair-soft); color: var(--cpo-fair); }
+.cpo-tag[data-tone="back"] { background: var(--cpo-low-soft); color: var(--cpo-low); }
+.cpo-tag[data-tone="done"] { background: var(--cpo-sunk); color: var(--cpo-ink-2); }
+.cpo-tag[data-tone="off"] { background: var(--cpo-sunk); color: var(--cpo-ink-3); }
+.cpo-fu-date { font-size: 0.75rem; color: var(--cpo-ink-3); white-space: nowrap; }
+.cpo-fu-date.is-late { color: var(--cpo-low); font-weight: 600; }
+.cpo-fu-empty { margin: 0; padding: 0.4rem 1.1rem 0.8rem; font-size: 0.85rem; color: var(--cpo-ink-3); }
+.cpo-info {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 0.4rem 1.1rem 1.1rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  background: var(--cpo-info-bg);
+  border: 1px solid var(--cpo-info-line);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--cpo-ink-2);
+}
+.cpo-info svg { inline-size: 1.15rem; block-size: 1.15rem; flex: none; color: var(--cpo-info-ink); margin-block-start: 0.05rem; }
+
+/* ── Width ─────────────────────────────────────────────────────────────── */
+/* The owner's layout, as far as the screen allows it: the table shares its
+   row with the follow-ups only when all fourteen columns still fit; six
+   cards and four charts share a row while each keeps room for its figures. */
+@container cpo (max-width: 1760px) {
+  .cpo-lower { grid-template-columns: minmax(0, 1fr); }
+  .cpo-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem); align-items: start; }
+  .cpo-side-head { grid-column: 1 / -1; }
+  .cpo-side .cpo-fu,
+  .cpo-side .cpo-fu-empty { grid-column: 1; }
+  .cpo-side .cpo-info { grid-column: 2; grid-row: 2 / span 4; margin-block-start: 0; }
+}
+@container cpo (max-width: 1450px) {
+  .cpo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cpo-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container cpo (max-width: 1400px) {
+  .cpo-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cpo-fields--more { max-inline-size: none; }
+  .cpo-go { justify-content: flex-end; }
+}
+@container cpo (max-width: 1100px) {
+  .cpo-motto { display: none; }
+}
+@container cpo (max-width: 900px) {
+  .cpo-side { display: block; }
+}
+@container cpo (max-width: 760px) {
+  .cpo-root .cpo-head { flex-wrap: wrap; align-items: flex-start; }
+  .cpo-root .cpo-headside { inline-size: 100%; }
+  .cpo-stamp { inline-size: 100%; justify-content: space-between; }
+  .cpo-stamp-copy { text-align: start; }
+  .cpo-flag { inline-size: 3.25rem; }
+  .cpo-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+  .cpo-metric { padding: 0.8rem; gap: 0.45rem; }
+  .cpo-glyph { inline-size: 2.25rem; block-size: 2.25rem; }
+  .cpo-glyph svg { inline-size: 1.3rem; block-size: 1.3rem; }
+  .cpo-metric-name { font-size: 0.88rem; }
+  .cpo-metric-part,
+  .cpo-metric-whole { font-size: 1.2rem; }
+  .cpo-metric-share { font-size: 0.95rem; }
+  .cpo-metric-foot { font-size: 0.78rem; }
+  .cpo-metric-foot strong { font-size: 0.95rem; }
+  .cpo-charts { grid-template-columns: minmax(0, 1fr); }
+  /* A tablet held upright: three to a row, the period and its value side by
+     side, so the seven filters and Apply take three rows rather than five. */
+  .cpo-fields,
+  .cpo-fields--more { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
+  .cpo-field--period { grid-column: span 2; }
+  .cpo-go > * { flex: 1 1 0; min-inline-size: 0; }
+  .cpo-drill-head { flex-wrap: wrap; }
+  .cpo-fu-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .cpo-fu-date { grid-column: 2; }
+}
+/* A phone: the year, the Programme Lead and the period first; the other four
+   filters join the extra ones behind "More filters" (the platform's phone
+   filter row is three and More), unless one of them is set. The table's own
+   two actions are icons in its title band (the platform's band glyphs), so
+   the title keeps the line beside them: beside two labelled buttons it stood
+   five words deep. Their names stay for screen readers and as tooltips. */
+@container cpo (max-width: 520px) {
+  .cpo-fields,
+  .cpo-fields--more { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cpo-field--lead { order: 1; }
+  .cpo-field--period { order: 2; }
+  .cpo-field--minor { order: 3; }
+  .cpo-go { order: 4; grid-column: span 2; }
+  .cpo-controls:not([data-more="true"]) .cpo-field--minor:not(.is-set) { display: none; }
+  .cpo-drill-tools :is(.cpo-quiet, .cpo-export) {
+    inline-size: 2.1rem;
+    padding-inline: 0;
+    justify-content: center;
+  }
+  .cpo-tool-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* ── Drawers and the Programme Lead's follow-up ─────────────────────────── */
+.cpo-sheet { display: flex; flex-direction: column; gap: 1.1rem; color: var(--cpo-ink); }
+.cpo-sheet > section + section,
+.cpo-sheet > section + div { margin-block-start: 0.35rem; }
+.cpo-sub {
+  margin: 0.4rem 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cpo-ink-2);
+}
+.cpo-muted { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--cpo-ink-3); line-height: 1.45; }
+.cpo-figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+.cpo-figs > div {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--cpo-line);
+  border-radius: 8px;
+  background: var(--cpo-surface);
+}
+.cpo-figs dt { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 600; }
+.cpo-figs dd { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 700; color: var(--cpo-ink); font-variant-numeric: tabular-nums; }
+.cpo-figs dd small { display: block; margin-block-start: 0.1rem; font-size: var(--edify-text-micro-size); font-weight: 400; color: var(--cpo-ink-3); }
+.cpo-figs dd.is-late { color: var(--cpo-low); }
+.cpo-figs--tight { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
+.cpo-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.4rem 1rem; margin: 0; }
+.cpo-facts dt { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
+.cpo-facts dd { margin: 0; font-size: 0.88rem; font-weight: 600; }
+.cpo-needs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.cpo-need {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--cpo-line);
+  border-radius: 8px;
+  background: var(--cpo-surface);
+}
+.cpo-need.is-clear { opacity: 0.72; }
+.cpo-need-name { margin: 0; font-size: 0.85rem; font-weight: 600; }
+.cpo-need-figs { margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--cpo-ink-3); }
+.cpo-need-figs strong { color: var(--cpo-low); }
+.cpo-need.is-clear .cpo-need-figs strong { color: var(--cpo-good); }
+.cpo-form { display: flex; flex-direction: column; gap: 0.65rem; }
+.cpo-form textarea,
+.cpo-form select,
+.cpo-form input[type="date"] {
+  inline-size: 100%;
+  border: 1px solid var(--cpo-line-2);
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.875rem;
+  background: var(--cpo-surface);
+  color: var(--cpo-ink);
+}
+.cpo-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cpo-inline select { block-size: 2rem; border: 1px solid var(--cpo-line-2); border-radius: 6px; padding-inline: 0.5rem; background: var(--cpo-surface); color: var(--cpo-ink); }
+.cpo-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0; font-size: 0.85rem; }
+.cpo-links a { color: var(--cpo-accent); font-weight: 600; }
+.cpo-fu--flush { padding: 0; }
+.cpo-schools { display: flex; flex-direction: column; gap: 0.6rem; }
+.cpo-school-list th[scope="row"] a { color: var(--cpo-ink); font-weight: 600; }
+.cpo-slotcell { background: var(--cpo-sunk); }
+.cpo-pager { display: flex; align-items: center; gap: 0.75rem; justify-content: flex-end; }
+.cpo-slots { list-style: none; margin: 0; padding: 0.25rem 0; display: flex; flex-direction: column; gap: 0.3rem; white-space: normal; }
+.cpo-slot {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) auto minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  font-size: 0.8rem;
+  text-align: start;
+}
+.cpo-slot-name { font-weight: 600; }
+.cpo-slot-name small,
+.cpo-slot-what small { display: block; font-weight: 400; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
+.cpo-slot[data-state="beyond"] { color: var(--cpo-ink-3); }
+.cpo-fu-entry {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--cpo-line);
+  border-radius: 8px;
+  background: var(--cpo-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.cpo-fu-entry.is-focus { border-color: var(--cpo-accent); box-shadow: 0 0 0 2px var(--cpo-accent-soft); }
+.cpo-fu-entry-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
+.cpo-fu-entry-name { margin: 0; font-size: 0.9rem; font-weight: 600; }
+.cpo-trail { margin: 0.2rem 0 0; padding-inline-start: 1.1rem; font-size: 0.8rem; color: var(--cpo-ink-2); }
+.cpo-trail small { color: var(--cpo-ink-3); margin-inline-start: 0.3rem; }
+.cpo-dq { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.cpo-dq-item details { border: 1px solid var(--cpo-line); border-radius: 8px; padding: 0.55rem 0.75rem; background: var(--cpo-surface); }
+.cpo-dq-item summary { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; cursor: pointer; }
+.cpo-dq-name { font-size: 0.85rem; font-weight: 600; }
+.cpo-dq-item[data-level="clear"] .cpo-dq-name { color: var(--cpo-ink-3); font-weight: 500; }
+.cpo-dq-samples { margin: 0.4rem 0 0; padding-inline-start: 1rem; font-size: 0.8rem; }
+.cpo-dq-samples small { color: var(--cpo-ink-3); }
+.cpo-opened .cpo-big { margin: 0; font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cpo-opened .cpo-big strong { margin-inline-start: 0.5rem; font-size: 1.1rem; }
+.cpo-opened[data-tone="good"] .cpo-big strong { color: var(--cpo-good); }
+.cpo-opened[data-tone="fair"] .cpo-big strong { color: var(--cpo-fair); }
+.cpo-opened[data-tone="low"] .cpo-big strong { color: var(--cpo-low); }
+.cpo-banner {
+  padding: 0.9rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--cpo-accent) 35%, var(--cpo-line));
+  border-inline-start: 4px solid var(--cpo-accent);
+  border-radius: 10px;
+  background: var(--cpo-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--cpo-ink);
+}
+.cpo-banner-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+.cpo-banner-kicker { margin: 0; font-size: 0.75rem; color: var(--cpo-ink-3); font-weight: 600; }
+.cpo-banner-name { margin: 0.1rem 0 0; font-size: 1.05rem; font-weight: 700; }
+.cpo-banner-ask { margin: 0; font-size: 0.92rem; color: var(--cpo-ink-2); }
+
+/* ── Execution & Completion (owner design, 2026-09-28) ─────────────────────
+   The second Country Oversight tab. It shares the planning page's surfaces
+   (cards, charts, tables, drawers) and adds its own series colours, the
+   reading row (on-time, backlog, age, forecast, shortcuts) and the lists
+   under the table. Class names are `cxo-` (a `cpx-` prefix would match the
+   indexed `px-` padding pattern). */
+.cxo-root {
+  --cxo-total: #1f3f78;
+  --cxo-staff: #4f95e6;
+  --cxo-partner: #2e9a5b;
+  --cxo-planned: #98a4b2;
+  --cxo-exec: #3b82f6;
+  --cxo-verified: #7a4fd8;
+  --cxo-closed: #1f8f55;
+  --cxo-overdue: #dc3f43;
+  --cxo-ontime-1: #26a05f;
+  --cxo-ontime-2: #f08a2c;
+  --cxo-ontime-3: #9aa7b6;
+  --cxo-ontime-4: #dc3f43;
+  --cxo-ontime-5: #c8d3df;
+  --cxo-ontime-6: #58606b;
+  --cxo-owner-staff: #3b82f6;
+  --cxo-owner-pl: #e0474c;
+  --cxo-owner-ia: #7fb7ea;
+  --cxo-owner-partner: #f08a2c;
+  --cxo-owner-finance: #f2c94c;
+  --cxo-owner-external: #5a9b7e;
+  --cxo-alert-soft: #fdecec;
+  --cxo-alert-line: #f4c6c7;
+  --cxo-violet-soft: #efe8fc;
+  --cxo-blue-soft: #e6effd;
+  --cxo-deep-soft: #e3f1ea;
+}
+:root:is(.theme-dark, .theme-blue) .cxo-root {
+  --cxo-total: #7ea6ea;
+  --cxo-staff: #6aa5f8;
+  --cxo-partner: #4fd19c;
+  --cxo-planned: #8494a5;
+  --cxo-exec: #6aa5f8;
+  --cxo-verified: #a78bfa;
+  --cxo-closed: #4fd19c;
+  --cxo-overdue: #ff8a86;
+  --cxo-ontime-1: #4fd19c;
+  --cxo-ontime-2: #f5a95a;
+  --cxo-ontime-3: #8d9aa8;
+  --cxo-ontime-4: #ff8a86;
+  --cxo-ontime-5: #4a5968;
+  --cxo-ontime-6: #b8c2cc;
+  --cxo-owner-staff: #6aa5f8;
+  --cxo-owner-pl: #ff8a86;
+  --cxo-owner-ia: #8fc1f5;
+  --cxo-owner-partner: #f5a95a;
+  --cxo-owner-finance: #f2d06b;
+  --cxo-owner-external: #7fc6a4;
+  --cxo-alert-soft: rgba(255, 138, 134, 0.12);
+  --cxo-alert-line: rgba(255, 138, 134, 0.35);
+  --cxo-violet-soft: rgba(167, 139, 250, 0.16);
+  --cxo-blue-soft: rgba(106, 165, 248, 0.16);
+  --cxo-deep-soft: rgba(79, 209, 156, 0.14);
+}
+
+.cxo-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-block-end: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--cpo-ink-3);
+}
+.cxo-crumbs a { color: var(--cpo-ink-3); text-decoration: none; }
+.cxo-crumbs a:hover { color: var(--cpo-accent); text-decoration: underline; }
+.cxo-crumbs span { color: var(--cpo-ink); font-weight: 600; }
+.cxo-crumbs svg { inline-size: 0.9rem; block-size: 0.9rem; }
+.cpo-root .cxo-head { margin-block-end: 0; }
+
+.cxo-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) repeat(4, minmax(0, 1fr)) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+.cxo-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  block-size: 2.35rem;
+  padding-inline: 0.4rem;
+  color: var(--cxo-exec);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.cxo-reset svg { inline-size: 1.1rem; block-size: 1.1rem; }
+.cxo-narrowed { margin: 0; font-size: 0.82rem; color: var(--cpo-ink-2); }
+
+/* The six figures: the icon beside the name, the figure and its share, the
+   bar across the foot (owner design). */
+.cpo-metric.cxo-metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "glyph label"
+    "glyph figure"
+    "glyph note"
+    "meter meter";
+  column-gap: 0.75rem;
+  row-gap: 0.2rem;
+  align-items: center;
+  align-content: start;
+}
+.cxo-metric .cxo-glyph { grid-area: glyph; align-self: start; inline-size: 2.5rem; block-size: 2.5rem; }
+.cxo-metric .cxo-glyph svg { inline-size: 1.45rem; block-size: 1.45rem; }
+.cxo-metric .cxo-label {
+  grid-area: label;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--cpo-ink);
+  overflow-wrap: normal;
+}
+.cxo-metric .cxo-figure { grid-area: figure; }
+.cxo-metric .cxo-metric-note { grid-area: note; overflow-wrap: normal; }
+.cxo-metric .cxo-meter { grid-area: meter; margin-block-start: 0.55rem; }
+.cxo-metric[data-tone] { --tone: var(--cxo-exec); --tone-soft: var(--cxo-blue-soft); }
+.cxo-metric[data-tone="good"] { --tone: var(--cxo-ontime-1); --tone-soft: var(--cpo-good-soft); }
+.cxo-metric[data-tone="violet"] { --tone: var(--cxo-verified); --tone-soft: var(--cxo-violet-soft); }
+.cxo-metric[data-tone="deep"] { --tone: var(--cxo-closed); --tone-soft: var(--cxo-deep-soft); }
+.cxo-metric[data-tone="alert"] {
+  --tone: var(--cxo-overdue);
+  --tone-soft: var(--cxo-alert-soft);
+  background: var(--cxo-alert-soft);
+  border-color: var(--cxo-alert-line);
+}
+.cxo-metric[data-tone="neutral"] { --tone: var(--cxo-exec); --tone-soft: var(--cxo-blue-soft); }
+.cxo-glyph { color: var(--tone); background: var(--tone-soft); }
+.cxo-metric[data-tone="alert"] .cxo-label,
+.cxo-metric[data-tone="alert"] .cxo-figure,
+.cxo-metric[data-tone="alert"] .cxo-metric-note { color: var(--cxo-overdue); }
+.cxo-figure {
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--cpo-ink);
+  font-variant-numeric: tabular-nums;
+  padding-inline-start: 0.1rem;
+}
+.cxo-metric-note { font-size: 0.85rem; color: var(--cpo-ink-2); }
+.cxo-meter .cpo-meter-fill { background: var(--tone); }
+
+/* Funnel and trend. */
+.cxo-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.cxo-hint {
+  margin-inline-start: 0.5rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  color: var(--cpo-ink-3);
+}
+.cxo-plot { min-block-size: 17.5rem; }
+
+/* The reading row: on-time, backlog, age, forecast, shortcuts. */
+.cxo-readings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.05fr);
+  gap: 0.9rem;
+}
+.cxo-reading { padding-block-end: 0.8rem; }
+.cxo-ring,
+.cxo-bars,
+.cxo-gauge { min-block-size: 11rem; flex: 0 0 auto; }
+.cxo-legend {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--cpo-ink-2);
+}
+.cxo-legend li { display: flex; align-items: center; gap: 0.45rem; }
+.cxo-legend strong { margin-inline-start: auto; color: var(--cpo-ink); font-variant-numeric: tabular-nums; }
+.cxo-legend-link {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  inline-size: 100%;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.cxo-legend-link:hover { color: var(--cpo-ink); }
+.cxo-legend-link:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cxo-swatch {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-radius: 999px;
+  flex: none;
+  background: var(--cpo-none);
+}
+.cxo-swatch[data-part="ontime-1"] { background: var(--cxo-ontime-1); }
+.cxo-swatch[data-part="ontime-2"] { background: var(--cxo-ontime-2); }
+.cxo-swatch[data-part="ontime-3"] { background: var(--cxo-ontime-3); }
+.cxo-swatch[data-part="ontime-4"] { background: var(--cxo-ontime-4); }
+.cxo-swatch[data-part="ontime-5"] { background: var(--cxo-ontime-5); }
+.cxo-swatch[data-part="ontime-6"] { background: var(--cxo-ontime-6); }
+.cxo-swatch[data-part="owner-staff"] { background: var(--cxo-owner-staff); }
+.cxo-swatch[data-part="owner-pl"] { background: var(--cxo-owner-pl); }
+.cxo-swatch[data-part="owner-ia"] { background: var(--cxo-owner-ia); }
+.cxo-swatch[data-part="owner-partner"] { background: var(--cxo-owner-partner); }
+.cxo-swatch[data-part="owner-finance"] { background: var(--cxo-owner-finance); }
+.cxo-swatch[data-part="owner-external"] { background: var(--cxo-owner-external); }
+.cxo-foot { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--cpo-ink-3); line-height: 1.35; }
+.cxo-verdict {
+  margin: -0.5rem 0 0;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cpo-ink-2);
+}
+.cxo-verdict[data-state="at_risk"] { color: var(--cxo-overdue); }
+.cxo-verdict[data-state="on_track"] { color: var(--cxo-closed); }
+.cxo-shortcuts { gap: 0.5rem; }
+.cxo-shortcut {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  inline-size: 100%;
+  min-block-size: 2.6rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--cpo-line-2);
+  border-radius: 7px;
+  background: var(--cpo-surface);
+  color: var(--cpo-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cxo-shortcut svg { inline-size: 1.1rem; block-size: 1.1rem; flex: none; }
+.cxo-shortcut:hover { background: var(--cpo-sunk); }
+.cxo-shortcut:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
+.cxo-shortcut--primary {
+  background: var(--cxo-total);
+  border-color: var(--cxo-total);
+  color: #fff;
+}
+.cxo-shortcut--primary:hover { background: color-mix(in srgb, var(--cxo-total) 88%, black); }
+:root:is(.theme-dark, .theme-blue) .cxo-shortcut--primary { color: #0b1a33; }
+
+/* The table. */
+.cxo-drill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.1rem 0.5rem;
+}
+.cxo-outlook {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  background: var(--cpo-sunk);
+  color: var(--cpo-ink-2);
+  white-space: nowrap;
+}
+.cxo-outlook[data-state="on_track"] { background: var(--cpo-good-soft); color: var(--cpo-good); }
+.cxo-outlook[data-state="at_risk"] { background: var(--cpo-fair-soft); color: var(--cpo-fair); }
+.cxo-outlook[data-state="closed"] { background: var(--cxo-blue-soft); color: var(--cxo-exec); }
+.cpo-root .cpo-table.cpo-table tr.cxo-total :is(th, td) {
+  font-weight: 700;
+  color: var(--cpo-ink);
+  background: var(--cpo-sunk);
+}
+.cxo-pad { margin: 0 1.1rem 0.75rem; }
+.cxo-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem 0.8rem;
+  font-size: 0.82rem;
+  color: var(--cpo-ink-3);
+}
+
+/* Issues, recent activity, follow-ups. */
+.cxo-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) minmax(0, 1.15fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+.cxo-list-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.cxo-count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.4rem;
+  block-size: 1.4rem;
+  margin-inline-start: 0.35rem;
+  padding-inline: 0.35rem;
+  border-radius: 999px;
+  background: var(--cpo-low-soft);
+  color: var(--cpo-low);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+.cxo-small {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.cxo-small :is(th, td) {
+  padding: 0.35rem 0.4rem;
+  border-block-end: 1px solid var(--cpo-line);
+  text-align: start;
+  font-weight: 400;
+  color: var(--cpo-ink-2);
+}
+.cxo-small thead th { font-weight: 600; color: var(--cpo-ink); background: var(--cpo-sunk); }
+.cxo-small tbody th { color: var(--cpo-ink); }
+
+/* The bottom lists read as lists: their text wraps rather than being cut to
+   the platform's one-line table cell. */
+.cpo-root .cxo-small.cxo-small :is(th, td),
+.cpo-root .cxo-small.cxo-small :is(th, td) * {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Who's Online under the planning tab: the planning page's width, in the
+   shared gutter. */
+
+/* The flag of Uganda keeps its own colours in every theme: they are the
+   country's, not the palette's. */
+.cpo-flag .cpo-ug-black { fill: #000; }
+.cpo-flag .cpo-ug-gold { fill: #fcdc04; }
+.cpo-flag .cpo-ug-crimson { fill: #d90000; }
+.cpo-flag .cpo-ug-white { fill: #fff; }
+.cpo-flag .cpo-ug-grey { fill: #9ca6a8; }
+.cpo-flag .cpo-ug-gold-line { fill: none; stroke: #fcdc04; }
+.cpo-flag .cpo-ug-black-line { fill: none; stroke: #000; }
+/* The mark inside a filled status dot. */
+.cpo-dotmark { fill: none; stroke: #fff; }
+
+/* Locked period snapshots (spec §22), in the drawer: the hierarchy steps in
+   as the page's table does, and the lists wrap there too. */
+.cpo-sheet .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell { padding-inline-start: 1.6rem !important; }
+.cpo-sheet .cpo-table.cpo-table tr[data-level="3"] .cpo-namecell { padding-inline-start: 3rem !important; }
+.cpo-sheet .cxo-small.cxo-small :is(th, td),
+.cpo-sheet .cxo-small.cxo-small :is(th, td) * {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+.cxo-locked { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+/* Reminder Suggested (spec §20): a cue in the Open Reminders column, never
+   an action taken. */
+.cxo-suggest {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px dashed color-mix(in srgb, var(--cpo-fair) 60%, transparent);
+  border-radius: 999px;
+  color: var(--cpo-fair);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The six figures and the filter row hold one line each while they fit;
+   the planning page's three-up step does not apply to these shorter cards. */
+@container cpo (max-width: 1450px) {
+  .cpo-metrics.cxo-metrics { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .cxo-readings { gap: 0.7rem; }
+  .cxo-reading { padding-inline: 0.85rem; }
+}
+@container cpo (max-width: 1100px) {
+  .cpo-metrics.cxo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Five readings on a tablet: three to the first row and two sharing the
+     second, rather than two and an empty third of the width. */
+  .cxo-readings { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .cxo-readings > * { grid-column: span 2; }
+  .cxo-readings > :nth-child(n + 4) { grid-column: span 3; }
+  .cxo-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cxo-charts { grid-template-columns: minmax(0, 1fr); }
+  .cxo-lower { grid-template-columns: minmax(0, 1fr); }
+}
+@container cpo (max-width: 760px) {
+  .cpo-metrics.cxo-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cxo-readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cxo-readings > *,
+  .cxo-readings > :nth-child(n + 4) { grid-column: auto; }
+  /* The period and its value are two selects: two columns of the three. */
+  .cxo-fields .cxo-field--period { grid-column: span 2; }
+  .cxo-figure { font-size: 1.35rem; }
+  .cxo-readings > .cxo-shortcuts { grid-column: 1 / -1; }
+}
+@container cpo (max-width: 520px) {
+  .cxo-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* On a phone the period and its value take the whole row, or neither reads. */
+  .cxo-fields .cxo-field--period { grid-column: 1 / -1; }
+}
+@container cpo (max-width: 420px) {
+  .cxo-readings { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cpo-root *,
+  .cpo-root *::before,
+  .cpo-root *::after { transition: none !important; }
+}

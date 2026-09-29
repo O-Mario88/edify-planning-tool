@@ -1,0 +1,43 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Country Map · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
+
+{% block shell_content %}
+{% comment %}The Country Map (owner, 2026-09-28): the country shaded by delivery,
+backlog or money — the map the Country Director's dashboard opened on — and,
+when there is one, the country portfolio under it: every school under the
+Programme Lead and the CCEO who hold it, with what is planned on each. The
+portfolio was a Country Oversight tab; Country Oversight keeps its two stages.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Country Oversight</p>
+      <h1 class="edify-page-title edify-page-header__title">Country Map</h1>
+      <p class="edify-page-header__description">Where the country's delivery, backlog and money sit, and every school in the country portfolio under the Programme Lead and CCEO who hold it.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a class="edify-page-header-control" href="/country-planning-oversight/">Country Oversight</a>
+    </div>
+  </header>
+
+  <div class="analytics-layout-row analytics-row--geography">
+    <div class="analytics-card-slot analytics-card-slot--map">
+      {% include "partials/analytics/regional_performance.html" %}
+    </div>
+  </div>
+
+  {% if has_portfolio %}
+  <section id="country-portfolio" class="space-y-3" aria-labelledby="country-portfolio-name">
+    <h2 class="sr-only" id="country-portfolio-name">Country portfolio</h2>
+    <div id="oversight-workspace">
+      {% include "partials/oversight/portfolio_workspace.html" %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
