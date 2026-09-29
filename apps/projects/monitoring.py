@@ -343,6 +343,11 @@ class ProjectSchoolRow:
     #: The coordinator's doors on the row's own partner work.
     withdraw_label: str = ""
     withdraw_url: str = ""
+    #: Taking the school out of the project (brief, 2026-09-29), drawn for
+    #: the staff member who added it and the project's coordinator. With
+    #: work begun the control stays, greyed, with the reason.
+    leave_url: str = ""
+    leave_block: str = ""
     resolve_url: str = ""
 
     @property
@@ -431,6 +436,10 @@ class ProjectMonitoringRow:
     #: The enrolled schools this reader may see, one row each, narrowed by
     #: the page's stage filter.
     school_rows: list[ProjectSchoolRow] = field(default_factory=list)
+    #: School allocations (apps.projects.capacity): the whole project's for a
+    #: whole-project reader, this reader's own otherwise. None when the
+    #: project is not capacity-managed.
+    capacity: dict | None = None
     #: The same schools before the stage filter. The project's own figures
     #: are counted from these, so filtering the rows never changes what the
     #: project did.
@@ -477,6 +486,8 @@ class ProjectMonitoring:
     lens_note: str = ""
     #: The fiscal years the activity figures read, for the page to say.
     plan_period_label: str = ""
+    #: This reader's own school allocations, one per project (My Projects).
+    allocations: list = field(default_factory=list)
 
     @property
     def projects(self) -> int:
@@ -611,6 +622,11 @@ def project_monitoring(
         plan_period_label=horizon_label(fys),
     )
 
+    from apps.projects import capacity as project_capacity
+
+    own_staff = getattr(principal, "staff_profile_id", None)
+    result.allocations = project_capacity.allocations_for_staff(own_staff)
+
     projects = list(_projects_for(principal))
     if project_id:
         projects = [project for project in projects if project.id == project_id]
@@ -637,6 +653,22 @@ def project_monitoring(
         intervention_labels=intervention_labels,
     )
 
+    # Who may take a school out of a project from here: the coordinator (and
+    # Admin) any school in view; a CCEO or Programme Lead the schools they
+    # added, which are the only ones they see. IA and the Country Director
+    # watch. One pair of queries decides every row (capacity.withdrawal_blocks).
+    may_withdraw = controls or (
+        getattr(principal, "active_role", "") == "Admin" or not whole
+    )
+    blocks = (
+        project_capacity.withdrawal_blocks(
+            (assignment.project_id, assignment.school_id) for assignment in assignments
+        )
+        if may_withdraw
+        else {}
+    )
+    allocations = project_capacity.allocations_by_project(project_ids)
+
     for project in projects:
         mine = by_project.get(project.id, [])
         if not reads_whole and not mine:
@@ -647,6 +679,31 @@ def project_monitoring(
         counts = totals.get(project.id, {})
         primary, supporting = project.intervention_plan()
         everyone = school_rows.get(project.id, [])
+        if may_withdraw:
+            for school_row in everyone:
+                block = blocks.get((project.id, school_row.school_pk))
+                school_row.leave_url = (
+                    f"/projects/capacity/withdraw?enrolment={school_row.assignment_id}"
+                )
+                school_row.leave_block = block.message if block else ""
+        project_allocations = allocations.get(project.id, [])
+        capacity_line = None
+        if project_allocations:
+            if reads_whole:
+                capacity_line = project_capacity.project_summary(
+                    project, project_allocations
+                )
+            else:
+                own = next(
+                    (a for a in project_allocations if a.staff_id == own_staff), None
+                )
+                if own is not None:
+                    capacity_line = {
+                        "capacity": own.maximum,
+                        "assigned": own.assigned,
+                        "remaining": own.remaining,
+                        "own": True,
+                    }
         rows = [row for row in everyone if row.matches(stage)]
         row = ProjectMonitoringRow(
             id=project.id,
@@ -677,6 +734,7 @@ def project_monitoring(
                 assignments=None if reads_whole else mine,
             ),
             school_rows=rows,
+            capacity=capacity_line,
             all_school_rows=everyone,
             accepts_new_work=project.accepts_new_work,
         )

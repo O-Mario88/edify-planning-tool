@@ -20,7 +20,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-03` | Standard staff school visit | ✓ | 12 | 106 | 34 | 3 | 8 | 10 | 26 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 64 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 55 | 27 | 2 | 2 | 1 | 4 | 91 |
-| `journey-06` | Special Project | ✓ | 1 | 111 | 29 | 3 | 5 | 6 | 18 | 80 |
+| `journey-06` | Special Project | ✓ | 1 | 112 | 29 | 3 | 5 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 83 | 28 | 4 | 10 | 9 | 23 | 80 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 80 | 26 | 3 | 6 | 7 | 18 | 79 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 54 | 15 | 0 | 0 | 1 | 4 | 25 |
@@ -153,10 +153,10 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools_oversight` _+50 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+101 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+102 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+17 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.activity_verified_by_pl`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready` _+10 more_ |
+| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.activity_verified_by_pl`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready` _+11 more_ |
 | Metrics computed in the run | `frontend_views_extended_views_assigned_schools`, `frontend_views_extended_views_assigned_staff` |
 | Metrics whose sources it moves | `bt_schools_financed`, `cluster_performance_dormant`, `cluster_performance_reach`, `cluster_performance_sessions`, `cluster_performance_ssa_coverage`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action` _+72 more_ |
 

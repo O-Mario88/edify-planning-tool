@@ -15,10 +15,17 @@
 <a href="/projects" class="btn btn-primary h-8">Create project</a>
 </div>
 {% else %}
+{% comment %}
+Capacity (brief, 2026-09-29): each project option carries the caller's
+allocation as the server counted it (apps.projects.capacity). Choosing a
+project shows it; a full allocation disables the button rather than letting
+it fail after the click. The service refuses it again under the lock.
+{% endcomment %}
 <form
 hx-post="/schools/{{ school.id }}/assign-to-project"
 hx-target="#drawer-container"
 class="space-y-4"
+x-data="{ cap: null, capBlock: '' }"
 >
 {% csrf_token %}
 
@@ -28,12 +35,23 @@ class="space-y-4"
 name="project_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 required
+@change="const o = $el.selectedOptions[0]; cap = o && o.dataset.max ? { max: o.dataset.max, used: o.dataset.used, left: o.dataset.left } : null; capBlock = (o && o.dataset.block) || ''"
 >
 <option value="">Select a project</option>
 {% for p in projects %}
-<option value="{{ p.id }}">{{ p.name }} ({{ p.code|default:"No Code" }}){% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
+<option value="{{ p.id }}"{% if p.allocation %} data-max="{{ p.allocation.maximum }}" data-used="{{ p.allocation.assigned }}" data-left="{{ p.allocation.remaining }}"{% endif %} data-block="{{ p.capacity_block }}">{{ p.name }} ({{ p.code|default:"No Code" }}){% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
 {% endfor %}
 </select>
+</div>
+
+<dl x-show="cap" x-cloak class="project-capacity-line" data-capacity-line>
+<div><dt>Your allocation</dt><dd><span x-text="cap && cap.max"></span> schools</dd></div>
+<div><dt>Currently assigned</dt><dd><span x-text="cap && cap.used"></span></dd></div>
+<div><dt>Remaining</dt><dd><strong x-text="cap && cap.left"></strong></dd></div>
+</dl>
+<div x-show="capBlock" x-cloak class="edify-note" data-tone="danger" role="alert" data-capacity-reached>
+<p class="edify-note__title">Project capacity reached</p>
+<p class="edify-note__body" x-text="capBlock"></p>
 </div>
 
 <div class="space-y-1">
@@ -107,7 +125,7 @@ class="w-full p-3 rounded-control border border-slate-200 text-[12px] bg-slate-5
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="btn btn-primary h-8">Assign to project</button>
+<button type="submit" class="btn btn-primary h-8" :disabled="!!capBlock">Assign to project</button>
 </div>
 </form>
 {% endif %}

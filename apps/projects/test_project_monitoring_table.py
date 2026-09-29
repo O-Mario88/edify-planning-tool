@@ -373,17 +373,35 @@ class OnlyTheCoordinatorDecidesTest(_TableFixture):
         )
 
 
-class StaffCannotWithdrawASchoolFromTheProjectTest(_TableFixture):
+class WhoWithdrawsASchoolFromTheProjectTest(_TableFixture):
+    """Brief, 2026-09-29, replacing the owner's 2026-09-24 rule: the staff
+    member who added a school withdraws it too, but only before its project
+    work began, and always with a reason."""
+
     def url(self, enrolment):
         return (
             f"/api/special-projects/{self.project.id}/schools/"
             f"{enrolment.school.school_id}"
         )
 
-    def test_the_officer_who_added_it_cannot_remove_it(self):
-        self.client.force_login(self.lead_user)
+    def withdraw(self, user, enrolment, **body):
+        self.client.force_login(user)
+        return self.client.delete(
+            self.url(enrolment),
+            data=body or {"reasonCode": "duplicate"},
+            content_type="application/json",
+        )
 
-        response = self.client.delete(self.url(self.unplanned))
+    def test_the_officer_who_added_it_withdraws_it_before_work_begins(self):
+        response = self.withdraw(self.lead_user, self.unplanned)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(
+            ProjectSchoolAssignment.objects.filter(id=self.unplanned.id).exists()
+        )
+
+    def test_another_officer_cannot_withdraw_it(self):
+        response = self.withdraw(self.other_lead_user, self.unplanned)
 
         self.assertEqual(response.status_code, 403)
         self.assertTrue(
@@ -391,31 +409,43 @@ class StaffCannotWithdrawASchoolFromTheProjectTest(_TableFixture):
         )
 
     def test_another_projects_coordinator_cannot_remove_it(self):
-        self.client.force_login(self.stranger_user)
-
-        response = self.client.delete(self.url(self.unplanned))
+        response = self.withdraw(self.stranger_user, self.unplanned)
 
         self.assertEqual(response.status_code, 403)
         self.assertTrue(
             ProjectSchoolAssignment.objects.filter(id=self.unplanned.id).exists()
         )
 
+    def test_a_reason_is_required(self):
+        response = self.withdraw(self.coord_user, self.unplanned, reason="")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(
+            ProjectSchoolAssignment.objects.filter(id=self.unplanned.id).exists()
+        )
+
+    def test_nobody_withdraws_a_school_whose_work_is_planned(self):
+        response = self.withdraw(self.coord_user, self.coordinated)
+
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertIn(b"planned project activity", response.content)
+        self.assertTrue(
+            ProjectSchoolAssignment.objects.filter(id=self.coordinated.id).exists()
+        )
+
     def test_the_projects_coordinator_removes_it_and_the_history_stays(self):
         from apps.projects.models import ProjectSchoolEnrollmentHistory
 
-        self.client.force_login(self.coord_user)
-
-        response = self.client.delete(self.url(self.unplanned))
+        response = self.withdraw(self.coord_user, self.unplanned)
 
         self.assertEqual(response.status_code, 200, response.content)
         self.assertFalse(
             ProjectSchoolAssignment.objects.filter(id=self.unplanned.id).exists()
         )
-        self.assertTrue(
-            ProjectSchoolEnrollmentHistory.objects.filter(
-                project=self.project, school=self.unplanned.school
-            ).exists()
+        history = ProjectSchoolEnrollmentHistory.objects.get(
+            project=self.project, school=self.unplanned.school
         )
+        self.assertEqual(history.removal_reason, "Duplicate assignment")
 
 
 class TheCoordinatorsDoorsCostNoQueryPerRowTest(_TableFixture):

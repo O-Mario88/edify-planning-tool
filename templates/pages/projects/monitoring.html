@@ -38,7 +38,7 @@ as "no change".
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Special Projects</p>
       <h1 class="edify-page-title edify-page-header__title">Project Monitoring</h1>
-      <p class="edify-page-header__description">{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. Read only — the Project Coordinator schedules the work, assigns it to partners, and alone withdraws or reassigns it.{% endif %}</p>
+      <p class="edify-page-header__description">{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners; you can withdraw a school you added until its project work begins.{% endif %}</p>
     </div>
   </header>
 
@@ -78,6 +78,38 @@ as "no change".
       {% kpi_helper %}Confirmed SSA movement on the target intervention{% endkpi_helper %}
     {% endkpi_metric %}
   {% endkpi_strip %}
+
+  {% if result.allocations %}
+  {% comment %}
+  My Projects (brief, 2026-09-29): how many schools this staff member may add
+  to each project, as the Project Coordinator set it, and what is left.
+  Counted by apps.projects.capacity from the live enrolments.
+  {% endcomment %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="my-allocations-title" data-my-allocations>
+    <div class="border-b border-[var(--edify-border)] px-4 py-3">
+      <h2 id="my-allocations-title" class="text-[15px] font-semibold text-slate-800">My project allocations</h2>
+    </div>
+    {% paginate result.allocations "allocations_page" as allocations_pager %}
+    <div class="overflow-x-auto overscroll-x-contain">
+      <table class="edify-data-table">
+        <thead><tr><th scope="col">Project</th><th scope="col" class="text-right">Maximum</th><th scope="col" class="text-right">Assigned</th><th scope="col" class="text-right">Remaining</th><th scope="col">Capacity</th><th scope="col" class="text-right">Action</th></tr></thead>
+        <tbody>
+        {% for a in allocations_pager.rows %}
+          <tr data-allocation="{{ a.project_id }}">
+            <td data-pinned-stack><strong>{{ a.project_name }}</strong>{% if a.project_code %} <span class="edify-text-caption edify-text-muted font-mono">{{ a.project_code }}</span>{% endif %}</td>
+            <td class="text-right tabular-nums">{{ a.maximum }}</td>
+            <td class="text-right tabular-nums">{{ a.assigned }}</td>
+            <td class="text-right tabular-nums"><strong>{{ a.remaining }}</strong></td>
+            <td><span class="partner-status-chip" data-tone="{% if a.status == 'full' %}danger{% elif a.status == 'near' %}warning{% else %}success{% endif %}">{{ a.status_label }}</span></td>
+            <td class="text-right"><a class="edify-text-caption font-semibold edify-primary-text" href="/projects/monitoring?project={{ a.project_id }}&amp;fy={{ fy }}">View</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=allocations_pager param="allocations_page" pagination_label="My project allocations" %}
+  </section>
+  {% endif %}
 
   <form method="get" action="/projects/monitoring" class="edify-filter-bar flex flex-wrap items-end gap-3">
     <label class="block">
@@ -124,6 +156,7 @@ as "no change".
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <span class="pill">{{ row.status_label }}</span>
+        {% if row.capacity %}<span class="pill" data-capacity-pill>{% if row.capacity.own %}Your allocation: {{ row.capacity.assigned }} of {{ row.capacity.capacity }} used · {{ row.capacity.remaining }} left{% else %}Capacity: {{ row.capacity.assigned }} / {{ row.capacity.capacity }} allocated · {{ row.capacity.remaining }} left{% endif %}</span>{% endif %}
         <span class="pill">{% if result.whole_project %}{{ row.my_schools }} schools{% else %}{{ row.my_schools }} of {{ row.schools }} schools yours{% endif %}</span>
         <span class="pill pill-info">{{ row.schools_planned }} planned</span>
         {% if row.schools_awaiting_partner %}<span class="pill pill-warn">{{ row.schools_awaiting_partner }} awaiting partner</span>{% endif %}
@@ -220,7 +253,7 @@ as "no change".
                 the coordinator, or the coordinator on a paused project with
                 no partner decision waiting — keeps it as its own button.
                 {% endcomment %}
-                {% if result.controls and school.resolve_url or result.controls and school.withdraw_url or result.controls and school.schedule_url %}
+                {% if result.controls and school.resolve_url or result.controls and school.withdraw_url or result.controls and school.schedule_url or school.leave_url %}
                 {% row_actions school.school_name %}
                 <button type="button" class="row-menu__item" role="menuitem"
                         hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
@@ -231,11 +264,20 @@ as "no change".
                 {% if school.withdraw_url %}
                 <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="{{ school.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ school.withdraw_label }} at {{ school.school_name }}, or reassign it" data-project-withdraw>Withdraw / Reassign</button>
                 {% endif %}
+                {% if result.controls %}
                 {% if school.schedule_url %}
                 <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule project work at {{ school.school_name }}">Schedule</button>
                 <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.school_name }} to a partner">Assign</button>
                 {% else %}
                 <p class="row-menu__note" role="none">Paused — takes no new work</p>
+                {% endif %}
+                {% endif %}
+                {% if school.leave_url %}
+                {% if school.leave_block %}
+                <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-enrolment-withdraw="blocked">Withdraw from project<span class="row-menu__reason">{{ school.leave_block }}</span></button>
+                {% else %}
+                <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="/projects/capacity/withdraw?enrolment={{ school.assignment_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Withdraw {{ school.school_name }} from {{ row.name }}" data-enrolment-withdraw="open">Withdraw from project</button>
+                {% endif %}
                 {% endif %}
                 {% endrow_actions %}
                 {% else %}
@@ -332,7 +374,7 @@ as "no change".
 
   {% if not result.controls %}
   <p class="edify-text-caption edify-text-muted px-1" data-read-only-note>
-    Read only. Scheduling a project activity, assigning one to a partner, and withdrawing a school's work from its partner or reassigning it are the Project Coordinator's — ask them for work you need at a school you added.
+    Read only, apart from withdrawing a school you added from its project before its project work begins. Scheduling a project activity, assigning one to a partner, and withdrawing a school's work from its partner or reassigning it are the Project Coordinator's — ask them for work you need at a school you added.
   </p>
   {% endif %}
   {% else %}

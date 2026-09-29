@@ -357,11 +357,22 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
             "anyway."
         )
 
+    # The adder's allocation (brief, 2026-09-29). Locked and counted inside
+    # this transaction, so concurrent additions cannot overfill it; a school
+    # already in the cohort uses no second place.
+    from apps.projects.capacity import consuming_staff_id, reserve_place
+
+    already = ProjectSchoolAssignment.objects.filter(project=p, school=school).exists()
+    assigned_staff_id = (
+        None if already else reserve_place(p, consuming_staff_id(principal))
+    )
+
     assignment, _created = ProjectSchoolAssignment.objects.get_or_create(
         project=p,
         school=school,
         defaults={
             "assigned_by": (getattr(principal, "user_id", None) if principal else None),
+            "assigned_staff_id": assigned_staff_id,
             "project_type": data.get("projectType") or None,
             "participation_type": data.get("participationType") or None,
             "start_date": data.get("startDate") or None,
@@ -409,6 +420,24 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
         from apps.projects.signals import enqueue_impact_refresh
 
         enqueue_impact_refresh(school.id, f"enrolment:{assignment.id}")
+    if _created:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="project.school_added",
+            subject_kind="School",
+            subject_id=school.id,
+            actor_id=getattr(principal, "user_id", None) if principal else None,
+            actor_role=getattr(principal, "active_role", None) if principal else None,
+            payload={
+                "projectId": p.id,
+                "project": p.name,
+                "school": school.name,
+                "staffId": assigned_staff_id,
+                "previous": {"enrolled": False},
+                "new": {"enrolled": True},
+            },
+        )
     return {"ok": True, "projectId": project_id, "schoolId": school.school_id}
 
 
@@ -588,27 +617,41 @@ def revoke_staff(project_id: str, staff_id: str, principal) -> dict:
 
 
 @transaction.atomic
-def remove_school(project_id: str, school_id: str, principal=None, *, reason: str = ""):
-    """Remove a school from a project, keeping the project's history.
+def remove_school(
+    project_id: str,
+    school_id: str,
+    principal=None,
+    *,
+    reason: str = "",
+    reason_code: str = "",
+):
+    """Withdraw a school from a project, keeping the project's history.
+
+    Brief, 2026-09-29: a school is withdrawn only before its project work has
+    begun — nothing planned, started, evidenced or completed, and nothing
+    handed to a partner (``capacity.withdrawal_block``, one rule for everyone,
+    the coordinator included: execution history is never rewritten). The
+    staff member whose allocation the school uses may withdraw it, as may the
+    project's coordinator (or Admin); the place returns to that allocation.
+    This replaces the owner's 2026-09-24 rule that only the coordinator could.
 
     The enrolment row is what every current count reads, so it goes; what it
-    recorded — when the school joined, who added it, the baseline it was
-    measured from and what the project delivered there — is copied into
-    ProjectSchoolEnrollment history first. Activities keep their project, so a
-    removal never erases delivered work (owner, 2026-09-15).
-
-    Only the project's coordinator removes a school (owner, 2026-09-24:
-    "Schools assigned to project cannot be withdrawn by the staff"). The
-    officer who added the school reads it on Project Monitoring from then on.
+    recorded — when the school joined, who added it, whose allocation it used,
+    the baseline it was measured from — is copied into
+    ProjectSchoolEnrollmentHistory first, with who withdrew it, when and why.
     A request always names its principal; ``None`` is for internal callers
     that have already decided.
     """
-    from apps.activities.models import Activity
-
-    _assert_directs_project(project_id, principal, "remove a school from it")
+    from apps.core.exceptions import ConflictError, Forbidden
+    from apps.projects.capacity import (
+        may_withdraw,
+        withdrawal_block,
+        withdrawal_reason_text,
+    )
 
     assignment = (
-        ProjectSchoolAssignment.objects.select_related("project", "school")
+        ProjectSchoolAssignment.objects.select_for_update(of=("self",))
+        .select_related("project", "school", "assigned_staff__user")
         .filter(
             Q(school__school_id=school_id) | Q(school_id=school_id),
             project_id=project_id,
@@ -617,15 +660,29 @@ def remove_school(project_id: str, school_id: str, principal=None, *, reason: st
     )
     if assignment is None:
         raise NotFoundError("This school is not enrolled in the project.")
-    activities = Activity.objects.filter(
-        project_id=project_id, school_id=assignment.school_id, deleted_at__isnull=True
-    )
+    if principal is not None:
+        if not may_withdraw(principal, assignment):
+            raise Forbidden(
+                "Only the staff member who added this school, or the project's "
+                "Project Coordinator, can withdraw it."
+            )
+        if reason_code:
+            reason = withdrawal_reason_text(reason_code, reason)
+        reason = (reason or "").strip()
+        if not reason:
+            raise BadRequest("Give a reason for withdrawing the school.")
+    block = withdrawal_block(project_id, assignment.school_id)
+    if block is not None:
+        raise ConflictError(f"{block.title}. {block.message}")
+
+    now = timezone.now()
     ProjectSchoolEnrollmentHistory.objects.create(
         project_id=project_id,
         school_id=assignment.school_id,
         joined_at=assignment.created_at,
-        removed_at=timezone.now(),
+        removed_at=now,
         added_by=assignment.assigned_by or "",
+        assigned_staff_id=assignment.assigned_staff_id or "",
         removed_by=str(
             getattr(principal, "user_id", None) or getattr(principal, "id", "") or ""
         ),
@@ -634,7 +691,7 @@ def remove_school(project_id: str, school_id: str, principal=None, *, reason: st
         assignment_reason=assignment.assignment_reason or "",
         baseline_score=assignment.baseline_score,
         baseline_band=assignment.baseline_band or "",
-        activities_delivered=activities.count(),
+        activities_delivered=0,
         snapshot={
             "projectType": assignment.project_type,
             "participationType": assignment.participation_type,
@@ -643,21 +700,31 @@ def remove_school(project_id: str, school_id: str, principal=None, *, reason: st
             else None,
             "supportArea": assignment.support_area,
             "impactClassification": assignment.impact_classification,
+            "reasonCode": reason_code or "",
         },
     )
     from apps.audit.services import log as audit_log
 
     audit_log(
-        action="project.school_removed",
+        action="project.school_withdrawn",
         subject_kind="School",
         subject_id=assignment.school_id,
         actor_id=getattr(principal, "user_id", None) if principal else None,
         actor_role=getattr(principal, "active_role", None) if principal else None,
         reason=reason or None,
         payload={
+            "projectId": project_id,
+            "project": assignment.project.name,
+            "school": assignment.school.name,
+            "staffId": assignment.assigned_staff_id,
+            "staff": (
+                assignment.assigned_staff.user.name
+                if assignment.assigned_staff_id
+                else None
+            ),
+            "assignedAt": assignment.created_at.isoformat(),
             "previous": {"projectId": project_id, "enrolled": True},
             "new": {"projectId": project_id, "enrolled": False},
-            "activitiesKept": activities.count(),
         },
     )
     assignment.delete()

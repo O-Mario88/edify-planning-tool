@@ -1,0 +1,64 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Withdraw School (brief, 2026-09-29). A school leaves a project only before
+its project work begins; the drawer shows what projects.services.remove_school
+will decide — the block and its reason, or the confirmation with a required
+reason — so Withdraw School is never a live button for a refusal. The
+enrolment's history is kept (ProjectSchoolEnrollmentHistory) and its place
+returns to the allocation it used.
+{% endcomment %}
+
+{% block drawer_title %}Withdraw school{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if not enrolment %}
+<p class="edify-note" data-tone="warning">That school is not in a project you can withdraw it from.</p>
+{% else %}
+<div class="space-y-4" x-data="{ reason: '{{ values.reason_code|escapejs }}' }" data-leave-project>
+  <dl class="project-capacity-line project-capacity-line--stack">
+    <div><dt>School</dt><dd>{{ enrolment.school.name }}</dd></div>
+    <div><dt>Project</dt><dd>{{ enrolment.project.name }}</dd></div>
+    <div><dt>Assigned</dt><dd>{{ enrolment.created_at|date:"j M Y" }}{% if enrolment.assigned_staff %} · {{ enrolment.assigned_staff.user.name }}{% endif %}</dd></div>
+  </dl>
+
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if leave_block %}
+  <div class="edify-note" data-tone="warning" role="alert" data-leave-blocked="{{ leave_block.code }}">
+    <p class="edify-note__title">{{ leave_block.title }}</p>
+    <p class="edify-note__body">{{ leave_block.message }}</p>
+  </div>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+  {% else %}
+  <div class="edify-note" data-tone="info">
+    <p class="edify-note__body">This school has not entered project execution and can be withdrawn.{% if enrolment.assigned_staff %} Its place returns to {{ enrolment.assigned_staff.user.name }}'s allocation.{% endif %}</p>
+  </div>
+  <form hx-post="/projects/capacity/withdraw" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="enrolment" value="{{ enrolment.id }}">
+    <div class="space-y-1">
+      <label for="leave-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+      <select id="leave-reason" name="reason_code" required x-model="reason" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+        <option value="">Choose a reason</option>
+        {% for code, label in reasons %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="space-y-1" x-show="reason === 'other'" x-cloak>
+      <label for="leave-reason-other" class="block edify-text-caption font-semibold text-slate-600">Say why <span class="text-rose-500">*</span></label>
+      <textarea id="leave-reason-other" name="reason_other" rows="2" maxlength="500" :required="reason === 'other'" class="w-full rounded-control border border-slate-200 text-[16px] sm:text-[13px] px-3 py-2">{{ values.reason_other }}</textarea>
+    </div>
+    <div class="drawer-footer">
+      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+      <button type="submit" class="btn btn-danger h-8" :disabled="!reason">Withdraw School</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

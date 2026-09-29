@@ -248,25 +248,40 @@ hx-include="#filters-form"
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 </button>
 </div>
-<form action="/schools/bulk-assign-project" method="post" class="drawer-body space-y-4">
+{% comment %}
+The remaining allocation comes from the server (apps.projects.capacity) on
+each option; the modal only compares it with the selection so the button is
+never live for a selection the service will refuse (brief, 2026-09-29).
+{% endcomment %}
+<form action="/schools/bulk-assign-project" method="post" class="drawer-body space-y-4"
+x-data="{ capLeft: null, capBlock: '' }">
 {% csrf_token %}
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
 <label for="bulk-assign-project" class="block edify-text-caption font-semibold text-slate-600">Project <span class="text-rose-500">*</span></label>
-<select id="bulk-assign-project" aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select id="bulk-assign-project" aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required
+@change="const o = $el.selectedOptions[0]; capLeft = o && o.dataset.remaining !== undefined && o.dataset.remaining !== '' ? Number(o.dataset.remaining) : null; capBlock = (o && o.dataset.block) || ''">
 <option value="">Select a project</option>
 {% for p in projects %}
-<option value="{{ p.id }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}</option>
+<option value="{{ p.id }}" data-remaining="{% if p.capacity_remaining is not None %}{{ p.capacity_remaining }}{% endif %}" data-block="{{ p.capacity_block }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}{% if p.allocation %} &middot; {{ p.allocation.remaining }} of {{ p.allocation.maximum }} left{% elif p.capacity_block %} &middot; no allocation{% endif %}</option>
 {% endfor %}
 </select>
 </div>
 
 <p class="edify-text-caption text-slate-500">Assigns <span x-text="selectedSchools.length" class="font-semibold text-slate-800"></span> selected school(s). Schools already in the project are skipped.</p>
+<div x-show="capBlock" x-cloak class="edify-note" data-tone="danger" role="alert" data-capacity-reached>
+<p class="edify-note__title">Project capacity reached</p>
+<p class="edify-note__body" x-text="capBlock"></p>
+</div>
+<div x-show="!capBlock && capLeft !== null && selectedSchools.length > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>
+<p class="edify-note__title">Capacity exceeded</p>
+<p class="edify-note__body">You can add a maximum of <span x-text="capLeft"></span> more school<span x-show="capLeft !== 1">s</span> to this project.</p>
+</div>
 
 <div class="drawer-footer">
 <button type="button" @click="bulkAssignProjectOpen = false" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="btn btn-primary h-8">Assign project</button>
+<button type="submit" class="btn btn-primary h-8" :disabled="!!capBlock || (capLeft !== null && selectedSchools.length > capLeft)">Assign project</button>
 </div>
 </form>
 </div>

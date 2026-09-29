@@ -7,6 +7,7 @@
 <div class="space-y-4 text-slate-700"
 x-data="{
 search: '',
+capLeft: {% if capacity_left is not None %}{{ capacity_left }}{% else %}null{% endif %},
 selectedCount: 0,
 totalEnrollment: 0,
 updateMetrics() {
@@ -30,7 +31,21 @@ this.updateMetrics();
 }
 }"
 >
-{% if not accepts_new_work %}
+{% if allocation %}
+{% comment %}The caller's allocation on this project, as apps.projects.capacity
+counted it (brief, 2026-09-29).{% endcomment %}
+<dl class="project-capacity-line" data-capacity-line>
+<div><dt>Your allocation</dt><dd>{{ allocation.maximum }} schools</dd></div>
+<div><dt>Currently assigned</dt><dd>{{ allocation.assigned }}</dd></div>
+<div><dt>Remaining</dt><dd><strong>{{ allocation.remaining }}</strong></dd></div>
+</dl>
+{% endif %}
+{% if capacity_block %}
+<div class="edify-note" data-tone="danger" role="alert" data-capacity-reached>
+<p class="edify-note__title">Project capacity reached</p>
+<p class="edify-note__body">{{ capacity_block }}</p>
+</div>
+{% elif not accepts_new_work %}
 <p class="edify-note edify-text-caption font-semibold" data-tone="warning">
 {{ project.name }} is {{ project.status_label|lower }} — it is not accepting new schools.
 </p>
@@ -123,13 +138,18 @@ placeholder="Why these schools join anyway"
 <p id="project-bulk-assign-reason-help" class="edify-text-caption text-slate-500">Needed only where confirmed SSA shows no weakness in the Project's target interventions.</p>
 </div>
 
+<div x-show="capLeft !== null && selectedCount > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>
+<p class="edify-note__title">Capacity exceeded</p>
+<p class="edify-note__body">You can add a maximum of <span x-text="capLeft"></span> more school<span x-show="capLeft !== 1">s</span> to this project.</p>
+</div>
+
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
 <button
 type="submit"
 class="btn btn-primary h-8"
-:disabled="selectedCount === 0"
-:class="selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
+:disabled="selectedCount === 0 || (capLeft !== null && selectedCount > capLeft)"
+:class="selectedCount === 0 || (capLeft !== null && selectedCount > capLeft) ? 'opacity-50 cursor-not-allowed' : ''"
 >Add selected schools</button>
 </div>
 </form>
