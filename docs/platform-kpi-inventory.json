@@ -1001,7 +1001,7 @@
    "audit_id": "KPI-SOURCE-052",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1202,
+   "line": 1215,
    "label": "Schools without SSA",
    "keys": [
     "color",
@@ -1022,7 +1022,7 @@
    "audit_id": "KPI-SOURCE-053",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1210,
+   "line": 1223,
    "label": "Schools not visited",
    "keys": [
     "color",
@@ -1044,7 +1044,7 @@
    "audit_id": "KPI-SOURCE-054",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1219,
+   "line": 1232,
    "label": "Schools not trained",
    "keys": [
     "color",
@@ -1066,7 +1066,7 @@
    "audit_id": "KPI-SOURCE-055",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1228,
+   "line": 1241,
    "label": "High-risk districts",
    "keys": [
     "color",
@@ -1087,7 +1087,7 @@
    "audit_id": "KPI-SOURCE-056",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1236,
+   "line": 1249,
    "label": "Clusters needing attention",
    "keys": [
     "color",
@@ -1547,7 +1547,7 @@
    "audit_id": "KPI-SOURCE-080",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1769,
+   "line": 1768,
    "label": null,
    "keys": [
     "bar_color",
@@ -1567,7 +1567,7 @@
    "audit_id": "KPI-SOURCE-081",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2235,
+   "line": 2233,
    "label": null,
    "keys": [
     "delta_pct",
@@ -2485,7 +2485,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 1019,
+   "line": 1026,
    "label": null,
    "keys": [
     "label",

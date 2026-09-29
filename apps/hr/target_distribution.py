@@ -1344,6 +1344,33 @@ def school_type_family(value: str) -> tuple[str, ...]:
     return (value,)
 
 
+def _rule_activity_filter(rule) -> Q:
+    """`_rule_activity_query` without joins, for use inside an aggregate FILTER.
+
+    The school-type condition becomes a school-id subquery: the same rows
+    match (an activity without a school matches neither), but no JOIN is
+    added to a query that other milestones' counts share.
+    """
+    from apps.schools.models import School
+
+    query = Q(catalogue_item_id=rule.catalogue_item_id)
+    if rule.project_id:
+        query &= Q(project_id=rule.project_id)
+    if rule.required_executor_type:
+        query &= Q(delivery_type=rule.required_executor_type)
+    if rule.required_delivery_method:
+        query &= Q(delivery_method_snapshot=rule.required_delivery_method)
+    if rule.school_type:
+        query &= Q(
+            school_id__in=School.all_objects.filter(
+                school_type__in=school_type_family(rule.school_type)
+            ).values("id")
+        )
+    if rule.target_intervention:
+        query &= Q(focus_intervention=rule.target_intervention)
+    return query
+
+
 def _rule_activity_query(rule) -> Q:
     query = Q(catalogue_item_id=rule.catalogue_item_id)
     if rule.project_id:
@@ -1407,66 +1434,102 @@ def milestone_plan_progress(
     if not rules_by_milestone:
         return {}
 
-    out: dict[str, dict] = {}
-    for mid, rules in rules_by_milestone.items():
+    # Every milestone's planned and completed figures in ONE conditional
+    # aggregate, and every school-basis milestone's verified figure in one
+    # more (they were two or three reads per milestone). Each count carries
+    # its own milestone's rule match and year as its FILTER, written without
+    # joins (_rule_activity_filter) so one milestone's school condition can
+    # never drop another milestone's school-less rows.
+    base = Activity.objects.filter(deleted_at__isnull=True)
+    if activity_ids is not None:
+        base = base.filter(id__in=activity_ids)
+    planned_filter = Q(status__in=PLANNED_OUTPUT_STATUSES)
+    completed_filter = Q(status__in=COMPLETED_WORK_STATUSES)
+    plan: dict[str, dict] = {}
+    measures = {}
+    verified_measures = {}
+    for index, (mid, rules) in enumerate(rules_by_milestone.items()):
         milestone = by_id[mid]
         year = fy or getattr(milestone.priority, "fy", None)
-        query = Q()
+        match = Q()
         for rule in rules:
-            query |= _rule_activity_query(rule)
-        activities = Activity.objects.filter(query, deleted_at__isnull=True)
+            match |= _rule_activity_filter(rule)
         if year:
-            activities = activities.filter(fy=year)
-        if activity_ids is not None:
-            activities = activities.filter(id__in=activity_ids)
-        planned_filter = Q(status__in=PLANNED_OUTPUT_STATUSES)
-        completed_filter = Q(status__in=COMPLETED_WORK_STATUSES)
-
-        # Planned and completed in one conditional aggregate per milestone
-        # (they were two reads each), over the same rows the separate reads
-        # saw: distinct schools, summed attendance, or counted activities.
+            match &= Q(fy=year)
+        # Planned and completed are distinct schools, summed attendance, or
+        # counted activities — whichever the milestone's rules count.
         bases = {rule.counting_basis for rule in rules}
         if bases & SCHOOL_BASES:
             unit = "schools"
-            measures = {
-                "planned": Count("school_id", distinct=True, filter=planned_filter),
-                "completed": Count("school_id", distinct=True, filter=completed_filter),
-            }
-        elif bases & TEACHER_BASES:
-            unit = "teachers"
-            measures = {
-                "planned": Sum("expected_participants", filter=planned_filter),
-                "completed": Sum("teachers_attended", filter=completed_filter),
-            }
-        elif bases & LEADER_BASES:
-            unit = "leaders"
-            measures = {
-                "planned": Sum("expected_participants", filter=planned_filter),
-                "completed": Sum("leaders_attended", filter=completed_filter),
-            }
+            measures[f"p{index}"] = Count(
+                "school_id", distinct=True, filter=match & planned_filter
+            )
+            measures[f"c{index}"] = Count(
+                "school_id", distinct=True, filter=match & completed_filter
+            )
+            verified_measures[f"v{index}"] = Count(
+                "activity__school_id",
+                distinct=True,
+                filter=Q(rule__milestone_id=mid)
+                & Q(activity_id__in=base.filter(match).values("id")),
+            )
+        elif bases & (TEACHER_BASES | LEADER_BASES):
+            unit = "teachers" if bases & TEACHER_BASES else "leaders"
+            field = "teachers_attended" if bases & TEACHER_BASES else "leaders_attended"
+            measures[f"p{index}"] = Sum(
+                "expected_participants", filter=match & planned_filter
+            )
+            measures[f"c{index}"] = Sum(field, filter=match & completed_filter)
         else:
             unit = "activities"
-            measures = {
-                "planned": Count("id", filter=planned_filter),
-                "completed": Count("id", filter=completed_filter),
-            }
-        totals = activities.aggregate(**measures)
-        planned = totals["planned"] or 0
-        completed = totals["completed"] or 0
-        from .milestone_progress import _aggregate_credits
+            measures[f"p{index}"] = Count("id", filter=match & planned_filter)
+            measures[f"c{index}"] = Count("id", filter=match & completed_filter)
+        plan[mid] = {
+            "index": index,
+            "year": year,
+            "unit": unit,
+            "bases": bases,
+            "match": match,
+        }
+    totals = base.aggregate(**measures)
+    verified_totals = (
+        MilestoneProgressCredit.objects.filter(
+            rule__active=True, reversed_at__isnull=True
+        ).aggregate(**verified_measures)
+        if verified_measures
+        else {}
+    )
+    from .milestone_progress import _aggregate_credits
 
-        verified = Decimal(
-            _aggregate_credits(
-                MilestoneProgressCredit.objects.filter(
-                    rule__milestone_id=mid,
-                    rule__active=True,
-                    reversed_at__isnull=True,
-                    activity_id__in=activities.values("id"),
-                ),
-                bases,
-            )
-            or 0
+    out: dict[str, dict] = {}
+    for mid, entry in plan.items():
+        milestone = by_id[mid]
+        index, year, unit, bases = (
+            entry["index"],
+            entry["year"],
+            entry["unit"],
+            entry["bases"],
         )
+        planned = totals[f"p{index}"] or 0
+        completed = totals[f"c{index}"] or 0
+        if f"v{index}" in verified_totals:
+            verified = Decimal(verified_totals[f"v{index}"] or 0)
+        else:
+            # Attendance and occurrence bases credit each event once across
+            # overlapping rules (a max per activity, then a sum), which one
+            # conditional aggregate cannot express; read those per milestone.
+            verified = Decimal(
+                _aggregate_credits(
+                    MilestoneProgressCredit.objects.filter(
+                        rule__milestone_id=mid,
+                        rule__active=True,
+                        reversed_at__isnull=True,
+                        activity_id__in=base.filter(entry["match"]).values("id"),
+                    ),
+                    bases,
+                )
+                or 0
+            )
         target = (targets or {}).get(str(milestone.id), milestone.target_value)
         target_f = float(target) if target is not None else None
 

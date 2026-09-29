@@ -911,18 +911,26 @@ def presence_summary(*, now=None, only_user_ids=None, period=None, on=None) -> d
         for offset in range(13, -1, -1)
     ]
     # Eight weeks of weekly counts, Monday to Sunday.
-    weekly = []
-    for back in range(7, -1, -1):
-        start = week_start - timedelta(weeks=back)
-        start_dt = week_start_dt - timedelta(weeks=back)
-        weekly.append(
-            {
-                "week_start": start,
-                "count": events.filter(
-                    at__gte=start_dt, at__lt=start_dt + timedelta(weeks=1)
-                ).count(),
-            }
-        )
+    # All eight weeks in one conditional aggregate (they were eight COUNTs).
+    week_counts = events.aggregate(
+        **{
+            f"w{back}": Count(
+                "id",
+                filter=Q(
+                    at__gte=week_start_dt - timedelta(weeks=back),
+                    at__lt=week_start_dt - timedelta(weeks=back - 1),
+                ),
+            )
+            for back in range(7, -1, -1)
+        }
+    )
+    weekly = [
+        {
+            "week_start": week_start - timedelta(weeks=back),
+            "count": week_counts[f"w{back}"],
+        }
+        for back in range(7, -1, -1)
+    ]
     return {
         "period": chosen,
         "period_options": PRESENCE_PERIODS,
