@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 670,
-  "templates": 249,
-  "distinct_titles": 639,
+  "titled_cards": 671,
+  "templates": 250,
+  "distinct_titles": 640,
   "with_card_key": 13,
-  "untitled_surfaces": 594,
+  "untitled_surfaces": 592,
   "untitled_chrome": 154,
-  "untitled_nested": 232,
+  "untitled_nested": 230,
   "untitled_headless": 208,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
@@ -4348,15 +4348,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/dashboards/_whos_online.html",
-   "line": 46,
-   "title": "Who's Online",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "presence-panel",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
    "line": 10,
    "title": "Critical Now",
@@ -4376,11 +4367,11 @@
   },
   {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
-   "line": 37,
+   "line": 40,
    "title": "Sign-ins",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "admin-panel admin-panel--presence",
+   "classes": "admin-panel",
    "branch_path": []
   },
   {
@@ -4529,7 +4520,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 78,
+   "line": 76,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4538,7 +4529,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 109,
+   "line": 107,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4547,7 +4538,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 167,
+   "line": 165,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4556,7 +4547,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 243,
+   "line": 241,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4565,7 +4556,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 278,
+   "line": 276,
    "title": "Verification &amp; Data Quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4574,7 +4565,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 329,
+   "line": 327,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4583,7 +4574,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 353,
+   "line": 351,
    "title": "Cluster SSA Comparison",
    "heading_level": 2,
    "has_card_key": false,
@@ -4592,7 +4583,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 405,
+   "line": 403,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4601,7 +4592,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 482,
+   "line": 480,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -7197,6 +7188,24 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "sp-card sp-trend",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/staff_activity/_insights.html",
+   "line": 6,
+   "title": "Team Insights",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-aside",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/staff_activity/_workspace.html",
+   "line": 60,
+   "title": "Your teamStaff by Program Lead",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-main",
    "branch_path": []
   },
   {

@@ -125,20 +125,6 @@ class PlatformAccordionContractTests(SimpleTestCase):
                 self.assertNotIn("{% if forloop.first %}open", template)
                 self.assertNotIn("{% if forloop.first %} open", template)
 
-    def test_who_s_online_folds_nothing(self):
-        """Owner, 2026-09-29: "who is online table does not collapse by PL. It
-        should have every details nothing to expand and collapse. everything
-        should be visible"."""
-        panel = (ROOT / "templates/partials/dashboards/_whos_online.html").read_text()
-        row = (ROOT / "templates/partials/dashboards/_whos_online_row.html").read_text()
-        self.assertIn('<tr class="edify-group-head">', panel)
-        self.assertNotIn("<script", panel)
-        for source in (panel, row):
-            self.assertNotIn("aria-expanded", source)
-            self.assertNotIn('" hidden>', source)
-        # Every other part of the tool is listed, not the first two.
-        self.assertNotIn("slice", row)
-
     def test_escalation_row_opens_its_own_details(self):
         table = (ROOT / "templates/pages/escalations/_table.html").read_text()
         self.assertIn(

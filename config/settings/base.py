@@ -137,6 +137,7 @@ INSTALLED_APPS = [
     "apps.integrations",
     "apps.autopilot",
     "apps.telemetry",
+    "apps.staff_activity",
     "apps.help_center",
     "apps.frontend",
     # ... (registered as each module is built)
@@ -964,6 +965,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # for the bounded precision that buys.
 SESSION_COOKIE_AGE = _as_int(os.environ.get("SESSION_IDLE_TIMEOUT_SECONDS"), 30 * 60)
 SESSION_SAVE_EVERY_REQUEST = False
+
+# Staff Activity Log (owner, 2026-09-29): what counts as active use of the
+# platform. The browser beats every HEARTBEAT_SECONDS while its page is
+# visible, focused and touched within IDLE_SECONDS; the server credits the
+# time between two beats only when it is at most IDLE_SECONDS, so an open but
+# untouched tab stops counting. ONLINE_SECONDS is how recent a beat must be
+# for the person to read as Online. Durations are always computed on the
+# server from its own clock (apps.accounts.presence), never sent by a browser.
+STAFF_ACTIVITY = {
+    "HEARTBEAT_SECONDS": _as_int(
+        os.environ.get("STAFF_ACTIVITY_HEARTBEAT_SECONDS"), 60
+    ),
+    "IDLE_SECONDS": _as_int(os.environ.get("STAFF_ACTIVITY_IDLE_SECONDS"), 5 * 60),
+    "ONLINE_SECONDS": _as_int(os.environ.get("STAFF_ACTIVITY_ONLINE_SECONDS"), 2 * 60),
+}
 
 # Sessions ride on the cache when it is Redis, and on the database otherwise.
 # `cached_db` rather than plain `cache`: a cache eviction or a Redis restart

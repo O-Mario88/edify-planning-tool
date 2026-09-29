@@ -143,6 +143,11 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     online_since = models.DateTimeField(null=True, blank=True)
     last_seen_path = models.CharField(max_length=255, blank=True, default="")
     last_seen_action = models.CharField(max_length=255, blank=True, default="")
+    # The sign-in (LoginEvent) the last beat came from, so the time since that
+    # beat is credited to the session it belongs to as well as to the page
+    # (Staff Activity Log, 2026-09-29: sign-in history with active and idle
+    # time per session).
+    last_seen_login_id = models.CharField(max_length=30, null=True, blank=True)
     # Set True when an admin creates/resets the password. The user must change it on next login.
     must_change_password = models.BooleanField(default=False)
     # Brute-force protection — apps.accounts.lockout_service
@@ -971,6 +976,16 @@ class LoginEvent(models.Model):
     role = models.CharField(max_length=64, blank=True, default="")
     ip = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.CharField(max_length=256, blank=True, default="")
+    # The session this sign-in opened (Staff Activity Log, 2026-09-29).
+    # ``active_seconds`` is the active time credited to it by the presence
+    # beat — deduplicated with every other session of the person, because a
+    # person has one beat pointer, not one per tab or device — and
+    # ``last_active_at`` the end of that time. A session ends at sign-out
+    # (``ended_at``); otherwise it timed out after its last activity.
+    device = models.CharField(max_length=16, blank=True, default="")
+    active_seconds = models.PositiveIntegerField(default=0)
+    last_active_at = models.DateTimeField(null=True, blank=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "login_event"
