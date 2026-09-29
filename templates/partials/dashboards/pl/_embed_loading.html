@@ -1,0 +1,11 @@
+{% comment %}What a dashboard section shows until its page's fragment arrives
+(apps.frontend.views.dashboard_embed); the fragment replaces it whole.{% endcomment %}
+<div class="space-y-2" aria-busy="true">
+  <p class="edify-text-caption font-semibold text-slate-500" role="status">{{ label }}</p>
+  <div class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 space-y-2" aria-hidden="true">
+    <div class="h-3 w-32 rounded bg-slate-100"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+    <div class="h-8 rounded-control bg-slate-50"></div>
+  </div>
+</div>

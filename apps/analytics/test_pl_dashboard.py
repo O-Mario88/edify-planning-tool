@@ -5,7 +5,7 @@ activities, handoffs or approvals. A PL can approve a supervised CCEO's weekly
 fund request but never their own — their own request routes to the CD.
 
 Rebuilt around the role description on 2026-09-13 (owner): a fixed part (six
-team pulse tiles and Leadership Attention) above one view at a time — Map,
+team pulse tiles) above one view at a time — This Week, Map,
 Priorities, Team, Coaching, Programmes, Collaboration — and only the fixed part
 and the chosen view are built. The dashboard decides nothing in place: every
 control opens the page where the work is done.
@@ -356,17 +356,22 @@ class PLDashboardTest(TestCase):
         by_label = {t["label"]: t for t in self._dash(self.pl_a)["kpi_strip_items"]}
         self.assertEqual(by_label["SSA Coverage"]["value"], "50%")
 
-    def test_attention_heading_always_renders_with_an_empty_state(self):
-        # Leadership Attention opens the dashboard's first view (Today from
-        # 2026-09-20, This Week since 2026-09-26); it renders there with or
-        # without anything to show.
+    def test_the_planning_monitor_opens_this_week_in_attentions_place(self):
+        # The Planning Monitor took Leadership Attention's place on This Week
+        # (owner, 2026-09-29). The band is gone; its cards still name the
+        # phone header's most pressing action.
         self.client.force_login(self.pl_b)
         WeeklyFundRequest.objects.all().delete()
         response = self.client.get("/dashboard", {"fy": FY, "view": "week"})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Leadership Attention")
+        html = response.content.decode()
+        self.assertNotIn("Leadership Attention", html)
+        self.assertIn('id="planning-monitor"', html)
+        self.assertIn('hx-get="/planning-monitor/?"', html)
+        self.assertLess(
+            html.index('id="planning-monitor"'), html.index("data-pl-week-panel")
+        )
         self.assertEqual(response.context["leadership_attention"], [])
-        self.assertContains(response, "Nothing needs your attention right now.")
 
     def test_attention_shows_a_country_director_flag_and_opens_quality_flags(self):
         CdFlag.objects.create(

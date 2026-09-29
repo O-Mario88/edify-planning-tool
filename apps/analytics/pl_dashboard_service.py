@@ -469,7 +469,9 @@ class ProgramLeadDashboardService:
             }
             if include_fixed:
                 data["kpi_strip_items"] = ProgramLeadDashboardService.kpis(ctx)
-            if include_fixed or view == "week":
+                # The phone's header names the most pressing of these. The
+                # band itself left This Week for the Planning Monitor (owner,
+                # 2026-09-29), so a tab swap no longer needs them.
                 data["leadership_attention"] = (
                     ProgramLeadDashboardService.leadership_attention(ctx)
                 )
