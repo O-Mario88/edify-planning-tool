@@ -316,17 +316,18 @@ class PresenceSurfaceTest(TestCase):
         html = self.client.get("/dashboard?view=operations").content.decode()
         self.assertIn("data-admin-presence", html)
         self.assertIn("Cara", html)
-        # The columns the owner listed on 2026-09-28, in order.
+        # The columns the owner listed on 2026-09-28, in order, each heading
+        # on one line (2026-09-29: "NO Wrapping"). The other parts accessed
+        # are each person's other lines, with their own time.
         headings = [
             "Staff name",
             "Title",
-            "# of<br>logins",
-            "Login day,<br>date &amp; time",
-            "Page<br>accessed",
-            "Working<br>on what",
-            "Duration<br>online",
-            "Other parts<br>accessed",
-            "Overall<br>time",
+            "# of logins",
+            "Login day, date &amp; time",
+            "Page accessed",
+            "Working on what",
+            "Duration online",
+            "Overall time",
         ]
         positions = [html.index(f">{heading}</th>") for heading in headings]
         self.assertEqual(positions, sorted(positions))
@@ -373,10 +374,10 @@ class PresenceSurfaceTest(TestCase):
         self.assertIn("Who's Online", html)
         self.assertIn("Cara", html)
         self.assertIn('data-presence="online"', html)
-        self.assertIn("Page<br>accessed", html)
+        self.assertIn(">Page accessed</th>", html)
         # The same logins column, but as plain text: the admin panel is not
         # the Country Director's to open, so it is never linked here.
-        self.assertIn("# of<br>logins", html)
+        self.assertIn("># of logins</th>", html)
         self.assertNotIn("/admin-panel/users/", html)
         # Cara folds under Paula, whose own row leads the group.
         self.assertIn("PL · Paula", html)

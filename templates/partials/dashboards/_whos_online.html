@@ -17,18 +17,22 @@
   A record of time, not only a sitting (owner, 2026-09-28): "how long the user
   spend on the planning tool, which part of the tool they accessed and for how
   long, working on what, how many times they logged in, when they logged in",
-  for a day, week, month, quarter or FY. Duration is the time on the tool in
-  the chosen period; the two columns after it say what on and where, with the
-  minutes; the row under each person lists every sign-in time and the time
-  under each part of the tool. The owner chose to show named minutes here and
-  only here (docs/STAFF_TIME_STANDARD.md §5).
+  for a day, week, month, quarter or FY. The owner chose to show named minutes
+  here and only here (docs/STAFF_TIME_STANDARD.md §5).
 
   Tidier, the same day: "page accessed should be in their own column and doing
-  what on that page on its own column" — Staff name, Title, # of logins, Login
-  day & date & time, Page accessed, Working on what, Duration online, Other
-  parts of the system accessed with their duration, Overall time on the tool.
-  Whoever is online is highlighted green across the whole row, behind a
-  pronounced pulsing light.
+  what on that page on its own column". Whoever is online is highlighted green
+  across their rows, behind a pronounced pulsing light.
+
+  A clean table (owner, 2026-09-29: "NO Wrapping and everything should be
+  accurate"; "we want the actual calculation of how long a person spent doing
+  what they are doing"): every cell is one line, and nothing is cut. Each
+  person has one line per page and task in the chosen period — the page they
+  are on, or were last on, first — and Duration online is that task's time in
+  the period, so the column adds up to the person's Overall time. The other
+  parts of the system they used are those lines; their sign-in times are
+  listed on the login cell. A table wider than its box scrolls sideways
+  (data-table-fit="scroll") rather than shortening a word.
 
   The filter and the pager fetch the panel alone from /dashboard/whos-online
   (`presence_fragment` is that response: the panel without its host).
@@ -65,40 +69,40 @@
     <button type="button" class="presence-choose__reset" hx-get="/dashboard/whos-online" hx-target="closest [data-presence-host]" hx-swap="innerHTML">Clear filters</button>
     {% endif %}
   </form>
-  {% comment %}Headings in the owner's words (2026-09-28), on two lines where
-  they are long: nine one-line headings in the dashboards' heading size need
-  more than a laptop's width, and the table then scrolled instead of fitting.
-  A <br> holds under the platform's nowrap.{% endcomment %}
+  {% comment %}Headings in the owner's words (2026-09-28), each on one line.{% endcomment %}
   <div class="presence-table-wrap">
     {% paginate presence.groups "presence_groups_page" as presence_groups_pager %}
-    <table class="presence-table">
+    <table class="presence-table" data-table-fit="scroll">
       <thead>
         <tr>
           <th scope="col" class="presence-table__name">Staff name</th>
           <th scope="col" class="presence-table__role">Title</th>
-          <th scope="col" class="presence-table__logins" title="Number of logins in the period"># of<br>logins</th>
-          <th scope="col" class="presence-table__login" title="Day, date and time of the last login">Login day,<br>date &amp; time</th>
-          <th scope="col" class="presence-table__page">Page<br>accessed</th>
-          <th scope="col" class="presence-table__working">Working<br>on what</th>
-          <th scope="col" class="presence-table__online">Duration<br>online</th>
-          <th scope="col" class="presence-table__parts" title="Every other part of the system used in the period, with its time">Other parts<br>accessed</th>
-          <th scope="col" class="presence-table__total" title="Overall time spent on the tool in the period">Overall<br>time</th>
+          <th scope="col" class="presence-table__logins" title="Number of logins in the period"># of logins</th>
+          <th scope="col" class="presence-table__login" title="Day, date and time of the last login in the period">Login day, date &amp; time</th>
+          <th scope="col" class="presence-table__page">Page accessed</th>
+          <th scope="col" class="presence-table__working">Working on what</th>
+          <th scope="col" class="presence-table__online" title="Time on this page doing this, in the period">Duration online</th>
+          <th scope="col" class="presence-table__total" title="All of the person's time on the tool in the period: their durations added up">Overall time</th>
         </tr>
       </thead>
       {% for group in presence_groups_pager.rows %}
       <tbody class="presence-group" data-presence-group="{{ group.kind }}" data-presence-online="{{ group.online }}">
         <tr class="edify-group-head">
-          <th colspan="9" scope="colgroup">
-            <span class="edify-group-head__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
-            <span class="edify-group-head__count" title="Time on the tool, {{ presence.period.label }}">{{ group.period_time_label }}</span>
-            <span class="edify-group-head__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i> {{ group.online }} of {{ group.total }} online</span>
+          <th colspan="8" scope="colgroup">
+            {% comment %}One box that stays at the table's start while the table
+            scrolls sideways, so the team is named beside its rows.{% endcomment %}
+            <span class="edify-cell-row presence-group-head">
+              <span class="edify-group-head__label">{% if group.kind == 'program_lead' %}PL · {% endif %}{{ group.label }}</span>
+              <span class="edify-group-head__count" title="Time on the tool, {{ presence.period.label }}: the Overall times below, added up">{{ group.period_time_label }}</span>
+              <span class="edify-group-head__count"><i class="admin-presence-light {% if group.online %}admin-presence-light--online{% else %}admin-presence-light--offline{% endif %}" aria-hidden="true"></i> {{ group.online }} of {{ group.total }} online</span>
+            </span>
           </th>
         </tr>
         {% if group.lead %}{% with person=group.lead is_lead=True %}{% include "partials/dashboards/_whos_online_row.html" %}{% endwith %}{% endif %}
         {% for person in group.members %}{% include "partials/dashboards/_whos_online_row.html" with is_lead=False %}{% endfor %}
       </tbody>
       {% empty %}
-      <tbody><tr><td colspan="9" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
+      <tbody><tr><td colspan="8" class="presence-table__empty">Nobody has an active account yet.</td></tr></tbody>
       {% endfor %}
     </table>
     {% include "components/table_pager.html" with pager=presence_groups_pager param="presence_groups_page" %}

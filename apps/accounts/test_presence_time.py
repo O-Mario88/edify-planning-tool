@@ -311,20 +311,15 @@ class SummaryForAPeriodTest(TestCase):
         self.assertEqual(summary["period"]["key"], "day")
         self.assertEqual(cara["period_seconds"], 2400)
         self.assertEqual(cara["period_time_label"], "40m")
-        # Parts, biggest first, each with its tasks and minutes.
+        # A line per page and task, longest first, each with its minutes;
+        # "Viewing My Plan" beside "My Plan" reads "Viewing".
         self.assertEqual(
-            [(p["section"], p["label"]) for p in cara["period_sections"]],
-            [("My Plan", "35m"), ("Schools", "5m")],
-        )
-        self.assertEqual(
+            [(r["section"], r["working_label"], r["label"]) for r in cara["rows"]],
             [
-                (t["working_on"], t["label"])
-                for t in cara["period_sections"][0]["tasks"]
+                ("My Plan", "Scheduling an activity", "25m"),
+                ("My Plan", "Viewing", "10m"),
+                ("Schools", "Viewing", "5m"),
             ],
-            [("Scheduling an activity", "25m"), ("Viewing My Plan", "10m")],
-        )
-        self.assertEqual(
-            cara["period_tasks"][0]["working_on"], "Scheduling an activity"
         )
         # Sign-ins: how many and when, latest first.
         self.assertEqual(cara["period_logins"], 2)
@@ -370,7 +365,9 @@ class SummaryForAPeriodTest(TestCase):
             p for g in summary["groups"] for p in g["members"] if p["id"] == self.dan.id
         )
         self.assertEqual(dan["period_seconds"], 0)
-        self.assertEqual(dan["period_sections"], [])
+        self.assertEqual(dan["period_time_label"], "0m")
+        # One line all the same, reading "—".
+        self.assertEqual([r["section"] for r in dan["rows"]], [""])
         self.assertEqual(dan["period_logins"], 0)
         self.assertEqual(dan["period_login_times"], [])
 
@@ -440,20 +437,21 @@ class WhosOnlineEndpointTest(TestCase):
         html = self._get(self.admin, "?presence_period=month").content.decode()
         self.assertIn(f"{month}:", html)
         self.assertIn('<option value="month" selected>', html)
-        # Every sign-in time and each part's minutes sit in the person's detail.
-        self.assertIn('class="presence-detail"', html)
-        self.assertIn("Scheduling an activity <b>25m</b>", html)
-        self.assertIn("My Plan <b>25m</b>", html)
+        # The month's page, task and time, each in its own cell.
+        self.assertIn(">My Plan</span></td>", html)
+        self.assertIn(">Scheduling an activity</span></td>", html)
+        self.assertIn(">25m</span></td>", html)
 
     def test_every_detail_is_shown_and_nothing_folds(self):
-        """Owner, 2026-09-29: "everything should be visible"."""
+        """Owner, 2026-09-29: "everything should be visible" and "NO
+        Wrapping": no toggles, no detail rows of lists, headings on one line."""
         html = self._get(self.lead, "?presence_period=month").content.decode()
         self.assertIn('<tr class="edify-group-head">', html)
         self.assertNotIn("aria-expanded", html)
-        self.assertIn(
-            f'<tr class="presence-detail" id="presence-person-{self.mine.id}">', html
-        )
-        self.assertIn("Scheduling an activity <b>25m</b>", html)
+        self.assertNotIn("presence-detail", html)
+        self.assertNotIn("<br>", html)
+        self.assertIn('data-table-fit="scroll"', html)
+        self.assertIn(">Scheduling an activity</span></td>", html)
 
     def test_the_dashboard_panel_is_a_fragment_host_for_the_pager(self):
         self.client.force_login(self.admin)
@@ -466,8 +464,9 @@ class TidyTableTest(TestCase):
     """Owner, 2026-09-28: "page accessed should be in their own column and
     doing what on that page on its own column" — Staff name, Title, # of
     logins, login day & date & time, page accessed, working on what, duration
-    online, other parts accessed with their time, overall time; whoever is
-    online highlighted green across the whole row."""
+    online, overall time; whoever is online highlighted green. Owner,
+    2026-09-29: "NO Wrapping and everything should be accurate" — a line per
+    page and task, every cell on one line."""
 
     def setUp(self):
         self.admin = _user("root", "Admin")
@@ -476,28 +475,31 @@ class TidyTableTest(TestCase):
         StaffSupervisorAssignment.objects.create(
             supervisor=self.lead.staff_profile, supervisee=self.cara.staff_profile
         )
-        today = timezone.localdate()
+        self.now = timezone.now()
+        # The day of Cara's last beat, which is the day its minutes go to.
+        day = timezone.localtime(self.now - timedelta(minutes=2)).date()
+        self.on = day.isoformat()
         for section, task, seconds in (
             ("My Plan", "Scheduling an activity", 1500),
             ("Schools", "Viewing Schools", 600),
         ):
             PresenceTime.objects.create(
                 user=self.cara,
-                day=today,
+                day=day,
                 section=section,
                 working_on=task,
                 seconds=seconds,
             )
-        LoginEvent.objects.create(user=self.cara, role="CCEO", at=_local(today, 8, 5))
+        LoginEvent.objects.create(user=self.cara, role="CCEO", at=_local(day, 0, 1))
         User.objects.filter(pk=self.cara.pk).update(
-            last_seen_at=timezone.now(),
-            online_since=timezone.now() - timedelta(minutes=40),
+            last_seen_at=self.now - timedelta(minutes=2),
+            online_since=self.now - timedelta(minutes=40),
             last_seen_path="/my-plan",
             last_seen_action="",
         )
 
     def _cara(self):
-        summary = presence_summary()
+        summary = presence_summary(now=self.now, on=self.on)
         return next(
             p
             for g in summary["groups"]
@@ -505,43 +507,57 @@ class TidyTableTest(TestCase):
             if p["id"] == self.cara.id
         )
 
-    def test_the_page_and_what_is_done_on_it_are_two_columns(self):
+    def test_a_line_per_page_and_task_the_page_they_are_on_first(self):
         cara = self._cara()
-        self.assertEqual(cara["section"], "My Plan")
-        # Reading the page is "Viewing" beside it, not the page said twice.
-        self.assertEqual(cara["working_label"], "Viewing")
-        # Other parts: every part but the page they are on, with its time.
+        # On My Plan now: its two minutes since the last beat lead, then the
+        # day's other lines, longest first. Reading the page is "Viewing"
+        # beside it, not the page said twice.
         self.assertEqual(
-            [(p["section"], p["label"]) for p in cara["other_sections"]],
-            [("Schools", "10m")],
+            [
+                (r["section"], r["working_label"], r["label"], r["current"])
+                for r in cara["rows"]
+            ],
+            [
+                ("My Plan", "Viewing", "2m", True),
+                ("My Plan", "Scheduling an activity", "25m", False),
+                ("Schools", "Viewing", "10m", False),
+            ],
         )
         self.assertEqual(cara["title"], "CCEO")
+        # The sitting is the name's title; Overall is the lines added up.
         self.assertEqual(cara["duration_label"], "40m")
-        self.assertEqual(cara["period_time_label"], "35m")
+        self.assertEqual(cara["period_time_label"], "37m")
 
-    def test_the_row_reads_in_the_owner_s_order_and_online_is_green(self):
+    def test_the_rows_read_in_the_owner_s_order_and_online_is_green(self):
         self.client.force_login(self.admin)
         html = self.client.get(
-            "/dashboard/whos-online", HTTP_HX_REQUEST="true"
+            f"/dashboard/whos-online?presence_on={self.on}", HTTP_HX_REQUEST="true"
         ).content.decode()
-        row = html.split(f'data-presence-person="presence-person-{self.cara.id}"')[0]
-        row = html[len(row) :].split("</tr>")[0]
-        # Online: the whole row is marked, and the light sits in the name.
+        marker = f'data-presence-person="presence-person-{self.cara.id}"'
+        start = html.rindex("<tr", 0, html.index(marker))
+        block = html[start:].split("</tbody>")[0]
+        row = block.split("</tr>")[0]
+        # Online: the rows are marked, and the light sits in the name.
         self.assertIn('<tr class="presence-row" data-presence="online"', html)
         self.assertIn("admin-presence-light--online", row)
         cells = [
             "Cara",
             ">CCEO<",
             ">1</a>",
-            f"{timezone.localdate().strftime('%a').upper()} ",
-            "My Plan",
-            ">Viewing<",
-            "40m",
-            "Schools <b>10m</b>",
-            "<b>35m</b>",
+            f"{timezone.localtime(self.now - timedelta(minutes=2)).strftime('%a').upper()} ",
+            ">My Plan</span>",
+            ">Viewing</span>",
+            ">2m</span>",
+            "<b>37m</b>",
         ]
         positions = [row.index(cell) for cell in cells]
         self.assertEqual(positions, sorted(positions))
+        # Her other lines: the page, the task and its time, with her name for
+        # screen readers only, and every one of them green.
+        self.assertEqual(block.count('data-presence="online"'), 3)
+        self.assertEqual(block.count('<span class="sr-only">Cara</span>'), 2)
+        for cell in (">Scheduling an activity</span>", ">25m</span>", ">10m</span>"):
+            self.assertIn(cell, block)
         # A lead's title is the short one, PL.
         self.assertIn(">PL<", html)
 
@@ -558,3 +574,225 @@ class TidyTableTest(TestCase):
         _user("bea", "BusinessTransformationOfficer")
         labels = [g["label"] for g in presence_summary()["groups"]]
         self.assertIn("Business Transformation Officer", labels)
+
+
+class EveryMinuteIsCountedTest(TestCase):
+    """Owner, 2026-09-29: "I WANT IT TO CALCULATE sum up the oveall time for
+    the whole day, whole week, whole month ... so that the filter can filter
+    the right item with accurate time. do the same for duration. we want the
+    actual calculation of how long a person spent doing what they are doing"."""
+
+    def setUp(self):
+        self.cara = _user("cara")
+        self.lead = _user("lena", "Program Lead")
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.lead.staff_profile, supervisee=self.cara.staff_profile
+        )
+        self.rf = RequestFactory()
+
+    def _record(self, user, day, section, task, seconds):
+        PresenceTime.objects.create(
+            user=user, day=day, section=section, working_on=task, seconds=seconds
+        )
+
+    def _read(self, user=None, **filters):
+        user = user or self.cara
+        summary = presence_summary(**filters)
+        for group in summary["groups"]:
+            for person in ([group["lead"]] if group["lead"] else []) + group["members"]:
+                if person["id"] == user.id:
+                    return summary, group, person
+        raise AssertionError(f"{user.id} is not in the table")
+
+    def _lines(self, person):
+        return [(r["section"], r["working_label"], r["label"]) for r in person["rows"]]
+
+    def _slots(self):
+        return {
+            (slot.day, slot.section, slot.working_on): slot.seconds
+            for slot in PresenceTime.objects.filter(user=self.cara)
+        }
+
+    def test_a_task_s_duration_is_its_time_in_the_chosen_period(self):
+        today = date(2026, 9, 30)  # a Wednesday
+        monday = date(2026, 9, 28)
+        self._record(self.cara, today, "My Plan", "Scheduling an activity", 1500)
+        self._record(self.cara, monday, "My Plan", "Scheduling an activity", 1200)
+        self._record(self.cara, monday, "Clusters", "Viewing Clusters", 600)
+        self._record(self.cara, date(2026, 9, 3), "Schools", "Viewing Schools", 900)
+        expected = {
+            "day": ([("My Plan", "Scheduling an activity", "25m")], "25m"),
+            "week": (
+                [
+                    ("My Plan", "Scheduling an activity", "45m"),
+                    ("Clusters", "Viewing", "10m"),
+                ],
+                "55m",
+            ),
+            "month": (
+                [
+                    ("My Plan", "Scheduling an activity", "45m"),
+                    ("Schools", "Viewing", "15m"),
+                    ("Clusters", "Viewing", "10m"),
+                ],
+                "1h 10m",
+            ),
+        }
+        for period, (lines, overall) in expected.items():
+            with self.subTest(period=period):
+                _, _, cara = self._read(
+                    now=_local(today, 16), period=period, on=today.isoformat()
+                )
+                self.assertEqual(self._lines(cara), lines)
+                self.assertEqual(cara["period_time_label"], overall)
+
+    def test_the_durations_add_up_to_the_overall_time_as_shown(self):
+        today = date(2026, 9, 30)
+        self._record(self.cara, today, "My Plan", "Scheduling an activity", 1610)
+        self._record(self.cara, today, "Field Debrief", "Writing a field debrief", 890)
+        self._record(self.cara, today, "Schools", "Viewing Schools", 30)
+        self._record(self.lead, today, "Dashboard", "Viewing Dashboard", 3599)
+        summary, group, cara = self._read(now=_local(today, 16), on=today.isoformat())
+        # 26m 50s, 14m 50s and 30s are 42m 10s: each line shows its minutes to
+        # the one below or above, and together they are the 42m of Overall
+        # (each on its own would read 26m + 14m = 40m beside 42m).
+        self.assertEqual([r["label"] for r in cara["rows"]], ["27m", "15m", "<1m"])
+        self.assertEqual(cara["period_time_label"], "42m")
+        # The heading adds up its people as shown — Lena's 59m 59s reads 59m —
+        # not their seconds, which would make 1h 42m over rows of 1h 41m.
+        self.assertEqual(group["period_time_label"], "1h 41m")
+        self.assertEqual(summary["period_time_label"], "1h 41m")
+
+    def test_the_time_since_the_last_beat_counts_and_the_next_beat_keeps_it(self):
+        beat = timezone.now() - timedelta(minutes=4)
+        day = timezone.localtime(beat).date()
+        self._record(self.cara, day, "My Plan", "Scheduling an activity", 1500)
+        _seen(
+            self.cara,
+            ago=timedelta(minutes=4),
+            path="/my-plan",
+            action="POST /planning/schedule-action",
+        )
+        _, _, before = self._read(on=day.isoformat())
+        # Online, on the task her last beat recorded: 25m on the record and
+        # the four minutes since, which the next beat will write.
+        self.assertTrue(before["online"])
+        self.assertEqual(
+            self._lines(before), [("My Plan", "Scheduling an activity", "29m")]
+        )
+        self.assertTrue(before["rows"][0]["current"])
+
+        touch_presence(self.cara, self.rf.get("/clusters"))
+
+        _, _, after = self._read(on=day.isoformat())
+        scheduling = next(
+            r for r in after["rows"] if r["working_on"] == "Scheduling an activity"
+        )
+        # The next beat wrote those minutes; the table read the same before.
+        self.assertEqual(scheduling["label"], "29m")
+        self.assertEqual(after["period_time_label"], "29m")
+        self.assertEqual(after["rows"][0]["section"], "Clusters")
+
+    def test_someone_who_has_left_carries_their_last_page_s_final_beat(self):
+        beat = timezone.now() - timedelta(hours=2)
+        day = timezone.localtime(beat).date()
+        self._record(self.cara, day, "Clusters", "Viewing Clusters", 600)
+        _seen(self.cara, ago=timedelta(hours=2), path="/clusters")
+        _, _, cara = self._read(on=day.isoformat())
+        self.assertFalse(cara["online"])
+        self.assertEqual(
+            [(r["section"], r["seconds"], r["current"]) for r in cara["rows"]],
+            [("Clusters", 600 + FINAL_BEAT_SECONDS, True)],
+        )
+
+        # Signing in again writes that final beat instead of dropping it.
+        from apps.accounts.presence import record_login
+
+        record_login(self.rf.post("/login"), User.objects.get(pk=self.cara.pk))
+        self.assertEqual(
+            self._slots()[(day, "Clusters", "Viewing Clusters")],
+            600 + FINAL_BEAT_SECONDS,
+        )
+
+    def test_a_day_gone_by_shows_that_day_s_lines_not_the_page_now(self):
+        beat = timezone.now() - timedelta(minutes=1)
+        earlier = timezone.localtime(beat).date() - timedelta(days=1)
+        self._record(self.cara, earlier, "Clusters", "Viewing Clusters", 1200)
+        _seen(self.cara, ago=timedelta(minutes=1), path="/my-plan")
+        _, _, cara = self._read(on=earlier.isoformat())
+        self.assertTrue(cara["online"])
+        self.assertEqual(self._lines(cara), [("Clusters", "Viewing", "20m")])
+        self.assertEqual(cara["period_time_label"], "20m")
+
+    def test_signing_in_leaves_the_person_on_the_dashboard(self):
+        """The sign-in's own POST replaced the Dashboard record_login wrote,
+        so the minutes after every sign-in went to "Sign-in · Signing in"."""
+        import uuid
+
+        self.cara.set_password("Secret-1!")
+        self.cara.save()
+        _seen(self.cara, ago=timedelta(hours=2), path="/clusters")
+        beat_day = timezone.localtime(self.cara.last_seen_at).date()
+        # The sign-in route is throttled per client address.
+        self.client.defaults["REMOTE_ADDR"] = "10.%d.%d.%d" % tuple(
+            uuid.uuid4().bytes[:3]
+        )
+        response = self.client.post(
+            "/login", {"email": self.cara.email, "password": "Secret-1!"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.cara.refresh_from_db()
+        self.assertEqual(
+            (self.cara.last_seen_path, self.cara.last_seen_action), ("/dashboard", "")
+        )
+        # The last sitting's final beat is on the page it ended on.
+        self.assertEqual(
+            self._slots(),
+            {(beat_day, "Clusters", "Viewing Clusters"): FINAL_BEAT_SECONDS},
+        )
+        # The next beat credits the Dashboard, and nothing is ever "Sign-in".
+        User.objects.filter(pk=self.cara.pk).update(
+            last_seen_at=timezone.now() - timedelta(minutes=3)
+        )
+        touch_presence(User.objects.get(pk=self.cara.pk), self.rf.get("/my-plan"))
+        sections = {section for _day, section, _task in self._slots()}
+        self.assertEqual(sections, {"Clusters", "Dashboard"})
+
+    def test_signing_in_and_out_are_not_pages(self):
+        from apps.accounts.presence import is_untracked_path, request_footprint
+
+        for path in ("/login", "/login/verify", "/login/resend-code", "/logout"):
+            with self.subTest(path=path):
+                self.assertTrue(is_untracked_path(path))
+                self.assertIsNone(request_footprint(self.rf.post(path)))
+
+    def test_the_migration_gives_sign_in_minutes_to_the_dashboard(self):
+        import importlib
+
+        from django.apps import apps
+
+        today = timezone.localdate()
+        before = today - timedelta(days=1)
+        self._record(self.cara, today, "Sign-in", "Signing in", 90)
+        self._record(self.cara, today, "Sign-in", "Verifying work", 30)
+        self._record(self.cara, today, "Dashboard", "Viewing Dashboard", 600)
+        self._record(self.cara, before, "Sign-in", "Signing in", 45)
+        _seen(self.cara, ago=timedelta(minutes=1), path="/login", action="POST /login")
+        _seen(self.lead, ago=timedelta(minutes=1), path="/login/verify")
+
+        importlib.import_module(
+            "apps.accounts.migrations.0034_sign_in_minutes_belong_to_the_dashboard"
+        ).move(apps, None)
+
+        self.assertEqual(
+            self._slots(),
+            {
+                (today, "Dashboard", "Viewing Dashboard"): 720,
+                (before, "Dashboard", "Viewing Dashboard"): 45,
+            },
+        )
+        for person in (self.cara, self.lead):
+            person.refresh_from_db()
+            self.assertEqual(
+                (person.last_seen_path, person.last_seen_action), ("/dashboard", "")
+            )
