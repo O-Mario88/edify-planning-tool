@@ -51,7 +51,7 @@
   align-items: start;
 }
 @media (min-width: 80rem) {
-  .sal-layout { grid-template-columns: minmax(0, 1fr) 24rem; }
+  .sal-layout { grid-template-columns: minmax(0, 1fr) 18rem; }
 }
 .sal-main { min-inline-size: 0; overflow: hidden; }
 .sal-tablehead {
@@ -323,7 +323,7 @@
 .sal-follows__late span { color: var(--edify-danger, #b91c1c); }
 
 /* ── Team Insights ─────────────────────────────────────────────────────── */
-.sal-aside { padding: 0.9rem 1rem; display: grid; gap: 1rem; min-inline-size: 0; }
+.sal-aside { padding: 0.8rem 0.85rem; display: grid; gap: 1rem; min-inline-size: 0; }
 .sal-aside__head h2 { margin: 0; font-size: 15px; font-weight: 750; }
 .sal-aside__head p { margin: 0.1rem 0 0; font-size: 12px; color: var(--edify-text-subtle); }
 .sal-aside__part h3 { margin: 0 0 0.5rem; font-size: 13px; font-weight: 700; }
@@ -335,7 +335,7 @@
 .sal-legend span { color: var(--edify-text-subtle); margin-inline-start: auto; padding-inline-start: 0.75rem; font-variant-numeric: tabular-nums; }
 .sal-note { margin: 0.4rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 .sal-modlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; font-size: 12px; }
-.sal-modlist li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.5rem; }
+.sal-modlist li { display: grid; grid-template-columns: 6rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.5rem; }
 .sal-modlist__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sal-modlist__pct { text-align: end; color: var(--edify-text-subtle); font-variant-numeric: tabular-nums; }
 .sal-bars--team { block-size: 6.5rem; }
@@ -373,14 +373,20 @@
 .sal-page-body { padding: 1rem 1.25rem; }
 
 .sal-narrow { max-inline-size: 54rem; margin-inline: auto; }
-.sal-modlist--detail li { grid-template-columns: minmax(6rem, 1fr) minmax(3rem, 1fr) 3.5rem 4.5rem; }
+/* In the narrow right column a module reads name, time and actions on one
+   line with its share bar under them. */
+.sal-modlist--detail li { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.15rem 0.6rem; }
+.sal-modlist--detail li > .sal-meter { grid-column: 1 / -1; order: 1; }
+.sal-modlist--detail .sal-modlist__head > span:nth-child(2) { display: none; }
 .sal-modlist__head { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 650; }
 .sal-bars--person li { grid-template-rows: minmax(0, 1fr) auto; }
 
 /* The right column: Team Insights, then the opened person's cards stacked
    (owner, 2026-09-29). */
 .sal-side { display: grid; gap: 1rem; min-inline-size: 0; align-content: start; }
-.sal-picked { padding: 0.9rem 1rem; min-inline-size: 0; }
+.sal-picked { padding: 0.8rem 0.85rem; min-inline-size: 0; }
 .sal-picked .sal-quads { grid-template-columns: minmax(0, 1fr) !important; }
 .sal-picked .sal-top { gap: 0.5rem 1rem; }
 .sal-picked .sal-figures { gap: 0.4rem 1rem; }
+.sal-picked .sal-box { padding: 0.6rem 0.65rem; }
+.sal-picked .sal-avatar--lg { inline-size: 2rem; block-size: 2rem; }
