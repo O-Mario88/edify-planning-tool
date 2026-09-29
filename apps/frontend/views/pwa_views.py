@@ -101,7 +101,13 @@ def manifest(request):
 # install and kept in a cache named after the worker version, so a deploy --
 # which changes the version, hence the worker, hence triggers an install --
 # replaces it.
-SERVICE_WORKER = """
+#
+# The JavaScript below is in raw strings, so each backslash reaches the browser
+# as written. A plain string rewrites some JavaScript escapes (`\b` in a regex
+# becomes a backspace, `\\` one backslash) and warns about the rest: `\/` made
+# production's pre-deploy job print "invalid escape sequence" (2026-09-29), and
+# a future Python refuses to compile it, taking this module down with it.
+SERVICE_WORKER = r"""
 const VERSION = '%(version)s';
 const CACHE = 'edify-static-' + VERSION;
 // Its own cache, so the passthrough build -- which caches no static asset --
@@ -196,7 +202,7 @@ self.addEventListener('fetch', (event) => {
 """
 
 # Installed only where asset names carry a content hash.
-STATIC_FETCH_BRANCH = """
+STATIC_FETCH_BRANCH = r"""
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   // Only versioned static assets. Everything else -- pages, APIs, anything
@@ -218,12 +224,12 @@ STATIC_FETCH_BRANCH = """
 # content-hashed the assets it links are immutable, so they are precached with
 # it -- one by one, and tolerantly: a single missing file must not leave the
 # worker uninstalled and the app without any fallback at all.
-STATIC_PRECACHE = """
+STATIC_PRECACHE = r"""
       .then(() => caches.match(OFFLINE_URL, { cacheName: OFFLINE_CACHE }))
       .then((res) => (res ? res.text() : ''))
       .then((html) => {
         const assets = Array.from(
-          html.matchAll(/(?:href|src)="(\\/static\\/[^"]+)"/g), (m) => m[1]
+          html.matchAll(/(?:href|src)="(\/static\/[^"]+)"/g), (m) => m[1]
         );
         return caches.open(CACHE).then((c) =>
           Promise.all(assets.map((a) => c.add(a).catch(() => null)))
@@ -234,7 +240,7 @@ STATIC_PRECACHE = """
 # stays installable, the manifest is honoured and the offline fallback works)
 # but every asset request goes to the network, which is the only correct
 # behaviour for assets whose URL does not change when their content does.
-PASSTHROUGH_NOTE = """
+PASSTHROUGH_NOTE = r"""
   // No static branch in this build: static asset names are not content-hashed
   // here, so anything cached would be served past the next edit.
 """
