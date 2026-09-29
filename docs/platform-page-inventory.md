@@ -11,7 +11,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **584**
+- Shared component templates: **585**
 - Full pages: **261**
 - Partials and drawers: **305**
 - Permission-gated surfaces: **858**
