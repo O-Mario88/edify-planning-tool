@@ -4349,7 +4349,7 @@
   },
   {
    "template": "templates/partials/dashboards/_whos_online.html",
-   "line": 39,
+   "line": 42,
    "title": "Who's Online",
    "heading_level": 2,
    "has_card_key": false,
