@@ -75,6 +75,10 @@ class PartnerBulkWithdrawalTest(PageFixture):
         self.sign_in(self.pl_user)
         body = self.client.get("/partner-oversight/").content.decode()
         self.assertNotIn(f'data-withdraw-pick value="{a.id}"', body)
+        # Nothing on the page can be withdrawn: no tick column at all, which
+        # phones would otherwise pin as the row's identity.
+        self.assertNotIn("school-plan-table__select", body)
+        self.assertNotIn("data-bulk-withdraw-table", body)
 
     def test_the_program_lead_withdraws_every_ticked_school(self):
         first = self.assign()

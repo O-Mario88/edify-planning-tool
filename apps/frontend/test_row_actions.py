@@ -193,6 +193,13 @@ class ClusterActionsAreOneMenuTest(SimpleTestCase):
         self.assertLess(
             row.index("school-plan-table__select"), row.index('data-label="School ID"')
         )
+        # Nothing on the list can go to a partner: no empty tick column,
+        # which phones would pin as though it were the school's identity.
+        none_open = render_to_string(
+            "partials/clusters/cluster_schools_table.html",
+            {"schools": [blocked], "cluster_id": "c1", "can_assign_partner": True},
+        )
+        self.assertNotIn("school-plan-table__select", none_open)
         # No assign permission: no tick column.
         plain = render_to_string(
             "partials/clusters/cluster_schools_table.html",

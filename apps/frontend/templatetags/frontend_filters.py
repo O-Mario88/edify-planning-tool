@@ -256,3 +256,15 @@ def facilitator_partners():
     from apps.activities.facilitation import facilitator_partners as partners
 
     return partners()
+
+
+@register.filter
+def any_attr(items, name):
+    """Whether any item (object or dict) has a truthy ``name``. A selection
+    table draws its tick column only when a row on the page can be ticked:
+    an all-empty tick column is pinned as though it were the identity."""
+    for item in items or ():
+        value = item.get(name) if isinstance(item, dict) else getattr(item, name, None)
+        if value:
+            return True
+    return False

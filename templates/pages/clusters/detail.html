@@ -181,8 +181,9 @@ cannot be used when too few schools are open, so the button stays.{% endcomment 
 Cluster School list, add checkbox on the first column so that the staff can be
 able to select the schools they want to assign to partners"). A school its
 gate keeps from a partner has no box.{% endcomment %}
-<div{% if can_assign_partner %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable{% endif %}>
-{% if can_assign_partner %}
+{% if can_assign_partner and schools|any_attr:"canAssignPartner" %}{% firstof "1" as can_tick %}{% endif %}
+<div{% if can_tick %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable{% endif %}>
+{% if can_tick %}
 <div class="school-directory-listbar px-4" x-cloak x-show="selectedSchools.length > 0">
   <div class="school-directory-listbar__bulk" aria-live="polite">
     <strong><span x-text="selectedSchools.length"></span> selected</strong>
@@ -200,7 +201,7 @@ gate keeps from a partner has no box.{% endcomment %}
 <caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, visit and training planning status, and planning readiness.</caption>
 <thead>
 <tr class="bg-slate-50/80 border-b border-[var(--edify-border)] text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
-{% if can_assign_partner %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
+{% if can_tick %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
 <th scope="col" class="px-4 py-2.5">School ID</th>
 <th scope="col" class="px-4 py-2.5">School Name</th>
 <th scope="col" class="px-4 py-2.5">SSA Average</th>
@@ -219,7 +220,7 @@ gate keeps from a partner has no box.{% endcomment %}
 {% if schools %}
 {% for s in schools_pager.rows %}
 <tr class="hover:bg-slate-50/60 transition-colors">
-{% if can_assign_partner %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
+{% if can_tick %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
 <td class="px-4 py-3 font-bold text-[var(--edify-accent)]" data-record-title>{{ s.schoolId }}</td>
 <td class="px-4 py-3" data-label="School Name">
 <a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
@@ -304,7 +305,7 @@ aria-label="Remove {{ s.name }} from this cluster"
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if support_rule %}{% if can_schedule or can_edit_cluster %}{% if can_assign_partner %}11{% else %}10{% endif %}{% else %}{% if can_assign_partner %}10{% else %}9{% endif %}{% endif %}{% else %}{% if can_schedule or can_edit_cluster %}{% if can_assign_partner %}10{% else %}9{% endif %}{% else %}{% if can_assign_partner %}9{% else %}8{% endif %}{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if support_rule %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}11{% else %}10{% endif %}{% else %}{% if can_tick %}10{% else %}9{% endif %}{% endif %}{% else %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}10{% else %}9{% endif %}{% else %}{% if can_tick %}9{% else %}8{% endif %}{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button
