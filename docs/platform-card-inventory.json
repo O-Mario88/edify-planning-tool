@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 672,
-  "templates": 251,
-  "distinct_titles": 641,
+  "titled_cards": 673,
+  "templates": 252,
+  "distinct_titles": 642,
   "with_card_key": 13,
   "untitled_surfaces": 594,
   "untitled_chrome": 155,
@@ -920,7 +920,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 317,
+   "line": 338,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 352,
+   "line": 373,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 375,
+   "line": 396,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2376,14 +2376,14 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 103,
+   "line": 107,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
    "branch_path": [
     [
-     11,
+     12,
      0
     ]
    ]
@@ -6360,6 +6360,15 @@
    "template": "templates/partials/my_plan/school_visits.html",
    "line": 3,
    "title": "School Visits Planned for This WeekThis MonthThis QuarterThis FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/my_plan/training_facilitations.html",
+   "line": 16,
+   "title": "Training Facilitation",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",

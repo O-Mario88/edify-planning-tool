@@ -304,6 +304,13 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             return
         add(RATE_LABELS[meals_key], meals_key, _participants_of(a, 0) * days)
 
+    def add_facilitation_fee(days: int) -> None:
+        add(
+            RATE_LABELS["group_training_facilitation_fee"],
+            "group_training_facilitation_fee",
+            days,
+        )
+
     def add_group_session(
         days: int,
         rate_key: str | None,
@@ -326,11 +333,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             add_rate(rate_key)
         if meals_key:
             add_meals(meals_key, days)
-        add(
-            RATE_LABELS["group_training_facilitation_fee"],
-            "group_training_facilitation_fee",
-            days,
-        )
+        add_facilitation_fee(days)
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
         if travel is None:
@@ -456,6 +459,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             nights = 1
         add_mission_rate()
         add_staff_visit_day(1, nights=nights)
+        if is_in_school_training and a.get("facilitated"):
+            # A partner facilitating an in-school training is paid the
+            # facilitation fee from the rate card (owner, 2026-09-29).
+            add_facilitation_fee(1)
     elif activity_type in ("partner_activity", "project_activity"):
         add(
             f"{RATE_LABELS['partner_meetings']} [Rate basis: per meeting]",
@@ -507,3 +514,30 @@ __all__ = [
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
 ]
+
+
+def facilitation_fee_cost(a: dict, rates: RateCard) -> ActivityCost:
+    """The facilitation fee alone, from the rate card: what a partner
+    facilitating a training that is otherwise priced at nothing (an in-school
+    Training whose School Visit carries the day) is paid (owner,
+    2026-09-29)."""
+    from apps.budget.reference import RATE_LABELS, with_rate_aliases
+
+    key = "group_training_facilitation_fee"
+    days = _days_of(a)
+    unit = with_rate_aliases(rates).get(key)
+    missing = unit is None
+    line = CostLine(
+        label=RATE_LABELS[key],
+        key=key,
+        unit=None if missing else unit,
+        qty=days,
+        amount=0 if missing else unit * days,
+        missing=missing,
+    )
+    return ActivityCost(
+        amount=line.amount,
+        lines=[line],
+        cost_missing=missing,
+        missing_items=[line.label] if missing else [],
+    )

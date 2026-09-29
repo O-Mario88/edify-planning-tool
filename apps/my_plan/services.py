@@ -18,6 +18,11 @@ import calendar
 from datetime import date, timedelta
 from django.db.models import Count, Q
 from apps.activities.models import Activity
+from apps.activities.facilitation import (
+    FACILITATOR_EDITABLE_STATUSES,
+    facilitator_label,
+    takes_facilitator,
+)
 from apps.activities.services import is_partner_ssa_support_activity
 from apps.geography.models import District
 from apps.accounts.models import User
@@ -1508,6 +1513,19 @@ def get_frontend_context(principal, query: dict) -> dict:
             else "General",
             "owner": users_map.get(a.responsible_staff_id, "Staff"),
             "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
+            # "Facilitated by" (owner, 2026-09-29): Staff, or the partner.
+            "facilitated_by": (
+                facilitator_label(
+                    a, partners_map.get(a.facilitating_partner_id or "", "")
+                )
+                if takes_facilitator(a.activity_type)
+                else ""
+            ),
+            "can_change_facilitator": (
+                takes_facilitator(a.activity_type)
+                and a.delivery_type == "staff"
+                and a.status in FACILITATOR_EDITABLE_STATUSES
+            ),
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
             "budget_total": budget_total,
             "salesforce_activity_id": a.salesforce_activity_id,

@@ -100,3 +100,64 @@ def facilitation_fees(activity_ids) -> dict[str, int]:
         .values("activity_id")
         .annotate(total=Sum("amount"))
     }
+
+
+# ── "Facilitated by" (owner, 2026-09-29) ────────────────────────────────────
+# "Scheduling training should have a Facilitated by field, listing the
+# partners in the database including the staff. If it is going to be done by
+# Edify staff then it should just be Staff." Staff may also change it on a
+# planned training afterwards. A training facilitated by a partner stays staff
+# work exactly as above; "Staff" is simply no facilitating partner.
+
+#: Every staff-run training that may name who facilitates it.
+FACILITATOR_TRAINING_TYPES = frozenset(
+    {
+        ActivityType.CLUSTER_TRAINING.value,
+        ActivityType.CLUSTER_TRAINING_SSA_COLLECTION.value,
+        ActivityType.IN_SCHOOL_TRAINING.value,
+        ActivityType.CORE_TRAINING.value,
+        ActivityType.TRAINING.value,
+        ActivityType.SCHOOL_IMPROVEMENT_TRAINING.value,
+    }
+)
+
+#: What "Facilitated by" reads when Edify staff facilitate.
+STAFF_FACILITATOR_LABEL = "Staff"
+
+#: A training's facilitator changes only while it is still a plan: once it
+#: has started, the day it happened is on record.
+FACILITATOR_EDITABLE_STATUSES = frozenset(
+    {"not_planned", "planned", "scheduled", "rescheduled", "deferred"}
+)
+
+
+def takes_facilitator(activity_type) -> bool:
+    """Whether staff name who facilitates this type of work."""
+    return (activity_type or "") in FACILITATOR_TRAINING_TYPES
+
+
+def facilitator_partners():
+    """The partners staff may name as a training's facilitator: every active
+    partner organisation, by name."""
+    from apps.partners.models import Partner
+
+    return list(
+        Partner.objects.filter(deleted_at__isnull=True, active_status=True)
+        .order_by("name")
+        .values("id", "name")
+    )
+
+
+def facilitator_label(activity, partner_name: str = "") -> str:
+    """ "Staff", or the facilitating partner's name."""
+    partner_id = getattr(activity, "facilitating_partner_id", None)
+    if not partner_id:
+        return STAFF_FACILITATOR_LABEL
+    if partner_name:
+        return partner_name
+    from apps.partners.models import Partner
+
+    return (
+        Partner.objects.filter(id=partner_id).values_list("name", flat=True).first()
+        or "Partner"
+    )

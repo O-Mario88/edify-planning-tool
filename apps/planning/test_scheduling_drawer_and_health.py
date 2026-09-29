@@ -547,15 +547,30 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(training.count("\nchecked\n"), 1)
         self.assertEqual(meeting.count("\nchecked\n"), 1)
 
-    def test_it_submits_the_agency_booking_workflow(self):
-        html = self._drawer()
+    def test_a_meeting_submits_the_agency_booking_workflow(self):
+        html = self._drawer_for("meeting")
         self.assertIn('value="certified_partner_agency"', html)
         self.assertIn('name="executor_type"', html)
 
-    def test_only_certified_agencies_are_offered(self):
-        html = self._drawer()
+    def test_a_meeting_offers_only_certified_agencies(self):
+        html = self._drawer_for("meeting")
         self.assertIn(self.certified.name, html)
         self.assertNotIn(self.uncertified.name, html)
+
+    def test_a_training_asks_who_facilitates_it(self):
+        """Owner, 2026-09-29: "scheduling training should have a Facilitated
+        by field ... the list of partners in the database including the
+        staff. If it is going to be done by Edify staff then it should just
+        be Staff." It replaced the certified-agency delivery choice."""
+        html = self._drawer()
+        self.assertIn("Facilitated by", html)
+        self.assertIn('name="facilitating_partner_id"', html)
+        self.assertIn('<option value="">Staff</option>', html)
+        # Every active partner, certified or not.
+        self.assertIn(self.certified.name, html)
+        self.assertIn(self.uncertified.name, html)
+        self.assertNotIn('value="certified_partner_agency"', html)
+        self.assertIn('name="executor_type" value="staff"', html)
 
     def test_training_asks_for_intervention_linked_activity_and_invited_schools(self):
         html = self._drawer()

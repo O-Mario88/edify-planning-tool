@@ -1862,6 +1862,10 @@ class FacilitatedTraining:
     shows_complete: bool = False
     # The view sets this: may the reader confirm or return it?
     can_review: bool = False
+    # The partner's own view (partner_facilitations): where the invoice for
+    # this fee stands, and the instalment to invoice next ("" = none now).
+    invoice_label: str = ""
+    invoice_instalment: str = ""
 
     @property
     def awaits_review(self) -> bool:
@@ -1921,6 +1925,16 @@ class FacilitatedTraining:
         return "scheduled"
 
     @property
+    def badge_color(self) -> str:
+        """The My Plan badge colour (mp-badge--*) for status_tone."""
+        return {
+            "danger": "red",
+            "success": "green",
+            "info": "blue",
+            "neutral": "slate",
+        }.get(self.status_tone, "amber")
+
+    @property
     def status_tone(self) -> str:
         return {
             "Returned": "danger",
@@ -1937,12 +1951,7 @@ def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
     the country, a region, or a Programme Lead's team and their own. Open
     work first by training date, completed work at the bottom
     (completion_columns)."""
-    from types import SimpleNamespace
-
-    from apps.activities.completion_columns import annotate, sort_completed_last
-    from apps.activities.facilitation import facilitation_fees
     from apps.activities.models import Activity
-    from apps.partners.models import Partner
 
     scope = _resolve_scope(principal)
     if scope["kind"] == "team" and not scope["staff_ids"]:
@@ -1953,18 +1962,39 @@ def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
         )
         .exclude(facilitating_partner_id="")
         .exclude(status__in=("cancelled", "rejected", "deferred"))
-        .select_related("cluster", "cluster__district", "training_course")
+        .select_related(
+            "cluster",
+            "cluster__district",
+            "school",
+            "school__district",
+            "training_course",
+        )
     )
     if fys:
         qs = qs.filter(fy__in=tuple(str(fy) for fy in fys))
     if scope.get("region_ids") is not None:
-        qs = qs.filter(cluster__region_id__in=scope["region_ids"])
+        # An in-school training has a school and no cluster (2026-09-29).
+        qs = qs.filter(
+            Q(cluster__region_id__in=scope["region_ids"])
+            | Q(school__region_id__in=scope["region_ids"])
+        )
     elif not scope["is_country"]:
         ids = scope["staff_ids"]
         qs = qs.filter(
             Q(responsible_staff_id__in=ids) | Q(cluster__responsible_staff_id__in=ids)
         )
-    activities = list(qs)
+    return _facilitated_rows(list(qs))
+
+
+def _facilitated_rows(activities) -> list[FacilitatedTraining]:
+    """One FacilitatedTraining per activity: names, the facilitation fee from
+    its cost lines, the officer and their Programme Lead."""
+    from types import SimpleNamespace
+
+    from apps.activities.completion_columns import annotate, sort_completed_last
+    from apps.activities.facilitation import facilitation_fees
+    from apps.partners.models import Partner
+
     if not activities:
         return []
 
@@ -1993,6 +2023,8 @@ def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
         canonical = directory["canonical"].get(owner, owner)
         pl_id, pl_name = directory["supervisor"].get(canonical, (None, ""))
         training, _purpose, intervention = describe_work(activity=activity)
+        # An in-school training has a school and no cluster (2026-09-29).
+        place = activity.cluster or activity.school
         rows.append(
             FacilitatedTraining(
                 activity_id=activity.id,
@@ -2000,11 +2032,8 @@ def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
                 activity_status=activity.status or "",
                 partner_id=activity.facilitating_partner_id,
                 partner_name=names.get(activity.facilitating_partner_id, ""),
-                cluster_name=getattr(activity.cluster, "name", "") or "",
-                district=getattr(
-                    getattr(activity.cluster, "district", None), "name", ""
-                )
-                or "",
+                cluster_name=getattr(place, "name", "") or "",
+                district=getattr(getattr(place, "district", None), "name", "") or "",
                 training_name=training,
                 intervention_label=intervention,
                 target_intervention=activity.focus_intervention or "",
@@ -2019,6 +2048,97 @@ def facilitated_trainings(principal, *, fys=None) -> list[FacilitatedTraining]:
     annotate(rows)
     sort_completed_last(rows, date_attr="training_date")
     return rows
+
+
+def partner_facilitations(principal, *, fys=None) -> list[FacilitatedTraining]:
+    """The trainings the signed-in partner facilitates, on its own side
+    (owner, 2026-09-29: "Once the partner has been selected to facilitate, it
+    should create an activity on the partner side ... each facilitation
+    fetches the facilitation fee from the database ... and help the partner
+    make the invoices").
+
+    The training stays one record, the officer's (apps.activities.facilitation);
+    the partner sees it here with its fee and where the fee's invoice stands,
+    and invoices it through the period invoice (apps.fund_requests.partner_invoices),
+    which already bills a facilitated training's fee alone.
+    """
+    from apps.activities.models import Activity
+    from apps.core.scoping import resolve_partner_ids
+
+    partner_ids = resolve_partner_ids(principal)
+    if not partner_ids:
+        return []
+    qs = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            facilitating_partner_id__in=partner_ids,
+            delivery_type="staff",
+        )
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .select_related(
+            "cluster",
+            "cluster__district",
+            "school",
+            "school__district",
+            "training_course",
+        )
+    )
+    if fys:
+        qs = qs.filter(fy__in=tuple(str(fy) for fy in fys))
+    rows = _facilitated_rows(list(qs))
+    _annotate_invoices(rows)
+    return rows
+
+
+_CLEARED_FOR_BALANCE = ("ia_verified", "closed", "accountant_confirmed")
+
+
+def _annotate_invoices(rows) -> None:
+    """Where each fee's invoice stands, and the instalment to raise next:
+    the 50% advance once the training is dated, the balance once the
+    advance is paid and the training verified (partner_invoices rules)."""
+    from apps.fund_requests.finance_models import (
+        PartnerInvoice,
+        PartnerInvoiceItem,
+        PartnerPayment,
+    )
+
+    ids = [r.activity_id for r in rows]
+    if not ids:
+        return
+    status_labels = dict(PartnerInvoice.STATUS_CHOICES)
+    invoiced: dict[tuple[str, str], str] = {}
+    for activity_id, instalment, status in PartnerInvoiceItem.objects.filter(
+        activity_id__in=ids
+    ).values_list("activity_id", "instalment", "invoice__status"):
+        invoiced[(activity_id, instalment)] = status
+    paid = set(
+        PartnerPayment.objects.filter(activity_id__in=ids).values_list(
+            "activity_id", "payment_type"
+        )
+    )
+    for row in rows:
+        key = row.activity_id
+        if row.fee <= 0:
+            row.invoice_label = "No fee"
+            continue
+        if (key, "clearance") in invoiced or (key, "clearance") in paid:
+            status = invoiced.get((key, "clearance"), "paid")
+            row.invoice_label = f"Balance: {status_labels.get(status, status)}"
+        elif (key, "advance") in invoiced or (key, "advance") in paid:
+            status = invoiced.get((key, "advance"), "paid")
+            if (key, "advance") in paid and row.activity_status in (
+                _CLEARED_FOR_BALANCE
+            ):
+                row.invoice_label = "Advance paid · balance ready to invoice"
+                row.invoice_instalment = "clearance"
+            else:
+                row.invoice_label = f"50% advance: {status_labels.get(status, status)}"
+        elif row.training_date:
+            row.invoice_label = "Ready to invoice (50% advance)"
+            row.invoice_instalment = "advance"
+        else:
+            row.invoice_label = "Not dated yet"
 
 
 def filter_trainings(trainings, *, member="all", activity_type="", status=""):
