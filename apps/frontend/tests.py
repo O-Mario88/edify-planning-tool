@@ -2083,6 +2083,29 @@ class FrontendViewsTestCase(TestCase):
             self.assertGreater(act.est_cost_cents, 0)
             self.assertFalse(act.cost_missing)
 
+    def test_cluster_bulk_assign_drawer_lists_the_ticked_schools(self):
+        """Owner, 2026-09-29: tick schools on a cluster's school list and
+        assign them to a partner. The drawer names each ticked school in the
+        reader's portfolio and posts to the Planning bulk partner action."""
+        from apps.partners.models import Partner
+
+        partner = Partner.objects.create(
+            name="Cluster Bulk Partner", active_status=True
+        )
+        self.client.force_login(self.cceo_user)
+        response = self.client.get(
+            "/planning/bulk-assign-partner-drawer",
+            {"school_ids": [self.school.school_id, "NOT-MINE"]},
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(self.school.name, html)
+        self.assertIn('hx-post="/planning/bulk-action"', html)
+        self.assertIn('name="action" value="partner"', html)
+        self.assertIn(f'name="school_ids" value="{self.school.school_id}"', html)
+        self.assertIn(partner.name, html)
+        self.assertIn("outside your planning portfolio", html)
+
     def test_bulk_assign_partner_without_date_defers_activity_creation(self):
         """Bulk partner assignment with no date yet must only write the
         PartnerAssignment handoff records. This is the exact HIGH finding:

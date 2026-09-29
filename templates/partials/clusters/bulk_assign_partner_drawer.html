@@ -1,0 +1,53 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Assign the schools ticked on a cluster's school list to one partner (owner,
+2026-09-29). Posts to the Planning page's bulk partner action, which hands
+each school's top eligible Catalogue recommendation to the partner; no
+Activity, cost or budget line exists until the partner (or you) dates it.
+{% endcomment %}
+
+{% block drawer_title %}Assign to partner{% endblock %}
+{% block drawer_subtitle %}{{ assignable|length }} school{{ assignable|length|pluralize }}{% endblock %}
+
+{% block drawer_body %}
+<form hx-post="/planning/bulk-action"
+      hx-target="#bulk-assign-partner-feedback"
+      hx-swap="innerHTML"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600"
+      data-cluster-bulk-assign>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="partner">
+  {% for row in assignable %}<input type="hidden" name="school_ids" value="{{ row.school.school_id }}">{% endfor %}
+
+  <ul class="space-y-1 text-sm font-medium text-slate-700">
+    {% for row in rows %}
+    <li>{{ row.school.name }} <span class="edify-text-caption text-slate-400">{{ row.school.school_id }}</span>{% if not row.ok %}<span class="block edify-text-caption text-amber-700">Not included: {{ row.reason }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if outside_scope %}<p class="edify-text-caption text-amber-700">{{ outside_scope }} selected school{{ outside_scope|pluralize }} {% if outside_scope == 1 %}is{% else %}are{% endif %} outside your planning portfolio and left out.</p>{% endif %}
+
+  {% if assignable %}
+  <p class="edify-text-caption text-slate-500">Each school's top eligible Catalogue recommendation goes to the partner. No activity, cost or budget line is created until it is scheduled.</p>
+  <div class="space-y-1">
+    <label for="bulk-partner-id" class="block edify-text-caption font-semibold text-slate-600">Partner <span class="text-rose-500">*</span></label>
+    <select id="bulk-partner-id" name="partner_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+      <option value="">Select a partner…</option>
+      {% for p in partners %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label for="bulk-partner-date" class="block edify-text-caption font-semibold text-slate-600">Target date <span class="font-normal text-slate-500">(optional)</span></label>
+    <input id="bulk-partner-date" type="date" name="scheduled_date" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50">
+    <p class="edify-text-caption text-slate-500">Leave blank if the partner will choose the date.</p>
+  </div>
+  {% endif %}
+
+  <div id="bulk-assign-partner-feedback"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if assignable %}<button type="submit" class="btn btn-primary h-8">Assign {{ assignable|length }} school{{ assignable|length|pluralize }}</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

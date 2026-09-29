@@ -30,6 +30,7 @@ from .views import (
     finance_views,
     partner_views,
     extended_views,
+    project_capacity_views,
     message_views,
     core_schools_views,
     impact_views,
@@ -825,6 +826,11 @@ urlpatterns = [
         name="partner_withdrawal_submit",
     ),
     path(
+        "partner-oversight/withdraw/bulk",
+        oversight_views.partner_bulk_withdrawal_view,
+        name="partner_bulk_withdrawal",
+    ),
+    path(
         "partner-oversight/withdraw/review",
         oversight_views.partner_withdrawal_review_view,
         name="partner_withdrawal_review",
@@ -893,6 +899,11 @@ urlpatterns = [
         "planning/assign-partner-modal",
         planning_views.assign_partner_modal_view,
         name="planning_assign_partner_modal",
+    ),
+    path(
+        "planning/bulk-assign-partner-drawer",
+        planning_views.bulk_assign_partner_drawer_view,
+        name="planning_bulk_assign_partner_drawer",
     ),
     path(
         "planning/assign-partner-action",
@@ -1086,6 +1097,11 @@ urlpatterns = [
         "activities/<str:activity_id>/start",
         my_plan_views.start_activity_drawer_view,
         name="start_activity_drawer",
+    ),
+    path(
+        "activities/<str:activity_id>/facilitator",
+        my_plan_views.facilitator_drawer_view,
+        name="activity_facilitator_drawer",
     ),
     path(
         "activities/<str:activity_id>/start/action",
@@ -2513,6 +2529,29 @@ urlpatterns = [
         "projects/monitoring/resolve/submit",
         extended_views.project_monitoring_resolve_submit_view,
         name="project_monitoring_resolve_submit",
+    ),
+    # School allocations per staff member and project, and withdrawing a
+    # school before its project work begins (brief, 2026-09-29). Above the
+    # <str:project_id> detail route, which would read "capacity" as an id.
+    path(
+        "projects/capacity",
+        project_capacity_views.project_capacity_view,
+        name="project_capacity",
+    ),
+    path(
+        "projects/capacity/set",
+        project_capacity_views.project_capacity_set_view,
+        name="project_capacity_set",
+    ),
+    path(
+        "projects/capacity/withdraw",
+        project_capacity_views.project_withdraw_school_view,
+        name="project_withdraw_school",
+    ),
+    path(
+        "projects/capacity/<str:capacity_id>/edit",
+        project_capacity_views.project_capacity_edit_view,
+        name="project_capacity_edit",
     ),
     path(
         "projects/<str:project_id>/staff/assign",

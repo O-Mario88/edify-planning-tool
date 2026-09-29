@@ -254,6 +254,11 @@ def my_plan_view(request):
         context = partner_plan_context(request.user)
         context["is_partner_viewer"] = True
         context["partner_invoice_tracker"] = partner_payment_tracker(request.user)
+        # The trainings it facilitates, each with its fee and invoice (owner,
+        # 2026-09-29; partner_oversight_service.partner_facilitations).
+        from apps.planning.partner_oversight_service import partner_facilitations
+
+        context["training_facilitations"] = partner_facilitations(request.user)
         return render(request, "pages/partner/my_plan.html", context)
 
     # Which of the reader's clusters have a group training and a cluster
@@ -434,6 +439,7 @@ def activity_detail_view(request, activity_id):
         ),
         "ssa_verdict": verdict_display(a),
         **_return_context(a),
+        **_facilitator_context(request.user, a),
     }
     # ── IA review · IA-P: OneTest results ──
     # A delivered OneTest visit carries "Record learning results"; the link a
@@ -1719,6 +1725,65 @@ def start_activity_action(request, activity_id):
             return response
 
     return local_redirect(f"/my-plan/{activity_id}")
+
+
+def _facilitator_context(user, activity) -> dict:
+    """ "Facilitated by" on a training's details (owner, 2026-09-29): the
+    label, and whether this viewer may change it (staff, a planned staff-run
+    training); the service repeats every check."""
+    from apps.activities.facilitation import (
+        FACILITATOR_EDITABLE_STATUSES,
+        facilitator_label,
+        takes_facilitator,
+    )
+    from apps.core.scoping import resolve_partner_ids
+
+    if not takes_facilitator(activity.activity_type):
+        return {}
+    return {
+        "facilitated_by": facilitator_label(activity),
+        "can_change_facilitator": (
+            activity.delivery_type == "staff"
+            and activity.status in FACILITATOR_EDITABLE_STATUSES
+            and not resolve_partner_ids(user)
+        ),
+    }
+
+
+@require_page_permission("my_plan")
+def facilitator_drawer_view(request, activity_id):
+    """Change who facilitates a planned training (owner, 2026-09-29: "allow
+    the staff to edit the planned activities to add the trainer"). GET shows
+    the drawer; POST saves through activities.services.set_facilitator, which
+    holds every rule."""
+    from apps.activities.facilitation import facilitator_label
+    from apps.activities.services import set_facilitator
+
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not RolePermissionService.can_view_record(request.user, a):
+        return HttpResponseForbidden("Access Denied.")
+
+    if request.method == "POST":
+        try:
+            set_facilitator(
+                activity_id,
+                request.POST.get("facilitating_partner_id", ""),
+                request.user,
+            )
+        except Exception as exc:
+            return error_fragment(exc, action="Facilitator not changed", status=400)
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse("<script>window.location.reload();</script>")
+            response["HX-Trigger"] = "close-drawer"
+            return response
+        return local_redirect("/my-plan")
+
+    context = {
+        "act": a,
+        "current_facilitator": facilitator_label(a),
+        "drawer_size": "sm",
+    }
+    return render(request, "partials/my_plan/facilitator_drawer.html", context)
 
 
 @require_page_permission("my_plan")

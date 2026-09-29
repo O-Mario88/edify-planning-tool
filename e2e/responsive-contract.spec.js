@@ -121,7 +121,9 @@ test.describe('Responsive contract — behaviours', () => {
       const region = page.locator('[data-partner-monitoring-table]').first().locator('xpath=ancestor::*[contains(@class,"edify-table-scroll-region")][1]');
       await expect(region).toHaveAttribute('data-scroll-state', 'start');
       await expect(page.locator('.edify-table-scroll-hint')).toHaveText('Swipe to view more columns');
-      const identity = region.locator('tbody tr').first().locator('> :first-child');
+      // The identity is the row's first cell, or the one beside the tick of a
+      // selection table (bulk withdraw, 2026-09-29), which pins both.
+      const identity = region.locator('tbody tr').first().locator('> :not(.school-plan-table__select)').first();
       await expect(identity).toHaveCSS('position', 'sticky');
       const before = await identity.boundingBox();
 

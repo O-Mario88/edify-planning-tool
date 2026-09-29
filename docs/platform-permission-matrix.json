@@ -788,6 +788,25 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
+   "route": "/activities/<str:activity_id>/facilitator",
+   "route_name": "activity_facilitator_drawer",
+   "view": "apps.frontend.views.my_plan_views.facilitator_drawer_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
    "route": "/activities/<str:activity_id>/partner-ssa-complete",
    "route_name": "partner_ssa_completion_drawer",
    "view": "apps.frontend.views.my_plan_views.partner_ssa_completion_drawer_view"
@@ -14700,6 +14719,24 @@
     "Accountant",
     "Admin"
    ],
+   "route": "/partner-oversight/withdraw/bulk",
+   "route_name": "partner_bulk_withdrawal",
+   "view": "apps.frontend.views.oversight_views.partner_bulk_withdrawal_view"
+  },
+  {
+   "page_permission": "partner_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
    "route": "/partner-oversight/withdraw/review",
    "route_name": "partner_withdrawal_review",
    "view": "apps.frontend.views.oversight_views.partner_withdrawal_review_view"
@@ -15623,6 +15660,23 @@
    "view": "apps.frontend.views.planning_views.bulk_action_view"
   },
   {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/bulk-assign-partner-drawer",
+   "route_name": "planning_bulk_assign_partner_drawer",
+   "view": "apps.frontend.views.planning_views.bulk_assign_partner_drawer_view"
+  },
+  {
    "page_permission": "fy_planning_policy",
    "required_permissions": [],
    "role_exclusive": false,
@@ -16374,6 +16428,58 @@
    "route": "/projects/analytics",
    "route_name": "special_projects_analytics",
    "view": "apps.frontend.views.extended_views.special_projects_analytics_view"
+  },
+  {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity",
+   "route_name": "project_capacity",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_view"
+  },
+  {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/<str:capacity_id>/edit",
+   "route_name": "project_capacity_edit",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_edit_view"
+  },
+  {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/set",
+   "route_name": "project_capacity_set",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_set_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/withdraw",
+   "route_name": "project_withdraw_school",
+   "view": "apps.frontend.views.project_capacity_views.project_withdraw_school_view"
   },
   {
    "page_permission": "projects",
@@ -18682,27 +18788,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 421,
-  "Admin": 1048,
+  "Accountant": 424,
+  "Admin": 1055,
   "BusinessTransformationOfficer": 238,
-  "CCEO": 548,
-  "CountryDirector": 804,
+  "CCEO": 552,
+  "CountryDirector": 808,
   "HumanResources": 336,
-  "ImpactAssessment": 662,
+  "ImpactAssessment": 666,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
-  "PartnerAdmin": 225,
-  "PartnerFieldOfficer": 225,
-  "Program Lead": 642,
-  "ProjectCoordinator": 459,
-  "RegionalProgramLead": 330,
-  "RegionalVicePresident": 399
+  "PartnerAdmin": 226,
+  "PartnerFieldOfficer": 226,
+  "Program Lead": 646,
+  "ProjectCoordinator": 465,
+  "RegionalProgramLead": 331,
+  "RegionalVicePresident": 400
  },
  "summary": {
-  "page_keys_declared": 182,
-  "page_keys_in_navigation": 199,
-  "routes_guarded": 1145,
-  "routes_total": 1339,
+  "page_keys_declared": 183,
+  "page_keys_in_navigation": 200,
+  "routes_guarded": 1152,
+  "routes_total": 1346,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

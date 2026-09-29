@@ -1,0 +1,66 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Set Staff Capacity / Edit capacity (brief, 2026-09-29), in Cost Settings'
+drawer shape. Choosing the project reloads the drawer with that project's
+eligible staff (CCEOs and Programme Leads in its country), so the staff list
+is always the database's, never typed. A staff member who already holds an
+allocation on the project is listed but not selectable: theirs is edited
+from its row. apps.projects.capacity.set_capacity checks all of it again.
+{% endcomment %}
+
+{% block drawer_title %}{% if mode == "edit" %}Edit capacity{% elif mode == "missing" %}Allocation not found{% else %}Set staff capacity{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if mode == "missing" %}
+<p class="edify-note" data-tone="warning">That allocation is not on a project you coordinate, or it no longer exists.</p>
+{% else %}
+<form {% if mode == "edit" %}hx-post="/projects/capacity/{{ row.id }}/edit"{% else %}hx-post="/projects/capacity/set"{% endif %} hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-capacity-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if mode == "edit" %}
+  <dl class="project-capacity-line">
+    <div><dt>Project</dt><dd>{{ project.name }}</dd></div>
+    <div><dt>Staff</dt><dd>{{ row.staff.user.name }}</dd></div>
+    <div><dt>Currently assigned</dt><dd><strong>{{ allocation.assigned }}</strong></dd></div>
+  </dl>
+  {% else %}
+  <div class="space-y-1">
+    <label for="capacity-set-project" class="block edify-text-caption font-semibold text-slate-600">Project <span class="text-rose-500">*</span></label>
+    <select id="capacity-set-project" name="project_id" required
+            hx-post="/projects/capacity/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">Choose a project</option>
+      {% for p in projects %}<option value="{{ p.id }}"{% if project and p.id == project.id %} selected{% endif %}>{{ p.name }}{% if p.code %} ({{ p.code }}){% endif %}</option>{% endfor %}
+    </select>
+  </div>
+
+  <div class="space-y-1">
+    <label for="capacity-set-staff" class="block edify-text-caption font-semibold text-slate-600">Staff member <span class="text-rose-500">*</span></label>
+    <select id="capacity-set-staff" name="staff_id" required {% if not project %}disabled{% endif %}
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">{% if project %}Choose a staff member{% else %}Choose the project first{% endif %}</option>
+      {% for staff in staff_options %}<option value="{{ staff.id }}"{% if staff.id in taken_staff %} disabled{% elif staff.id == values.staff_id %} selected{% endif %}>{{ staff.user.name }}{% if staff.id in taken_staff %} — already allocated, edit from the table{% endif %}</option>{% endfor %}
+    </select>
+    {% if project and not staff_options %}<p class="edify-text-caption text-slate-500">No active CCEO or Programme Lead works in this project's country.</p>{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="capacity-max" class="block edify-text-caption font-semibold text-slate-600">Maximum schools <span class="text-rose-500">*</span></label>
+    <input id="capacity-max" name="max_schools" type="number" inputmode="numeric" min="1" step="1" required value="{{ values.max_schools }}"
+           class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+    <p class="edify-text-caption text-slate-500">The most schools this staff member can add to this project. Assigned and remaining are counted for you.</p>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" name="save" value="1" class="btn btn-primary h-8">Save Capacity</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

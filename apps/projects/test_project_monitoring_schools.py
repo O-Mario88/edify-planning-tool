@@ -350,21 +350,30 @@ class OnlyTheCoordinatorActsTest(_Fixture):
                 self.assertNotIn("assign-partner-modal", html)
                 self.assertNotIn("/projects/planning/bulk-partner", html)
                 self.assertIn("Read only", html)
-                # View alone is one action: its own button, not a menu.
-                self.assertNotIn('aria-label="Actions for Unplanned Primary"', html)
+        # The officer who added a school may withdraw it before its work
+        # begins (brief, 2026-09-29), so their row carries a menu with View
+        # and Withdraw from project; Impact Assessment watches, and View alone
+        # is its own button, not a menu.
+        self.client.force_login(self.lead_user)
+        html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
+        self.assertIn(b'aria-label="Actions for Unplanned Primary"', html)
+        self.assertIn(b'data-enrolment-withdraw="open"', html)
+        self.client.force_login(self.ia_user)
+        html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
+        self.assertNotIn(b'aria-label="Actions for Unplanned Primary"', html)
+        self.assertNotIn(b"data-enrolment-withdraw", html)
 
     def test_a_paused_project_offers_the_coordinator_no_new_work(self):
         Project.objects.filter(id=self.project.id).update(status="paused")
         _result, rows = self.rows_for(self.coord_user)
         self.assertTrue(all(not row.schedule_url for row in rows.values()))
-        # With only View left the row keeps its button and says Paused; a
-        # row with a partner decision still waiting gets the Actions menu,
-        # and the menu says why Schedule and Assign are not on it.
+        # Every row keeps the coordinator's Withdraw from project, so each
+        # gets the Actions menu, and the menu says why Schedule and Assign
+        # are not on it.
         self.client.force_login(self.coord_user)
         html = self.client.get("/projects/monitoring", {"fy": self.fy}).content
         html = html.decode()
-        self.assertNotIn('aria-label="Actions for Unplanned Primary"', html)
-        self.assertIn('title="A paused project takes no new work">Paused</span>', html)
+        self.assertIn('aria-label="Actions for Unplanned Primary"', html)
         self.assertIn('aria-label="Actions for Returned Primary"', html)
         self.assertIn(
             '<p class="row-menu__note" role="none">Paused — takes no new work</p>', html

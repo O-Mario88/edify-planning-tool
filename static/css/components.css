@@ -5782,3 +5782,45 @@ table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([
   inset-inline-end: 0;
   z-index: 1;
 }
+
+/* Project capacity (brief, 2026-09-29): an allocation's figures as one
+   compact line of "Label value" pairs — the Add to Project drawers, the
+   Withdraw School drawer and each project's section on Project Capacity.
+   Deliberately not KPI tiles: three numbers read on one line. */
+.project-capacity-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.35rem 0 0;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted);
+}
+
+.project-capacity-line > div {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: baseline;
+}
+
+.project-capacity-line dt {
+  font-weight: 600;
+}
+
+.project-capacity-line dd {
+  margin: 0;
+  color: var(--edify-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-capacity-line--stack {
+  flex-direction: column;
+}
+
+/* The section's name and figures on the left, its Actions menu on the
+   right, on one line at every width. */
+.capacity-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}

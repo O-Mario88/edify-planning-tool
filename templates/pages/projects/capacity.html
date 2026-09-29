@@ -1,0 +1,117 @@
+{% extends "layouts/shell.html" %}
+{% load static row_actions table_pagination %}
+
+{% block title %}Project Capacity — Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The Project Coordinator's school allocations (brief, 2026-09-29): one
+section per project, never one table of every project, each with a compact
+line — schools used of those allocated, staff, places left — and a table
+whose first column is the staff member's name. It follows Cost Settings: the
+header's one primary button opens the drawer that creates an allocation, the
+project filter is the platform's compact field, and each allocation is
+changed in its own drawer from its row's Actions menu.
+
+Maximum is the only number anyone enters. Assigned, Remaining and
+Utilisation are counted by apps.projects.capacity from the live enrolments,
+so a withdrawn school gives its place back without anybody touching them.
+A project nobody has set allocations for is open to staff as before; the
+first allocation makes it capacity-managed, and staff without one may add
+none — said on the section so the coordinator knows before it bites.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-project-capacity-page>
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Special Projects</p>
+<h1 class="edify-page-title edify-page-header__title">Project Capacity</h1>
+<p class="edify-page-header__description">How many schools each staff member may add to each of your projects.</p>
+</div>
+{% if project_options %}
+<div class="edify-page-header__controls">
+<button type="button"
+hx-get="/projects/capacity/set{% if selected_project %}?project={{ selected_project }}{% endif %}"
+hx-target="#drawer-container" hx-swap="innerHTML"
+class="btn btn-primary h-8">+ Set Staff Capacity</button>
+</div>
+{% endif %}
+</div>
+
+{% if project_options|length > 1 %}
+<form method="get" action="/projects/capacity" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Project" x-data>
+  <div class="edify-filter-field platform-filter-compact"><label for="capacity-project" class="edify-filter-label">Project</label>
+  <select id="capacity-project" name="project" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+    <option value="">All projects</option>
+    {% for p in project_options %}<option value="{{ p.id }}"{% if p.id == selected_project %} selected{% endif %}>{{ p.name }}</option>{% endfor %}
+  </select></div>
+  <noscript><button type="submit" class="btn btn-secondary h-8 self-end">Show project</button></noscript>
+</form>
+{% endif %}
+
+{% for section in sections %}
+{% with project=section.project summary=section.summary %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="capacity-{{ project.id }}-title" data-capacity-project="{{ project.id }}">
+  <div class="capacity-section-head border-b border-[var(--edify-border)] px-4 py-3">
+    <div class="min-w-0">
+      <h2 id="capacity-{{ project.id }}-title" class="text-[15px] font-semibold text-slate-800">{% firstof project.code project.name %}</h2>
+      {% if project.code %}<p class="edify-text-caption edify-text-muted">{{ project.name }}</p>{% endif %}
+      <dl class="project-capacity-line" data-capacity-summary>
+        <div><dt>Schools</dt><dd>{{ summary.assigned }} / {{ summary.capacity }} allocated</dd></div>
+        <div><dt>Staff</dt><dd>{{ summary.staff }}</dd></div>
+        <div><dt>Capacity remaining</dt><dd><strong>{{ summary.remaining }}</strong></dd></div>
+        {% if summary.outside_allocations %}<div><dt>Added outside allocations</dt><dd>{{ summary.outside_allocations }}</dd></div>{% endif %}
+        {% if section.blocked %}<div><dt>Project</dt><dd>{{ project.status_label }} — takes no new schools</dd></div>{% endif %}
+      </dl>
+    </div>
+    {% row_actions project.name %}
+    <button type="button" class="row-menu__item" role="menuitem" hx-get="/projects/capacity/set?project={{ project.id }}" hx-target="#drawer-container" hx-swap="innerHTML">Manage capacity</button>
+    <a class="row-menu__item" role="menuitem" href="/projects/monitoring?project={{ project.id }}">View schools</a>
+    <a class="row-menu__item" role="menuitem" href="/projects/{{ project.id }}">Project details</a>
+    {% endrow_actions %}
+  </div>
+  {% if section.allocations %}
+  {% with page_key="staff_page-"|add:project.id %}
+  {% paginate section.allocations page_key as staff_pager %}
+  <div class="overflow-x-auto overscroll-x-contain">
+    <table class="edify-data-table" aria-label="Staff allocations for {{ project.name }}">
+      <thead><tr>
+        <th scope="col">Staff Name</th>
+        <th scope="col" class="text-right">Maximum Schools</th>
+        <th scope="col" class="text-right">Assigned Schools</th>
+        <th scope="col" class="text-right">Remaining</th>
+        <th scope="col" class="text-right">Utilization</th>
+        <th scope="col">Status</th>
+        <th scope="col" class="text-right">Action</th>
+      </tr></thead>
+      <tbody>
+      {% for a in staff_pager.rows %}
+        <tr data-allocation-row="{{ a.capacity_id }}">
+          <td data-pinned-stack><strong class="text-slate-800">{{ a.staff_name }}</strong></td>
+          <td class="text-right tabular-nums">{{ a.maximum }}</td>
+          <td class="text-right tabular-nums">{{ a.assigned }}</td>
+          <td class="text-right tabular-nums"><strong>{{ a.remaining }}</strong></td>
+          <td class="text-right tabular-nums">{{ a.utilization|floatformat:"-1" }}%</td>
+          <td><span class="partner-status-chip" data-tone="{% if section.blocked %}neutral{% elif a.status == 'full' %}danger{% elif a.status == 'near' %}warning{% else %}success{% endif %}">{% if section.blocked %}Blocked{% else %}{{ a.status_label }}{% endif %}</span></td>
+          <td class="text-right">
+            {% row_actions a.staff_name %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="/projects/capacity/{{ a.capacity_id }}/edit" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Edit {{ a.staff_name }}'s allocation on {{ project.name }}">Edit capacity</button>
+            {% endrow_actions %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=staff_pager param=page_key pagination_label="Staff allocations for "|add:project.name %}
+  {% endwith %}
+  {% else %}
+  <p class="px-4 py-4 edify-text-caption edify-text-muted" data-capacity-unmanaged>No staff allocations yet. Until you set the first one, staff add schools to this project without a limit; after it, only staff with an allocation can add them.</p>
+  {% endif %}
+</section>
+{% endwith %}
+{% empty %}
+{% include "components/empty_state.html" with title="No projects to allocate" message="Projects you coordinate appear here once they are running." %}
+{% endfor %}
+</div>
+{% endblock %}

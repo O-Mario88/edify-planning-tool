@@ -26,7 +26,7 @@ from django.utils import timezone
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
 
-from .costing import ActivityCost, CostLine, cost_for_activity
+from .costing import ActivityCost, CostLine, cost_for_activity, facilitation_fee_cost
 from .models import (
     ActivityCostSnapshot,
     CostCatalogue,
@@ -964,6 +964,15 @@ def _programme_period_specs(cost, activity, planned_date):
                     )
                 )
     return specs
+
+
+def facilitation_fee_for(input: dict) -> ActivityCost:
+    """The facilitation fee alone, priced on the operational card that
+    apply_to_activity reads (apps.budget.costing.facilitation_fee_cost)."""
+    input = _profiled_input(input)
+    dual = calculate_dual({**input})
+    rates, _settings = _rate_card(dual["operationalCard"])
+    return facilitation_fee_cost(input, rates)
 
 
 def apply_to_activity(

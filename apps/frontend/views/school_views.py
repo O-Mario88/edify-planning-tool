@@ -760,7 +760,13 @@ def school_directory_view(request):
     # never its owner. The old narrowing left every school-scoped role with an
     # empty dropdown, so the bulk path could not fill a new project at all
     # (owner, 2026-09-16) — the single-school drawer answers the same way.
-    projects = annotate_coordinator_names(assignable_projects(user))
+    # Each carries the caller's school allocation, so the modal can show what
+    # is left and refuse a selection larger than it (brief, 2026-09-29).
+    from apps.projects.capacity import annotate_allocations
+
+    projects = annotate_allocations(
+        annotate_coordinator_names(assignable_projects(user)), user
+    )
 
     # An empty table says why it is empty (controls audit F-03, 2026-09-14):
     # a filter with no matches used to tell the reader no schools had ever
@@ -1325,7 +1331,12 @@ def assign_to_project_drawer_view(request, school_id):
 
         # Whose cohort each one is, so the person enrolling a school can tell
         # the coordinator's projects apart in a country-wide list.
-        projects = annotate_coordinator_names(projects_open_for_enrolment(user, school))
+        from apps.projects.capacity import annotate_allocations
+
+        projects = annotate_allocations(
+            annotate_coordinator_names(projects_open_for_enrolment(user, school)),
+            user,
+        )
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
@@ -1854,7 +1865,23 @@ def bulk_assign_project_view(request):
                 schools = School.objects.none()
             schools = schools.filter(id__in=school_ids, deleted_at__isnull=True)
 
+            from apps.projects.capacity import assert_batch_fits, consuming_staff_id
             from apps.projects.services import assign_school as assign_project_school
+
+            # More schools than the caller's allocation has left: refuse the
+            # whole selection rather than fill it in list order (brief,
+            # 2026-09-29). Each school is still counted again inside
+            # assign_school, under the allocation's lock.
+            new_count = schools.exclude(
+                id__in=ProjectSchoolAssignment.objects.filter(project=project).values(
+                    "school_id"
+                )
+            ).count()
+            try:
+                assert_batch_fits(project, consuming_staff_id(request.user), new_count)
+            except BadRequest as exc:
+                messages.error(request, str(exc))
+                return redirect("/schools")
 
             count = 0
             duplicates = 0
