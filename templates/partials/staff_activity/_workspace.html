@@ -4,6 +4,7 @@
   a filter change swaps them together and they never disagree.
 {% endcomment %}
 <div id="staff-activity-workspace" class="space-y-4">
+  {% if embedded %}{% include "partials/staff_activity/_embed_head.html" %}{% endif %}
 
   {% include "components/context_metrics.html" with items=kpi_items variant="executive" density="compact" title="Staff activity at a glance" %}
 

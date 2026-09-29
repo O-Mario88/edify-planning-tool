@@ -6,6 +6,9 @@ Meetings, with the same columns, and an action per row: Verify when the
 officer has completed it, Send to <officer> when they have not. Completed
 work is off both lists; the figures above still count it.
 
+Everyone (owner, 2026-09-29) is the same lists and tables for the lead and
+every officer together, the Executor column naming whose each row is.
+
 The lead's own tab (Me) opens with their Today workbench — the to-do list
 that used to open the dashboard — and sends today_section=own with every
 request made inside it, so the workbench leaves out the team, whose weeks
@@ -21,7 +24,7 @@ have their own tabs.
   </div>
 
   {% if person.leave %}
-  <p class="rpl-card__footnote" data-tone="warning" data-pl-week-leave>On approved leave {{ person.leave|join:", " }}.</p>
+  <p class="rpl-card__footnote" data-tone="warning" data-pl-week-leave>{% if person.is_everyone %}On approved leave: {{ person.leave|join:"; " }}.{% else %}On approved leave {{ person.leave|join:", " }}.{% endif %}</p>
   {% endif %}
 
   {% comment %}Not on the officer's own week (owner, 2026-09-26: "Waiting on

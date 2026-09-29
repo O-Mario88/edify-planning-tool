@@ -445,7 +445,16 @@ def planning_monitor_view(request):
     work and the schools nobody has planned for — and Execution & Completion
     — that plan as it is delivered, completed and verified. The country for
     the CD, IA and RVP; a Lead's own team for the PL.
+
+    The Programme Lead reads it on their dashboard, in place of Leadership
+    Attention (owner, 2026-09-29; apps.frontend.views.dashboard_embed): the
+    dashboard section's requests get the monitor with its tabs, and the page
+    opened on its own sends the Lead there.
     """
+    from apps.frontend.views import dashboard_embed
+
+    if dashboard_embed.reads_on_dashboard(request):
+        return dashboard_embed.to_dashboard(request, dashboard_embed.PLANNING_MONITOR)
     execution = (request.GET.get("view") or "").strip().lower() == "execution"
     lens = "execution" if execution else "monitor"
     period = _period_filters(request)
@@ -470,6 +479,10 @@ def planning_monitor_view(request):
         "monitor_is_country": is_country_reader(request.user),
         "fy_options": fy_options(),
     }
+    if dashboard_embed.is_embedded(request):
+        return dashboard_embed.fragment(
+            render(request, "partials/oversight/planning_monitor_embed.html", context)
+        )
     if request.headers.get("HX-Request") == "true":
         return render(request, _MONITOR_TEMPLATES[lens], context)
     return render(request, "pages/oversight/planning_monitor.html", context)

@@ -76,6 +76,10 @@ def _at(day: date, hour: int, minute: int = 0):
     )
 
 
+#: What the Programme Lead's dashboard section sends with its requests.
+EMBED = {"HTTP_HX_REQUEST": "true", "HTTP_X_EDIFY_EMBED": "dashboard"}
+
+
 class Team(TestCase):
     def setUp(self):
         self.director = _user("clara", "CountryDirector")
@@ -551,15 +555,27 @@ class PageTest(Team):
             seconds=600,
         )
         LoginEvent.objects.create(user=self.mina, role="CCEO", device="mobile")
-        for reader in (self.lead, self.director, self.admin):
+        for reader in (self.director, self.admin):
             self.client.force_login(reader)
             html = self.client.get("/staff-activity").content.decode()
             self.assertIn("Staff Activity Log", html)
             self.assertIn("Mina", html)
             self.assertIn('data-table-fit="scroll"', html)
             self.assertEqual("Follow-up Queue" in html, reader != self.admin)
+        # The Programme Lead reads it on their dashboard (owner, 2026-09-29):
+        # the section's requests get the workspace with its heading and
+        # actions, and no history entry.
         self.client.force_login(self.lead)
-        self.assertNotIn("Otto", self.client.get("/staff-activity").content.decode())
+        embedded = self.client.get("/staff-activity", **EMBED)
+        self.assertEqual(embedded["HX-Push-Url"], "false")
+        html = embedded.content.decode()
+        self.assertNotIn("<html", html)
+        self.assertIn('id="pl-staff-activity-title"', html)
+        self.assertIn("Mina", html)
+        self.assertIn('data-table-fit="scroll"', html)
+        self.assertIn("Follow-up Queue", html)
+        self.assertIn('href="/staff-activity/export?', html)
+        self.assertNotIn("Otto", html)
         detail = self.client.get(f"/staff-activity/people/{self.mina.id}?period=week")
         self.assertContains(detail, "Sign-in history")
         self.assertContains(detail, "Time by module")
@@ -579,13 +595,28 @@ class PageTest(Team):
         self.assertEqual(log["kpis"]["staff_total"], 2)
 
     def test_the_sidebar_offers_it_to_its_readers(self):
-        for reader, offered in (
-            (self.lead, True),
-            (self.director, True),
-            (self.mina, False),
+        # The Programme Lead's is on their dashboard, not in the sidebar
+        # (owner, 2026-09-29).
+        for reader, in_sidebar, on_dashboard in (
+            (self.lead, False, True),
+            (self.director, True, False),
+            (self.mina, False, False),
         ):
             self.client.force_login(reader)
             html = self.client.get("/dashboard", follow=True).content.decode()
             self.assertEqual(
-                'href="/staff-activity"' in html, offered, reader.active_role
+                'href="/staff-activity"' in html, in_sidebar, reader.active_role
             )
+            self.assertEqual(
+                'id="staff-activity"' in html, on_dashboard, reader.active_role
+            )
+
+    def test_a_lead_opening_the_page_lands_on_their_dashboard(self):
+        self.client.force_login(self.lead)
+        response = self.client.get("/staff-activity?period=week")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"], "/dashboard?sa=period%3Dweek#staff-activity"
+        )
+        dashboard = self.client.get(response["Location"].split("#")[0])
+        self.assertContains(dashboard, 'hx-get="/staff-activity?period=week"')

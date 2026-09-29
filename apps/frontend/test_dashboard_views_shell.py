@@ -163,14 +163,17 @@ class DashboardViewSourceTest(TestCase):
 class DashboardViewRenderTest(TestCase):
     """What each role gets on their home dashboard."""
 
-    def test_pl_this_week_owns_attention_and_ignores_saved_tabs(self):
+    def test_pl_this_week_owns_the_monitor_and_ignores_saved_tabs(self):
+        # The Planning Monitor took Leadership Attention's place on This
+        # Week (owner, 2026-09-29).
         self.client.cookies[f"{VIEW_COOKIE_PREFIX}pl"] = "map"
         response = self._get(self.pl, "/dashboard")
         self.assertEqual(response.context["dashboard_view"], "week")
-        self.assertContains(response, "data-pl-attention")
+        self.assertContains(response, "data-pl-monitor")
+        self.assertNotContains(response, "data-pl-attention")
         self.assertContains(response, 'data-section="what-needs-you-now"')
         other = self._get(self.pl, "/dashboard?view=team")
-        self.assertNotContains(other, "data-pl-attention")
+        self.assertNotContains(other, "data-pl-monitor")
         self.assertNotContains(other, 'data-section="what-needs-you-now"')
         self.client.force_login(self.pl)
         week = self.client.get(
@@ -178,9 +181,10 @@ class DashboardViewRenderTest(TestCase):
             HTTP_HX_REQUEST="true",
             HTTP_HX_TARGET="pl-dashboard-view-shell",
         )
-        self.assertContains(week, "data-pl-attention")
+        self.assertContains(week, "data-pl-monitor")
         self.assertContains(week, 'data-section="what-needs-you-now"')
-        self.assertIn("leadership_attention", week.context)
+        # The band is gone, so a tab swap no longer builds it.
+        self.assertNotIn("leadership_attention", week.context)
 
     def setUp(self):
         self.cd = _user("cd.view@edify.test", "CountryDirector")

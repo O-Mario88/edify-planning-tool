@@ -281,8 +281,15 @@ class TheLensIsTheirs(MonitorFixture):
                 self.assertContains(gap, "School MON-B1")
 
     def test_a_programme_lead_reads_their_team(self):
+        # On their dashboard (owner, 2026-09-29): the section's requests
+        # carry X-Edify-Embed.
         self.client.force_login(self.pl_user)
-        response = self.client.get("/planning-monitor/", {"fy": FY})
+        response = self.client.get(
+            "/planning-monitor/",
+            {"fy": FY},
+            HTTP_HX_REQUEST="true",
+            HTTP_X_EDIFY_EMBED="dashboard",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-planning-monitor")
         self.assertEqual(response.context["monitor_totals"].school_count, 6)
