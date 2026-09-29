@@ -55,10 +55,18 @@ def _query(request, **overrides) -> str:
 @require_page_permission("staff_activity")
 @require_GET
 def staff_activity_view(request):
+    """The log. A Programme Lead reads their team's on their dashboard's This
+    Week (owner, 2026-09-29; apps.frontend.views.dashboard_embed): the
+    dashboard section's requests get the workspace with its own heading and
+    actions, and the page opened on its own sends the Lead there."""
     from apps.core.metrics.payload import render_precomputed_metric_for_source
+    from apps.frontend.views import dashboard_embed
     from apps.staff_activity.follow_ups import open_count_for
     from apps.staff_activity.services import activity_log
 
+    if dashboard_embed.reads_on_dashboard(request):
+        return dashboard_embed.to_dashboard(request, dashboard_embed.STAFF_ACTIVITY)
+    embedded = dashboard_embed.is_embedded(request)
     try:
         log = activity_log(request.user, **_filters(request))
     except PermissionError:
@@ -94,7 +102,12 @@ def staff_activity_view(request):
             _filters(request)[k] for k in ("role", "program_lead", "status", "q")
         )
         or not log["period"]["is_default"],
+        "embedded": embedded,
     }
+    if embedded:
+        return dashboard_embed.fragment(
+            render(request, "partials/staff_activity/_workspace.html", context)
+        )
     if (
         request.headers.get("HX-Request") == "true"
         and request.headers.get("HX-Target") == "staff-activity-workspace"

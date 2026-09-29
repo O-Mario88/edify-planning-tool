@@ -1636,7 +1636,7 @@
    "audit_id": "KPI-SOURCE-084",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 823,
+   "line": 857,
    "label": "Everyone",
    "keys": [
     "count",
@@ -1655,7 +1655,7 @@
    "audit_id": "KPI-SOURCE-085",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 841,
+   "line": 875,
    "label": "Partners",
    "keys": [
     "count",
@@ -1674,7 +1674,7 @@
    "audit_id": "KPI-SOURCE-086",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 798,
+   "line": 832,
    "label": "My activities",
    "keys": [
     "count",
@@ -1693,7 +1693,7 @@
    "audit_id": "KPI-SOURCE-087",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 806,
+   "line": 840,
    "label": "My week",
    "keys": [
     "count",
@@ -1712,7 +1712,7 @@
    "audit_id": "KPI-SOURCE-088",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 812,
+   "line": 846,
    "label": "My partners",
    "keys": [
     "count",
@@ -1731,7 +1731,7 @@
    "audit_id": "KPI-SOURCE-089",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 832,
+   "line": 866,
    "label": null,
    "keys": [
     "count",
@@ -1750,7 +1750,7 @@
    "audit_id": "KPI-SOURCE-090",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 712,
+   "line": 746,
    "label": "Due this week",
    "keys": [
     "active",
@@ -1770,7 +1770,7 @@
    "audit_id": "KPI-SOURCE-091",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_week_service.py",
-   "line": 702,
+   "line": 736,
    "label": null,
    "keys": [
     "active",
@@ -8626,7 +8626,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 933,
+   "line": 946,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8645,7 +8645,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 943,
+   "line": 956,
    "label": "My Work",
    "keys": [
     "count",
@@ -8664,7 +8664,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2487,
+   "line": 2500,
    "label": null,
    "keys": [
     "count",
@@ -8682,7 +8682,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 952,
+   "line": 965,
    "label": null,
    "keys": [
     "count",
@@ -8701,7 +8701,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1003,
+   "line": 1016,
    "label": null,
    "keys": [
     "count",
@@ -8720,7 +8720,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1043,
+   "line": 1056,
    "label": null,
    "keys": [
     "count",
@@ -8739,7 +8739,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2518,
+   "line": 2531,
    "label": "All team members",
    "keys": [
     "count",
@@ -8757,7 +8757,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2524,
+   "line": 2537,
    "label": null,
    "keys": [
     "count",
@@ -8775,7 +8775,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1028,
+   "line": 1041,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -16101,7 +16101,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/planning-monitor/",
-   "page_title": "Planning Monitor \u00b7 Edify",
+   "page_title": "Planning Monitor",
    "roles": [
     "ADMIN",
     "CD",
@@ -16111,7 +16111,7 @@
     "RVP"
    ],
    "page_purpose": "The Planning Monitor, a page of its own under the Dashboard (owner, 2026-09-29: \"move the [monitor] on its own page and add it to the side bar and place it below the Dashboard. Do the same for PL\").",
-   "primary_action": "Complete planning form",
+   "primary_action": "Planning Monitor",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
    "mobile_result": "Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
@@ -16718,7 +16718,7 @@
   {
    "audit_id": "KPI-SURFACE-159",
    "template": "templates/partials/staff_activity/_workspace.html",
-   "line": 8,
+   "line": 9,
    "source_pattern": "shared-component",
    "items_expression": "kpi_items",
    "presentation": "context",
@@ -16730,7 +16730,7 @@
     "CD",
     "PL"
    ],
-   "page_purpose": "How your team uses the platform How staff across the country use the platform : active time, the parts they use, and the meaningful work they complete.",
+   "page_purpose": "The log. A Programme Lead reads their team's on their dashboard's This Week (owner, 2026-09-29; apps.frontend.views.dashboard_embed): the dashboard section's requests get the workspace with its own heading and actions, and the page opened on its own sends the Lead there.",
    "primary_action": "Staff Activity",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 0,
@@ -41916,7 +41916,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1139,
+   "line": 1151,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -41942,7 +41942,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1559,
+   "line": 1571,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

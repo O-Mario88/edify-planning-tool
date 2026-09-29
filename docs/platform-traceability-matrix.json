@@ -218,7 +218,6 @@
         "pl_analytics",
         "pl_review_queue",
         "planning",
-        "planning_monitor",
         "priorities_master",
         "programme_rollout",
         "programme_schools",
@@ -229,7 +228,6 @@
         "school_directory",
         "settings",
         "ssa_performance",
-        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "todos",
@@ -531,6 +529,7 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
+        "apps/accounts/presence_labels.py",
         "apps/activities/closure_services.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
@@ -636,6 +635,7 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
+        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -712,7 +712,6 @@
         "pl_analytics",
         "pl_review_queue",
         "planning",
-        "planning_monitor",
         "priorities_master",
         "programme_rollout",
         "programme_schools",
@@ -723,7 +722,6 @@
         "reports",
         "school_directory",
         "settings",
-        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "todos",
@@ -2339,7 +2337,6 @@
         "pl_analytics",
         "pl_review_queue",
         "planning",
-        "planning_monitor",
         "priorities_master",
         "programme_rollout",
         "programme_schools",
@@ -2349,7 +2346,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "staff_activity",
         "team_availability",
         "team_coaching",
         "team_planning_oversight",
@@ -3333,7 +3329,6 @@
         "pl_analytics",
         "pl_review_queue",
         "planning",
-        "planning_monitor",
         "priorities_master",
         "programme_rollout",
         "programme_schools",
@@ -3342,7 +3337,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "team_targets",
@@ -4629,9 +4623,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "51c93a03ea97b06d0ccaa6e448392308f76e1a34f05138d38c683b01469d7c14",
-    "sources": "a82abf267fe6fa51478c5e4f38b22749ae218bc9c73557934a8d2e4a5ad10000",
-    "sourceCount": 225,
+    "payload": "c84c2dfa43bfb71b716365de504c0cf0d96325bf149ec7740983649a61b4d42a",
+    "sources": "b57575b8c0183cefaf001b05e2415c8b93128060ed886c299e62de5f817332fb",
+    "sourceCount": 226,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
