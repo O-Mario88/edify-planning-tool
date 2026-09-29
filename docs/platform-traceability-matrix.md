@@ -16,8 +16,8 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 113 | 31 | 2 | 2 | 6 | 19 | 80 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 43 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 107 | 34 | 3 | 8 | 10 | 26 | 80 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 44 | 10 | 1 | 11 | 0 | 0 | 29 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 106 | 34 | 3 | 8 | 10 | 26 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 64 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 55 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 112 | 29 | 3 | 5 | 6 | 19 | 80 |
@@ -73,7 +73,7 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Permissions checked | `analytics.view` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/analytics/role_analytics.py`, `apps/analytics/services.py`, `apps/analytics/views.py` _+33 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/analytics/role_analytics.py`, `apps/analytics/services.py`, `apps/analytics/views.py` _+34 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `sessions.Session`, `ssa.SsaRecord`, `ssa.SsaScore` |
 | Notifications raised | — |
 | Audit actions (evidence) | — |
@@ -93,7 +93,7 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+44 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+97 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py` _+96 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+22 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |

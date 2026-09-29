@@ -206,26 +206,28 @@
   border: 1px solid var(--cpo-line);
   border-radius: var(--cpo-radius);
   box-shadow: var(--cpo-shadow);
-  padding: 0.8rem 1rem 0.55rem;
+  padding: 0.7rem 1.1rem 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
 }
+/* Fields, Apply and Clear share one height (2.15rem), so the row's buttons
+   line up with its selects. */
 .cpo-fields {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr)) auto;
-  gap: 0.75rem;
+  gap: 0.55rem 0.7rem;
   align-items: end;
 }
 .cpo-fields--more { grid-template-columns: repeat(4, minmax(0, 1fr)); max-inline-size: 60%; }
 .cpo-field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
   min-inline-size: 0;
 }
 .cpo-caption {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--cpo-ink-2);
   font-weight: 500;
 }
@@ -233,13 +235,13 @@
 .cpo-controls input[type="week"] {
   inline-size: 100%;
   min-inline-size: 0;
-  block-size: 2.35rem;
-  padding-inline: 0.65rem 1.9rem;
+  block-size: 2.15rem;
+  padding-inline: 0.6rem 1.8rem;
   border: 1px solid var(--cpo-line-2);
   border-radius: 6px;
   background-color: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.875rem;
+  font-size: 0.84rem;
 }
 .cpo-controls input[type="week"] { padding-inline-end: 0.5rem; }
 .cpo-controls select:focus-visible,
@@ -249,10 +251,10 @@
 .cpo-go { display: flex; gap: 0.6rem; align-items: end; }
 .cpo-apply,
 .cpo-reset {
-  block-size: 2.5rem;
-  padding-inline: 1.35rem;
+  block-size: 2.15rem;
+  padding-inline: 1.1rem;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -265,7 +267,7 @@
   background: var(--cpo-accent);
   color: #fff;
   border: 1px solid var(--cpo-accent);
-  min-inline-size: 8.5rem;
+  min-inline-size: 7.5rem;
 }
 .cpo-apply:hover { background: var(--cpo-accent-hover); border-color: var(--cpo-accent-hover); }
 :root:is(.theme-dark, .theme-blue) .cpo-apply { color: #062a20; }
@@ -273,7 +275,7 @@
   background: var(--cpo-surface);
   color: var(--cpo-ink);
   border: 1px solid var(--cpo-line-2);
-  min-inline-size: 6.5rem;
+  min-inline-size: 5.5rem;
 }
 .cpo-reset:hover { background: var(--cpo-sunk); }
 .cpo-apply:focus-visible,
@@ -283,8 +285,8 @@
   align-self: flex-start;
   border: 0;
   background: none;
-  padding: 0.1rem 0;
-  font-size: 0.8rem;
+  padding: 0;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--cpo-accent);
   cursor: pointer;
@@ -314,13 +316,17 @@
 .cpo-workspace { display: flex; flex-direction: column; gap: 0.9rem; }
 
 /* ── Summary cards ─────────────────────────────────────────────────────── */
+/* Six compact cards on one row wherever a card keeps about 170px (the page is
+   1080px or wider): the icon beside a name of at most two lines, the figure
+   and its share, a thin meter, then the headline and its note. Names are held
+   to two lines so every card's meter sits on the same line. */
 .cpo-metrics {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.9rem;
 }
 .cpo-metric,
-.cpo-metric * { white-space: normal; overflow-wrap: anywhere; }
+.cpo-metric * { white-space: normal; overflow-wrap: break-word; }
 .cpo-metric {
   --tone: var(--cpo-good);
   --tone-soft: var(--cpo-good-soft);
@@ -328,8 +334,8 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  padding: 1rem 1.1rem 0.95rem;
+  gap: 0.45rem;
+  padding: 0.85rem 0.95rem 0.8rem;
   background: var(--cpo-surface);
   border: 1px solid var(--cpo-line);
   border-radius: var(--cpo-radius);
@@ -344,44 +350,51 @@
 .cpo-metric[data-tone="fair"] { --tone: var(--cpo-fair); --tone-soft: var(--cpo-fair-soft); }
 .cpo-metric[data-tone="low"] { --tone: var(--cpo-low); --tone-soft: var(--cpo-low-soft); }
 .cpo-metric[data-tone="none"] { --tone: var(--cpo-none); --tone-soft: var(--cpo-sunk); }
-.cpo-metric-top { display: flex; align-items: center; gap: 0.75rem; min-inline-size: 0; }
+.cpo-metric-top { display: flex; align-items: center; gap: 0.6rem; min-inline-size: 0; min-block-size: 2.25rem; }
 .cpo-glyph {
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--tone-soft);
   color: var(--cpo-accent);
 }
 .cpo-metric[data-tone="fair"] .cpo-glyph,
 .cpo-metric[data-tone="low"] .cpo-glyph { color: var(--tone); }
-.cpo-glyph svg { inline-size: 1.6rem; block-size: 1.6rem; }
+.cpo-glyph svg { inline-size: 1.3rem; block-size: 1.3rem; }
 .cpo-metric-name {
-  font-size: 1.02rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--cpo-ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
+/* The figure holds one line: the part in full weight, "/ whole" a step
+   lighter and smaller, the share at the end. */
+.cpo-metric .cpo-metric-figure,
+.cpo-metric .cpo-metric-figure * { white-space: nowrap; }
 .cpo-metric-figure {
   display: flex;
   align-items: baseline;
-  gap: 0.35rem;
-  padding-inline-start: 0.1rem;
+  gap: 0.3rem;
   font-variant-numeric: tabular-nums;
 }
-.cpo-metric-part { font-size: 1.6rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
-.cpo-metric-whole { font-size: 1.6rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
+.cpo-metric-part { font-size: 1.4rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
+.cpo-metric-whole { font-size: 1.1rem; font-weight: 600; color: var(--cpo-ink-2); line-height: 1; }
 .cpo-metric-share {
   margin-inline-start: auto;
-  font-size: 1.12rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--tone);
 }
 .cpo-meter {
   display: block;
-  block-size: 0.55rem;
+  block-size: 0.4rem;
   border-radius: 999px;
   background: var(--cpo-meter-track);
   overflow: hidden;
@@ -394,23 +407,33 @@
   min-inline-size: 0;
 }
 .cpo-metric[data-tone="good"] .cpo-meter-fill { background: var(--cpo-good); }
+/* The headline and its note keep two lines each at most; the card's drawer
+   holds the rest, and the card's title names the measure in full. */
+.cpo-metric-foot,
+.cpo-metric-extra,
+.cpo-metric-note {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .cpo-metric-foot {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--cpo-ink-2);
   line-height: 1.3;
 }
 .cpo-metric-foot strong {
-  font-size: 1.12rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--tone);
-  margin-inline-end: 0.35rem;
+  margin-inline-end: 0.3rem;
 }
 .cpo-metric-extra,
 .cpo-metric-note {
   font-size: 0.75rem;
   color: var(--cpo-ink-3);
-  line-height: 1.35;
-  margin-block-start: -0.25rem;
+  line-height: 1.3;
+  margin-block-start: -0.2rem;
 }
 
 /* ── Charts ────────────────────────────────────────────────────────────── */
@@ -421,7 +444,7 @@
 }
 .cpo-chart {
   margin: 0;
-  padding: 1rem 1.1rem 0.6rem;
+  padding: 0.9rem 1.1rem 0.55rem;
   background: var(--cpo-surface);
   border: 1px solid var(--cpo-line);
   border-radius: var(--cpo-radius);
@@ -430,18 +453,24 @@
   display: flex;
   flex-direction: column;
 }
+/* Every card title on both tabs is one size and weight: charts, the table,
+   the follow-ups and the lists under the execution table. */
 .cpo-chart-name {
-  margin: 0 0 0.35rem;
-  font-size: 1.02rem;
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--cpo-ink);
 }
+/* Four charts to a row: a title that takes two lines would drop its plot
+   below its neighbours', so every title there holds two lines' room. */
+.cpo-charts > .cpo-chart > .cpo-chart-name { min-block-size: 2.6em; }
 /* The chart engine redraws a beat after its box changes size (a debounced
    resize), so for that beat the old, wider drawing sticks out of the card and
    the workspace scrolls sideways — the full-width execution charts did, going
    from a tablet's portrait to its landscape. The plot clips that beat
    sideways only; a tooltip still rises above it. */
-.cpo-plot { min-block-size: 15.5rem; flex: 1 1 auto; overflow-x: clip; }
+.cpo-plot { min-block-size: 13.75rem; flex: 1 1 auto; overflow-x: clip; }
 .cpo-chart-data { margin-block-start: 0.25rem; }
 .cpo-chart-data > summary {
   cursor: pointer;
@@ -477,8 +506,9 @@
 .cpo-drill-name,
 .cpo-side-name {
   margin: 0;
-  font-size: 1.12rem;
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--cpo-ink);
 }
 .cpo-drill-name span { color: var(--cpo-ink-2); margin-inline: 0.15rem; }
@@ -510,8 +540,9 @@
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
   /* The platform pads every table cell from this token (design-system.css);
-     fourteen columns fit a 1440 px screen at it. */
-  --edify-table-cell-padding-inline: 0.25rem;
+     fourteen columns fit a 1440 px screen at it, with the first column
+     starting under the card's title. */
+  --edify-table-cell-padding-inline: 0.2rem;
 }
 .cpo-table :is(th, td) { text-align: center; white-space: nowrap; }
 .cpo-table thead th {
@@ -524,8 +555,8 @@
    (<br>), so each line still keeps the platform's one-line rule: a heading
    left to wrap on its own breaks differently at every width, and the
    responsive contract counts it as a wrap. */
-.cpo-root .cpo-table thead th:not(.cpo-namecol) { min-inline-size: 3.6rem; }
-.cpo-table thead th.cpo-namecol { text-align: start; min-inline-size: 8.75rem; }
+.cpo-root .cpo-table thead th:not(.cpo-namecol) { min-inline-size: 3.4rem; }
+.cpo-table thead th.cpo-namecol { text-align: start; min-inline-size: 8rem; }
 .cpo-table .cpo-namecell {
   text-align: start;
   font-weight: 500;
@@ -540,11 +571,18 @@
    before the table scrolls. Indentation is padding on the name cell — the
    only box the platform leaves a table's cells to set. */
 .cpo-root table.cpo-table.cpo-table { width: 100% !important; }
-.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell { padding-inline-start: 0.6rem !important; }
-.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell[data-leaf] { padding-inline-start: 2.2rem !important; }
-.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell { padding-inline-start: 1.9rem !important; }
-.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell[data-leaf] { padding-inline-start: 3.5rem !important; }
-.cpo-root .cpo-table.cpo-table tr[data-level="3"] .cpo-namecell[data-leaf] { padding-inline-start: 3.9rem !important; }
+/* The first column starts where the card's title does (1.1rem in), and each
+   level steps in from there; the last column keeps a little room from the
+   card's edge. The narrower minimums keep all fourteen planning columns on a
+   1440px screen with those margins. */
+.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell { padding-inline-start: 1.1rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level] .cpo-namecell[data-leaf] { padding-inline-start: 2.8rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell { padding-inline-start: 2.4rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="2"] .cpo-namecell[data-leaf] { padding-inline-start: 4.1rem !important; }
+.cpo-root .cpo-table.cpo-table tr[data-level="3"] .cpo-namecell[data-leaf] { padding-inline-start: 4.5rem !important; }
+.cpo-root .cpo-table.cpo-table tr.cxo-total .cpo-namecell { padding-inline-start: 2.8rem !important; }
+.cpo-root .cpo-table.cpo-table thead th:first-child { padding-inline-start: 1.1rem !important; }
+.cpo-root .cpo-table.cpo-table :is(thead, tbody) tr > :last-child { padding-inline-end: 0.6rem !important; }
 .cpo-table tr[data-level="3"] .cpo-namecell { font-weight: 400; color: var(--cpo-ink-2); }
 .cpo-table tr[data-level="placeholder"] { display: none; }
 .cpo-toggle {
@@ -747,6 +785,9 @@
   color: var(--cpo-ink-2);
 }
 .cpo-info svg { inline-size: 1.15rem; block-size: 1.15rem; flex: none; color: var(--cpo-info-ink); margin-block-start: 0.05rem; }
+/* The same note standing on its own in the page (the execution tab's targets
+   and stages notes) keeps the page's edges and gap, not the panel's inset. */
+.cpo-workspace > .cpo-info { margin: 0; }
 
 /* ── Width ─────────────────────────────────────────────────────────────── */
 /* The owner's layout, as far as the screen allows it: the table shares its
@@ -761,8 +802,22 @@
   .cpo-side .cpo-info { grid-column: 2; grid-row: 2 / span 4; margin-block-start: 0; }
 }
 @container cpo (max-width: 1450px) {
-  .cpo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cpo-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cpo-charts > .cpo-chart > .cpo-chart-name { min-block-size: 0; }
+  /* Six cards of about 170px: every piece a step smaller. */
+  .cpo-metric { padding: 0.75rem 0.8rem 0.7rem; gap: 0.4rem; }
+  .cpo-metric-top { gap: 0.5rem; min-block-size: 2rem; }
+  .cpo-glyph { inline-size: 1.9rem; block-size: 1.9rem; border-radius: 7px; }
+  .cpo-glyph svg { inline-size: 1.1rem; block-size: 1.1rem; }
+  .cpo-metric-name { font-size: 0.84rem; }
+  .cpo-metric-part { font-size: 1.2rem; }
+  .cpo-metric-whole { font-size: 0.95rem; }
+  .cpo-metric-share { font-size: 0.85rem; }
+  .cpo-metric-foot { font-size: 0.76rem; }
+  .cpo-metric-foot strong { font-size: 0.88rem; margin-inline-end: 0.2rem; }
+}
+@container cpo (max-width: 1079px) {
+  .cpo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @container cpo (max-width: 1400px) {
   .cpo-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -781,16 +836,8 @@
   .cpo-stamp { inline-size: 100%; justify-content: space-between; }
   .cpo-stamp-copy { text-align: start; }
   .cpo-flag { inline-size: 3.25rem; }
+  /* Two cards to a row, in the compact card set out for six to a row. */
   .cpo-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
-  .cpo-metric { padding: 0.8rem; gap: 0.45rem; }
-  .cpo-glyph { inline-size: 2.25rem; block-size: 2.25rem; }
-  .cpo-glyph svg { inline-size: 1.3rem; block-size: 1.3rem; }
-  .cpo-metric-name { font-size: 0.88rem; }
-  .cpo-metric-part,
-  .cpo-metric-whole { font-size: 1.2rem; }
-  .cpo-metric-share { font-size: 0.95rem; }
-  .cpo-metric-foot { font-size: 0.78rem; }
-  .cpo-metric-foot strong { font-size: 0.95rem; }
   .cpo-charts { grid-template-columns: minmax(0, 1fr); }
   /* A tablet held upright: three to a row, the period and its value side by
      side, so the seven filters and Apply take three rows rather than five. */
@@ -1040,10 +1087,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  block-size: 2.35rem;
+  block-size: 2.15rem;
   padding-inline: 0.4rem;
   color: var(--cxo-exec);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1052,34 +1099,42 @@
 .cxo-reset svg { inline-size: 1.1rem; block-size: 1.1rem; }
 .cxo-narrowed { margin: 0; font-size: 0.82rem; color: var(--cpo-ink-2); }
 
-/* The six figures: the icon beside the name, the figure and its share, the
-   bar across the foot (owner design). */
+/* The six figures (owner design): the icon beside the name, then the figure,
+   its note and the bar across the foot, each on the card's whole width. Beside
+   the icon the figure and note had a third of a narrow card and broke into
+   three and four lines ("0% of due · 0 / carried / forward"). The bar keeps to
+   the foot, so the six bars line up. */
 .cpo-metric.cxo-metric {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;
   grid-template-areas:
     "glyph label"
-    "glyph figure"
-    "glyph note"
+    "figure figure"
+    "note note"
     "meter meter";
-  column-gap: 0.75rem;
-  row-gap: 0.2rem;
+  column-gap: 0.55rem;
+  row-gap: 0.3rem;
   align-items: center;
-  align-content: start;
+  align-content: stretch;
 }
-.cxo-metric .cxo-glyph { grid-area: glyph; align-self: start; inline-size: 2.5rem; block-size: 2.5rem; }
-.cxo-metric .cxo-glyph svg { inline-size: 1.45rem; block-size: 1.45rem; }
+.cxo-metric .cxo-glyph { grid-area: glyph; inline-size: 2rem; block-size: 2rem; border-radius: 7px; }
+.cxo-metric .cxo-glyph svg { inline-size: 1.15rem; block-size: 1.15rem; }
 .cxo-metric .cxo-label {
   grid-area: label;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--cpo-ink);
   overflow-wrap: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
-.cxo-metric .cxo-figure { grid-area: figure; }
+.cxo-metric .cxo-figure { grid-area: figure; margin-block-start: 0.2rem; }
 .cxo-metric .cxo-metric-note { grid-area: note; overflow-wrap: normal; }
-.cxo-metric .cxo-meter { grid-area: meter; margin-block-start: 0.55rem; }
+.cxo-metric .cxo-meter { grid-area: meter; align-self: end; margin-block-start: 0.35rem; }
 .cxo-metric[data-tone] { --tone: var(--cxo-exec); --tone-soft: var(--cxo-blue-soft); }
 .cxo-metric[data-tone="good"] { --tone: var(--cxo-ontime-1); --tone-soft: var(--cpo-good-soft); }
 .cxo-metric[data-tone="violet"] { --tone: var(--cxo-verified); --tone-soft: var(--cxo-violet-soft); }
@@ -1096,14 +1151,14 @@
 .cxo-metric[data-tone="alert"] .cxo-figure,
 .cxo-metric[data-tone="alert"] .cxo-metric-note { color: var(--cxo-overdue); }
 .cxo-figure {
-  font-size: 1.85rem;
+  font-size: 1.6rem;
   font-weight: 700;
   line-height: 1.05;
   color: var(--cpo-ink);
   font-variant-numeric: tabular-nums;
   padding-inline-start: 0.1rem;
 }
-.cxo-metric-note { font-size: 0.85rem; color: var(--cpo-ink-2); }
+.cxo-metric-note { font-size: 0.78rem; line-height: 1.3; color: var(--cpo-ink-2); }
 .cxo-meter .cpo-meter-fill { background: var(--tone); }
 
 /* Funnel and trend. */
@@ -1118,25 +1173,29 @@
   font-weight: 500;
   color: var(--cpo-ink-3);
 }
-.cxo-plot { min-block-size: 17.5rem; }
+.cxo-plot { min-block-size: 15.75rem; }
 
-/* The reading row: on-time, backlog, age, forecast, shortcuts. */
+/* The reading row: on-time, backlog, age, forecast, shortcuts. The
+   shortcuts take a little more of the row, so each of their names holds one
+   line. */
 .cxo-readings {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.05fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.2fr);
   gap: 0.9rem;
 }
-.cxo-reading { padding-block-end: 0.8rem; }
+.cxo-reading { padding: 0.9rem 1rem 0.8rem; }
 .cxo-ring,
 .cxo-bars,
-.cxo-gauge { min-block-size: 11rem; flex: 0 0 auto; }
+.cxo-gauge { min-block-size: 10.25rem; flex: 0 0 auto; }
+/* "Decision support" under the forecast's name, not beside it. */
+.cxo-reading .cpo-chart-name .cxo-hint { display: block; margin: 0.1rem 0 0; }
 .cxo-legend {
   list-style: none;
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   padding: 0;
   display: grid;
-  gap: 0.2rem;
-  font-size: 0.82rem;
+  gap: 0.15rem;
+  font-size: 0.8rem;
   color: var(--cpo-ink-2);
 }
 .cxo-legend li { display: flex; align-items: center; gap: 0.45rem; }
@@ -1182,26 +1241,35 @@
 }
 .cxo-verdict[data-state="at_risk"] { color: var(--cxo-overdue); }
 .cxo-verdict[data-state="on_track"] { color: var(--cxo-closed); }
-.cxo-shortcuts { gap: 0.5rem; }
+.cxo-shortcuts { gap: 0.45rem; }
 .cxo-shortcut {
   all: unset;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   inline-size: 100%;
-  min-block-size: 2.6rem;
-  padding: 0.45rem 0.8rem;
+  min-block-size: 2.3rem;
+  padding: 0.35rem 0.7rem;
   border: 1px solid var(--cpo-line-2);
   border-radius: 7px;
   background: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
 }
-.cxo-shortcut svg { inline-size: 1.1rem; block-size: 1.1rem; flex: none; }
+.cxo-shortcut svg { inline-size: 1.05rem; block-size: 1.05rem; flex: none; }
+/* Each name keeps one line: cut with an ellipsis where the card is narrower
+   than the name (the button's own name is the full text). */
+.cxo-shortcut-label {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .cxo-shortcut:hover { background: var(--cpo-sunk); }
 .cxo-shortcut:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
 .cxo-shortcut--primary {
@@ -1252,11 +1320,13 @@
 }
 
 /* Issues, recent activity, follow-ups. */
+/* Three equal lists under the table, as tall as the tallest, so the row
+   reads as one band. */
 .cxo-lower {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) minmax(0, 1.15fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.9rem;
-  align-items: start;
+  align-items: stretch;
 }
 .cxo-list-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .cxo-count {
@@ -1287,17 +1357,25 @@
 .cxo-small thead th { font-weight: 600; color: var(--cpo-ink); background: var(--cpo-sunk); }
 .cxo-small tbody th { color: var(--cpo-ink); }
 
-/* The bottom lists read as lists: their text wraps rather than being cut to
-   the platform's one-line table cell. */
-.cpo-root .cxo-small.cxo-small :is(th, td),
-.cpo-root .cxo-small.cxo-small :is(th, td) * {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
+/* The bottom lists keep the platform's one line per row and fit their card:
+   a fixed layout gives the short columns their width and the long one the
+   rest, cut with an ellipsis and read in full on hover. Left to the scroll
+   region, the table grew to its longest line and "1 activity verified
+   (Partner work, by IA)" ran out of the card. */
+.cpo-root table.cxo-small.cxo-small {
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  table-layout: fixed !important;
 }
-
-/* Who's Online under the planning tab: the planning page's width, in the
-   shared gutter. */
+.cpo-root .cxo-small.cxo-small :is(th, td) {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.cxo-small--issues th:nth-child(2) { inline-size: 4.25rem; }
+.cxo-small--issues th:nth-child(3) { inline-size: 3.75rem; }
+.cxo-small--recent th:nth-child(1) { inline-size: 6.25rem; }
+.cxo-small--recent th:nth-child(2) { inline-size: 5.5rem; }
 
 /* The flag of Uganda keeps its own colours in every theme: they are the
    country's, not the palette's. */
@@ -1342,20 +1420,27 @@
   .cpo-metrics.cxo-metrics { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .cxo-readings { gap: 0.7rem; }
   .cxo-reading { padding-inline: 0.85rem; }
+  /* Five readings to a row: each name holds one line ("Completion
+     Forecast"), so the rings and the dial start on one line. */
+  .cxo-readings .cpo-chart-name { font-size: 0.95rem; }
 }
 @container cpo (max-width: 1100px) {
-  .cpo-metrics.cxo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* Five readings on a tablet: three to the first row and two sharing the
      second, rather than two and an empty third of the width. */
   .cxo-readings { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .cxo-readings > * { grid-column: span 2; }
   .cxo-readings > :nth-child(n + 4) { grid-column: span 3; }
   .cxo-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .cxo-charts { grid-template-columns: minmax(0, 1fr); }
-  .cxo-lower { grid-template-columns: minmax(0, 1fr); }
+}
+/* The six figures stay one row while a card keeps about 150px; the funnel and
+   the trend stay side by side down to a tablet held upright. */
+@container cpo (max-width: 960px) {
+  .cpo-metrics.cxo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @container cpo (max-width: 760px) {
   .cpo-metrics.cxo-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cxo-charts { grid-template-columns: minmax(0, 1fr); }
+  .cxo-lower { grid-template-columns: minmax(0, 1fr); }
   .cxo-readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cxo-readings > *,
   .cxo-readings > :nth-child(n + 4) { grid-column: auto; }

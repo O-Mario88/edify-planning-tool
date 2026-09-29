@@ -740,3 +740,48 @@ class MyPlanShowsWorkInBothIdSpacesTest(TestCase):
             "work stored against the User id is missing from My Plan — the "
             "field officer's own day, invisible to them",
         )
+
+
+class ScheduleActionQueryCostTest(SchoolVisitSpineJourneyTest):
+    """One scheduled visit, through the planning endpoint, reads each rate
+    card once, marks the target ledger once, and asks once whether its item
+    is the loan-use verification (2026-09-29). The five saves of the new
+    Activity used to repeat all three."""
+
+    test_a_funded_visit_can_be_executed_verified_accounted_and_closed = None
+    test_the_same_spine_walked_through_the_platform_s_own_doors = None
+    test_the_verified_visit_credits_the_ledger_exactly_once = None
+
+    def test_the_repeated_reads_and_marks_happen_once(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+        item = resolve_item_for_workflow_kind("school_visit")
+        self.client.force_login(self.cceo)
+        with CaptureQueriesContext(connection) as queries:
+            self.client.post(
+                "/planning/schedule-action",
+                {
+                    "school_id": self.school.school_id,
+                    "catalogue_item_id": item.id,
+                    "scheduled_date": _at(self.day).isoformat(),
+                    "activity_purpose_text": "Query cost probe",
+                    "purpose_of_visit": "ssa_support",
+                    "delivery_type": "staff",
+                    "executor_type": "staff",
+                },
+            )
+        self.assertTrue(Activity.objects.filter(school=self.school).exists())
+        sqls = [q["sql"] for q in queries.captured_queries]
+        rate_reads = [
+            s for s in sqls if s.startswith("SELECT") and 'FROM "cost_setting"' in s
+        ]
+        self.assertLessEqual(len(rate_reads), 1, rate_reads)
+        marks = [
+            s for s in sqls if s.startswith("INSERT") and "target_ledger_dirty" in s
+        ]
+        self.assertEqual(len(marks), 1)
+        loan_checks = [s for s in sqls if "BT_UG_LOAN_USE_VERIFICATION" in s]
+        self.assertLessEqual(len(loan_checks), 1, loan_checks)

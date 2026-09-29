@@ -4105,8 +4105,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1331,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1733,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4496,7 +4498,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14358,
+      "bytes": 14603,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"

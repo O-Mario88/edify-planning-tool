@@ -250,6 +250,26 @@ class FamilyAndDenominatorTest(World):
         self.assertEqual(tree.country.undeliverable_training, 1)
         self.assertEqual(tree.country.unmapped_schools, 0)
 
+    def test_a_core_graduate_support_visit_fills_its_visit_slot(self):
+        """Following the client rule for its visits means its support visit
+        fills the slot, as a client school's does; a donor visit does not.
+        Before, Core Graduate had no visit rule at all, so its slot read open
+        whatever was planned there."""
+        planned = self.school("core_graduate", self.cceo)
+        donor_only = self.school("core_graduate", self.cceo)
+        self.activity(planned, "follow_up_visit", owner=self.cceo)
+        self.activity(donor_only, "donor_visit", owner=self.cceo)
+        t = self.tree().country
+        self.assertEqual(t.visit_slots, 2)
+        self.assertEqual(t.staff, 1)
+        self.assertEqual(t.any_staff, 1)
+        self.assertEqual(t.unallocated, 1)
+        self.assertEqual(t.fully_planned, 1)
+        from apps.planning.country_oversight.coverage import VISIT_RULE_BY_TYPE
+
+        governed = set(policy.SCHOOL_TYPE_FAMILY)
+        self.assertEqual(governed - set(VISIT_RULE_BY_TYPE), set())
+
     def test_a_type_with_no_family_is_governed_rather_than_folded_in(self):
         """A blank or unknown type: outside every denominator, counted on its
         own, and named on the data-quality queue."""
@@ -419,6 +439,31 @@ class PartnerAndPlannedTest(World):
         self.assertEqual(t.partner_expected - t.partner_assigned, t.partner_gap + 0)
         # Counted where Partner work is read, never as a held slot.
         self.assertEqual(t.returned, 1)
+
+    def test_the_partner_view_never_hands_a_staff_held_client_slot_to_a_partner(self):
+        """Staff hold a client school's one slot once they plan it; a Partner's
+        work there claims nothing — on the Partner view too, so filtering to a
+        channel can only narrow the country's figures, never add to them."""
+        dated = self.school("client", self.cceo)
+        handed = self.school("client", self.cceo)
+        for school in (dated, handed):
+            self.activity(school, "school_visit", owner=self.cceo, on=20)
+        self.activity(
+            dated, "school_visit", status="partner_scheduled", partner=self.partner
+        )
+        self.handover(handed, self.partner)
+        everything = self.tree().country
+        partner_view = self.tree(channel="partner").country
+        staff_view = self.tree(channel="staff").country
+        self.assertEqual(everything.staff, 2)
+        self.assertEqual(everything.partner_assigned, 0)
+        self.assertEqual(partner_view.partner_assigned, 0)
+        self.assertEqual(partner_view.partner_scheduled, 0)
+        self.assertEqual(staff_view.staff, 2)
+        for figure in ("partner_assigned", "partner_scheduled"):
+            self.assertLessEqual(
+                getattr(partner_view, figure), getattr(everything, figure)
+            )
 
     def test_two_partners_at_a_core_school_never_exceed_two_partner_slots(self):
         core = self.school("core", self.cceo)

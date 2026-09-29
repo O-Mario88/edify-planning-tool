@@ -85,17 +85,39 @@ def _activity_state_bridge(sender, instance, **kwargs):
     )
 
 
+LOAN_VERIFICATION_CODE = "BT_UG_LOAN_USE_VERIFICATION"
+
+
+def _is_loan_verification_item(activity: Activity) -> bool:
+    """Whether the activity's catalogue item is the loan-use verification.
+
+    Asked on every Activity save, and scheduling one visit saves it five
+    times. The item is read from the activity when it is already loaded;
+    otherwise the ids carrying the code are read once per request.
+    """
+    loaded = activity._state.fields_cache.get("catalogue_item")
+    if loaded is not None and loaded.pk == activity.catalogue_item_id:
+        return loaded.stable_code == LOAN_VERIFICATION_CODE
+    from apps.activity_catalogue.models import ActivityCatalogueItem
+    from apps.core.request_cache import memoize
+
+    ids = memoize(
+        ("bt.loan_verification_item_ids",),
+        lambda: frozenset(
+            ActivityCatalogueItem.objects.filter(
+                stable_code=LOAN_VERIFICATION_CODE
+            ).values_list("id", flat=True)
+        ),
+    )
+    return activity.catalogue_item_id in ids
+
+
 def _link_planned_loan_verification_activity(activity: Activity) -> None:
     """Attach a governed BT verification visit to the oldest due loan need."""
 
     if not activity.school_id or not activity.catalogue_item_id:
         return
-    from apps.activity_catalogue.models import ActivityCatalogueItem
-
-    if not ActivityCatalogueItem.objects.filter(
-        id=activity.catalogue_item_id,
-        stable_code="BT_UG_LOAN_USE_VERIFICATION",
-    ).exists():
+    if not _is_loan_verification_item(activity):
         return
     from .models import (
         BusinessTransformationActivityLink,
