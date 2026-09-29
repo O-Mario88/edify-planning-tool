@@ -731,6 +731,78 @@ def remove_school(
     return {"ok": True, "historyKept": True}
 
 
+#: A page's worth of ticks (owner, 2026-09-29 bulk withdraw).
+MAX_BULK_SCHOOL_WITHDRAWALS = 100
+
+
+def remove_schools(
+    project_id: str,
+    school_ids,
+    principal,
+    *,
+    reason: str = "",
+    reason_code: str = "",
+) -> list[dict]:
+    """Withdraw every ticked school from the project (owner, 2026-09-29:
+    "check all the schools they want to withdraw and be able to withdraw").
+
+    The single withdrawal repeated, each in its own transaction: one school
+    the rule keeps (work begun, handed to a partner, someone else's) is left
+    and said so, and does not undo the others. Returns one
+    ``{"school_id", "school", "ok", "message"}`` per school."""
+    from apps.core.exceptions import ConflictError, Forbidden
+
+    ids = [str(i).strip() for i in (school_ids or ()) if str(i).strip()]
+    ids = list(dict.fromkeys(ids))
+    if not ids:
+        raise BadRequest("Tick the schools to withdraw first.")
+    if len(ids) > MAX_BULK_SCHOOL_WITHDRAWALS:
+        raise BadRequest(
+            f"Withdraw at most {MAX_BULK_SCHOOL_WITHDRAWALS} schools at a time."
+        )
+    # The reason is the same for every school: refuse a missing one once.
+    from apps.projects.capacity import withdrawal_reason_text
+
+    if reason_code:
+        withdrawal_reason_text(reason_code, reason)
+    elif not (reason or "").strip():
+        raise BadRequest("Give a reason for withdrawing the schools.")
+
+    names = dict(
+        ProjectSchoolAssignment.objects.filter(
+            project_id=project_id, school_id__in=ids
+        ).values_list("school_id", "school__name")
+    )
+    outcomes = []
+    for school_id in ids:
+        try:
+            remove_school(
+                project_id,
+                school_id,
+                principal,
+                reason=reason,
+                reason_code=reason_code,
+            )
+            outcomes.append(
+                {
+                    "school_id": school_id,
+                    "school": names.get(school_id, ""),
+                    "ok": True,
+                    "message": "Withdrawn.",
+                }
+            )
+        except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+            outcomes.append(
+                {
+                    "school_id": school_id,
+                    "school": names.get(school_id, ""),
+                    "ok": False,
+                    "message": str(exc),
+                }
+            )
+    return outcomes
+
+
 def _assert_directs_project(project_id: str, principal, action: str) -> None:
     """Only the project's coordinator (or Admin) changes its work — owner,
     2026-09-24: "Only Project coordinator can edit plan and do everything".

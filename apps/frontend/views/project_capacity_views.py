@@ -266,3 +266,104 @@ def project_withdraw_school_view(request):
         messages.success(request, message)
         return redirect("/projects/monitoring")
     return render(request, "partials/projects/withdraw_school_drawer.html", context)
+
+
+# ── Withdraw many schools from a project (owner, 2026-09-29) ────────────────
+def mark_withdrawable(user, project, rows) -> bool:
+    """Set ``can_withdraw`` (and ``withdraw_block``, why not) on each
+    portfolio row for this reader; True when any row can be ticked.
+
+    The same two questions the single Withdraw asks: may this reader take the
+    enrolment out (``capacity.may_withdraw``), and has its work not begun
+    (``capacity.withdrawal_blocks``). The service asks both again."""
+    from apps.projects import capacity
+    from apps.projects.models import ProjectSchoolAssignment
+
+    if not rows:
+        return False
+    enrolments = {
+        e.id: e
+        for e in ProjectSchoolAssignment.objects.filter(
+            id__in=[r["assignment_id"] for r in rows]
+        )
+    }
+    blocks = capacity.withdrawal_blocks((project.id, r["school_id"]) for r in rows)
+    any_withdrawable = False
+    for row in rows:
+        enrolment = enrolments.get(row["assignment_id"])
+        block = blocks.get((str(project.id), str(row["school_id"])))
+        allowed = enrolment is not None and capacity.may_withdraw(user, enrolment)
+        row["can_withdraw"] = bool(allowed and block is None)
+        row["withdraw_block"] = block.title if (allowed and block) else ""
+        any_withdrawable = any_withdrawable or row["can_withdraw"]
+    return any_withdrawable
+
+
+@require_page_permission("projects")
+def project_bulk_withdraw_view(request, project_id):
+    """Withdraw the schools ticked on a project's Participating Schools.
+
+    GET lists each ticked school with whether it will leave (and why not);
+    POST withdraws each through ``projects.services.remove_schools`` with the
+    one reason given, and reports every school."""
+    from apps.projects import capacity
+    from apps.projects.models import Project
+    from apps.projects.portfolio import portfolio_rows
+    from apps.projects.services import remove_schools
+
+    project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if project is None:
+        return render(
+            request,
+            "partials/projects/bulk_withdraw_drawer.html",
+            {"error": "Project not found.", "drawer_size": "md"},
+            status=404,
+        )
+    source = request.POST if request.method == "POST" else request.GET
+    ticked = [i.strip() for i in source.getlist("school_ids") if i.strip()]
+    rows = [r for r in portfolio_rows(project) if r["school_id"] in set(ticked)]
+    mark_withdrawable(request.user, project, rows)
+    values = {
+        "reason_code": (request.POST.get("reason_code") or "").strip(),
+        "reason_other": (request.POST.get("reason_other") or "").strip(),
+    }
+    context = {
+        "project": project,
+        "rows": rows,
+        "withdrawable": [r for r in rows if r["can_withdraw"]],
+        "reasons": capacity.WITHDRAWAL_REASONS,
+        "values": values,
+        "drawer_size": "md",
+    }
+    if request.method == "POST":
+        try:
+            outcomes = remove_schools(
+                project.id,
+                [r["school_id"] for r in context["withdrawable"]],
+                request.user,
+                reason=values["reason_other"],
+                reason_code=values["reason_code"],
+            )
+        except BadRequest as exc:
+            context["validation_error"] = str(exc)
+            return render(
+                request, "partials/projects/bulk_withdraw_drawer.html", context
+            )
+        done = sum(1 for o in outcomes if o["ok"])
+        message = (
+            f"{done} school{'s' if done != 1 else ''} withdrawn from {project.name}."
+        )
+        left = [o for o in outcomes if not o["ok"]]
+        if left:
+            message += " Not withdrawn: " + "; ".join(
+                f"{o['school'] or 'a school'} ({o['message']})" for o in left
+            )
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse(status=204)
+            response["HX-Trigger"] = "close-drawer"
+            response["HX-Refresh"] = "true"
+            (messages.success if done else messages.error)(request, message)
+            return response
+        (messages.success if done else messages.error)(request, message)
+        return redirect(f"/projects/{project.id}")
+    return render(request, "partials/projects/bulk_withdraw_drawer.html", context)

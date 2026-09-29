@@ -206,12 +206,29 @@ are unchanged, and the visit and training columns are derived from the
 canonical activities rather than stored on the enrolment.
 {% endcomment %}
 {% paginate project_portfolio "portfolio_page" as portfolio_pager %}
+{% comment %}Bulk withdraw (owner, 2026-09-29): tick the schools to leave the
+project, then Withdraw selected. A school has a box only while this reader
+may withdraw it and its project work has not begun.{% endcomment %}
+<div{% if can_bulk_withdraw %} x-data="{ selected: [] }" data-project-bulk-withdraw{% endif %}>
+{% if can_bulk_withdraw %}
+<div class="school-directory-listbar" x-cloak x-show="selected.length > 0">
+  <div class="school-directory-listbar__bulk" aria-live="polite">
+    <strong><span x-text="selected.length"></span> selected</strong>
+    <form hx-get="/projects/{{ project.id }}/schools/bulk-withdraw" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+      <template x-for="id in selected" :key="id"><input type="hidden" name="school_ids" :value="id"></template>
+      <button type="submit" data-project-withdraw-selected>Withdraw selected</button>
+    </form>
+    <button type="button" class="is-clear" @click="selected = []">Clear</button>
+  </div>
+</div>
+{% endif %}
 <table class="edify-record-table w-full">
   <caption class="sr-only">Participating schools in {{ project.name }}</caption>
-  <thead><tr><th scope="col">School</th><th scope="col">Geography</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
+  <thead><tr>{% if can_bulk_withdraw %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}<th scope="col">School</th><th scope="col">Geography</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
   <tbody>
     {% for row in portfolio_pager.rows %}
     <tr>
+      {% if can_bulk_withdraw %}<td class="school-plan-table__select">{% if row.can_withdraw %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" value="{{ row.school_id }}" x-model="selected" data-project-leave-pick><span class="sr-only">Select {{ row.school_name }} to withdraw</span></label>{% endif %}</td>{% endif %}
       <td data-record-title data-label="School">{% school_identity row.school_name row.school_id %}<span class="edify-text-caption block">{{ row.school_code }}</span></td>
       <td data-label="Geography">{{ row.geography|default:"—" }}</td>
       <td data-label="School owner">{{ row.school_owner }}</td>
@@ -225,9 +242,10 @@ canonical activities rather than stored on the enrolment.
       <td data-label="Partner">{{ row.partner_status }}</td>
       <td data-record-action data-label="Action"><a href="{{ row.school_url }}" class="btn btn-secondary">View Profile</a></td>
     </tr>
-    {% empty %}<tr><td colspan="12">No schools assigned to this project yet.</td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="{% if can_bulk_withdraw %}13{% else %}12{% endif %}">No schools assigned to this project yet.</td></tr>{% endfor %}
   </tbody>
 </table>
+</div>
 {% include "components/table_pager.html" with pager=portfolio_pager param="portfolio_page" %}
 </div>
 </div>
