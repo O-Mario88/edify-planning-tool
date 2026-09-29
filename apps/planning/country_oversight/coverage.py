@@ -504,6 +504,15 @@ def load_facts(
             school.staff[2] += row["total"]
             school.staff[3] += row["verified"]
 
+    # Work moved onto a Partner as an activity and not yet dated by it
+    # (status assigned_to_partner). It is no plan yet, so the planned read
+    # above leaves it out — but it is a school assigned to that Partner, and
+    # the reassign path writes no handover row for it, so it counted nowhere:
+    # a visit a CCEO planned and then gave to a Partner vanished from Staff
+    # Planned and never reached Partner Assigned (owner, 2026-09-29). An
+    # activity that an open handover already carries is read there instead.
+    _load_partner_activities(facts, window, school_ids)
+
     # Trainings at the school itself: one slot per training.
     for row in (
         planned.filter(activity_type__in=SCHOOL_TRAINING_TYPES, cluster__isnull=True)
@@ -538,6 +547,48 @@ def load_facts(
 
     _load_handovers(facts, window, school_ids)
     return facts
+
+
+def _load_partner_activities(
+    facts: dict[str, SchoolFacts], window: Window, school_ids
+) -> None:
+    from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+
+    carried = PartnerAssignment.objects.filter(
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+        source_activity_id__isnull=False,
+    ).values("source_activity_id")
+    inside = Q(day__gte=window.start, day__lt=window.end)
+    if window.start <= window.fy_start < window.end:
+        # Undated work is outstanding from the year's first day.
+        inside |= Q(day__isnull=True)
+    rows = (
+        Activity.objects.filter(
+            fy=str(window.fy),
+            deleted_at__isnull=True,
+            status=str(policy.S.ASSIGNED_TO_PARTNER),
+            school_id__in=school_ids,
+        )
+        .exclude(id__in=carried)
+        .annotate(day=_day())
+        .filter(visit_claim_q())
+        .values("school_id", "assigned_partner_id")
+        .annotate(
+            before=Count("id", filter=Q(day__lt=window.start)),
+            inside=Count("id", filter=inside),
+            total=Count("id"),
+        )
+        .order_by()
+    )
+    for row in rows:
+        school = facts.get(row["school_id"])
+        if school is None or not school.is_governed:
+            continue
+        counts = _partner_counts(school, row["assigned_partner_id"] or "")
+        counts[P_PEND_B] += row["before"]
+        counts[P_PEND_I] += row["inside"]
+        counts[P_PEND_T] += row["total"]
 
 
 def _add(school, attribute: str, row) -> None:
@@ -597,10 +648,18 @@ def _bucket(day: date, window: Window) -> int:
 def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -> None:
     """Partner handovers not yet dated (assigned) and handed back (returned).
 
-    A handover carries no fiscal year; like every other oversight surface it
-    is read in the year it was made, and a returned one in the year it came
-    back. A dated handover is not read here at all: the activity it became is
-    the record, which is what keeps one piece of work from counting twice.
+    A handover carries no fiscal year. One still waiting for its Partner's
+    date is a school assigned to that Partner today, whichever year it was
+    made in — Partner Oversight's rule (owner, 2026-09-28: "show exactly the
+    number of schools assigned to the partner"). So it is read in every year
+    from the one it was made in, and in a later year it counts from that
+    year's first day. Filed under its creation year alone, a handover made in
+    September for October's work vanished from the planning year the Country
+    Director was reading, and the Partner Assigned column read nothing while
+    the Partner held the school (owner, 2026-09-29). A returned one is read
+    in the year it came back. A dated handover is not read here at all: the
+    activity it became is the record, which is what keeps one piece of work
+    from counting twice.
     """
     from apps.core.fy import get_operational_fy
     from apps.partners.models import PartnerAssignment
@@ -644,10 +703,11 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
             if _bucket(_local_day(moment), window) == 1:
                 _partner_counts(school, partner_id or "")[P_RETURNED] += 1
             continue
-        if created_at is None or get_operational_fy(created_at) != window.fy:
+        if created_at is None or int(get_operational_fy(created_at)) > int(window.fy):
             continue
         counts = _partner_counts(school, partner_id or "")
-        where = _bucket(_local_day(created_at), window)
+        # Carried into a later year, it is outstanding from the year's start.
+        where = _bucket(max(_local_day(created_at), window.fy_start), window)
         counts[P_PEND_T] += 1
         if where == 0:
             counts[P_PEND_B] += 1
