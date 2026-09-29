@@ -210,10 +210,35 @@ class ResponsiveLayerTest(SimpleTestCase):
         rule = consistency[start : consistency.index("}", start)]
         self.assertIn("display: inline !important;", rule)
         self.assertIn(
-            ':not(:where(.edify-table-scroll-region:is([data-scroll-state="start"], '
+            ':not(:where(.edify-cell-hidden, .edify-table-scroll-region:is([data-scroll-state="start"], '
             '[data-scroll-state="middle"], [data-scroll-state="end"]) > table > tbody '
             "> tr > :first-child > :first-child))",
             rule,
+        )
+
+    def test_a_child_the_page_hides_is_left_off_the_line(self):
+        """micro-ux marks a cell's child the page hides (a phone-only label)
+        `.edify-cell-hidden`, and the hide rule (about 0,5,3) keeps it hidden
+        from 768px up. The cell-text rule held it inline at about 0,12,4, so a
+        marked span showed on a desktop (2026-09-29). The marked child is left
+        out of that rule inside its `:where()`, so the rule's weight is
+        unchanged for everything it still holds on the line."""
+        consistency = (ROOT / "static/css/consistency.css").read_text()
+        start = consistency.index(
+            "(p, span, small).edify-cell-text:not(.edify-cell-row)"
+        )
+        rule = consistency[start : consistency.index("{", start)]
+        self.assertIn(":not(:where(.edify-cell-hidden, ", rule)
+        self.assertNotIn(":not(.edify-cell-hidden)", rule)
+        hide = consistency[
+            consistency.index(
+                "/* A child the page hides at this width stays hidden, marker or not. */"
+            ) :
+        ]
+        self.assertIn(
+            "table tbody :is(td, th).edify-cell.edify-cell > "
+            ".edify-cell-hidden.edify-cell-hidden {\n    display: none !important;",
+            hide,
         )
 
     def test_a_column_plan_that_clips_a_heading_scrolls_instead(self):

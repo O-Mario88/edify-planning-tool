@@ -172,8 +172,9 @@
           && !element.matches('table, thead, tbody, tfoot, tr, td, th, script, style, template')
           && !element.closest('.edify-table-action')
           // Planning status chips, and Partner Monitoring's in the same
-          // design, retain their semantic colour and compact border.
-          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip')
+          // design, retain their semantic colour and compact border; Who's
+          // Online's status light is nothing but its paint.
+          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip, .admin-presence-light')
           && !(popup && table.contains(popup))
           && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
         element.classList.toggle('edify-table-plain-content', plain);
@@ -270,6 +271,7 @@
       var prev = cell.previousElementSibling;
       var identity = row && (cell === row.firstElementChild ||
         (prev === row.firstElementChild && prev.querySelector('input[type="checkbox"], input[type="radio"], .edify-table-choice')));
+      var named = false;
       if (identity && !cell.hasAttribute('x-text') && !cell.hasAttribute('x-html')) {
         var lead = [];
         for (var node = cell.firstChild; node && node.nodeType !== 1; node = node.nextSibling) lead.push(node);
@@ -278,11 +280,18 @@
           name.className = 'edify-cell-name';
           cell.insertBefore(name, lead[0]);
           lead.forEach(function (n) { name.appendChild(n); });
+          named = true;
         }
       }
-      var hiddenChildren = read.hidden;
+      /* The read phase flagged the children the cell had then. The name span
+         is written in front of them, so it takes a flag of its own (never
+         hidden: it is the row's name) and every read flag moves up one. The
+         toggle is always forced: `toggle(name, undefined)` is a plain toggle,
+         and a plain toggle on a name with no flag hid the name (2026-09-29). */
+      var hiddenChildren = read.hidden.slice();
+      if (named) hiddenChildren.unshift(false);
       Array.from(cell.children).forEach(function (child, index) {
-        child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);
+        child.classList.toggle('edify-cell-hidden', Boolean(hiddenChildren[index]));
       });
       Array.from(cell.children).forEach(function (child) {
         if (child.matches('div.rounded-pill, div.rounded-full')) child.classList.add('edify-cell-mark');

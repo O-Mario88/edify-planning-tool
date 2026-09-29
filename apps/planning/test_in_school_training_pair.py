@@ -199,12 +199,9 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         )
         self.assertEqual(visit.est_cost_cents, visit_total)
 
-    def test_a_pair_scheduled_before_the_change_moves_its_cost_to_the_visit(self):
-        """Pairs made before 2026-09-28 carry the cost on the Training."""
-        from apps.activities.pair_costing import (
-            find_pair_trainings_carrying_cost,
-            move_pair_costs_to_visits,
-        )
+    def _pair_in_the_old_shape(self):
+        """A pair as it was scheduled before 2026-09-28: the visit unpriced,
+        the Training priced. Returns (training, visit, the visit's price)."""
         from apps.budget.costing import ActivityCost
         from apps.budget.costing_service import apply_to_activity
         from apps.daily_visit_batches.services import remove_school
@@ -213,7 +210,6 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         result = schedule_in_school_training_pair(self.payload(), self.user)
         training = Activity.objects.get(id=result["id"])
         visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
-        # Rebuild the old shape: the visit unpriced, the Training priced.
         visit_total = visit.est_cost_cents
         remove_school(activity_id=visit.id)
         visit.refresh_from_db()
@@ -228,17 +224,63 @@ class InSchoolTrainingPairTest(StandardSupportBase):
                 "districtType": "primary",
             },
         )
+        return training, visit, visit_total
+
+    def test_a_pair_scheduled_before_the_change_moves_its_cost_to_the_visit(self):
+        """Pairs made before 2026-09-28 carry the cost on the Training."""
+        from apps.activities.pair_costing import (
+            find_pair_trainings_carrying_cost,
+            move_pair_costs_to_visits,
+        )
+
+        training, visit, visit_total = self._pair_in_the_old_shape()
         self.assertEqual(find_pair_trainings_carrying_cost(), [training.id])
 
         moved = move_pair_costs_to_visits(write=lambda _line: None)
 
-        self.assertEqual(moved, {"moved": [training.id], "skipped": []})
+        self.assertEqual(moved, {"moved": [training.id], "skipped": [], "left": []})
         training.refresh_from_db()
         visit.refresh_from_db()
         self.assertEqual(training.est_cost_cents, 0)
         self.assertEqual(visit.est_cost_cents, visit_total)
         self.assertEqual(find_pair_trainings_carrying_cost(), [])
         self.assertEqual(missing_cost_lines_count(), 0)
+
+    def test_a_pair_not_reached_by_the_deadline_is_left_for_the_next_run(self):
+        """Migration 0061 runs in App Platform's 30-minute pre-deploy job and
+        stops starting pairs at its budget. What it does not reach keeps its
+        cost, so the command (or the next deployment) finds it again."""
+        import importlib
+        import time
+
+        from apps.activities.pair_costing import (
+            find_pair_trainings_carrying_cost,
+            move_pair_costs_to_visits,
+        )
+
+        training, visit, visit_total = self._pair_in_the_old_shape()
+
+        late = move_pair_costs_to_visits(
+            write=lambda _line: None, deadline=time.monotonic() - 1
+        )
+
+        self.assertEqual(late, {"moved": [], "skipped": [], "left": [training.id]})
+        self.assertEqual(find_pair_trainings_carrying_cost(), [training.id])
+        self.assertEqual(
+            move_pair_costs_to_visits(write=lambda _line: None)["moved"],
+            [training.id],
+        )
+        visit.refresh_from_db()
+        self.assertEqual(visit.est_cost_cents, visit_total)
+
+        migration = importlib.import_module(
+            "apps.activities.migrations.0061_move_in_school_training_cost_to_visit"
+        )
+        self.assertFalse(
+            migration.Migration.atomic,
+            "one transaction for every pair is what outlived the pre-deploy job",
+        )
+        self.assertLess(migration.BUDGET_SECONDS, 30 * 60)
 
     def test_a_failure_creating_visit_rolls_back_training(self):
         before = Activity.objects.count()

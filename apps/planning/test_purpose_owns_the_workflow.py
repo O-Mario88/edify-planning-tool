@@ -86,6 +86,41 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
             "catalogue item it no longer uses.",
         )
 
+    def test_ssa_support_and_a_donor_visit_leave_the_support_visit_open(self):
+        """The owner's two counts (2026-09-28) are read by activity type: SSA
+        Support is counted apart, and a donor visit is in neither count."""
+        from apps.core.fy import get_operational_fy
+        from apps.planning.visit_gate import visit_gate
+
+        pinned = self.item("STANDARD_SCHOOL_VISIT")
+        for purpose in ("ssa_support", "donor_visit"):
+            response = self._post(purpose_of_visit=purpose, catalogue_item_id=pinned.id)
+            self.assertIn(response.status_code, (200, 204))
+
+        gate = visit_gate(self.school, get_operational_fy(_schedulable_date()))
+        self.assertEqual(gate.staff_visits, 0)
+        self.assertEqual(gate.staff_ssa_visits, 1)
+        self.assertTrue(gate.staff_can_schedule, gate.staff_reason)
+
+    def test_a_pin_of_the_purposes_own_kind_is_left_alone(self):
+        """The control for the generic-pin rule: a pin that already is the
+        purpose's kind keeps its row and its SSA reason."""
+        pinned = self.item("STANDARD_SCHOOL_VISIT_SSA_COLLECTION")
+
+        response = self._post(
+            purpose_of_visit="ssa_support",
+            catalogue_item_id=pinned.id,
+            recommendation_reason="SSA recommends collecting the SSA.",
+        )
+
+        self.assertIn(response.status_code, (200, 204))
+        activity = Activity.objects.filter(purpose_type="ssa_support").first()
+        self.assertIsNotNone(activity, response.content.decode()[:400])
+        self.assertEqual(activity.catalogue_item_id, pinned.id)
+        self.assertEqual(
+            activity.recommendation_reason, "SSA recommends collecting the SSA."
+        )
+
     def test_a_pin_that_agrees_with_the_purpose_is_left_alone(self):
         """The control: reconciliation must not churn a correct pin, or the
         test above would pass with the pin simply always discarded."""
