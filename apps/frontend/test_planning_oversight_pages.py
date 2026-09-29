@@ -239,8 +239,9 @@ class ScopeTest(OversightPageFixture):
 
     def test_the_country_page_renders_lead_rows_and_team_expansion_for_ia(self):
         """IA monitors the activity of Program Leads and CCEOs across the country plan."""
-        # IA accesses the country planning oversight page
-        response = self.as_user(self.ia_user).get(CD_URL)
+        # IA opens the Country Plan tab (the page itself opens on the
+        # Planning Monitor since 2026-09-29).
+        response = self.as_user(self.ia_user).get(CD_URL + "?view=planning")
         self.assertEqual(response.status_code, 200)
         # Each Program Lead is a tab (2026-09-19 redesign); opening it loads
         # the team's detail from its own route.

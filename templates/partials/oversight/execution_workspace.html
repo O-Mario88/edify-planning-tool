@@ -1,0 +1,163 @@
+{% load frontend_filters school_identity table_pagination %}
+{% comment %}
+The Execution & Completion Monitor (owner, 2026-09-29): the Planning
+Monitor's people — each Programme Lead (280 visits a year) and CCEO (560)
+under their Lead — and their plan as it is delivered, completed (the
+Salesforce ID and the form both in) and verified, with the partner work they
+monitor beside it.
+
+Read-only, like every supervision lens. Every number is folded from the
+activity rows under it (apps.planning.execution_monitor), so a Lead's
+subtotal and their people agree, and every follow-up count opens the list of
+the activities behind it.
+{% endcomment %}
+<section class="space-y-4" data-execution-monitor>
+
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title=monitor_is_country|yesno:"Country execution & completion,Team execution & completion" %}
+
+  <form class="edify-filter-bar oversight-portfolio-filters"
+        aria-label="Execution monitor filters"
+        hx-get="{{ lens_base_url }}"
+        hx-target="#oversight-workspace"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        hx-push-url="true">
+    <input type="hidden" name="view" value="execution">
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+      <select name="fy" aria-label="Financial year">
+        {% for option in fy_options %}
+        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if execution.lead_options|length > 1 %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
+      <select name="program_lead" aria-label="Programme Lead">
+        <option value="">All leads</option>
+        {% for lead in execution.lead_options %}
+        <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Follow up</span>
+      <select name="list" aria-label="Activities to list">
+        <option value="">Choose a list</option>
+        {% for key, label in execution_lists %}
+        <option value="{{ key }}" {% if execution_list == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if execution_list %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Staff</span>
+      <select name="person" aria-label="Staff">
+        <option value="">Everyone</option>
+        {% for person in execution.person_options %}
+        <option value="{{ person.id }}" {% if execution_person == person.id %}selected{% endif %}>{{ person.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  </form>
+
+  <section class="card p-0 overflow-hidden" aria-labelledby="execution-title">
+    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+      <h3 id="execution-title">Execution &amp; completion · FY {{ fy }}</h3>
+      <span class="tabular-nums">{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete</span>
+    </header>
+    <p class="px-4 pt-3 edify-text-caption edify-text-muted">Each person's own staff work in the year, as My Plan lists it. Delivered: submitted, awaiting verification or verified. Complete: delivered with the Salesforce ID and the form both in. Overdue: the planned day has passed and it is not delivered. Partner activities are the partner-delivered work each person monitors.</p>
+    {% if execution.teams %}
+    <div class="overflow-x-auto mt-2">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-execution-table>
+        <caption class="sr-only">Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="px-3 py-2">Staff</th>
+            <th scope="col" class="px-3 py-2 text-right">Visits<br>delivered</th>
+            <th scope="col" class="px-3 py-2 text-right">Delivered<br>of due</th>
+            <th scope="col" class="px-3 py-2 text-right">Complete</th>
+            {% for key, label, tone in execution_columns %}
+            <th scope="col" class="px-3 py-2 text-right">{{ label }}</th>
+            {% endfor %}
+            <th scope="col" class="px-3 py-2 text-right">Verified</th>
+            <th scope="col" class="px-3 py-2 text-right">Trainings</th>
+            <th scope="col" class="px-3 py-2 text-right">Meetings</th>
+            <th scope="col" class="px-3 py-2 text-right">Partner<br>activities</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for team in execution.teams %}
+          <tr class="edify-group-head">
+            <th colspan="13" scope="colgroup">
+              <span class="edify-group-head__label">{{ team.name }}</span>
+              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits delivered · {{ team.overdue|intcomma }} overdue</span>
+            </th>
+          </tr>
+          {% for person in team.people %}
+          {% include "partials/oversight/_execution_row.html" with row=person is_person=True %}
+          {% endfor %}
+          {% if team.person_count > 1 %}
+          {% include "partials/oversight/_execution_row.html" with row=team is_subtotal=True label=team.name|add:" total" %}
+          {% endif %}
+          {% endfor %}
+        </tbody>
+        {% if execution.teams|length > 1 %}
+        <tfoot>
+          {% include "partials/oversight/_execution_row.html" with row=execution_totals is_subtotal=True label=monitor_is_country|yesno:"Country total,Team total" %}
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
+    {% endif %}
+  </section>
+
+  {% if execution_list %}
+  {% paginate execution.rows "work_page" as work_pager %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="execution-list-title" data-execution-list="{{ execution_list }}">
+    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+      <h3 id="execution-list-title">{{ execution_list_label }}</h3>
+      <span class="tabular-nums">{{ work_pager.total|intcomma }} activit{{ work_pager.total|pluralize:"y,ies" }}</span>
+    </header>
+    <div class="overflow-x-auto">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+        <caption class="sr-only">Activities: {{ execution_list_label|lower }}, with the school, the person responsible and what is missing.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="px-3 py-2">School ID</th>
+            <th scope="col" class="px-3 py-2">School / Cluster</th>
+            <th scope="col" class="px-3 py-2">Activity</th>
+            <th scope="col" class="px-3 py-2">Planned Date</th>
+            <th scope="col" class="px-3 py-2">Staff</th>
+            <th scope="col" class="px-3 py-2">Salesforce ID</th>
+            <th scope="col" class="px-3 py-2">Evidence</th>
+            <th scope="col" class="px-3 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for work in work_pager.rows %}
+          <tr>
+            <td class="px-3 py-2 tabular-nums" data-label="School ID">{{ work.school_code|default:"—" }}</td>
+            <td class="px-3 py-2" data-record-title>{% if work.school_id %}<a href="/schools/{{ work.school_id }}" class="font-semibold hover:underline">{{ work.place }}</a>{% else %}{{ work.place }}{% endif %}</td>
+            <td class="px-3 py-2" data-label="Activity"><a href="/activities/{{ work.id }}" class="hover:underline">{{ work.activity_type|status_label }}</a></td>
+            <td class="px-3 py-2 tabular-nums" data-label="Planned Date">{{ work.planned_date|date:"j M Y"|default:"—" }}</td>
+            <td class="px-3 py-2" data-label="Staff">{{ work.person_name }}</td>
+            <td class="px-3 py-2" data-label="Salesforce ID">{% if work.salesforce_ok %}<span class="edify-status-text" data-edify-tone="success">In</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not in SF</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Evidence">{% if work.evidence_ok %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">No form</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Status">{{ work.status|status_label }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=work_pager param="work_page" pagination_label=execution_list_label %}
+  </section>
+  {% endif %}
+</section>

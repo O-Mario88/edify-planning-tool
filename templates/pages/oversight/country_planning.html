@@ -13,7 +13,7 @@
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Leadership</p>
       <h1 class="edify-page-title edify-page-header__title">Country Planning Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is overdue.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
@@ -46,6 +46,8 @@
       {% include "partials/oversight/portfolio_workspace.html" %}
     {% elif active_oversight_view == "monitor" %}
       {% include "partials/oversight/monitor_workspace.html" %}
+    {% elif active_oversight_view == "execution" %}
+      {% include "partials/oversight/execution_workspace.html" %}
     {% else %}
       {% include "partials/oversight/cd_workspace.html" %}
     {% endif %}

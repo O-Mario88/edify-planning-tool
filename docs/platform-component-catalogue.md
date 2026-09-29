@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **519**
+Components and application partials: **521**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -370,6 +370,7 @@ Components and application partials: **519**
 | `partials/oversight/_cluster_table.html` | application-partial | Reusable  cluster table interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /cluster-oversight/ | 0 |
 | `partials/oversight/_core_schools_table.html` | application-partial | Reusable  core schools table interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /core-schools-oversight/ | 0 |
 | `partials/oversight/_core_work_table.html` | application-partial | Reusable  core work table interface primitive | {{ item.session_tone }}; default, empty | explicit responsive contract | accessible name and label | /core-schools-oversight/ | 0 |
+| `partials/oversight/_execution_row.html` | application-partial | Reusable  execution row interface primitive | {{ column.tone }}, {{ row.due_tone }}, {{ row.target_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_export_menu.html` | application-partial | Reusable  export menu interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_lens_tabs.html` | application-partial | Reusable  lens tabs interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_monitor_row.html` | application-partial | Reusable  monitor row interface primitive | {{ gap.tone }}, {{ row.visit_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
@@ -386,6 +387,7 @@ Components and application partials: **519**
 | `partials/oversight/core_schools_oversight_workspace.html` | application-partial | Reusable core schools oversight workspace interface primitive | canonical; default, selected, open | inherits containing page contract | accessible name and label | /core-schools-oversight/ | 0 |
 | `partials/oversight/coverage_workspace.html` | application-partial | Reusable coverage workspace interface primitive | success, {% if coverage.missing_count %}warning{% else %}success{% endif %}, {{ row.visit_status_tone }}; default, empty | inherits containing page contract | accessible name and label | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/detail_drawer.html` | application-partial | Reusable detail drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /team-planning-oversight/detail | 0 |
+| `partials/oversight/execution_workspace.html` | application-partial | Reusable execution workspace interface primitive | executive, success, warning; default, empty | explicit responsive contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/flagged_schools.html` | application-partial | Reusable flagged schools interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/monitor_workspace.html` | application-partial | Reusable monitor workspace interface primitive | danger, executive, info, success, warning; default, empty | explicit responsive contract | accessible name and label | /country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/partner_core_row.html` | application-partial | Reusable partner core row interface primitive | danger, warning, {{ item.status_tone }}; default, disabled, open | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |

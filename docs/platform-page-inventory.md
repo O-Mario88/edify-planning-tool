@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **31**
 - Activity states: **24**
-- Shared component templates: **519**
-- Full pages: **259**
-- Partials and drawers: **278**
+- Shared component templates: **521**
+- Full pages: **260**
+- Partials and drawers: **277**
 - Permission-gated surfaces: **822**
 - Referenced by automated tests: **731**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -253,7 +253,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E49086D072 | /country-budget/history/<str:budget_id> | FY | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6C0C6DD33B | /country-budget/plan-sources | Country Budget Plan Sources | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EFEA0EEA3D | /country-budget/return | Country Budget Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-15D0AB1EB0 | /country-planning-oversight/send | Country Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

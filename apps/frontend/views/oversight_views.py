@@ -349,12 +349,28 @@ def _lens_tabs(
     base_url: str, active: str, available, *, country: bool = True
 ) -> list[dict]:
     """The lens strip, in one order, for whichever page is drawing it."""
-    labels = (
-        (
-            "planning",
-            "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
-        ),
+    plan = (
+        "planning",
+        "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
+    )
+    monitors = (
         ("monitor", "Planning Monitor"),
+        ("execution", "Execution & Completion"),
+    )
+    # Country Planning Oversight opens on the monitors, the daily view (owner,
+    # 2026-09-29: "Planning Monitoring ... is what will be used on a daily
+    # basis"); Team Oversight keeps the Team Plan first, where a Programme
+    # Lead acts on their team's rows, with the monitors beside it.
+    ordered = (
+        (*monitors, plan)
+        if base_url == COUNTRY_OVERSIGHT_PATH
+        else (
+            plan,
+            *monitors,
+        )
+    )
+    labels = (
+        *ordered,
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
@@ -363,7 +379,7 @@ def _lens_tabs(
     for key, label in labels:
         if key not in available:
             continue
-        query = "" if key == "planning" else f"?view={key}"
+        query = f"?view={key}"
         tabs.append(
             {
                 "key": key,
@@ -411,6 +427,7 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         DEFAULT_VISITS_TARGET,
         GAP_LABELS,
         GAPS,
+        PL_VISITS_TARGET,
         planning_monitor,
     )
 
@@ -441,8 +458,127 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "monitor_officer": officer,
         "selected_program_lead": selected_lead,
         "default_visits_target": DEFAULT_VISITS_TARGET,
+        "pl_visits_target": PL_VISITS_TARGET,
         "kpis": _monitor_kpis(monitor["totals"], monitor_url=monitor_url),
     }
+
+
+_MONITOR_TEMPLATES = {
+    "monitor": "partials/oversight/monitor_workspace.html",
+    "execution": "partials/oversight/execution_workspace.html",
+}
+
+
+def _execution_context(request, period: dict, *, base_url: str) -> dict:
+    """The Execution & Completion Monitor lens (owner, 2026-09-29): each
+    person's plan as it is delivered, completed and verified, under their
+    Programme Lead."""
+    from apps.core.fy import get_operational_fy
+    from apps.planning.execution_monitor import (
+        LIST_COLUMNS,
+        LIST_LABELS,
+        LISTS,
+        execution_monitor,
+    )
+
+    # The running year: execution happens in it. Any year the selector
+    # offers may be chosen.
+    fy = (request.GET.get("fy") or "").strip() or str(get_operational_fy())
+    selected_lead = (request.GET.get("program_lead") or "").strip()
+    list_key = (request.GET.get("list") or "").strip()
+    list_key = list_key if list_key in LIST_LABELS else ""
+    person = (request.GET.get("person") or "").strip()
+    monitor = execution_monitor(
+        request.user,
+        fy=fy,
+        program_lead_id=selected_lead or None,
+        list_key=list_key or None,
+        person_id=person or None,
+    )
+    execution_url = f"{base_url}?view=execution&fy={fy}"
+    return {
+        "fy": fy,
+        "execution": monitor,
+        "execution_totals": monitor["totals"],
+        "execution_url": execution_url,
+        "execution_lists": LISTS,
+        "execution_columns": LIST_COLUMNS,
+        "execution_list": list_key,
+        "execution_list_label": LIST_LABELS.get(list_key, ""),
+        "execution_person": person,
+        "selected_program_lead": selected_lead,
+        "kpis": _execution_kpis(monitor["totals"], execution_url=execution_url),
+    }
+
+
+def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
+    """The execution monitor's tiles, each folded from the rows below them."""
+
+    def share(key, part, whole, *, helper, icon, drill=None, empty):
+        return render_kpi_item(
+            key,
+            (
+                MetricValue.ratio(part, whole)
+                if whole
+                else MetricValue.absent(DataState.NOT_YET_MEASURABLE, note=empty)
+            ),
+            helper=helper,
+            icon=icon,
+            drilldown_url=drill,
+        )
+
+    return [
+        share(
+            "execution_visits_delivered_target",
+            totals.visits_delivered,
+            totals.visits_target,
+            helper=f"{totals.visits_delivered:,} of {totals.visits_target:,} visits",
+            icon="target",
+            empty="No one in scope",
+        ),
+        share(
+            "execution_due_delivered",
+            totals.delivered_due,
+            totals.due,
+            helper=f"{totals.delivered_due:,} of {totals.due:,} due to date",
+            icon="check",
+            empty="Nothing due yet",
+        ),
+        render_kpi_item(
+            "execution_overdue",
+            MetricValue.measured(totals.overdue),
+            helper="Due, not delivered",
+            tone="danger" if totals.overdue else "neutral",
+            icon="warning",
+            drilldown_url=f"{execution_url}&list=overdue",
+        ),
+        share(
+            "execution_complete_share",
+            totals.complete,
+            totals.delivered,
+            helper=f"{totals.missing_salesforce:,} no SF ID · "
+            f"{totals.missing_evidence:,} no form",
+            icon="clipboard",
+            drill=f"{execution_url}&list=missing_salesforce",
+            empty="Nothing delivered yet",
+        ),
+        render_kpi_item(
+            "execution_awaiting_ia",
+            MetricValue.measured(totals.awaiting_ia),
+            helper=f"{totals.verified:,} verified",
+            icon="check",
+            drilldown_url=f"{execution_url}&list=awaiting_ia",
+        ),
+        share(
+            "execution_partner_delivered",
+            totals.partner_delivered,
+            totals.partner_scheduled,
+            helper=f"{totals.partner_delivered:,} of {totals.partner_scheduled:,} "
+            "partner activities",
+            icon="users",
+            empty="No partner work",
+        ),
+    ]
 
 
 def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
@@ -470,7 +606,7 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
             helper=f"{totals.staff_visits:,} of {totals.visits_target:,} visits · "
             f"{totals.core_visits:,} core, {totals.client_visits:,} client",
             icon="target",
-            empty="No CCEOs in scope",
+            empty="No one in scope",
         ),
         share(
             "monitor_schools_with_visit",
@@ -507,8 +643,9 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
         ),
         render_kpi_item(
             "monitor_partner_share",
-            MetricValue.measured(totals.partner_schools),
-            helper=f"of {totals.partner_needed:,} beyond staff reach",
+            MetricValue.measured(totals.partner_assigned_schools),
+            helper=f"{totals.partner_scheduled:,} partner activities scheduled · "
+            f"{totals.partner_awaiting:,} awaiting a date",
             icon="users",
             drilldown_url=f"{monitor_url}&gap=no_partner",
         ),
@@ -518,14 +655,6 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
             helper="Enrolled in an open Special Project",
             icon="clipboard",
             drilldown_url="/projects/monitoring",
-        ),
-        share(
-            "monitor_visits_delivered_share",
-            totals.visits_done,
-            totals.staff_visits,
-            helper=f"{totals.visits_done:,} of {totals.staff_visits:,} planned visits",
-            icon="check",
-            empty="Nothing planned yet",
         ),
     ]
 
@@ -1183,17 +1312,18 @@ def team_planning_oversight_view(request):
         return response
     active_view = (
         requested_view
-        if requested_view in {"targets", "coverage", "portfolio", "monitor"}
+        if requested_view
+        in {"targets", "coverage", "portfolio", "monitor", "execution"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
     if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
-    if active_view in ("portfolio", "monitor") and not can_view_portfolio:
+    if active_view in ("portfolio", "monitor", "execution") and not can_view_portfolio:
         active_view = "planning"
     if (
-        active_view in ("planning", "coverage", "portfolio", "monitor")
+        active_view in ("planning", "coverage", "portfolio", "monitor", "execution")
         and not can_view_planning
     ):
         active_view = "targets"
@@ -1203,6 +1333,7 @@ def team_planning_oversight_view(request):
         for key, allowed in (
             ("planning", can_view_planning),
             ("monitor", can_view_portfolio),
+            ("execution", can_view_portfolio),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
@@ -1235,10 +1366,13 @@ def team_planning_oversight_view(request):
 
     period = _period_filters(request)
 
-    if active_view == "monitor":
+    if active_view in ("monitor", "execution"):
+        lens_context = (
+            _monitor_context if active_view == "monitor" else _execution_context
+        )
         context = {
             **period,
-            **_monitor_context(request, period, base_url=TEAM_OVERSIGHT_PATH),
+            **lens_context(request, period, base_url=TEAM_OVERSIGHT_PATH),
             "active_oversight_view": active_view,
             "lens_tabs": lens_tabs,
             "lens_base_url": TEAM_OVERSIGHT_PATH,
@@ -1250,7 +1384,7 @@ def team_planning_oversight_view(request):
             "fy_options": fy_options(),
         }
         if request.headers.get("HX-Request") == "true":
-            return render(request, "partials/oversight/monitor_workspace.html", context)
+            return render(request, _MONITOR_TEMPLATES[active_view], context)
         return render(request, "pages/oversight/team_planning.html", context)
 
     # The portfolio and cluster lenses stand on the school and cluster records,
@@ -1553,17 +1687,28 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    active_view = (
-        requested_view if requested_view in {"portfolio", "monitor"} else "planning"
-    )
+    # The Planning Monitor is the page's front door (owner, 2026-09-29): the
+    # country plan's rows are one tab away, and every link that names
+    # `view=planning` — or carries the plan's own filters — still opens them.
+    plan_keys = {"lead", "period", "week", "month", "quarter", *oversight.FILTER_KEYS}
+    if not (request.GET.get("view") or "").strip():
+        requested_view = "planning" if plan_keys & set(request.GET) else "monitor"
+    elif requested_view not in {"planning", "portfolio", "monitor", "execution"}:
+        requested_view = "planning"
+    active_view = requested_view
     lens_tabs = _lens_tabs(
-        COUNTRY_OVERSIGHT_PATH, active_view, {"planning", "monitor", "portfolio"}
+        COUNTRY_OVERSIGHT_PATH,
+        active_view,
+        {"planning", "monitor", "execution", "portfolio"},
     )
 
-    if active_view == "monitor":
+    if active_view in ("monitor", "execution"):
+        lens_context = (
+            _monitor_context if active_view == "monitor" else _execution_context
+        )
         context = {
             **period,
-            **_monitor_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
+            **lens_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
             "active_oversight_view": active_view,
             "lens_tabs": lens_tabs,
             "lens_base_url": COUNTRY_OVERSIGHT_PATH,
@@ -1571,7 +1716,7 @@ def country_planning_oversight_view(request):
             "fy_options": fy_options(),
         }
         if request.headers.get("HX-Request") == "true":
-            return render(request, "partials/oversight/monitor_workspace.html", context)
+            return render(request, _MONITOR_TEMPLATES[active_view], context)
         return render(request, "pages/oversight/country_planning.html", context)
 
     if active_view == "portfolio":
@@ -1798,14 +1943,18 @@ def _wants_excel(request) -> bool:
     return (request.GET.get("format") or "").strip().lower() in {"xlsx", "excel"}
 
 
-def _export_response(items, filename: str, *, excel: bool = False):
+def _export_response(items, filename: str, *, request_user, excel: bool = False):
     """Exactly the rows the page is showing, as CSV or as a workbook.
 
-    Both are built from the same item list and the same `export_rows`, so the
-    export and the page can never disagree about scope, period or totals, and
-    the two formats can never disagree with each other.
+    The items go through the same partition the page draws its four tables
+    with (`_partition_owner_groups_by_stream`), so every row the page lists
+    is a row of the export — a cluster training once per invited school, with
+    that school's ID — and the Training Name and SSA intervention columns the
+    page shows travel with it (owner, 2026-09-29). Both formats come from the
+    same `export_rows`, so they can never disagree with each other.
     """
-    rows = list(oversight.export_rows(items))
+    groups = _partition_owner_groups_by_stream(list(items), request_user)
+    rows = list(oversight.export_rows(oversight.stream_rows(groups)))
     headers, body = (rows[0], rows[1:]) if rows else ([], [])
 
     if excel:
@@ -1864,6 +2013,7 @@ def team_planning_export_view(request):
     return _export_response(
         visible,
         f"team-planning-oversight-{period['fy']}.csv",
+        request_user=request.user,
         excel=_wants_excel(request),
     )
 
@@ -1882,6 +2032,7 @@ def country_planning_export_view(request):
     return _export_response(
         items,
         f"country-planning-oversight-{period['fy']}.csv",
+        request_user=request.user,
         excel=_wants_excel(request),
     )
 

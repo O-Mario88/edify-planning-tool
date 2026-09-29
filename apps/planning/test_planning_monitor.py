@@ -28,7 +28,12 @@ from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.partners.models import Partner, PartnerAssignment
-from apps.planning.planning_monitor import DEFAULT_VISITS_TARGET, planning_monitor
+from apps.planning.planning_monitor import (
+    CCEO_VISITS_TARGET,
+    DEFAULT_VISITS_TARGET,
+    PL_VISITS_TARGET,
+    planning_monitor,
+)
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.schools.models import School
 
@@ -174,18 +179,21 @@ class TheYearAgainstItsTarget(MonitorFixture):
         self.assertEqual(anna.client_visits, 2)
         self.assertEqual(anna.visits_done, 1)
 
-    def test_an_officer_s_own_target_replaces_the_default(self):
+    def test_the_role_sets_the_target_not_a_saved_profile(self):
+        # Owner, 2026-09-29: "PL plans for maximum of 280 and CCEO 560". A
+        # StaffTargetProfile feeds Target Performance, not this monitor.
         StaffTargetProfile.objects.create(staff=self.anna, fy=FY, visits_target=300)
-        anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)
-        self.assertEqual(anna.visits_target, 300)
-        self.assertTrue(anna.target_is_set)
-        self.assertEqual(anna.client_visit_target, 296)
+        monitor = planning_monitor(self.cd_user, fy=FY)
+        anna = self._officer(monitor, self.anna)
+        lead = self._officer(monitor, self.pl)
+        self.assertEqual(anna.visits_target, CCEO_VISITS_TARGET)
+        self.assertEqual(anna.client_visit_target, CCEO_VISITS_TARGET - 4)
+        self.assertEqual((lead.visits_target, lead.role_label), (280, "Programme Lead"))
 
-    def test_client_schools_beyond_staff_reach_are_the_partner_s(self):
-        StaffTargetProfile.objects.create(staff=self.anna, fy=FY, visits_target=5)
+    def test_client_schools_with_partner_work(self):
         anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)
-        # 5 visits − 4 core = 1 client visit for 3 client-rule schools.
-        self.assertEqual(anna.partner_needed, 2)
+        # 560 − 4 core visits reach every one of her 3 client-rule schools.
+        self.assertEqual(anna.partner_needed, 0)
         # The partner visit, and the handover not yet dated.
         self.assertEqual(anna.partner_schools, 2)
 
@@ -233,7 +241,9 @@ class CoverageAndGaps(MonitorFixture):
         monitor = planning_monitor(self.cd_user, fy=FY)
         lead = next(lead for lead in monitor["leads"] if lead.key == self.pl.id)
         self.assertEqual(lead.school_count, 6)
-        self.assertEqual(lead.visits_target, 2 * DEFAULT_VISITS_TARGET)
+        # The Lead's own 280 and each CCEO's 560.
+        self.assertEqual(lead.visits_target, PL_VISITS_TARGET + 2 * CCEO_VISITS_TARGET)
+        self.assertEqual(lead.officer_count, 3)
         self.assertEqual(lead.no_both, 1)
 
     def test_the_drill_down_lists_the_schools_behind_a_count(self):

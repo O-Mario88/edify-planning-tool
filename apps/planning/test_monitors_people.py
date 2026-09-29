@@ -1,0 +1,345 @@
+"""The Planning and Execution Monitors follow people (owner, 2026-09-29).
+
+"On the Planning Monitoring summaries, PL plans for maximum of 280 and CCEO
+560 ... fetch the right data based on what people have planned. Accuracy is
+everything ... Design a similar Country execution and completion
+Monitoring ... give PLs access ... so they can follow up with their team
+members ... add the column for schools assigned to partner and activities
+scheduled by partners."
+
+Also the plan export (the Training Name and SSA intervention of every
+training, a School ID on every school row) and the SSA intervention every
+training carries from its course.
+"""
+
+from __future__ import annotations
+
+import csv
+from datetime import date, timedelta
+
+from django.test import TestCase
+
+from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+from apps.activities.models import Activity, ClusterActivityAttendance
+from apps.activity_catalogue.models import (
+    ActivityCatalogueItem,
+    ActivityInterventionMapping,
+)
+from apps.clusters.models import Cluster
+from apps.core.rbac import EdifyRole
+from apps.evidence.models import EvidenceRecord
+from apps.geography.models import District, Region
+from apps.partners.models import Partner, PartnerAssignment
+from apps.planning.execution_monitor import execution_monitor
+from apps.planning.planning_monitor import planning_monitor
+from apps.schools.models import School
+
+FY = "2027"
+DAY = date(2026, 11, 3)
+TODAY = date(2027, 2, 1)
+
+
+def _user(email, role):
+    user = User.objects.create(
+        email=email,
+        name=email.split("@")[0].title(),
+        roles=[role.value],
+        active_role=role.value,
+        is_active=True,
+    )
+    profile = StaffProfile.objects.create(user=user)
+    return user, profile
+
+
+class PeopleFixture(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.region = Region.objects.create(name="People Region")
+        cls.district = District.objects.create(
+            name="People District", region=cls.region
+        )
+        cls.lead_user, cls.lead = _user(
+            "lead@people.test", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        cls.other_lead_user, cls.other_lead = _user(
+            "other@people.test", EdifyRole.COUNTRY_PROGRAM_LEAD
+        )
+        # Cara owns every school; Dan owns none and plans at hers.
+        cls.cara_user, cls.cara = _user("cara@people.test", EdifyRole.CCEO)
+        cls.dan_user, cls.dan = _user("dan@people.test", EdifyRole.CCEO)
+        cls.eve_user, cls.eve = _user("eve@people.test", EdifyRole.CCEO)
+        for officer in (cls.cara, cls.dan):
+            StaffSupervisorAssignment.objects.create(
+                supervisee=officer, supervisor=cls.lead
+            )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=cls.eve, supervisor=cls.other_lead
+        )
+        cls.cd_user, _ = _user("cd@people.test", EdifyRole.COUNTRY_DIRECTOR)
+        cls.cluster = Cluster.objects.create(
+            name="People Cluster", region=cls.region, district=cls.district
+        )
+        cls.client_school = cls._school("PPL-1", "client")
+        cls.core = cls._school("PPL-C", "core")
+
+    @classmethod
+    def _school(cls, code, school_type):
+        return School.objects.create(
+            school_id=code,
+            name=f"School {code}",
+            region=cls.region,
+            district=cls.district,
+            school_type=school_type,
+            account_owner_id=cls.cara.id,
+            account_owner_status="matched",
+            cluster_id=cls.cluster.id,
+            cluster_status="clustered",
+        )
+
+    @classmethod
+    def _work(cls, person, activity_type, *, school=None, status="scheduled", **extra):
+        return Activity.objects.create(
+            school=school if school is not None else cls.client_school,
+            activity_type=activity_type,
+            status=status,
+            delivery_type=extra.pop("delivery_type", "staff"),
+            fy=FY,
+            planned_date=extra.pop("planned_date", DAY),
+            responsible_staff_id=person.id,
+            **extra,
+        )
+
+    @staticmethod
+    def _row(rows, profile):
+        return next(row for row in rows if row.key == profile.id)
+
+
+class ThePlanningMonitorFollowsPeople(PeopleFixture):
+    def _people(self, user=None):
+        monitor = planning_monitor(user or self.cd_user, fy=FY)
+        return [o for lead in monitor["leads"] for o in lead.officers], monitor
+
+    def test_a_lead_plans_280_and_a_cceo_560(self):
+        people, _ = self._people()
+        self.assertEqual(self._row(people, self.lead).visits_target, 280)
+        self.assertEqual(self._row(people, self.cara).visits_target, 560)
+        self.assertEqual(self._row(people, self.lead).role_label, "Programme Lead")
+
+    def test_a_cceo_with_no_school_is_still_followed_with_their_plan(self):
+        self._work(self.dan, "school_visit")
+        self._work(self.dan, "ssa_activity")
+        people, _ = self._people()
+        dan = self._row(people, self.dan)
+        self.assertEqual((dan.school_count, dan.staff_visits), (0, 2))
+
+    def test_visits_count_what_team_plan_lists(self):
+        # SSA Support and a visit returned for correction are still planned;
+        # a cancelled visit and a partner's delivery are not the officer's.
+        self._work(self.cara, "school_visit")
+        self._work(self.cara, "ssa_activity")
+        self._work(self.cara, "school_visit", status="returned_by_pl")
+        self._work(self.cara, "school_visit", status="cancelled")
+        self._work(self.cara, "school_visit", delivery_type="partner")
+        self._work(self.cara, "core_visit", school=self.core)
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.core_visits, cara.client_visits), (1, 3))
+
+    def test_the_lead_total_carries_the_lead_s_own_target(self):
+        _, monitor = self._people()
+        team = next(lead for lead in monitor["leads"] if lead.key == self.lead.id)
+        self.assertEqual(team.visits_target, 280 + 560 + 560)
+        self.assertEqual(monitor["totals"].visits_target, 2 * 280 + 3 * 560)
+
+    def test_a_programme_lead_reads_their_own_team(self):
+        people, _ = self._people(self.lead_user)
+        self.assertEqual(
+            {p.key for p in people}, {self.lead.id, self.cara.id, self.dan.id}
+        )
+
+    def test_partner_schools_and_partner_activities_per_person(self):
+        partner = Partner.objects.create(name="People Partner")
+        self._work(
+            self.cara,
+            "school_visit",
+            delivery_type="partner",
+            monitored_by_staff_id=self.cara.id,
+            status="completed",
+        )
+        PartnerAssignment.objects.create(
+            school=self.core,
+            partner=partner,
+            assigning_staff_id=self.cara.id,
+            status=PartnerAssignment.UNSCHEDULED_STATUSES[0],
+        )
+        PartnerAssignment.objects.create(
+            school=self.core,
+            partner=partner,
+            assigning_staff_id=self.cara.id,
+            status="returned_to_staff",
+        )
+        people, monitor = self._people()
+        cara = self._row(people, self.cara)
+        self.assertEqual(cara.partner_assigned_schools, 2)
+        self.assertEqual(
+            (cara.partner_scheduled, cara.partner_delivered, cara.partner_awaiting),
+            (1, 1, 1),
+        )
+        self.assertEqual(monitor["totals"].partner_scheduled, 1)
+
+
+class TheExecutionMonitor(PeopleFixture):
+    def _people(self, **kwargs):
+        monitor = execution_monitor(self.cd_user, fy=FY, today=TODAY, **kwargs)
+        return [p for team in monitor["teams"] for p in team.people], monitor
+
+    def test_delivered_complete_overdue_and_verified(self):
+        done = self._work(
+            self.cara,
+            "school_visit",
+            status="completed",
+            salesforce_activity_id="SVE-1",
+        )
+        EvidenceRecord.objects.create(
+            activity=done, kind="visit_form", uri="f.pdf", uploaded_by=self.cara_user.id
+        )
+        self._work(self.cara, "school_visit", status="completed")  # nothing in
+        self._work(self.cara, "school_visit")  # due, not delivered
+        self._work(self.cara, "school_visit", planned_date=TODAY)  # due today
+        self._work(self.cara, "school_visit", planned_date=TODAY + timedelta(days=9))
+        self._work(self.cara, "school_visit", status="ia_verified")
+        self._work(self.cara, "school_visit", status="awaiting_ia_verification")
+        self._work(self.cara, "school_visit", status="returned_by_ia")
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.planned, cara.due, cara.delivered), (8, 7, 4))
+        self.assertEqual(cara.visits_delivered, 4)
+        self.assertEqual(cara.complete, 1)
+        self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 3))
+        # The day itself is not late, and returned work is its own list.
+        self.assertEqual((cara.overdue, cara.returned), (1, 1))
+        self.assertEqual((cara.verified, cara.awaiting_ia), (1, 1))
+        self.assertEqual(cara.target_progress, 1)
+
+    def test_the_list_behind_a_count(self):
+        late = self._work(self.cara, "school_visit")
+        self._work(self.dan, "school_visit")
+        _, monitor = self._people(list_key="overdue", person_id=self.cara.id)
+        self.assertEqual([row.id for row in monitor["rows"]], [late.id])
+        self.assertEqual(monitor["rows"][0].school_code, "PPL-1")
+
+    def test_partner_work_is_counted_for_its_monitor(self):
+        self._work(
+            self.dan,
+            "school_visit",
+            delivery_type="partner",
+            monitored_by_staff_id=self.cara.id,
+            status="completed",
+        )
+        people, _ = self._people()
+        cara, dan = self._row(people, self.cara), self._row(people, self.dan)
+        self.assertEqual((cara.partner_scheduled, cara.partner_delivered), (1, 1))
+        self.assertEqual((dan.partner_scheduled, dan.planned), (0, 0))
+
+    def test_a_team_total_is_the_sum_of_its_people(self):
+        self._work(self.cara, "school_visit", status="completed")
+        self._work(self.dan, "school_visit")
+        _, monitor = self._people()
+        team = next(t for t in monitor["teams"] if t.key == self.lead.id)
+        self.assertEqual((team.planned, team.delivered, team.overdue), (2, 1, 1))
+        self.assertEqual(team.visits_target, 280 + 2 * 560)
+
+
+class TheLensesOnThePages(PeopleFixture):
+    def test_the_country_page_opens_on_the_planning_monitor(self):
+        self.client.force_login(self.cd_user)
+        body = self.client.get("/country-planning-oversight/").content.decode()
+        self.assertIn("data-planning-monitor", body)
+        self.assertIn("Execution &amp; Completion", body)
+        plan = self.client.get("/country-planning-oversight/?view=planning")
+        self.assertNotIn("data-planning-monitor", plan.content.decode())
+
+    def test_the_execution_lens_on_both_pages(self):
+        for user, url in (
+            (self.cd_user, "/country-planning-oversight/?view=execution"),
+            (self.lead_user, "/team-planning-oversight/?view=execution"),
+        ):
+            with self.subTest(url=url):
+                self.client.force_login(user)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "data-execution-monitor")
+
+    def test_a_programme_lead_reaches_both_monitors_from_the_dashboard(self):
+        self.client.force_login(self.lead_user)
+        response = self.client.get("/team-planning-oversight/?view=monitor")
+        self.assertContains(response, "data-planning-monitor")
+        dashboard = self.client.get("/dashboard")
+        self.assertContains(dashboard, 'href="/team-planning-oversight/?view=monitor"')
+        self.assertContains(
+            dashboard, 'href="/team-planning-oversight/?view=execution"'
+        )
+
+
+class TrainingsCarryTheirIntervention(PeopleFixture):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.course = ActivityCatalogueItem.objects.create(
+            stable_code="PPL-DISCIPLESHIP",
+            source_name="Discipleship Dynamics",
+            display_name="Discipleship Dynamics",
+            activity_type="training",
+            status="active",
+            costing_profile="IN_SCHOOL_TRAINING",
+            evidence_profile="TRAINING_ATTENDANCE",
+            salesforce_record_type="TRAINING",
+            is_training_course=True,
+        )
+        ActivityInterventionMapping.objects.create(
+            catalogue_item=cls.course,
+            intervention="exposure_to_word_of_god",
+            mapping_mode="fixed",
+        )
+
+    def test_a_training_saved_without_one_takes_its_course_s(self):
+        training = self._work(
+            self.cara, "in_school_training", training_course=self.course
+        )
+        training.refresh_from_db()
+        self.assertEqual(training.focus_intervention, "exposure_to_word_of_god")
+        self.assertEqual(training.purpose_intervention, "exposure_to_word_of_god")
+
+    def test_the_planner_s_choice_is_kept(self):
+        training = self._work(
+            self.cara,
+            "in_school_training",
+            training_course=self.course,
+            focus_intervention="leadership",
+        )
+        training.refresh_from_db()
+        self.assertEqual(training.focus_intervention, "leadership")
+
+    def test_the_export_carries_the_training_name_intervention_and_school_ids(self):
+        session = Activity.objects.create(
+            cluster=self.cluster,
+            activity_type="cluster_training",
+            status="scheduled",
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.cara.id,
+            catalogue_item=self.course,
+            activity_name_snapshot="Discipleship Dynamics",
+        )
+        for school in (self.client_school, self.core):
+            ClusterActivityAttendance.objects.create(
+                activity=session, school=school, invited=True
+            )
+        self.client.force_login(self.cd_user)
+        response = self.client.get(f"/country-planning-oversight/export?fy={FY}")
+        rows = list(
+            csv.DictReader(b"".join(response.streaming_content).decode().splitlines())
+        )
+        trainings = [row for row in rows if row["Table"] == "Training"]
+        self.assertEqual({row["School ID"] for row in trainings}, {"PPL-1", "PPL-C"})
+        for row in trainings:
+            self.assertEqual(row["Training name"], "Discipleship Dynamics")
+            self.assertEqual(row["SSA intervention"], "Exposure to the Word of God")

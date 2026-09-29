@@ -480,6 +480,36 @@ class Activity(SoftDeleteModel):
             ),
         ]
 
+    def _link_training_intervention(self, update_fields) -> None:
+        """A training carries its course's SSA intervention (owner,
+        2026-09-29: "make sure the SSA interventions are linked to every
+        training created").
+
+        Only a training saved without one, and only where its course is
+        fixed to a single intervention: a planner's own choice is never
+        replaced, and an orientation or "Other" course moves none. A save
+        limited to other fields is left alone — it could not write these.
+        """
+        from apps.core.activity_types import TRAINING_TYPES
+
+        if self.activity_type not in TRAINING_TYPES:
+            return
+        if self.focus_intervention or self.purpose_intervention:
+            return
+        if update_fields is not None and "focus_intervention" not in update_fields:
+            return
+        from apps.activity_catalogue.training_intervention import intervention_for
+
+        intervention = intervention_for(
+            training_course_id=self.training_course_id,
+            catalogue_item_id=self.catalogue_item_id,
+        )
+        if not intervention:
+            return
+        self.focus_intervention = intervention
+        if update_fields is None or "purpose_intervention" in update_fields:
+            self.purpose_intervention = intervention
+
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
         # Normalize direct model/admin/import writes before Django prepares the
@@ -487,6 +517,7 @@ class Activity(SoftDeleteModel):
         # analytics, availability, or period boundaries.
         if self.scheduled_date is not None:
             self.scheduled_date = _normalize_datetime_value(self.scheduled_date)
+        self._link_training_intervention(kwargs.get("update_fields"))
         super().save(*args, **kwargs)
         try:
             from apps.core_schools.models import CoreActivitySlot

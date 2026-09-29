@@ -1462,18 +1462,20 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         ),
     ),
     # ── The planning monitor ─────────────────────────────────────────────────
-    # Each CCEO's year against the visits it should hold (owner, 2026-09-28):
-    # 560 visits, two per Core school and the rest client visits, the partner
-    # share beyond, training coverage and the schools not yet planned.
+    # Each person's year against the visits it should hold (owner, 2026-09-28,
+    # 2026-09-29): 280 for a Programme Lead, 560 for a CCEO, two per Core
+    # school and the rest client visits, the partner work, training coverage
+    # and the schools not yet planned. Delivery moved to the execution monitor.
     MetricSpec(
         key="monitor_visits_planned_share",
         label="Visits Planned Against Target",
         definition=(
-            "Staff visits planned in the fiscal year at the reader's Core, "
-            "Client and Core Trained schools, against the sum of each CCEO's "
-            "visit target — their own target where the Country Director set "
-            "one, else 560. Each target holds two visits per Core school; the "
-            "rest are client visits."
+            "Staff visits each person planned in the fiscal year — every "
+            "visit type and SSA Support, in any live state, counted by the "
+            "person responsible — against the sum of their visit targets: "
+            "280 for a Programme Lead, 560 for a CCEO (owner, 2026-09-29). "
+            "Each target holds two visits per Core school; the rest are "
+            "client visits."
         ),
         question="How far is the team's plan from the visits it is expected to hold?",
         category=Category.PROGRESS,
@@ -1481,7 +1483,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         service="apps.planning.planning_monitor.planning_monitor",
         source_models=("schools.School", "activities.Activity"),
         numerator="Live staff visits planned in the fiscal year",
-        denominator="The CCEOs' visit targets, summed",
+        denominator="Each Programme Lead's 280 and each CCEO's 560, summed",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
@@ -1610,37 +1612,14 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         refresh_events=("project_school_assigned",),
     ),
     MetricSpec(
-        key="monitor_visits_delivered_share",
-        label="Planned Visits Delivered",
-        definition=(
-            "Staff visits in the fiscal year already delivered — submitted, "
-            "awaiting verification or verified — against the staff visits "
-            "planned."
-        ),
-        question="How much of the plan has happened?",
-        category=Category.PROGRESS,
-        unit=Unit.PERCENT,
-        service="apps.planning.planning_monitor.planning_monitor",
-        source_models=("schools.School", "activities.Activity"),
-        numerator="Staff visits delivered in the fiscal year",
-        denominator="Staff visits planned in the fiscal year",
-        date_basis=DateBasis.PLANNED_DATE,
-        period=Period.FINANCIAL_YEAR,
-        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
-        owner_page="country_planning_oversight",
-        secondary_pages=("team_planning_oversight",),
-        filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/?view=monitor",
-        refresh_events=("activity_completed", "activity_verified"),
-    ),
-    MetricSpec(
         key="monitor_partner_share",
-        label="Client Schools With A Partner",
+        label="Schools Handed To Partners",
         definition=(
-            "Client and Core Trained schools with partner work — a dated "
-            "partner visit or a handover not yet dated — against the schools "
-            "beyond what each CCEO's client visits can reach, which are the "
-            "partner's."
+            "Distinct schools each person has handed to a partner in the "
+            "fiscal year — a handover they assigned or monitor that is not "
+            "withdrawn or returned, or a partner-delivered activity they "
+            "monitor — with the partner activities scheduled and the "
+            "handovers still waiting for the partner's date beside it."
         ),
         question="Is the work beyond staff reach handed to partners?",
         category=Category.PROGRESS,
@@ -1651,7 +1630,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "activities.Activity",
             "partners.PartnerAssignment",
         ),
-        numerator="Client-rule schools with partner work in the fiscal year",
+        numerator="Schools with a live partner handover or partner activity",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
@@ -1660,6 +1639,149 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="/country-planning-oversight/?view=monitor&gap=no_partner",
         refresh_events=("partner_assigned", "activity_scheduled"),
+    ),
+    # ── The execution & completion monitor ──────────────────────────────────
+    # Each person's plan as it is delivered, completed and verified (owner,
+    # 2026-09-29), beside the planning monitor and over the same people.
+    MetricSpec(
+        key="execution_visits_delivered_target",
+        label="Visits Delivered Against Target",
+        definition=(
+            "Staff visits each person delivered in the fiscal year — "
+            "submitted, awaiting verification or verified — against 280 for "
+            "a Programme Lead and 560 for a CCEO, summed."
+        ),
+        question="How far through the year's visits is the team?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity",),
+        numerator="Staff visits delivered in the fiscal year",
+        denominator="Each Programme Lead's 280 and each CCEO's 560, summed",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution",
+        refresh_events=("activity_completed", "activity_verified"),
+    ),
+    MetricSpec(
+        key="execution_due_delivered",
+        label="Due Work Delivered",
+        definition=(
+            "Staff work whose planned date has arrived and that is delivered, "
+            "against all staff work due to date. Future work is not late."
+        ),
+        question="Is the plan happening on time?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity",),
+        numerator="Due staff work delivered",
+        denominator="Staff work with a planned date on or before today",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution",
+        refresh_events=("activity_completed",),
+    ),
+    MetricSpec(
+        key="execution_overdue",
+        label="Overdue Work",
+        definition=(
+            "Staff work whose planned day has passed and that is not "
+            "delivered, not counting work returned for correction. The "
+            "planned day itself is not late."
+        ),
+        question="What should have happened and has not?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity",),
+        numerator="Due staff work not delivered",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution&list=overdue",
+        refresh_events=("activity_completed", "activity_rescheduled"),
+    ),
+    MetricSpec(
+        key="execution_complete_share",
+        label="Delivered Work Complete",
+        definition=(
+            "Delivered staff work with both the Salesforce ID and the form "
+            "(visit form or attendance register) in, against all delivered "
+            "staff work (apps.activities.completion_columns)."
+        ),
+        question="Is what happened finished?",
+        category=Category.QUALITY,
+        unit=Unit.PERCENT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity", "evidence.EvidenceRecord"),
+        numerator="Delivered staff work with the Salesforce ID and the form",
+        denominator="Delivered staff work",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution&list=missing_salesforce",
+        refresh_events=("evidence_uploaded", "salesforce_id_entered"),
+    ),
+    MetricSpec(
+        key="execution_awaiting_ia",
+        label="Delivered Work Awaiting IA",
+        definition=(
+            "Delivered staff work waiting on Impact Assessment's "
+            "verification, with the work already verified beside it."
+        ),
+        question="How much delivered work waits on verification?",
+        category=Category.QUALITY,
+        unit=Unit.COUNT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity",),
+        numerator="Staff work awaiting IA verification",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution&list=awaiting_ia",
+        refresh_events=("activity_verified",),
+    ),
+    MetricSpec(
+        key="execution_partner_delivered",
+        label="Partner Activities Delivered",
+        definition=(
+            "Partner-delivered activities in the fiscal year that are "
+            "delivered, against all the partner activities scheduled that "
+            "each person monitors."
+        ),
+        question="Is the partner work happening?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        service="apps.planning.execution_monitor.execution_monitor",
+        source_models=("activities.Activity",),
+        numerator="Partner activities delivered",
+        denominator="Partner activities scheduled",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD or IA",
+        owner_page="country_planning_oversight",
+        secondary_pages=("team_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/?view=execution",
+        refresh_events=("activity_completed",),
     ),
     # ── The country portfolio lens ───────────────────────────────────────────
     # Every school under the Programme Lead and the CCEO who hold it, and
