@@ -1,0 +1,421 @@
+/* Staff Activity Log (owner, 2026-09-29) — replaces Who's Online.
+   Served directly from static/css (page-level stylesheet), prefix "sal-":
+   class names avoid the legacy [class*=…] patterns the indexed build
+   compiles (static/build/css/selectors.json). */
+
+:root {
+  --sal-online: var(--edify-success, #16a34a);
+  --sal-idle: var(--edify-warning, #d97706);
+  --sal-offline: var(--edify-text-subtle, #94a3b8);
+  --sal-leave: var(--edify-info, #2563eb);
+  --sal-line: var(--edify-border, #e2e8f0);
+  --sal-soft: color-mix(in srgb, var(--edify-accent, #285b96) 6%, transparent);
+}
+
+/* Header button count. */
+.sal-count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding-inline: 0.35rem;
+  border-radius: 999px;
+  background: var(--edify-danger, #dc2626);
+  color: #fff;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Filters: the period rail beside the fields, one row from 48rem. */
+.sal-choose { align-items: end; }
+.sal-period nav[data-edify-tablist] { margin: 0; }
+.sal-clear {
+  align-self: end;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--edify-radius-sm, 8px);
+  color: var(--edify-text-subtle);
+  font-size: 18px;
+  text-decoration: none;
+}
+.sal-clear:hover { background: var(--sal-soft); color: var(--edify-text); }
+
+/* The table beside Team Insights; stacked below 80rem. */
+.sal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+@media (min-width: 80rem) {
+  .sal-layout { grid-template-columns: minmax(0, 1fr) 18rem; }
+}
+.sal-main { min-inline-size: 0; overflow: hidden; }
+.sal-tablehead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.75rem 1rem;
+}
+.sal-tablehead h2 { margin: 0; font-size: 14px; font-weight: 750; white-space: nowrap; }
+.sal-caption { font-size: 12px; color: var(--edify-text-subtle); }
+/* The scroll region is a size container, so an opened row's detail can be
+   exactly as wide as the part of the table on screen (100cqi), pinned to
+   its start while the columns scroll behind it. Nothing inside it is
+   position: fixed (floating menus go through the top layer). */
+.sal-scroll { overflow-x: auto; container-type: inline-size; }
+
+.sal-table { inline-size: 100%; border-collapse: collapse; font-size: 12px; }
+.sal-table thead th {
+  text-align: start;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0.55rem 0.6rem;
+  border-block-end: 1px solid var(--sal-line);
+}
+.sal-table td {
+  padding: 0.5rem 0.6rem;
+  border-block-end: 1px solid var(--sal-line);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.sal-table .sal-num { text-align: end; font-variant-numeric: tabular-nums; }
+/* Online rows are green, the opened row tinted (the reference). consistency.css
+   flattens every cell of a plain table to its surface (!important, (0,6,3))
+   with no opt-out for a record row, so these selectors repeat the table class
+   to outrank it — for this table alone (Who's Online did the same). */
+:root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--online > td {
+  background-color: color-mix(in srgb, var(--edify-success, #16a34a) 10%, var(--edify-surface-raised, #fff)) !important;
+}
+:root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--online > td:first-child {
+  box-shadow: inset 3px 0 0 var(--edify-success, #16a34a) !important;
+}
+:root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--open > td {
+  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 9%, var(--edify-surface-raised, #fff)) !important;
+}
+:root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-person--open > td:first-child {
+  box-shadow: inset 3px 0 0 var(--edify-accent, #285b96) !important;
+}
+:root :is(main, .drawer-body) table.sal-table.sal-table.sal-table.sal-table tbody tr.sal-detailrow > td {
+  background-color: color-mix(in srgb, var(--edify-accent, #285b96) 4%, var(--edify-surface-raised, #fff)) !important;
+}
+.sal-empty { text-align: center; padding: 2rem 1rem !important; color: var(--edify-text-subtle); }
+.sal-grouphead .edify-group-head__count { font-weight: 600; }
+/* A Programme Lead's heading stays at the table's start while the table
+   scrolls sideways. consistency.css makes a cell's .edify-cell-row a
+   full-width flex row and responsive-system.css caps the first thing in a
+   scrolled row's first cell at the identity measure, both !important; a
+   heading is neither, and the never-matching id outranks both for it alone. */
+.sal-table .sal-grouphead { position: sticky; inset-inline-start: 0.75rem; }
+.sal-table .edify-group-head > th > .sal-grouphead:not(#sal-grouphead-none) {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.75rem;
+  max-inline-size: none !important;
+  overflow: visible !important;
+}
+
+.sal-who { display: inline-flex; align-items: center; gap: 0.5rem; }
+.sal-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--edify-accent, #285b96) 14%, transparent);
+  color: var(--edify-accent, #285b96);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 750;
+}
+.sal-avatar--lg { inline-size: 2.5rem; block-size: 2.5rem; font-size: 14px; }
+.sal-name {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--edify-accent, #285b96);
+  cursor: pointer;
+  text-align: start;
+}
+.sal-name:hover { text-decoration: underline; }
+.sal-failed { color: var(--edify-danger, #dc2626); font-weight: 600; }
+
+/* Status: a dot and a word. The dot is paint only, exempt from the table's
+   plain-ink flattening (micro-ux.js). */
+.sal-state { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; }
+.sal-dot {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-radius: 50%;
+  background: var(--sal-offline);
+}
+.sal-dot--online { background: var(--sal-online); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sal-online) 22%, transparent); }
+.sal-dot--idle { background: var(--sal-idle); }
+.sal-dot--on_leave { background: var(--sal-leave); }
+.sal-dot--online::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--sal-online);
+  animation: sal-halo 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes sal-halo {
+  0% { transform: scale(1); opacity: 0.5; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sal-dot--online::after { animation: none; display: none; }
+}
+.sal-usage { font-weight: 650; }
+.sal-usage--good { color: var(--edify-success, #15803d); }
+.sal-usage--watch { color: var(--edify-warning, #b45309); }
+.sal-usage--alarm { color: var(--edify-danger, #b91c1c); }
+.sal-usage--calm { color: var(--edify-info, #1d4ed8); }
+.sal-usage--muted { color: var(--edify-text-subtle); }
+
+/* ── The opened row ─────────────────────────────────────────────────────
+   Its cell spans the table; its content is a page of its own, so the
+   table's one-line cell rules do not reach into it. */
+.sal-detailrow > td { padding: 0 !important; background: var(--sal-soft); }
+.sal-table .sal-detailrow > td > .sal-detail:not(#sal-none) {
+  display: block !important;
+  max-inline-size: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  padding: 0.9rem 1rem 1rem;
+  position: sticky;
+  inset-inline-start: 0;
+  inline-size: 100cqi;
+  box-sizing: border-box;
+}
+.sal-detail, .sal-detail * { white-space: normal; }
+.sal-loading { margin: 0; color: var(--edify-text-subtle); }
+
+.sal-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding-block-end: 0.75rem;
+}
+.sal-ident { min-inline-size: 12rem; flex: 1 1 14rem; }
+.sal-ident h3 { margin: 0; font-size: 16px; font-weight: 750; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.sal-ident p { margin: 0.15rem 0 0; font-size: 12px; color: var(--edify-text-subtle); }
+.sal-figures { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; }
+.sal-figures dt { font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.sal-figures dd { margin: 0; font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.sal-close {
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--edify-text-subtle);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+.sal-suggest {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--edify-radius-sm, 8px);
+  background: color-mix(in srgb, var(--sal-idle) 12%, transparent);
+  font-size: 12px;
+}
+
+.sal-quads {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+@media (min-width: 48rem) { .sal-quads { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 96rem) { .sal-quads { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sal-box {
+  min-inline-size: 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--sal-line);
+  border-radius: var(--edify-radius-md, 12px);
+  background: var(--edify-surface, #fff);
+}
+.sal-box h4, .sal-subhead { margin: 0; font-size: 13px; font-weight: 750; color: var(--edify-text); }
+.sal-subhead { margin-block-start: 0.75rem; }
+.sal-sub { margin: 0.15rem 0 0.6rem; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.sal-none { margin: 0; font-size: 12px; color: var(--edify-text-subtle); }
+
+.sal-sessions, .sal-timeline, .sal-follows { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.sal-sessions li { display: grid; gap: 0.1rem; padding: 0.35rem 0; border-block-end: 1px solid var(--sal-line); }
+.sal-sessions li:last-child { border-block-end: 0; }
+.sal-sessions__when { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 650; }
+.sal-sessions__nums, .sal-sessions__end { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); padding-inline-start: 1rem; }
+.sal-sessions__current .sal-sessions__end { color: var(--sal-online); font-weight: 650; }
+
+.sal-mini { inline-size: 100%; border-collapse: collapse; font-size: 12px; }
+.sal-mini th { text-align: start; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); font-weight: 650; padding: 0 0.3rem 0.3rem; }
+.sal-mini td { padding: 0.3rem; border-block-start: 1px solid var(--sal-line); }
+.sal-mini .sal-num { text-align: end; font-variant-numeric: tabular-nums; }
+.sal-meter {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 3rem;
+  block-size: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent);
+  overflow: hidden;
+}
+.sal-meter > span { display: block; block-size: 100%; border-radius: inherit; background: var(--edify-accent, #285b96); }
+/* Inside the detail's small table the platform's cell rules make every span
+   inline text; a meter is a shape. */
+.sal-detail :is(.sal-meter, .sal-meter > span, .sal-bars__col > span):not(#sal-none) { display: block !important; }
+.sal-detail .sal-bars__col:not(#sal-none) { display: flex !important; }
+
+.sal-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.75rem minmax(0, 1fr);
+  gap: 0 0.5rem;
+  padding: 0.3rem 0 0.3rem 0.9rem;
+}
+.sal-timeline li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.65rem;
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  border-radius: 50%;
+  background: var(--sal-online);
+}
+.sal-timeline li.sal-timeline__fail::before { background: var(--edify-danger, #dc2626); }
+.sal-timeline__at { color: var(--edify-text-subtle); font-variant-numeric: tabular-nums; grid-row: span 2; }
+.sal-timeline__what { font-weight: 650; }
+.sal-timeline__where { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
+
+.sal-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  block-size: 6rem;
+  overflow-x: auto;
+}
+.sal-bars li { flex: 1 0 1.4rem; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; block-size: 100%; }
+.sal-bars__col { display: flex; align-items: flex-end; inline-size: 70%; block-size: 100%; }
+.sal-bars__col > span { display: block; inline-size: 100%; min-block-size: 2px; border-radius: 3px 3px 0 0; background: var(--edify-accent, #285b96); }
+.sal-bars__day, .sal-bars__n { font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); white-space: nowrap; }
+.sal-bars__n { color: var(--edify-text); font-weight: 650; }
+
+.sal-follows li { padding: 0.35rem 0; border-block-end: 1px solid var(--sal-line); display: grid; gap: 0.1rem; }
+.sal-follows li:last-child { border-block-end: 0; }
+.sal-follows a { font-weight: 650; color: var(--edify-accent, #285b96); }
+.sal-follows span { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
+.sal-follows__late span { color: var(--edify-danger, #b91c1c); }
+
+/* ── Team Insights ─────────────────────────────────────────────────────── */
+.sal-aside { padding: 0.8rem 0.85rem; display: grid; gap: 1rem; min-inline-size: 0; }
+.sal-aside__head h2 { margin: 0; font-size: 15px; font-weight: 750; }
+.sal-aside__head p { margin: 0.1rem 0 0; font-size: 12px; color: var(--edify-text-subtle); }
+.sal-aside__part h3 { margin: 0 0 0.5rem; font-size: 13px; font-weight: 700; }
+.sal-live { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.sal-live__big { margin: 0; font-size: 12px; color: var(--edify-text-subtle); }
+.sal-live__big strong { display: block; font-size: 26px; line-height: 1.1; color: var(--edify-text); }
+.sal-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; font-size: 12px; }
+.sal-legend li { display: flex; align-items: center; gap: 0.4rem; }
+.sal-legend span { color: var(--edify-text-subtle); margin-inline-start: auto; padding-inline-start: 0.75rem; font-variant-numeric: tabular-nums; }
+.sal-note { margin: 0.4rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.sal-modlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; font-size: 12px; }
+.sal-modlist li { display: grid; grid-template-columns: 6rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.5rem; }
+.sal-modlist__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sal-modlist__pct { text-align: end; color: var(--edify-text-subtle); font-variant-numeric: tabular-nums; }
+.sal-bars--team { block-size: 6.5rem; }
+.sal-devices { list-style: none; margin: 0 0 0.4rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 12px; }
+.sal-split { display: flex; block-size: 0.45rem; border-radius: 999px; overflow: hidden; margin: 0; background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent); }
+.sal-split > span { display: block; block-size: 100%; }
+.sal-split__desktop { background: var(--edify-accent, #285b96); }
+.sal-split__mobile { background: var(--sal-online, #16a34a); }
+.sal-split__tablet { background: #8b5cf6; }
+
+/* ── Follow-up drawer and page ─────────────────────────────────────────── */
+.sal-snapshot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--edify-border, #e2e8f0);
+  border-radius: var(--edify-radius-sm, 8px);
+  font-size: 12px;
+}
+.sal-snapshot dt { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.sal-snapshot dd { margin: 0; font-weight: 700; color: var(--edify-text); }
+.sal-formpair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.sal-quote {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-inline-start: 3px solid var(--edify-accent, #285b96);
+  background: color-mix(in srgb, var(--edify-accent, #285b96) 5%, transparent);
+  font-size: 13px;
+  color: var(--edify-text);
+}
+.sal-steps { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.staff-activity-error { margin: 0; padding: 0.5rem 0.75rem; border-radius: 8px; background: color-mix(in srgb, #dc2626 10%, transparent); color: #b91c1c; font-size: 12px; font-weight: 650; }
+.sal-page-body { padding: 1rem 1.25rem; }
+
+.sal-narrow { max-inline-size: 54rem; margin-inline: auto; }
+/* In the narrow right column a module reads name, time and actions on one
+   line with its share bar under them. */
+.sal-modlist--detail li { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0.15rem 0.6rem; }
+.sal-modlist--detail li > .sal-meter { grid-column: 1 / -1; order: 1; }
+.sal-modlist--detail .sal-modlist__head > span:nth-child(2) { display: none; }
+.sal-modlist__head { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 650; }
+.sal-bars--person li { grid-template-rows: minmax(0, 1fr) auto; }
+
+/* The right column: Team Insights, then the opened person's cards stacked
+   (owner, 2026-09-29). */
+.sal-side { display: grid; gap: 1rem; min-inline-size: 0; align-content: start; }
+.sal-picked { padding: 0.8rem 0.85rem; min-inline-size: 0; }
+.sal-picked .sal-quads { grid-template-columns: minmax(0, 1fr) !important; }
+.sal-picked .sal-top { gap: 0.5rem 1rem; }
+.sal-picked .sal-figures { gap: 0.4rem 1rem; }
+.sal-picked .sal-box { padding: 0.6rem 0.65rem; }
+.sal-picked .sal-avatar--lg { inline-size: 2rem; block-size: 2rem; }
+
+/* Compact rows (owner, 2026-09-29: "reduce the space between the rows to
+   make the table smaller"). The name is a link-like button, not a 28px table
+   control, so the platform's control size is taken off it; its tap area
+   stays generous through ::after on touch screens. */
+:root table.sal-table.sal-table tbody :is(td, th):not(#sal-none) {
+  padding-block: 0.2rem !important;
+}
+:root table.sal-table.sal-table .sal-name:not(#sal-none) {
+  min-block-size: 0 !important;
+  block-size: auto !important;
+  padding: 0 !important;
+  line-height: 1.3 !important;
+  position: relative;
+}
+@media (pointer: coarse) {
+  .sal-table .sal-name::after { content: ""; position: absolute; inset: -0.6rem -0.25rem; }
+}
+.sal-table .sal-avatar { inline-size: 1.4rem; block-size: 1.4rem; font-size: var(--edify-text-micro-size); }
+/* The Actions trigger keeps the platform's 24px; its cell gives up its
+   padding so the trigger, not the padding, sets the row's height. */
+:root table.sal-table.sal-table tbody tr.sal-person > td:last-child:not(#sal-none) { padding-block: 0 !important; }
+/* consistency.css fixes every table row at 2rem (!important); this table's
+   rows are 1.6rem, the Actions trigger's 24px plus a hairline. */
+:root :is(main, .drawer-body) table.sal-table.sal-table tbody tr:not(#sal-none) { block-size: 1.6rem !important; }
+/* Status leads the row (owner, 2026-09-29), in the cell the platform treats
+   as the row's identity; it stays a dot and a word side by side. */
+:root table.sal-table.sal-table .sal-state:not(#sal-none) { display: inline-flex !important; align-items: center; gap: 0.4rem; }
+.sal-dot--offline { background: #94a3b8; }

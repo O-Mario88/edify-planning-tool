@@ -174,8 +174,11 @@
           // Planning status chips, and Partner Monitoring's in the same
           // design, retain their semantic colour and compact border; Who's
           // Online's status light is nothing but its paint.
-          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip, .admin-presence-light')
+          && !element.matches('.school-planning-badge, .school-planning-badges, .partner-status-chip, .admin-presence-light, .sal-dot')
           && !(popup && table.contains(popup))
+          // An opened row's detail (the Staff Activity Log's, 2026-09-29) is
+          // a page of its own inside one spanning cell, not a cell's text.
+          && !element.closest('[data-table-detail]')
           && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
         element.classList.toggle('edify-table-plain-content', plain);
       });

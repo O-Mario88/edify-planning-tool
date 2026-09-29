@@ -139,6 +139,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
         "apps/targets/ledger_sync.py",
@@ -228,6 +229,7 @@
         "school_directory",
         "settings",
         "ssa_performance",
+        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "todos",
@@ -628,6 +630,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
@@ -720,6 +723,7 @@
         "reports",
         "school_directory",
         "settings",
+        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "todos",
@@ -946,6 +950,7 @@
         "apps/ssa/presentation.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
@@ -1454,6 +1459,7 @@
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
@@ -1544,6 +1550,7 @@
         "school_directory",
         "school_profile",
         "settings",
+        "staff_activity",
         "staff_directory",
         "target_distribution",
         "team_planning_oversight",
@@ -2280,6 +2287,7 @@
         "apps/realtime/domain_events.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -2343,6 +2351,7 @@
         "report_problem",
         "school_directory",
         "settings",
+        "staff_activity",
         "team_availability",
         "team_coaching",
         "team_planning_oversight",
@@ -2512,6 +2521,7 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/services.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
         "apps/targets/ledger_sync.py",
@@ -2788,6 +2798,7 @@
         "apps/professional_development/approval_service.py",
         "apps/professional_development/completion_service.py",
         "apps/professional_development/services.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -2917,6 +2928,7 @@
         "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/professional_development/services.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -3022,6 +3034,7 @@
         "apps/hr/review_authority.py",
         "apps/messaging/services.py",
         "apps/professional_development/services.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -3268,6 +3281,7 @@
         "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -3330,6 +3344,7 @@
         "report_problem",
         "school_directory",
         "settings",
+        "staff_activity",
         "team_coaching",
         "team_planning_oversight",
         "team_targets",
@@ -3465,6 +3480,7 @@
         "apps/ssa/recommendation_models.py",
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
@@ -3633,6 +3649,7 @@
         "apps/ssa/recommendation_models.py",
         "apps/ssa/recommendation_service.py",
         "apps/ssa/services.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/telemetry/middleware.py"
@@ -3801,6 +3818,7 @@
         "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -4000,6 +4018,7 @@
         "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/telemetry/middleware.py"
       ],
@@ -4431,6 +4450,7 @@
         "apps/schools/models.py",
         "apps/ssa/plan_alignment.py",
         "apps/ssa/signals.py",
+        "apps/staff_activity/templatetags/staff_activity_tags.py",
         "apps/targets/apps.py",
         "apps/targets/ledger_sync.py",
         "apps/targets/my_targets.py",
@@ -4611,9 +4631,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "7db95fcb3ad726afd881f8ee7f87045b86939331fe3d197269454be2fffdc84e",
-    "sources": "189c4867777e88faedd939e943d9b4648199228f798c874918b512a6398764d9",
-    "sourceCount": 225,
+    "payload": "0367e1ff289dd25de307a8eeaa603526ed060fcac6fb52e6c8876594b974e7d0",
+    "sources": "c4d27b336148b591ffd575a638354d1a61b5d93057d3bd3ca8050d415adb2532",
+    "sourceCount": 226,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

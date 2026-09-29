@@ -8,7 +8,7 @@ alpine:init, which fires when the deferred Alpine above starts.{% endcomment %}
 
 {% block title %}Country Planning Oversight · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% if active_oversight_view == "coverage" or active_oversight_view == "execution" %}
-<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20260929cpo12">{% endif %}{% if show_whos_online %}<link rel="stylesheet" href="{% static 'css/components/presence.css' %}?v=20260928presence12">{% endif %}{% endblock %}
+<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20260929cpo12">{% endif %}{% endblock %}
 
 {% block shell_content %}
 {% if active_oversight_view == "coverage" %}
@@ -18,24 +18,8 @@ Programme Lead, with the Country Director's "Follow Up with PL". Its lens strip
 is the shared one, so the Country Plan and the Country Portfolio stay a click
 away.{% endcomment %}
 {% include "partials/country_oversight/page.html" %}
-{% if show_whos_online %}
-{% comment %}Who's Online under the planning tab (owner, 2026-09-28): who is
-using the system, for how long and on what — the table the Admin and the
-Country Director read. Outside the dashboard's swap target, and fetched on its
-own from /dashboard/whos-online, so the planning figures never wait for it and
-a filter change never reloads it.{% endcomment %}
-<section class="cpo-presence px-4 sm:px-6 pb-5" aria-label="Who's Online" data-no-titlebar>
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
-    {% comment %}The host the panel's period filter and pager swap into
-    (hx-target "closest [data-presence-host]"), as on every dashboard that
-    draws it.{% endcomment %}
-    <div class="presence-host" data-presence-host data-pager-fragment="/dashboard/whos-online"
-         hx-get="/dashboard/whos-online{% if presence_query %}?{{ presence_query }}{% endif %}" hx-trigger="load" hx-swap="innerHTML">
-      <p class="cpo-muted">Reading who is online…</p>
-    </div>
-  </div>
-</section>
-{% endif %}
+{% comment %}Who's Online, which sat here from 2026-09-28, became the Staff
+Activity Log (owner, 2026-09-29): /staff-activity.{% endcomment %}
 {% elif active_oversight_view == "execution" %}
 {% comment %}Country Execution & Completion Oversight (owner, 2026-09-28): did
 the planned work happen, was it verified and closed, and who holds what is
