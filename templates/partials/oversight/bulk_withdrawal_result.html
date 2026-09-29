@@ -1,0 +1,11 @@
+{% comment %}A bulk withdrawal that moved nothing (2026-09-29): the drawer stays
+open with each school's reason. One that moved anything closes and reloads
+the page with the summary instead.{% endcomment %}
+<div class="edify-note space-y-2" data-tone="danger" role="alert" data-drawer-stay-open data-bulk-withdrawal-result>
+  <p class="edify-note__title">{{ summary }}</p>
+  <ul class="space-y-1 text-sm">
+    {% for o in outcomes %}
+    <li data-outcome="{{ o.outcome }}"><strong>{{ o.school|default:"Unknown school" }}</strong> — {{ o.message }}</li>
+    {% endfor %}
+  </ul>
+</div>

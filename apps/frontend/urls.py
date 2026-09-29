@@ -826,6 +826,11 @@ urlpatterns = [
         name="partner_withdrawal_submit",
     ),
     path(
+        "partner-oversight/withdraw/bulk",
+        oversight_views.partner_bulk_withdrawal_view,
+        name="partner_bulk_withdrawal",
+    ),
+    path(
         "partner-oversight/withdraw/review",
         oversight_views.partner_withdrawal_review_view,
         name="partner_withdrawal_review",
@@ -894,6 +899,11 @@ urlpatterns = [
         "planning/assign-partner-modal",
         planning_views.assign_partner_modal_view,
         name="planning_assign_partner_modal",
+    ),
+    path(
+        "planning/bulk-assign-partner-drawer",
+        planning_views.bulk_assign_partner_drawer_view,
+        name="planning_bulk_assign_partner_drawer",
     ),
     path(
         "planning/assign-partner-action",
@@ -1087,6 +1097,11 @@ urlpatterns = [
         "activities/<str:activity_id>/start",
         my_plan_views.start_activity_drawer_view,
         name="start_activity_drawer",
+    ),
+    path(
+        "activities/<str:activity_id>/facilitator",
+        my_plan_views.facilitator_drawer_view,
+        name="activity_facilitator_drawer",
     ),
     path(
         "activities/<str:activity_id>/start/action",

@@ -58,18 +58,27 @@ def find_pair_trainings_carrying_cost(apps=None) -> list[str]:
 
     Takes the migration's historical ``apps`` so the migration can ask
     without touching live models; the command passes nothing."""
+    from django.db.models import Exists, OuterRef
+
     if apps is not None:
         Activity = apps.get_model("activities", "Activity")
+        CostLine = apps.get_model("activities", "ActivityScheduleCostLine")
     else:
         from apps.activities.models import Activity
+        from apps.activities.models import ActivityScheduleCostLine as CostLine
 
+    # A partner facilitator's fee is the one line a pair Training keeps
+    # (owner, 2026-09-29; apps.activities.facilitation): not visit cost.
+    visit_cost = CostLine.objects.filter(activity_id=OuterRef("pk")).exclude(
+        line_item_type="facilitation"
+    )
     return list(
         Activity.objects.filter(
             UNCOSTED_PAIR_TRAINING,
+            Exists(visit_cost),
             deleted_at__isnull=True,
             scheduled_date__isnull=False,
             status__in=MOVABLE_STATUSES,
-            schedule_cost_lines__isnull=False,
         )
         .distinct()
         .order_by("id")

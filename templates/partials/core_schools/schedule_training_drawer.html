@@ -111,6 +111,10 @@ class="space-y-4 text-[13px] text-slate-700"
   </select>
 </div>
 
+<template x-if="delivery === 'staff'">
+{% include "partials/activities/facilitated_by_field.html" with field_id="core_facilitating_partner_id" %}
+</template>
+
 <div class="space-y-1">
   <label for="training_purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose and description</label>
   <textarea name="training_purpose" id="training_purpose" rows="3" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Goal of this training"></textarea>

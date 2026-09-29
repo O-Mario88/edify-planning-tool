@@ -23,6 +23,7 @@ unscheduled) and Resolve Exception on a hand-back. `row_id` is
 <tr class="partner-plan-row" data-assignment="{{ item.partner_assignment_id }}" data-core-assignment{% if item.awaits_staff_decision %} data-returned{% endif %}{% if item.project_id %} data-project="{{ item.project_id }}"{% endif %}
     @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
     :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
+  {% if selectable %}<td class="school-plan-table__select">{% if item.withdrawal_label %}<label class="school-record-row__select" for="withdraw-pick-{{ row_id }}"><input type="checkbox" id="withdraw-pick-{{ row_id }}" data-withdraw-pick value="{{ item.partner_assignment_id }}" x-model="selected"><span class="sr-only">Select {{ item.school_name }} to withdraw</span></label>{% endif %}</td>{% endif %}
   <td data-label="School ID"><span class="partner-plan-table__code">{{ item.school_code|default:"—" }}</span></td>
   <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
     <button type="button" class="school-plan-table__name-toggle"
@@ -82,7 +83,7 @@ unscheduled) and Resolve Exception on a hand-back. `row_id` is
 </tr>
 <tr id="partner-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="11">
+  <td colspan="{% if selectable %}12{% else %}11{% endif %}">
     <dl class="school-record-row__metadata">
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
       {% if item.stage == "awaiting_schedule" and item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}

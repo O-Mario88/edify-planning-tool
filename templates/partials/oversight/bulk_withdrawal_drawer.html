@@ -1,0 +1,104 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+{% comment %}
+Withdraw the ticked schools from their partner at once (owner, 2026-09-29:
+"check all the schools they want to withdraw and be able to withdraw").
+
+Every school is previewed by the same functions as the single withdrawal
+drawer and then withdrawn by the same service, one at a time
+(apps.partners.bulk_withdrawal). What each will get — withdrawn, sent to the
+Program Lead (work a partner has already scheduled, for a CCEO), or left
+with the reason — is listed before anyone confirms.
+{% endcomment %}
+
+{% block drawer_title %}Withdraw selected schools{% endblock %}
+{% block drawer_subtitle %}{% if plan %}{{ plan|length }} selected{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if error %}
+<p class="text-sm edify-text-muted">{{ error }}</p>
+{% else %}
+<form hx-post="/partner-oversight/withdraw/bulk"
+      hx-target="#bulk-withdrawal-result"
+      hx-swap="innerHTML"
+      class="space-y-4 pr-1 edify-drawer-scroll"
+      data-bulk-withdrawal>
+  {% csrf_token %}
+  {% for row in actionable %}<input type="hidden" name="assignment_ids" value="{{ row.assignment_id }}">{% endfor %}
+
+  <section aria-labelledby="bwd-schools">
+    <h3 id="bwd-schools" class="text-sm font-semibold mb-2">Schools</h3>
+    <ul class="space-y-1.5 text-sm">
+      {% for row in plan %}
+      <li class="flex items-start justify-between gap-3" data-bulk-row="{{ row.assignment_id }}">
+        <span>{{ row.school|default:"Unknown school" }}{% if row.preview %} <span class="edify-text-caption edify-text-muted">· {{ row.preview.partner }}</span>{% endif %}</span>
+        <span class="edify-text-caption whitespace-nowrap {% if row.mode == 'withdraw' %}text-slate-700{% elif row.mode == 'request' %}text-amber-700{% else %}edify-text-muted{% endif %}">
+          {% if row.mode == 'withdraw' %}{{ row.preview.kind_label }}{% elif row.mode == 'request' %}Request to Program Lead{% else %}Not included{% endif %}
+        </span>
+      </li>
+      {% if row.mode != 'withdraw' and row.mode != 'request' %}<li class="edify-text-caption edify-text-muted -mt-1">{{ row.mode }}</li>{% endif %}
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% if actionable %}
+  <section aria-labelledby="bwd-impact">
+    <h3 id="bwd-impact" class="text-sm font-semibold mb-2">Impact</h3>
+    <ul class="space-y-1.5 text-sm">
+      <li class="flex items-start justify-between gap-3"><span>Planned cost on this work</span><span class="tabular-nums font-semibold whitespace-nowrap">UGX {{ planned_cost|intcomma }}</span></li>
+      <li class="flex items-start justify-between gap-3"><span>Leaves the live budget</span><span class="tabular-nums font-semibold whitespace-nowrap">UGX {{ budget_removed|intcomma }}</span></li>
+      {% if request_count %}<li class="edify-text-caption edify-text-muted">{{ request_count }} already scheduled by the partner: your Program Lead decides those.</li>{% endif %}
+    </ul>
+  </section>
+
+  <div class="space-y-1">
+    <label for="bwd-reason-category" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+    <select id="bwd-reason-category" name="reason_category" required class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
+      <option value="">Choose a reason…</option>
+      {% for value, label in reasons %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+    <p class="edify-text-caption edify-text-muted">One reason for every school selected. Decides whether it counts against the partner's performance.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="bwd-partner-reason" class="block edify-text-caption font-semibold text-slate-600">Explanation for the partner <span class="text-rose-500">*</span></label>
+    <textarea id="bwd-partner-reason" name="partner_facing_reason" required rows="3" minlength="20" maxlength="600"
+              class="w-full px-3 py-2 rounded-control border edify-border text-[16px] sm:text-[13px]"
+              placeholder="Why this work is being withdrawn and what happens next"></textarea>
+  </div>
+
+  <div class="space-y-1">
+    <label for="bwd-internal-note" class="block edify-text-caption font-semibold text-slate-600">Internal note <span class="font-normal text-slate-500">(optional)</span></label>
+    <textarea id="bwd-internal-note" name="internal_note" rows="2" maxlength="2000"
+              class="w-full px-3 py-2 rounded-control border edify-border text-[16px] sm:text-[13px]"
+              placeholder="Staff only, never shown to the partner"></textarea>
+  </div>
+
+  <div class="space-y-3" x-data="{ disposition: 'return_to_planning' }">
+    <div class="space-y-1">
+      <label for="bwd-disposition" class="block edify-text-caption font-semibold text-slate-600">What happens next <span class="text-rose-500">*</span></label>
+      <select id="bwd-disposition" name="disposition" required x-model="disposition" class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
+        {% for value, label in dispositions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div x-show="disposition === 'reassign_partner'" x-cloak class="space-y-1">
+      <label for="bwd-replacement-partner" class="block edify-text-caption font-semibold text-slate-600">Replacement partner</label>
+      <select id="bwd-replacement-partner" name="replacement_partner_id" class="min-h-11 w-full px-3 rounded-control border edify-border text-[16px] sm:text-[13px]">
+        <option value="">Choose the partner taking these on…</option>
+        {% for p in partners %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  {% endif %}
+
+  <div id="bulk-withdrawal-result" class="mt-1"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if actionable %}
+    <button type="submit" class="btn btn-primary h-8">{% if withdraw_count and request_count %}Withdraw {{ withdraw_count }} · request {{ request_count }}{% elif request_count %}Send {{ request_count }} to Program Lead{% else %}Withdraw {{ withdraw_count }} school{{ withdraw_count|pluralize }}{% endif %}</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

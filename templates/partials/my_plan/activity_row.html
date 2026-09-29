@@ -65,6 +65,20 @@ Reschedule Activity
 </button>
 {% endif %}
 
+{% comment %}"Facilitated by" on a planned training (owner, 2026-09-29).{% endcomment %}
+{% if row.can_change_facilitator and not viewer_is_partner %}
+<button
+type="button"
+hx-get="/activities/{{ row.id }}/facilitator"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="close()"
+class="row-menu__item" role="menuitem"
+>
+Change Facilitator
+</button>
+{% endif %}
+
 <!-- Start Activity -->
 {% if row.status == 'scheduled' or row.status == 'partner_scheduled' or row.status == 'assigned_to_partner' %}
 <button

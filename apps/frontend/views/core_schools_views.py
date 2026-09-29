@@ -1072,6 +1072,7 @@ def core_schedule_training_action(request):
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+    facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     if not catalogue_item_id:
         return error_fragment(
@@ -1132,6 +1133,13 @@ def core_schedule_training_action(request):
         # Omit the key entirely for staff delivery — an empty string would be
         # stamped into the budget line's partner FK and violate the constraint.
         **({"assignedPartnerId": partner_id} if partner_id else {}),
+        # "Facilitated by" (owner, 2026-09-29) names a partner only for
+        # training staff deliver; blank is Staff.
+        **(
+            {"facilitatingPartnerId": facilitating_partner_id}
+            if facilitating_partner_id and not partner_id
+            else {}
+        ),
     }
 
     if scheduled_date:

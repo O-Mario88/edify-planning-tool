@@ -24,13 +24,33 @@ the same rule the Planning badges keep.
 {% endcomment %}
 {% for table in workspace_tables %}
 {% paginate table.items table.page_param as page %}
-<section class="partner-plan-group" aria-labelledby="partner-plan-{{ table.page_param }}">
+{% comment %}The tick column is drawn only when a row on this page can be
+withdrawn (any_attr): an all-empty tick column would be pinned as the row's
+identity on phones.{% endcomment %}
+{% with selectable=page.rows|any_attr:"withdrawal_label" %}
+<section class="partner-plan-group" aria-labelledby="partner-plan-{{ table.page_param }}"{% if selectable and table.columns == 'school' or selectable and table.columns == 'core' %} x-data="{ selected: [] }" data-bulk-withdraw-table{% endif %}>
   <h3 id="partner-plan-{{ table.page_param }}" class="partner-plan-group__title" data-no-titlebar>{{ table.title }} ({{ table.items|length }})</h3>
+  {% if selectable and table.columns == 'school' or selectable and table.columns == 'core' %}
+  {% comment %}Bulk withdraw (owner, 2026-09-29): tick the schools, then
+  Withdraw selected. Only rows that can be withdrawn carry a box; the drawer
+  previews each and runs the single withdrawal for each.{% endcomment %}
+  <div class="school-directory-listbar" x-cloak x-show="selected.length > 0">
+    <div class="school-directory-listbar__bulk" aria-live="polite">
+      <strong><span x-text="selected.length"></span> selected</strong>
+      <form hx-get="/partner-oversight/withdraw/bulk" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+        <template x-for="id in selected" :key="id"><input type="hidden" name="assignment_ids" :value="id"></template>
+        <button type="submit" data-bulk-withdraw>Withdraw selected</button>
+      </form>
+      <button type="button" class="is-clear" @click="selected = []">Clear</button>
+    </div>
+  </div>
+  {% endif %}
   <div class="school-plan-table-scroll">
     <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-monitoring-table="{{ table.kind }}"{% if table.columns == 'school' %} data-partner-school-columns{% elif table.columns == 'core' %} data-partner-core-columns{% endif %} x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
       <caption class="sr-only">{{ table.title }} for {{ active_partner.name }}{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
       {% if table.columns == 'core' %}
       <thead><tr>
+{% if selectable %}        <th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" aria-label="Select every school on this page that can be withdrawn" @change="selected = $event.target.checked ? Array.from($el.closest('table').querySelectorAll('tbody input[data-withdraw-pick]')).map(i => i.value) : []"></label></th>{% endif %}
         <th scope="col">School ID</th>
         <th scope="col">School Name</th>
         <th scope="col">Staff Name</th>
@@ -48,6 +68,7 @@ the same rule the Planning badges keep.
       {% empty %}<tr><td colspan="11" class="partner-plan-table__empty">No Core Schools assigned to this Partner for the selected team and filters.</td></tr>{% endfor %}</tbody>
       {% elif table.columns == 'school' %}
       <thead><tr>
+{% if selectable %}        <th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" aria-label="Select every school on this page that can be withdrawn" @change="selected = $event.target.checked ? Array.from($el.closest('table').querySelectorAll('tbody input[data-withdraw-pick]')).map(i => i.value) : []"></label></th>{% endif %}
         <th scope="col">School ID</th>
         <th scope="col">School Name</th>
         <th scope="col">Staff Name</th>
@@ -82,5 +103,6 @@ the same rule the Planning badges keep.
   </div>
   {% include "components/table_pager.html" with pager=page param=table.page_param pagination_label=table.title %}
 </section>
+{% endwith %}
 {% endfor %}
 {% if plan_reads_forward %}<p class="px-4 py-3 edify-text-caption edify-text-muted" data-plan-period>Read for {{ plan_period_label }}: work a Partner dates into the next financial year stays here, on its date.</p>{% endif %}

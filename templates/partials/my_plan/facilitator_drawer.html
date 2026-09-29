@@ -1,0 +1,24 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Facilitated by{% endblock %}
+{% block drawer_subtitle %}{% firstof act.activity_name_snapshot act.get_activity_type_display %}{% if act.cluster %} · {{ act.cluster.name }}{% elif act.school %} · {{ act.school.name }}{% endif %}{% if act.scheduled_date %} · {{ act.scheduled_date|date:"j M Y" }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="/activities/{{ act.id }}/facilitator"
+hx-target="#facilitator-errors"
+class="space-y-4 text-[12px] font-semibold text-slate-600"
+>
+<div id="facilitator-errors"></div>
+
+<p class="edify-text-caption text-slate-500">Now facilitated by <strong>{{ current_facilitator }}</strong>. Staff still run the training and complete it; a partner facilitator is told the date and invoices the facilitation fee.</p>
+
+{% include "partials/activities/facilitated_by_field.html" with field_id="change_facilitating_partner_id" selected=act.facilitating_partner_id %}
+
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Save</button>
+</div>
+</form>
+{% endblock %}
