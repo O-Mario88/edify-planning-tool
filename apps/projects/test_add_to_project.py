@@ -329,9 +329,11 @@ class CoordinatorPortfolioTest(ProjectFixture):
         self.assertContains(page, "Added by")
         self.assertContains(page, "awaiting planning")
 
-    def test_removing_a_school_keeps_the_history_and_the_work(self):
+    def test_a_school_with_project_work_cannot_be_removed(self):
+        from apps.core.exceptions import ConflictError
+
         self._add()
-        activity = Activity.objects.create(
+        Activity.objects.create(
             activity_type="school_visit",
             school=self.school,
             project_id=self.project.id,
@@ -342,6 +344,21 @@ class CoordinatorPortfolioTest(ProjectFixture):
             responsible_staff_id=self.coordinator.id,
             delivery_type="staff",
         )
+        with self.assertRaisesMessage(ConflictError, "already been completed"):
+            project_services.remove_school(
+                self.project.id,
+                self.school.school_id,
+                self.coordinator_user,
+                reason="Left the cohort.",
+            )
+        self.assertTrue(
+            ProjectSchoolAssignment.objects.filter(
+                project=self.project, school=self.school
+            ).exists()
+        )
+
+    def test_removing_a_school_keeps_the_history(self):
+        self._add()
         project_services.remove_school(
             self.project.id,
             self.school.school_id,
@@ -357,11 +374,9 @@ class CoordinatorPortfolioTest(ProjectFixture):
             project=self.project, school=self.school
         )
         self.assertEqual(history.removal_reason, "Left the cohort.")
-        self.assertEqual(history.activities_delivered, 1)
-        activity.refresh_from_db()
-        self.assertEqual(activity.project_id, self.project.id)
+        self.assertEqual(history.activities_delivered, 0)
         self.assertTrue(
-            AuditLog.objects.filter(action="project.school_removed").exists()
+            AuditLog.objects.filter(action="project.school_withdrawn").exists()
         )
         # It can join again afterwards.
         self._add()

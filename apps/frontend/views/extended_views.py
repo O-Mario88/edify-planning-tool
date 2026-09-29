@@ -3304,6 +3304,26 @@ def project_bulk_assign_drawer_view(request, project_id):
             return response
         reason = (request.POST.get("reason") or "").strip()
         schools = writable.filter(id__in=request.POST.getlist("school_ids"))
+        # A selection larger than the caller's allocation has left is refused
+        # whole, not filled in list order (brief, 2026-09-29).
+        from apps.projects.capacity import assert_batch_fits, consuming_staff_id
+
+        try:
+            assert_batch_fits(
+                project,
+                consuming_staff_id(request.user),
+                schools.exclude(
+                    id__in=ProjectSchoolAssignment.objects.filter(
+                        project=project
+                    ).values("school_id")
+                ).count(),
+            )
+        except BadRequest as exc:
+            return render(
+                request,
+                "partials/schools/toast_success.html",
+                {"message": str(exc)},
+            )
         assigned, duplicates, refused = [], [], []
         assigned_ids = []
         for school in schools:
@@ -3376,10 +3396,16 @@ def project_bulk_assign_drawer_view(request, project_id):
         .select_related("sub_county")
         .order_by("sub_county__name", "name")[:300]
     )
+    from apps.projects.capacity import annotate_allocations
+
+    (project,) = annotate_allocations([project], request.user)
     context = {
         "project": project,
         "schools": candidates,
         "accepts_new_work": project.accepts_new_work,
+        "allocation": project.allocation,
+        "capacity_left": project.capacity_remaining,
+        "capacity_block": project.capacity_block,
         "drawer_type": "center",
         "drawer_size": "md",
     }

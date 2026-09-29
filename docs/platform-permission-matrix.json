@@ -16360,6 +16360,58 @@
    "view": "apps.frontend.views.extended_views.special_projects_analytics_view"
   },
   {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity",
+   "route_name": "project_capacity",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_view"
+  },
+  {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/<str:capacity_id>/edit",
+   "route_name": "project_capacity_edit",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_edit_view"
+  },
+  {
+   "page_permission": "project_capacity",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/set",
+   "route_name": "project_capacity_set",
+   "view": "apps.frontend.views.project_capacity_views.project_capacity_set_view"
+  },
+  {
+   "page_permission": "project_monitoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/projects/capacity/withdraw",
+   "route_name": "project_withdraw_school",
+   "view": "apps.frontend.views.project_capacity_views.project_withdraw_school_view"
+  },
+  {
    "page_permission": "projects",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18514,26 +18566,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 418,
-  "Admin": 1038,
+  "Admin": 1042,
   "BusinessTransformationOfficer": 235,
-  "CCEO": 545,
-  "CountryDirector": 794,
+  "CCEO": 546,
+  "CountryDirector": 795,
   "HumanResources": 333,
-  "ImpactAssessment": 658,
+  "ImpactAssessment": 659,
   "MfiLoanOfficer": 131,
   "MfiPartnerAdmin": 134,
   "PartnerAdmin": 222,
   "PartnerFieldOfficer": 222,
-  "Program Lead": 632,
-  "ProjectCoordinator": 456,
+  "Program Lead": 633,
+  "ProjectCoordinator": 460,
   "RegionalProgramLead": 326,
   "RegionalVicePresident": 395
  },
  "summary": {
-  "page_keys_declared": 180,
-  "page_keys_in_navigation": 197,
-  "routes_guarded": 1135,
-  "routes_total": 1329,
+  "page_keys_declared": 181,
+  "page_keys_in_navigation": 198,
+  "routes_guarded": 1139,
+  "routes_total": 1333,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

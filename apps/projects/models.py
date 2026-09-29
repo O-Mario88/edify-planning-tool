@@ -139,6 +139,16 @@ class ProjectSchoolAssignment(TimeStampedModel):
         "schools.School", on_delete=models.CASCADE, related_name="project_assignments"
     )
     assigned_by = models.CharField(max_length=30, null=True, blank=True)
+    #: Whose school allocation this enrolment uses (see ProjectStaffCapacity).
+    #: The staff member who added it; empty when a coordinator or country role
+    #: added it, which draws on nobody's allocation.
+    assigned_staff = models.ForeignKey(
+        "accounts.StaffProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_school_enrolments",
+    )
     project_type = models.CharField(max_length=128, null=True, blank=True)
     participation_type = models.CharField(max_length=128, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
@@ -234,6 +244,8 @@ class ProjectSchoolEnrollmentHistory(TimeStampedModel):
     joined_at = models.DateTimeField(null=True, blank=True)
     removed_at = models.DateTimeField()
     added_by = models.CharField(max_length=30, blank=True, default="")
+    #: The staff member whose allocation the enrolment used.
+    assigned_staff_id = models.CharField(max_length=30, blank=True, default="")
     removed_by = models.CharField(max_length=30, blank=True, default="")
     removal_reason = models.TextField(blank=True, default="")
     matched_intervention = models.CharField(max_length=64, blank=True, default="")
@@ -290,6 +302,43 @@ class ProjectStaffAssignment(TimeStampedModel):
         ]
 
 
+class ProjectStaffCapacity(TimeStampedModel):
+    """How many schools one staff member may add to one project.
+
+    Set by the Project Coordinator (brief, 2026-09-29). What is used and what
+    remains are never stored: they are counted from the live enrolments in
+    ``apps.projects.capacity``, the one place that does the sum. The database
+    holds the line too — a trigger (migration 0014) refuses an enrolment past
+    the allocation and an allocation below what is already enrolled, so no
+    entry point, import or concurrent request can go over it.
+    """
+
+    id = CuidField()
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="staff_capacities"
+    )
+    staff = models.ForeignKey(
+        "accounts.StaffProfile",
+        on_delete=models.CASCADE,
+        related_name="project_capacities",
+    )
+    max_schools = models.PositiveIntegerField()
+    set_by = models.CharField(max_length=30, blank=True, default="")
+    set_by_role = models.CharField(max_length=64, blank=True, default="")
+
+    class Meta:
+        db_table = "project_staff_capacity"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "staff"], name="uniq_project_staff_capacity"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(max_schools__gt=0),
+                name="project_staff_capacity_positive",
+            ),
+        ]
+
+
 class ProjectPartnerAssignment(TimeStampedModel):
     id = CuidField()
     project = models.ForeignKey(
@@ -329,6 +378,7 @@ __all__ = [
     "Project",
     "ProjectSchoolAssignment",
     "ProjectStaffAssignment",
+    "ProjectStaffCapacity",
     "ProjectPartnerAssignment",
     "ProjectImpactSnapshot",
 ]

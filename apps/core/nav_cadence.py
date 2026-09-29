@@ -53,6 +53,8 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # nobody acts on it — it answers "what has the coordinator delivered at
     # the schools I put in" (owner, 2026-09-21).
     "project_monitoring": (WEEKLY, 66),
+    # Set once a term and adjusted as cohorts fill (brief, 2026-09-29).
+    "project_capacity": (WEEKLY, 67),
     "coverage": (WEEKLY, 70),
     "escalations": (WEEKLY, 75),
     "actions_sent": (WEEKLY, 80),

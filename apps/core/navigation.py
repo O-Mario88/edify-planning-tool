@@ -586,6 +586,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # partner, withdraw from a partner and reassign — each checked again by
     # the drawer's own route and by the service behind it.
     "project_monitoring": {CCEO, PL, IA, CD, ADMIN, PROJECT_COORDINATOR},
+    # How many schools each staff member may add to each project (brief,
+    # 2026-09-29). Set by the Project Coordinator who runs the project; Admin
+    # keeps the platform-wide authority every project write honours. Staff
+    # read their own allocations on Project Monitoring.
+    "project_capacity": {PROJECT_COORDINATOR, ADMIN},
     "analytics_publishing": {CD, IA, ADMIN},
     # IA owns evidence assurance before records can enter finance and
     # leadership analytics, so the role must be able to open the shared
@@ -856,6 +861,7 @@ ICONS.update(
         "closed_schools": ICONS["completed_archive"],
         "programme_schools": ICONS["core_schools"],
         "project_monitoring": ICONS["projects"],
+        "project_capacity": ICONS["projects"],
         "leave_tracker": ICONS["team_availability"],
         "priorities_master": ICONS["target_distribution"],
         "ssa_mapping": ICONS["target_distribution"],
@@ -2038,6 +2044,12 @@ SIDEBAR_ITEMS = [
                 # A Programme Lead staffs no projects; project links from the
                 # school drawer still open (2026-09-13).
                 "visible_to": PAGE_PERMISSIONS["projects"] - {PL},
+            },
+            {
+                "label": "Project Capacity",
+                "url": "/projects/capacity",
+                "page_key": "project_capacity",
+                "visible_to": {PROJECT_COORDINATOR},
             },
             {
                 "label": "Coverage",
