@@ -3071,6 +3071,151 @@ def partner_withdrawal_preview_view(request):
     )
 
 
+def _bulk_withdrawal_plan(user, assignment_ids) -> list[dict]:
+    """Each ticked handover, previewed by the same functions the single
+    withdrawal uses, with what confirming will do to it: withdraw, send to
+    the Program Lead, or nothing and why (owner, 2026-09-29)."""
+    from apps.core.exceptions import NotFoundError
+    from apps.partners import withdrawal_service
+
+    rows = []
+    for assignment_id in assignment_ids:
+        item = _partner_item_in_scope(user, assignment_id)
+        if item is None:
+            rows.append(
+                {
+                    "assignment_id": assignment_id,
+                    "school": "",
+                    "mode": "That assignment is not in your team.",
+                }
+            )
+            continue
+        _lock_project_work(user, [item])
+        school = item.school_name or ""
+        if item.project_locked:
+            rows.append(
+                {
+                    "assignment_id": assignment_id,
+                    "school": school,
+                    "mode": (
+                        f"{item.project_name or 'A Special Project'}'s work: "
+                        "only its Project Coordinator can withdraw it."
+                    ),
+                }
+            )
+            continue
+        try:
+            preview = withdrawal_service.preview(user, assignment_id)
+        except NotFoundError:
+            rows.append(
+                {
+                    "assignment_id": assignment_id,
+                    "school": school,
+                    "mode": "This assignment no longer exists.",
+                }
+            )
+            continue
+        if not preview["available"]:
+            mode = "It has been paid or closed and can no longer be withdrawn."
+        elif _must_request(user, item, preview):
+            mode = "request"
+        else:
+            mode = "withdraw"
+        rows.append(
+            {
+                "assignment_id": assignment_id,
+                "school": school,
+                "mode": mode,
+                "preview": preview,
+            }
+        )
+    return rows
+
+
+@require_page_permission("partner_oversight")
+def partner_bulk_withdrawal_view(request):
+    """Withdraw every ticked school from its partner (owner, 2026-09-29).
+
+    GET previews each one and asks once for the reason, the explanation and
+    what happens next; POST runs the single withdrawal for each
+    (apps.partners.bulk_withdrawal) and says what happened to every school.
+    """
+    from apps.core.exceptions import BadRequest
+    from apps.partners import bulk_withdrawal
+    from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
+
+    source = request.POST if request.method == "POST" else request.GET
+    try:
+        ids = bulk_withdrawal.clean_ids(source.getlist("assignment_ids"))
+    except BadRequest as exc:
+        if request.method == "POST":
+            return _action_response(
+                request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+            )
+        return render(
+            request,
+            "partials/oversight/bulk_withdrawal_drawer.html",
+            {"error": str(exc)},
+            status=400,
+        )
+    plan = _bulk_withdrawal_plan(request.user, ids)
+
+    if request.method == "POST":
+        data = {
+            "reason_category": request.POST.get("reason_category"),
+            "partner_facing_reason": request.POST.get("partner_facing_reason"),
+            "internal_note": request.POST.get("internal_note"),
+            "disposition": request.POST.get("disposition"),
+            "replacement_partner_id": request.POST.get("replacement_partner_id"),
+        }
+        outcomes = bulk_withdrawal.withdraw_many(
+            request.user,
+            [(row["assignment_id"], row["school"], row["mode"]) for row in plan],
+            data,
+        )
+        if request.headers.get("HX-Request") != "true":
+            return _action_response(
+                request,
+                bulk_withdrawal.summary(outcomes),
+                ok=any(o.outcome != bulk_withdrawal.SKIPPED for o in outcomes),
+                fallback=PARTNER_OVERSIGHT_PATH,
+            )
+        return render(
+            request,
+            "partials/oversight/bulk_withdrawal_result.html",
+            {
+                "outcomes": outcomes,
+                "summary": bulk_withdrawal.summary(outcomes),
+                "any_done": any(o.outcome != bulk_withdrawal.SKIPPED for o in outcomes),
+            },
+        )
+
+    from apps.partners.models import Partner
+
+    actionable = [row for row in plan if row["mode"] in ("withdraw", "request")]
+    return render(
+        request,
+        "partials/oversight/bulk_withdrawal_drawer.html",
+        {
+            "plan": plan,
+            "actionable": actionable,
+            "withdraw_count": sum(1 for r in plan if r["mode"] == "withdraw"),
+            "request_count": sum(1 for r in plan if r["mode"] == "request"),
+            "skipped": [r for r in plan if r["mode"] not in ("withdraw", "request")],
+            "planned_cost": sum(r["preview"]["planned_cost"] for r in actionable),
+            "budget_removed": sum(r["preview"]["budget_removed"] for r in actionable),
+            "reasons": WithdrawalReason.choices,
+            "dispositions": WithdrawalDisposition.choices,
+            "partners": [
+                {"id": p.id, "name": p.name}
+                for p in Partner.objects.filter(
+                    active_status=True, deleted_at__isnull=True
+                ).order_by("name")[:100]
+            ],
+        },
+    )
+
+
 def _eligible_replacements(item) -> list[dict]:
     """Active partners other than the one the work is being taken from."""
     from apps.partners.models import Partner

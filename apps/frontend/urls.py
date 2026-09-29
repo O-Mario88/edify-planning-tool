@@ -777,6 +777,11 @@ urlpatterns = [
         name="partner_withdrawal_submit",
     ),
     path(
+        "partner-oversight/withdraw/bulk",
+        oversight_views.partner_bulk_withdrawal_view,
+        name="partner_bulk_withdrawal",
+    ),
+    path(
         "partner-oversight/withdraw/review",
         oversight_views.partner_withdrawal_review_view,
         name="partner_withdrawal_review",
