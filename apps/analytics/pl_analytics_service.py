@@ -941,7 +941,7 @@ class PLAnalyticsService:
             allocation_priorities(user, fy, quarter=quarter, include_plans=False)
             for user in User.objects.filter(
                 id__in=[c["user_id"] for c in pls.cceos if c["user_id"]]
-            )
+            ).select_related("staff_profile")
         ]
         measurable = [score for score in scores if score["pct"] is not None]
         expected = 100 if quarter else PLAnalyticsService._expected_pace(fy)
@@ -1557,37 +1557,36 @@ class PLAnalyticsService:
                     .values("school_id")
                     .annotate(s=Sum("average_score"), n=Count("id"))
                 }
-        rows = []
-        for c in pls.cceos:
+        # Four conditional counts per CCEO, every CCEO in ONE aggregate. Each
+        # CCEO's own filter (their activities or their schools' activities)
+        # is ANDed into each count, so the numbers are the ones the old
+        # per-CCEO aggregate produced; the page just stops issuing one query
+        # per officer on the team.
+        measures = {
+            "completed": Q(status__in=COMPLETED_STATUSES),
+            "backlog": Q(
+                status__in=(
+                    "returned_by_pl",
+                    "returned_by_ia",
+                    "salesforce_id_required",
+                    "awaiting_ia_verification",
+                )
+            ),
+            "evidence_total": Q(activity_type__in=VISIT_TYPES + TRAINING_TYPES),
+            "evidence_done": Q(evidence_status="accepted"),
+        }
+        team_counts = {}
+        for index, c in enumerate(pls.cceos):
             ids = {c["staff_id"]}
             if c["user_id"]:
                 ids.add(c["user_id"])
-            c_acts = acts.filter(
-                Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ref"])
-            )
-            # Four conditional counts in one round trip rather than four
-            # `.count()` calls. The base queryset is unchanged, so the numbers
-            # are identical — this only stops the per-CCEO fan-out: the page
-            # issued 4 COUNT(*) on `activity` per CCEO, and database time was
-            # 77% of its wall clock.
-            counts = c_acts.aggregate(
-                completed=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
-                backlog=Count(
-                    "id",
-                    filter=Q(
-                        status__in=(
-                            "returned_by_pl",
-                            "returned_by_ia",
-                            "salesforce_id_required",
-                            "awaiting_ia_verification",
-                        )
-                    ),
-                ),
-                evidence_total=Count(
-                    "id", filter=Q(activity_type__in=VISIT_TYPES + TRAINING_TYPES)
-                ),
-                evidence_done=Count("id", filter=Q(evidence_status="accepted")),
-            )
+            mine = Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ref"])
+            for name, measure in measures.items():
+                team_counts[f"{name}_{index}"] = Count("id", filter=mine & measure)
+        totals = acts.aggregate(**team_counts) if team_counts else {}
+        rows = []
+        for index, c in enumerate(pls.cceos):
+            counts = {name: totals[f"{name}_{index}"] for name in measures}
             completed = counts["completed"]
             backlog = counts["backlog"]
             target_pct, _, target_total = bulk_targets[c["staff_id"]]
@@ -1828,21 +1827,20 @@ class PLAnalyticsService:
         def trend(ids):
             if not ids:
                 return {"count": 0, "labels": [], "series": []}
-            fys = sorted(
-                SsaRecord.objects.filter(
+            # Every year's average in one grouped read (it was one per year).
+            by_fy = {
+                row["fy"]: row["a"]
+                for row in SsaRecord.objects.filter(
                     school_id__in=ids, verification_status="confirmed"
                 )
-                .order_by("fy")
-                .values_list("fy", flat=True)
-                .distinct()
-            )
+                .order_by()
+                .values("fy")
+                .annotate(a=Avg("average_score"))
+            }
             labels, series = [], []
-            for f in fys:
-                avg = SsaRecord.objects.filter(
-                    school_id__in=ids, verification_status="confirmed", fy=f
-                ).aggregate(a=Avg("average_score"))["a"]
+            for f in sorted(by_fy):
                 labels.append(f"FY{f}")
-                series.append(_ssa_score(avg) or 0)
+                series.append(_ssa_score(by_fy[f]) or 0)
             return {"count": len(ids), "labels": labels, "series": series}
 
         return {"core": trend(core_ids), "champion": trend(champ_ids)}

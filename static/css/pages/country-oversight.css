@@ -1377,16 +1377,6 @@
 .cxo-small--recent th:nth-child(1) { inline-size: 6.25rem; }
 .cxo-small--recent th:nth-child(2) { inline-size: 5.5rem; }
 
-/* Who's Online under the planning tab: the cards' edges (the page's own
-   gutter, not a gutter of its own) and the cards' gap above it, so it reads
-   as the last card of the page. */
-.cpo-presence.cpo-presence {
-  max-inline-size: 1880px;
-  margin-inline: auto;
-  margin-block-start: calc(0.9rem - 2rem);
-  padding-inline: clamp(0.75rem, 0.4rem + 1.2vw, 1.75rem);
-}
-
 /* The flag of Uganda keeps its own colours in every theme: they are the
    country's, not the palette's. */
 .cpo-flag .cpo-ug-black { fill: #000; }

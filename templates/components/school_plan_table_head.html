@@ -7,6 +7,7 @@
     {% if selectable %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
     <th scope="col" aria-label="School ID" title="School ID">ID</th>
     <th scope="col">School Name</th>
+    {% if cluster_column %}<th scope="col" class="school-plan-table__cluster">Cluster</th>{% endif %}
     <th scope="col">Visit Plan Status</th>
     <th scope="col">Training Plan Status</th>
     {% if support %}<th scope="col" class="school-plan-table__responsible">Responsible</th>{% endif %}

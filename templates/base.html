@@ -1,4 +1,4 @@
-{% load static frontend_filters %}
+{% load static frontend_filters staff_activity_tags %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -106,7 +106,7 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260929cellhidden1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260929cellname1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260929sal1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -190,6 +190,9 @@ dead signal -- stored on the phone, replayed when it reconnects. Loaded after
 csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
 <script defer src="{% static 'js/field-outbox.js' %}?v=20260923owner1"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
+{% comment %}Staff Activity heartbeat (owner, 2026-09-29): a beat while the page
+is visible, focused and in use; background htmx requests marked as such.{% endcomment %}
+<script defer src="{% static 'js/staff-activity-beat.js' %}?v=20260929sal1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
@@ -244,7 +247,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260929cellname1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260929sal1"></script>
 <script defer src="{% static 'js/date-picker.js' %}?v=20260927layer1"></script>
 
 {% comment %}
@@ -1109,6 +1112,7 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
 class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 data-edify-outbox-owner="{{ request.user|outbox_owner }}"
+{% staff_activity_attrs %}
 data-edify-field-role="{{ request.user|field_role }}"
 >
 {% include "partials/pwa_launch.html" %}

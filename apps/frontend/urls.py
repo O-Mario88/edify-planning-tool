@@ -51,6 +51,7 @@ from .views import (
     target_distribution_views,
     today_views,
     undo_views,
+    staff_activity_views,
 )
 
 app_name = "frontend"
@@ -256,6 +257,53 @@ urlpatterns = [
         dashboard_views.program_lead_dashboard_view,
         name="pl_dashboard",
     ),
+    # Staff Activity Log (owner, 2026-09-29) — replaces Who's Online.
+    path(
+        "staff-activity",
+        staff_activity_views.staff_activity_view,
+        name="staff_activity",
+    ),
+    path(
+        "staff-activity/export",
+        staff_activity_views.staff_activity_export_view,
+        name="staff_activity_export",
+    ),
+    path(
+        "staff-activity/beat",
+        staff_activity_views.staff_activity_beat_view,
+        name="staff_activity_beat",
+    ),
+    path(
+        "staff-activity/people/<str:person_id>",
+        staff_activity_views.staff_activity_person_view,
+        name="staff_activity_person",
+    ),
+    path(
+        "staff-activity/people/<str:person_id>/follow-up",
+        staff_activity_views.follow_up_new_view,
+        name="staff_activity_follow_up_new",
+    ),
+    path(
+        "staff-activity/people/<str:person_id>/follow-up/send",
+        staff_activity_views.follow_up_create_view,
+        name="staff_activity_follow_up_create",
+    ),
+    path(
+        "staff-activity/follow-ups",
+        staff_activity_views.follow_up_queue_view,
+        name="staff_activity_follow_ups",
+    ),
+    path(
+        "staff-activity/follow-ups/<str:follow_up_id>",
+        staff_activity_views.follow_up_detail_view,
+        name="staff_activity_follow_up",
+    ),
+    path(
+        "staff-activity/follow-ups/<str:follow_up_id>/<slug:action>",
+        staff_activity_views.follow_up_transition_view,
+        name="staff_activity_follow_up_transition",
+    ),
+    # Who's Online's old address, for bookmarks and open tabs.
     path(
         "dashboard/whos-online",
         dashboard_views.whos_online_view,
@@ -613,6 +661,11 @@ urlpatterns = [
     # figure, one school's requirement slots, the Country Director's "Follow
     # Up with PL", and the page's workbook. All read one canonical service.
     path("country-map/", oversight_views.country_map_view, name="country_map"),
+    path(
+        "planning-monitor/",
+        oversight_views.planning_monitor_view,
+        name="planning_monitor",
+    ),
     # Country Execution & Completion Oversight — the second Country Oversight
     # tab (/country-planning-oversight/?view=execution) and its drill-downs.
     path(

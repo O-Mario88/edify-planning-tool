@@ -10490,6 +10490,7 @@ from apps.core.metrics.ia_collection_metrics import IA_COLLECTION_METRIC_ROWS  #
 from apps.core.metrics.ia_framework_metrics import IA_FRAMEWORK_METRIC_ROWS  # noqa: E402
 from apps.core.metrics.ia_learning_metrics import IA_LEARNING_METRIC_ROWS  # noqa: E402
 from apps.core.metrics.ia_reporting_metrics import IA_REPORTING_METRIC_ROWS  # noqa: E402
+from apps.core.metrics.staff_activity_metrics import STAFF_ACTIVITY_METRIC_ROWS  # noqa: E402
 
 RECONCILED_METRIC_ROWS = (
     RECONCILED_METRIC_ROWS
@@ -10508,6 +10509,7 @@ RECONCILED_METRIC_ROWS = (
     + IA_FRAMEWORK_METRIC_ROWS
     + IA_LEARNING_METRIC_ROWS
     + IA_REPORTING_METRIC_ROWS
+    + STAFF_ACTIVITY_METRIC_ROWS
 )
 
 RECONCILED_METRICS: tuple[MetricSpec, ...] = tuple(
