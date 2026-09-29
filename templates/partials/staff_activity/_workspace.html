@@ -57,7 +57,11 @@
     {% endif %}
   </form>
 
-  <div class="sal-layout">
+  {% comment %}On the Programme Lead's dashboard (owner, 2026-09-29) the log
+  runs top to bottom: Team Insights across above the table, and the person a
+  row opens across below it. The page of its own keeps the right column.{% endcomment %}
+  <div class="sal-layout"{% if embedded %} data-sal-flow="row"{% endif %}>
+    {% if embedded %}{% include "partials/staff_activity/_insights.html" with insights=log.insights %}{% endif %}
     <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-main" aria-labelledby="sal-table-title">
       <header class="sal-tablehead">
         <h2 id="sal-table-title">{% if log.scope.mode == "team" %}Your team{% else %}Staff by Program Lead{% endif %}</h2>
@@ -81,7 +85,7 @@
               <th scope="col" class="sal-num">Logins</th>
               <th scope="col" title="First active time in the period">First<br>Active</th>
               <th scope="col" title="Most recent active time in the period">Last<br>Active</th>
-              <th scope="col" class="sal-num" title="Active time, deduplicated across tabs and devices; idle and background tabs excluded">Active<br>Time</th>
+              <th scope="col" class="sal-num" title="Time spent active on the platform: the day's for Day; for Week, Month, Quarter and FY each day's time added up. Deduplicated across tabs and devices; idle and background tabs excluded">Active<br>Time</th>
               <th scope="col" class="sal-num" title="Meaningful workflow actions completed">Actions</th>
               <th scope="col" class="sal-num" title="Distinct schools with a meaningful action">Schools</th>
               <th scope="col">Last Page</th>
@@ -120,14 +124,16 @@
       {% include "components/table_pager.html" with pager=pager param="staff_page" %}
     </section>
 
+    {% if embedded %}
+    {% include "partials/staff_activity/_picked.html" %}
+    {% else %}
     {% comment %}The right column (owner, 2026-09-29): Team Insights, and under
     it the person a row opens — sign-in history, time by module, meaningful
     actions and the period trend — so the table's rows stay whole.{% endcomment %}
     <div class="sal-side">
       {% include "partials/staff_activity/_insights.html" with insights=log.insights %}
-      <section id="sal-picked" class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-picked" aria-live="polite" aria-label="Selected staff member">
-        <p class="sal-none">Select a staff member to see their sign-in history, time by module, meaningful actions and period trend.</p>
-      </section>
+      {% include "partials/staff_activity/_picked.html" %}
     </div>
+    {% endif %}
   </div>
 </div>

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **576**
+Components and application partials: **577**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -550,7 +550,8 @@ Components and application partials: **576**
 | `partials/staff_activity/_insights.html` | application-partial | Reusable  insights interface primitive | canonical; default | inherits containing page contract | accessible name and label | /staff-activity | 0 |
 | `partials/staff_activity/_person_detail.html` | application-partial | Reusable  person detail interface primitive | canonical; default | inherits containing page contract | accessible name and label | /staff-activity/people/<str:person_id> | 0 |
 | `partials/staff_activity/_person_row.html` | application-partial | Reusable  person row interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /staff-activity | 0 |
-| `partials/staff_activity/_workspace.html` | application-partial | Reusable  workspace interface primitive | executive; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /staff-activity | 0 |
+| `partials/staff_activity/_picked.html` | application-partial | Reusable  picked interface primitive | canonical; default | inherits containing page contract | accessible name and label, announced dynamic state | /staff-activity | 0 |
+| `partials/staff_activity/_workspace.html` | application-partial | Reusable  workspace interface primitive | executive; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /staff-activity | 0 |
 | `partials/targets/_period_matrix.html` | application-partial | Reusable  period matrix interface primitive | {% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}, {% if cell.pct == None %}neutral{% elif cell.pct >= 70 %}success{% elif cell.pct >= 50 %}warning{% else %}danger{% endif %}; default | inherits containing page contract | accessible name and label | /my-targets<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/targets/area_drawer.html` | application-partial | Reusable area drawer interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-targets/area-drawer | 0 |
 | `partials/targets/my_body.html` | application-partial | Reusable my body interface primitive | executive, {{ row.classification.tone }}; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-targets | 0 |

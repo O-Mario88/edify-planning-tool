@@ -11700,7 +11700,7 @@
    "audit_id": "KPI-SOURCE-645",
    "kind": "breakdown-row",
    "module": "apps/staff_activity/services.py",
-   "line": 808,
+   "line": 838,
    "label": null,
    "keys": [
     "count",
@@ -11719,7 +11719,7 @@
    "audit_id": "KPI-SOURCE-646",
    "kind": "breakdown-row",
    "module": "apps/staff_activity/services.py",
-   "line": 848,
+   "line": 878,
    "label": null,
    "keys": [
     "count",
@@ -11737,7 +11737,7 @@
    "audit_id": "KPI-SOURCE-647",
    "kind": "breakdown-row",
    "module": "apps/staff_activity/services.py",
-   "line": 869,
+   "line": 899,
    "label": null,
    "keys": [
     "count",
