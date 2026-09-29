@@ -1,0 +1,178 @@
+{% comment %}
+Country Planning Oversight — the planning-coverage dashboard (owner design,
+2026-09-28). The whole of it is one swap target: applying the filters redraws
+the heading, the strip, the charts, the table and the follow-ups from one
+server fold, so nothing on the page can describe a different selection from
+anything else. Every figure arrives formatted; the page divides nothing.
+{% endcomment %}
+<div id="cpo-root" class="cpo-root" data-cpo-root data-mobile-family="oversight"
+     x-data="{ period: '{{ filters.period }}', more: {% if more_open %}true{% else %}false{% endif %} }">
+
+  {% comment %}The platform's page-header anatomy (lead + controls), carrying
+  the design's flag, motto and read stamp.{% endcomment %}
+  <header class="edify-page-header cpo-head">
+    <div class="edify-page-header__lead cpo-headline">
+      {% if is_uganda %}{% include "partials/country_oversight/_flag_uganda.html" %}{% endif %}
+      <div class="cpo-headline-copy">
+        <h1 class="edify-page-header__title edify-page-title cpo-name">Country Planning Oversight</h1>
+        <div class="cpo-subline">
+          <span>{{ header.country }}</span><span class="cpo-dot" aria-hidden="true">•</span><span>{{ header.view_label }}</span><span class="cpo-dot" aria-hidden="true">•</span><span>{% if window.is_annual %}{{ header.fy_label }}{% else %}{{ header.window_label }}{% endif %}</span>
+        </div>
+      </div>
+    </div>
+    <div class="edify-page-header__controls cpo-headside">
+      <div class="cpo-motto" aria-hidden="true">
+        {% if is_uganda %}{% include "partials/country_oversight/_uganda_outline.html" %}{% endif %}
+        <div class="cpo-motto-text">Stronger<br>Schools<br>Brighter {{ header.country }}</div>
+      </div>
+      <div class="cpo-stamp">
+        <div class="cpo-stamp-copy">
+          <div class="cpo-stamp-label">Last updated</div>
+          <div class="cpo-stamp-time"><time datetime="{{ header.built_at|date:'Y-m-d\TH:i' }}">{{ header.built_at|date:"j M Y, g:i A" }}</time></div>
+          <div class="cpo-stamp-asof">Portfolio as of {{ header.as_of|date:"j M Y" }}</div>
+        </div>
+        <a class="cpo-refresh" href="/country-planning-oversight/?{{ query }}&amp;refresh=1"
+           aria-label="Read the planning data again" title="Read the planning data again">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.6"/><path d="M20 4v7h-7"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="cpo-lenses">{% include "partials/oversight/_lens_tabs.html" %}</div>
+
+  {% comment %}The owner's design: every filter in one card, applied together
+  with Apply Filters, cleared with Clear. Plain GET, so it works before and
+  without scripts; with them it redraws the page in place.{% endcomment %}
+  <form class="cpo-controls" action="/country-planning-oversight/" method="get"
+        hx-get="/country-planning-oversight/" hx-target="#cpo-root" hx-select="#cpo-root" hx-swap="outerHTML"
+        hx-push-url="true" data-edify-filter-row="off" aria-label="Country planning filters"
+        :data-more="more ? 'true' : 'false'">
+    <div class="cpo-fields">
+      <label class="cpo-field">
+        <span class="cpo-caption">Financial Year</span>
+        <select name="fy">
+          {% for option in options.fy_options %}
+          <option value="{{ option.value }}"{% if option.value == filters.fy %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="cpo-field cpo-field--period" role="group" aria-labelledby="cpo-period-caption">
+        <span class="cpo-caption" id="cpo-period-caption">Period</span>
+        <div class="cpo-pair">
+          <select name="period" x-model="period" aria-labelledby="cpo-period-caption">
+            <option value="fy"{% if filters.period == "fy" %} selected{% endif %}>Full Year</option>
+            <option value="quarter"{% if filters.period == "quarter" %} selected{% endif %}>Quarter</option>
+            <option value="month"{% if filters.period == "month" %} selected{% endif %}>Month</option>
+            <option value="week"{% if filters.period == "week" %} selected{% endif %}>Week</option>
+          </select>
+          <select name="quarter" aria-label="Quarter" x-show="period === 'quarter'"{% if filters.period != "quarter" %} style="display: none"{% endif %}>
+            <option value="Q1"{% if filters.quarter == "Q1" %} selected{% endif %}>Q1 · Oct–Dec</option>
+            <option value="Q2"{% if filters.quarter == "Q2" %} selected{% endif %}>Q2 · Jan–Mar</option>
+            <option value="Q3"{% if filters.quarter == "Q3" %} selected{% endif %}>Q3 · Apr–Jun</option>
+            <option value="Q4"{% if filters.quarter == "Q4" %} selected{% endif %}>Q4 · Jul–Sep</option>
+          </select>
+          <select name="month" aria-label="Month" x-show="period === 'month'"{% if filters.period != "month" %} style="display: none"{% endif %}>
+            {% for value, label in options.months %}
+            <option value="{{ value }}"{% if filters.month == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input type="week" name="week" aria-label="Week" value="{{ filters.week }}" x-show="period === 'week'"{% if filters.period != "week" %} style="display: none"{% endif %}>
+        </div>
+      </div>
+      <label class="cpo-field cpo-field--minor{% if filters.region %} is-set{% endif %}">
+        <span class="cpo-caption">Region</span>
+        <select name="region">
+          <option value="">All Regions</option>
+          {% for key, name in options.regions %}
+          <option value="{{ key }}"{% if key == filters.region %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field cpo-field--lead">
+        <span class="cpo-caption">Program Lead</span>
+        <select name="program_lead">
+          <option value="">All Program Leads</option>
+          {% for lead in options.leads %}
+          <option value="{{ lead.key }}"{% if lead.key == filters.program_lead %} selected{% endif %}>{{ lead.name }}</option>
+          {% endfor %}
+          <option value="{{ no_lead_key }}"{% if filters.program_lead == no_lead_key %} selected{% endif %}>No Programme Lead</option>
+        </select>
+      </label>
+      <label class="cpo-field cpo-field--minor{% if filters.cceo %} is-set{% endif %}">
+        <span class="cpo-caption">CCEO</span>
+        <select name="cceo">
+          <option value="">All CCEOs</option>
+          {% for owner in options.owners %}
+          <option value="{{ owner.key }}"{% if owner.key == filters.cceo %} selected{% endif %}>{{ owner.name }}{% if owner.kind == "pl_personal" %} (PL personal){% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field cpo-field--minor{% if filters.partner %} is-set{% endif %}">
+        <span class="cpo-caption">Partner</span>
+        <select name="partner">
+          <option value="">All Partners</option>
+          {% for key, name in options.partners %}
+          <option value="{{ key }}"{% if key == filters.partner %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field cpo-field--minor{% if filters.planning_status %} is-set{% endif %}">
+        <span class="cpo-caption">Planning Status</span>
+        <select name="planning_status">
+          <option value="">All</option>
+          {% for key, label in options.statuses %}
+          <option value="{{ key }}"{% if key == filters.planning_status %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="cpo-go">
+        <button type="submit" class="cpo-apply">Apply Filters</button>
+        <a class="cpo-reset" href="/country-planning-oversight/" hx-get="/country-planning-oversight/" hx-target="#cpo-root" hx-select="#cpo-root" hx-swap="outerHTML" hx-push-url="true">Clear</a>
+      </div>
+    </div>
+    <div class="cpo-fields cpo-fields--more" x-show="more"{% if not more_open %} style="display: none"{% endif %}>
+      <label class="cpo-field">
+        <span class="cpo-caption">District</span>
+        <select name="district">
+          <option value="">All Districts</option>
+          {% for key, name in options.districts %}
+          <option value="{{ key }}"{% if key == filters.district %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">School Family</span>
+        <select name="family">
+          <option value="">All Families</option>
+          {% for key, label in options.families %}
+          <option value="{{ key }}"{% if key == filters.family %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Delivery Channel</span>
+        <select name="channel">
+          <option value="">Staff and Partner</option>
+          {% for key, label in options.channels %}
+          <option value="{{ key }}"{% if key == filters.channel %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="cpo-field">
+        <span class="cpo-caption">Cluster Status</span>
+        <select name="cluster_status">
+          <option value="">All</option>
+          {% for key, label in options.clusters %}
+          <option value="{{ key }}"{% if key == filters.cluster_status %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <button type="button" class="cpo-more" @click="more = !more" :aria-expanded="more ? 'true' : 'false'">
+      <span x-text="more ? 'Fewer filters' : 'More filters'">More filters</span>
+    </button>
+  </form>
+
+  {% include "partials/country_oversight/workspace.html" %}
+</div>

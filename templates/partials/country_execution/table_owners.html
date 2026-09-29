@@ -1,0 +1,41 @@
+{% load table_pagination %}{% comment %}Every CCEO (and each Lead's personal delivery) in one list, with the
+Lead they report to. Supervision is not ownership: a Lead's own work is its
+own row, never the team's total.{% endcomment %}
+<div class="cpo-tscroll" data-mobile-table="scroll">
+  {% paginate owner_list "owners_page" as owners_pager %}
+  <table class="cpo-table cxo-table">
+    <thead>
+      <tr>
+        <th scope="col" class="cpo-namecol">CCEO</th>
+        {% include "partials/country_execution/_heads.html" %}
+        <th scope="col" class="cpo-actcol">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in owners_pager.rows %}
+      <tr data-level="1">
+        <th scope="row" class="cpo-namecell" data-leaf>
+          <span>{{ row.name }}</span><span class="cpo-hint"><span>{% if row.kind == "pl_personal" %}{{ row.person }} · personal delivery{% else %}{{ row.lead_name }}{% endif %}</span></span>
+        </th>
+        {% include "partials/country_execution/_cells.html" with cells=row.cells %}
+        <td class="cpo-actcell">
+          <div class="cpo-acts">
+            {% if may_follow_up and row.lead_key != no_lead_key %}
+            <button type="button" class="cpo-ask" aria-label="Follow Up with PL about {{ row.name }}"
+                    hx-get="/country-planning-oversight/execution/follow-up?lead={{ row.lead_key }}&amp;cceo={% if row.kind != 'pl_personal' %}{{ row.key }}{% endif %}&amp;{{ query }}"
+                    hx-target="#drawer-container" hx-swap="innerHTML">Follow Up</button>
+            {% else %}
+            <button type="button" class="cpo-view"
+                    hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;owner={{ row.key }}&amp;stage=due&amp;{{ query }}"
+                    hx-target="#drawer-container" hx-swap="innerHTML" aria-label="View {{ row.name }}'s activities">View</button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="14" class="cpo-empty">No officer has work due in this selection.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/table_pager.html" with pager=owners_pager param="owners_page" %}

@@ -113,7 +113,9 @@ class CdGeographyBreakdownTest(TestCase):
 
     def test_the_dashboard_renders_the_breakdown(self):
         self.client.force_login(self.cd)
-        response = self.client.get("/dashboard?fy=2026")
+        # The command dashboard's map view (the Country Director's /dashboard
+        # opens Country Oversight since 2026-09-28).
+        response = self.client.get("/dashboard?view=map&fy=2026")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-cd-geography")
         self.assertContains(response, "Geo D1")

@@ -269,29 +269,25 @@ class TheLensIsTheirs(MonitorFixture):
             with self.subTest(role=user.active_role):
                 self.client.force_login(user)
                 response = self.client.get(
-                    "/country-planning-oversight/", {"view": "monitor", "fy": FY}
+                    "/planning-monitor/", {"view": "planning", "fy": FY}
                 )
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, "data-planning-monitor")
                 self.assertContains(response, "School MON-B1", count=0)
                 gap = self.client.get(
-                    "/country-planning-oversight/",
-                    {"view": "monitor", "fy": FY, "gap": "no_both"},
+                    "/planning-monitor/",
+                    {"view": "planning", "fy": FY, "gap": "no_both"},
                 )
                 self.assertContains(gap, "School MON-B1")
 
     def test_a_programme_lead_reads_their_team(self):
         self.client.force_login(self.pl_user)
-        response = self.client.get(
-            "/team-planning-oversight/", {"view": "monitor", "fy": FY}
-        )
+        response = self.client.get("/planning-monitor/", {"fy": FY})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-planning-monitor")
         self.assertEqual(response.context["monitor_totals"].school_count, 6)
 
     def test_a_cceo_has_no_monitor(self):
         self.client.force_login(self.anna_user)
-        response = self.client.get(
-            "/team-planning-oversight/", {"view": "monitor", "fy": FY}
-        )
+        response = self.client.get("/planning-monitor/", {"fy": FY})
         self.assertNotIn("data-planning-monitor", response.content.decode())

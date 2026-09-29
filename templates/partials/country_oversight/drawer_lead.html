@@ -1,0 +1,82 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}One Programme Lead: their figures, their gaps with Follow Up with
+PL, their people, the schools behind any gap, and the team asks the Country
+Plan page has always offered. Read-only except the asks.{% endcomment %}
+{% block drawer_title %}{{ lead.name }}{% endblock %}
+{% block drawer_subtitle %}Programme Lead · {{ header.fy_label }}{% if not filters.window.is_annual %} · {{ header.window_label }}{% endif %} · portfolio as of {{ header.as_of|date:"j M Y" }}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet">
+  <section aria-labelledby="cpo-l-figs">
+    <h3 class="cpo-sub" id="cpo-l-figs">Figures</h3>
+    {% include "partials/country_oversight/_figures.html" with tally=tally %}
+  </section>
+
+  <section aria-labelledby="cpo-l-gaps">
+    <h3 class="cpo-sub" id="cpo-l-gaps">Gaps</h3>
+    {% with follow_query="lead="|add:lead.key %}
+    {% include "partials/country_oversight/_gaps.html" with can_follow_up=True %}
+    {% endwith %}
+  </section>
+
+  <section aria-labelledby="cpo-l-people">
+    <h3 class="cpo-sub" id="cpo-l-people">People</h3>
+    <div class="cpo-tscroll">
+      <table class="cpo-mini">
+        <thead><tr><th scope="col">Name</th><th scope="col">Portfolio</th><th scope="col">Required</th><th scope="col">Staff planned</th><th scope="col">Partner assigned</th><th scope="col">Remaining</th><th scope="col">Training</th><th scope="col">Deficit</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+          {% for row in owners.rows %}
+          <tr>
+            <th scope="row">{{ row.name }}</th>
+            <td>{{ row.cells.schools }}</td><td>{{ row.cells.visit_slots }}</td><td>{{ row.cells.staff }}</td><td>{{ row.cells.partner_assigned }}</td><td>{{ row.cells.unallocated }}</td><td>{{ row.cells.training }}</td><td>{{ row.cells.deficit }}</td>
+            <td><button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">View</button></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9">Nobody under this Lead holds a school in this selection.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "partials/country_oversight/_drawer_pager.html" with pager=owners %}
+    </div>
+  </section>
+
+  {% if may_see_schools %}
+  <section aria-labelledby="cpo-l-schools">
+    <h3 class="cpo-sub" id="cpo-l-schools">Schools</h3>
+    <div hx-get="/country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=unallocated&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="cpo-l-fu">
+    <h3 class="cpo-sub" id="cpo-l-fu">Open follow-ups</h3>
+    {% include "partials/country_oversight/_followup_list.html" %}
+  </section>
+
+  {% if may_follow_up and not lead.is_no_lead %}
+  <section aria-labelledby="cpo-l-asks">
+    <h3 class="cpo-sub" id="cpo-l-asks">Team asks on the activity plan</h3>
+    <p class="cpo-muted">The Country Plan's asks, unchanged: a recovery plan for overdue work, the Partner scheduling backlog, or the team's unpriced work.</p>
+    <form hx-post="/country-planning-oversight/send" hx-target="#cpo-l-ask-result" hx-swap="innerHTML" class="cpo-inline">
+      {% csrf_token %}
+      <input type="hidden" name="program_lead" value="{{ lead.key }}">
+      <input type="hidden" name="fy" value="{{ filters.fy }}">
+      <label class="sr-only" for="cpo-l-ask">What to ask for</label>
+      <select id="cpo-l-ask" name="issue">
+        <option value="team_execution_risk">Recovery plan</option>
+        <option value="team_partner_backlog">Partner backlog</option>
+        <option value="team_costing_backlog">Costing backlog</option>
+      </select>
+      <button type="submit" class="cpo-view">Send</button>
+    </form>
+    <div id="cpo-l-ask-result" class="cpo-muted"></div>
+  </section>
+  {% endif %}
+
+  {% if not lead.is_no_lead %}
+  <p class="cpo-links">
+    <a href="/country-planning-oversight/?view=plan&amp;program_lead={{ lead.key }}&amp;lead={{ lead.key }}">Country Plan (activities)</a>
+    <a href="/team-planning-oversight/?program_lead={{ lead.key }}">Team Oversight</a>
+    <a href="/country-planning-oversight/?view=portfolio&amp;program_lead={{ lead.key }}">Country Portfolio</a>
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

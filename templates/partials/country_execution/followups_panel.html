@@ -1,0 +1,31 @@
+{% load table_pagination %}{% comment %}The open execution follow-ups (the Director's reminders to Programme
+Leads about work that has not happened, reached review or closed). View all
+opens the register of every follow-up, planning and execution together.{% endcomment %}
+<section id="cxo-side" class="cpo-chart cxo-list" data-no-titlebar aria-labelledby="cxo-followups-name"
+         hx-get="/country-planning-oversight/execution/follow-ups-panel?{{ query }}"
+         hx-trigger="cpo-followups-changed from:body" hx-swap="outerHTML">
+  <header class="cxo-list-head">
+    <h2 class="cpo-chart-name" id="cxo-followups-name" data-no-titlebar>Open Follow-ups <span class="cxo-count">{{ followups.count }}</span></h2>
+    <button type="button" class="cpo-link"
+            hx-get="/country-planning-oversight/drawer?kind=followups&amp;{{ planning_query }}" hx-target="#drawer-container" hx-swap="innerHTML">View all</button>
+  </header>
+  {% if followups.rows %}
+  {% paginate followups.rows "followups_page" as followups_pager %}
+  <table class="cxo-small" data-table-fit="scroll">
+    <thead><tr><th scope="col">Date</th><th scope="col">To</th><th scope="col">Issue</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+      {% for row in followups_pager.rows %}
+      <tr>
+        <td><span>{{ row.date|date:"j M" }}</span></td>
+        <td>{{ row.to }}</td>
+        <th scope="row">{{ row.title }}</th>
+        <td><span class="cpo-tag" data-tone="{{ row.tone }}">{{ row.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% include "components/table_pager.html" with pager=followups_pager param="followups_page" %}
+  {% else %}
+  <p class="cpo-muted">No execution follow-up is open.{% if may_follow_up %} Use <strong>Follow Up</strong> on a Programme Lead's row, or Send Reminder to PL.{% endif %}</p>
+  {% endif %}
+</section>

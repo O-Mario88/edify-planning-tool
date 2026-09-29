@@ -30,16 +30,6 @@
     </div>
   </div>
 
-  {% comment %}The two monitors the CD follows every day (owner, 2026-09-29),
-  one click from the dashboard: planning against each person's 280 or 560,
-  and execution and completion as it happens. They open on Country Planning
-  Oversight, where the Planning Monitor is the front tab.{% endcomment %}
-  <nav class="flex items-center gap-2" aria-label="Daily monitors" data-monitor-links>
-    <span class="hidden sm:inline edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Daily monitors</span>
-    <a href="/country-planning-oversight/?view=monitor" class="btn btn-secondary h-8 flex-1 sm:flex-none">Planning Monitor</a>
-    <a href="/country-planning-oversight/?view=execution" class="btn btn-secondary h-8 flex-1 sm:flex-none">Execution &amp; Completion</a>
-  </nav>
-
       <form hx-get="/dashboard" hx-target="#cd-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
             class="edify-filter-bar" aria-label="Country dashboard filters">
         <input type="hidden" name="view" value="{{ dashboard_view }}">

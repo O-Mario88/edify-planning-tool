@@ -201,7 +201,20 @@ class CountryBoundaryTest(TestCase):
 
     def test_the_cd_pages_do_not_show_the_other_country(self):
         self.client.force_login(self.cd)
-        for url in ("/coverage", "/dashboard", "/analytics/country-director"):
+        # The Country Director's /dashboard opens Country Oversight (owner,
+        # 2026-09-28): both of its stages, the Country Map, and the command
+        # dashboard a link can still name.
+        self.assertEqual(
+            self.client.get("/dashboard")["Location"], "/country-planning-oversight/"
+        )
+        for url in (
+            "/coverage",
+            "/dashboard?view=map",
+            "/country-planning-oversight/?fy=2026",
+            "/country-planning-oversight/?view=execution&period=fy&fy=2026",
+            "/country-map/",
+            "/analytics/country-director",
+        ):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200, url)
             self.assertNotContains(response, "Nairobi Primary", msg_prefix=url)

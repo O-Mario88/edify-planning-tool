@@ -60,7 +60,7 @@ def link(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("activities", "0061_move_in_school_training_cost_to_visit"),
+        ("activities", "0062_activity_schedule_change"),
         ("activity_catalogue", "0014_mapping_review"),
     ]
 

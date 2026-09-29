@@ -1,0 +1,8 @@
+{% comment %}What happened when the Director sent, closed or cancelled a
+follow-up. On success the drawer closes itself and the Open Follow-ups panel
+refreshes (cpo-followups-changed).{% endcomment %}
+{% if ok %}
+<p class="cpo-notice" role="status" x-data x-init="setTimeout(() => $dispatch('close-drawer'), 1400)">{{ message }}</p>
+{% else %}
+<p class="cpo-notice cpo-notice--attention" role="alert">{{ message }}</p>
+{% endif %}

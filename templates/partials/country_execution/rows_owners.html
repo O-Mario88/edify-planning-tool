@@ -1,0 +1,29 @@
+{% comment %}A Lead's people as rows of the execution table: the Lead's personal
+delivery first (their own work, never the team's), then each CCEO. An officer
+opens onto their staff and Partner delivery.{% endcomment %}
+{% for row in rows %}
+<tr data-level="2" x-show="open">
+  <th scope="row" class="cpo-namecell"{% if not row.has_children %} data-leaf{% endif %}>
+    <span>{% if row.has_children %}<button type="button" class="cpo-toggle" :class="owners['{{ row.key }}'] ? 'is-open' : ''"
+            @click="owners['{{ row.key }}'] = !owners['{{ row.key }}']; if ($refs['x{{ forloop.counter }}'] && !$refs['x{{ forloop.counter }}'].dataset.asked) { $refs['x{{ forloop.counter }}'].dataset.asked = '1'; htmx.trigger($refs['x{{ forloop.counter }}'], 'cxo-load'); }"
+            :aria-expanded="owners['{{ row.key }}'] ? 'true' : 'false'" aria-label="Show {{ row.name }}'s delivery channels">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>{% endif %}{{ row.name }}</span>{% if row.kind == "pl_personal" %}<span class="cpo-hint"><span>{{ row.person }} · personal delivery</span></span>{% elif row.cells.blocker %}<span class="cpo-hint"><span>{{ row.cells.blocker }}</span></span>{% endif %}
+  </th>
+  {% include "partials/country_execution/_cells.html" with cells=row.cells %}
+  <td class="cpo-actcell">
+    <div class="cpo-acts">
+      <button type="button" class="cpo-view"
+              hx-get="/country-planning-oversight/execution/drawer?kind=activities&amp;owner={{ row.key }}&amp;stage=due&amp;{{ query }}"
+              hx-target="#drawer-container" hx-swap="innerHTML" aria-label="View {{ row.name }}'s activities">View</button>
+    </div>
+  </td>
+</tr>
+{% if row.has_children %}
+<tr x-ref="x{{ forloop.counter }}" data-level="placeholder" hidden
+    hx-get="/country-planning-oversight/execution/rows?level=owner&amp;key={{ row.key }}&amp;{{ query }}"
+    hx-trigger="cxo-load" hx-swap="outerHTML"><td colspan="14"></td></tr>
+{% endif %}
+{% empty %}
+<tr data-level="2" x-show="open"><td colspan="14" class="cpo-empty">Nobody under this Programme Lead has work due in the period.</td></tr>
+{% endfor %}

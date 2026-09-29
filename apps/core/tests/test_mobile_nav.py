@@ -195,6 +195,10 @@ class MobileNavDestinationTests(SimpleTestCase):
                     # Impact Assessment's home is its own dashboard, not a
                     # redirect to it (IA review, 2026-09-13).
                     expected = "/ia/dashboard/"
+                elif role == CD:
+                    # Country Oversight is the Country Director's dashboard
+                    # (owner, 2026-09-28).
+                    expected = "/country-planning-oversight/"
                 else:
                     expected = "/dashboard"
                 self.assertEqual(nav_for(role)[0]["url"], expected)
@@ -243,8 +247,9 @@ class MobileNavActiveStateTests(SimpleTestCase):
         # highlight — the root-active contract belongs to a role whose bar
         # still carries the dashboard first.
         # Impact Assessment's bar leads with its own dashboard since the IA
-        # review (2026-09-13), so the Country Director carries the contract.
-        nav = nav_for(CD, path="/")
+        # review (2026-09-13), and the Country Director's with Country
+        # Oversight since 2026-09-28, so the Regional VP carries the contract.
+        nav = nav_for(RVP, path="/")
         self.assertEqual(nav[0]["url"], "/dashboard")
         self.assertTrue(nav[0]["active"])
 

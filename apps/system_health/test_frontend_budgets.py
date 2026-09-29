@@ -101,7 +101,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: page chrome the owner asked for: phone controls and badges on a smaller
     #: step, rows that reach the screen's edge, one-row filters with an ×,
     #: School Directory rows like Planning's, and details that wrap.
-    CSS_GZIP_KB = 203
+    #:
+    #: Raised to 204 on 2026-09-29 (203.0 to 203.05 KB) for Country Oversight:
+    #: its five-part stacked bars' shared tooltip draws
+    #: `apexcharts-tooltip-series-group-4`, which holds the legacy pattern
+    #: "p-4", so the name joined that pattern's index in two shared sheets
+    #: (the route audit checks every class on a page against the index).
+    CSS_GZIP_KB = 204
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

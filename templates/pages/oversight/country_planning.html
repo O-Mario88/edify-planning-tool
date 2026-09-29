@@ -1,19 +1,54 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% if active_oversight_view == "coverage" or active_oversight_view == "execution" %}
+{% comment %}Not deferred: it registers the charts' Alpine component on
+alpine:init, which fires when the deferred Alpine above starts.{% endcomment %}
+<script src="{% static 'js/country-oversight.js' %}?v=20260929cpo16"></script>{% endif %}{% endblock %}
 
 {% block title %}Country Planning Oversight · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% if active_oversight_view == "coverage" or active_oversight_view == "execution" %}
+<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20260929cpo12">{% endif %}{% if show_whos_online %}<link rel="stylesheet" href="{% static 'css/components/presence.css' %}?v=20260928presence12">{% endif %}{% endblock %}
 
 {% block shell_content %}
+{% if active_oversight_view == "coverage" %}
+{% comment %}The planning-coverage dashboard (owner, 2026-09-28): the year's
+visit, training, cluster and meeting obligation against the plan, by
+Programme Lead, with the Country Director's "Follow Up with PL". Its lens strip
+is the shared one, so the Country Plan and the Country Portfolio stay a click
+away.{% endcomment %}
+{% include "partials/country_oversight/page.html" %}
+{% if show_whos_online %}
+{% comment %}Who's Online under the planning tab (owner, 2026-09-28): who is
+using the system, for how long and on what — the table the Admin and the
+Country Director read. Outside the dashboard's swap target, and fetched on its
+own from /dashboard/whos-online, so the planning figures never wait for it and
+a filter change never reloads it.{% endcomment %}
+<section class="cpo-presence px-4 sm:px-6 pb-5" aria-label="Who's Online" data-no-titlebar>
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
+    {% comment %}The host the panel's period filter and pager swap into
+    (hx-target "closest [data-presence-host]"), as on every dashboard that
+    draws it.{% endcomment %}
+    <div class="presence-host" data-presence-host data-pager-fragment="/dashboard/whos-online"
+         hx-get="/dashboard/whos-online{% if presence_query %}?{{ presence_query }}{% endif %}" hx-trigger="load" hx-swap="innerHTML">
+      <p class="cpo-muted">Reading who is online…</p>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% elif active_oversight_view == "execution" %}
+{% comment %}Country Execution & Completion Oversight (owner, 2026-09-28): did
+the planned work happen, was it verified and closed, and who holds what is
+still open — the second Country Oversight tab.{% endcomment %}
+{% include "partials/country_execution/page.html" %}
+{% else %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Leadership</p>
       <h1 class="edify-page-title edify-page-header__title">Country Planning Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is overdue.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
@@ -33,7 +68,7 @@
   their own FY control, so the period bar would offer them a week they do not
   read.{% endcomment %}
   {% if active_oversight_view == "planning" %}
-  {% include "partials/oversight/period_filter_bar.html" with filter_label="Country oversight period" target_url="/country-planning-oversight/" target_id="#country-workspace" %}
+  {% include "partials/oversight/period_filter_bar.html" with filter_label="Country oversight period" target_url="/country-planning-oversight/" target_id="#country-workspace" lens_view="plan" %}
   {% endif %}
   </div>
 
@@ -46,12 +81,11 @@
       {% include "partials/oversight/portfolio_workspace.html" %}
     {% elif active_oversight_view == "monitor" %}
       {% include "partials/oversight/monitor_workspace.html" %}
-    {% elif active_oversight_view == "execution" %}
-      {% include "partials/oversight/execution_workspace.html" %}
     {% else %}
       {% include "partials/oversight/cd_workspace.html" %}
     {% endif %}
   </div></div>
 
 </div>
+{% endif %}
 {% endblock %}

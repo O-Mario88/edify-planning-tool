@@ -55,7 +55,9 @@ class CountryDirectorClusterDirectoryTest(TestCase):
 
     def test_sidebar_offers_the_cd_the_cluster_directory(self):
         self.client.force_login(self.cd)
-        response = self.client.get("/dashboard")
+        # Country Oversight is the Country Director's dashboard (owner,
+        # 2026-09-28); the sidebar is the same on every page.
+        response = self.client.get("/country-planning-oversight/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/clusters"')
 

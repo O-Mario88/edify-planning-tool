@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **838**
-- All registered routes: **1310**
+- Routed product surfaces: **858**
+- All registered routes: **1330**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **31**
+- Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **521**
-- Full pages: **260**
-- Partials and drawers: **277**
-- Permission-gated surfaces: **822**
-- Referenced by automated tests: **731**
+- Shared component templates: **566**
+- Full pages: **261**
+- Partials and drawers: **294**
+- Permission-gated surfaces: **842**
+- Referenced by automated tests: **751**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -253,9 +253,26 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E49086D072 | /country-budget/history/<str:budget_id> | FY | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6C0C6DD33B | /country-budget/plan-sources | Country Budget Plan Sources | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EFEA0EEA3D | /country-budget/return | Country Budget Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-5A9AECA4A2 | /country-map/ | Country Map | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3CB2AE6648 | /country-planning-oversight/ | Country Oversight | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D97FB630D1 | /country-planning-oversight/coverage-export | Cpo Coverage Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-B4BC2BE769 | /country-planning-oversight/drawer | Cpo Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-726FB0940E | /country-planning-oversight/execution/drawer | Cpx Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-58BF5DA655 | /country-planning-oversight/execution/export | Cpx Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-83E3384A4B | /country-planning-oversight/execution/follow-up | Cpx Follow Up | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CFF130F018 | /country-planning-oversight/execution/follow-ups-panel | Cpx Followups Panel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C3457E0D16 | /country-planning-oversight/execution/rows | Cpx Rows | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8664A5A06F | /country-planning-oversight/execution/snapshots | Cpx Snapshots | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-27C7447FF6 | /country-planning-oversight/execution/snapshots/<str:snapshot_id> | Cpx Snapshot | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B4D7E70702 | /country-planning-oversight/execution/table | Cpx Table | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-6F857A0111 | /country-planning-oversight/follow-up | Cpo Follow Up | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-BE4DC27E5B | /country-planning-oversight/follow-up/<str:followup_id>/<str:action> | Cpo Follow Up Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6E08AE9527 | /country-planning-oversight/follow-ups-panel | Cpo Followups Panel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-87CFAB10E4 | /country-planning-oversight/rows | Cpo Rows | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-253268D31D | /country-planning-oversight/schools | Cpo Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-15D0AB1EB0 | /country-planning-oversight/send | Country Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-EB2A1BB141 | /country-planning-oversight/slots | Cpo Slots | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E4DAD286B | /cpd-learning | CPD & Learning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -665,6 +682,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5B9704236A | /pl/review-queue/<str:activity_id>/return | Pl Return | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-80D35194CE | /pl/review-queue/<str:activity_id>/return-drawer | Pl Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5F1957110F | /planning | Planning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-436E67D76F | /planning-follow-ups/<str:followup_id> | Planning Followup Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E57F627F7E | /planning-follow-ups/<str:followup_id>/<str:action> | Planning Followup Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-46B09EFCBC | /planning-monitor/ | Planning Monitor · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2460A9454D | /planning/assign-partner-action | Planning Assign Partner Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

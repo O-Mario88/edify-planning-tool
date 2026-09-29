@@ -34,16 +34,6 @@ The dashboard is a read — every control opens the page where the work is done.
     </div>
   </header>
 
-  {% comment %}The team's two monitors (owner, 2026-09-29: "give PLs access to
-  the Planning Monitoring ... so they can follow up with their team
-  members"): the Lead's own 280 and each CCEO's 560, then delivery and
-  completion. Both open on Team Oversight, scoped to this Lead's team.{% endcomment %}
-  <nav class="flex items-center gap-2" aria-label="Daily monitors" data-monitor-links>
-    <span class="hidden sm:inline edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Daily monitors</span>
-    <a href="/team-planning-oversight/?view=monitor" class="btn btn-secondary h-8 flex-1 sm:flex-none">Planning Monitor</a>
-    <a href="/team-planning-oversight/?view=execution" class="btn btn-secondary h-8 flex-1 sm:flex-none">Execution &amp; Completion</a>
-  </nav>
-
   {% comment %}One filter, the year: every figure on the page reads it. The view
   travels with the form so a year change keeps the tab you are on.{% endcomment %}
   <form id="pl-dashboard-filters"

@@ -37,6 +37,8 @@ from apps.planning.action_service import ActionError
 # Lead's page would be a scope change dressed up as a redirect.
 TEAM_OVERSIGHT_PATH = "/team-planning-oversight/"
 COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
+PLANNING_MONITOR_PATH = "/planning-monitor/"
+COUNTRY_MAP_PATH = "/country-map/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
 
 
@@ -349,28 +351,12 @@ def _lens_tabs(
     base_url: str, active: str, available, *, country: bool = True
 ) -> list[dict]:
     """The lens strip, in one order, for whichever page is drawing it."""
-    plan = (
-        "planning",
-        "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
-    )
-    monitors = (
-        ("monitor", "Planning Monitor"),
-        ("execution", "Execution & Completion"),
-    )
-    # Country Planning Oversight opens on the monitors, the daily view (owner,
-    # 2026-09-29: "Planning Monitoring ... is what will be used on a daily
-    # basis"); Team Oversight keeps the Team Plan first, where a Programme
-    # Lead acts on their team's rows, with the monitors beside it.
-    ordered = (
-        (*monitors, plan)
-        if base_url == COUNTRY_OVERSIGHT_PATH
-        else (
-            plan,
-            *monitors,
-        )
-    )
     labels = (
-        *ordered,
+        (
+            "planning",
+            "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
+        ),
+        ("monitor", "Planning Monitor"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
@@ -379,7 +365,7 @@ def _lens_tabs(
     for key, label in labels:
         if key not in available:
             continue
-        query = f"?view={key}"
+        query = "" if key == "planning" else f"?view={key}"
         tabs.append(
             {
                 "key": key,
@@ -391,6 +377,148 @@ def _lens_tabs(
     # A strip of one is furniture: it costs the first table row its place above
     # the fold and chooses nothing.
     return tabs if len(tabs) > 1 else []
+
+
+#: Query parameters only the Country Plan (activity) lens reads. A link that
+#: carries one of them was made on that lens.
+_ACTIVITY_PLAN_PARAMS = frozenset(
+    {
+        "lead",
+        "risk",
+        "activity_type",
+        "executor_type",
+        "context",
+        "status",
+        "district_id",
+        "partner_id",
+    }
+)
+
+
+def _names_activity_plan(request) -> bool:
+    import re
+
+    keys = set(request.GET.keys())
+    if keys & _ACTIVITY_PLAN_PARAMS:
+        return True
+    return any(re.match(r"^g\d+_page", key) for key in keys)
+
+
+def country_lens_tabs(active: str) -> list[dict]:
+    """Country Oversight's two stages (owner, 2026-09-28): planning general
+    oversight, and execution & completion. The activity plan, the planning
+    monitor and the portfolio stay reachable from the rows' menus and links,
+    and the portfolio lives on the Map page."""
+    return [
+        {
+            "key": key,
+            "label": label,
+            "short": short,
+            "href": href,
+            "is_active": key == active,
+        }
+        for key, label, short, href in (
+            (
+                "coverage",
+                "Country General Planning Oversight",
+                "General Planning",
+                COUNTRY_OVERSIGHT_PATH,
+            ),
+            (
+                "execution",
+                "Country Execution & Completion Oversight",
+                "Execution & Completion",
+                f"{COUNTRY_OVERSIGHT_PATH}?view=execution",
+            ),
+        )
+    ]
+
+
+@require_page_permission("planning_monitor")
+def planning_monitor_view(request):
+    """The Planning Monitor, a page of its own under the Dashboard (owner,
+    2026-09-29: "move the [monitor] on its own page and add it to the side
+    bar and place it below the Dashboard. Do the same for PL").
+
+    Two tabs over the same people (apps.planning.monitor_roster): Planning —
+    each Programme Lead's and CCEO's plan against their 280 or 560, partner
+    work and the schools nobody has planned for — and Execution & Completion
+    — that plan as it is delivered, completed and verified. The country for
+    the CD, IA and RVP; a Lead's own team for the PL.
+    """
+    execution = (request.GET.get("view") or "").strip().lower() == "execution"
+    lens = "execution" if execution else "monitor"
+    period = _period_filters(request)
+    lens_context = _execution_context if execution else _monitor_context
+    context = {
+        **period,
+        **lens_context(request, period, base_url=PLANNING_MONITOR_PATH),
+        "active_oversight_view": lens,
+        "lens_tabs": [
+            {
+                "key": key,
+                "label": label,
+                "href": f"{PLANNING_MONITOR_PATH}?view={key}",
+                "is_active": key == ("execution" if execution else "planning"),
+            }
+            for key, label in (
+                ("planning", "Planning"),
+                ("execution", "Execution & Completion"),
+            )
+        ],
+        "lens_base_url": PLANNING_MONITOR_PATH,
+        "monitor_is_country": is_country_reader(request.user),
+        "fy_options": fy_options(),
+    }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, _MONITOR_TEMPLATES[lens], context)
+    return render(request, "pages/oversight/planning_monitor.html", context)
+
+
+def _to_planning_monitor(request, lens: str):
+    """An old link to a monitor tab on an oversight page opens the Planning
+    Monitor page with the same filters (the monitors moved there,
+    2026-09-29)."""
+    query = request.GET.copy()
+    query["view"] = "execution" if lens == "execution" else "planning"
+    destination = f"{PLANNING_MONITOR_PATH}?{query.urlencode()}"
+    response = redirect(destination)
+    if request.headers.get("HX-Request") == "true":
+        response["HX-Redirect"] = destination
+    return response
+
+
+@require_page_permission("country_map")
+def country_map_view(request):
+    """The Country Map (owner, 2026-09-28): the country shaded by delivery,
+    backlog or money, and under it the country portfolio — every school under
+    the Programme Lead and the CCEO who hold it — when there is one.
+
+    The portfolio used to be a Country Oversight tab; Country Oversight keeps
+    its two stages (planning, and execution & completion) and the portfolio
+    reads beside the map. Read-only, like both of them.
+    """
+    from apps.analytics.country_map_context import country_map_context
+
+    period = _period_filters(request)
+    portfolio = _portfolio_context(request, period, base_url=COUNTRY_MAP_PATH)
+    context = {
+        **period,
+        **portfolio,
+        "active_oversight_view": "portfolio",
+        "lens_tabs": [],
+        "lens_base_url": COUNTRY_MAP_PATH,
+        "portfolio_is_country": True,
+        "fy_options": fy_options(),
+        "has_portfolio": bool(portfolio["portfolio_totals"].get("schools")),
+    }
+    if (
+        request.headers.get("HX-Request") == "true"
+        and (request.headers.get("HX-Target") or "") == "oversight-workspace"
+    ):
+        return render(request, "partials/oversight/portfolio_workspace.html", context)
+    context.update(country_map_context(period["fy"]))
+    return render(request, "pages/oversight/country_map.html", context)
 
 
 def _portfolio_context(request, period: dict, *, base_url: str) -> dict:
@@ -1302,6 +1430,9 @@ def team_planning_oversight_view(request):
         PORTFOLIO_LENS_ROLES
     )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
+    # The people monitors moved to their own page (owner, 2026-09-29).
+    if requested_view in ("monitor", "execution"):
+        return _to_planning_monitor(request, requested_view)
     if requested_view == "clusters":
         query = request.GET.copy()
         query.pop("view", None)
@@ -1312,28 +1443,22 @@ def team_planning_oversight_view(request):
         return response
     active_view = (
         requested_view
-        if requested_view
-        in {"targets", "coverage", "portfolio", "monitor", "execution"}
+        if requested_view in {"targets", "coverage", "portfolio"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
     if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
-    if active_view in ("portfolio", "monitor", "execution") and not can_view_portfolio:
+    if active_view == "portfolio" and not can_view_portfolio:
         active_view = "planning"
-    if (
-        active_view in ("planning", "coverage", "portfolio", "monitor", "execution")
-        and not can_view_planning
-    ):
+    if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
 
     available_lenses = {
         key
         for key, allowed in (
             ("planning", can_view_planning),
-            ("monitor", can_view_portfolio),
-            ("execution", can_view_portfolio),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
@@ -1365,27 +1490,6 @@ def team_planning_oversight_view(request):
         return render(request, "pages/oversight/team_planning.html", context)
 
     period = _period_filters(request)
-
-    if active_view in ("monitor", "execution"):
-        lens_context = (
-            _monitor_context if active_view == "monitor" else _execution_context
-        )
-        context = {
-            **period,
-            **lens_context(request, period, base_url=TEAM_OVERSIGHT_PATH),
-            "active_oversight_view": active_view,
-            "lens_tabs": lens_tabs,
-            "lens_base_url": TEAM_OVERSIGHT_PATH,
-            "monitor_is_country": country_reader,
-            "can_view_team_targets": can_view_targets,
-            "can_view_team_planning": can_view_planning,
-            "can_view_school_coverage": can_view_coverage,
-            "can_view_portfolio": can_view_portfolio,
-            "fy_options": fy_options(),
-        }
-        if request.headers.get("HX-Request") == "true":
-            return render(request, _MONITOR_TEMPLATES[active_view], context)
-        return render(request, "pages/oversight/team_planning.html", context)
 
     # The portfolio and cluster lenses stand on the school and cluster records,
     # not on the period's planning items. Answering them before `build_items`
@@ -1678,7 +1782,7 @@ def country_planning_oversight_view(request):
     # one format rather than a second one (owner, 2026-09-16). The country
     # reader holds every lens by definition: this route is already gated on
     # `country_planning_oversight`.
-    requested_view = (request.GET.get("view") or "planning").strip().lower()
+    requested_view = (request.GET.get("view") or "").strip().lower()
     if requested_view == "clusters":
         query = request.GET.copy()
         query.pop("view", None)
@@ -1687,37 +1791,37 @@ def country_planning_oversight_view(request):
         if request.headers.get("HX-Request") == "true":
             response["HX-Redirect"] = destination
         return response
-    # The Planning Monitor is the page's front door (owner, 2026-09-29): the
-    # country plan's rows are one tab away, and every link that names
-    # `view=planning` — or carries the plan's own filters — still opens them.
-    plan_keys = {"lead", "period", "week", "month", "quarter", *oversight.FILTER_KEYS}
-    if not (request.GET.get("view") or "").strip():
-        requested_view = "planning" if plan_keys & set(request.GET) else "monitor"
-    elif requested_view not in {"planning", "portfolio", "monitor", "execution"}:
-        requested_view = "planning"
-    active_view = requested_view
-    lens_tabs = _lens_tabs(
-        COUNTRY_OVERSIGHT_PATH,
-        active_view,
-        {"planning", "monitor", "execution", "portfolio"},
-    )
+    # The page opens on the planning-coverage dashboard (owner, 2026-09-28):
+    # the year's obligation against the plan, by Programme Lead. The activity
+    # plan it used to open on is the "Country Plan" lens, and a link carrying
+    # that lens's own filters (a Lead tab, a risk, an activity type) still
+    # lands there, so no bookmark changes meaning.
+    if not requested_view and _names_activity_plan(request):
+        requested_view = "plan"
+    if requested_view == "execution":
+        from apps.frontend.views.country_execution_views import execution_page
 
-    if active_view in ("monitor", "execution"):
-        lens_context = (
-            _monitor_context if active_view == "monitor" else _execution_context
-        )
-        context = {
-            **period,
-            **lens_context(request, period, base_url=COUNTRY_OVERSIGHT_PATH),
-            "active_oversight_view": active_view,
-            "lens_tabs": lens_tabs,
-            "lens_base_url": COUNTRY_OVERSIGHT_PATH,
-            "monitor_is_country": True,
-            "fy_options": fy_options(),
-        }
+        return execution_page(request)
+    if requested_view == "portfolio":
+        # The country portfolio lives on the Country Map page (owner,
+        # 2026-09-28); an old link keeps its filters on the way there.
+        query = request.GET.copy()
+        query.pop("view", None)
+        destination = COUNTRY_MAP_PATH + ("?" + query.urlencode() if query else "")
+        response = redirect(destination + "#country-portfolio")
         if request.headers.get("HX-Request") == "true":
-            return render(request, _MONITOR_TEMPLATES[active_view], context)
-        return render(request, "pages/oversight/country_planning.html", context)
+            response["HX-Redirect"] = destination + "#country-portfolio"
+        return response
+    # The people monitors moved to their own page (owner, 2026-09-29); an old
+    # link to them here opens it with the same filters.
+    if requested_view == "monitor":
+        return _to_planning_monitor(request, requested_view)
+    if requested_view not in {"plan", "planning", "portfolio"}:
+        from apps.frontend.views.country_oversight_views import coverage_page
+
+        return coverage_page(request)
+    active_view = "portfolio" if requested_view == "portfolio" else "planning"
+    lens_tabs = country_lens_tabs(active_view)
 
     if active_view == "portfolio":
         context_data = _portfolio_context(

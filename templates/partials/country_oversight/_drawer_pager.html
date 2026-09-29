@@ -1,0 +1,10 @@
+{% comment %}Page links for a list inside a Country Oversight drawer: a
+server-side pagination strip that asks the same drawer again for the next
+page. `page_query` is everything the drawer was opened with, bar the page.{% endcomment %}
+{% if pager.pages > 1 %}
+<nav class="cpo-pager edify-pagination-scope" aria-label="Pages">
+  <span class="cpo-muted">{{ pager.total }} in all · page {{ pager.page }} of {{ pager.pages }}</span>
+  {% if pager.page > 1 %}<button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?{{ page_query }}&amp;page={{ pager.page|add:'-1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Previous</button>{% endif %}
+  {% if pager.page < pager.pages %}<button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?{{ page_query }}&amp;page={{ pager.page|add:'1' }}" hx-target="#drawer-container" hx-swap="innerHTML">Next</button>{% endif %}
+</nav>
+{% endif %}

@@ -37,6 +37,8 @@ EXPECTED_PL_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/dashboard"),
+            # Under the Dashboard (owner, 2026-09-29).
+            ("Planning Monitor", "/planning-monitor/"),
             ("Planning", "/planning"),
             ("My Plan", "/my-plan"),
             ("School Directory", "/schools"),

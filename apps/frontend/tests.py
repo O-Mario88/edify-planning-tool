@@ -314,9 +314,13 @@ class FrontendViewsTestCase(TestCase):
         )
         cd_user.save()
         self.client.force_login(cd_user)
-        response = self.client.get("/dashboard")
+        # The command dashboard, where a link names its view; the Country
+        # Director's /dashboard opens Country Oversight (owner, 2026-09-28).
+        response = self.client.get("/dashboard?view=map")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/cd.html")
+        home = self.client.get("/dashboard", follow=True)
+        self.assertTemplateUsed(home, "pages/oversight/country_planning.html")
 
     def test_special_projects_dashboard_renders(self):
         User = get_user_model()

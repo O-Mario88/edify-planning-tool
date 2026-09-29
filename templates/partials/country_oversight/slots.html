@@ -1,0 +1,17 @@
+{% load frontend_filters %}{% comment %}One school's requirement slots for the year, and the record
+filling each. Work beyond the slots is listed as claiming nothing, so a
+duplicate is visible rather than counted twice.{% endcomment %}
+<ol class="cpo-slots" aria-label="Requirement slots for {{ school.name }}">
+  {% for slot in slots %}
+  <li class="cpo-slot" data-state="{{ slot.state }}">
+    <span class="cpo-slot-name">{{ slot.label }}{% if slot.expected %}<small>{{ slot.expected }}</small>{% endif %}</span>
+    <span class="cpo-tag" data-tone="{% if slot.state == 'verified' %}done{% elif slot.state == 'planned' or slot.state == 'cover' %}sent{% elif slot.state == 'assigned' %}wait{% elif slot.state == 'beyond' %}off{% else %}back{% endif %}">{% if slot.state == "verified" %}Verified{% elif slot.state == "planned" %}Planned{% elif slot.state == "cover" %}Planned by staff{% elif slot.state == "assigned" %}Assigned{% elif slot.state == "beyond" %}Claims no slot{% else %}Open{% endif %}</span>
+    <span class="cpo-slot-what">
+      {% if slot.activity_id %}{{ slot.activity_type|replace_underscore|capfirst }}{% if slot.day %} · {{ slot.day|date:"j M Y" }}{% endif %}{% if slot.who %} · {{ slot.who }}{% endif %}{% elif slot.who %}{{ slot.who }}{% endif %}{% if slot.note %}<small>{{ slot.note }}</small>{% endif %}
+    </span>
+    {% if slot.activity_id %}
+    <button type="button" class="cpo-view" hx-get="/team-planning-oversight/detail?activity_id={{ slot.activity_id }}" hx-target="#drawer-container" hx-swap="innerHTML">Activity</button>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>

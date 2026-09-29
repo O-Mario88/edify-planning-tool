@@ -8481,6 +8481,20 @@
    "view": "apps.frontend.views.finance_views.country_budget_return_drawer_view"
   },
   {
+   "page_permission": "country_map",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-map/",
+   "route_name": "country_map",
+   "view": "apps.frontend.views.oversight_views.country_map_view"
+  },
+  {
    "page_permission": "country_planning_oversight",
    "required_permissions": [],
    "role_exclusive": false,
@@ -8493,6 +8507,146 @@
    "route": "/country-planning-oversight/",
    "route_name": "country_planning_oversight",
    "view": "apps.frontend.views.oversight_views.country_planning_oversight_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/coverage-export",
+   "route_name": "cpo_coverage_export",
+   "view": "apps.frontend.views.country_oversight_views.coverage_export_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/drawer",
+   "route_name": "cpo_drawer",
+   "view": "apps.frontend.views.country_oversight_views.drawer_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/drawer",
+   "route_name": "cpx_drawer",
+   "view": "apps.frontend.views.country_execution_views.drawer_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/export",
+   "route_name": "cpx_export",
+   "view": "apps.frontend.views.country_execution_views.export_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/follow-up",
+   "route_name": "cpx_follow_up",
+   "view": "apps.frontend.views.country_execution_views.follow_up_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/follow-ups-panel",
+   "route_name": "cpx_followups_panel",
+   "view": "apps.frontend.views.country_execution_views.followups_panel_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/rows",
+   "route_name": "cpx_rows",
+   "view": "apps.frontend.views.country_execution_views.rows_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/snapshots",
+   "route_name": "cpx_snapshots",
+   "view": "apps.frontend.views.country_execution_views.snapshots_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/snapshots/<str:snapshot_id>",
+   "route_name": "cpx_snapshot",
+   "view": "apps.frontend.views.country_execution_views.snapshot_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/table",
+   "route_name": "cpx_table",
+   "view": "apps.frontend.views.country_execution_views.table_view"
   },
   {
    "page_permission": "country_planning_oversight",
@@ -8518,9 +8672,93 @@
     "ImpactAssessment",
     "Admin"
    ],
+   "route": "/country-planning-oversight/follow-up",
+   "route_name": "cpo_follow_up",
+   "view": "apps.frontend.views.country_oversight_views.follow_up_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/follow-up/<str:followup_id>/<str:action>",
+   "route_name": "cpo_follow_up_action",
+   "view": "apps.frontend.views.country_oversight_views.follow_up_action_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/follow-ups-panel",
+   "route_name": "cpo_followups_panel",
+   "view": "apps.frontend.views.country_oversight_views.followups_panel_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/rows",
+   "route_name": "cpo_rows",
+   "view": "apps.frontend.views.country_oversight_views.rows_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/schools",
+   "route_name": "cpo_schools",
+   "view": "apps.frontend.views.country_oversight_views.schools_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
    "route": "/country-planning-oversight/send",
    "route_name": "country_planning_oversight_send",
    "view": "apps.frontend.views.oversight_views.country_planning_send_action_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/slots",
+   "route_name": "cpo_slots",
+   "view": "apps.frontend.views.country_oversight_views.slots_view"
   },
   {
    "page_permission": "country_planning_oversight",
@@ -15284,6 +15522,56 @@
    "view": "apps.frontend.views.planning_views.planning_dashboard_view"
   },
   {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/planning-follow-ups/<str:followup_id>",
+   "route_name": "planning_followup_detail",
+   "view": "apps.frontend.views.country_oversight_views.followup_detail_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/planning-follow-ups/<str:followup_id>/<str:action>",
+   "route_name": "planning_followup_action",
+   "view": "apps.frontend.views.country_oversight_views.followup_lead_action_view"
+  },
+  {
+   "page_permission": "planning_monitor",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/planning-monitor/",
+   "route_name": "planning_monitor",
+   "view": "apps.frontend.views.oversight_views.planning_monitor_view"
+  },
+  {
    "page_permission": "planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18241,27 +18529,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 416,
-  "Admin": 1019,
+  "Accountant": 418,
+  "Admin": 1039,
   "BusinessTransformationOfficer": 235,
   "CCEO": 545,
-  "CountryDirector": 775,
+  "CountryDirector": 795,
   "HumanResources": 333,
-  "ImpactAssessment": 639,
+  "ImpactAssessment": 659,
   "MfiLoanOfficer": 131,
   "MfiPartnerAdmin": 134,
   "PartnerAdmin": 222,
   "PartnerFieldOfficer": 222,
-  "Program Lead": 630,
+  "Program Lead": 633,
   "ProjectCoordinator": 456,
-  "RegionalProgramLead": 324,
-  "RegionalVicePresident": 376
+  "RegionalProgramLead": 327,
+  "RegionalVicePresident": 396
  },
  "summary": {
-  "page_keys_declared": 179,
-  "page_keys_in_navigation": 196,
-  "routes_guarded": 1116,
-  "routes_total": 1310,
+  "page_keys_declared": 181,
+  "page_keys_in_navigation": 198,
+  "routes_guarded": 1136,
+  "routes_total": 1330,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

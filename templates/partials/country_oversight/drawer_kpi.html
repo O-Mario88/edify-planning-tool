@@ -1,0 +1,38 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}A summary card, opened: what it counts, each Programme Lead's
+share of it, and the schools behind its gap.{% endcomment %}
+{% block drawer_title %}{{ card.label }}{% endblock %}
+{% block drawer_subtitle %}{{ header.country }} · {{ header.fy_label }}{% if not filters.window.is_annual %} · {{ header.window_label }}{% endif %}{% endblock %}
+{% block drawer_body %}
+<div class="cpo-sheet">
+  <section class="cpo-opened" data-tone="{{ card.tone }}">
+    <p class="cpo-big"><span>{{ card.part }}</span> / {{ card.whole }} <strong>{% if card.share is None %}—{% else %}{{ card.share }}%{% endif %}</strong></p>
+    <p class="cpo-muted">{{ card.definition }}</p>
+    {% if card.extras %}<p class="cpo-muted">{{ card.extras|join:" · " }}</p>{% endif %}
+    {% if card.note %}<p class="cpo-muted">{{ card.note }}</p>{% endif %}
+  </section>
+  <section aria-labelledby="cpo-k-leads">
+    <h3 class="cpo-sub" id="cpo-k-leads">By Programme Lead</h3>
+    <div class="cpo-tscroll">
+      <table class="cpo-mini">
+        <thead><tr><th scope="col">Programme Lead</th><th scope="col">Portfolio</th><th scope="col">Required visits</th><th scope="col">Staff planned</th><th scope="col">Partner assigned</th><th scope="col">Partner scheduled</th><th scope="col">Training</th><th scope="col">Clustered</th><th scope="col">Meetings</th></tr></thead>
+        <tbody>
+          {% for row in chart_rows.rows %}
+          <tr>
+            <th scope="row">{{ row.name }}</th>
+            <td>{{ row.cells.schools }}</td><td>{{ row.cells.visit_slots }}</td><td>{{ row.cells.staff }} / {{ row.tally.staff_expected }}</td><td>{{ row.cells.partner_assigned }} / {{ row.tally.partner_expected }}</td><td>{{ row.cells.partner_scheduled }}</td><td>{{ row.cells.training }}</td><td>{{ row.tally.clustered }} / {{ row.tally.schools }}</td><td>{{ row.cells.meeting }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "partials/country_oversight/_drawer_pager.html" with pager=chart_rows %}
+    </div>
+  </section>
+  {% if may_see_schools %}
+  <section aria-labelledby="cpo-k-schools">
+    <h3 class="cpo-sub" id="cpo-k-schools">Schools: {{ gap_label|lower }}</h3>
+    <div hx-get="/country-planning-oversight/schools?gap={{ gap }}&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

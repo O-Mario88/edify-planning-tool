@@ -1,0 +1,18 @@
+{% comment %}An officer's delivery channels: each Partner working their
+schools (a school two Partners share is under both), then the schools no
+Partner is involved in. Shown while the officer's row is open.{% endcomment %}
+{% for row in rows %}
+<tr data-level="3" x-show="open && owners['{{ owner.key }}']">
+  <th scope="row" class="cpo-namecell" data-leaf>
+    <span>{{ row.name }}</span>{% if row.is_staff %}<span class="cpo-hint"><span>schools no Partner works</span></span>{% endif %}{% if not row.is_staff and row.assigned_unscheduled %}<span class="cpo-hint"><span>{{ row.assigned_unscheduled }} awaiting schedule</span></span>{% endif %}
+  </th>
+  {% include "partials/country_oversight/_cells.html" with cells=row.cells followups=0 %}
+  <td class="cpo-actcell">
+    <div class="cpo-acts">
+      <button type="button" class="cpo-view"
+              hx-get="/country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}"
+              hx-target="#drawer-container" hx-swap="innerHTML" aria-label="View {{ row.name }} for {{ owner.name }}">View</button>
+    </div>
+  </td>
+</tr>
+{% endfor %}

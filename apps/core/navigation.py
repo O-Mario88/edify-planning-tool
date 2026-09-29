@@ -208,6 +208,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # an IA does not pass, and both exports carry
     # `@require_export_permission`. Nothing on this page edits an activity.
     "country_planning_oversight": {CD, RVP, IA, ADMIN},
+    # The country map and, under it, the country portfolio (owner,
+    # 2026-09-28: the portfolio left Country Oversight's tabs for the map
+    # page). The same readers as Country Oversight.
+    "country_map": {CD, RVP, IA, ADMIN},
+    # The Planning Monitor, a page of its own under the Dashboard (owner,
+    # 2026-09-29: "move the [monitor] on its own page and add it to the side
+    # bar and place it below the Dashboard. Do the same for PL"): each
+    # Programme Lead's and CCEO's plan against their 280 or 560, and its
+    # execution and completion — the country for the CD, IA and RVP, a
+    # Lead's own team for the PL, the region for the RPL.
+    "planning_monitor": {PL, IA, CD, RVP, RPL, ADMIN},
     # The Accountant read clusters as a section of Team Oversight until the
     # section moved here (2026-09-23), and keeps that reading (owner,
     # 2026-09-23: "give them the access"). The data stays scoped by
@@ -827,6 +838,8 @@ ICONS.update(
         "team_planning_oversight": ICONS["planning"],
         "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
+        "country_map": ICONS["coverage"],
+        "planning_monitor": ICONS["team_targets"],
         "cluster_oversight": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
@@ -1681,12 +1694,24 @@ SIDEBAR_ITEMS = [
                 "role_urls": {
                     PARTNER: "/partner/assigned-schools",
                     IA: "/ia/dashboard/",
+                    # Country Oversight is the Country Director's dashboard
+                    # (owner, 2026-09-28): planning coverage and execution &
+                    # completion, with Who's Online under the planning tab.
+                    CD: "/country-planning-oversight/",
                     # An MFI's home is its portal dashboard (/dashboard only
                     # redirected there); one link, not two "Dashboard" rows.
                     MFI_ADMIN: "/mfi-portal/dashboard",
                     MFI_OFFICER: "/mfi-portal/dashboard",
                     BUSINESS_TRANSFORMATION: "/business-transformation/overview",
                 },
+            },
+            {
+                # Directly under the Dashboard for the people who follow
+                # planning and delivery every day (owner, 2026-09-29).
+                "label": "Planning Monitor",
+                "url": "/planning-monitor/",
+                "page_key": "planning_monitor",
+                "visible_to": {CD, PL, IA},
             },
             {
                 "label": "Planning",
@@ -1771,9 +1796,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "programme_schools",
             },
             {
+                # The Country Director reaches this page as their Dashboard
+                # (owner, 2026-09-28), so it is listed here for the others.
                 "label": "Country Oversight",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
+                "visible_to": {IA, RPL, RVP, ADMIN},
+            },
+            {
+                # The country map, with the country portfolio under it —
+                # the portfolio left Country Oversight's tabs (owner,
+                # 2026-09-28).
+                "label": "Country Map",
+                "url": "/country-map/",
+                "page_key": "country_map",
                 "visible_to": {IA, CD, RPL, RVP, ADMIN},
             },
             {
@@ -3282,6 +3318,9 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     oversight_keys = (
         "team_planning_oversight",
         "country_planning_oversight",
+        # The country map carries the country portfolio that was Country
+        # Oversight's third tab (owner, 2026-09-28), so it sits beside it.
+        "country_map",
         "cluster_oversight",
         "core_schools_oversight",
         "partner_oversight",

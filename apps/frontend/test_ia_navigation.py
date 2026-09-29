@@ -59,6 +59,8 @@ IA_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/ia/dashboard/"),
+            # Under the Dashboard (owner, 2026-09-29).
+            ("Planning Monitor", "/planning-monitor/"),
             ("Planning", "/planning"),
             ("School Directory", "/schools"),
             ("Calendar", "/calendar"),
@@ -76,6 +78,7 @@ IA_SIDEBAR = [
         [
             ("Planning Oversight", "/team-planning-oversight/"),
             ("Country Oversight", "/country-planning-oversight/"),
+            ("Country Map", "/country-map/"),
             ("Cluster Oversight", "/cluster-oversight/"),
             ("Core School Oversight", "/core-schools-oversight/"),
             ("Partner Oversight", "/partner-oversight/"),

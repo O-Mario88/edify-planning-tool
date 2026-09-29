@@ -248,35 +248,64 @@ class TheExecutionMonitor(PeopleFixture):
         self.assertEqual(team.visits_target, 280 + 2 * 560)
 
 
-class TheLensesOnThePages(PeopleFixture):
-    def test_the_country_page_opens_on_the_planning_monitor(self):
-        self.client.force_login(self.cd_user)
-        body = self.client.get("/country-planning-oversight/").content.decode()
-        self.assertIn("data-planning-monitor", body)
-        self.assertIn("Execution &amp; Completion", body)
-        plan = self.client.get("/country-planning-oversight/?view=planning")
-        self.assertNotIn("data-planning-monitor", plan.content.decode())
+class ThePlanningMonitorPage(PeopleFixture):
+    """Its own page, under the Dashboard in the sidebar (owner, 2026-09-29:
+    "move the on its own page and add it to the side bar and place it below
+    the Dashboard. Do the same for PL")."""
 
-    def test_the_execution_lens_on_both_pages(self):
-        for user, url in (
-            (self.cd_user, "/country-planning-oversight/?view=execution"),
-            (self.lead_user, "/team-planning-oversight/?view=execution"),
-        ):
-            with self.subTest(url=url):
-                self.client.force_login(user)
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 200)
-                self.assertContains(response, "data-execution-monitor")
+    def test_both_tabs_for_the_cd_and_the_lead(self):
+        for user in (self.cd_user, self.lead_user):
+            self.client.force_login(user)
+            for view, marker in (
+                ("planning", "data-planning-monitor"),
+                ("execution", "data-execution-monitor"),
+            ):
+                with self.subTest(role=user.active_role, view=view):
+                    response = self.client.get(f"/planning-monitor/?view={view}")
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, marker)
+                    self.assertContains(response, "Execution &amp; Completion")
 
-    def test_a_programme_lead_reaches_both_monitors_from_the_dashboard(self):
+    def test_a_lead_reads_their_own_team(self):
         self.client.force_login(self.lead_user)
-        response = self.client.get("/team-planning-oversight/?view=monitor")
-        self.assertContains(response, "data-planning-monitor")
-        dashboard = self.client.get("/dashboard")
-        self.assertContains(dashboard, 'href="/team-planning-oversight/?view=monitor"')
-        self.assertContains(
-            dashboard, 'href="/team-planning-oversight/?view=execution"'
-        )
+        body = self.client.get("/planning-monitor/").content.decode()
+        # Each person heads their row: "<name> <role>".
+        self.assertIn(">Cara <span", body)
+        self.assertNotIn(">Eve <span", body)
+
+    def test_a_cceo_has_no_page(self):
+        self.client.force_login(self.cara_user)
+        self.assertNotEqual(self.client.get("/planning-monitor/").status_code, 200)
+
+    def test_the_sidebar_lists_it_right_under_the_dashboard(self):
+        for user in (self.cd_user, self.lead_user):
+            with self.subTest(role=user.active_role):
+                self.client.force_login(user)
+                body = self.client.get("/planning-monitor/").content.decode()
+                dashboard = body.index(
+                    'href="{}"'.format(
+                        "/country-planning-oversight/"
+                        if user is self.cd_user
+                        else "/dashboard"
+                    )
+                )
+                monitor = body.index('href="/planning-monitor/"')
+                self.assertLess(dashboard, monitor)
+                between = body[dashboard:monitor]
+                self.assertNotIn('href="/planning"', between)
+
+    def test_old_monitor_links_open_the_page(self):
+        self.client.force_login(self.cd_user)
+        for old, view in (
+            ("/country-planning-oversight/?view=monitor&fy=2027", "planning"),
+            ("/team-planning-oversight/?view=monitor&fy=2027", "planning"),
+            ("/team-planning-oversight/?view=execution", "execution"),
+        ):
+            with self.subTest(old=old):
+                response = self.client.get(old)
+                self.assertEqual(response.status_code, 302)
+                self.assertIn("/planning-monitor/?", response["Location"])
+                self.assertIn(f"view={view}", response["Location"])
 
 
 class TrainingsCarryTheirIntervention(PeopleFixture):

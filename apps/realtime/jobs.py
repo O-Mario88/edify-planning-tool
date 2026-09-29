@@ -883,6 +883,71 @@ def school_action_sweep_job():
     run_tracked_job("school_action_sweep", _do_school_action_sweep)
 
 
+# ── Country Planning Oversight follow-ups ────────────────────────────────────
+def _do_planning_followup_sweep() -> int:
+    """Close the Country Director's planning follow-ups whose gap has cleared.
+
+    The follow-up re-reads its scope through the same coverage service the
+    page counts with, so a Programme Lead never has to mark a system-derived
+    gap done — and their To-Do, derived from the follow-up, goes with it.
+    """
+    from apps.planning.country_oversight.followups import sweep
+
+    return int(sweep()["resolved"])
+
+
+def planning_followup_sweep_job():
+    if not _enabled():
+        return
+    run_tracked_job("planning_followup_sweep", _do_planning_followup_sweep)
+
+
+def _do_planning_oversight_warm() -> int:
+    """Rebuild the Country Oversight figures before readers ask.
+
+    At 50,000 schools the page's figures take seconds to build and a quarter
+    of a second to serve; this keeps the year (and the windows country readers
+    opened in the last hour) built, so the Country Director is served, not
+    kept waiting. Readers who arrive when nothing is built still build it.
+    Both stages: planning coverage, and execution & completion (the month its
+    tab opens on and the year).
+    """
+    from apps.planning.country_execution.service import warm as warm_execution
+    from apps.planning.country_oversight.service import warm
+
+    done = 0
+    failed: Exception | None = None
+    for step in (warm, warm_execution):
+        try:
+            done += step()
+        except Exception as exc:  # noqa: BLE001 - one stage must not stop the other
+            failed = failed or exc
+    if failed is not None:
+        raise failed
+    return done
+
+
+def planning_oversight_warm_job():
+    if not _enabled():
+        return
+    run_tracked_job("planning_oversight_warm", _do_planning_oversight_warm)
+
+
+def _do_execution_period_snapshots() -> int:
+    """Lock each recently ended week, month, quarter and financial year of
+    Country Execution & Completion Oversight (owner spec 2026-09-28, §22), so
+    a later correction never silently rewrites a closed period's figures."""
+    from apps.planning.country_execution.snapshots import lock_ended_periods
+
+    return lock_ended_periods()
+
+
+def execution_period_snapshots_job():
+    if not _enabled():
+        return
+    run_tracked_job("execution_period_snapshots", _do_execution_period_snapshots)
+
+
 def _system_principal():
     """A minimal stand-in principal for system-initiated jobs."""
     from apps.accounts.jwt import AuthPrincipal
@@ -918,6 +983,9 @@ __all__ = [
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",
     "school_action_sweep_job",
+    "planning_followup_sweep_job",
+    "planning_oversight_warm_job",
+    "execution_period_snapshots_job",
     "fiscal_year_rollover_job",
     "performance_readiness_job",
 ]
