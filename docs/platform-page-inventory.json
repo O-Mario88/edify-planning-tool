@@ -10154,7 +10154,10 @@
       "bytes": 3012,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/planning-monitor/"
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
       ],
       "findings": [],
       "forms": 0,
@@ -10638,7 +10641,10 @@
       "bytes": 9844,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/planning-monitor/"
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
       ],
       "findings": [],
       "forms": 1,

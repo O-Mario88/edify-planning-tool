@@ -265,19 +265,18 @@ class CoverageAndGaps(MonitorFixture):
 
 class TheLensIsTheirs(MonitorFixture):
     def test_the_country_director_and_ia_read_it(self):
-        for user in (self.cd_user, self.ia_user):
+        # IA reads it as a Planning Oversight tab (owner, 2026-09-30).
+        for user, path, view in (
+            (self.cd_user, "/planning-monitor/", "planning"),
+            (self.ia_user, "/team-planning-oversight/", "monitor"),
+        ):
             with self.subTest(role=user.active_role):
                 self.client.force_login(user)
-                response = self.client.get(
-                    "/planning-monitor/", {"view": "planning", "fy": FY}
-                )
+                response = self.client.get(path, {"view": view, "fy": FY})
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, "data-planning-monitor")
                 self.assertContains(response, "School MON-B1", count=0)
-                gap = self.client.get(
-                    "/planning-monitor/",
-                    {"view": "planning", "fy": FY, "gap": "no_both"},
-                )
+                gap = self.client.get(path, {"view": view, "fy": FY, "gap": "no_both"})
                 self.assertContains(gap, "School MON-B1")
 
     def test_a_programme_lead_reads_their_team(self):

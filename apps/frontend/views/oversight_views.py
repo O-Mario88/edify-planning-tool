@@ -332,6 +332,18 @@ COVERAGE_LENS_ROLES = frozenset(
 # URL and says which lenses it holds.
 PORTFOLIO_LENS_ROLES = COVERAGE_LENS_ROLES
 
+#: Who reads the people monitors as Planning Oversight tabs, beside the Team
+#: Plan, rather than on the Planning Monitor page (owner, 2026-09-30: "on IA
+#: can you move the planning monitor and Execution & Completion tabs back to
+#: Planning oversight page"). Everyone else keeps the page of its own; an old
+#: link sends each reader to wherever their monitors are.
+MONITORS_ON_OVERSIGHT_ROLES = frozenset({"ImpactAssessment"})
+
+
+def monitors_on_oversight(user) -> bool:
+    """Whether this reader's monitors are tabs on Planning Oversight."""
+    return (getattr(user, "active_role", "") or "") in MONITORS_ON_OVERSIGHT_ROLES
+
 
 def is_country_reader(user) -> bool:
     """Whether this reader's scope is the country rather than a team.
@@ -357,6 +369,7 @@ def _lens_tabs(
             "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
         ),
         ("monitor", "Planning Monitor"),
+        ("execution", "Execution & Completion"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
@@ -457,6 +470,11 @@ def planning_monitor_view(request):
         return dashboard_embed.to_dashboard(request, dashboard_embed.PLANNING_MONITOR)
     execution = (request.GET.get("view") or "").strip().lower() == "execution"
     lens = "execution" if execution else "monitor"
+    # IA reads the monitors as Planning Oversight tabs (owner, 2026-09-30):
+    # a bookmark or a figure's drill-down to this page opens the same tab
+    # there, on the same filters.
+    if monitors_on_oversight(request.user):
+        return _to_planning_monitor(request, lens)
     period = _period_filters(request)
     lens_context = _execution_context if execution else _monitor_context
     context = {
@@ -491,10 +509,15 @@ def planning_monitor_view(request):
 def _to_planning_monitor(request, lens: str):
     """An old link to a monitor tab on an oversight page opens the Planning
     Monitor page with the same filters (the monitors moved there,
-    2026-09-29)."""
+    2026-09-29) — or, for a reader who keeps them as Planning Oversight tabs
+    (IA, 2026-09-30), the same tab there."""
     query = request.GET.copy()
-    query["view"] = "execution" if lens == "execution" else "planning"
-    destination = f"{PLANNING_MONITOR_PATH}?{query.urlencode()}"
+    if monitors_on_oversight(request.user):
+        query["view"] = "execution" if lens == "execution" else "monitor"
+        destination = f"{TEAM_OVERSIGHT_PATH}?{query.urlencode()}"
+    else:
+        query["view"] = "execution" if lens == "execution" else "planning"
+        destination = f"{PLANNING_MONITOR_PATH}?{query.urlencode()}"
     response = redirect(destination)
     if request.headers.get("HX-Request") == "true":
         response["HX-Redirect"] = destination
@@ -1442,9 +1465,12 @@ def team_planning_oversight_view(request):
     can_view_portfolio = can_view_planning and (request.user.active_role or "") in (
         PORTFOLIO_LENS_ROLES
     )
+    # IA reads the people monitors here, as tabs beside the Team Plan (owner,
+    # 2026-09-30).
+    can_view_monitors = can_view_planning and monitors_on_oversight(request.user)
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     # The people monitors moved to their own page (owner, 2026-09-29).
-    if requested_view in ("monitor", "execution"):
+    if requested_view in ("monitor", "execution") and not can_view_monitors:
         return _to_planning_monitor(request, requested_view)
     if requested_view == "clusters":
         query = request.GET.copy()
@@ -1456,7 +1482,8 @@ def team_planning_oversight_view(request):
         return response
     active_view = (
         requested_view
-        if requested_view in {"targets", "coverage", "portfolio"}
+        if requested_view
+        in {"targets", "coverage", "portfolio", "monitor", "execution"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
@@ -1472,6 +1499,8 @@ def team_planning_oversight_view(request):
         key
         for key, allowed in (
             ("planning", can_view_planning),
+            ("monitor", can_view_monitors),
+            ("execution", can_view_monitors),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
             ("targets", can_view_targets),
@@ -1503,6 +1532,29 @@ def team_planning_oversight_view(request):
         return render(request, "pages/oversight/team_planning.html", context)
 
     period = _period_filters(request)
+
+    # The people monitors read the reporting line, not the period's planning
+    # items, so they are answered before `build_items` as well.
+    if active_view in ("monitor", "execution"):
+        lens_context = (
+            _monitor_context if active_view == "monitor" else _execution_context
+        )
+        context = {
+            **period,
+            **lens_context(request, period, base_url=TEAM_OVERSIGHT_PATH),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": TEAM_OVERSIGHT_PATH,
+            "monitor_is_country": country_reader,
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
+            "fy_options": fy_options(),
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(request, _MONITOR_TEMPLATES[active_view], context)
+        return render(request, "pages/oversight/team_planning.html", context)
 
     # The portfolio and cluster lenses stand on the school and cluster records,
     # not on the period's planning items. Answering them before `build_items`
