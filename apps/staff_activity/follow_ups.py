@@ -261,6 +261,8 @@ def create_follow_up(
         )
     if subject_id not in scope["ids"]:
         raise FollowUpError("You can follow up only with people in your scope.")
+    if subject_id == scope.get("self_id"):
+        raise FollowUpError("A follow-up is about someone else, not yourself.")
     if trigger not in FollowUpTrigger.values:
         raise FollowUpError("Choose what the follow-up is about.")
     if priority not in FollowUpPriority.values:

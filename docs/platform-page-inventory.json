@@ -13840,7 +13840,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2506,
+      "bytes": 2529,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -13863,10 +13863,33 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7733,
+      "bytes": 459,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Picked",
+      "purpose": "Reusable  picked interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_picked.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 8071,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -113289,7 +113312,7 @@
     "activity_states": 24,
     "all_routes": 1347,
     "api_routes": 360,
-    "component_templates": 585,
+    "component_templates": 586,
     "full_pages": 261,
     "mobile_contract_pass": 570,
     "nonvisual_actions": 277,

@@ -218,8 +218,48 @@ class WhoReadsWhomTest(Team):
     def test_a_programme_lead_reads_their_own_officers_only(self):
         scope = viewer_scope(self.lead)
         self.assertEqual(scope["mode"], "team")
-        self.assertEqual(scope["ids"], {self.mina.id, self.max.id})
+        # Themselves too (owner, 2026-09-29: "Add the PL on staff activity
+        # table too").
+        self.assertEqual(scope["ids"], {self.lead.id, self.mina.id, self.max.id})
+        self.assertEqual(scope["self_id"], self.lead.id)
         self.assertTrue(scope["can_follow_up"])
+
+    def test_the_lead_s_own_row_comes_first_and_is_never_followed_up(self):
+        log = activity_log(self.lead)
+        first = log["people"][0]
+        self.assertEqual(first["name"], "Lena")
+        self.assertTrue(first["is_self"])
+        self.assertEqual(first["suggestions"], [])
+        self.assertFalse(any(p["is_self"] for p in log["people"][1:]))
+        with self.assertRaises(FollowUpError):
+            create_follow_up(
+                self.lead,
+                self.lead.id,
+                trigger="no_login",
+                note="Me",
+                priority="normal",
+                due_date=timezone.localdate(),
+                period=activity_period(None, None),
+                snapshot={},
+            )
+        self.client.force_login(self.lead)
+        html = self.client.get("/staff-activity", **EMBED).content.decode()
+        own = html.index(f'data-sal-person="{self.lead.id}"')
+        mina = html.index(f'data-sal-person="{self.mina.id}"')
+        self.assertLess(own, mina)
+        # No Follow up in the Lead's own row, nor in their own detail.
+        self.assertNotIn(f"/people/{self.lead.id}/follow-up", html)
+        self.assertIn(f"/people/{self.mina.id}/follow-up", html)
+        detail = self.client.get(f"/staff-activity/people/{self.lead.id}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertNotContains(detail, "/follow-up")
+        self.assertEqual(
+            self.client.get(
+                f"/staff-activity/people/{self.lead.id}/follow-up",
+                HTTP_HX_REQUEST="true",
+            ).status_code,
+            403,
+        )
 
     def test_the_director_reads_the_country_grouped_by_programme_lead(self):
         log = activity_log(self.director)
@@ -343,6 +383,44 @@ class UsageStatusTest(Team):
             )["people"]
         }
         self.assertEqual(week["Max"]["active_seconds"], 2880)
+
+    def test_each_period_adds_up_its_days(self):
+        # Owner, 2026-09-29: the day's time on the app for Day; Week, Month,
+        # Quarter and FY the days added up, so time per day can be followed.
+        for day, seconds in (
+            (WEDNESDAY, 1800),
+            (WEDNESDAY - timedelta(days=1), 1200),  # same week
+            (WEDNESDAY - timedelta(days=7), 600),  # last week
+            (WEDNESDAY - timedelta(days=45), 3000),  # an earlier month
+            (WEDNESDAY - timedelta(days=400), 9000),  # another FY
+        ):
+            PresenceTime.objects.create(
+                user=self.max,
+                day=day,
+                section="Planning",
+                working_on="Viewing Planning",
+                seconds=seconds,
+            )
+
+        def total(period):
+            return self._log(period=period)["Max"]["active_seconds"]
+
+        in_period = {}
+        for period in ("day", "week", "month", "quarter", "fy"):
+            chosen = activity_period(period, WEDNESDAY.isoformat(), today=WEDNESDAY)
+            in_period[period] = sum(
+                PresenceTime.objects.filter(
+                    user=self.max, day__gte=chosen["start"], day__lte=chosen["end"]
+                ).values_list("seconds", flat=True)
+            )
+            with self.subTest(period=period):
+                self.assertEqual(total(period), in_period[period])
+        self.assertEqual(in_period["day"], 1800)
+        self.assertEqual(in_period["week"], 3000)
+        self.assertLessEqual(in_period["week"], in_period["month"])
+        self.assertLessEqual(in_period["month"], in_period["quarter"])
+        self.assertLessEqual(in_period["quarter"], in_period["fy"])
+        self.assertLess(in_period["fy"], 1800 + 1200 + 600 + 3000 + 9000)
 
 
 class MeaningfulActionsTest(Team):
@@ -582,6 +660,28 @@ class PageTest(Team):
         export = self.client.get("/staff-activity/export")
         self.assertEqual(export.status_code, 200)
         self.assertIn(".xlsx", export["Content-Disposition"])
+
+    def test_the_dashboard_runs_insights_table_then_the_person(self):
+        # Owner, 2026-09-29: on the Programme Lead's dashboard Team Insights
+        # runs across above the table and the opened person below it; the
+        # page of its own keeps the right column.
+        self.client.force_login(self.lead)
+        html = self.client.get("/staff-activity", **EMBED).content.decode()
+        self.assertIn('data-sal-flow="row"', html)
+        self.assertNotIn('class="sal-side"', html)
+        self.assertLess(
+            html.index('id="sal-insights-title"'), html.index('id="sal-table-title"')
+        )
+        self.assertLess(
+            html.index('id="sal-table-title"'), html.index('id="sal-picked"')
+        )
+        self.client.force_login(self.director)
+        page = self.client.get("/staff-activity").content.decode()
+        self.assertNotIn("data-sal-flow", page)
+        self.assertIn('class="sal-side"', page)
+        self.assertLess(
+            page.index('id="sal-table-title"'), page.index('id="sal-insights-title"')
+        )
 
     def test_filters_narrow_every_figure(self):
         self.client.force_login(self.director)

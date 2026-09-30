@@ -98,17 +98,26 @@ ACTIONS_SHOWN = 12
 def viewer_scope(user) -> dict | None:
     """What this reader's log covers, or None when the page is not theirs.
 
-    ``mode`` is "team" (a Programme Lead: the people they supervise, including
-    a covered Lead's officers while the cover lasts) or "country" (the Country
-    Director and the Admin). ``can_follow_up`` is False for the Admin, whose
-    access is technical support, not management.
+    ``mode`` is "team" (a Programme Lead: themselves and the people they
+    supervise, including a covered Lead's officers while the cover lasts) or
+    "country" (the Country Director and the Admin). ``can_follow_up`` is
+    False for the Admin, whose access is technical support, not management;
+    ``self_id`` is the reader when their own row is in the log, which nobody
+    follows up with.
     """
     role = getattr(user, "active_role", "") or ""
     own = getattr(user, "id", None)
     if role == PROGRAM_LEAD:
+        # The Lead's own row heads their team (owner, 2026-09-29: "Add the PL
+        # on staff activity table too").
         ids = _tracked(team_user_ids(user))
-        ids.discard(own)
-        return {"mode": "team", "role": role, "ids": ids, "can_follow_up": True}
+        return {
+            "mode": "team",
+            "role": role,
+            "ids": ids,
+            "self_id": own if own in ids else None,
+            "can_follow_up": True,
+        }
     if role in (COUNTRY_DIRECTOR, ADMIN):
         return {
             "mode": "country",
@@ -266,6 +275,10 @@ def activity_log(
         )
     chosen = activity_period(period, on, today=today)
     everyone = _people(scope["ids"], chosen, now=now, today=today)
+    for person in everyone:
+        _mark_self(person, scope)
+    # The reader's own row first; the rest keep their order.
+    everyone.sort(key=lambda p: not p["is_self"])
 
     # The Programme Lead column: whose team a person is on.
     leads = _program_leads(everyone)
@@ -321,6 +334,23 @@ def activity_log(
         "total_people": len(everyone),
         "idle_minutes": activity_setting("IDLE_SECONDS") // 60,
     }
+
+
+def _mark_self(person: dict, scope: dict) -> None:
+    """Whether this row is the reader's own. Nobody follows up with
+    themselves, so their own row suggests no follow-up."""
+    person["is_self"] = bool(scope.get("self_id")) and person["id"] == scope.get(
+        "self_id"
+    )
+    if not person["is_self"]:
+        return
+    person["suggestions"] = []
+    if person["usage_key"] == "follow_up":
+        person["usage_key"], person["usage_label"], person["usage_tone"] = (
+            "normal",
+            "Normal",
+            "good",
+        )
 
 
 def _matches_status(person: dict, status: str) -> bool:
@@ -913,6 +943,7 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
     person = next(iter(_people([person_id], chosen, now=now, today=today)), None)
     if person is None:
         raise PermissionError("Not in your scope.")
+    _mark_self(person, viewer_scope(viewer))
     user = User.objects.get(pk=person_id)
 
     # A. Sign-in history.

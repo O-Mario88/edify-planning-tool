@@ -391,6 +391,31 @@
 .sal-picked .sal-box { padding: 0.6rem 0.65rem; }
 .sal-picked .sal-avatar--lg { inline-size: 2rem; block-size: 2rem; }
 
+/* On the Programme Lead's dashboard (owner, 2026-09-29: "Team Insights card
+   should be horizontal above your team table … select staff member … card
+   switched from vertical to horizontal and below the staff activity table"):
+   one column, Team Insights across above the table with its four parts side
+   by side, and the opened person's cards side by side below it. The page of
+   its own keeps the right column above. */
+.sal-layout[data-sal-flow="row"] { grid-template-columns: minmax(0, 1fr); }
+[data-sal-flow="row"] > .sal-aside { gap: 0.75rem 1.5rem; align-items: start; }
+[data-sal-flow="row"] > .sal-aside > .sal-aside__head { grid-column: 1 / -1; }
+.sal-layout[data-sal-flow="row"] .sal-picked .sal-quads {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+@media (min-width: 48rem) {
+  [data-sal-flow="row"] > .sal-aside,
+  .sal-layout[data-sal-flow="row"] .sal-picked .sal-quads {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 80rem) {
+  [data-sal-flow="row"] > .sal-aside,
+  .sal-layout[data-sal-flow="row"] .sal-picked .sal-quads {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
 /* Compact rows (owner, 2026-09-29: "reduce the space between the rows to
    make the table smaller"). The name is a link-like button, not a 28px table
    control, so the platform's control size is taken off it; its tap area

@@ -188,7 +188,9 @@ def staff_activity_person_view(request, person_id: str):
         {
             "detail": detail,
             "person": detail["person"],
-            "can_follow_up": viewer_scope(request.user)["can_follow_up"],
+            # Nobody follows up with themselves (the Lead's own row).
+            "can_follow_up": viewer_scope(request.user)["can_follow_up"]
+            and not detail["person"]["is_self"],
             "query": _query(request),
         },
     )
@@ -269,6 +271,8 @@ def follow_up_new_view(request, person_id: str):
         return HttpResponseForbidden(
             "Follow-ups are sent by a Programme Lead or the Country Director."
         )
+    if person_id == scope.get("self_id"):
+        return HttpResponseForbidden("A follow-up is about someone else.")
     try:
         detail = person_detail(
             request.user,
