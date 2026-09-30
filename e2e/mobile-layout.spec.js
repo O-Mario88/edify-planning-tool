@@ -125,7 +125,12 @@ for (const [email, routes] of Object.entries(PAGES)) {
   });
 }
 
-test('a selection table pins its tick boxes and the name beside them on a phone', async ({ browser }) => {
+// Mobile mode freezes no column (owner, 2026-09-30: "make sure no column is
+// [frozen] so that the users can scroll well without freezing half of the
+// mobile screen"). A selection table's tick boxes and the name beside them
+// scroll away with the rest of the row; this replaced the pinned tick column
+// of 2026-09-27. e2e/mobile-unfrozen-columns.spec.js holds laptops pinned.
+test('a selection table scrolls its tick boxes and the name beside them with the row on a phone', async ({ browser }) => {
   test.setTimeout(120_000);
   const context = await browser.newContext({ isMobile: true, hasTouch: true, viewport: { width: 360, height: 800 } });
   const page = await context.newPage();
@@ -139,22 +144,22 @@ test('a selection table pins its tick boxes and the name beside them on a phone'
       const region = input.closest('.edify-table-scroll-region');
       const cell = input.closest('td');
       const identity = cell.nextElementSibling;
-      const before = cell.getBoundingClientRect().left;
+      const cellBefore = cell.getBoundingClientRect().left;
+      const identityBefore = identity.getBoundingClientRect().left;
       region.scrollLeft = 240;
       await new Promise((resolve) => setTimeout(resolve, 300));
-      const box = input.getBoundingClientRect();
-      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      const scrolled = region.scrollLeft;
       const out = {
         state: region.dataset.scrollState,
-        cellStays: Math.abs(cell.getBoundingClientRect().left - before) < 1,
+        cellMoves: Math.abs(cell.getBoundingClientRect().left - (cellBefore - scrolled)) < 1,
+        identityMoves: Math.abs(identity.getBoundingClientRect().left - (identityBefore - scrolled)) < 1,
         identityBeside: identity.getBoundingClientRect().left >= cell.getBoundingClientRect().right - 1,
-        boxOnTop: Boolean(hit && cell.contains(hit)),
       };
       region.scrollLeft = 0;
       return out;
     });
-    if (result.state === 'none') continue; // fits this phone: nothing to pin
-    expect(result, route).toEqual({ state: result.state, cellStays: true, identityBeside: true, boxOnTop: true });
+    if (result.state === 'none') continue; // fits this phone: nothing scrolls
+    expect(result, route).toEqual({ state: result.state, cellMoves: true, identityMoves: true, identityBeside: true });
   }
   await context.close();
 });
