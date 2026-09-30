@@ -1419,6 +1419,7 @@
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/templatetags/row_actions.py",
         "apps/frontend/views/extended_views.py",
+        "apps/frontend/views/project_capacity_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
@@ -1437,6 +1438,7 @@
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
+        "apps/projects/authority.py",
         "apps/projects/capacity.py",
         "apps/projects/dashboard_service.py",
         "apps/projects/handlers.py",
@@ -4643,9 +4645,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "607a865ca204192e4494b37deca18946647617d208e77b1b396de756b4073f84",
-    "sources": "d375cb5c7beb938ca6a673c79ecfa957c34fbeba3af7a123331075d0b91c27dd",
-    "sourceCount": 227,
+    "payload": "d16915f0da87d11771c9e002041ce25a6f8fc8b1ed06d043237e57f8087aa486",
+    "sources": "f3c824d73f7a557d6ef16a01e3439ab08288c28321b9f8bcc6d094bbbc757591",
+    "sourceCount": 229,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

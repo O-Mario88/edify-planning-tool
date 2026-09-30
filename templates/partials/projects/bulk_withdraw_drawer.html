@@ -1,0 +1,64 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Withdraw the schools ticked on a project's Participating Schools (owner,
+2026-09-29: "They can go to the project profile ... and check all the schools
+they want to withdraw and be able to withdraw"). Each school is the single
+Withdraw School repeated (projects.services.remove_schools): it leaves only
+before its project work begins, only by the staff member whose allocation it
+uses or the coordinator, with one reason for all. A school that cannot leave
+is listed with why and left in the project.
+{% endcomment %}
+
+{% block drawer_title %}Withdraw schools{% endblock %}
+{% block drawer_subtitle %}{% if project %}{{ project.name }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if error %}
+<p class="edify-note" data-tone="warning">{{ error }}</p>
+{% else %}
+<div class="space-y-4" x-data="{ reason: '{{ values.reason_code|escapejs }}' }" data-bulk-leave-project>
+  <ul class="space-y-1.5 text-sm">
+    {% for row in rows %}
+    <li class="flex items-start justify-between gap-3" data-bulk-leave-row="{{ row.school_code }}">
+      <span>{{ row.school_name }} <span class="edify-text-caption text-slate-400">{{ row.school_code }}</span></span>
+      <span class="edify-text-caption whitespace-nowrap {% if row.can_withdraw %}text-slate-700{% else %}text-amber-700{% endif %}">{% if row.can_withdraw %}Will be withdrawn{% elif row.withdraw_block %}{{ row.withdraw_block }}{% else %}Not yours to withdraw{% endif %}</span>
+    </li>
+    {% empty %}
+    <li class="edify-text-caption text-slate-500">None of the ticked schools are in this project.</li>
+    {% endfor %}
+  </ul>
+
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if withdrawable %}
+  <form hx-post="/projects/{{ project.id }}/schools/bulk-withdraw" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4">
+    {% csrf_token %}
+    {% for row in withdrawable %}<input type="hidden" name="school_ids" value="{{ row.school_id }}">{% endfor %}
+    <div class="space-y-1">
+      <label for="bulk-leave-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
+      <select id="bulk-leave-reason" name="reason_code" required x-model="reason" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+        <option value="">Choose a reason</option>
+        {% for code, label in reasons %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+      </select>
+      <p class="edify-text-caption text-slate-500">One reason for every school withdrawn. Each place returns to the allocation it used; the enrolment history is kept.</p>
+    </div>
+    <div class="space-y-1" x-show="reason === 'other'" x-cloak>
+      <label for="bulk-leave-reason-other" class="block edify-text-caption font-semibold text-slate-600">Say why <span class="text-rose-500">*</span></label>
+      <textarea id="bulk-leave-reason-other" name="reason_other" rows="2" maxlength="500" :required="reason === 'other'" class="w-full rounded-control border border-slate-200 text-[16px] sm:text-[13px] px-3 py-2">{{ values.reason_other }}</textarea>
+    </div>
+    <div class="drawer-footer">
+      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+      <button type="submit" class="btn btn-danger h-8" :disabled="!reason">Withdraw {{ withdrawable|length }} school{{ withdrawable|length|pluralize }}</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
