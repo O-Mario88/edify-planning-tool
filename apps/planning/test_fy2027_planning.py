@@ -27,6 +27,7 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -138,8 +139,17 @@ class FiscalYearBoundaryTest(TestCase):
         fy_policy.assert_same_fiscal_year(OCT_6_2026, datetime.date(2027, 3, 2))
 
 
+@freeze_time("2026-09-28 09:00:00", tick=True)
 class Fy2027CostingTest(StandardSupportBase):
-    """Real pricing: no patched cost snapshot here."""
+    """Real pricing: no patched cost snapshot here.
+
+    Planning FY2027 from the end of FY2026 is the whole subject, so the class
+    runs on a late-FY2026 clock (Monday 28 September 2026): both SEP_29_2026
+    and OCT_6_2026 must still be ahead, and nothing is planned backwards
+    (fy_policy.assert_date_plannable). On the real clock the class broke on
+    30 September 2026. Nothing may borrow this class's setUp or tearDown
+    (the freeze would leak into the worker); borrow helpers instead.
+    """
 
     def setUp(self):
         # Deliberately not calling StandardSupportBase.setUp (it patches the
