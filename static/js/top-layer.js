@@ -63,13 +63,15 @@
     };
   }
 
-  /* Its foot is the top of the bottom navigation when that is on screen. */
+  /* Its foot is the top of the bottom navigation when that is on screen and
+     in play: behind an open drawer the navigation is inert and covered, so a
+     calendar in the drawer's last field may use the space it sits under. */
   function viewport() {
     var width = win.innerWidth;
     var client = doc.documentElement.clientWidth;
     var height = win.innerHeight;
     var nav = doc.querySelector(".edify-bottom-nav");
-    if (nav && nav.getClientRects().length) {
+    if (nav && nav.getClientRects().length && !nav.closest("[inert]")) {
       var top = nav.getBoundingClientRect().top;
       if (top > 0 && top < height) height = top;
     }
@@ -176,18 +178,91 @@
     return spot;
   }
 
+  function scrolls(box) {
+    return box === doc.scrollingElement || /(auto|scroll)/.test(win.getComputedStyle(box).overflowY);
+  }
+
   /* Scroll what holds the button up by the room the panel needs, never so
      far that the button leaves the top of its scroller. */
-  function makeRoom(state, need) {
+  function scrollUp(state, need) {
     var boxes = state.clips.concat(doc.scrollingElement ? [doc.scrollingElement] : []);
     for (var i = 0; i < boxes.length && need > 0; i += 1) {
       var box = boxes[i];
       var page = box === doc.scrollingElement;
-      if (box.scrollHeight <= box.clientHeight || (!page && !/(auto|scroll)/.test(win.getComputedStyle(box).overflowY))) continue;
+      if (box.scrollHeight <= box.clientHeight || !scrolls(box)) continue;
       var headroom = state.trigger.getBoundingClientRect().top - (page ? 0 : Math.max(box.getBoundingClientRect().top, 0)) - MARGIN;
       var travel = Math.floor(Math.min(need, headroom, box.scrollHeight - box.clientHeight - box.scrollTop));
       if (travel > 0) { box.scrollTop += travel; need -= travel; }
     }
+  }
+
+  /* A field at the foot of a drawer whose content fits (the cluster list's
+     Assign to partner, 2026-09-30), or a row menu in the last row of a page,
+     has nothing below it to scroll away: the calendar was squeezed into the
+     25px left under the field. So the content of the nearest scroller is
+     lengthened at its end by the room still missing, for as long as the
+     panel is open: a bottom sheet grows upward and lifts the field with it,
+     and a full one gets that much to scroll. An element, not padding: the
+     phone sheet's body is a shrinkable flex item, which absorbs padding, but
+     its content still overflows into the sheet's scroll. Removed again when
+     the panel closes. */
+  var ROOM = "data-edify-room";
+  var rooms = new WeakMap();
+
+  // A table's sideways scroller computes overflow-y auto too; it is not the
+  // box that scrolls the page up.
+  function scrollsDown(box) {
+    var style = win.getComputedStyle(box);
+    return /(auto|scroll)/.test(style.overflowY) &&
+      (!/(auto|scroll)/.test(style.overflowX) || box.scrollHeight > box.clientHeight);
+  }
+
+  function lengthen(panel, state, need) {
+    if (rooms.has(panel)) return;
+    var scroller = null;
+    for (var i = 0; i < state.clips.length && !scroller; i += 1) {
+      if (scrollsDown(state.clips[i])) scroller = state.clips[i];
+    }
+    if (!scroller) scroller = doc.body;
+    // Right under the field's own row, inside its form when it has one: what
+    // follows (help text, a drawer's sticky footer) moves down, and the
+    // footer settles at the foot of the sheet instead of floating mid-way.
+    // A flex holder would shrink its other items (the sheet's body) by the
+    // spacer's height rather than grow, so the spacer goes a level deeper.
+    var holder = state.trigger.closest("form");
+    if (!holder || holder === scroller || !scroller.contains(holder)) holder = scroller;
+    var row;
+    for (;;) {
+      row = state.trigger;
+      while (row && row.parentElement !== holder) row = row.parentElement;
+      if (!row) return;
+      if (row === state.trigger || !/flex/.test(win.getComputedStyle(holder).display) ||
+          /^(TABLE|THEAD|TBODY|TFOOT|TR|UL|OL|DL)$/.test(row.tagName)) break;
+      holder = row;
+    }
+    var spacer = doc.createElement("div");
+    spacer.setAttribute(ROOM, "");
+    spacer.setAttribute("aria-hidden", "true");
+    spacer.style.cssText = "display:block;flex:none;grid-column:1/-1;inline-size:1px;margin:0;padding:0;border:0;" +
+      "visibility:hidden;pointer-events:none;block-size:" + Math.ceil(need + MARGIN) + "px";
+    holder.insertBefore(spacer, row.nextSibling);
+    rooms.set(panel, spacer);
+  }
+
+  function shorten(panel) {
+    var spacer = rooms.get(panel);
+    if (!spacer) return;
+    rooms.delete(panel);
+    spacer.remove();
+  }
+
+  function makeRoom(panel, state, need) {
+    scrollUp(state, need);
+    var spot = place(panel);
+    if (!spot || spot.need <= 0) return;
+    lengthen(panel, state, spot.need);
+    spot = place(panel);
+    if (spot && spot.need > 0) scrollUp(state, spot.need);
   }
 
   function follow() {
@@ -245,7 +320,7 @@
     lift(panel);
     var spot = place(panel);
     if (fresh && spot && spot.need > 0) {
-      makeRoom(state, spot.need);
+      makeRoom(panel, state, spot.need);
       place(panel);
     }
     if (fresh) open.push(panel);
@@ -262,6 +337,7 @@
      showing it again cannot draw it in the page before it is lifted. */
   function closePanel(panel) {
     wanted.set(panel, false);
+    shorten(panel);
     var index = open.indexOf(panel);
     if (index === -1) return;
     open.splice(index, 1);
