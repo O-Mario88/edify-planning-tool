@@ -4889,6 +4889,13 @@ main .core-scope-switch [data-edify-tab] {
 
 .core-oversight-table thead th:last-child { background: var(--edify-surface-muted); }
 .core-oversight-table tbody tr:hover td:last-child { background: var(--edify-surface-hover); }
+
+/* Mobile mode scrolls the whole table (responsive-system.css, owner
+   2026-09-30): Send to moves with its row, so it casts no edge shadow. */
+@media (max-width: 63.999rem) {
+  .core-oversight-table th:last-child,
+  .core-oversight-table td:last-child { box-shadow: none; }
+}
 .core-oversight-table td[data-label="Blocker"] { max-inline-size: 10rem; }
 .core-oversight-table__delivery { max-inline-size: 9rem; }
 

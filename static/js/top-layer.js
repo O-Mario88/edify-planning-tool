@@ -63,9 +63,7 @@
     };
   }
 
-  /* Its foot is the top of the bottom navigation when that is on screen and
-     in play: behind an open drawer the navigation is inert and covered, so a
-     calendar in the drawer's last field may use the space it sits under. */
+  /* Its foot is the top of the bottom navigation, unless a drawer covers it. */
   function viewport() {
     var width = win.innerWidth;
     var client = doc.documentElement.clientWidth;
@@ -196,21 +194,13 @@
     }
   }
 
-  /* A field at the foot of a drawer whose content fits (the cluster list's
-     Assign to partner, 2026-09-30), or a row menu in the last row of a page,
-     has nothing below it to scroll away: the calendar was squeezed into the
-     25px left under the field. So the content of the nearest scroller is
-     lengthened at its end by the room still missing, for as long as the
-     panel is open: a bottom sheet grows upward and lifts the field with it,
-     and a full one gets that much to scroll. An element, not padding: the
-     phone sheet's body is a shrinkable flex item, which absorbs padding, but
-     its content still overflows into the sheet's scroll. Removed again when
-     the panel closes. */
+  /* Nothing below the field to scroll away (a short drawer's last field,
+     2026-09-30: the calendar got 25px): a spacer under the field's row gives
+     the room while the panel is open. A sheet grows up, a full one scrolls. */
   var ROOM = "data-edify-room";
   var rooms = new WeakMap();
 
-  // A table's sideways scroller computes overflow-y auto too; it is not the
-  // box that scrolls the page up.
+  // Not a table's sideways scroller.
   function scrollsDown(box) {
     var style = win.getComputedStyle(box);
     return /(auto|scroll)/.test(style.overflowY) &&
@@ -224,11 +214,8 @@
       if (scrollsDown(state.clips[i])) scroller = state.clips[i];
     }
     if (!scroller) scroller = doc.body;
-    // Right under the field's own row, inside its form when it has one: what
-    // follows (help text, a drawer's sticky footer) moves down, and the
-    // footer settles at the foot of the sheet instead of floating mid-way.
-    // A flex holder would shrink its other items (the sheet's body) by the
-    // spacer's height rather than grow, so the spacer goes a level deeper.
+    // In the field's form, so a sticky footer stays at the foot; below any
+    // flex box, which would shrink its items rather than grow.
     var holder = state.trigger.closest("form");
     if (!holder || holder === scroller || !scroller.contains(holder)) holder = scroller;
     var row;
@@ -243,8 +230,7 @@
     var spacer = doc.createElement("div");
     spacer.setAttribute(ROOM, "");
     spacer.setAttribute("aria-hidden", "true");
-    spacer.style.cssText = "display:block;flex:none;grid-column:1/-1;inline-size:1px;margin:0;padding:0;border:0;" +
-      "visibility:hidden;pointer-events:none;block-size:" + Math.ceil(need + MARGIN) + "px";
+    spacer.style.cssText = "display:block;flex:none;grid-column:1/-1;margin:0;visibility:hidden;height:" + Math.ceil(need + MARGIN) + "px";
     holder.insertBefore(spacer, row.nextSibling);
     rooms.set(panel, spacer);
   }
