@@ -3828,7 +3828,7 @@
    "audit_id": "KPI-SOURCE-202",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3633,
+   "line": 3639,
    "label": null,
    "keys": [
     "label",
@@ -3883,7 +3883,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3539,
+   "line": 3545,
    "label": "About",
    "keys": [
     "label",
@@ -3900,7 +3900,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3540,
+   "line": 3546,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3917,7 +3917,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3541,
+   "line": 3547,
    "label": "Flag",
    "keys": [
     "label",
@@ -3934,7 +3934,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3542,
+   "line": 3548,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8227,7 +8227,7 @@
    "audit_id": "KPI-SOURCE-455",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 1120,
+   "line": 1123,
    "label": "Search coverage by the staff member covered or covering",
    "keys": [
     "action",
@@ -11575,7 +11575,7 @@
    "audit_id": "KPI-SOURCE-638",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 845,
+   "line": 847,
    "label": null,
    "keys": [
     "label",
@@ -11592,7 +11592,7 @@
    "audit_id": "KPI-SOURCE-639",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 854,
+   "line": 856,
    "label": "Staff-led",
    "keys": [
     "label",
@@ -11609,7 +11609,7 @@
    "audit_id": "KPI-SOURCE-640",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 855,
+   "line": 857,
    "label": "Partner-led",
    "keys": [
     "label",
@@ -11626,7 +11626,7 @@
    "audit_id": "KPI-SOURCE-641",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 856,
+   "line": 858,
    "label": "Not assigned",
    "keys": [
     "label",
@@ -11643,7 +11643,7 @@
    "audit_id": "KPI-SOURCE-642",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
-   "line": 859,
+   "line": 861,
    "label": null,
    "keys": [
     "label",
@@ -41971,7 +41971,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3093,
+   "line": 3099,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -41993,7 +41993,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3839,
+   "line": 3845,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -42046,7 +42046,7 @@
   {
    "audit_id": "KPI-PAYLOAD-016",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 817,
+   "line": 820,
    "function": "_leave_approvals_page",
    "target": "leave_kpi_items",
    "source_item_count": 6,
@@ -42479,7 +42479,7 @@
   {
    "audit_id": "KPI-PAYLOAD-030",
    "module": "apps/projects/planning_service.py",
-   "line": 619,
+   "line": 621,
    "function": "get_planning",
    "target": "kpis",
    "source_item_count": 6,
@@ -42509,7 +42509,7 @@
   {
    "audit_id": "KPI-PAYLOAD-031",
    "module": "apps/projects/planning_service.py",
-   "line": 664,
+   "line": 666,
    "function": "get_planning",
    "target": "band_cards",
    "source_item_count": 3,
@@ -42533,7 +42533,7 @@
   {
    "audit_id": "KPI-PAYLOAD-032",
    "module": "apps/projects/planning_service.py",
-   "line": 740,
+   "line": 742,
    "function": "get_planning",
    "target": "delivery",
    "source_item_count": 5,

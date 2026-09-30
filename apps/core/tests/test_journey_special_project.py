@@ -222,7 +222,7 @@ class SpecialProjectJourneyTest(TestCase):
                 },
                 self.ia,
             )
-        self.assertIn("impact measurement", str(no_target.exception))
+        self.assertIn("at least one target intervention", str(no_target.exception))
 
         with self.assertRaises(BadRequest):
             services.create_project(
@@ -241,7 +241,7 @@ class SpecialProjectJourneyTest(TestCase):
         self.assertTrue(project.accepts_new_work)
 
     # ── Steps 3–4: eligibility, and the baseline it fixes ────────────────
-    def test_step_3_a_school_is_added_on_evidence_of_need_not_on_a_hunch(self):
+    def test_step_3_need_is_recorded_but_does_not_gate_enrolment(self):
         from apps.projects import services
 
         project = self._active_project()
@@ -256,13 +256,16 @@ class SpecialProjectJourneyTest(TestCase):
         )
         self.assertEqual(assignment.matched_intervention, TARGET)
 
-        # A school that is already strong is off-recommendation, and the
-        # platform will not invent a need for it.
-        with self.assertRaises(BadRequest) as no_need:
-            services.assign_school(
-                project.id, {"schoolId": self.strong_school.school_id}, self.cd
-            )
-        self.assertIn("reason", str(no_need.exception).lower())
+        # A school that is already strong joins too (owner, 2026-09-30: the
+        # SSA no longer gates project enrolment), and no need is invented
+        # for it.
+        services.assign_school(
+            project.id, {"schoolId": self.strong_school.school_id}, self.cd
+        )
+        strong = ProjectSchoolAssignment.objects.get(
+            project=project, school=self.strong_school
+        )
+        self.assertIsNone(strong.matched_intervention)
 
     def test_step_4_the_baseline_is_the_score_at_entry(self):
         """Not the latest reading — the one the project starts from."""

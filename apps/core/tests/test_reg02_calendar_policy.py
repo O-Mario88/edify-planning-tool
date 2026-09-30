@@ -19,6 +19,7 @@ Fixed dates keep this contract independent of the day on which the suite runs.
 
 from __future__ import annotations
 
+from unittest.mock import patch
 from datetime import date
 
 from django.test import Client, TestCase
@@ -67,11 +68,9 @@ def _user(email: str, role: str) -> User:
     )
 
 
-# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
-# and the dates below are fixed. "Today" therefore sits just before them, in
-# the same fiscal year, so every calendar fact they encode stays true.
-@freeze_time("2026-08-08")
-class Reg02CalendarPolicyTest(TestCase):
+class _CalendarFixture:
+    """One school, its CCEO and a priced visit, shared by both test classes."""
+
     def setUp(self):
         self.region = Region.objects.create(name="REG02 Region")
         self.district = District.objects.create(
@@ -114,6 +113,50 @@ class Reg02CalendarPolicyTest(TestCase):
         }
         return create(payload, self.cceo)
 
+
+# Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),
+# and the dates below are fixed. "Today" therefore sits just before them, in
+# the same fiscal year, so every calendar fact they encode stays true.
+@freeze_time("2026-08-08")
+class CalendarRestrictionsLiftedTest(_CalendarFixture, TestCase):
+    """Owner, 2026-09-30: "Just lift all the scheduling restrictions".
+
+    A Sunday, a public holiday and the staff member's approved leave are
+    still worked out and said, as warnings; none of them refuses the date.
+    """
+
+    def test_a_sunday_is_scheduled_and_named_as_a_warning(self):
+        self.assertEqual(self._create(SUNDAY)["status"], "scheduled")
+        check = SchedulingPolicyService.check(self.cceo, SUNDAY)
+        self.assertEqual(check["status"], "warning")
+        self.assertEqual(check["blockers"], [])
+        self.assertIn("This date is a Sunday.", check["warnings"])
+        self.assertIn("This date is a Sunday.", check["calendarConflicts"])
+
+    def test_a_public_holiday_is_scheduled(self):
+        PublicHoliday.objects.create(name="Lifted Holiday", date=HOLIDAY)
+        self.assertEqual(self._create(HOLIDAY)["status"], "scheduled")
+
+    def test_work_on_an_approved_leave_day_is_scheduled(self):
+        Leave.objects.create(
+            staff=self.staff,
+            type="personal_time_off",
+            start_date=LEAVE_DAY,
+            end_date=LEAVE_DAY,
+            days=1,
+            status="approved",
+        )
+        self.assertEqual(self._create(LEAVE_DAY)["status"], "scheduled")
+        check = SchedulingPolicyService.check(self.cceo, LEAVE_DAY)
+        self.assertTrue(any("approved leave" in w for w in check["warnings"]), check)
+
+
+# The owner lifted the calendar restrictions (2026-09-30); they refuse
+# nothing by default. These tests prove the refusal still works when
+# calendar_policy.CALENDAR_BLOCKS_REFUSE is switched back on.
+@patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
+@freeze_time("2026-08-08")
+class Reg02CalendarPolicyTest(_CalendarFixture, TestCase):
     def test_sunday_scheduling_is_blocked(self):
         with self.assertRaises(BadRequest) as caught:
             self._create(SUNDAY)

@@ -17,7 +17,8 @@ recommendationReason: '',
 selectTraining(event) {
   const option = event.target.options[event.target.selectedIndex];
   this.catalogueItemId = event.target.value;
-  this.focusIntervention = option ? option.dataset.intervention || '' : '';
+  const suggested = option ? option.dataset.intervention || '' : '';
+  if (suggested) { this.focusIntervention = suggested; }
   this.trainingCategory = option ? option.dataset.category || '' : '';
   this.ssaIndicator = option ? option.dataset.indicator || '' : '';
   this.recommendationReason = option ? option.dataset.reason || '' : '';
@@ -34,7 +35,6 @@ class="space-y-4 text-[13px] text-slate-700"
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
 <input type="hidden" name="catalogue_item_id" :value="catalogueItemId" required>
-<input type="hidden" name="focus_intervention" :value="focusIntervention">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
 <div class="space-y-1">
@@ -53,6 +53,21 @@ class="space-y-4 text-[13px] text-slate-700"
   <p id="core-training-help" class="edify-text-caption text-slate-500">Any training in the Training Catalogue, whatever intervention it serves.</p>
   <p x-show="catalogueItemId" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="trainingCategory"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="ssaIndicator"></span></p>
   {% if not catalogue_items %}<p class="edify-note" data-tone="warning">No training is active in the Training Catalogue.</p>{% endif %}
+</div>
+
+{% comment %}The planner's choice, any of the eight (owner, 2026-09-30). The
+course pre-fills it; it used to be a hidden copy of the course's own
+intervention that the save then ignored.{% endcomment %}
+<div class="space-y-1">
+  <label for="core_training_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+  <select id="core_training_focus_intervention" name="focus_intervention" x-model="focusIntervention"
+    class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+    <option value="">The training's own intervention</option>
+    {% for code, label in interventions %}
+    <option value="{{ code }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <p class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
 </div>
 
 <div class="space-y-1">

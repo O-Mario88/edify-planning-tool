@@ -1403,8 +1403,9 @@ def assign_to_project_drawer_view(request, school_id):
             except ValueError:
                 pass
 
-        # One canonical service enforces SSA need, Project staff scope, school
-        # focus, and the Client=1/Core=4 Project portfolio limit.
+        # One canonical service enforces Project staff scope and school focus.
+        # A school may join any number of projects, with or without an SSA
+        # (owner, 2026-09-30).
         from apps.projects.services import assign_school as assign_project_school
 
         already_enrolled = ProjectSchoolAssignment.objects.filter(
@@ -1829,11 +1830,9 @@ def bulk_assign_cluster_view(request):
 
 @require_page_permission("school_directory")
 def bulk_assign_project_view(request):
-    # Same two gates as the single-school drawer: the assignSchool permission,
-    # and the ecosystem rule that a school either shows confirmed SSA need in a
-    # target intervention or carries a written override reason. Without these
-    # the bulk path was a way to attach off-recommendation cohorts with no
-    # permission check and no recorded justification.
+    # The single-school drawer's gate: the assignSchool permission. Each school
+    # then goes through `assign_school`. The SSA no longer decides who may join
+    # (owner, 2026-09-30); a reason given is kept on each enrolment.
     from apps.core.permissions import has_permission
 
     if not has_permission(request.user, "project.assignSchool"):

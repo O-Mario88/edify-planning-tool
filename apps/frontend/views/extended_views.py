@@ -2271,8 +2271,11 @@ def project_create_drawer_view(request):
             "Director, or Admin may create Projects."
         )
     from apps.activity_catalogue.services import effective_items
-    from apps.core.enums import SsaIntervention
-    from apps.projects.models import ProjectCategory, ProjectSchoolFocus
+    from apps.projects.models import (
+        PROJECT_INTERVENTION_CHOICES,
+        ProjectCategory,
+        ProjectSchoolFocus,
+    )
 
     return render(
         request,
@@ -2280,7 +2283,7 @@ def project_create_drawer_view(request):
         {
             "categories": ProjectCategory.choices,
             "school_focuses": ProjectSchoolFocus.choices,
-            "interventions": SsaIntervention.choices,
+            "interventions": PROJECT_INTERVENTION_CHOICES,
             "catalogue_items": effective_items()
             .filter(project_delivery_allowed=True)
             .order_by("display_name"),
@@ -2336,10 +2339,13 @@ def project_edit_drawer_view(request, project_id):
     moved (owner, 2026-09-16). Its own coordinator edits it; a peer's cohort
     is refused by the service, not by this view.
     """
-    from apps.core.enums import SsaIntervention
     from apps.core.exceptions import Forbidden, NotFoundError
     from apps.core.htmx_errors import error_fragment
-    from apps.projects.models import ProjectCategory, ProjectSchoolFocus
+    from apps.projects.models import (
+        PROJECT_INTERVENTION_CHOICES,
+        ProjectCategory,
+        ProjectSchoolFocus,
+    )
     from apps.projects.services import update_project
 
     try:
@@ -2367,7 +2373,7 @@ def project_edit_drawer_view(request, project_id):
             "project": project,
             "categories": ProjectCategory.choices,
             "school_focuses": ProjectSchoolFocus.choices,
-            "interventions": SsaIntervention.choices,
+            "interventions": PROJECT_INTERVENTION_CHOICES,
             "selected_interventions": set(project.target_intervention_list()),
         },
     )
@@ -3266,9 +3272,9 @@ def project_bulk_assign_drawer_view(request, project_id):
     round trips (owner, 2026-09-16: "Bulk assign to project should work like
     the way cluster bulk assign works"). This is the Cluster drawer's shape,
     with the Project rules kept intact: each school still goes through
-    `assign_school`, so the SSA-need check, the override reason and the
-    per-school Project limit all apply, and a school the service refuses is
-    reported by name rather than silently dropped.
+    `assign_school`, so scope, school focus and the caller's allocation all
+    apply, and a school the service refuses is reported by name rather than
+    silently dropped.
     """
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.core.permissions import has_permission

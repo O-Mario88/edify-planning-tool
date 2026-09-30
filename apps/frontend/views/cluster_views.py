@@ -1344,9 +1344,15 @@ def planner_drawer_view(request):
 
     selected_focus_intervention = request.GET.get("focus_intervention", "").strip()
     if selected_focus_intervention not in SsaIntervention.values:
-        selected_focus_intervention = (
-            weakest_interventions[0]["intervention"] if weakest_interventions else ""
+        # A training opened on a course starts on that course's intervention,
+        # which the planner may change to any of the eight (owner, 2026-09-30).
+        selected_course = next(
+            (o for o in training_options if o["id"] == selected_training_activity_id),
+            None,
         )
+        selected_focus_intervention = (selected_course or {}).get(
+            "ssaIntervention"
+        ) or (weakest_interventions[0]["intervention"] if weakest_interventions else "")
 
     context = {
         "clusters": clusters,

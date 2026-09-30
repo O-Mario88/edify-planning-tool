@@ -456,21 +456,36 @@ class ProjectNeedGateTest(TestCase):
         )
         self.fy = get_operational_fy()
 
-    def test_strong_school_requires_reason(self):
+    def test_strong_school_joins_without_reason(self):
+        """Owner, 2026-09-30: the SSA no longer gates project enrolment."""
         from apps.projects.services import assign_school
 
         school = _school("ECO-PRJ1", self.district)
         _ssa(school, self.fy, {"leadership": 9.0})
-        with self.assertRaises(BadRequest):
-            assign_school(self.project.id, {"schoolId": school.school_id})
+        result = assign_school(self.project.id, {"schoolId": school.school_id})
+        self.assertTrue(result["ok"])
+        assignment = self.project.school_assignments.get(school=school)
+        self.assertIsNone(assignment.matched_intervention)
+        self.assertFalse(assignment.assignment_reason)
 
-        result = assign_school(
+    def test_a_reason_given_is_kept(self):
+        from apps.projects.services import assign_school
+
+        school = _school("ECO-PRJ3", self.district)
+        _ssa(school, self.fy, {"leadership": 9.0})
+        assign_school(
             self.project.id,
             {"schoolId": school.school_id, "reason": "Donor-mandated pilot site"},
         )
-        self.assertTrue(result["ok"])
         assignment = self.project.school_assignments.get(school=school)
         self.assertEqual(assignment.assignment_reason, "Donor-mandated pilot site")
+
+    def test_school_with_no_ssa_joins_without_reason(self):
+        from apps.projects.services import assign_school
+
+        school = _school("ECO-PRJ4", self.district)
+        result = assign_school(self.project.id, {"schoolId": school.school_id})
+        self.assertTrue(result["ok"])
 
     def test_weak_school_assigns_without_reason(self):
         from apps.projects.services import assign_school

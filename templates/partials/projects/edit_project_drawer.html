@@ -39,8 +39,8 @@
     </div>
   </div>
   <fieldset class="space-y-2">
-    <legend class="block edify-text-caption font-semibold text-slate-600">Target SSA interventions <span class="text-rose-500">*</span></legend>
-    <p class="edify-text-caption text-slate-500">Impact measurement and the school-need check read these, so at least one is required.</p>
+    <legend class="block edify-text-caption font-semibold text-slate-600">Target interventions <span class="text-rose-500">*</span></legend>
+    <p class="edify-text-caption text-slate-500">Choose at least one. Choose General when the project does not work on one SSA intervention.</p>
     <div class="grid gap-2">{% for value, label in interventions %}<label class="flex items-center gap-2"><input type="checkbox" name="targetInterventions" value="{{ value }}" class="h-4 w-4" {% if value in selected_interventions %}checked{% endif %}><span>{{ label }}</span></label>{% endfor %}</div>
   </fieldset>
   {% comment %}

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from datetime import date, datetime
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -303,6 +304,7 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertIsNotNone(entry)
         self.assertEqual(entry.subject_id, cov.id)
 
+    @patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
     def test_prevent_activity_during_leave(self):
         """Approved leave blocks scheduling the person it covers.
 
@@ -651,14 +653,16 @@ class LeaveWorkflowIntegrationTest(APITestCase):
             any(c["conflict_type"] == "high_workload_cover" for c in conflicts)
         )
 
+    @patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
     def test_planning_availability_sunday(self):
         """Test Sunday is blocked by PlanningAvailabilityService."""
         from apps.hr.leave_services import PlanningAvailabilityService
 
         res = PlanningAvailabilityService.check(self.cceo2_user, "2026-10-11")  # Sunday
         self.assertEqual(res["status"], "blocked")
-        self.assertIn("Sundays", res["blockers"][0])
+        self.assertIn("Sunday", res["blockers"][0])
 
+    @patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
     def test_planning_availability_leave(self):
         """Test approved leave dates are blocked by PlanningAvailabilityService."""
         from apps.hr.leave_services import PlanningAvailabilityService
@@ -676,6 +680,7 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertEqual(res["status"], "blocked")
         self.assertIn("approved leave", res["blockers"][0])
 
+    @patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
     def test_planning_availability_holiday_blackout(self):
         """Test holiday and blackout dates are blocked by PlanningAvailabilityService."""
         from apps.hr.leave_services import PlanningAvailabilityService
@@ -692,6 +697,7 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertEqual(res["status"], "blocked")
         self.assertIn("blackout date", res["blockers"][0])
 
+    @patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
     def test_planning_availability_conference_week(self):
         """Test conference weeks block scheduling in PlanningAvailabilityService."""
         from apps.hr.leave_services import PlanningAvailabilityService

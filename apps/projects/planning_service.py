@@ -188,6 +188,8 @@ def _row_state(latest_ssa, activities, handover=None):
             (activity for activity in activities if activity.ssa_collection_expected),
             None,
         )
+        # No SSA no longer holds project support back (owner, 2026-09-30):
+        # both rows keep Schedule, and the SSA visit is advice, not a gate.
         if baseline_activity:
             label, tone = _activity_state(baseline_activity)
             return {
@@ -197,8 +199,8 @@ def _row_state(latest_ssa, activities, handover=None):
                 "readiness": label,
                 "readiness_tone": tone,
                 "action": "Monitor SSA visit",
-                "next_step": "Complete the planned SSA collection before support activities are scheduled.",
-                "action_kind": "my_plan",
+                "next_step": "The SSA visit gives the project its baseline. Project support can be scheduled alongside it.",
+                "action_kind": "schedule",
                 "activity": baseline_activity,
             }
         return {
@@ -208,7 +210,7 @@ def _row_state(latest_ssa, activities, handover=None):
             "readiness": "SSA Required",
             "readiness_tone": "danger",
             "action": "Schedule SSA visit",
-            "next_step": "Establish the current intervention scores before planning project support.",
+            "next_step": "An SSA visit gives the project its baseline. Project support can be scheduled without it.",
             "action_kind": "schedule",
             "activity": None,
         }

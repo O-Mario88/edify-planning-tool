@@ -128,8 +128,10 @@ def partners(project_id: str) -> list[dict]:
 
 def evaluate_school_need(project, school) -> str | None:
     """Return the first project target intervention the school's latest
-    CONFIRMED SSA is genuinely weak in (< 7.0), or None. None with declared
-    targets means the assignment is off-recommendation and needs a reason."""
+    CONFIRMED SSA is genuinely weak in (< 7.0), or None.
+
+    Recorded on the enrolment as its matched intervention. It no longer
+    decides whether the school may join (owner, 2026-09-30)."""
     targets = project.target_intervention_list()
     if not targets:
         return None
@@ -146,12 +148,14 @@ def evaluate_school_need(project, school) -> str | None:
     return next((t for t in targets if t in weak), None)
 
 
-def school_project_limit(school) -> int:
-    """Client Schools carry one Project; Core Schools may carry four."""
-    return 4 if school.school_type == "core" else 1
+def _assert_school_focus(project, school) -> None:
+    """The project's school focus admits this school.
 
-
-def _assert_school_capacity(project, school) -> None:
+    A school may join any number of projects (owner, 2026-09-30: "a school
+    can be added to CC-SEL project and other projects"). The per-school limit
+    of one Project for a Client School and four for a Core School is gone; the
+    focus a project declares still applies.
+    """
     if project.school_focus == ProjectSchoolFocus.CORE and school.school_type != "core":
         raise BadRequest(
             f"'{project.name}' is limited to Core Schools; {school.name} is "
@@ -163,22 +167,6 @@ def _assert_school_capacity(project, school) -> None:
     ):
         raise BadRequest(
             f"'{project.name}' is limited to Client Schools; {school.name} is Core."
-        )
-    active_count = (
-        ProjectSchoolAssignment.objects.filter(
-            school=school,
-            project__deleted_at__isnull=True,
-            project__status__in=[status.value for status in OPEN_PROJECT_STATUSES],
-        )
-        .exclude(project=project)
-        .count()
-    )
-    limit = school_project_limit(school)
-    if active_count >= limit:
-        label = "Core School" if limit == 4 else "Client School"
-        raise BadRequest(
-            f"{school.name} is a {label} and already has its maximum of "
-            f"{limit} active Project{'s' if limit != 1 else ''}."
         )
 
 
@@ -323,13 +311,15 @@ def projects_open_for_enrolment(principal, school):
 
 @transaction.atomic
 def assign_school(project_id: str, data: dict, principal=None) -> dict:
-    """Assign a school to a Special Project using verified SSA need.
+    """Enrol a school in a Special Project.
 
-    Ecosystem rule: if the project declares target interventions, the school's
-    latest CONFIRMED SSA must show genuine weakness (< 7.0) in at least one of
-    them — otherwise assignment requires an explicit override reason, which is
-    persisted on the assignment. Schools with no confirmed SSA also require a
-    reason (never fabricate need)."""
+    The school's SSA informs the enrolment and no longer gates it (owner,
+    2026-09-30: "lift the ssa restriction on schools assigned to partners and
+    projects"). A school with no confirmed SSA, or one already strong in the
+    project's target interventions, joins without a reason. The weak target
+    it does show is still recorded as the matched intervention, a reason
+    given is still kept, and the baseline is still captured when there is a
+    confirmed score to capture."""
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
@@ -345,17 +335,10 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
         raise BadRequest("Unknown school.")
     _assert_staff_can_plan_project(p, school, principal)
     _assert_project_accepts_school(p, school)
-    _assert_school_capacity(p, school)
+    _assert_school_focus(p, school)
 
-    targets = p.target_intervention_list()
     reason = (data.get("reason") or data.get("notes") or "").strip()
     matched = evaluate_school_need(p, school)
-    if targets and not matched and not reason:
-        raise BadRequest(
-            "This school's confirmed SSA shows no weakness in the project's "
-            "target interventions — provide an override reason to assign it "
-            "anyway."
-        )
 
     # The adder's allocation (brief, 2026-09-29). Locked and counted inside
     # this transaction, so concurrent additions cannot overfill it; a school
@@ -931,6 +914,28 @@ def apply_decision(project: Project, action: str, principal, reason: str = "") -
     return True
 
 
+def _clean_target_interventions(raw) -> list[str]:
+    """The target interventions a create or an edit may save.
+
+    One of the eight SSA interventions or General, at least one, each once and
+    in the order given. Create and edit both read it, so the two cannot drift.
+    """
+    from .models import PROJECT_INTERVENTION_VALUES
+
+    targets = raw or []
+    if isinstance(targets, str):
+        targets = [t.strip() for t in targets.split(",") if t.strip()]
+    unknown = [t for t in targets if t not in PROJECT_INTERVENTION_VALUES]
+    if unknown:
+        raise BadRequest(f"Unknown target intervention(s): {', '.join(unknown)}.")
+    if not targets:
+        raise BadRequest(
+            "Choose at least one target intervention, or General when the "
+            "project does not work on one SSA intervention."
+        )
+    return list(dict.fromkeys(targets))
+
+
 @transaction.atomic
 def create_project(data: dict, principal) -> dict:
     """Create a Special Project.
@@ -941,7 +946,6 @@ def create_project(data: dict, principal) -> dict:
     the RVP ratifies it into `active` via the strategic-decision flow.
     """
     from apps.audit.services import log as audit_log
-    from apps.core.enums import SsaIntervention
 
     _assert_project_configurer(principal)
     name = (data.get("name") or "").strip()
@@ -954,21 +958,7 @@ def create_project(data: dict, principal) -> dict:
             f"Category must be one of: {', '.join(sorted(valid_categories))}."
         )
 
-    targets = data.get("targetInterventions") or []
-    if isinstance(targets, str):
-        targets = [t.strip() for t in targets.split(",") if t.strip()]
-    valid_interventions = {i.value for i in SsaIntervention}
-    unknown = [t for t in targets if t not in valid_interventions]
-    if unknown:
-        raise BadRequest(f"Unknown target intervention(s): {', '.join(unknown)}.")
-    if not targets:
-        # The model already documents this: a project with no declared target
-        # cannot be measured for impact, and the assignment gate has nothing to
-        # evaluate school need against.
-        raise BadRequest(
-            "Declare at least one target SSA intervention — impact measurement "
-            "and the school-assignment need check both depend on it."
-        )
+    targets = _clean_target_interventions(data.get("targetInterventions"))
 
     code = (data.get("code") or "").strip() or None
     if code and Project.objects.filter(code=code).exists():
@@ -1235,6 +1225,14 @@ def update_project(project_id: str, data: dict, principal) -> dict:
 
     The validation is create's, deliberately: two spellings of "a project must
     declare a target intervention" is how the two drift apart.
+
+    Changing the target interventions also moves the legacy ``intervention``
+    (owner, 2026-09-30: "allow the users to edit and change the project
+    intervention"). The projects seeded before targets existed carry only
+    that field, and ``target_intervention_list`` merges it back in, so an
+    edit that unticked it was silently undone and it stayed the primary.
+    It now keeps its value while still chosen, becomes the first SSA
+    intervention chosen when it is not, and is cleared when only General is.
     """
     from apps.audit.services import log as audit_log
     from apps.core.enums import SsaIntervention
@@ -1274,20 +1272,15 @@ def update_project(project_id: str, data: dict, principal) -> dict:
         _set("category", category)
 
     if "targetInterventions" in data:
-        targets = data.get("targetInterventions") or []
-        if isinstance(targets, str):
-            targets = [t.strip() for t in targets.split(",") if t.strip()]
-        valid_interventions = {i.value for i in SsaIntervention}
-        unknown = [t for t in targets if t not in valid_interventions]
-        if unknown:
-            raise BadRequest(f"Unknown target intervention(s): {', '.join(unknown)}.")
-        if not targets:
-            raise BadRequest(
-                "Declare at least one target SSA intervention — impact "
-                "measurement and the school-assignment need check both depend "
-                "on it."
-            )
-        _set("target_interventions", list(dict.fromkeys(targets)))
+        targets = _clean_target_interventions(data.get("targetInterventions"))
+        _set("target_interventions", targets)
+        ssa_targets = [t for t in targets if t in SsaIntervention.values]
+        _set(
+            "intervention",
+            project.intervention
+            if project.intervention in ssa_targets
+            else next(iter(ssa_targets), None),
+        )
 
     for key, field in (
         ("measurementStartFy", "measurement_start_fy"),

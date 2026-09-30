@@ -353,42 +353,37 @@ replaced the delivery choice that listed only certified agencies.{% endcomment %
 {% endif %}
 
 {% if action != 'meeting' %}
-{% comment %}Training first. Category and SSA association are fetched from the
-governed course row; the backend repeats that derivation before saving.{% endcomment %}
+{% comment %}Training first. Every governed course is listed, the ones for the
+cluster's weakest interventions first, and the focus intervention is the
+planner's: the course pre-fills it and any of the eight may be chosen (owner,
+2026-09-30: "leave the users to select any SSA intervention"). The list used
+to show only the recommended courses and post the course's own intervention
+from a hidden field, so a cluster strong in an intervention could not be
+trained in it without a Show all step, and never against another one.{% endcomment %}
 <div
 x-data="{
 activities: {{ training_activity_options_json|default:'[]' }},
 intervention: '{{ selected_focus_intervention|default:'' }}',
 activityId: '{{ selected_training_activity_id|default:'' }}',
-showAll: false,
-get deliverable() {
+get availableActivities() {
   return this.activities.filter(activity =>
     (this.executorType === 'certified_partner_agency'
       ? activity.certifiedAgencyDeliveryAllowed
       : activity.staffDeliveryAllowed)
   );
 },
-get hasRecommended() {
-  return this.deliverable.some(activity => activity.addressesPriority)
-    && this.deliverable.some(activity => !activity.addressesPriority);
-},
-get availableActivities() {
-  if (this.showAll || !this.hasRecommended) return this.deliverable;
-  return this.deliverable.filter(activity =>
-    activity.addressesPriority || activity.id === this.activityId
-  );
-},
 get selectedActivity() {
   return this.availableActivities.find(activity => activity.id === this.activityId) || null;
 },
-onActivityChange() {
-  this.intervention = this.selectedActivity ? this.selectedActivity.ssaIntervention : '';
+onActivityChange(keepChoice = false) {
+  const suggested = this.selectedActivity ? this.selectedActivity.ssaIntervention : '';
+  if (suggested && (!keepChoice || !this.intervention)) { this.intervention = suggested; }
 },
 ensureActivity() {
   if (!this.availableActivities.some(activity => activity.id === this.activityId)) {
     this.activityId = '';
   }
-  this.onActivityChange();
+  this.onActivityChange(true);
 }
 }"
 x-init="ensureActivity()"
@@ -412,52 +407,43 @@ aria-describedby="cluster-training-help"
 </template>
 </select>
 <p id="cluster-training-help" x-show="selectedActivity" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedActivity ? selectedActivity.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedActivity ? selectedActivity.ssaIndicator : ''"></span></p>
-{% comment %} The list is the courses for the cluster's recommended
-interventions (owner, 2026-09-26); this reaches every other governed course,
-which the service schedules as readily. {% endcomment %}
-<label for="training_show_all" x-show="hasRecommended" style="display:none" class="inline-flex items-center gap-2 edify-text-caption font-semibold text-slate-600 cursor-pointer">
-<input id="training_show_all" type="checkbox" x-model="showAll" @change="ensureActivity()">
-<span>Show all trainings</span>
-</label>
 </div>
-<input type="hidden" name="focus_intervention" :value="intervention">
+<div class="space-y-1">
+<label for="cluster_training_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+<select
+name="focus_intervention"
+id="cluster_training_focus_intervention"
+x-model="intervention"
+aria-describedby="cluster-training-focus-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+>
+<option value="">The training's own intervention</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+<p id="cluster-training-focus-help" class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
+</div>
 </div>
 {% endif %}
 
 {% if action == 'meeting' %}
-{% comment %} The cluster's recommended interventions (owner, 2026-09-26),
-by name alone; Show all interventions reaches the rest, and any is accepted.
-{% endcomment %}
-<div class="space-y-1" x-data="{
-options: {{ meeting_intervention_options_json|default:'[]' }},
-selected: '{{ selected_focus_intervention|default:'' }}',
-showAll: false,
-get hasRecommended() {
-  return this.options.some(option => option.recommended)
-    && this.options.some(option => !option.recommended);
-},
-get shown() {
-  if (this.showAll || !this.hasRecommended) return this.options;
-  return this.options.filter(option => option.recommended || option.code === this.selected);
-}
-}">
+{% comment %} All eight interventions, by name alone (owner, 2026-09-30: any
+SSA intervention may be chosen). It used to list only the cluster's
+recommended ones behind a Show all interventions step. {% endcomment %}
+<div class="space-y-1">
 <label for="meeting_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
 <select
 name="focus_intervention"
 id="meeting_focus_intervention"
-x-model="selected"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">No specific intervention</option>
-<template x-for="option in shown" :key="option.code">
-<option :value="option.code" x-text="option.label" :selected="option.code === selected"></option>
-</template>
+{% for code, label in interventions %}
+<option value="{{ code }}"{% if code == selected_focus_intervention %} selected{% endif %}>{{ label }}</option>
+{% endfor %}
 </select>
-<label for="meeting_show_all" x-show="hasRecommended" style="display:none" class="inline-flex items-center gap-2 edify-text-caption font-semibold text-slate-600 cursor-pointer">
-<input id="meeting_show_all" type="checkbox" x-model="showAll">
-<span>Show all interventions</span>
-</label>
-<p class="edify-text-caption text-slate-500">Pre-selected from the weakest verified cluster need.</p>
+<p class="edify-text-caption text-slate-500">Pre-selected from the weakest verified cluster need. Any SSA intervention may be chosen.</p>
 </div>
 {% endif %}
 

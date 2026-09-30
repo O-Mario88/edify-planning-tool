@@ -8,7 +8,12 @@ from apps.core.rbac import EdifyRole, Permission
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
-from .models import Project, ProjectCategory, ProjectStaffAssignment
+from .models import (
+    Project,
+    ProjectCategory,
+    ProjectSchoolAssignment,
+    ProjectStaffAssignment,
+)
 from .services import assign_school, assign_staff, create_project
 from .staff_priorities import staff_project_priorities, team_project_priorities
 
@@ -226,42 +231,37 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
             {self.cceo.name, self.pl.name},
         )
 
-    def test_client_school_can_join_only_one_active_project(self):
-        first = self._project("CLIENT-1")
-        second = self._project("CLIENT-2")
-        self._assign_to_cceo(first)
-        self._assign_to_cceo(second)
-
-        assign_school(
-            first.id,
-            {"schoolId": self.client_school.school_id},
-            self.cceo,
-        )
-
-        with self.assertRaisesMessage(BadRequest, "maximum of 1 active Project"):
+    def test_client_school_can_join_several_active_projects(self):
+        """Owner, 2026-09-30: "a school can be added to CC-SEL project and
+        other projects". The one-Project limit for Client Schools is gone."""
+        projects = [self._project(f"CLIENT-{index}") for index in range(1, 4)]
+        for project in projects:
+            self._assign_to_cceo(project)
             assign_school(
-                second.id,
+                project.id,
                 {"schoolId": self.client_school.school_id},
                 self.cceo,
             )
 
-    def test_core_school_can_join_four_active_projects_but_not_five(self):
+        self.assertEqual(
+            ProjectSchoolAssignment.objects.filter(school=self.client_school).count(),
+            3,
+        )
+
+    def test_core_school_can_join_more_than_four_active_projects(self):
         projects = [self._project(f"CORE-{index}") for index in range(1, 6)]
         for project in projects:
             self._assign_to_cceo(project)
-        for project in projects[:4]:
             assign_school(
                 project.id,
                 {"schoolId": self.core_school.school_id},
                 self.cceo,
             )
 
-        with self.assertRaisesMessage(BadRequest, "maximum of 4 active Projects"):
-            assign_school(
-                projects[4].id,
-                {"schoolId": self.core_school.school_id},
-                self.cceo,
-            )
+        self.assertEqual(
+            ProjectSchoolAssignment.objects.filter(school=self.core_school).count(),
+            5,
+        )
 
     def test_core_focused_project_rejects_client_school(self):
         project = self._project("CORE-ONLY", school_focus="core")

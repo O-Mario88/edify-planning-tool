@@ -2993,7 +2993,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23927,
+      "bytes": 25199,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -3550,7 +3550,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7851,
+      "bytes": 8789,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3864,7 +3864,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6955,
+      "bytes": 7857,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -11465,7 +11465,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8915,
+      "bytes": 9840,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -11583,7 +11583,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 28091,
+      "bytes": 27687,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -12459,7 +12459,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6722,
+      "bytes": 6687,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/schools/bulk-assign-drawer"
@@ -12605,7 +12605,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4449,
+      "bytes": 4590,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -12630,7 +12630,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4645,
+      "bytes": 4647,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"

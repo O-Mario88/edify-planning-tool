@@ -1107,11 +1107,11 @@ def _schedule_modal(request):
 
         ssa_need = cluster_need(cluster.id)
         need_by_code = {row["intervention"]: row for row in ssa_need.rows}
-        # The list offers the trainings for the cluster's recommended
-        # interventions, by their own names (owner, 2026-09-26: no
-        # " · priority need" on the name — "it makes it very messy"); the
-        # drawer's Show all trainings reaches the rest, and the service
-        # schedules any governed course.
+        # Every governed course, by its own name (owner, 2026-09-26: no
+        # " · priority need" on the name — "it makes it very messy"), the
+        # ones for the cluster's recommended interventions first. None is
+        # hidden, and the focus intervention is the planner's to choose
+        # (owner, 2026-09-30).
         for option in training_options:
             row = need_by_code.get(option.get("ssaIntervention"))
             option["addressesPriority"] = (
@@ -1175,18 +1175,6 @@ def _schedule_modal(request):
                 (code, label, need_by_code.get(code))
                 for code, label in SsaIntervention.choices
             ],
-            # The meeting's focus lists the recommended interventions (owner,
-            # 2026-09-26), Show all interventions the rest; any is accepted.
-            "meeting_intervention_options_json": json.dumps(
-                [
-                    {
-                        "code": code,
-                        "label": str(label),
-                        "recommended": code in ssa_need.priorities,
-                    }
-                    for code, label in SsaIntervention.choices
-                ]
-            ),
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context
@@ -2408,16 +2396,12 @@ def assign_partner_action_view(request):
                 raise BadRequest(
                     "A source session is only valid for Training Follow Up."
                 )
-            if (
-                catalogue_item.requires_current_ssa
-                and school_for_validation
-                and source_ssa is None
-                and purpose_of_visit != "training_follow_up"
-            ):
-                raise BadRequest(
-                    "Complete the School SSA first. Intervention-specific support "
-                    "cannot be assigned without an applicable SSA."
-                )
+            # A school with no applicable SSA may still be handed to a partner
+            # (owner, 2026-09-30: "lift the ssa restriction on schools
+            # assigned to partners and projects"). The catalogue item's
+            # requires_current_ssa refused nearly every hand-over, the plain
+            # School Visit and In-School Training included. The SSA the school
+            # does have is still recorded on the handover as its source.
             focus_intervention = resolve_activity_intervention(
                 catalogue_item,
                 requested_intervention=focus_intervention,

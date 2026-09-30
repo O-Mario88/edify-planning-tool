@@ -109,6 +109,11 @@ hx-include="#action-planner-form"
   x-data="{
     activities: {{ training_activity_options_json|default:'[]' }},
     activityId: '{{ selected_training_activity_id|default:""|escapejs }}',
+    focusIntervention: '{{ selected_focus_intervention|default:""|escapejs }}',
+    onTrainingChange() {
+      const suggested = this.selectedTraining ? this.selectedTraining.ssaIntervention : '';
+      if (suggested) { this.focusIntervention = suggested; }
+    },
     teachers: {{ teachers_per_school|default_if_none:2 }},
     leaders: {{ leaders_per_school|default_if_none:0 }},
     other: {{ other_per_school|default_if_none:0 }},
@@ -141,7 +146,7 @@ hx-include="#action-planner-form"
 >
   <div class="space-y-1">
     <label for="planner_training_activity" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
-      <select id="planner_training_activity" name="catalogue_item_id" x-model="activityId" required
+      <select id="planner_training_activity" name="catalogue_item_id" x-model="activityId" @change="onTrainingChange()" required
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
         <option value="">Select a training…</option>
         <template x-for="activity in availableActivities" :key="activity.id">
@@ -149,7 +154,21 @@ hx-include="#action-planner-form"
         </template>
       </select>
       <p x-show="selectedTraining" x-cloak aria-live="polite" class="edify-text-caption text-slate-500">Category <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.category : '—'"></span> · SSA association <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.ssaIndicator : '—'"></span></p>
-      <input type="hidden" name="focus_intervention" :value="selectedTraining ? selectedTraining.ssaIntervention : ''">
+  </div>
+  {% comment %}The planner's choice, any of the eight (owner, 2026-09-30:
+  "leave the users to select any SSA intervention"). It was a hidden field
+  holding the course's own intervention, so a training could not be aimed at
+  another need, and a course with none was refused on save.{% endcomment %}
+  <div class="space-y-1">
+    <label for="planner_training_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention <span class="text-rose-500">*</span></label>
+    <select id="planner_training_focus_intervention" name="focus_intervention" x-model="focusIntervention" required
+      class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer">
+      <option value="">Select an intervention…</option>
+      {% for item in interventions %}
+      <option value="{{ item.value }}">{{ item.label }}</option>
+      {% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
   </div>
 
   <div>

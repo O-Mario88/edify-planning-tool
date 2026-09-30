@@ -37,9 +37,13 @@ def _next_week_start(today: date | None = None) -> date:
 
 
 def _workable_days(staff, week_start: date) -> list[date]:
-    """Next week's days this person can actually work, by the same gate that
-    governs manual scheduling (REG-02): holidays, blackouts, org events and
-    the person's approved leave all block here too."""
+    """Next week's days this person can actually work, by the same calendar
+    manual scheduling reads (REG-02): holidays, blackouts, org events and the
+    person's approved leave all keep a day out of the proposal.
+
+    Read from the calendar's facts, not its refusal. Since the owner lifted
+    the calendar restrictions (2026-09-30) a person may still choose such a
+    day themselves; the system does not propose one on their behalf."""
 
     from apps.core.calendar_policy import SchedulingPolicyService
 
@@ -48,7 +52,7 @@ def _workable_days(staff, week_start: date) -> list[date]:
     for offset in range(WORKABLE_WEEKDAYS):
         candidate = week_start + timedelta(days=offset)
         verdict = SchedulingPolicyService.check(user, candidate)
-        if verdict.get("status") != "blocked":
+        if not verdict.get("calendarConflicts"):
             days.append(candidate)
     return days
 

@@ -299,6 +299,45 @@ class CoreTrainingCatalogueTest(_CoreFixture):
         self.assertEqual(training.activity_name_snapshot, course.display_name)
         self.assertEqual(self._slot("t", 1).activity_id, training.id)
 
+    def _schedule_training(self, **fields):
+        course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
+        response = self._client(self.cceo).post(
+            "/core-schools/schedule-training/action",
+            {
+                "school_id": self.school.school_id,
+                "training_number": "1",
+                "scheduled_date": _today().isoformat(),
+                "catalogue_item_id": course.id,
+                "responsible_staff_id": self.cceo_sp.id,
+                **fields,
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        return Activity.objects.get(school=self.school)
+
+    def test_the_planner_aims_a_core_training_at_any_intervention(self):
+        """Owner, 2026-09-30: "leave the users to select any SSA intervention".
+        The drawer's intervention was a hidden copy of the course's, and the
+        save ignored it."""
+        training = self._schedule_training(focus_intervention="christlike_behaviour")
+        self.assertEqual(training.focus_intervention, "christlike_behaviour")
+
+    def test_a_blank_focus_keeps_the_courses_own_intervention(self):
+        training = self._schedule_training(focus_intervention="")
+        self.assertEqual(training.focus_intervention, "leadership")
+
+    def test_the_training_drawer_offers_every_intervention(self):
+        from apps.core.enums import SsaIntervention
+
+        html = (
+            self._client(self.cceo)
+            .get(f"/core-schools/schedule-training?school_id={self.school.school_id}")
+            .content.decode()
+        )
+        self.assertIn('name="focus_intervention" x-model="focusIntervention"', html)
+        for code in SsaIntervention.values:
+            self.assertIn(f'<option value="{code}">', html)
+
 
 class ClusterSessionCoreCreditTest(_CoreFixture):
     def _session(self, activity_type="cluster_training", invited=None):
@@ -540,3 +579,29 @@ class CorePartnerPurposeTest(_CoreFixture):
         self.assertEqual(activity.training_course_id, course.id)
         self.assertEqual(activity.activity_name_snapshot, course.display_name)
         self.assertEqual(self._slot("t", 1).activity_id, activity.id)
+
+    def test_an_in_school_training_handoff_takes_any_intervention(self):
+        """Owner, 2026-09-30: the planner chooses the focus, not the course."""
+        self._take_first_visit()
+        course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
+        response = self._assign(
+            purpose_of_visit="in_school_training",
+            training_course_id=course.id,
+            focus_intervention="financial_health",
+        )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        pa = PartnerAssignment.objects.get(school=self.school)
+        self.assertEqual(pa.focus_intervention, "financial_health")
+
+    def test_the_handoff_drawer_offers_every_intervention_for_a_training(self):
+        from apps.core.enums import SsaIntervention
+
+        self._take_first_visit()
+        html = (
+            self._client(self.cceo)
+            .get(f"/core-schools/assign-partner?school_id={self.school.school_id}")
+            .content.decode()
+        )
+        self.assertIn('id="partner_core_training_focus"', html)
+        for code in SsaIntervention.values:
+            self.assertIn(f'<option value="{code}">', html)

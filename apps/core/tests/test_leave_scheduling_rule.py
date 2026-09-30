@@ -9,6 +9,7 @@ the calendar of the person who is away.
 
 from __future__ import annotations
 
+from unittest.mock import patch
 import datetime as dt
 
 from django.test import TestCase
@@ -29,6 +30,10 @@ def _user(email: str, name: str) -> User:
     )
 
 
+# The owner lifted the calendar restrictions (2026-09-30); they refuse
+# nothing by default. These tests prove the refusal still works when
+# calendar_policy.CALENDAR_BLOCKS_REFUSE is switched back on.
+@patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
 class LeaveSchedulingRuleTest(TestCase):
     def setUp(self):
         self.away = _user("away@leave.test", "Ada Away")
@@ -97,6 +102,10 @@ class LeaveSchedulingRuleTest(TestCase):
         self.assertTrue(any("pending leave" in w for w in result["warnings"]))
 
 
+# The owner lifted the calendar restrictions (2026-09-30); they refuse
+# nothing by default. These tests prove the refusal still works when
+# calendar_policy.CALENDAR_BLOCKS_REFUSE is switched back on.
+@patch("apps.core.calendar_policy.CALENDAR_BLOCKS_REFUSE", True)
 class CoveredWorkOwnershipTest(TestCase):
     """Work the coverer takes on belongs to the coverer.
 

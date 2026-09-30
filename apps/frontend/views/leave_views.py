@@ -244,7 +244,10 @@ def personal_time_off_view(request):
     my_conflicts = []
     for act in user_activities:
         avail = PlanningAvailabilityService.check(user, act.scheduled_date)
-        if avail["status"] == "blocked":
+        # The calendar facts, whether or not they refuse a date any more
+        # (calendar_policy.CALENDAR_BLOCKS_REFUSE): work on a leave day or a
+        # holiday is still worth listing here.
+        if avail["calendarConflicts"]:
             my_conflicts.append(
                 {
                     "id": act.id,
@@ -254,7 +257,7 @@ def personal_time_off_view(request):
                     if act.school
                     else (act.cluster.name if act.cluster else "General"),
                     "date": act.scheduled_date.date().isoformat(),
-                    "blockers": avail["blockers"],
+                    "blockers": avail["calendarConflicts"],
                 }
             )
 

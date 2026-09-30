@@ -2341,10 +2341,18 @@ def _create(
         # retained as supporting interventions. A caller that deliberately
         # states a different focus is still respected by this general service.
         primary_target, supporting_targets = project.intervention_plan()
-        if activity_type == "cluster_training" and not primary_target:
+        # A General project names no SSA intervention (owner, 2026-09-30), so
+        # its Group Training takes the one the planner chose; only a training
+        # with no intervention from either side is refused.
+        if (
+            activity_type == "cluster_training"
+            and not primary_target
+            and not focus
+            and not data.get("purposeIntervention")
+        ):
             raise BadRequest(
-                f"'{project.name}' does not have an SSA intervention configured. "
-                "Configure the Project before scheduling its Group Training."
+                f"'{project.name}' does not name an SSA intervention. Choose the "
+                "SSA intervention this Group Training targets."
             )
         if not focus and not data.get("purposeIntervention") and primary_target:
             focus = primary_target
