@@ -341,6 +341,96 @@ class ThePlanningMonitorPage(PeopleFixture):
                 self.assertIn(f"view={view}", response["Location"])
 
 
+class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
+    """Owner, 2026-09-30: "on IA can you move the planning monitor and
+    Execution & Completion tabs back to Planning oversight page"."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.ia_user, _ = _user("ia@people.test", EdifyRole.IMPACT_ASSESSMENT)
+
+    def setUp(self):
+        self.client.force_login(self.ia_user)
+
+    def test_the_tabs_sit_beside_the_team_plan(self):
+        response = self.client.get("/team-planning-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [(t["key"], t["label"]) for t in response.context["lens_tabs"]],
+            [
+                ("planning", "Team Plan"),
+                ("monitor", "Planning Monitor"),
+                ("execution", "Execution & Completion"),
+                ("portfolio", "Country Portfolio"),
+                ("coverage", "Schools & Coverage"),
+                ("targets", "Target Performance"),
+            ],
+        )
+        body = response.content.decode()
+        self.assertIn('href="/team-planning-oversight/?view=monitor"', body)
+        self.assertIn('href="/team-planning-oversight/?view=execution"', body)
+        # The page of its own is gone from their sidebar.
+        self.assertNotIn('href="/planning-monitor/"', body)
+
+    def test_each_tab_opens_its_monitor_in_place(self):
+        for view, marker in (
+            ("monitor", "data-planning-monitor"),
+            ("execution", "data-execution-monitor"),
+        ):
+            with self.subTest(view=view):
+                response = self.client.get(f"/team-planning-oversight/?view={view}")
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, marker)
+                self.assertRegex(
+                    response.content.decode(),
+                    rf'href="/team-planning-oversight/\?view={view}"\s+'
+                    r'data-edify-tab\s+aria-current="page"',
+                )
+                # The country's people, under every Lead.
+                self.assertContains(response, ">Cara <span")
+                self.assertContains(response, ">Eve <span")
+                # A filter change swaps the workspace and stays on the page.
+                swap = self.client.get(
+                    f"/team-planning-oversight/?view={view}", HTTP_HX_REQUEST="true"
+                )
+                self.assertNotContains(swap, "<html")
+                self.assertContains(swap, marker)
+                self.assertContains(swap, 'hx-get="/team-planning-oversight/"')
+
+    def test_old_links_open_the_tab_here(self):
+        for old, destination in (
+            ("/planning-monitor/", "/team-planning-oversight/?view=monitor"),
+            (
+                "/planning-monitor/?view=planning&gap=no_visit",
+                "/team-planning-oversight/?view=monitor&gap=no_visit",
+            ),
+            (
+                "/planning-monitor/?view=execution&list=overdue",
+                "/team-planning-oversight/?view=execution&list=overdue",
+            ),
+            (
+                "/country-planning-oversight/?view=monitor&fy=2027",
+                "/team-planning-oversight/?view=monitor&fy=2027",
+            ),
+        ):
+            with self.subTest(old=old):
+                response = self.client.get(old)
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response["Location"], destination)
+
+    def test_the_country_director_keeps_the_page_of_its_own(self):
+        self.client.force_login(self.cd_user)
+        keys = [
+            t["key"]
+            for t in self.client.get("/team-planning-oversight/").context["lens_tabs"]
+        ]
+        self.assertNotIn("monitor", keys)
+        self.assertNotIn("execution", keys)
+        response = self.client.get("/team-planning-oversight/?view=execution")
+        self.assertEqual(response["Location"], "/planning-monitor/?view=execution")
+
+
 class TrainingsCarryTheirIntervention(PeopleFixture):
     @classmethod
     def setUpTestData(cls):
