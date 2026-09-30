@@ -14,11 +14,18 @@ and Partner delivery channels. The country's total closes the table.
       </tr>
     </thead>
     {% for row in leads_pager.rows %}
-    <tbody x-data="{ open: false, loaded: false, owners: {} }" data-lead="{{ row.key }}">
+    {% comment %}A Lead and each of their CCEOs open like a cluster accordion
+    (owner, 2026-09-30): a click on the name opens the rows under it and
+    another closes them. The chevron is the same switch for the keyboard and
+    screen readers. Rows are fetched on the first opening only.{% endcomment %}
+    <tbody x-data="{ open: false, loaded: false, owners: {},
+                     toggle() { this.open = !this.open; if (!this.loaded) { this.loaded = true; this.$nextTick(() => htmx.trigger(this.$refs.more, 'cxo-load')); } },
+                     toggleOwner(key, ref) { this.owners[key] = !this.owners[key]; const more = this.$refs[ref]; if (more && !more.dataset.asked) { more.dataset.asked = '1'; htmx.trigger(more, 'cxo-load'); } } }"
+           data-lead="{{ row.key }}">
       <tr data-level="1" :data-open="open ? 'true' : 'false'">
         <th scope="row" class="cpo-namecell"{% if not row.has_children %} data-leaf{% endif %}>
-          <span>{% if row.has_children %}<button type="button" class="cpo-toggle" :class="open ? 'is-open' : ''"
-                  @click="open = !open; if (!loaded) { loaded = true; $nextTick(() => htmx.trigger($refs.more, 'cxo-load')); }"
+          <span{% if row.has_children %} data-opens-rows @click.self="toggle()"{% endif %}>{% if row.has_children %}<button type="button" class="cpo-toggle" :class="open ? 'is-open' : ''"
+                  @click="toggle()"
                   :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ row.name }}'s people">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>{% endif %}{{ row.name }}</span>{% if row.cells.blocker %}<span class="cpo-hint"><span>{{ row.cells.blocker }}</span></span>{% endif %}

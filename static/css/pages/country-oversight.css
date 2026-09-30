@@ -566,6 +566,10 @@
 .cpo-table tr[data-level="0"] :is(th, td) { font-weight: 700; color: var(--cpo-ink); }
 .cpo-table tr[data-level="1"] .cpo-namecell { font-weight: 600; }
 .cpo-table tr[data-level="1"][data-open="true"] .cpo-namecell > span:last-child { color: var(--cpo-accent); }
+/* A Lead's or CCEO's name opens and closes the rows under it, like a
+   cluster accordion (owner, 2026-09-30). */
+.cpo-table .cpo-namecell > span[data-opens-rows] { cursor: pointer; }
+.cpo-table .cpo-namecell > span[data-opens-rows]:hover { color: var(--cpo-accent); }
 /* The platform sizes a scrolling table to its content; this one fills its
    region first, so the two-line headings and short figures can give way
    before the table scrolls. Indentation is padding on the name cell — the
