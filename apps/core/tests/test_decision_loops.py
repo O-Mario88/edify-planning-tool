@@ -149,7 +149,7 @@ class ProjectCreationTests(TestCase):
             project_services.create_project(
                 {"name": "SP-VAGUE", "category": ProjectCategory.PILOT.value}, self.cd
             )
-        self.assertIn("target SSA intervention", str(ctx.exception))
+        self.assertIn("at least one target intervention", str(ctx.exception))
 
     def test_rejects_unknown_intervention(self):
         with self.assertRaises(BadRequest):
