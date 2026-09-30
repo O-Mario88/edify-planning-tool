@@ -14,6 +14,8 @@ lands in (see the FY-roll rule in the test-runner notes).
 
 from __future__ import annotations
 
+import re
+
 from datetime import date, timedelta
 
 from django.db import connection
@@ -1523,6 +1525,33 @@ class PageTest(World):
         ):
             with self.subTest(text=text):
                 self.assertIn(text, body)
+
+    def test_names_open_and_close_the_rows_under_them(self):
+        # Like a cluster accordion (owner, 2026-09-30): a click on a Lead's
+        # name opens their CCEOs, a click on a CCEO's their delivery
+        # channels, and another click closes them; the chevron is the same
+        # switch, and each set of rows is fetched on the first opening only.
+        school = self.school("core", self.cceo, cluster=self.cluster)
+        self.activity(school, "core_visit", owner=self.cceo)
+        self.handover(school, self.partner)
+        client = self.as_user(self.cd_user)
+        body = client.get("/country-planning-oversight/").content.decode()
+        lead = body[body.index(f'data-lead="{self.pl.id}"') :]
+        lead = lead[: lead.index("</tbody>")]
+        self.assertIn('<span data-opens-rows @click="toggle()">Lead A</span>', lead)
+        self.assertRegex(lead, r'class="cpo-toggle"[^>]*\s@click="toggle\(\)"')
+        self.assertIn("toggle() { this.open = !this.open; this.load(); }", body)
+        self.assertIn("if (!this.loaded) { this.loaded = true;", body)
+        self.assertIn("if (more && !more.dataset.asked)", body)
+        people = client.get(
+            f"/country-planning-oversight/rows?level=lead&key={self.pl.id}&fy={FY}",
+            HTTP_HX_REQUEST="true",
+        ).content.decode()
+        opener = f"toggleOwner('{self.cceo.id}', 'p"
+        self.assertIn(f'<span data-opens-rows @click.self="{opener}', people)
+        self.assertRegex(
+            people, rf'class="cpo-toggle"[^>]*\s@click="{re.escape(opener)}\d+\'\)"'
+        )
 
     def test_two_line_headings_carry_their_own_break(self):
         # The design sets the table's headings on two short lines. The break

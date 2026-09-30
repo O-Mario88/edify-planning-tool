@@ -59,19 +59,30 @@ scrolls sideways with the names pinned, never turned into cards.
         </tr>
       </tbody>
       {% for row in leads_pager.rows %}
-      <tbody x-data="{ open: false, loaded: false, owners: {} }" x-show="country"
+      {% comment %}A Lead and each of their CCEOs open like a cluster accordion
+      (owner, 2026-09-30): a click on the name opens the rows under it and
+      another closes them. The chevron is the same switch for the keyboard
+      and screen readers. Rows are fetched on the first opening only.{% endcomment %}
+      <tbody x-data="{ open: false, loaded: false, owners: {},
+                       show() { this.open = true; this.load(); },
+                       toggle() { this.open = !this.open; this.load(); },
+                       load() { if (!this.loaded) { this.loaded = true; this.$nextTick(() => htmx.trigger(this.$refs.more, 'cpo-load')); } },
+                       toggleOwner(key, ref) { this.owners[key] = !this.owners[key]; const more = this.$refs[ref]; if (more && !more.dataset.asked) { more.dataset.asked = '1'; htmx.trigger(more, 'cpo-load'); } } }"
+             x-show="country"
              data-lead="{{ row.key }}"
-             @cpo-open-lead.window="if ($event.detail === '{{ row.key }}') { open = true; if (!loaded) { loaded = true; $nextTick(() => htmx.trigger($refs.more, 'cpo-load')); } $el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }">
+             @cpo-open-lead.window="if ($event.detail === '{{ row.key }}') { show(); $el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }">
         <tr data-level="1" :data-open="open ? 'true' : 'false'">
           <th scope="row" class="cpo-namecell"{% if not row.has_children %} data-leaf{% endif %}>
             {% if row.has_children %}
             <button type="button" class="cpo-toggle" :class="open ? 'is-open' : ''"
-                    @click="open = !open; if (!loaded) { loaded = true; $nextTick(() => htmx.trigger($refs.more, 'cpo-load')); }"
+                    @click="toggle()"
                     :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ row.name }}'s CCEOs">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            {% endif %}
+            <span data-opens-rows @click="toggle()">{{ row.name }}</span>
+            {% else %}
             <span>{{ row.name }}</span>
+            {% endif %}
           </th>
           {% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups %}
           <td class="cpo-actcell">

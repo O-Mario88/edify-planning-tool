@@ -22,6 +22,8 @@ so no assertion depends on the day the suite runs.
 
 from __future__ import annotations
 
+import re
+
 from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
@@ -1237,7 +1239,24 @@ class ExecutionPageTest(ExecutionWorld):
             )
             .content.decode()
         )
-        self.assertIn('<span><button type="button" class="cpo-toggle"', body)
+        # The span is also the name's own switch (owner, 2026-09-30: open and
+        # close like a cluster accordion); a click on the chevron is not the
+        # span's (`.self`), so the two never both toggle.
+        self.assertIn(
+            '<span data-opens-rows @click.self="toggle()">'
+            '<button type="button" class="cpo-toggle"',
+            body,
+        )
+        self.assertRegex(body, r'class="cpo-toggle"[^>]*\s@click="toggle\(\)"')
+        rows = self.as_user(self.cd_user).get(
+            f"/country-planning-oversight/execution/rows?level=lead&key={self.pl.id}&{self.QUERY}",
+            HTTP_HX_REQUEST="true",
+        )
+        for opener in re.findall(r"<span data-opens-rows[^>]*>", rows.content.decode()):
+            with self.subTest(opener=opener):
+                self.assertRegex(
+                    opener, r"@click\.self=\"toggleOwner\('[^']+', 'x\d+'\)\""
+                )
 
     def test_every_table_view_and_drill_down_answers(self):
         client = self.as_user(self.cd_user)
