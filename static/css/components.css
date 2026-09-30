@@ -5774,9 +5774,9 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
    keeps its last column on the right edge of its scroll region, as Core
    School Oversight's Send to does (platform.css, .core-oversight-table). The
    plain-table rules give every cell an opaque surface, so the columns
-   scrolling beneath it stay hidden. At every width: a record table stays a
-   table that scrolls sideways on a phone too (mobile-shell.css, "Record
-   tables stay tables"), which is where the actions most need holding. */
+   scrolling beneath it stay hidden. From 64rem up: in mobile mode no column
+   is frozen and the table scrolls as one piece (owner, 2026-09-30; the
+   unpinning rule is in responsive-system.css). */
 table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([colspan]) {
   position: sticky;
   inset-inline-end: 0;

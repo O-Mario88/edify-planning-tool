@@ -12827,7 +12827,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10898,
+      "bytes": 9962,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -12841,8 +12841,7 @@
       "purpose": "Reusable portfolio list interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "open"
+        "default"
       ],
       "tables": 1,
       "template": "partials/projects/portfolio_list.html",
