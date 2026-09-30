@@ -35,10 +35,13 @@ test('project filters, queue tabs, and closed action menus survive interaction',
  await page.setViewportSize({width:1366,height:768});
  await signIn(page,'admin@edify.org','edify',{acceptRequiredAgreements:false});
  await page.goto('/projects');
- const menu=page.locator('.row-menu').first();await expect(menu).toBeHidden();
- await page.getByRole('button',{name:'Project actions',exact:true}).first().click();await expect(menu).toBeVisible();
+ // The portfolio row's menu is the shared Actions menu since 2026-09-30
+ // (its hand-rolled list was clipped by the table scroller).
+ const row=page.locator('[data-record-action] .row-menu').first();
+ const menu=row.locator('.row-menu__list');await expect(menu).toBeHidden();
+ await row.locator('.row-menu__trigger').click();await expect(menu).toBeVisible();
  await page.getByRole('heading',{name:'Projects',exact:true}).first().click();await expect(menu).toBeHidden();
- const detail=await page.locator('.row-menu a').first().getAttribute('href');await page.goto(detail);
+ const detail=await menu.locator('a').first().getAttribute('href');await page.goto(detail);
  for(const id of ['assign-project-staff-title','add-project-school-title']){const panel=page.locator('details[aria-labelledby="'+id+'"]');await expect(panel.locator('form')).toBeHidden();await panel.locator('summary').first().click();await expect(panel.locator('form')).toBeVisible();}
  await page.goto('/projects/planning');
  await page.locator('.spp-readiness summary').click();await expect(page.locator('.spp-band').first()).toBeVisible();

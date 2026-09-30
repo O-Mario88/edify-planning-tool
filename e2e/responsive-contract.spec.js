@@ -112,7 +112,11 @@ test.describe('Responsive contract — every page family at every geometry', () 
 });
 
 test.describe('Responsive contract — behaviours', () => {
-  test('a wide table keeps its identity column in view and says it scrolls', async ({ browser, baseURL, browserName, isMobile }) => {
+  test('a wide table on a phone says it scrolls and scrolls as one piece', async ({ browser, baseURL, browserName, isMobile }) => {
+    // Mobile mode freezes no column (owner, 2026-09-30: "make sure no column
+    // is [frozen] so that the users can scroll well without freezing half of
+    // the mobile screen"); laptops keep the pinned identity
+    // (e2e/mobile-unfrozen-columns.spec.js holds both sides).
     onlyChromiumDesktop({ browserName, isMobile });
     const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'pl1@edify.org');
     try {
@@ -122,24 +126,15 @@ test.describe('Responsive contract — behaviours', () => {
       await expect(region).toHaveAttribute('data-scroll-state', 'start');
       await expect(page.locator('.edify-table-scroll-hint')).toHaveText('Swipe to view more columns');
       // The identity is the row's first cell, or the one beside the tick of a
-      // selection table (bulk withdraw, 2026-09-29), which pins both.
+      // selection table; either way it moves with the columns it introduces.
       const identity = region.locator('tbody tr').first().locator('> :not(.school-plan-table__select)').first();
-      await expect(identity).toHaveCSS('position', 'sticky');
       const before = await identity.boundingBox();
 
-      await region.evaluate(element => { element.scrollLeft = 240; });
+      const scrolled = await region.evaluate(element => { element.scrollLeft = 240; return element.scrollLeft; });
       await expect(region).toHaveAttribute('data-scroll-state', /middle|end/);
       await expect(page.locator('.edify-table-scroll-hint')).toHaveCount(0);
       const after = await identity.boundingBox();
-      expect(Math.abs(after.x - before.x)).toBeLessThan(1);
-      // Pinned, the identity leaves most of the region for the columns it
-      // introduces, and a cut name keeps its full text as a title.
-      const regionWidth = await region.evaluate(element => element.clientWidth);
-      expect(after.width).toBeLessThanOrEqual(regionWidth * 0.6);
-      const name = identity.locator('> :first-child');
-      if (await name.evaluate(e => e.scrollWidth > e.clientWidth + 1)) {
-        await expect(name).toHaveAttribute('title', /\S/);
-      }
+      expect(Math.abs(after.x - (before.x - scrolled))).toBeLessThan(1);
 
       // Learned once, the hint stays away for the rest of the session.
       await page.reload();
