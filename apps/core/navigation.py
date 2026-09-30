@@ -222,7 +222,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # bar and place it below the Dashboard. Do the same for PL"): each
     # Programme Lead's and CCEO's plan against their 280 or 560, and its
     # execution and completion — the country for the CD, IA and RVP, a
-    # Lead's own team for the PL, the region for the RPL.
+    # Lead's own team for the PL, the region for the RPL. IA keeps the grant:
+    # its monitors are Planning Oversight tabs (owner, 2026-09-30), and this
+    # page sends an IA's old links and drill-downs there.
     "planning_monitor": {PL, IA, CD, RVP, RPL, ADMIN},
     # The Accountant read clusters as a section of Team Oversight until the
     # section moved here (2026-09-23), and keeps that reading (owner,
@@ -1722,11 +1724,12 @@ SIDEBAR_ITEMS = [
                 # planning and delivery every day (owner, 2026-09-29). The
                 # Programme Lead reads it on their dashboard instead, in place
                 # of Leadership Attention (owner, 2026-09-29: "the content in
-                # them are not big"), so it is not in their sidebar.
+                # them are not big"), and IA as Planning Oversight tabs (owner,
+                # 2026-09-30), so it is in neither's sidebar.
                 "label": "Planning Monitor",
                 "url": "/planning-monitor/",
                 "page_key": "planning_monitor",
-                "visible_to": {CD, IA},
+                "visible_to": {CD},
             },
             {
                 "label": "Planning",

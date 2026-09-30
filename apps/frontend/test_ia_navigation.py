@@ -59,8 +59,8 @@ IA_SIDEBAR = [
         "DAILY",
         [
             ("Dashboard", "/ia/dashboard/"),
-            # Under the Dashboard (owner, 2026-09-29).
-            ("Planning Monitor", "/planning-monitor/"),
+            # No Planning Monitor: IA reads it as Planning Oversight tabs
+            # (owner, 2026-09-30).
             ("Planning", "/planning"),
             ("School Directory", "/schools"),
             ("Calendar", "/calendar"),

@@ -27,8 +27,9 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     # Directly below the Dashboard for its readers (owner, 2026-09-29: "move
     # the staff activity log below the Dashboard").
     "staff_activity": (DAILY, 1),
-    # Under the Dashboard: the monitor the CD, PL and IA read daily
-    # (owner, 2026-09-29).
+    # Under the Dashboard: the monitor the CD reads daily (owner,
+    # 2026-09-29); the PL reads it on their dashboard and IA on Planning
+    # Oversight.
     "planning_monitor": (DAILY, 1.5),  # after Staff Activity
     "planning": (DAILY, 2),
     "my_plan": (DAILY, 4),
