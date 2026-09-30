@@ -581,6 +581,20 @@ def recommend_activities(
             _suggestion(item, None, source_ssa, reason, rank=0)
             for item in candidates.order_by("display_name")
         ]
+        if project is not None:
+            recommendations.extend(
+                _project_items_without_ssa(
+                    qs.exclude(
+                        id__in=[row["catalogueItemId"] for row in recommendations]
+                    ),
+                    project=project,
+                    school=school,
+                    cluster=cluster,
+                    executor_type=executor_type,
+                    fy=fy,
+                    on_date=on_date,
+                )
+            )
         return {
             "hasApplicableSsa": False,
             "sourceSsaId": None,
@@ -822,6 +836,63 @@ def recommend_activities(
         "primary": suggestions[:limit],
         "otherEligible": suggestions[limit:],
     }
+
+
+def _project_items_without_ssa(
+    qs, *, project, school, cluster, executor_type, fy, on_date
+) -> list[dict]:
+    """A project's own activities for a school with no applicable SSA.
+
+    Owner, 2026-09-30: "lift the ssa restriction on schools assigned to
+    partners and projects". Without an SSA the recommendation offered only the
+    SSA collection, so a project school could be neither scheduled nor handed
+    to a partner for the project's work until it had been assessed. The SSA
+    collection still comes first; the project's items follow it.
+
+    Each item must still be deliverable here (validate_context and
+    validate_frequency). It carries the intervention it is mapped to, else the
+    project's primary SSA intervention, else none. A follow-up that could name
+    neither is left out, because the create would refuse it.
+    """
+    project_primary, _supporting = project.intervention_plan()
+    reason = "No applicable verified SSA yet. Offered by this Project without one."
+    rows = []
+    for item in (
+        qs.exclude(activity_type=CatalogueActivityType.ADMIN)
+        .distinct()
+        .order_by("display_name")
+    ):
+        try:
+            validate_context(
+                item,
+                school=school,
+                cluster=cluster,
+                project=project,
+                executor_type=executor_type,
+            )
+            validate_frequency(
+                item,
+                school=school,
+                cluster=cluster,
+                fy=fy,
+                on_date=on_date,
+            )
+        except (BadRequest, Forbidden):
+            continue
+        mappings = sorted(
+            (m for m in item.intervention_mappings.all() if m.active),
+            key=lambda m: (not m.is_primary, m.priority, m.intervention or ""),
+        )
+        modes = {m.mapping_mode for m in mappings}
+        if MappingMode.ADMINISTRATIVE in modes:
+            continue
+        target = next(
+            (m.intervention for m in mappings if m.intervention), project_primary
+        )
+        if MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in modes and not target:
+            continue
+        rows.append(_suggestion(item, target, None, reason, rank=1))
+    return rows
 
 
 def recommend_cluster_activities(

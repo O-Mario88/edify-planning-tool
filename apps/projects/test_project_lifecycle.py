@@ -112,7 +112,7 @@ class TheOwnerCorrectsTheProjectTest(_Fixture):
             update_project(
                 self.project.id, {"targetInterventions": []}, self.coordinator
             )
-        self.assertIn("target SSA intervention", str(caught.exception))
+        self.assertIn("at least one target intervention", str(caught.exception))
 
 
 class TheOwnerWithdrawsAnUnusedProjectTest(_Fixture):

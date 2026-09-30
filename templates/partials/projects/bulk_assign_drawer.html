@@ -123,19 +123,19 @@ class="school-checkbox rounded-control border-slate-300 text-[var(--edify-accent
 {% endfor %}
 </div>
 
-<!-- Override reason — the same field the one-school form carries, because the
-     same SSA-need rule is applied to every school in the batch. -->
+<!-- Reason — optional, kept on each school's enrolment. The SSA no longer
+     gates who may join (owner, 2026-09-30), so nothing asks for it. -->
 <div class="space-y-1">
-<label for="project-bulk-assign-reason" class="block edify-text-caption font-semibold text-slate-600">Override reason <span class="font-normal text-slate-500">(optional)</span></label>
+<label for="project-bulk-assign-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="font-normal text-slate-500">(optional)</span></label>
 <textarea
 id="project-bulk-assign-reason"
 name="reason"
 rows="2"
 aria-describedby="project-bulk-assign-reason-help"
 class="w-full rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-medium px-3 py-2 focus:outline-none focus:ring-2 edify-primary-focus"
-placeholder="Why these schools join anyway"
+placeholder="Why these schools join"
 ></textarea>
-<p id="project-bulk-assign-reason-help" class="edify-text-caption text-slate-500">Needed only where confirmed SSA shows no weakness in the Project's target interventions.</p>
+<p id="project-bulk-assign-reason-help" class="edify-text-caption text-slate-500">Kept on each school's enrolment. Schools join with or without an SSA.</p>
 </div>
 
 <div x-show="capLeft !== null && selectedCount > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>

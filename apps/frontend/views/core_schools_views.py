@@ -1074,6 +1074,7 @@ def core_schedule_training_action(request):
     partner_id = request.POST.get("assigned_partner_id")
     facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    focus_intervention = request.POST.get("focus_intervention", "").strip()
     if not catalogue_item_id:
         return error_fragment(
             BadRequest("Select a training from the Training Catalogue."),
@@ -1130,6 +1131,13 @@ def core_schedule_training_action(request):
         "catalogueItemId": training_profile.id,
         "requireCatalogue": True,
         "recommendationReason": request.POST.get("recommendation_reason", ""),
+        # The planner's focus, any of the eight (owner, 2026-09-30); blank
+        # leaves the course's own (activities.services.create).
+        **(
+            {"focusIntervention": focus_intervention}
+            if focus_intervention in SsaIntervention.values
+            else {}
+        ),
         # Omit the key entirely for staff delivery — an empty string would be
         # stamped into the budget line's partner FK and violate the constraint.
         **({"assignedPartnerId": partner_id} if partner_id else {}),
@@ -1253,6 +1261,7 @@ def core_assign_partner_drawer(request):
         "first_visit": first_visit,
         "partner_visit_purposes": purposes,
         "recommended_visit_purpose": "ssa_support" if first_visit else "",
+        "interventions": SsaIntervention.choices,
         "training_courses_json": json.dumps(
             [
                 course
@@ -1333,6 +1342,7 @@ def core_assign_partner_action(request):
     notes = request.POST.get("notes", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
     course_id = request.POST.get("training_course_id", "").strip()
+    chosen_focus = request.POST.get("focus_intervention", "").strip()
 
     partner = get_object_or_404(Partner, id=partner_id)
 
@@ -1371,7 +1381,13 @@ def core_assign_partner_action(request):
                 catalogue_item = resolve_item_for_workflow_kind(
                     ActivityType.IN_SCHOOL_TRAINING
                 )
-                focus_intervention = selected["ssaIntervention"] or None
+                # The planner's focus, any of the eight (owner, 2026-09-30);
+                # blank keeps the course's own.
+                focus_intervention = (
+                    chosen_focus
+                    if chosen_focus in SsaIntervention.values
+                    else selected["ssaIntervention"] or None
+                )
                 linked = ", ".join(selected["priorityTitles"])
                 recommendation_reason = (
                     f"Priority activity: {linked}"

@@ -6,7 +6,8 @@ Batches, Route feasibility, Budget Amendment reschedule, calendar views,
 APIs, HTMX endpoints, background jobs — must call before committing a date.
 One surface must never block a date another surface allows.
 
-Rule:
+What it works out (each a warning, not a refusal, while
+``CALENDAR_BLOCKS_REFUSE`` is off — see the owner's note below):
 - Sunday is always blocked.
 - Saturday is never blocked by this policy (existing org policy permits it).
 - A public holiday blocks — PublicHoliday and CalendarBlock(PUBLIC_HOLIDAY)
@@ -22,6 +23,14 @@ Rule:
 resolvable staff identity yet, e.g. a route-feasibility preview before
 anyone is assigned) still get the always-on Sunday/holiday/blackout gate;
 the leave and role-scoped checks are skipped when no user is given.
+
+Owner, 2026-09-30: "Just lift all the scheduling restrictions" — calendar
+blocks included. While ``CALENDAR_BLOCKS_REFUSE`` is off, everything above is
+still worked out and said, but as a warning: ``status`` is never "blocked",
+so no surface refuses a date for it. The facts stay readable as
+``calendarConflicts`` for pages that list work falling on a leave day or a
+holiday. Turning the constant back on restores the refusals everywhere at
+once, because every surface reads this one answer.
 """
 
 from __future__ import annotations
@@ -39,6 +48,12 @@ from apps.accounts.models import (
     StaffProfile,
     User,
 )
+
+
+#: Whether a Sunday, a public holiday, a blackout date, a blocking calendar
+#: event or the staff member's approved leave REFUSES a date. Off since the
+#: owner lifted the calendar restrictions (2026-09-30); they are warnings.
+CALENDAR_BLOCKS_REFUSE = False
 
 
 def resolve_scheduling_user(staff_or_user_id: str | None):
@@ -139,13 +154,14 @@ class SchedulingPolicyService:
                 "reasons": [],
                 "blockers": [],
                 "warnings": [],
+                "calendarConflicts": [],
             }
 
         blockers: list[str] = []
         warnings: list[str] = []
 
         if d.weekday() == 6:
-            blockers.append("Scheduling on Sundays is blocked.")
+            blockers.append("This date is a Sunday.")
 
         public_holiday = PublicHoliday.objects.filter(date=d).first()
         if public_holiday:
@@ -173,7 +189,7 @@ class SchedulingPolicyService:
                     pass
                 else:
                     blockers.append(
-                        f"Staff Conference Week: {b.title} blocks scheduling."
+                        f"This date is in Staff Conference Week: {b.title}."
                     )
             elif b.block_type in ("REGIONAL_EVENT", "ORG_EVENT", "CUSTOM_BLOCK"):
                 # Country-wide events created on Calendar must also block
@@ -182,7 +198,7 @@ class SchedulingPolicyService:
                 # can be evaluated without over-blocking another audience.
                 if not user:
                     if b.applies_to_all_roles and not b.region_id and not b.district_id:
-                        blockers.append(f"Blocked by calendar event: {b.title}.")
+                        blockers.append(f"Calendar event on this date: {b.title}.")
                     continue
                 geo_blocked = True
                 if sp and b.country and sp.country and sp.country != b.country:
@@ -204,7 +220,7 @@ class SchedulingPolicyService:
                     ):
                         geo_blocked = False
                 if geo_blocked:
-                    blockers.append(f"Blocked by calendar event: {b.title}.")
+                    blockers.append(f"Calendar event on this date: {b.title}.")
 
         if user and sp:
             d_str = d.isoformat()
@@ -259,6 +275,11 @@ class SchedulingPolicyService:
                     f"High workload warning: {user.name} has {week_count} activities scheduled this week."
                 )
 
+        conflicts = list(blockers)
+        if not CALENDAR_BLOCKS_REFUSE:
+            warnings = blockers + warnings
+            blockers = []
+
         status = "available"
         if blockers:
             status = "blocked"
@@ -270,6 +291,7 @@ class SchedulingPolicyService:
             "reasons": blockers + warnings,
             "blockers": blockers,
             "warnings": warnings,
+            "calendarConflicts": conflicts,
         }
 
     @staticmethod

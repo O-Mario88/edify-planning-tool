@@ -172,9 +172,10 @@ class PreviewNamesLinesFromTheCatalogueTest(TestCase):
 
 class TheSessionDrawerTest(SimpleTestCase):
     """The group training and cluster meeting drawer (owner, 2026-09-26):
-    training names without " · priority need", the recommended trainings and
-    interventions listed with a Show all that reaches the rest (scheduling
-    is not restricted), and a cost preview that follows every field."""
+    training names without " · priority need" and a cost preview that follows
+    every field. Every training and every intervention is listed (owner,
+    2026-09-30: "leave the users to select any SSA intervention"), with no
+    Show all step in front of the ones the cluster is strong in."""
 
     def setUp(self):
         from pathlib import Path
@@ -192,12 +193,15 @@ class TheSessionDrawerTest(SimpleTestCase):
         self.assertNotIn('option["label"] = (', self.view)
         self.assertNotIn("priority need", self.drawer)
 
-    def test_the_lists_show_the_recommended_with_a_show_all(self):
-        self.assertIn('id="training_show_all"', self.drawer)
-        self.assertIn("activity.addressesPriority", self.drawer)
-        self.assertIn('id="meeting_show_all"', self.drawer)
-        self.assertIn("meeting_intervention_options_json", self.drawer)
-        self.assertIn('"recommended": code in ssa_need.priorities', self.view)
+    def test_the_lists_hide_nothing_behind_a_show_all(self):
+        self.assertNotIn("training_show_all", self.drawer)
+        self.assertNotIn("meeting_show_all", self.drawer)
+        self.assertNotIn("activity.addressesPriority", self.drawer)
+        self.assertNotIn("meeting_intervention_options_json", self.view)
+        # The training's intervention is a visible choice, not a hidden copy
+        # of the course's.
+        self.assertIn('id="cluster_training_focus_intervention"', self.drawer)
+        self.assertNotIn('<input type="hidden" name="focus_intervention"', self.drawer)
         # No "· avg x/10" on the meeting's options.
         self.assertNotIn("/10{% endif %}</option>", self.drawer)
 

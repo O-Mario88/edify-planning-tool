@@ -12,6 +12,7 @@ x-data="{
   purposeOfVisit: '{{ recommended_visit_purpose|default:''|escapejs }}',
   trainingCourses: {{ training_courses_json|default:'[]' }},
   trainingCourseId: '',
+  focusIntervention: '',
   followUps: {{ follow_up_options_json|default:'[]' }},
   sourceActivityId: '',
   followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
@@ -19,6 +20,9 @@ x-data="{
   get isFollowUp() { return this.purposeOfVisit === 'training_follow_up'; },
   get isSsa() { return this.purposeOfVisit === 'ssa_support'; },
   get selectedCourse() { return this.trainingCourses.find(course => course.id === this.trainingCourseId) || null; },
+  onCourseChange() {
+    if (this.selectedCourse && this.selectedCourse.ssaIntervention) { this.focusIntervention = this.selectedCourse.ssaIntervention; }
+  },
   get selectedFollowUp() { return this.followUps.find(row => row.id === this.sourceActivityId) || null; },
   onPurposeChange() {
     if (!this.isTraining) { this.trainingCourseId = ''; }
@@ -69,7 +73,7 @@ x-data="{
 <template x-if="isTraining">
 <div class="space-y-1">
   <label for="partner_core_training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
-  <select name="training_course_id" id="partner_core_training" x-model="trainingCourseId" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+  <select name="training_course_id" id="partner_core_training" x-model="trainingCourseId" @change="onCourseChange()" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
     <option value="">Select a training…</option>
     <template x-for="course in trainingCourses" :key="course.id">
       <option :value="course.id" x-text="course.label"></option>
@@ -77,6 +81,13 @@ x-data="{
   </select>
   <p class="edify-text-caption text-slate-500">You choose the training; the partner only sets the delivery date.</p>
   <p x-show="selectedCourse" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.category : ''"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.ssaInterventionLabel : ''"></span></p>
+  {% comment %}The planner's choice, any of the eight (owner, 2026-09-30).{% endcomment %}
+  <label for="partner_core_training_focus" class="mt-3 block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+  <select name="focus_intervention" id="partner_core_training_focus" x-model="focusIntervention" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    <option value="">The training's own intervention</option>
+    {% for code, label in interventions %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+  </select>
+  <p class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
 </div>
 </template>
 

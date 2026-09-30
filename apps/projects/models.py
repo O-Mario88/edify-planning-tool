@@ -8,6 +8,21 @@ from apps.core.enums import SsaIntervention
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 
 
+#: A project that works across the programme rather than on one SSA
+#: intervention (owner, 2026-09-30: "add intervention General to the Project
+#: SSA intervention list"). It is a Project choice only: stored among the
+#: targets, never one of the eight SSA interventions, so it is never an
+#: Activity's focus and has no SSA score of its own to measure.
+GENERAL_INTERVENTION = "general"
+PROJECT_INTERVENTION_CHOICES = [
+    *SsaIntervention.choices,
+    (GENERAL_INTERVENTION, "General"),
+]
+PROJECT_INTERVENTION_VALUES = frozenset(
+    value for value, _label in PROJECT_INTERVENTION_CHOICES
+)
+
+
 class ProjectCategory(models.TextChoices):
     INTERVENTION_SPECIFIC = "intervention_specific", "Intervention Specific"
     PILOT = "pilot", "Pilot"
@@ -76,8 +91,11 @@ class Project(SoftDeleteModel):
     # Ecosystem audit: a Special Project must declare WHICH of the eight SSA
     # interventions it intends to improve — a single nullable `intervention`
     # (kept for back-compat) under-specified real multi-intervention projects
-    # and let a project exist with no target at all. List of SsaIntervention
-    # values; target_intervention_list() merges both fields.
+    # and let a project exist with no target at all. List of
+    # PROJECT_INTERVENTION_VALUES (the eight SSA interventions and General);
+    # target_intervention_list() merges both fields. Editing the targets keeps
+    # `intervention` in step (services.update_project), so the legacy field can
+    # no longer hold a choice the coordinator has taken away.
     target_interventions = models.JSONField(default=list, blank=True)
     # Measurement window for verified SSA impact comparison.
     measurement_start_fy = models.CharField(max_length=16, null=True, blank=True)
@@ -106,8 +124,15 @@ class Project(SoftDeleteModel):
         legacy projects may instead carry the single ``intervention`` field.
         When both exist, that explicit legacy primary remains primary and the
         other targets become supporting interventions.
+
+        Only SSA interventions are returned: General is not one, and an
+        Activity's focus must be (resolve_activity_intervention).
         """
-        targets = list(dict.fromkeys(self.target_intervention_list()))
+        targets = [
+            target
+            for target in dict.fromkeys(self.target_intervention_list())
+            if target in SsaIntervention.values
+        ]
         if not targets:
             return None, []
         primary = self.intervention if self.intervention in targets else targets[0]
