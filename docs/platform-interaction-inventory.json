@@ -8301,11 +8301,16 @@
   },
   "partials/oversight/_execution_row.html": {
    "pages": [
-    "/planning-monitor/"
+    "/planning-monitor/",
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
    ],
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CD",
+    "HR",
     "IA",
     "PL",
     "RPL",
@@ -8568,11 +8573,16 @@
   },
   "partials/oversight/execution_workspace.html": {
    "pages": [
-    "/planning-monitor/"
+    "/planning-monitor/",
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
    ],
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CD",
+    "HR",
     "IA",
     "PL",
     "RPL",
@@ -11164,7 +11174,7 @@
   {"accessible_name": "Retry", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4730E4FA7D3E", "kind": "button", "line": 44, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/offline.html"},
   {"accessible_name": "Country Oversight", "destination": "/country-planning-oversight/", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-4E4219473963", "kind": "link", "line": 24, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_map.html"},
   {"accessible_name": "Add Partner Organisation", "destination": "/partners/create", "destination_route": "/partners/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F5687CADB1D", "kind": "button", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/partner_oversight.html"},
-  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 95, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
+  {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 97, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-13A6673C139F", "kind": "field", "line": 22, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/partner/activities.html"},
   {"accessible_name": "Return", "destination": "/partner/assignments/{{ assignment.id }}/return-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/return-drawer", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-426E7F2A74E4", "kind": "button", "line": 50, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},
   {"accessible_name": "Schedule", "destination": "/partner/assignments/{{ assignment.id }}/schedule-drawer", "destination_route": "/partner/assignments/<str:assignment_id>/schedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-F9C65452187C", "kind": "button", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partner/activities.html"},

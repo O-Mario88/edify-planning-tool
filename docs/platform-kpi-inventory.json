@@ -8227,7 +8227,7 @@
    "audit_id": "KPI-SOURCE-455",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 1120,
+   "line": 1123,
    "label": "Search coverage by the staff member covered or covering",
    "keys": [
     "action",
@@ -8626,7 +8626,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 946,
+   "line": 969,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8645,7 +8645,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 956,
+   "line": 979,
    "label": "My Work",
    "keys": [
     "count",
@@ -8664,7 +8664,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2500,
+   "line": 2552,
    "label": null,
    "keys": [
     "count",
@@ -8682,7 +8682,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 965,
+   "line": 988,
    "label": null,
    "keys": [
     "count",
@@ -8701,7 +8701,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1016,
+   "line": 1039,
    "label": null,
    "keys": [
     "count",
@@ -8720,7 +8720,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1056,
+   "line": 1079,
    "label": null,
    "keys": [
     "count",
@@ -8739,7 +8739,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2531,
+   "line": 2583,
    "label": "All team members",
    "keys": [
     "count",
@@ -8757,7 +8757,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2537,
+   "line": 2589,
    "label": null,
    "keys": [
     "count",
@@ -8775,7 +8775,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1041,
+   "line": 1064,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -42046,7 +42046,7 @@
   {
    "audit_id": "KPI-PAYLOAD-016",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 817,
+   "line": 820,
    "function": "_leave_approvals_page",
    "target": "leave_kpi_items",
    "source_item_count": 6,
