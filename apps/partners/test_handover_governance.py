@@ -1,7 +1,8 @@
 """Hand-over governance from the core-school partner audit (owner, 2026-10-01:
 "fix all the remaining open").
 
-* A hand-over's status is one of a fixed vocabulary, held by the database.
+* A hand-over's status is one of a fixed vocabulary, held by the database
+  for every row written from now on (legacy spellings stay valid).
 * A partner is handed only the trainings it is recorded as delivering — when
   it records any.
 * A project's work goes to the project's own partners, or carries a reason.
@@ -67,7 +68,14 @@ class StatusVocabularyTest(_Fixture):
 
     def test_the_legacy_spellings_stay_valid(self):
         handover = self._hand_over(self.partner, training_course=self.course)
-        for status in ("assigned", "scheduled", "completed"):
+        for status in (
+            "assigned",
+            "partner_pending_schedule",
+            "scheduled",
+            "completed",
+            "returned",
+            "cancelled",
+        ):
             PartnerAssignment.objects.filter(id=handover.id).update(status=status)
         self.assertIn(
             PartnerAssignment.STATUS_COMPLETED, PartnerAssignment.SCHEDULED_STATUSES

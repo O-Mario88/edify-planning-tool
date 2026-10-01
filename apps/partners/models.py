@@ -159,24 +159,36 @@ class PartnerReturnReason(models.TextChoices):
 
 
 class PartnerAssignmentStatus(models.TextChoices):
-    """Every state a hand-over can be in — and, enforced by the database
-    (``partner_assignment_status_known``), the only ones.
+    """Every state a hand-over can be in — and, for every row written from
+    now on, the only ones (``partner_assignment_status_known``).
 
     It was a bare CharField, and one spelling per writer reached the data.
-    Two legacy spellings stay because production rows hold them and readers
-    match them: ``assigned`` beside ``pending_scheduling`` (not yet dated) and
-    ``scheduled`` beside ``partner_scheduled`` (dated). ``completed`` is the
-    seed data's. New hand-overs start ``pending_scheduling``
-    (`partners.services.create_assignment`) and the partner's date moves them
-    to ``partner_scheduled``.
+    The current writers use three: ``pending_scheduling`` when a hand-over is
+    made (`partners.services.create_assignment`), ``partner_scheduled`` once
+    the partner dates it, ``returned_to_staff`` when the partner lets it go.
+
+    The rest are legacy spellings no writer produces any more but readers
+    across the platform still match, so production rows may hold them and
+    they stay valid rather than being rewritten on a guess: ``assigned`` and
+    ``partner_pending_schedule`` (not yet dated), ``scheduled`` (dated),
+    ``completed`` (the seed data's), ``returned`` and ``cancelled``. (Some
+    readers also list ``assigned_to_partner_pending_scheduling``; at 38
+    characters it never fitted this 32-character column.)
     """
 
     PENDING_SCHEDULING = "pending_scheduling", "Waiting for the partner to schedule"
-    ASSIGNED = "assigned", "Waiting for the partner to schedule (legacy)"
     PARTNER_SCHEDULED = "partner_scheduled", "Scheduled by the partner"
-    SCHEDULED = "scheduled", "Scheduled (legacy)"
-    COMPLETED = "completed", "Completed"
     RETURNED_TO_STAFF = "returned_to_staff", "Returned to staff"
+    # ── Legacy spellings: readable, never written by current code ──
+    ASSIGNED = "assigned", "Waiting for the partner to schedule (legacy)"
+    PARTNER_PENDING_SCHEDULE = (
+        "partner_pending_schedule",
+        "Waiting for the partner to schedule (legacy)",
+    )
+    SCHEDULED = "scheduled", "Scheduled (legacy)"
+    COMPLETED = "completed", "Completed (legacy)"
+    RETURNED = "returned", "Returned (legacy)"
+    CANCELLED = "cancelled", "Cancelled (legacy)"
 
 
 class PartnerAssignment(TimeStampedModel):
@@ -599,11 +611,14 @@ class PartnerAssignment(TimeStampedModel):
                 condition=models.Q(
                     status__in=[
                         "pending_scheduling",
-                        "assigned",
                         "partner_scheduled",
+                        "returned_to_staff",
+                        "assigned",
+                        "partner_pending_schedule",
                         "scheduled",
                         "completed",
-                        "returned_to_staff",
+                        "returned",
+                        "cancelled",
                     ]
                 ),
                 name="partner_assignment_status_known",
