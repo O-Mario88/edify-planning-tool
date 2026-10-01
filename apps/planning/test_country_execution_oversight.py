@@ -808,7 +808,16 @@ class PeriodSnapshotTest(ExecutionWorld):
 
         window, closed = self.april()
         followup, _ = self.send(cceo_key=self.cceo.id)
-        locked = snapshots.take("Uganda", window, today=closed)
+        # The period this test is about began BEFORE the schedule trail did.
+        # The trail begins when its migration is applied — on a test database,
+        # the day the suite runs — so that held only while the fixture's
+        # April was 2026's; from 1 October 2026 it is 2027's. Say it outright.
+        trail_began = timezone.make_aware(datetime.combine(closed, time(9)))
+        with patch(
+            "apps.activities.schedule_trail.tracking_since",
+            return_value=trail_began,
+        ):
+            locked = snapshots.take("Uganda", window, today=closed)
         self.assertEqual(
             (locked.version, locked.kind, locked.as_of), (1, "original", closed)
         )
