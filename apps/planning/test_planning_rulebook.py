@@ -597,7 +597,8 @@ class PeopleFirstPageTest(World):
         snapshot = self.snapshot()
         rows = {row["key"]: row for row in svc.type_rows(snapshot)}
         self.assertEqual(
-            [row["key"] for row in svc.type_rows(snapshot)], list(rules.TYPE_ORDER)
+            [row["key"] for row in svc.type_rows(snapshot) if not row.get("is_total")],
+            list(rules.TYPE_ORDER),
         )
         self.assertEqual(
             (

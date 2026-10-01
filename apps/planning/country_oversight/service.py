@@ -1322,6 +1322,17 @@ KPI_KEYS = (
 )
 
 
+#: The consolidated table each card opens (``tables``): every row it counts.
+KPI_TABLES = {
+    "cpo_staff_visit_planning": "visits",
+    "cpo_partner_planning": "partners",
+    "cpo_total_visit_coverage": "plans",
+    "cpo_training_planning": "trainings",
+    "cpo_cluster_membership": "clusters",
+    "cpo_cluster_meeting_planning": "meetings",
+}
+
+
 def _fmt(value) -> str:
     return f"{int(value):,}"
 
@@ -1357,7 +1368,7 @@ def kpis(snapshot: Snapshot) -> list[dict]:
         rendered = render_metric(
             key,
             MetricValue.ratio(part, whole),
-            drilldown_url=f"{PAGE_PATH}drawer?kind=kpi&metric={key}&{snapshot.filters.query()}",
+            drilldown_url=f"{PAGE_PATH}table/{KPI_TABLES[key]}?{snapshot.filters.query()}",
         ).as_dict()
         share = Tally.share(part, whole)
         rendered.update(
@@ -1384,11 +1395,10 @@ def kpis(snapshot: Snapshot) -> list[dict]:
         period_note = "Year to date against the annual requirement"
 
     visit_part, training_part = t.planned, t.training
-    meeting_part = t.meeting_covered
     if week:
         # A week has no approved phasing: the card reads the year so far.
         visit_part = t.cum_staff + t.cum_partner_scheduled
-        training_part, meeting_part = t.cum_training, t.cum_meeting_covered
+        training_part = t.cum_training
 
     lead_target = policy.ceiling_for(policy.PROGRAM_LEAD_ROLE)
     cceo_target = policy.ceiling_for(policy.CCEO_ROLE)
@@ -1422,7 +1432,7 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             headline=(_fmt(t.pa_schools), "Schools assigned to Partners"),
             note="" if phased else period_note,
             extras=[
-                f"{_fmt(t.pa_work)} assigned by staff",
+                f"of {_fmt(t.visit_schools)} schools needing a visit",
                 f"{_fmt(t.partner_waiting)} awaiting the Partner's date",
             ],
             icon="partner",
@@ -1435,6 +1445,7 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             note=period_note,
             extras=[
                 f"{_fmt(t.no_visit)} schools not yet planned",
+                f"{_fmt(max(0, t.visit_slots - visit_part))} visits remaining",
                 f"{_fmt(t.duplicates)} planned twice" if t.duplicates else "",
             ],
             icon="target",
@@ -1460,15 +1471,17 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             extras=[],
             icon="cluster",
         ),
+        # Membership is not a meeting: of the schools in a cluster, the ones
+        # on the roster of a meeting staff have actually planned.
         card(
             "cpo_cluster_meeting_planning",
-            meeting_part,
-            t.schools,
+            t.meeting_covered_clustered,
+            t.clustered,
             headline=(_fmt(t.p_meetings), "Cluster meetings planned by staff"),
-            note=period_note,
+            note="" if phased or week else period_note,
             extras=[
-                f"{_fmt(t.meeting_covered_clustered)} of {_fmt(t.clustered)} "
-                "clustered schools on a planned meeting",
+                f"{_fmt(t.clustered_no_meeting)} clustered schools on no planned "
+                "meeting",
             ],
             icon="meeting",
         ),
@@ -1476,48 +1489,61 @@ def kpis(snapshot: Snapshot) -> list[dict]:
     return cards
 
 
+def _type_row(key: str, label: str, tally: Tally, need) -> dict:
+    planned = tally.staff + tally.partner_scheduled
+    return {
+        "key": key,
+        "label": label,
+        "needs_visits": bool(need is None or need.visits),
+        "needs_trainings": bool(need is None or need.trainings),
+        "schools": _fmt(tally.schools),
+        "visit_slots": _fmt(tally.visit_slots),
+        "staff": _fmt(tally.staff),
+        "partner_scheduled": _fmt(tally.partner_scheduled),
+        "visit_remaining": _fmt(max(0, tally.visit_slots - planned)),
+        "slot_share": tally.visit_share,
+        "slot_tone": _tone(tally.visit_share),
+        "visit_share": tally.unique_visit_share,
+        "visit_tone": _tone(tally.unique_visit_share),
+        "any_visit": _fmt(tally.any_visit),
+        "no_visit": _fmt(tally.no_visit),
+        "with_partner": _fmt(tally.with_partner),
+        "training_slots": _fmt(tally.training_slots),
+        "training": _fmt(tally.training),
+        "training_remaining": _fmt(max(0, tally.training_slots - tally.training)),
+        "training_share": tally.training_share,
+        "training_tone": _tone(tally.training_share),
+        "no_training": _fmt(tally.no_training),
+        "duplicates": tally.duplicates,
+    }
+
+
 def type_rows(snapshot: Snapshot) -> list[dict]:
     """The same schools by their own type (owner, 2026-10-01: "separate all
     the plans for Core, Clients, Core Trained, Core Graduates ... how many
     schools have been planned for and how many are not yet. Do the same for
-    trainings"). One row per type the selection holds, the rulebook's order;
-    a type the requirement asks nothing of shows what it has and no gap."""
+    trainings"). One row per type the selection holds, the rulebook's order:
+    what the type needs, what is planned, what remains. A type the
+    requirement asks nothing of shows what it has and no gap. The last row is
+    every type together — the cards' own figures."""
     by_type = snapshot.tree.by_type
     order = [
         t for t in rules.TYPE_ORDER if t in by_type or not snapshot.filters.school_type
     ]
     order += sorted(t for t in by_type if t not in rules.TYPE_ORDER)
-    rows = []
-    for school_type in order:
-        tally = by_type.get(school_type) or Tally()
-        need = rules.requirement_for(school_type)
-        rows.append(
-            {
-                "key": school_type,
-                "label": rules.type_label(school_type),
-                "needs_visits": bool(need.visits),
-                "needs_trainings": bool(need.trainings),
-                "schools": _fmt(tally.schools),
-                "visit_slots": _fmt(tally.visit_slots),
-                "staff": _fmt(tally.staff),
-                "partner_scheduled": _fmt(tally.partner_scheduled),
-                "visit_share": tally.unique_visit_share,
-                "visit_tone": _tone(tally.unique_visit_share),
-                "any_visit": _fmt(tally.any_visit),
-                "no_visit": _fmt(tally.no_visit),
-                "with_partner": _fmt(tally.with_partner),
-                "training_slots": _fmt(tally.training_slots),
-                "training": _fmt(tally.training),
-                "training_share": tally.training_share,
-                "training_tone": _tone(tally.training_share),
-                "trained_share": Tally.share(
-                    tally.any_training, tally.training_schools
-                ),
-                "any_training": _fmt(tally.any_training),
-                "no_training": _fmt(tally.no_training),
-                "duplicates": tally.duplicates,
-            }
+    rows = [
+        _type_row(
+            school_type,
+            rules.type_label(school_type),
+            by_type.get(school_type) or Tally(),
+            rules.requirement_for(school_type),
         )
+        for school_type in order
+    ]
+    if len(rows) > 1:
+        total = _type_row("", "All school types", snapshot.tree.country, None)
+        total["is_total"] = True
+        rows.append(total)
     return rows
 
 
@@ -1853,9 +1879,9 @@ def row_cells(tally: Tally) -> dict:
         "training_share": tally.training_share,
         "training_tone": _tone(tally.training_share),
         "unclustered": _fmt(tally.unclustered),
-        "meeting": f"{_fmt(tally.meeting_covered)} / {_fmt(tally.schools)}",
-        "meeting_share": tally.meeting_share,
-        "meeting_tone": _tone(tally.meeting_share),
+        "meeting": f"{_fmt(tally.meeting_covered_clustered)} / {_fmt(tally.clustered)}",
+        "meeting_share": tally.meeting_clustered_share,
+        "meeting_tone": _tone(tally.meeting_clustered_share),
         "deficit": tally.deficit,
         "shortfall": tally.shortfall,
         "duplicates": tally.duplicates,

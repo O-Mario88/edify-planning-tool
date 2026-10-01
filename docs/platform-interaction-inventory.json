@@ -5,20 +5,20 @@
   "by_evidence": {
    "browser-rendered": 794,
    "none": 286,
-   "page-tested": 1414,
-   "request-tested": 1195
+   "page-tested": 1417,
+   "request-tested": 1203
   },
   "by_kind": {
    "button": 1278,
    "disclosure": 71,
-   "field": 1274,
-   "link": 998,
+   "field": 1277,
+   "link": 1006,
    "tab": 68
   },
-  "controls": 3689,
+  "controls": 3700,
   "high_consequence": 200,
   "state_changing": 441,
-  "templates_scanned": 611,
+  "templates_scanned": 613,
   "unresolved_destinations": 0,
   "untested": 286,
   "untested_state_changing": 23
@@ -128,6 +128,7 @@
     "/country-budget/history/<str:budget_id>",
     "/country-map/",
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/coverage",
     "/cpd-learning",
     "/culture-engagement",
@@ -863,6 +864,7 @@
     "/cost-settings",
     "/country-map/",
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/coverage",
     "/dashboard",
     "/dashboard/past-due-popup",
@@ -1099,6 +1101,7 @@
     "/country-budget/history/<str:budget_id>",
     "/country-map/",
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/coverage",
     "/cpd-learning",
     "/culture-engagement",
@@ -1461,6 +1464,7 @@
     "/country-budget/history/<str:budget_id>",
     "/country-map/",
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/coverage",
     "/cpd-learning",
     "/culture-engagement",
@@ -1760,6 +1764,7 @@
     "/country-planning-oversight/",
     "/country-planning-oversight/execution/follow-ups-panel",
     "/country-planning-oversight/execution/table",
+    "/country-planning-oversight/table/<str:key>",
     "/country-planning-oversight/team/<str:staff_id>",
     "/coverage",
     "/cpd-learning",
@@ -2011,6 +2016,7 @@
     "/country-budget/history/<str:budget_id>",
     "/country-map/",
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/coverage",
     "/cpd-learning",
     "/culture-engagement",
@@ -3993,6 +3999,17 @@
   "pages/oversight/country_map.html": {
    "pages": [
     "/country-map/"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "IA",
+    "RVP"
+   ]
+  },
+  "pages/oversight/country_table.html": {
+   "pages": [
+    "/country-planning-oversight/table/<str:key>"
    ],
    "roles": [
     "ADMIN",
@@ -6087,6 +6104,17 @@
    ]
   },
   "partials/country_oversight/_table.html": {
+   "pages": [
+    "/country-planning-oversight/"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "IA",
+    "RVP"
+   ]
+  },
+  "partials/country_oversight/_types.html": {
    "pages": [
     "/country-planning-oversight/"
    ],
@@ -8403,6 +8431,7 @@
   "partials/oversight/_lens_tabs.html": {
    "pages": [
     "/country-planning-oversight/",
+    "/country-planning-oversight/table/<str:key>",
     "/planning-monitor/",
     "/team-planning-oversight/",
     "/team-targets",
@@ -11262,6 +11291,13 @@
   {"accessible_name": "Archive", "destination": "/notifications", "destination_route": "/notifications", "evidence": "request-tested", "high_consequence": true, "id": "INT-8A65563682FF", "kind": "button", "line": 241, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/notifications/index.html"},
   {"accessible_name": "Retry", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4730E4FA7D3E", "kind": "button", "line": 44, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/offline.html"},
   {"accessible_name": "Country Oversight", "destination": "/country-planning-oversight/", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-4E4219473963", "kind": "link", "line": 24, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_map.html"},
+  {"accessible_name": "Country Planning Oversight", "destination": "/country-planning-oversight/?{{ query }}", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-229DB29BF44C", "kind": "link", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "Export {{ spec.title }} to Excel", "destination": "/country-planning-oversight/table-export/{{ spec.key }}?{{ query }}", "destination_route": "/country-planning-oversight/table-export/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-EF62AC41523D", "kind": "link", "line": 26, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "Financial year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1ED1A3178A04", "kind": "field", "line": 48, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "Programme Lead", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-47E5B279C139", "kind": "field", "line": 56, "method": "", "selector": "select[name=program_lead]", "state_changing": false, "tag": "select", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "School type", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1A755420A0B1", "kind": "field", "line": 65, "method": "", "selector": "select[name=school_type]", "state_changing": false, "tag": "select", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "Apply", "destination": "/country-planning-oversight/table/{{ spec.key }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-07BC0D22DF9A", "kind": "button", "line": 72, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/country_table.html"},
+  {"accessible_name": "{{ value }}", "destination": "/schools/{{ line.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A1EF26D0D4E1", "kind": "link", "line": 106, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/country_table.html"},
   {"accessible_name": "Add Partner Organisation", "destination": "/partners/create", "destination_route": "/partners/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F5687CADB1D", "kind": "button", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/oversight/partner_oversight.html"},
   {"accessible_name": "Evidence gaps", "destination": "/evidence/?tab=pending", "destination_route": "/evidence/", "evidence": "request-tested", "high_consequence": false, "id": "INT-610EB240B8FB", "kind": "link", "line": 97, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/oversight/team_planning.html"},
   {"accessible_name": "Status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-13A6673C139F", "kind": "field", "line": 22, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/partner/activities.html"},
@@ -12161,6 +12197,10 @@
   {"accessible_name": "Planning Monitor", "destination": "/country-planning-oversight/?view=monitor&program_lead={{ row.key }}", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-DD115C80062A", "kind": "link", "line": 117, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_table.html"},
   {"accessible_name": "Country Portfolio", "destination": "/country-map/?program_lead={{ row.key }}#country-portfolio", "destination_route": "/country-map/", "evidence": "request-tested", "high_consequence": false, "id": "INT-D0E7CC7D91E1", "kind": "link", "line": 118, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_table.html"},
   {"accessible_name": "Execution & Completion", "destination": "/country-planning-oversight/?view=execution&program_lead={{ row.key }}", "destination_route": "/country-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-9AB3BE4F90C7", "kind": "link", "line": 119, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_table.html"},
+  {"accessible_name": "List the schools not yet planned", "destination": "/country-planning-oversight/table/not-planned?school_type={{ row.key }}&{{ type_query }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-BB1F83F60F22", "kind": "link", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_types.html"},
+  {"accessible_name": "List the schools assigned to Partners", "destination": "/country-planning-oversight/table/partners?school_type={{ row.key }}&{{ type_query }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-530FCA566FAB", "kind": "link", "line": 53, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_types.html"},
+  {"accessible_name": "List the schools with no training planned", "destination": "/country-planning-oversight/table/no-training?school_type={{ row.key }}&{{ type_query }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-F0A610CE39EC", "kind": "link", "line": 58, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_types.html"},
+  {"accessible_name": "List every plan at the schools planned twice", "destination": "/country-planning-oversight/table/duplicates?school_type={{ row.key }}&{{ type_query }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-27A15011E8AD", "kind": "link", "line": 62, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/_types.html"},
   {"accessible_name": "{{ item.label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7A88B4FF5B52", "kind": "field", "line": 59, "method": "", "selector": "select[name=issue]", "state_changing": false, "tag": "select", "template": "partials/country_oversight/drawer_follow_up.html"},
   {"accessible_name": "{{ default_due|date:'Y-m-d' }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3F7E04E2DE63", "kind": "field", "line": 68, "method": "", "selector": "input[name=due_date]", "state_changing": false, "tag": "input", "template": "partials/country_oversight/drawer_follow_up.html"},
   {"accessible_name": "{{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-83A8C5124C72", "kind": "field", "line": 72, "method": "", "selector": "select[name=priority]", "state_changing": false, "tag": "select", "template": "partials/country_oversight/drawer_follow_up.html"},
@@ -12230,7 +12270,7 @@
   {"accessible_name": "Next", "destination": "/country-planning-oversight/schools?{{ list_query }}&page={{ page|add:'1' }}", "destination_route": "/country-planning-oversight/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-64CE89BA1DAB", "kind": "button", "line": 57, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/schools.html"},
   {"accessible_name": "Activity", "destination": "/team-planning-oversight/detail?activity_id={{ slot.activity_id }}", "destination_route": "/team-planning-oversight/detail", "evidence": "request-tested", "high_consequence": false, "id": "INT-E9A741D63FB4", "kind": "button", "line": 13, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/slots.html"},
   {"accessible_name": "Open Data Quality", "destination": "/country-planning-oversight/drawer?kind=dq&{{ query }}", "destination_route": "/country-planning-oversight/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-B0B125092D66", "kind": "button", "line": 23, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/workspace.html"},
-  {"accessible_name": "{{ card.accessible_description }} Open the schools behind it.", "destination": "/country-planning-oversight/drawer?kind=kpi&metric={{ card.metric_key }}&{{ query }}", "destination_route": "/country-planning-oversight/drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-34395D4B8C09", "kind": "button", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/country_oversight/workspace.html"},
+  {"accessible_name": "{{ card.accessible_description }} Open {{ card.table_title }}.", "destination": "/country-planning-oversight/table/{{ card.table_key }}?{{ query }}", "destination_route": "/country-planning-oversight/table/<str:key>", "evidence": "request-tested", "high_consequence": false, "id": "INT-26F86AFBB1DB", "kind": "link", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/country_oversight/workspace.html"},
   {"accessible_name": "{{ tab.description }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-950682A27E71", "kind": "tab", "line": 43, "method": "", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/_view_tabs_nav.html"},
   {"accessible_name": "{{ tab.description }}", "destination": "{{ tab.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B84CCA6CBE20", "kind": "tab", "line": 46, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/_view_tabs_nav.html"},
   {"accessible_name": "{{ incident.reference }} · {{ incident.title }}", "destination": "/admin-ops/incidents/{{ incident.id }}", "destination_route": "/admin-ops/incidents/<str:incident_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-03BA6C161B1A", "kind": "link", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/dashboards/admin/_platform_operations.html"},

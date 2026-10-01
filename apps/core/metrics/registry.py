@@ -1255,7 +1255,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_staff_visit_planning",
+        drilldown="/country-planning-oversight/table/visits",
         refresh_events=("activity_scheduled", "activity_cancelled"),
     ),
     MetricSpec(
@@ -1279,7 +1279,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_partner_planning",
+        drilldown="/country-planning-oversight/table/partners",
         refresh_events=("partner_assignment_created", "partner_scheduled"),
     ),
     MetricSpec(
@@ -1304,7 +1304,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_total_visit_coverage",
+        drilldown="/country-planning-oversight/table/plans",
         refresh_events=("activity_scheduled", "partner_scheduled"),
     ),
     MetricSpec(
@@ -1330,7 +1330,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_training_planning",
+        drilldown="/country-planning-oversight/table/trainings",
         refresh_events=("activity_scheduled", "cluster_invitations_changed"),
     ),
     MetricSpec(
@@ -1352,30 +1352,31 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_cluster_membership",
+        drilldown="/country-planning-oversight/table/clusters",
         refresh_events=("school_cluster_changed",),
     ),
     MetricSpec(
         key="cpo_cluster_meeting_planning",
         label="Cluster Meeting Planning",
         definition=(
-            "Eligible schools on the planned roster of a dated cluster meeting, "
-            "against every eligible school; the share of clustered schools is "
-            "shown beside it. Membership alone never counts as a planned meeting."
+            "Of the schools in an active cluster, those on the planned roster "
+            "of a dated cluster meeting; the number of meetings staff have "
+            "planned is shown beside it. Membership alone never counts as a "
+            "planned meeting."
         ),
         question="Which schools will actually be convened this period?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Eligible portfolio schools",
+        denominator="Schools in an active cluster",
         service="apps.planning.country_oversight.service.kpis",
         source_models=("activities.Activity", "activities.ClusterActivityAttendance"),
-        numerator="Schools named on a planned cluster meeting's roster",
+        numerator="Clustered schools named on a planned cluster meeting's roster",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's country portfolio",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/drawer?kind=kpi&metric=cpo_cluster_meeting_planning",
+        drilldown="/country-planning-oversight/table/meetings",
         refresh_events=("activity_scheduled", "cluster_invitations_changed"),
     ),
     # ── Country Execution & Completion Oversight (owner, 2026-09-28): did the
