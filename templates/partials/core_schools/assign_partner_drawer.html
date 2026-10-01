@@ -21,11 +21,11 @@ x-data="{
   get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
   get isFollowUp() { return this.purposeOfVisit === 'training_follow_up'; },
   get isSsa() { return this.purposeOfVisit === 'ssa_support'; },
-  get offeredCourses() {
+  get coursesForPartner() {
     const codes = this.partnerCourses[this.partnerId];
     return codes ? this.trainingCourses.filter(course => codes.includes(course.stableCode)) : this.trainingCourses;
   },
-  get selectedCourse() { return this.offeredCourses.find(course => course.id === this.trainingCourseId) || null; },
+  get selectedCourse() { return this.coursesForPartner.find(course => course.id === this.trainingCourseId) || null; },
   onPartnerChange() { if (!this.selectedCourse) { this.trainingCourseId = ''; } },
   onCourseChange() {
     if (this.selectedCourse && this.selectedCourse.ssaIntervention) { this.focusIntervention = this.selectedCourse.ssaIntervention; }
@@ -88,7 +88,7 @@ x-data="{
   <label for="partner_core_training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
   <select name="training_course_id" id="partner_core_training" x-model="trainingCourseId" @change="onCourseChange()" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
     <option value="">Select a training…</option>
-    <template x-for="course in offeredCourses" :key="course.id">
+    <template x-for="course in coursesForPartner" :key="course.id">
       <option :value="course.id" x-text="course.label"></option>
     </template>
   </select>
