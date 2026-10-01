@@ -233,3 +233,121 @@ class ProjectPartnerHandoverTest(TestCase):
             ).count(),
             1,
         )
+
+    # ── The project's own partners (audit follow-up, 2026-10-01) ──────────
+    def _post_handover(self, partner, **extra):
+        self.client.force_login(self.coord_user)
+        items = self.client.get(self._row()["partner_url"]).context["catalogue_items"]
+        return self.client.post(
+            "/projects/planning/bulk-partner",
+            {
+                "assignments": self.enrolment.id,
+                "partner_id": partner.id,
+                "scheduled_date": (
+                    timezone.localdate() + timedelta(days=7)
+                ).isoformat(),
+                "catalogue_item_id": items[0]["catalogueItemId"],
+                **extra,
+            },
+        )
+
+    def test_the_project_s_partners_come_first_and_others_need_a_reason(self):
+        from apps.projects.models import ProjectPartnerAssignment
+
+        ProjectPartnerAssignment.objects.create(
+            project=self.project, partner=self.partner
+        )
+        outsider = Partner.objects.create(name="PPH Outsider", active_status=True)
+        self.client.force_login(self.coord_user)
+        drawer = self.client.get(self._row()["partner_url"])
+        self.assertEqual(
+            [p.id for p in drawer.context["project_partners"]], [self.partner.id]
+        )
+        self.assertIn(outsider.id, [p.id for p in drawer.context["other_partners"]])
+        self.assertContains(drawer, "Other partners (reason required)")
+
+        refused = self._post_handover(outsider)
+        self.assertEqual(refused.status_code, 400)
+        self.assertContains(
+            refused, "not one of the selected projects", status_code=400
+        )
+        self.assertFalse(PartnerAssignment.objects.filter(partner=outsider))
+
+        accepted = self._post_handover(
+            outsider, override_reason="Only partner working in the district"
+        )
+        self.assertEqual(accepted.status_code, 200, accepted.content[:400])
+        handover = PartnerAssignment.objects.get(partner=outsider)
+        self.assertEqual(
+            handover.override_reason, "Only partner working in the district"
+        )
+
+    def test_a_project_with_no_partner_list_takes_any_partner(self):
+        outsider = Partner.objects.create(name="PPH Any", active_status=True)
+        response = self._post_handover(outsider)
+        self.assertEqual(response.status_code, 200, response.content[:400])
+        self.assertTrue(PartnerAssignment.objects.filter(partner=outsider))
+
+    def test_bulk_schedule_skips_a_refused_school_and_names_it(self):
+        """One school the scheduling rules refuse no longer costs the
+        coordinator the rest of the selection (audit follow-up, 2026-10-01)."""
+        from unittest import mock
+
+        from apps.core.exceptions import BadRequest
+
+        second_school = School.objects.create(
+            school_id="PPH-2",
+            name="Second Handover Primary",
+            region=self.school.region,
+            district=self.school.district,
+            school_type="client",
+            current_fy_ssa_status="done",
+            planning_readiness="ready_for_support_planning",
+        )
+        second = ProjectSchoolAssignment.objects.create(
+            project=self.project, school=second_school
+        )
+        calls = []
+
+        def schedule(payload, principal):
+            calls.append(payload["schoolId"])
+            if payload["schoolId"] == "PPH-2":
+                raise BadRequest("Second Handover Primary has had its visit.")
+            return {"id": "x"}
+
+        self.client.force_login(self.coord_user)
+        with (
+            mock.patch(
+                "apps.frontend.views.planning_views._common_project_recommendations",
+                return_value=(
+                    [{"catalogueItemId": "item-1"}],
+                    {
+                        a: {
+                            "item-1": {
+                                "targetIntervention": None,
+                                "recommendationReason": "",
+                            }
+                        }
+                        for a in (self.enrolment.id, second.id)
+                    },
+                ),
+            ),
+            mock.patch(
+                "apps.frontend.views.planning_views.schedule_school_visit",
+                side_effect=schedule,
+            ),
+        ):
+            response = self.client.post(
+                "/projects/planning/bulk-schedule",
+                {
+                    "assignments": f"{self.enrolment.id},{second.id}",
+                    "scheduled_date": (
+                        timezone.localdate() + timedelta(days=7)
+                    ).isoformat(),
+                    "catalogue_item_id": "item-1",
+                },
+            )
+        self.assertEqual(response.status_code, 200, response.content[:400])
+        self.assertEqual(sorted(calls), ["PPH-1", "PPH-2"])
+        self.assertContains(response, "Scheduled 1 project school activities.")
+        self.assertContains(response, "Second Handover Primary has had its visit.")

@@ -178,6 +178,37 @@ def selected_capabilities(posted_interventions, posted_activities) -> dict:
     }
 
 
+def delivers(partner, item) -> bool:
+    """Whether ``partner`` may be handed this training course.
+
+    From the core-school partner audit (owner, 2026-10-01: "fix all the
+    remaining open"): partners are offered the trainings they are recorded as
+    delivering (`Partner.activity_codes`), not every course in the catalogue. Only courses are checked — the visits a
+    hand-over resolves to are workflow items a partner records loosely. A
+    partner with no activities recorded is not yet scoped and is offered
+    everything, as `bookable_certified_agencies` treats an empty coverage
+    list.
+    """
+    if partner is None or item is None:
+        return True
+    if not getattr(item, "is_training_course", False):
+        return True
+    codes = set(getattr(partner, "activity_codes", None) or [])
+    return not codes or item.stable_code in codes
+
+
+def assert_delivers(partner, item) -> None:
+    from apps.core.exceptions import BadRequest
+
+    if not delivers(partner, item):
+        raise BadRequest(
+            f"{partner.name} is not recorded as delivering "
+            f"{getattr(item, 'display_name', None) or item.stable_code}. Choose a "
+            "partner who delivers it, or add it to this partner's activities on "
+            "their profile."
+        )
+
+
 def describe(partner) -> dict:
     """A saved partner's capabilities, for a profile or a register row."""
     labels = _intervention_labels()

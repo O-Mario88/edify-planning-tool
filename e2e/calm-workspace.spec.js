@@ -5,7 +5,10 @@ test('populated oversight and finance remain compact, readable and interactive',
  test.setTimeout(180000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await signIn(page,'accountant@edify.org','edify',{acceptRequiredAgreements:false});
- for(const route of ['/team-planning-oversight/','/accounts','/analytics']){
+ // The demo seed's work is a fixed April-2026 fixture (FY2026). The oversight
+ // page opens on the operational year, which from 1 October 2026 is FY2027 and
+ // holds none of it, so the page is asked for the year the seed fills.
+ for(const route of ['/team-planning-oversight/?fy=2026','/accounts','/analytics']){
   await page.goto(route);await expect(page.locator('main[data-workspace-design=calm]')).toBeVisible();
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
   for(const width of [390,768,1048,1600]){
@@ -49,7 +52,8 @@ test('populated oversight and finance remain compact, readable and interactive',
  await expect(context).toHaveAttribute('open','');
  await expect(context.locator('.analytics-decision-frame')).toBeVisible();
  await context.locator('summary').click();
- await page.goto('/accounts');
+ // The seed's fund plans are FY2026's too (see the note on the routes above).
+ await page.goto('/accounts?fy=2026');
  // Which CCEOs hold a plan depends on the seed's random draw, so take a requester from the rail rather than a name.
  const requester=page.locator('.fund-requesters__strip .fund-requester:visible').nth(1);
  const requesterName=(await requester.locator('.fund-requester__name').textContent()).trim();

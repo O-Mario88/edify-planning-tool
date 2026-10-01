@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from freezegun import freeze_time
+
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, User
@@ -106,6 +108,10 @@ class ScopeSeesBothIdentitySpacesTest(TestCase):
         self.assertEqual(self._visible_activity_count(), 0)
 
 
+# The fixture dates work on "this week's Monday" and "twelve weeks ago" and
+# reads it in the operational year. In the week a fiscal year turns, that
+# Monday is last year's (found 1 October 2026), so the class runs mid-year.
+@freeze_time("2027-02-10 09:00:00")
 class FourPeriodBudgetTest(TestCase):
     """Week, month, quarter and FY, all from the canonical budget builder.
 

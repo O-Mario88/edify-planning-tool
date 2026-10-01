@@ -2,6 +2,7 @@ from django.test import Client, TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activity_catalogue.models import ActivityCatalogueItem
+from apps.core.fy import get_operational_fy
 from apps.core.exceptions import BadRequest
 from apps.core.permissions import has_permission
 from apps.core.rbac import EdifyRole, Permission
@@ -334,7 +335,10 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
             self.cceo,
         )
 
-        row = staff_project_priorities(user=self.cceo, fy="2026")[0]
+        # The year the assignment above was made in: assign_staff files it
+        # under the operational year, which stopped being FY2026 on
+        # 1 October 2026.
+        row = staff_project_priorities(user=self.cceo, fy=get_operational_fy())[0]
 
         self.assertEqual(
             row["schoolTypeBreakdown"],

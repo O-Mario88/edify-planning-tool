@@ -182,13 +182,22 @@ def core_visit_q(prefix: str = ""):
     """
     from django.db.models import Q
 
+    from apps.core_schools.package_credit import NON_PACKAGE_VISIT_PURPOSES
+
     slot_activity_ids = CoreActivitySlot.objects.filter(
         activity_type="visit", activity_id__isnull=False
     ).values("activity_id")
+    # A donor, story, invitation or social visit is not package work (owner,
+    # 2026-09-30), including one the Core Schools drawer booked as a
+    # ``core_visit`` before that rule.
     return (
-        Q(**{f"{prefix}activity_type": "core_visit"})
-        | Q(**{f"{prefix}id__in": slot_activity_ids})
-    ) & Q(**{f"{prefix}cluster__isnull": True})
+        (
+            Q(**{f"{prefix}activity_type": "core_visit"})
+            | Q(**{f"{prefix}id__in": slot_activity_ids})
+        )
+        & Q(**{f"{prefix}cluster__isnull": True})
+        & ~Q(**{f"{prefix}purpose_type__in": sorted(NON_PACKAGE_VISIT_PURPOSES)})
+    )
 
 
 class CorePackageSchedulingService:
@@ -281,9 +290,9 @@ class CorePackageSchedulingService:
         restriction and package restrictions. Only block staff visit schedule
         after 2 scheduling and block partner assignment and schedule after 2
         assignment and scheduling", and again, "can you make sure all
-        restrictions are lifted throughout the platform". Those two caps are
-        enforced in assert_can_schedule and assert_can_assign and are
-        untouched.
+        restrictions are lifted throughout the platform". The caps that
+        remain are the package's 2 + 2 split (owner, 2026-09-30), enforced in
+        assert_can_schedule and assert_can_assign through `package_split`.
 
         A no-op rather than five deletions: a rule that has been lifted is
         worth being able to find, and the call sites read the same either way.
@@ -338,11 +347,13 @@ class CorePackageSchedulingService:
         ninth piece of core support could not be planned at all even when the
         school needed it.
 
-        Owner, 2026-09-28, lifting the rest: "staff may plan more core
-        schools visits but only if the partner has not planned." Staff take
-        a third or later visit on the package only while the partner has no
-        core visit planned at the school; the partner side and the trainings
-        are no longer capped. The dates are the planner's.
+        Owner, 2026-09-30, replacing the 2026-09-28 caps: the package is "4
+        visits and 4 trainings (2 each for staff and the other 2 for
+        partners)". Staff take two of each and partners two of each, counted
+        on the PACKAGE (`package_split`), not on a fiscal year: a package's
+        work can land in more than one, and a cap that counted
+        `fy=current_fy` would reset itself across the boundary. The dates are
+        the planner's.
         """
         if activity_type not in {"visit", "training"}:
             raise BadRequest("Core support must be a visit or a training.")
@@ -355,36 +366,18 @@ class CorePackageSchedulingService:
                 "package support. Plan its work from the Planning page."
             )
 
-        if not is_partner_delivery and activity_type == "visit":
-            # Owner, 2026-09-28: "staff may plan more core schools visits but
-            # only if the partner has not planned." Staff hold two visits on
-            # the package while a partner core visit is planned at the school;
-            # with none planned they may fill it. Trainings are not capped.
-            # Counted on the PACKAGE, not on a fiscal year: a package's work
-            # can land in more than one, and a cap that counted
-            # `fy=current_fy` would reset itself across the boundary.
-            from apps.planning.visit_gate import CORE_STAFF_VISIT_CAP, visit_gate
+        from apps.core_schools.package_split import (
+            PARTNER,
+            STAFF,
+            assert_side_open,
+        )
 
-            if visit_gate(school, plan.fy).partner_visits:
-                # Counted in Python through `is_allocated`, which normalises
-                # the status: the column holds "Scheduled" and "Evidence
-                # Uploaded" while the allocated set is lowercase, so a DB
-                # `status__in` would silently match none of them.
-                staff_taken = sum(
-                    1
-                    for slot in CoreActivitySlot.objects.filter(
-                        core_plan=plan,
-                        activity_type=activity_type,
-                        owner="staff",
-                    ).exclude(sequence_number=sequence_number)
-                    if cls.is_allocated(slot)
-                )
-                if staff_taken >= CORE_STAFF_VISIT_CAP:
-                    raise BadRequest(
-                        f"Staff may deliver at most {CORE_STAFF_VISIT_CAP} core "
-                        f"visits on this package ({staff_taken} already "
-                        "scheduled) while the partner has visits planned here."
-                    )
+        assert_side_open(
+            school,
+            activity_type,
+            PARTNER if is_partner_delivery else STAFF,
+            fy=plan.fy,
+        )
 
         return cls._free_slot(plan, activity_type, sequence_number)
 
@@ -460,30 +453,30 @@ class CorePackageSchedulingService:
 
     @classmethod
     def assert_can_assign(
-        cls, *, plan: CorePlan, activity_type: str, sequence_number: int
+        cls,
+        *,
+        plan: CorePlan,
+        school: School,
+        activity_type: str,
+        sequence_number: int,
     ) -> CoreActivitySlot:
-        """Reserve only an untouched slot for a partner assignment."""
-        summary = cls.summary(plan)
-        if summary["package_complete"]:
-            raise BadRequest(
-                "This core package is complete: all 4 visits and 4 trainings are already scheduled or completed."
-            )
-        slot = (
-            CoreActivitySlot.objects.select_for_update()
-            .filter(
-                core_plan=plan,
-                activity_type=activity_type,
-                sequence_number=sequence_number,
-            )
-            .first()
-        )
-        if (
-            not slot
-            or cls.is_allocated(slot)
-            or cls._normalise_status(slot.status) == "assigned"
-        ):
-            raise BadRequest("That core support slot is no longer available to assign.")
-        return slot
+        """Reserve a slot for a partner hand-over while the partner's side of
+        the package has room (owner, 2026-09-30: two of the visits and two of
+        the trainings are the partner's).
+
+        The requested slot, or the next free one — made past the fourth when
+        cluster sessions or older work have taken the four — exactly as a
+        staff booking gets (`_free_slot`). It used to refuse once the whole
+        4 + 4 package was taken and to accept only an untouched requested
+        slot, so a partner hand-over could be refused while the partner's own
+        half was empty.
+        """
+        from apps.core_schools.package_split import PARTNER, assert_side_open
+
+        if activity_type not in {"visit", "training"}:
+            raise BadRequest("Core support must be a visit or a training.")
+        assert_side_open(school, activity_type, PARTNER, fy=plan.fy)
+        return cls._free_slot(plan, activity_type, sequence_number or 1)
 
     @classmethod
     def commit_schedule(
@@ -975,7 +968,11 @@ class CorePackageProgressService:
         # The staff and partner halves of each package's visits (owner,
         # 2026-09-15: staff schedule two, a partner is assigned two), from
         # the same rule the Schedule and Assign buttons grey out on.
-        from apps.planning.visit_gate import visit_gates
+        from apps.planning.visit_gate import (
+            CORE_PARTNER_TRAINING_CAP,
+            CORE_STAFF_TRAINING_CAP,
+            visit_gates,
+        )
 
         gate_map = visit_gates(iterator, fy)
 
@@ -1177,22 +1174,28 @@ class CorePackageProgressService:
                     "trainings_target": package_summary["trainings_target"],
                     "package_complete": package_summary["package_complete"],
                     "package_status": package_summary["package_status"],
-                    "core_package_available": bool(plan)
-                    and not package_summary["package_complete"],
+                    # The row's Training and Assign entries follow the
+                    # package's 2 + 2 split below, not the whole package: a
+                    # cluster session can fill a slot without being anyone's
+                    # half (owner, 2026-09-30).
+                    "core_package_available": bool(plan),
                     "blocked_reason": blocked_reason,
-                    # Staff's two visits: the Schedule button greys out once
-                    # they are used. Trainings are not visits, so the row's
-                    # Training entry stays open while staff trainings remain.
+                    # The package's 2 + 2 split (owner, 2026-09-30), from the
+                    # count every core door asks (`package_split`). Staff's
+                    # two visits and two trainings grey their own entries;
+                    # the Assign entry greys once the partner's two visits
+                    # and two trainings are all held.
                     "staff_visit_count": gate.staff_visits,
                     "staff_visits_cap": gate.staff_cap,
                     "staff_can_schedule_visit": gate.staff_can_schedule,
                     "staff_visit_reason": gate.staff_reason,
                     "staff_training_count": gate.staff_trainings,
+                    "staff_trainings_cap": CORE_STAFF_TRAINING_CAP,
                     "staff_trainings_open": gate.staff_trainings_open,
-                    # Partner's two visits: scheduled by, or assigned to, a
-                    # partner. The Assign button greys out once both are held.
                     "partner_visit_count": gate.partner_held_visits,
                     "partner_visits_cap": gate.partner_cap,
+                    "partner_training_count": gate.partner_held_trainings,
+                    "partner_trainings_cap": CORE_PARTNER_TRAINING_CAP,
                     "can_assign_partner_visit": gate.can_assign_partner,
                     "assign_visit_reason": gate.assign_reason,
                     "next_missing_milestone": next_missing_milestone,

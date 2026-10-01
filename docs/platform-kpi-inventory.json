@@ -3750,7 +3750,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 473,
+   "line": 474,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -3828,7 +3828,7 @@
    "audit_id": "KPI-SOURCE-202",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3639,
+   "line": 3668,
    "label": null,
    "keys": [
     "label",
@@ -3883,7 +3883,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3545,
+   "line": 3574,
    "label": "About",
    "keys": [
     "label",
@@ -3900,7 +3900,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3546,
+   "line": 3575,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3917,7 +3917,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3547,
+   "line": 3576,
    "label": "Flag",
    "keys": [
     "label",
@@ -3934,7 +3934,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3548,
+   "line": 3577,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -3951,7 +3951,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 238,
+   "line": 242,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -3971,7 +3971,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 245,
+   "line": 249,
    "label": "Approved",
    "keys": [
     "color",
@@ -3991,7 +3991,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 252,
+   "line": 256,
    "label": "Pending",
    "keys": [
     "color",
@@ -4011,7 +4011,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 259,
+   "line": 263,
    "label": "Returned",
    "keys": [
     "color",
@@ -4031,7 +4031,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1392,
+   "line": 1402,
    "label": "Week",
    "keys": [
     "label",
@@ -4048,7 +4048,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1393,
+   "line": 1403,
    "label": "Amount",
    "keys": [
     "label",
@@ -4065,7 +4065,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1394,
+   "line": 1404,
    "label": "Name",
    "keys": [
     "label",
@@ -41885,7 +41885,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 334,
+   "line": 335,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,
@@ -41971,7 +41971,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3099,
+   "line": 3128,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -41993,7 +41993,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3845,
+   "line": 3874,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

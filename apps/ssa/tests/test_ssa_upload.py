@@ -20,7 +20,13 @@ from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import DataQualityIssue, School, UnmatchedSSARecord
 from apps.ssa.models import SsaRecord
+from django.utils import timezone
 
+
+#: An assessment day in the operational fiscal year. The two tests that read
+#: the school's CURRENT-year SSA status need the assessment to be this year's;
+#: a fixed 2026-07-01 stopped being that on 1 October 2026.
+THIS_FY_DAY = timezone.now().date().isoformat()  # UTC, as the fiscal year is read
 
 SSA_HEADERS = (
     "School ID,Assessment Date,SSA Year,Teaching Environment,Financial Health,Christlike Behaviour,"
@@ -74,7 +80,7 @@ class SsaUploadTest(APITestCase):
         return res
 
     def test_valid_rows_save_and_link(self):
-        body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
+        body = f"{SSA_HEADERS}\nSSA-SCH-1,{THIS_FY_DAY},{SCORES}\n"
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
@@ -104,7 +110,7 @@ class SsaUploadTest(APITestCase):
         )
 
     def test_upload_request_imports_without_a_second_action(self):
-        body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
+        body = f"{SSA_HEADERS}\nSSA-SCH-1,{THIS_FY_DAY},{SCORES}\n"
 
         res = self._post(self._csv(body))
 

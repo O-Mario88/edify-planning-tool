@@ -47,6 +47,12 @@
     <p class="edify-text-caption text-slate-500">Only these activities will be available in Project Planning.</p>
     <div class="max-h-72 space-y-2 overflow-y-auto">{% for item in catalogue_items %}<label class="flex items-start gap-2 rounded-control border border-slate-200 p-2"><input type="checkbox" name="catalogueItemIds" value="{{ item.id }}" class="mt-1 h-4 w-4"><span><strong>{{ item.display_name }}</strong><span class="block edify-text-caption text-slate-500">{{ item.stable_code }} · {{ item.get_delivery_method_display }}</span></span></label>{% endfor %}</div>
   </fieldset>
+  {% comment %}The partners contracted to deliver this project. Its work goes to them; anyone else needs a reason at hand-over.{% endcomment %}
+  <fieldset class="space-y-2" data-project-partners>
+    <legend class="block edify-text-caption font-semibold text-slate-600">Project partners</legend>
+    <p class="edify-text-caption text-slate-500">The partners delivering this project. Handing its work to another partner asks for a reason. Leave empty to allow any partner.</p>
+    <div class="max-h-48 grid gap-2 overflow-y-auto">{% for partner in partner_choices %}<label class="flex items-center gap-2"><input type="checkbox" name="partnerIds" value="{{ partner.id }}" class="h-4 w-4" {% if partner.id in selected_partner_ids %}checked{% endif %}><span>{{ partner.name }}</span></label>{% empty %}<p class="edify-text-caption text-slate-500">No partner can take new work right now.</p>{% endfor %}</div>
+  </fieldset>
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
     <button type="submit" class="btn btn-primary h-8">Create proposed project</button>

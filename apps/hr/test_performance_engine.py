@@ -9,6 +9,7 @@ manual.
 from __future__ import annotations
 
 from django.test import TestCase
+from freezegun import freeze_time
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -208,6 +209,10 @@ class MyPerformancePageTests(EngineFixture):
         )  # Legacy templates cannot supply an operational target.
 
 
+# These pages read the performance cycle of the OPERATIONAL year, and the
+# fixture's cycle is FY2026. From 1 October 2026 the real clock asks for
+# FY2027 and finds none, so the class runs on a mid-FY2026 clock.
+@freeze_time("2026-06-15 09:00:00")
 class OpenConversationControlTests(EngineFixture):
     """HR alone opens and closes the conversation window, and manager roles keep
     the Open conversation control while CCEO/Accountant/IA get Priority setting controls."""
@@ -691,6 +696,10 @@ class MilestoneAutoPopulationTests(EngineFixture):
         self.assertEqual(m["Partner Visits supervised"]["value"], 1)
 
 
+# These pages read the performance cycle of the OPERATIONAL year, and the
+# fixture's cycle is FY2026. From 1 October 2026 the real clock asks for
+# FY2027 and finds none, so the class runs on a mid-FY2026 clock.
+@freeze_time("2026-06-15 09:00:00")
 class ConversationFormViewTests(EngineFixture):
     """The working conversation (§9, §11, §12): who may write which column,
     and the window gate — proven through the HTTP layer, not just the engine."""

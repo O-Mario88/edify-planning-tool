@@ -524,7 +524,7 @@ class EntitlementGateTest(TestCase):
         # Scheduling is intentionally blocked without a published CD catalogue.
         # This entitlement fixture exercises slot behaviour, so it provides the
         # minimum valid operational configuration rather than bypassing costing.
-        CostCatalogue.objects.get_or_create(
+        catalogue = CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
             defaults={"label": "Entitlement test catalogue"},
@@ -536,8 +536,13 @@ class EntitlementGateTest(TestCase):
             ("group_training_venue_cost", "Training venue"),
             ("group_training_participant_meal_cost_per_head", "Training meals"),
         ):
+            # Scoped to its catalogue: from 1 October the post_migrate
+            # reference data also seeds the new year's rates, so a key alone
+            # matches two rows.
             CostSetting.objects.get_or_create(
-                key=key, defaults={"label": label, "unit_cost": 5_000, "version": 1}
+                key=key,
+                catalogue=catalogue,
+                defaults={"label": label, "unit_cost": 5_000, "version": 1},
             )[0]
         from apps.ssa.models import SsaRecord, SsaScore
 
@@ -668,12 +673,12 @@ class EntitlementGateTest(TestCase):
         ):
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=future_catalogue,
                 defaults={
                     "label": label,
                     "unit_cost": 5_000,
                     "version": 1,
                     "fy": future_fy,
-                    "catalogue": future_catalogue,
                 },
             )
 

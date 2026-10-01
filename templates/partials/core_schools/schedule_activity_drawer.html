@@ -12,10 +12,10 @@
         <span class="rounded-pill bg-emerald-50 px-2.5 py-1 edify-text-caption font-semibold text-emerald-700">Package complete</span>
       {% endif %}
     </div>
-    <p class="edify-text-caption text-slate-500">Limited to four visits and four trainings.</p>
+    <p class="edify-text-caption text-slate-500">Four visits and four trainings: two of each by staff, two of each by a partner.</p>
 
     <div class="grid gap-3">
-      {% if package_available and not package_complete and visits_remaining and staff_can_schedule_visit %}
+      {% if package_available and staff_can_schedule_visit %}
         <button
           type="button"
           hx-get="/core-schools/schedule-visit?school_id={{ school.school_id }}"
@@ -24,7 +24,7 @@
           class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
         >
           <span class="block text-[13px] font-semibold edify-primary-text">Schedule</span>
-          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining · staff {{ staff_visit_count }}/{{ staff_visits_cap }}</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · staff {{ staff_visit_count }}/{{ staff_visits_cap }} · {{ visits_remaining }} remaining</span>
         </button>
       {% elif not staff_can_schedule_visit %}
         <button type="button" disabled title="{{ staff_visit_reason }}" data-visit-locked="true" class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
@@ -34,11 +34,11 @@
       {% else %}
         <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
           <span class="block text-[13px] font-semibold">Schedule</span>
-          <span class="mt-0.5 block edify-text-caption">Core visit · no package slots available</span>
+          <span class="mt-0.5 block edify-text-caption">Core visit · no core package for this year</span>
         </button>
       {% endif %}
 
-      {% if package_available and not package_complete and trainings_remaining and can_plan_core_training %}
+      {% if package_available and staff_trainings_open and can_plan_core_training %}
         <button
           type="button"
           hx-get="/core-schools/schedule-training?school_id={{ school.school_id }}"
@@ -47,12 +47,17 @@
           class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
         >
           <span class="block text-[13px] font-semibold edify-primary-text">Schedule</span>
-          <span class="mt-0.5 block edify-text-caption text-slate-500">Core training · {{ trainings_remaining }} remaining</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core training · staff {{ staff_training_count }}/{{ staff_trainings_cap }} · {{ trainings_remaining }} remaining</span>
+        </button>
+      {% elif package_available and not staff_trainings_open %}
+        <button type="button" disabled data-training-locked="true" class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
+          <span class="block text-[13px] font-semibold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core training · staff trainings complete ({{ staff_training_count }}/{{ staff_trainings_cap }})</span>
         </button>
       {% else %}
         <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
           <span class="block text-[13px] font-semibold">Schedule</span>
-          <span class="mt-0.5 block edify-text-caption">Core training · no package slots available</span>
+          <span class="mt-0.5 block edify-text-caption">Core training · {% if package_available %}not available for your role{% else %}no core package for this year{% endif %}</span>
         </button>
       {% endif %}
     </div>
@@ -60,7 +65,7 @@
 
   <section class="space-y-2" aria-labelledby="core-other-activity-heading">
     <h4 id="core-other-activity-heading" class="edify-text-caption font-semibold text-slate-600">Other school activities</h4>
-    <p class="edify-text-caption text-slate-500">Donor, story, invitation, social, follow-up and coaching visits. Each counts as one of this school's package visits (V1–V4).</p>
+    <p class="edify-text-caption text-slate-500">Donor, story, invitation and social visits have no limit and are not package visits. A follow-up or SSA Support visit counts as one of the staff's package visits.</p>
     <button
       type="button"
       hx-get="/planning/schedule-modal?school_id={{ school.school_id }}"

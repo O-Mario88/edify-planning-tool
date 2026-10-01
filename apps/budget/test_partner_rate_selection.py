@@ -15,8 +15,9 @@ from datetime import date
 from django.test import TestCase
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
-from apps.budget.costing_service import apply_to_activity
-from apps.budget.models import CostCatalogue, CostSetting
+from apps.budget.costing_service import active_catalogue, apply_to_activity
+from apps.budget.models import CostSetting
+from apps.budget.reference import ensure_active_catalogue
 from apps.geography.models import District, Region
 from apps.partners.models import Partner
 from apps.schools.models import School
@@ -37,23 +38,22 @@ class PartnerRateSelectionTest(TestCase):
         )
         cls.partner = Partner.objects.create(name="Partner X", active_status=True)
 
-        # The FY2026 catalogue already exists — reference data publishes one on
-        # migrate. Reuse it rather than creating a second, which the
-        # one-active-catalogue-per-country-and-FY constraint rejects.
-        cls.catalogue_2026, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy="2026", version=1, defaults={"is_active": True}
-        )
+        # The active catalogue already exists — reference data publishes one
+        # on migrate, for the operational year of that day (FY2026 until 30
+        # September 2026, FY2027 after). Reuse it, whichever year it is:
+        # pricing reads the live card, not a year's.
+        cls.catalogue_2026 = active_catalogue() or ensure_active_catalogue()
         for key, label, rate in (
             ("client_partner_visit", "Client Partner Visit", PARTNER_VISIT_RATE),
             ("school_visit_transport", "Staff transport", STAFF_VISIT_RATE),
         ):
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=cls.catalogue_2026,
                 defaults={
                     "label": label,
                     "unit_cost": rate,
-                    "fy": "2026",
-                    "catalogue": cls.catalogue_2026,
+                    "fy": cls.catalogue_2026.fy,
                 },
             )
 

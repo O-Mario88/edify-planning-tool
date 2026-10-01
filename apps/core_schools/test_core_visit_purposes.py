@@ -122,11 +122,15 @@ class CoreVisitPurposeTest(_CoreFixture):
             self.assertIn(f'value="{value}"', html)
 
     def test_the_first_visit_may_be_any_purpose(self):
+        """A donor visit is booked as itself and takes no package slot (owner,
+        2026-09-30: donor, story, invitation and social visits are not package
+        work)."""
         response = self._post_visit(purpose_of_visit="donor_visit")
         self.assertEqual(response.status_code, 200, response.content[:300])
-        visit = Activity.objects.get(school=self.school, activity_type="core_visit")
+        visit = Activity.objects.get(school=self.school, activity_type="donor_visit")
         self.assertEqual(visit.purpose_type, "donor_visit")
-        self.assertEqual(self._slot("v", 1).activity_id, visit.id)
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=visit.id))
+        self.assertIsNone(self._slot("v", 1).activity_id)
 
     def test_ssa_support_still_collects_the_ssa_when_it_is_chosen(self):
         response = self._post_visit(purpose_of_visit="ssa_support")
@@ -172,7 +176,7 @@ class CoreVisitPurposeTest(_CoreFixture):
         self._take_first_visit()
         response = self._post_visit(purpose_of_visit="donor_visit", visit_number="2")
         self.assertEqual(response.status_code, 200, response.content[:300])
-        visit = Activity.objects.get(school=self.school, activity_type="core_visit")
+        visit = Activity.objects.get(school=self.school, activity_type="donor_visit")
         self.assertEqual(visit.purpose_type, "donor_visit")
         self.assertIsNone(visit.focus_intervention)
         self.assertFalse(visit.ssa_collection_expected)

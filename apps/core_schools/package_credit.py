@@ -23,13 +23,19 @@ package's next open slot of its kind. It runs after commit on purpose. The
 routes above create the activity first and link their chosen slot a moment
 later in the same transaction; by the time this runs they have, and it finds
 the activity already linked and does nothing. Nothing here refuses work — the
-two-per-side caps belong to the doors that create it.
+2 + 2 split belongs to the doors that create it (`package_split`).
+
+Special Project work at a Core School counts too (owner, 2026-09-30: "all
+scheduling visit or training can contribute to the core school packages").
+It stays costed and reported as the project's; it also takes the package slot
+its visit or training fills.
 
 Not credited here, each for its reason:
 
 * cluster sessions — `cluster_credit` owns them (one session, many schools);
-* Special Project work — the project's, not the package's (`visit_routing`);
 * the companion visit an in-school training creates — it is the training;
+* donor, content/story, invitation and social visits — not package support
+  (owner, 2026-09-30), and unlimited wherever they are planned;
 * work at a school whose package is for an earlier year than the work's own —
   a past year's visit is not this year's V1.
 """
@@ -52,11 +58,24 @@ from apps.planning.visit_gate import (
 
 logger = logging.getLogger(__name__)
 
+#: Visits that are not package support (owner, 2026-09-30): donor visits,
+#: content/story gathering, school invitations and social visits have no limit
+#: and never take one of the package's four visits. Both spellings, because a
+#: Core Schools visit booked before the rule carries the purpose on a
+#: ``core_visit`` row rather than the visit's own type.
+NON_PACKAGE_VISIT_TYPES = frozenset(
+    {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
+)
+NON_PACKAGE_VISIT_PURPOSES = frozenset(
+    {"donor_visit", "story_gathering", "school_invitation", "social_visit"}
+)
+
 #: The visit family — the same set the Core Schools drawer turns into a core
 #: visit, and the one `backfill_core_school_visits` converts.
 PACKAGE_VISIT_TYPES = frozenset(
     (set(FOLLOW_UP_VISIT_TYPES) | set(PURPOSE_ACTIVITY_TYPES.values()) | {"core_visit"})
     - {"in_school_training"}
+    - NON_PACKAGE_VISIT_TYPES
 )
 #: A training delivered AT the school (a cluster session is credited apart).
 PACKAGE_TRAINING_TYPES = frozenset(str(t) for t in SCHOOL_TRAINING_TYPES)
@@ -66,18 +85,57 @@ PACKAGE_TRAINING_TYPES = frozenset(str(t) for t in SCHOOL_TRAINING_TYPES)
 UNCREDITED_STATUSES = frozenset(DEAD_STATUSES) | frozenset(NOT_YET_PLANNED_STATUSES)
 
 
-def package_kind(activity) -> str | None:
-    """ "visit", "training", or None when this work is not package work."""
-    if activity.cluster_id or getattr(activity, "project_id", None):
+def package_kind_for(
+    activity_type: str | None,
+    purpose_type: str | None = None,
+    *,
+    cluster_id=None,
+) -> str | None:
+    """ "visit", "training", or None, for work of this shape at a Core School.
+
+    Read from the shape alone so a door can ask before the activity exists.
+    """
+    if cluster_id:
         return None
-    if activity.purpose_type == COMPANION_VISIT_PURPOSE:
+    purpose = str(purpose_type or "")
+    if purpose == COMPANION_VISIT_PURPOSE or purpose in NON_PACKAGE_VISIT_PURPOSES:
         return None
-    activity_type = str(activity.activity_type or "")
+    activity_type = str(activity_type or "")
     if activity_type in PACKAGE_VISIT_TYPES:
         return "visit"
     if activity_type in PACKAGE_TRAINING_TYPES:
         return "training"
     return None
+
+
+def package_kind(activity) -> str | None:
+    """ "visit", "training", or None when this work is not package work."""
+    return package_kind_for(
+        activity.activity_type, activity.purpose_type, cluster_id=activity.cluster_id
+    )
+
+
+def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
+    """Activities that are package work of ``kind`` (both kinds when None) —
+    `package_kind_for` as a filter. Status and deletion are the caller's."""
+    p = prefix
+    if kind == "visit":
+        types = PACKAGE_VISIT_TYPES
+    elif kind == "training":
+        types = PACKAGE_TRAINING_TYPES
+    else:
+        types = PACKAGE_VISIT_TYPES | PACKAGE_TRAINING_TYPES
+    return (
+        Q(**{f"{p}activity_type__in": sorted(types)})
+        & Q(**{f"{p}cluster__isnull": True})
+        & ~Q(
+            **{
+                f"{p}purpose_type__in": sorted(
+                    {COMPANION_VISIT_PURPOSE, *NON_PACKAGE_VISIT_PURPOSES}
+                )
+            }
+        )
+    )
 
 
 def schedule_package_credit(activity) -> None:
@@ -263,15 +321,9 @@ def uncredited_package_work(*, fy: str | None = None, school_code: str | None = 
     from apps.core_schools.models import CoreActivitySlot
 
     qs = (
-        Activity.objects.filter(
-            deleted_at__isnull=True,
-            school__school_type="core",
-            cluster__isnull=True,
-            activity_type__in=PACKAGE_VISIT_TYPES | PACKAGE_TRAINING_TYPES,
-        )
-        .filter(Q(project_id__isnull=True) | Q(project_id=""))
+        Activity.objects.filter(deleted_at__isnull=True, school__school_type="core")
+        .filter(package_work_q())
         .exclude(status__in=UNCREDITED_STATUSES)
-        .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
         .exclude(
             id__in=CoreActivitySlot.objects.filter(activity_id__isnull=False).values(
                 "activity_id"
@@ -310,7 +362,7 @@ def assignment_kind(assignment) -> str | None:
         return "visit"
     if assignment.training_number:
         return "training"
-    if getattr(assignment, "project_id", None):
+    if str(assignment.purpose_of_visit or "") in NON_PACKAGE_VISIT_PURPOSES:
         return None
     expected = str(assignment.expected_activity_type or "")
     if not expected and assignment.purpose_of_visit:
@@ -463,6 +515,39 @@ def release_assignment_slot(assignment, *, replacement=None):
     return slot
 
 
+def non_package_slots():
+    """Slots linked to a visit that is not package work — a donor, story,
+    invitation or social visit the Core Schools drawer booked as a
+    ``core_visit`` before 2026-09-30, or one credited before that rule."""
+    from apps.activities.models import Activity
+    from apps.core_schools.models import CoreActivitySlot
+
+    outreach = Activity.all_objects.filter(
+        Q(activity_type__in=sorted(NON_PACKAGE_VISIT_TYPES))
+        | Q(purpose_type__in=sorted(NON_PACKAGE_VISIT_PURPOSES))
+    ).values("id")
+    return list(
+        CoreActivitySlot.objects.filter(activity_id__in=outreach).select_related(
+            "core_plan"
+        )
+    )
+
+
+def _open_slot_again(slot) -> None:
+    slot.status = "Planned"
+    slot.activity_id = None
+    slot.owner = "unassigned"
+    slot.assigned_staff_id = None
+    slot.assigned_partner_id = None
+    slot.assigned_partner_name = None
+    slot.scheduled_for = None
+    slot.scheduled_month = None
+    slot.scheduled_week = None
+    slot.salesforce_id = None
+    slot.evidence_uri = None
+    slot.save()
+
+
 def stale_partner_slots():
     """Slots still "Assigned" to a partner who no longer holds any open
     handover at that school — withdrawn or returned before this module
@@ -517,6 +602,16 @@ def repair_package_links(*, apply: bool, fy=None, school_code=None) -> dict:
 
     report = {"released": [], "reserved": [], "credited": [], "unplaced": []}
 
+    # Donor, story, invitation and social visits give their slots back (owner,
+    # 2026-09-30): they are not package work.
+    for slot in non_package_slots():
+        if school_code and slot.school_id != school_code:
+            continue
+        report["released"].append(slot.id)
+        if apply:
+            _open_slot_again(slot)
+            resync_plan_completion(slot.core_plan)
+
     for slot in stale_partner_slots():
         if school_code and slot.school_id != school_code:
             continue
@@ -558,12 +653,17 @@ def repair_package_links(*, apply: bool, fy=None, school_code=None) -> dict:
 
 
 __all__ = [
+    "NON_PACKAGE_VISIT_PURPOSES",
+    "NON_PACKAGE_VISIT_TYPES",
     "PACKAGE_TRAINING_TYPES",
     "PACKAGE_VISIT_TYPES",
     "UNCREDITED_STATUSES",
     "assignment_kind",
     "credit_school_activity",
+    "non_package_slots",
     "package_kind",
+    "package_kind_for",
+    "package_work_q",
     "plan_for_activity",
     "release_assignment_slot",
     "repair_package_links",

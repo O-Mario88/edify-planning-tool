@@ -20,9 +20,10 @@ So what these tests hold:
 * Core Trained and Core Graduate schools may be handed to a partner like
   client schools; Champion schools, which take donor and story visits only,
   may not;
-* at a CORE school staff hold two visits while the partner has a core visit
-  planned there, and may take more while it has none; the partner side and
-  the trainings are not capped.
+* at a CORE school the package is split 2 + 2 (owner, 2026-09-30, replacing
+  2026-09-28's "staff may plan more core visits only if the partner has not
+  planned"): staff hold two visits and two trainings, the partner side two of
+  each, and donor, story, invitation and social visits are not package work.
 
 The gate (apps.planning.visit_gate) is the one definition the buttons and the
 services share, so the tests drive it directly and then check that both
@@ -372,25 +373,27 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertIn("never assigned to a partner", str(ctx.exception.detail))
 
 
-class CoreSchoolStaffVisitsTest(_GateFixture, TestCase):
-    """Owner, 2026-09-28: "staff may plan more core schools visits but only if
-    the partner has not planned." The partner side is no longer capped."""
+class CoreSchoolPackageSplitTest(_GateFixture, TestCase):
+    """Owner, 2026-09-30: a Core package is two staff and two partner visits,
+    and two staff and two partner trainings (`apps.core_schools.package_split`
+    counts it; the gate reads the same count)."""
 
-    def test_staff_take_more_while_the_partner_has_planned_none(self):
-        school = self._school("VG-C1", school_type="core")
-        for _ in range(3):
-            self._visit(school)
-        gate = visit_gate(school)
-        self.assertEqual(gate.rule, "core")
-        self.assertEqual(gate.staff_visits, 3)
-        self.assertTrue(gate.staff_can_schedule)
-        self.assertEqual(gate.staff_reason, "")
+    def _core(self, code):
+        from apps.core_schools.models import CorePlan, cplan_id
+        from apps.core_schools.services import create_package_slots
 
-    def test_staff_stop_at_two_once_the_partner_has_planned(self):
-        school = self._school("VG-C1b", school_type="core")
-        self._visit(school, delivery="partner")
+        school = self._school(code, school_type="core")
+        plan = CorePlan.objects.create(
+            id=cplan_id(code, fy=self.fy), school_id=code, fy=self.fy, status="Active"
+        )
+        create_package_slots(plan, code, ["leadership"])
+        return school
+
+    def test_staff_stop_at_two_visits_whatever_the_partner_has_planned(self):
+        school = self._core("VG-C1")
         self._visit(school)
         gate = visit_gate(school)
+        self.assertEqual(gate.rule, "core")
         self.assertEqual(gate.staff_cap, CORE_STAFF_VISIT_CAP)
         self.assertTrue(gate.staff_can_schedule)
         self._visit(school)
@@ -401,47 +404,56 @@ class CoreSchoolStaffVisitsTest(_GateFixture, TestCase):
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_a_handover_not_yet_dated_is_not_a_partner_plan(self):
-        school = self._school("VG-C2", school_type="core")
+    def test_a_waiting_handover_holds_a_partner_visit(self):
+        school = self._core("VG-C2")
         self._assign(school, support_type="Visit", visit_number="3")
-        for _ in range(2):
-            self._visit(school)
+        self._visit(school, delivery="partner")
         gate = visit_gate(school)
         self.assertEqual(gate.partner_pending, 1)
+        self.assertEqual(gate.partner_held_visits, CORE_PARTNER_VISIT_CAP)
+        self.assertFalse(gate.can_assign_visit)
         self.assertTrue(gate.staff_can_schedule)
-
-    def test_the_partner_side_is_never_capped(self):
-        school = self._school("VG-C3", school_type="core")
-        for _ in range(CORE_PARTNER_VISIT_CAP + 1):
-            self._visit(school, delivery="partner")
-        self._assign(school, support_type="Visit", visit_number="4")
-        gate = visit_gate(school)
-        self.assertEqual(gate.partner_visits, CORE_PARTNER_VISIT_CAP + 1)
-        self.assertTrue(gate.partner_can_schedule)
+        # The partner's two trainings are still open, so Assign stays live.
         self.assertTrue(gate.can_assign_partner)
 
+    def test_assign_closes_once_the_partner_half_is_held(self):
+        school = self._core("VG-C3")
+        for _ in range(CORE_PARTNER_VISIT_CAP):
+            self._visit(school, delivery="partner")
+        self._assign(school, support_type="Training", training_number="1")
+        self._visit(school, delivery="partner", kind="in_school_training")
+        gate = visit_gate(school)
+        self.assertFalse(gate.can_assign_partner)
+        self.assertIn("partner's half", gate.assign_reason)
+        # Dating a waiting hand-over is asked at its own door, without itself.
+        self.assertTrue(gate.partner_can_schedule)
+
     def test_a_training_assignment_does_not_use_a_visit_slot(self):
-        school = self._school("VG-C4", school_type="core")
+        school = self._core("VG-C4")
         self._assign(school, support_type="Training", training_number="1")
         gate = visit_gate(school)
         self.assertEqual(gate.partner_pending, 0)
         self.assertEqual(gate.partner_pending_trainings, 1)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_trainings_are_not_visits_and_are_never_capped(self):
-        school = self._school("VG-C5", school_type="core")
-        self._visit(school, delivery="partner")
-        self._visit(school)
-        self._visit(school)
+    def test_trainings_are_split_like_visits(self):
+        school = self._core("VG-C5")
+        self._visit(school, kind="in_school_training")
+        self.assertTrue(visit_gate(school).staff_trainings_open)
+        self._visit(school, kind="in_school_training")
         gate = visit_gate(school)
-        self.assertFalse(gate.staff_can_schedule)
-        self.assertEqual(gate.staff_trainings, 0)
-        self.assertTrue(gate.staff_trainings_open)
+        self.assertEqual(gate.staff_trainings, 2)
+        self.assertFalse(gate.staff_trainings_open)
+        self.assertTrue(gate.partner_trainings_open)
+        self.assertTrue(gate.staff_can_schedule)
+
+    def test_donor_visits_are_not_package_visits(self):
+        school = self._core("VG-C6")
         for _ in range(3):
-            self._visit(school, kind="core_training")
+            self._visit(school, kind="donor_visit")
         gate = visit_gate(school)
-        self.assertEqual(gate.staff_trainings, 3)
-        self.assertTrue(gate.staff_trainings_open)
+        self.assertEqual(gate.staff_visits, 0)
+        self.assertTrue(gate.staff_can_schedule)
 
 
 class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):

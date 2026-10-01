@@ -230,6 +230,19 @@ class AccountantJourneyFlowTest(BaseFlowTest):
         r = self.client.get("/accounts")
         self.assertEqual(r.status_code, 200)
 
+    def test_accounts_dashboard_opens_another_known_year(self):
+        """A year that has just closed still has advances to account for; the
+        page was fixed to the operational year with no way back to it."""
+        from apps.core.fy import get_operational_fy
+
+        earlier = str(int(get_operational_fy()) - 1)
+        r = self.client.get("/accounts", {"fy": earlier})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.context["fy"], earlier)
+        # An unknown year falls back to the operational one.
+        r = self.client.get("/accounts", {"fy": "1999"})
+        self.assertEqual(r.context["fy"], get_operational_fy())
+
     def test_fund_allocation_renders_for_accountant(self):
         r = self.client.get("/finance/fund-allocation")
         self.assertEqual(r.status_code, 200)

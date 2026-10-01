@@ -12,6 +12,7 @@ delivery: 'staff',
 purposeOfVisit: '{{ recommended_visit_purpose|default:''|escapejs }}',
 focusIntervention: '{{ recommended_focus_intervention|default:''|escapejs }}',
 partnerPurposes: {{ partner_visit_purpose_values_json|default:'[]' }},
+outreachPurposes: {{ non_package_purpose_values_json|default:'[]' }},
 trainingCourses: {{ training_courses_json|default:'[]' }},
 trainingCourseId: '',
 followUps: {{ follow_up_options_json|default:'[]' }},
@@ -20,6 +21,7 @@ followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
 get showTraining() { return this.purposeOfVisit === 'in_school_training'; },
 get showFollowUp() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsa() { return this.purposeOfVisit === 'ssa_support'; },
+get isOutreach() { return this.outreachPurposes.includes(this.purposeOfVisit); },
 get showFocus() { return !!this.purposeOfVisit && !this.showTraining && !this.showSsa && (!this.showFollowUp || (!this.followUpRequiresTraining && !this.sourceActivityId)); },
 get availableCourses() {
   return this.trainingCourses.filter(course => this.delivery === 'partner' ? course.partnerDeliveryAllowed : course.staffDeliveryAllowed);
@@ -125,16 +127,18 @@ class="space-y-4 text-[13px] text-slate-700"
 </div>
 </template>
 
-<div x-show="!showTraining" class="space-y-1">
+<div x-show="!showTraining && !isOutreach" class="space-y-1">
   <label for="visit_number" class="block edify-text-caption font-semibold text-slate-600">Visit slot</label>
   <select name="visit_number" id="visit_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
     {% for slot in available_visit_slots %}
     <option value="{{ slot.sequence }}" {% if next_visit_seq == slot.sequence %}selected{% endif %}>{{ slot.label }}</option>
     {% empty %}
-    <option value="">No visit slots available</option>
+    <option value="">Next open slot</option>
     {% endfor %}
   </select>
 </div>
+{% comment %}Owner, 2026-09-30: donor, story, invitation and social visits are not package work.{% endcomment %}
+<p x-show="isOutreach" style="display: none;" class="edify-text-caption text-slate-500" role="status" data-outreach-visit>This visit is not one of the package's four visits and has no limit.</p>
 
 <div class="space-y-1">
   <label for="core_visit_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Planned date <span class="text-rose-500">*</span></label>

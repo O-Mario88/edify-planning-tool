@@ -252,17 +252,17 @@ class StaffCoreAnnualCapTests(TestCase):
             CorePackageSchedulingService,
         )
 
-        # Since 2026-09-28 the two apply only while the partner has a core
-        # visit planned at the school ("staff may plan more core schools
-        # visits but only if the partner has not planned"); where they apply
-        # they are still counted on the package.
+        # Since 2026-09-30 the package is split 2 + 2 for visits and for
+        # trainings, both sides, and the count lives in one place
+        # (`package_split`), which every door asks.
+        from apps.core_schools import package_split
+
         source = inspect.getsource(CorePackageSchedulingService.assert_can_schedule)
-        self.assertIn("CORE_STAFF_VISIT_CAP", source)
-        cap_block = source.split(".partner_visits:")[1]
-        # Counted on the package. Neither the quarter nor the year narrows it.
-        self.assertIn("core_plan=plan", cap_block)
-        self.assertNotIn("quarter=", cap_block)
-        self.assertNotIn("fy=", cap_block)
+        self.assertIn("assert_side_open", source)
+        counted = inspect.getsource(package_split.package_splits)
+        # Counted on the package's own slots. No quarter window narrows it.
+        self.assertIn("core_plan_id__in", counted)
+        self.assertNotIn("quarter", counted)
 
 
 class ClusterAttendanceMembershipTests(Fixture):

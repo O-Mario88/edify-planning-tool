@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import (
     StaffProfile,
@@ -35,6 +36,11 @@ from apps.targets.performance import (
 )
 
 
+# The fixtures date their work "N days ago" and count it in the operational
+# year. In the first days of a fiscal year "5 days ago" is last year's, and
+# every count read 0 (found 1 October 2026). A mid-year clock keeps "N days
+# ago" inside the year the test asks about, whichever day it runs.
+@freeze_time("2027-02-10 09:00:00")
 class PerformanceEngineTest(TestCase):
     def setUp(self):
         self.fy = get_operational_fy()

@@ -155,13 +155,16 @@ class VisitRequestFixture(TestCase):
             ("primary_transport_per_day", 50_000),
             ("primary_lunch_per_day", 12_000),
         ):
+            # Scoped to its catalogue: from 1 October the post_migrate
+            # reference data also seeds the new year's rates, so a key alone
+            # matches two rows.
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=catalogue,
                 defaults={
                     "label": key.replace("_", " ").title(),
                     "unit_cost": cost,
                     "fy": catalogue.fy,
-                    "catalogue": catalogue,
                 },
             )
 

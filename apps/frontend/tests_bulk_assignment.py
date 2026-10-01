@@ -406,14 +406,20 @@ class BulkAssignmentTests(TestCase):
             school_type="core",
             current_fy_ssa_status="done",
         )
+        # The package of the year the page reads (the operational one), not
+        # FY2026 by name: from 1 October 2026 the page found no package for
+        # the school and reported its first visit missing.
+        from apps.core.fy import get_operational_fy
+
+        fy = get_operational_fy()
         plan = CorePlan.objects.create(
-            id=cplan_id(school_plan.school_id),
+            id=cplan_id(school_plan.school_id, fy=fy),
             school_id=school_plan.school_id,
-            fy="2026",
+            fy=fy,
         )
         # Add a completed visit slot for first sequence
         CoreActivitySlot.objects.create(
-            id=cslot_id(school_plan.school_id, "visit", 1),
+            id=cslot_id(school_plan.school_id, "visit", 1, fy=fy),
             core_plan=plan,
             school_id=school_plan.school_id,
             intervention="Reading Fluency",

@@ -32,6 +32,7 @@ from django.db.models import Count, Max, Model, Q, QuerySet, Sum
 from django.template import engines
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import (
     StaffGeographyAssignment,
@@ -1279,10 +1280,16 @@ def stable_html(body: bytes) -> bytes:
 
 
 # ── Fixture ──────────────────────────────────────────────────────────────────
-FY = get_operational_fy()
+# The fixture dates everything relative to "today" ("created 20 days ago",
+# "30 days ago") and reads it in the operational year. In the first weeks of
+# a fiscal year those days are last year's, and the partner hand-overs fell
+# out of the year under test (found 1 October 2026). A mid-year day keeps
+# the whole fixture inside one year; OracleFixture runs its classes on it.
+CLOCK = "2027-02-10 09:00:00"
+TODAY = date(2027, 2, 10)
+FY = get_operational_fy(TODAY)
 NEXT_FY = str(int(FY) + 1)
 PREV_FY = str(int(FY) - 1)
-TODAY = date.today()
 
 
 def _person(key, name, role):
@@ -1298,6 +1305,26 @@ def _person(key, name, role):
 
 class OracleFixture(TestCase):
     """Three lenses over one lifecycle-wide plan."""
+
+    # Started and stopped here rather than with a class decorator: freezegun
+    # binds a decorated base's setUpClass to the base, and a subclass's own
+    # class set-up then never runs.
+    @classmethod
+    def setUpClass(cls):
+        cls._clock = freeze_time(CLOCK)
+        cls._clock.start()
+        try:
+            super().setUpClass()
+        except Exception:
+            cls._clock.stop()
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super().tearDownClass()
+        finally:
+            cls._clock.stop()
 
     @classmethod
     def setUpTestData(cls):

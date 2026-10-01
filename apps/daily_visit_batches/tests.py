@@ -8,7 +8,9 @@ from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
-from apps.budget.models import CostCatalogue, CostSetting
+from apps.budget.models import CostSetting
+from apps.budget.costing_service import active_catalogue
+from apps.budget.reference import ensure_active_catalogue
 from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.geography.models import (
@@ -68,21 +70,14 @@ class DailyVisitBatchTestCase(TestCase):
             name="Batch Sub", district=self.primary_district
         )
 
-        # apps.budget migrations 0003/0005 already seed one active "Uganda
-        # FY2026 v1" catalogue on every test DB — reuse it (rather than
-        # creating a second is_active=True row, which active_catalogue()'s
-        # is_active-only lookup would resolve ambiguously) and just set the
-        # tight daily target this test suite needs.
-        self.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda",
-            fy="2026",
-            version=1,
-            defaults={
-                "is_active": True,
-                "label": "Test Catalogue",
-                "required_school_visits_per_day": 3,
-            },
-        )
+        # The reference data already publishes one active catalogue on every
+        # test DB, for the operational year the database was migrated in
+        # ("Uganda FY2026 v1" until 30 September 2026, FY2027 after). Reuse
+        # the live card pricing reads (`active_catalogue`), whichever year it
+        # is: asking for FY2026 by name made a second active card from
+        # 1 October and left the live one without this suite's rates. Then
+        # set the tight daily target this test suite needs.
+        self.catalogue = active_catalogue() or ensure_active_catalogue()
         self.catalogue.required_school_visits_per_day = 3
         self.catalogue.is_active = True
         self.catalogue.save(
@@ -93,11 +88,11 @@ class DailyVisitBatchTestCase(TestCase):
         ):
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=self.catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": cost,
-                    "fy": "2026",
-                    "catalogue": self.catalogue,
+                    "fy": self.catalogue.fy,
                     "version": 1,
                 },
             )
@@ -468,12 +463,7 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
         )
         # Reuse the catalogue apps.budget migrations 0003/0005 already seed
         # (see DailyVisitBatchTestCase.setUp for why get_or_create is required).
-        self.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda",
-            fy="2026",
-            version=1,
-            defaults={"is_active": True, "required_school_visits_per_day": 5},
-        )
+        self.catalogue = active_catalogue() or ensure_active_catalogue()
         self.catalogue.required_school_visits_per_day = 5
         self.catalogue.is_active = True
         self.catalogue.save(
@@ -482,11 +472,11 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
         for key, cost in PRIMARY_RATES:
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=self.catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": cost,
-                    "fy": "2026",
-                    "catalogue": self.catalogue,
+                    "fy": self.catalogue.fy,
                     "version": 1,
                 },
             )
@@ -625,12 +615,12 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         ]:
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=self.catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": rate,
                     "approved_minimum": rate // 2,
-                    "catalogue": self.catalogue,
-                    "fy": "2026",
+                    "fy": self.catalogue.fy,
                     "version": 1,
                 },
             )

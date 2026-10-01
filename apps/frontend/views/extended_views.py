@@ -2287,6 +2287,7 @@ def project_create_drawer_view(request):
             "catalogue_items": effective_items()
             .filter(project_delivery_allowed=True)
             .order_by("display_name"),
+            **_project_partner_choices(None),
         },
     )
 
@@ -2304,6 +2305,7 @@ def project_create_action_view(request):
     payload = request.POST.dict()
     payload["targetInterventions"] = request.POST.getlist("targetInterventions")
     payload["catalogueItemIds"] = request.POST.getlist("catalogueItemIds")
+    payload["partnerIds"] = request.POST.getlist("partnerIds")
     try:
         project = create_project(payload, request.user)
         response = HttpResponse(
@@ -2315,6 +2317,29 @@ def project_create_action_view(request):
         from apps.core.htmx_errors import error_fragment
 
         return error_fragment(exc, status=400)
+
+
+def _project_partner_choices(project) -> dict:
+    """The partners a project drawer offers, and the ones it already has.
+
+    Partners who may take new work, plus any the project already lists (a
+    held partner stays visible so unticking it is a choice, not a surprise).
+    """
+    from apps.partners.models import Partner
+    from apps.partners.services import assignable_partners
+
+    chosen = set()
+    if project is not None:
+        chosen = set(project.partner_assignments.values_list("partner_id", flat=True))
+    offered = list(assignable_partners()) + list(
+        Partner.objects.filter(id__in=chosen, deleted_at__isnull=True).exclude(
+            id__in=assignable_partners().values("id")
+        )
+    )
+    return {
+        "partner_choices": sorted(offered, key=lambda p: p.name.casefold()),
+        "selected_partner_ids": chosen,
+    }
 
 
 def _project_for_editing(request, project_id):
@@ -2356,6 +2381,9 @@ def project_edit_drawer_view(request, project_id):
     if request.method == "POST":
         payload = request.POST.dict()
         payload["targetInterventions"] = request.POST.getlist("targetInterventions")
+        payload.pop("partnerIds", None)
+        if request.POST.get("partnerIdsSent"):
+            payload["partnerIds"] = request.POST.getlist("partnerIds")
         try:
             update_project(project.id, payload, request.user)
         except Exception as exc:  # noqa: BLE001 — surfaced in the drawer
@@ -2375,6 +2403,7 @@ def project_edit_drawer_view(request, project_id):
             "school_focuses": ProjectSchoolFocus.choices,
             "interventions": PROJECT_INTERVENTION_CHOICES,
             "selected_interventions": set(project.target_intervention_list()),
+            **_project_partner_choices(project),
         },
     )
 

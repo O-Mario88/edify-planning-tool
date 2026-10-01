@@ -1172,9 +1172,27 @@ def _assert_schedule_entitlement(
     )
 
     rule = rule_for(school.school_type)
-    if is_request or rule != "client":
+    if is_request:
         # A visit request waits for the owner; the rule is applied when they
         # approve it (apps.planning.visit_requests.approve).
+        return
+    if rule == "core":
+        # The package's 2 + 2 split, at every door that reaches here — the
+        # Planning and cluster-school drawers, a Special Project, autopilot,
+        # catch-up plans, the API (owner, 2026-09-30). Core Schools and the
+        # Planning core routing have already asked through the slot they
+        # lock; asking again reads the same count.
+        from apps.core_schools.package_credit import package_kind_for
+        from apps.core_schools.package_split import assert_side_open, side_of
+
+        assert_side_open(
+            school,
+            package_kind_for(activity_type, data.get("purposeType")),
+            side_of(data),
+            fy=fy,
+        )
+        return
+    if rule != "client":
         return
     pool = client_visit_pool(activity_type, catalogue_item, data.get("purposeType"))
     if pool is None:
@@ -3232,7 +3250,7 @@ def _ensure_partner_handover(activity: Activity, data: dict) -> None:
                 scheduled_date=(
                     activity.scheduled_date.date() if activity.scheduled_date else None
                 ),
-                status="partner_scheduled",
+                status=PartnerAssignment.STATUS_PARTNER_SCHEDULED,
                 scheduled_activity=activity,
             )
     except Exception:  # noqa: BLE001
@@ -4919,6 +4937,24 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
         a.responsible_staff_id = (
             data.get("responsibleStaffId") or a.responsible_staff_id
         )
+        if a.school_id and (delivery == "partner") != was_partner:
+            # Moving package work between staff and a partner moves it across
+            # the Core package's 2 + 2 split (owner, 2026-09-30); the side it
+            # lands on must have room. It no longer counts on the side it left.
+            from apps.core_schools.package_credit import package_kind
+            from apps.core_schools.package_split import (
+                PARTNER,
+                STAFF,
+                assert_side_open,
+            )
+
+            assert_side_open(
+                a.school,
+                package_kind(a),
+                PARTNER if delivery == "partner" else STAFF,
+                fy=a.fy,
+                exclude_activity_id=a.id,
+            )
         if "expectedParticipants" in data:
             a.expected_participants = data.get("expectedParticipants")
         if delivery == "partner":
@@ -5046,7 +5082,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         )
         if not pa:
             raise NotFoundError("Partner assignment not found.")
-        if pa.status in ("partner_scheduled", "scheduled", "completed"):
+        if pa.status in PartnerAssignment.SCHEDULED_STATUSES:
             raise BadRequest("This assignment is already scheduled.")
         from apps.schools.lifecycle_service import assert_operating
 
@@ -5200,6 +5236,20 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 assert_partner_may_schedule_visit(
                     pa.school, fy, exclude_activity_id=pa.scheduled_activity_id
                 )
+            # The partner's half of a Core package (owner, 2026-09-30). This
+            # hand-over already holds its place there, so it is left out of
+            # the count it is checked against.
+            from apps.core_schools.package_credit import package_kind_for
+            from apps.core_schools.package_split import PARTNER, assert_side_open
+
+            assert_side_open(
+                pa.school,
+                package_kind_for(_sched_activity_type, pa.purpose_of_visit),
+                PARTNER,
+                fy=fy,
+                exclude_activity_id=pa.scheduled_activity_id,
+                exclude_assignment_id=pa.id,
+            )
             from apps.activities.duplicate_visits import (
                 assert_not_duplicate_client_visit,
             )

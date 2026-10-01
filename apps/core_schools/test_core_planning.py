@@ -47,7 +47,11 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
 User = get_user_model()
-FY = get_operational_fy()
+# The year of the frozen clock the tests below run on (`@freeze_time`), not of
+# the real one: from 1 October 2026 the module-level call read FY2027 while
+# every view under the frozen clock read FY2026.
+FROZEN_TODAY = "2026-04-01"
+FY = get_operational_fy(date.fromisoformat(FROZEN_TODAY))
 
 # Varied scores → deterministic 4 weakest: TE(2) < GR(3) < LE(4) < Lship(5).
 SCORE_MAP = {
@@ -71,6 +75,10 @@ def core_planning_setup(case):
     stops it — silently moving "today" for every test in those modules. They
     borrow this instead, and the class calls it.
     """
+    # The clock this setUp runs on, frozen or not: test_core_visit_purposes
+    # borrows this fixture on the real clock, test_core_planning on a frozen
+    # one, and a package of the wrong year is "no active core package".
+    fy = get_operational_fy()
     case.region = Region.objects.create(name="Core R")
     case.district = District.objects.create(
         name="Core D", region=case.region, district_type="primary"
@@ -121,11 +129,11 @@ def core_planning_setup(case):
     # Verified annual SSA with all eight interventions.
     case.ssa = SsaRecord.objects.create(
         school=case.school,
-        fy=FY,
+        fy=fy,
         quarter="Q1",
         average_score=5.6,
         verification_status="confirmed",
-        date_of_ssa=date(int(FY) - 1, 11, 5),
+        date_of_ssa=date(int(fy) - 1, 11, 5),
         uploaded_by="test",
     )
     for code, score in SCORE_MAP.items():
@@ -134,7 +142,7 @@ def core_planning_setup(case):
     # Costing so core visit scheduling can price.
     catalogue, _ = CostCatalogue.objects.get_or_create(
         country="Uganda",
-        fy=FY,
+        fy=fy,
         version=1,
         defaults={"is_active": True, "label": "Core Test Catalogue"},
     )
@@ -151,13 +159,16 @@ def core_planning_setup(case):
         ("group_training_venue_cost", 80000),
         ("group_training_participant_meal_cost_per_head", 15000),
     ):
+        # Scoped to this catalogue: from 1 October the post_migrate reference
+        # data also seeds the new operational year's catalogue, so a key alone
+        # matches two rows.
         CostSetting.objects.update_or_create(
             key=key,
+            catalogue=catalogue,
             defaults={
                 "label": key,
                 "unit_cost": cost,
-                "fy": FY,
-                "catalogue": catalogue,
+                "fy": fy,
                 "version": 1,
             },
         )
@@ -170,7 +181,7 @@ def core_planning_setup(case):
 # core support is released in the CURRENT quarter only — so "today" has to
 # sit inside the quarter these slots are scheduled in, FY2026 Q3. The partner
 # booking keeps a later quarter, which is the rule it exists to prove.
-@freeze_time("2026-04-01")
+@freeze_time(FROZEN_TODAY)
 class CoreSchoolsPlanningTest(TestCase):
     def setUp(self):
         core_planning_setup(self)
@@ -202,17 +213,18 @@ class CoreSchoolsPlanningTest(TestCase):
         return School.objects.get(id=s.id)
 
     def _plan(self, school):
+        fy = get_operational_fy()
         plan = CorePlan.objects.create(
             id=cplan_id(school.school_id),
             school_id=school.school_id,
-            fy=FY,
+            fy=fy,
             status="Active",
         )
         CoreSchoolProfile.objects.create(
             id=cprof_id(school.school_id),
             school_id=school.school_id,
             core_plan=plan,
-            core_start_fy=FY,
+            core_start_fy=fy,
         )
         # Build the canonical 9-slot package (1 assessment + 4v + 4t) via the
         # production helper so fixtures never drift from real onboarding.
@@ -470,20 +482,31 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_core_chooser_keeps_general_activities_available_after_package_completion(
         self,
     ):
-        CoreActivitySlot.objects.filter(
-            core_plan=self.plan, activity_type__in=["visit", "training"]
-        ).update(status="Scheduled")
+        # The staff half of the package taken (owner, 2026-09-30: two staff
+        # visits and two staff trainings).
+        for activity_type in (
+            "core_visit",
+            "core_visit",
+            "core_training",
+            "core_training",
+        ):
+            Activity.objects.create(
+                activity_type=activity_type,
+                school=self.school,
+                fy=FY,
+                quarter="Q3",
+                status="scheduled",
+                delivery_type="staff",
+            )
 
         response = self._client(self.cceo).get(
             f"/core-schools/schedule-activity?school_id={self.school.school_id}"
         )
-        self.assertContains(response, "Package complete")
-        # The chooser labels each exhausted option in place ("Core visit ·
-        # no package slots available") rather than as a standalone
-        # sentence. The behaviour under test is unchanged -- package slots
-        # are gone, general activities remain -- only the wording moved.
-        self.assertContains(response, "Core visit · no package slots available")
-        self.assertContains(response, "Core training · no package slots available")
+        # The chooser labels each exhausted option in place. The behaviour
+        # under test is unchanged -- the staff's package work is used up,
+        # general activities remain.
+        self.assertContains(response, "Core visit · staff visits complete (2/2)")
+        self.assertContains(response, "Core training · staff trainings complete (2/2)")
         self.assertContains(response, "Schedule other activity")
         self.assertContains(
             response,
@@ -530,25 +553,30 @@ class CoreSchoolsPlanningTest(TestCase):
             ).exists()
         )
 
-    def test_staff_take_a_third_visit_only_while_the_partner_has_none(self):
-        """Owner, 2026-09-28: "staff may plan more core schools visits but
-        only if the partner has not planned." Two staff visits go through
-        whatever the calendar says; a third goes through while no partner
-        visit is planned at the school, and is refused once one is."""
+    def test_staff_take_two_visits_and_the_partner_two(self):
+        """Owner, 2026-09-30: the package is "4 visits and 4 trainings (2 each
+        for staff and the other 2 for partners)" — replacing 2026-09-28's
+        "staff may plan more core schools visits but only if the partner has
+        not planned". A third staff visit is refused whether or not a partner
+        has planned, and so is a third partner visit."""
         first = self._schedule_visit(seq="1", when="2026-04-21")
         self.assertIn(first.status_code, (200, 302), first.content[:200])
         second = self._schedule_visit(seq="2", when="2026-04-28")
         self.assertIn(second.status_code, (200, 302), second.content[:200])
         third = self._schedule_visit(seq="3", when="2026-05-05")
-        self.assertIn(third.status_code, (200, 302), third.content[:200])
+        self.assertEqual(third.status_code, 400)
+        self.assertIn("2 staff core visits", third.content.decode())
 
-        partner = self._schedule_visit(
-            seq="4", when="2026-06-09", partner_id=self.partner.id
+        for seq, when in (("3", "2026-06-09"), ("4", "2026-06-16")):
+            partner = self._schedule_visit(
+                seq=seq, when=when, partner_id=self.partner.id
+            )
+            self.assertIn(partner.status_code, (200, 302), partner.content[:200])
+        third_partner = self._schedule_visit(
+            seq="5", when="2026-06-23", partner_id=self.partner.id
         )
-        self.assertIn(partner.status_code, (200, 302), partner.content[:200])
-        fourth = self._schedule_visit(seq="5", when="2026-06-16")
-        self.assertEqual(fourth.status_code, 400)
-        self.assertIn("at most 2 core visits", fourth.content.decode())
+        self.assertEqual(third_partner.status_code, 400)
+        self.assertIn("2 partner core visits", third_partner.content.decode())
 
     def test_a_partner_may_still_take_the_package_beyond_the_staff_cap(self):
         """The cap is the staff share, not the school's need."""

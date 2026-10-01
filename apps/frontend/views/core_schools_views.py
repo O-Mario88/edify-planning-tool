@@ -25,6 +25,7 @@ from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.partners import services as partner_services
 from apps.partners.purposes import PARTNER_VISIT_PURPOSES
+from apps.core_schools.package_credit import NON_PACKAGE_VISIT_PURPOSES
 from apps.activities.models import Activity
 from apps.core_schools.models import (
     CoreActivitySlot,
@@ -655,7 +656,9 @@ def core_schedule_visit_drawer(request):
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
     )
-    partners = Partner.objects.all().order_by("name")
+    # Only partners who may take new work (active, not on hold), as every
+    # Planning picker offers (`partners.services.assignable_partners`).
+    partners = partner_services.assignable_partners()
 
     fy = get_operational_fy()
     plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
@@ -696,6 +699,9 @@ def core_schedule_visit_drawer(request):
         "recommended_visit_purpose": "ssa_support" if first_visit else "",
         "partner_visit_purpose_values_json": json.dumps(
             [value for value, _label in PARTNER_VISIT_PURPOSES]
+        ),
+        "non_package_purpose_values_json": json.dumps(
+            sorted(NON_PACKAGE_VISIT_PURPOSES)
         ),
         "interventions": SsaIntervention.choices,
         "recommended_focus_intervention": focus_code,
@@ -773,7 +779,18 @@ def core_schedule_visit_action(request):
                 responsible_staff_id=responsible_staff_id,
                 partner_id=partner_id,
             )
-        visit_sequence = int(visit_seq)
+        if purpose_of_visit in NON_PACKAGE_VISIT_PURPOSES:
+            return _schedule_core_outreach_visit(
+                request,
+                school=school,
+                purpose_of_visit=purpose_of_visit,
+                scheduled_date=scheduled_date,
+                responsible_staff_id=responsible_staff_id,
+                visit_request=visit_request,
+                visit_justification=visit_justification,
+            )
+        # Blank asks for the next open slot, which `_free_slot` finds.
+        visit_sequence = int(visit_seq or 1)
     except (TypeError, ValueError):
         return HttpResponse(
             '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Please choose a valid planned date and visit slot.</div>',
@@ -871,6 +888,7 @@ def core_schedule_visit_action(request):
                 scheduled_for=scheduled_for,
                 is_partner_delivery=bool(partner_id),
             )
+            visit_sequence = slot.sequence_number
 
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
@@ -929,6 +947,92 @@ def core_schedule_visit_action(request):
         return error_fragment(e, status=400)
 
 
+def _assert_partner_delivers_course(partner_id, course_id) -> None:
+    """A partner-delivered core training is one the partner is recorded as
+    delivering (`partners.capabilities.delivers`)."""
+    from apps.activity_catalogue.models import ActivityCatalogueItem
+    from apps.partners.capabilities import assert_delivers
+
+    assert_delivers(
+        Partner.objects.filter(id=partner_id).first(),
+        ActivityCatalogueItem.objects.filter(id=course_id).first(),
+    )
+
+
+def _schedule_core_outreach_visit(
+    request,
+    *,
+    school,
+    purpose_of_visit,
+    scheduled_date,
+    responsible_staff_id,
+    visit_request,
+    visit_justification,
+):
+    """A donor, content/story, invitation or social visit at a Core School.
+
+    Not package work (owner, 2026-09-30): it takes none of the package's four
+    visits, is costed as its own kind of visit rather than as a Core Visit,
+    and has no limit — the same visit a client school gets from the Planning
+    drawer. It used to be booked as a ``core_visit`` that took a V1..V4 slot,
+    so two donor visits could read as half the package delivered.
+    """
+    from apps.activities.services import create as create_activity
+    from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+    from apps.partners.purposes import purpose_activity_type, visit_purpose_label
+
+    label = visit_purpose_label(purpose_of_visit)
+    activity_type = purpose_activity_type(purpose_of_visit)
+    item = resolve_item_for_workflow_kind(
+        activity_type, on_date=date.fromisoformat(scheduled_date)
+    )
+    if item is None:
+        raise BadRequest(
+            f"No single approved Catalogue Activity costs \u201c{label}\u201d. "
+            "Ask the Country Director to define one costing for it before "
+            "scheduling this purpose."
+        )
+    owner_id = visit_request["visit_request_owner_id"]
+    payload = {
+        **_core_visit_payload_base(request, school.school_id, scheduled_date, None),
+        "activityType": activity_type,
+        "catalogueItemId": item.id,
+        "purposeType": purpose_of_visit,
+        "responsibleStaffId": responsible_staff_id,
+        **({"visitJustification": visit_justification} if owner_id else {}),
+    }
+    with transaction.atomic():
+        created = create_activity(payload, request.user)
+        audit_log(
+            action="schedule_core_outreach_visit",
+            subject_kind="Activity",
+            subject_id=created["id"],
+            actor_id=str(request.user.id),
+            actor_role=getattr(request.user, "active_role", None),
+            success=True,
+        )
+    if owner_id:
+        from apps.planning.visit_requests import QUEUE_URL
+
+        messages.success(
+            request,
+            f"{label} scheduled, pending "
+            f"{visit_request['visit_request_owner_name']}'s approval. It takes "
+            "effect on your plan and enters your budget once approved.",
+        )
+        response = HttpResponse(
+            f'<script>window.location.href = "{QUEUE_URL}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    return _core_scheduled_response(
+        request,
+        created,
+        scheduled_date,
+        f"{label} scheduled. It is not one of the package's four visits.",
+    )
+
+
 def _schedule_core_in_school_training(
     request, *, school, scheduled_for, responsible_staff_id, partner_id
 ):
@@ -953,6 +1057,8 @@ def _schedule_core_in_school_training(
     if not course_id:
         raise BadRequest("Select the Training to deliver.")
     validate_in_school_training_course_selection(course_id, on_date=scheduled_for)
+    if partner_id:
+        _assert_partner_delivers_course(partner_id, course_id)
 
     payload = {
         **_core_visit_payload_base(request, school_id, scheduled_date, partner_id),
@@ -971,11 +1077,12 @@ def _schedule_core_in_school_training(
         # slot, and refusing one on the state of the other is how a core
         # school with an unstarted package could be given no training at all
         # (owner, 2026-09-17).
+        # Blank asks for the next open slot. Whether the training fits is the
+        # package's 2 + 2 split (`assert_can_schedule`), not whether the four
+        # slots are free: a cluster session can take one without being
+        # anybody's half.
         requested = request.POST.get("training_number", "").strip()
-        options = CorePackageSchedulingService.available_options(plan, "training")
-        if not options:
-            raise BadRequest("All 4 core trainings are already scheduled or completed.")
-        training_sequence = int(requested) if requested else options[0]["sequence"]
+        training_sequence = int(requested) if requested else 1
         slot = CorePackageSchedulingService.assert_can_schedule(
             plan=plan,
             school=school,
@@ -984,6 +1091,7 @@ def _schedule_core_in_school_training(
             scheduled_for=scheduled_for,
             is_partner_delivery=bool(partner_id),
         )
+        training_sequence = slot.sequence_number
         created = schedule_in_school_training_pair(payload, request.user)
         CorePackageSchedulingService.commit_schedule(
             slot,
@@ -1031,7 +1139,9 @@ def core_schedule_training_drawer(request):
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
     )
-    partners = Partner.objects.all().order_by("name")
+    # Only partners who may take new work (active, not on hold), as every
+    # Planning picker offers (`partners.services.assignable_partners`).
+    partners = partner_services.assignable_partners()
 
     fy = get_operational_fy()
     plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
@@ -1097,6 +1207,10 @@ def core_schedule_training_action(request):
         # which for the cluster-delivered courses is not a school workflow.
         validate_in_school_training_course_selection(catalogue_item_id)
         course = get_selectable_item(catalogue_item_id)
+        if partner_id:
+            from apps.partners.capabilities import assert_delivers
+
+            assert_delivers(Partner.objects.filter(id=partner_id).first(), course)
         training_profile = resolve_item_for_workflow_kind(
             ActivityType.IN_SCHOOL_TRAINING
         )
@@ -1109,7 +1223,8 @@ def core_schedule_training_action(request):
         return error_fragment(exc, status=400)
 
     try:
-        training_sequence = int(train_seq)
+        # Blank asks for the next open slot, which `_free_slot` finds.
+        training_sequence = int(train_seq or 1)
         scheduled_for = date.fromisoformat(scheduled_date)
     except (TypeError, ValueError):
         return HttpResponse(
@@ -1177,6 +1292,7 @@ def core_schedule_training_action(request):
                 scheduled_for=scheduled_for,
                 is_partner_delivery=bool(partner_id),
             )
+            training_sequence = slot.sequence_number
 
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
@@ -1232,10 +1348,22 @@ def core_assign_partner_drawer(request):
     """
     import json
 
+    from apps.core_schools.package_split import (
+        PARTNER,
+        SIDE_CAP,
+        TRAINING,
+        VISIT,
+        package_split,
+    )
+
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden(
+            "You do not have permission to assign to a partner."
+        )
     school_id = request.GET.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
-    partners = Partner.objects.all().order_by("name")
+    partners = partner_services.assignable_partners()
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
@@ -1243,6 +1371,9 @@ def core_assign_partner_drawer(request):
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
+    # The partner's half of the package (owner, 2026-09-30): two visits and
+    # two trainings. A full half greys its purposes, as the POST refuses them.
+    split = package_split(school, plan.fy if plan else None)
     # The same three purposes the client school's assign drawer offers, from
     # the same tuple (owner, 2026-09-17: "the purpose options are the same as
     # the options on the client school assign to partner"). They used to be
@@ -1274,6 +1405,21 @@ def core_assign_partner_drawer(request):
         ),
         "follow_up_fy": get_operational_fy(),
         "follow_up_requires_training": _follow_up_requires_training(),
+        # The courses each partner is recorded as delivering; the drawer
+        # offers only those once a partner who records any is chosen
+        # (`partners.capabilities.delivers`).
+        "partner_courses_json": json.dumps(
+            {
+                partner.id: list(partner.activity_codes)
+                for partner in partners
+                if partner.activity_codes
+            }
+        ),
+        "partner_visits_used": split.used(VISIT, PARTNER),
+        "partner_trainings_used": split.used(TRAINING, PARTNER),
+        "partner_visits_open": split.is_open(VISIT, PARTNER),
+        "partner_trainings_open": split.is_open(TRAINING, PARTNER),
+        "side_cap": SIDE_CAP,
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
 
@@ -1285,9 +1431,9 @@ def core_schedule_activity_drawer(request):
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     summary = CorePackageSchedulingService.summary(plan) if plan else None
-    from apps.planning.visit_gate import visit_gate
+    from apps.planning.visit_gate import CORE_STAFF_TRAINING_CAP, visit_gate
 
-    gate = visit_gate(school, get_operational_fy())
+    gate = visit_gate(school, plan.fy if plan else get_operational_fy())
 
     context = {
         "school": school,
@@ -1305,14 +1451,13 @@ def core_schedule_activity_drawer(request):
         ),
         "package_available": bool(plan),
         "package_complete": bool(summary and summary["package_complete"]),
-        "visits_remaining": max(0, (summary["visits_target"] - summary["visits"]))
-        if summary
-        else 0,
-        "trainings_remaining": max(
-            0, (summary["trainings_target"] - summary["trainings"])
-        )
-        if summary
-        else 0,
+        # Staff's half of the package (owner, 2026-09-30): two visits and two
+        # trainings, whatever the partner's half holds.
+        "visits_remaining": max(0, gate.staff_cap - gate.staff_visits),
+        "staff_trainings_open": gate.staff_trainings_open,
+        "staff_training_count": gate.staff_trainings,
+        "staff_trainings_cap": CORE_STAFF_TRAINING_CAP,
+        "trainings_remaining": max(0, CORE_STAFF_TRAINING_CAP - gate.staff_trainings),
     }
     return render(
         request, "partials/core_schools/schedule_activity_drawer.html", context
@@ -1335,6 +1480,12 @@ def core_assign_partner_action(request):
     from apps.partners.purposes import normalise_visit_purpose, visit_purpose_label
     from apps.ssa.services import latest_applicable_record
 
+    # The same permission every Planning hand-over asks; the Core Schools
+    # door used to ask only for the page.
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden(
+            "You do not have permission to assign to a partner."
+        )
     school_id = request.POST.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
     partner_id = request.POST.get("partner_id")
@@ -1344,7 +1495,8 @@ def core_assign_partner_action(request):
     course_id = request.POST.get("training_course_id", "").strip()
     chosen_focus = request.POST.get("focus_intervention", "").strip()
 
-    partner = get_object_or_404(Partner, id=partner_id)
+    # Only a partner who may take new work: active, and not on hold.
+    partner = get_object_or_404(partner_services.assignable_partners(), id=partner_id)
 
     try:
         with transaction.atomic():
@@ -1445,28 +1597,21 @@ def core_assign_partner_action(request):
                 executor_type="partner",
             )
 
-            options = CorePackageSchedulingService.available_options(
-                plan, activity_type
-            )
             requested = request.POST.get("visit_training_number", "").strip()
             try:
-                sequence_number = (
-                    int(requested) if requested else options[0]["sequence"]
-                )
-            except (TypeError, ValueError, IndexError) as error:
+                # Blank asks for the next open slot, which `_free_slot` finds.
+                sequence_number = int(requested) if requested else 1
+            except (TypeError, ValueError) as error:
                 raise BadRequest("Choose an available support slot.") from error
+            # The partner's half of the package (two visits, two trainings;
+            # owner, 2026-09-30) and the slot this hand-over holds.
             slot = CorePackageSchedulingService.assert_can_assign(
                 plan=plan,
+                school=school,
                 activity_type=activity_type,
                 sequence_number=sequence_number,
             )
-            if activity_type == "visit":
-                # The partner side of a core package is two visits (owner,
-                # 2026-09-15): scheduled partner visits plus visit slots
-                # already assigned and waiting on the partner.
-                from apps.planning.visit_gate import assert_may_assign_partner_visit
-
-                assert_may_assign_partner_visit(school)
+            sequence_number = slot.sequence_number
 
             # 1. Create PartnerAssignment in DB
             pa = partner_services.create_assignment(

@@ -26,6 +26,7 @@ from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
+from freezegun import freeze_time
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
@@ -155,6 +156,10 @@ class IAPerformanceTestBase(TestCase):
         return act
 
 
+# The IA dashboard reads the operational year and takes no year parameter;
+# the fixture's work is April 2026 (FY2026). From 1 October 2026 the real
+# clock asks for FY2027 and counts none of it, so the class runs in FY2026.
+@freeze_time("2026-06-15 09:00:00")
 class IADashboardQueryBudgetTest(IAPerformanceTestBase):
     def test_dashboard_monitors_district_region_cceo_and_program_lead(self):
         cceo_user = User.objects.create_user(

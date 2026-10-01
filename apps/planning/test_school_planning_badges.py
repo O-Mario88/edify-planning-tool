@@ -586,34 +586,36 @@ class FurtherPlanningIsNeverBlockedTest(StandardSupportBase):
         self.assertEqual(self._counts(year).visits.planned_count, 3)
 
     def test_a_school_with_completed_training_can_receive_another(self):
+        """Last year's completed training does not close this year's.
+
+        A client school takes one staff support visit a year (owner,
+        2026-09-28), so the completed training is filed in the year before
+        the one the new training is scheduled into. Filing both in one year
+        only passed while "20 days ago" and the scheduled day fell either
+        side of 30 September.
+        """
+        scheduled_in = get_operational_fy(_schedulable_date())
+        completed_in = str(int(scheduled_in) - 1)
         Activity.objects.create(
             activity_type="in_school_training",
             school=self.school,
-            fy=get_operational_fy(),
-            quarter="Q1",
-            planned_date=timezone.localdate() - datetime.timedelta(days=20),
+            fy=completed_in,
+            quarter="Q3",
+            planned_date=datetime.date(int(completed_in), 6, 15),
             status="ia_verified",
             delivery_type="staff",
             responsible_staff_id=self.staff.id,
         )
-        self.assertEqual(self._counts().trainings.verified_count, 1)
+        self.assertEqual(self._counts(completed_in).trainings.verified_count, 1)
         self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
             focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
             teachersAttended=6,
         )
-        # Each training is counted in the fiscal year it is dated in: the
-        # completed one in this year, the new one in the year it was
-        # scheduled into — the next one in the last days of September.
-        completed_in = get_operational_fy()
-        scheduled_in = get_operational_fy(_schedulable_date())
+        # Each training is counted in the fiscal year it is dated in.
         self.assertEqual(self._counts(completed_in).trainings.verified_count, 1)
-        planned = self._counts(scheduled_in).trainings.planned_count
-        self.assertEqual(planned, 1)
-        if scheduled_in == completed_in:
-            counts = self._counts(completed_in).trainings
-            self.assertEqual((counts.planned_count, counts.verified_count), (1, 1))
+        self.assertEqual(self._counts(scheduled_in).trainings.planned_count, 1)
 
     def test_an_exact_double_click_is_still_refused(self):
         day = _schedulable_date()

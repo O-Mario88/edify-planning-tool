@@ -1,8 +1,10 @@
 """A visit at a Core School is core package work, wherever it was scheduled.
 
-The Core Schools page has always treated it that way: every purpose its visit
-drawer offers creates a ``core_visit`` priced against the Core Visit costing
-and locks one of the package's visit slots.
+The Core Schools page has always treated it that way: every support purpose
+its visit drawer offers creates a ``core_visit`` priced against the Core Visit
+costing and locks one of the package's visit slots. Donor, story, invitation
+and social visits are not package work (owner, 2026-09-30) and are booked as
+themselves.
 
 The Planning page's Core tab and the Cluster schools table open the SAME
 drawer -- both point at ``/planning/schedule-modal`` -- and that drawer went
@@ -125,11 +127,24 @@ def schedule_as_core_visit(data: dict, principal) -> dict | None:
     from apps.core_schools.core_planning_services import CorePackageSchedulingService
 
     if data.get("projectId"):
-        # Project work is the project's, not the package's. It is funded from
-        # the project's own approved activity list -- the caller has already
-        # validated the Catalogue item as eligible for every school in the
-        # batch -- so routing it here would re-cost it against the Core Visit
-        # item and count somebody else's delivery as core package support.
+        # Project work keeps its own costing: it is funded from the project's
+        # approved activity list, which the caller has already validated, so
+        # it is not re-costed here as a Core Visit. It still counts toward the
+        # package (owner, 2026-09-30): the ordinary create path applies the
+        # 2 + 2 split and `package_credit` links its slot once it commits.
+        return None
+    from apps.core_schools.package_credit import (
+        NON_PACKAGE_VISIT_PURPOSES,
+        NON_PACKAGE_VISIT_TYPES,
+    )
+
+    if (
+        data.get("activityType") in NON_PACKAGE_VISIT_TYPES
+        or data.get("purposeType") in NON_PACKAGE_VISIT_PURPOSES
+    ):
+        # Donor, story, invitation and social visits are not package work
+        # (owner, 2026-09-30): the ordinary path books them as themselves,
+        # with no slot and no limit.
         return None
 
     school = resolve_school(data.get("schoolId"))
@@ -142,8 +157,8 @@ def schedule_as_core_visit(data: dict, principal) -> dict | None:
     partner_id = str(data.get("assignedPartnerId") or "").strip() or None
     is_partner_delivery = bool(partner_id) or data.get("deliveryType") == "partner"
 
-    # Locks the slot and applies the two caps the package exists to protect:
-    # staff deliver at most two of its visits, the partner at most two.
+    # Locks the slot and applies the package's 2 + 2 split: staff deliver two
+    # of its visits, the partner two (`package_split`).
     slot = CorePackageSchedulingService.assert_can_schedule(
         plan=plan,
         school=school,

@@ -4,7 +4,7 @@
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
-<form hx-post="/projects/planning/bulk-partner" hx-target="#bulk-partner-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700">
+<form hx-post="/projects/planning/bulk-partner" hx-target="#bulk-partner-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700" x-data="{ partnerId: '', projectPartners: [{% for partner in project_partners %}'{{ partner.id|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}], keepsList: {{ keeps_partner_list|yesno:'true,false' }}, get outsideList() { return this.keepsList && this.partnerId !== '' && !this.projectPartners.includes(this.partnerId); } }">
   {% csrf_token %}<input type="hidden" name="assignments" value="{{ assignment_ids }}">
   <div id="bulk-partner-errors"></div>
   <div class="space-y-1">
@@ -13,7 +13,12 @@
   </div>
   <div class="space-y-1">
     <label for="bulk-partner-partner" class="block edify-text-caption font-semibold text-slate-600">Partner organization <span class="text-rose-500">*</span></label>
-    <select id="bulk-partner-partner" aria-label="Partner ID" name="partner_id" required class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select partner…</option>{% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}</select>
+    <select id="bulk-partner-partner" aria-label="Partner ID" name="partner_id" required x-model="partnerId" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select partner…</option>{% if not keeps_partner_list %}{% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}{% else %}<optgroup label="This project's partners">{% for partner in project_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% empty %}<option value="" disabled>None of the projects' partners can take new work</option>{% endfor %}</optgroup>{% if other_partners %}<optgroup label="Other partners (reason required)">{% for partner in other_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}</optgroup>{% endif %}{% endif %}</select>
+  </div>
+  {% comment %}A partner outside the project's own list needs a reason, which the hand-over keeps.{% endcomment %}
+  <div class="space-y-1" x-show="outsideList" style="display: none;" data-outside-project-partners>
+    <label for="bulk-partner-reason" class="block edify-text-caption font-semibold text-slate-600">Why this partner <span class="text-rose-500">*</span></label>
+    <textarea id="bulk-partner-reason" name="override_reason" rows="2" :required="outsideList" class="w-full rounded-control border border-slate-200 p-3" placeholder="They are not one of this project's partners"></textarea>
   </div>
   <fieldset class="space-y-2"><legend class="block edify-text-caption font-semibold text-slate-600">Project-approved partner activity <span class="text-rose-500">*</span></legend>{% for item in catalogue_items %}<label class="flex items-start gap-3 rounded-control border border-slate-200 p-3"><input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %}><span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span></label>{% empty %}<p class="edify-note edify-text-caption font-semibold" data-tone="warning">No single Partner-deliverable Catalogue Activity is eligible for every selected Project School.</p>{% endfor %}</fieldset>
   <div class="space-y-1">

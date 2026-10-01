@@ -17,6 +17,7 @@ from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
@@ -48,7 +49,35 @@ def _user(uid, role, name):
 
 
 class _Fixture(TestCase):
-    """One coordinated project, schools at every stage the page tracks."""
+    """One coordinated project, schools at every stage the page tracks.
+
+    The fixture dates its work "2 days ago" and "20 days ago" and files it
+    under the operational year. In the first weeks of a fiscal year those
+    days are last year's (found 1 October 2026), so the fixture and every
+    class built on it, here and in test_project_monitoring_table, run on a
+    mid-year clock. Started and stopped here rather than with a class
+    decorator: freezegun binds a decorated base's setUpClass to the base, and
+    a subclass's own setUpTestData then never runs.
+    """
+
+    MID_YEAR = "2027-02-10 09:00:00"
+
+    @classmethod
+    def setUpClass(cls):
+        cls._clock = freeze_time(cls.MID_YEAR)
+        cls._clock.start()
+        try:
+            super().setUpClass()
+        except Exception:
+            cls._clock.stop()
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super().tearDownClass()
+        finally:
+            cls._clock.stop()
 
     @classmethod
     def setUpTestData(cls):
