@@ -836,16 +836,14 @@ class TeamTargetsPageTest(TestCase):
     # reads a whole fiscal year, so only this test moves its "today".
     @freeze_time("2026-07-01")
     def test_recovery_schedule_creates_budget_lines(self):
-        from apps.budget.models import CostCatalogue, CostSetting
+        from apps.budget.costing_service import active_catalogue
+        from apps.budget.models import CostSetting
+        from apps.budget.reference import ensure_active_catalogue
 
-        catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda",
-            fy=FY,
-            version=1,
-            defaults={"is_active": True, "label": "Test Catalogue"},
-        )
-        catalogue.is_active = True
-        catalogue.save(update_fields=["is_active"])
+        # The live card pricing reads, whichever year the test database was
+        # migrated in. Asking for an FY2026 card by name made a second active
+        # one from 1 October 2026 and left the live card without these rates.
+        catalogue = active_catalogue() or ensure_active_catalogue()
         for key, cost in (
             ("staff_visit_transport_primary", 280000),
             ("lunch", 30000),
@@ -854,11 +852,11 @@ class TeamTargetsPageTest(TestCase):
         ):
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": cost,
-                    "fy": FY,
-                    "catalogue": catalogue,
+                    "fy": catalogue.fy,
                     "version": 1,
                 },
             )

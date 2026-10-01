@@ -177,7 +177,9 @@ class TimePeriodTargetsTest(TestCase):
         """
         c = Client()
         c.force_login(self.cceo)
-        html = c.get("/my-targets").content.decode()
+        # The year the fixture's agreement is for; the page otherwise opens on
+        # the operational one, which stopped being FY2026 on 1 October 2026.
+        html = c.get(f"/my-targets?fy={FY}").content.decode()
         self.assertNotIn("No measurable performance priorities agreed", html)
         self.assertIn("Cumulative progress by time period", html)
 

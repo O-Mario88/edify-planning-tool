@@ -45,7 +45,10 @@ class FundAllocationTest(TestCase):
             current_fy_ssa_status="done",
             planning_readiness="ready",
         )
-        self.fy = get_operational_fy()
+        # The year of the fixture's own dates (April 2026, month_key
+        # "2026-04"), not of the day the suite runs: from 1 October 2026 the
+        # real clock read FY2027, whose April is 2027.
+        self.fy = get_operational_fy(datetime.date(2026, 4, 15))
 
         # Create users
         self.accountant = User.objects.create_user(

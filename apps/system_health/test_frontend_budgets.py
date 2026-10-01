@@ -33,6 +33,7 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.test import SimpleTestCase, TestCase
+from freezegun import freeze_time
 from django.utils import timezone
 
 BASE_TEMPLATE = settings.BASE_DIR / "templates" / "base.html"
@@ -194,6 +195,11 @@ class ShellAssetBudgetTest(SimpleTestCase):
         self.assertLessEqual(self.assets["inline_bytes"] / 1024, self.INLINE_SCRIPT_KB)
 
 
+# The ceilings below were measured on 24 September 2026, and the pages are
+# "deterministic up to dates": on the first day of a fiscal year /my-targets
+# alone drew 988 elements against a 940 ceiling. The class runs on the day it
+# was measured, so a breach means the page grew, not that the calendar moved.
+@freeze_time("2026-09-24 09:00:00")
 class PagePayloadBudgetTest(TestCase):
     """HTML bytes and element count of the pages a field team lives in.
 

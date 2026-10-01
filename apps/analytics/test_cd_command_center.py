@@ -336,7 +336,9 @@ class CDCommandCenterTest(TestCase):
         self.assertNotIn("mscs", ada["areas_by_key"])
 
         self.client.force_login(self.cd)
-        html = self.client.get("/dashboard?view=operations").content.decode()
+        # The fixture's own year: the page otherwise opens on the operational
+        # one, which stopped being FY2026 on 1 October 2026.
+        html = self.client.get(f"/dashboard?view=operations&fy={FY}").content.decode()
         table = html.split("Country Program Leads Performance", 1)[1]
         headers = re.findall(r"<th[^>]*>\s*([^<]+?)\s*</th>", table)[:14]
         self.assertEqual(

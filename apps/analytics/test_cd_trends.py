@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from freezegun import freeze_time
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -27,6 +29,10 @@ from apps.schools.models import School
 User = get_user_model()
 
 
+# The fixture labels its work FY2025 and FY2026 and dates it "365 days ago" and
+# "yesterday". That only agrees with the labels on a mid-FY2026 day: from
+# 1 October 2026 "365 days ago" is FY2026's and the prior-year count read 0.
+@freeze_time("2026-06-15 09:00:00")
 class CdTrendTilesTest(TestCase):
     @classmethod
     def setUpTestData(cls):
