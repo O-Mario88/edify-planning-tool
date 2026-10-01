@@ -18,7 +18,7 @@ from __future__ import annotations
 
 # The Country Cost Catalogue (owner, 2026-09-06: "these are the list of
 # activities to put in the cost catalog; remove the ones you have now").
-# Twenty-three rows in four groups: the per-activity rates, the partner rates,
+# Twenty rows in four groups: the per-activity rates, the partner rates,
 # the group-session components and the travel per-diems. A key is the stable
 # handle the recipes read (`apps/budget/costing.py`); the label is what the
 # Country Director sees. Where the owner's list renamed a rate the platform
@@ -32,15 +32,9 @@ PARTNER_RATES: tuple[tuple[str, str, int], ...] = (
     ("partner_meetings", "Partner Meetings", 40000),
 )
 GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
-    # Owner, 2026-09-17: "cluster meeting is not fetching the right cost for
-    # cluster meeting". It could not: a meeting and a training shared one row,
-    # so the Country Director had no way to price them apart. They are two
-    # rows now. `cluster_meetings_trainings` stays, still priced and still the
-    # training's rate, so every saved cost line, snapshot and test that names
-    # it keeps reading; the meeting gets its own key and is seeded from the
-    # shared row's value, so splitting them reprices nothing on its own.
-    ("cluster_meetings_trainings", "Cluster Training", 0),
-    ("cluster_meeting", "Cluster Meeting", 0),
+    # A cluster meeting and a cluster training have no row of their own: each
+    # is what it spends (owner, 2026-09-26), so the per-session rates that sat
+    # here are retired -- see RETIRED_SESSION_RATE_KEYS.
     ("tot_trainings", "TOT trainings", 0),
     ("tot_trainings_meals", "TOT trainings - Meals", 5000),
     # Owner, 2026-09-15: a cluster meeting or training feeds its participants
@@ -51,9 +45,10 @@ GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
     # A group training feeds its participants per head too (session costing
     # spec, 2026-09-26: participant_meals_total = participants x meal rate,
     # for a staff-run or a partner-run training). Its own row, so the Country
-    # Director prices a training's meal apart from a meeting's snack, as the
-    # meeting and training session rates were split on 2026-09-17. A TOT
-    # training keeps its own meals row.
+    # Director prices a training's meal apart from a meeting's snack (owner,
+    # 2026-10-01: "cluster meeting participant meals fetches cost for cluster
+    # meeting plans and group training fetches cost for group training
+    # participant meals"). A TOT training keeps its own meals row.
     ("group_training_meals", "Group Training - Participant Meals", 5000),
     ("student_conference", "Student Conference", 0),
     ("proprietor_conference", "Proprietor Conference", 0),
@@ -77,8 +72,6 @@ RATE_UNITS: dict[str, str] = {
     "client_partner_visit": "per visit",
     "core_partner_visit": "per visit",
     "partner_meetings": "per meeting",
-    "cluster_meetings_trainings": "per session",
-    "cluster_meeting": "per meeting",
     "tot_trainings": "per training",
     "tot_trainings_meals": "per participant per day",
     "cluster_meetings_trainings_meals": "per participant per day",
@@ -108,8 +101,6 @@ RATE_LABELS: dict[str, str] = {key: label for key, label, _cost in CANONICAL_RAT
 OPTIONAL_RATE_KEYS = frozenset(
     {
         "onetest",
-        "cluster_meetings_trainings",
-        "cluster_meeting",
         "tot_trainings",
         "cluster_meetings_trainings_meals",
         "group_training_meals",
@@ -132,10 +123,6 @@ RATE_ALIASES: dict[str, tuple[str, ...]] = {
         "cluster_meeting_participant_meal_cost_per_head",
         "meals_per_participant",
     ),
-    # A rate card written before meetings and trainings were priced apart
-    # carries only the shared row; a meeting costed against it prices exactly
-    # as it did before the split rather than falling to zero.
-    "cluster_meeting": ("cluster_meetings_trainings",),
 }
 
 
@@ -232,20 +219,24 @@ DUPLICATE_COST_SETTING_KEYS = frozenset(
 RETIRED_VISIT_RATE_KEYS = frozenset(
     {"client_staff_visit", "core_staff_visit", "ssa_support"}
 )
+# The per-session rates a cluster training and a cluster meeting carried on
+# top of what they spend: one shared row from 2026-09-06, split in two on
+# 2026-09-17. The session costing spec of 2026-09-26 stopped charging either
+# -- a meeting is its participants' snacks, the room, the handouts and the
+# day; a training adds the facilitator -- so both rows sat on Cost Settings
+# at UGX 0, editable and pricing nothing. Owner, 2026-10-01: "remove the dead
+# cluster training and cluster meeting rows". Budget migration 0023 deletes
+# them; a meeting or training priced while they were charged keeps its line.
+RETIRED_SESSION_RATE_KEYS = frozenset({"cluster_meetings_trainings", "cluster_meeting"})
 
 # Rates an earlier cluster meeting recipe charged, which a meeting priced at
 # the time still carries on its saved cost lines: the snacks under their
 # first name (until 2026-09-15) and the per-meeting rate (2026-09-06 to
-# 2026-09-26), first on the row meetings shared with trainings and from
-# 2026-09-17 on its own. System Health reads them as history, not as a wrong
-# cost on a meeting.
-CLUSTER_MEETING_FORMER_RATE_KEYS = frozenset(
-    {
-        "cluster_meeting_participant_meal_cost_per_head",
-        "cluster_meetings_trainings",
-        "cluster_meeting",
-    }
-)
+# 2026-09-26). System Health reads them as history, not as a wrong cost on a
+# meeting.
+CLUSTER_MEETING_FORMER_RATE_KEYS = RETIRED_SESSION_RATE_KEYS | {
+    "cluster_meeting_participant_meal_cost_per_head"
+}
 
 RETIRED_COST_SETTING_KEYS = (
     LEGACY_VISIT_COST_KEYS
@@ -253,6 +244,7 @@ RETIRED_COST_SETTING_KEYS = (
     | DUPLICATE_COST_SETTING_KEYS
     | RENAMED_COST_SETTING_KEYS
     | RETIRED_VISIT_RATE_KEYS
+    | RETIRED_SESSION_RATE_KEYS
 )
 
 
