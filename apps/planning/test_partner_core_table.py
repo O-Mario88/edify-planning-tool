@@ -145,6 +145,33 @@ class TheCoreTableTest(_CoreTableFixture):
         self.assertRegex(row, r"data-core-support>V2<")
         self.assertIn("No Evidence Uploaded", row)
 
+    def test_a_training_waiting_for_the_partner_reads_the_partner_visit_rate(self):
+        """An in-school training is priced as a partner school visit at a
+        Core School as at any other (owner, 2026-10-01), so that is the rate
+        the row shows before the Partner dates it: what scheduling charges."""
+        catalogue = CostCatalogue.objects.filter(is_active=True).first()
+        CostSetting.objects.update_or_create(
+            key="client_partner_visit",
+            catalogue=catalogue,
+            defaults={
+                "label": "Client Partner Visit",
+                "unit_cost": 41_000,
+                "fy": self.fy,
+                "version": catalogue.version,
+            },
+        )
+        handover = self.assign(
+            school=self.core_school,
+            support_type="Training",
+            visit_number="1",
+            purpose_of_visit="in_school_training",
+        )
+        row = self.core_row(self.page(), handover)
+
+        self.assertIn("Waiting for scheduling from partner", row)
+        self.assertIn("UGX 41,000", row, "the partner school visit rate")
+        self.assertNotIn("UGX 55,000", row)
+
     def test_once_scheduled_it_reads_the_planned_date_and_the_priced_cost(self):
         handover = self.core_handover()
         activity = self.schedule(handover, cost=180_000)
