@@ -1336,6 +1336,60 @@ class DailyVisitBatchAgreesWithTheSessionCalculatorsTest(DailyVisitBatchTestCase
         self.assertEqual(costs, [spec.totals.total_cost_per_meeting] * 4)
         self.assertEqual(sum(costs), spec.totals.total_day_cost)
 
+    def test_a_scheduled_cluster_meeting_passes_system_health(self):
+        """What the recipe writes for a meeting, System Health accepts: the
+        room and the handouts are the meeting's own cost, beside the snacks
+        and the day. The check once kept its own list, which still said a
+        meeting is snacks alone, so every meeting scheduled was a blocker."""
+        from django.db import transaction
+
+        from apps.activities.services import _apply_schedule_cost_snapshot
+        from apps.system_health.services import _workflow_issues
+
+        for key, rate in (
+            ("printing_training_materials", 500),
+            ("photocopying_training_materials", 100),
+        ):
+            CostSetting.objects.update_or_create(
+                key=key,
+                catalogue=self.catalogue,
+                defaults={
+                    "label": key,
+                    "unit_cost": rate,
+                    "approved_minimum": rate,
+                    "fy": self.catalogue.fy,
+                    "version": 1,
+                },
+            )
+        meeting = self._session("cluster_meeting", date(2026, 8, 14), participants=20)
+        # Ten pages printed and five pages copied for the twenty in the room.
+        meeting.printing_pages = 10
+        meeting.photocopy_pages = 5
+        meeting.photocopy_copies = 20
+        meeting.save()
+        with transaction.atomic():
+            _apply_schedule_cost_snapshot(meeting, {}, self.principal)
+
+        keys = set(
+            ActivityScheduleCostLine.objects.filter(activity=meeting).values_list(
+                "cost_setting_key", flat=True
+            )
+        )
+        self.assertLessEqual(
+            {
+                "cluster_meetings_trainings_meals",
+                "group_training_venue_cost",
+                "printing_training_materials",
+                "photocopying_training_materials",
+            },
+            keys,
+        )
+        blockers = _workflow_issues()["blockers"]
+        self.assertFalse(
+            any("cluster meeting cost line" in blocker for blocker in blockers),
+            blockers,
+        )
+
     def test_two_cluster_trainings_share_one_day(self):
         from apps.budget.session_costing import cost_primary_group_training
 

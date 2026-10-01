@@ -314,3 +314,135 @@ class CostReferenceSurvivesAFlushTest(TransactionTestCase):
         missing = [key for key, _, _ in CANONICAL_RATES if key not in present]
         self.assertEqual(missing, [])
         self.assertTrue(CostCatalogue.objects.filter(is_active=True).exists())
+
+
+class ClusterSessionRatesAreRetiredTest(TestCase):
+    """Owner, 2026-10-01: "remove the dead cluster training and cluster
+    meeting rows". Neither had been charged since 2026-09-26; both sat on
+    Cost Settings, editable and pricing nothing."""
+
+    KEYS = ("cluster_meetings_trainings", "cluster_meeting")
+
+    def setUp(self):
+        import importlib
+
+        self.migration = importlib.import_module(
+            "apps.budget.migrations.0023_retire_cluster_session_rates"
+        )
+        self.catalogue = ensure_active_catalogue()
+
+    def _row(self, key, catalogue=None, **fields):
+        return CostSetting.objects.create(
+            key=key,
+            label=key,
+            unit_cost=0,
+            catalogue=catalogue or self.catalogue,
+            **fields,
+        )
+
+    def test_the_rate_card_no_longer_carries_them(self):
+        from apps.budget.reference import RETIRED_SESSION_RATE_KEYS
+        from apps.budget.services import list_cost_settings
+
+        self.assertEqual(RETIRED_SESSION_RATE_KEYS, set(self.KEYS))
+        self.assertTrue(RETIRED_SESSION_RATE_KEYS <= RETIRED_COST_SETTING_KEYS)
+        self.assertEqual(len(CANONICAL_RATES), 20)
+        # A fresh database: the migrations have run and the reference data is
+        # in place, and neither row is among it.
+        self.assertFalse(CostSetting.objects.filter(key__in=self.KEYS).exists())
+        shown = list_cost_settings(principal=None, query={})["settings"]
+        self.assertFalse(
+            {"Cluster Training", "Cluster Meeting"} & {item["label"] for item in shown}
+        )
+        # The rows a meeting and a training ARE priced from stay.
+        self.assertLessEqual(
+            {
+                "cluster_meetings_trainings_meals",
+                "group_training_meals",
+                "group_training_venue_cost",
+                "group_training_facilitation_fee",
+            },
+            {item["key"] for item in shown},
+        )
+
+    def test_the_migration_removes_them_from_every_catalogue(self):
+        from django.apps import apps as django_apps
+
+        older = CostCatalogue.objects.create(
+            country=self.catalogue.country,
+            fy=self.catalogue.fy,
+            version=self.catalogue.version + 50,
+            is_active=False,
+        )
+        for key in self.KEYS:
+            self._row(key)
+            self._row(key, catalogue=older)
+        untouched = CostSetting.objects.exclude(key__in=self.KEYS).count()
+
+        self.migration.retire(django_apps, None)
+
+        self.assertFalse(CostSetting.objects.filter(key__in=self.KEYS).exists())
+        self.assertEqual(CostSetting.objects.count(), untouched)
+        # Reference data only ever creates canonical rows, so a deploy does
+        # not bring them back.
+        self.assertEqual(ensure_cost_reference(), 0)
+        self.assertFalse(CostSetting.objects.filter(key__in=self.KEYS).exists())
+        self.migration.retire(django_apps, None)  # nothing left: a no-op
+
+    def test_what_was_priced_with_them_is_history_and_stays(self):
+        from django.apps import apps as django_apps
+
+        from apps.activities.models import Activity, ActivityScheduleCostLine
+        from apps.budget.models import CostSettingHistory
+
+        meeting = Activity.objects.create(
+            activity_type="cluster_meeting", status="completed"
+        )
+        for key in self.KEYS:
+            self._row(key)
+            ActivityScheduleCostLine.objects.create(
+                activity=meeting,
+                cost_setting_key=key,
+                label=key,
+                unit_cost=9_000,
+                amount=9_000,
+                catalogue_id=self.catalogue.id,
+            )
+            CostSettingHistory.objects.create(
+                key=key,
+                label=key,
+                new_unit_cost=9_000,
+                version=2,
+                changed_by_user_id="cd-1",
+            )
+
+        self.migration.retire(django_apps, None)
+
+        self.assertEqual(
+            ActivityScheduleCostLine.objects.filter(
+                activity=meeting, cost_setting_key__in=self.KEYS
+            ).count(),
+            2,
+        )
+        self.assertEqual(
+            CostSettingHistory.objects.filter(key__in=self.KEYS).count(), 2
+        )
+
+    def test_a_retired_session_rate_cannot_be_set_again(self):
+        from types import SimpleNamespace
+
+        from apps.budget.services import upsert_cost_setting
+        from apps.core.exceptions import BadRequest
+        from apps.core.rbac import EdifyRole
+
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value, user_id="cd-1"
+        )
+        for key in self.KEYS:
+            with self.subTest(key=key):
+                with self.assertRaisesMessage(BadRequest, "retired cost item"):
+                    upsert_cost_setting(
+                        {"key": key, "unitCost": 5_000, "reason": "Bring it back"},
+                        principal,
+                    )
+        self.assertFalse(CostSetting.objects.filter(key__in=self.KEYS).exists())
