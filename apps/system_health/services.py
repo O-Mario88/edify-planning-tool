@@ -509,6 +509,48 @@ def _mock_leakage() -> dict:
     }
 
 
+def cluster_meeting_lines_off_recipe():
+    """Saved cost lines on a cluster meeting that no meeting recipe wrote.
+
+    What belongs on a meeting is read from the costing recipe
+    (``cluster_meeting_rate_keys``): the participants' snacks, the room, the
+    handouts and the staff member's day. This check used to keep its own
+    list, which still said a meeting is snacks alone, so the room the recipe
+    charges every meeting was reported as a wrong cost. Beside the recipe's
+    own rates a meeting may carry:
+
+    * its share of the shared field day, which the Daily Visit Batch writes
+      under the same day keys;
+    * a rate an earlier recipe charged it, on a line saved at the time;
+    * a cost the Country Director linked to the meeting's catalogue item.
+
+    Everything else is reported: a legacy venue, mobilisation or lump-sum
+    key, a facilitation fee (nobody facilitates a meeting), a training's
+    meals rate.
+    """
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.budget.costing import CLUSTER_MEETING_TYPES, cluster_meeting_rate_keys
+    from apps.budget.models import CostSetting
+    from apps.budget.reference import CLUSTER_MEETING_FORMER_RATE_KEYS
+    from apps.daily_visit_batches.pricing import KEY_LABELS as day_pool_keys
+
+    linked_to_its_catalogue_item = CostSetting.objects.filter(
+        key=OuterRef("cost_setting_key"),
+        catalogue_item_id=OuterRef("activity_catalogue_item_id"),
+    )
+    return (
+        ActivityScheduleCostLine.objects.filter(
+            activity__activity_type__in=CLUSTER_MEETING_TYPES
+        )
+        .exclude(
+            cost_setting_key__in=cluster_meeting_rate_keys()
+            | CLUSTER_MEETING_FORMER_RATE_KEYS
+            | set(day_pool_keys)
+        )
+        .exclude(Exists(linked_to_its_catalogue_item))
+    )
+
+
 def _workflow_issues() -> dict:
     """Detect data/workflow + finance-integrity conditions that make a demo or
     approval chain unsafe. Every check is a DB aggregation, not a Python loop."""
@@ -567,30 +609,7 @@ def _workflow_issues() -> dict:
         if line_total and line_total != estimate
     )
 
-    # Cluster meetings carry only the participant-snacks line.  The check is
-    # deliberately key-based so a legacy venue/facilitation/mobilisation row
-    # is caught too, not only the three historic keys listed here previously.
-    # A staff meeting also carries its share of the owner's shared field day
-    # (transport, lunch and the secondary-district nights) when it joins that
-    # day's batch; those pooled lines are the day's cost, not the meeting's.
-    from apps.daily_visit_batches.pricing import KEY_LABELS as _DAY_POOL_KEYS
-
-    cluster_meeting_with_wrong_cost = (
-        ActivityScheduleCostLine.objects.filter(
-            activity__activity_type__in=[
-                "cluster_meeting",
-                "cluster_meeting_ssa_review",
-            ]
-        )
-        .exclude(
-            cost_setting_key__in=[
-                "cluster_meeting_participant_meal_cost_per_head",
-                "cluster_meetings_trainings_meals",
-                *_DAY_POOL_KEYS,
-            ]
-        )
-        .count()
-    )
+    cluster_meeting_with_wrong_cost = cluster_meeting_lines_off_recipe().count()
 
     # Trainings (group training) without a participant count.
     training_no_participants = (
@@ -1258,7 +1277,7 @@ def _workflow_issues() -> dict:
         )
     if cluster_meeting_with_wrong_cost:
         blockers.append(
-            f"{cluster_meeting_with_wrong_cost} cluster meeting cost line(s) do not use Participant snacks."
+            f"{cluster_meeting_with_wrong_cost} cluster meeting cost line(s) carry a rate the meeting recipe does not charge."
         )
     if training_no_participants:
         blockers.append(

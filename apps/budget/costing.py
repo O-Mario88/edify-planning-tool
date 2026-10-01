@@ -61,10 +61,6 @@ GROUP_TRAINING_RATE_KEYS = (
     "group_training_venue_cost",
 )
 TOT_MEALS_RATE_KEY = "tot_trainings_meals"
-# A cluster meeting is priced apart from a cluster training (owner,
-# 2026-09-17). A rate card that predates the split answers this key from the
-# shared row — see RATE_ALIASES in apps.budget.reference.
-CLUSTER_MEETING_RATE_KEY = "cluster_meeting"
 # Meeting participant meals are exclusive to meetings. The legacy rate key
 # is retained for compatibility with rate cards and saved budget lines.
 CLUSTER_MEALS_RATE_KEY = "cluster_meetings_trainings_meals"
@@ -179,13 +175,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
       whose reason is OneTest fetches the OneTest rate instead.
     * A group session is venue and facilitation per day, the materials it
       states (printing by the page, photocopying by the page and the copy;
-      none stated, none charged), the day away, and the session's own rate:
-      Cluster Meetings/Trainings, TOT trainings, Student or Proprietor
-      Conference. A cluster meeting feeds its participants per head at the
-      cluster meals rate (owner, 2026-09-15); a group training, staff-run or
-      partner-run, at the group training meals rate and a TOT training at
-      the TOT meals rate (session costing spec, 2026-09-26). A meeting has
-      no facilitator.
+      none stated, none charged), the day away, and the session's own rate
+      where it has one: TOT trainings, Student or Proprietor Conference. A
+      cluster meeting or training has none (owner, 2026-09-26; the two rows
+      were removed on 2026-10-01). A cluster meeting feeds its participants
+      per head at the cluster meals rate (owner, 2026-09-15); a group
+      training, staff-run or partner-run, at the group training meals rate
+      and a TOT training at the TOT meals rate (session costing spec,
+      2026-09-26). A meeting has no facilitator.
     * The day away always carries its meal. The participants' meals are the
       session's own line and the staff member's lunch is the day's, and the
       Daily Visit Batch shares that day across every session run on it. A
@@ -396,8 +393,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # participants' meals per head, the facilitation fee, the venue, the
         # printed and photocopied materials, and the staff member's day
         # (primary or secondary district) shared across that officer's
-        # activities that day. The "Cluster Training" per-session rate is no
-        # longer charged.
+        # activities that day. No per-session rate on top.
         add_group_session(
             _days_of(a),
             None,
@@ -434,7 +430,13 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             key = "onetest"
             basis = "per OneTest visit"
         elif is_in_school_training:
-            key = "core_partner_visit" if is_core else "client_partner_visit"
+            # Owner, 2026-10-01: an in-school training "should be costed as
+            # a normal visit ... if it is partner it should carry the same
+            # partner school visit cost", and "in-school training visit for
+            # core is the same as the in-school training visit for client
+            # schools, core trained and core graduate". One row, whatever
+            # the school: the partner school visit rate.
+            key = "client_partner_visit"
             basis = "per school mission"
         elif activity_type in VISIT_TYPES or is_ssa:
             # SSA Support is a partner school visit and costs as one.
@@ -492,6 +494,44 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     )
 
 
+def cluster_meeting_rate_keys() -> frozenset[str]:
+    """Every rate the recipe above can charge a cluster meeting, read off the
+    recipe itself.
+
+    Each meeting type is priced on a card that carries every canonical rate,
+    staff-run and partner-run, in a primary and a secondary district, with
+    people in the room and handouts printed and copied; the keys of the lines
+    are the answer. Whatever needs to know which costs belong on a meeting
+    (System Health, the data repair) asks here rather than keeping a list of
+    its own: the health check kept one, and reported the room every meeting
+    is charged for as a wrong cost.
+    """
+    from apps.budget.reference import CANONICAL_RATE_KEYS
+
+    card = dict.fromkeys(CANONICAL_RATE_KEYS, 1)
+    stated = {
+        "expectedParticipants": 1,
+        "printingPages": 1,
+        "photocopyPages": 1,
+        "photocopyCopies": 1,
+    }
+    return frozenset(
+        line.key
+        for activity_type in CLUSTER_MEETING_TYPES
+        for delivery in ("staff", "partner")
+        for district in ("primary", "secondary")
+        for line in cost_for_activity(
+            {
+                **stated,
+                "activityType": activity_type,
+                "deliveryType": delivery,
+                "districtType": district,
+            },
+            card,
+        ).lines
+    )
+
+
 # NOTE: a `resolve_activity_cost` helper used to live here ("prefer the
 # snapshot; recalc when actuals exist"). It had no callers, and its recalc
 # branch would have re-priced completed work at CURRENT rates — the exact
@@ -513,6 +553,7 @@ __all__ = [
     "materials_quantities",
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
+    "cluster_meeting_rate_keys",
 ]
 
 
