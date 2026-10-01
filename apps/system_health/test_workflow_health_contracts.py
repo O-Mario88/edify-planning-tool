@@ -89,36 +89,160 @@ class WorkPricedLaterIsNotReportedTest(TestCase):
         )
         self.assertEqual(_workflow_issues()["scheduledVisitsMissingBatch"], 1)
 
-    def test_a_meetings_share_of_the_field_day_is_not_a_wrong_meeting_cost(self):
-        from apps.system_health.services import _workflow_issues
 
-        meeting = Activity.objects.create(
+class ClusterMeetingCostLinesFollowTheRecipeTest(TestCase):
+    """System Health reads what belongs on a cluster meeting from the costing
+    recipe. It kept a list of its own, which still said a meeting is snacks
+    alone after the recipe gave every meeting its room, and reported each
+    meeting scheduled as a blocker."""
+
+    def setUp(self):
+        self.meeting = Activity.objects.create(
             activity_type="cluster_meeting", status="scheduled"
         )
-        for key in ("primary_transport_per_day", "lunch_per_day"):
-            ActivityScheduleCostLine.objects.create(
-                activity=meeting,
-                cost_setting_key=key,
-                label=key,
-                unit_cost=5_000,
-                amount=5_000,
-            )
-        issues = _workflow_issues()
-        self.assertFalse(
-            any("do not use Participant snacks" in b for b in issues["blockers"]),
-            issues["blockers"],
-        )
-        ActivityScheduleCostLine.objects.create(
-            activity=meeting,
-            cost_setting_key="group_training_venue_cost",
-            label="Venue",
+
+    def _line(self, key, activity=None, **fields):
+        return ActivityScheduleCostLine.objects.create(
+            activity=activity or self.meeting,
+            cost_setting_key=key,
+            label=key,
             unit_cost=5_000,
             amount=5_000,
+            **fields,
         )
-        self.assertIn(
-            "1 cluster meeting cost line(s) do not use Participant snacks.",
-            _workflow_issues()["blockers"],
+
+    def _reported(self):
+        from apps.system_health.services import cluster_meeting_lines_off_recipe
+
+        return sorted(
+            cluster_meeting_lines_off_recipe().values_list(
+                "cost_setting_key", flat=True
+            )
         )
+
+    def _blockers(self):
+        from apps.system_health.services import _workflow_issues
+
+        return [
+            blocker
+            for blocker in _workflow_issues()["blockers"]
+            if "cluster meeting cost line" in blocker
+        ]
+
+    def test_the_recipe_is_snacks_the_room_the_handouts_and_the_day(self):
+        """The keys are read off the recipe. A meeting's snacks are its own
+        rate, not a group training's meals (owner, 2026-10-01), nobody
+        facilitates a meeting, and no per-meeting rate rides on top."""
+        from apps.budget.costing import cluster_meeting_rate_keys
+
+        self.assertEqual(
+            cluster_meeting_rate_keys(),
+            {
+                "cluster_meetings_trainings_meals",
+                "group_training_venue_cost",
+                "printing_training_materials",
+                "photocopying_training_materials",
+                "primary_transport_per_day",
+                "secondary_transport_per_day",
+                "lunch_per_day",
+                "secondary_breakfast_per_day",
+                "secondary_overnight_dinner_per_day",
+                "secondary_accommodation_per_night",
+            },
+        )
+
+    def test_what_the_recipe_charges_a_meeting_is_not_a_wrong_cost(self):
+        from apps.budget.costing import cluster_meeting_rate_keys
+
+        review = Activity.objects.create(
+            activity_type="cluster_meeting_ssa_review", status="scheduled"
+        )
+        for key in cluster_meeting_rate_keys():
+            self._line(key)
+            self._line(key, activity=review)
+
+        self.assertEqual(self._reported(), [])
+        self.assertEqual(self._blockers(), [])
+
+    def test_a_line_saved_under_an_earlier_recipe_is_not_a_wrong_cost(self):
+        """The snacks under their first name, and the per-meeting rate the
+        recipe charged from 2026-09-06 to 2026-09-26."""
+        for key in (
+            "cluster_meeting_participant_meal_cost_per_head",
+            "cluster_meetings_trainings",
+            "cluster_meeting",
+        ):
+            self._line(key)
+
+        self.assertEqual(self._reported(), [])
+
+    def test_a_cost_the_cd_linked_to_the_meetings_item_is_not_a_wrong_cost(self):
+        from apps.budget.models import CostSetting
+
+        item, other = (_catalogue_item(code) for code in ("LINKED", "OTHER"))
+        CostSetting.objects.create(
+            key="meeting_banner",
+            label="Banner",
+            unit_cost=5_000,
+            catalogue_item=item,
+        )
+        self._line("meeting_banner", activity_catalogue_item_id=item.id)
+        self.assertEqual(self._reported(), [])
+
+        # The same rate on a meeting of an item it is not linked to.
+        elsewhere = Activity.objects.create(
+            activity_type="cluster_meeting", status="scheduled"
+        )
+        self._line(
+            "meeting_banner", activity=elsewhere, activity_catalogue_item_id=other.id
+        )
+        self.assertEqual(self._reported(), ["meeting_banner"])
+
+    def test_a_rate_no_meeting_recipe_charged_is_reported(self):
+        wrong = [
+            # Nobody facilitates a meeting.
+            "group_training_facilitation_fee",
+            # A training's meals are not a meeting's snacks.
+            "group_training_meals",
+            # Retired cluster keys the repair commands look for.
+            "cluster_meeting_cost",
+            "meals_per_participant",
+            "mobilisation_per_participant",
+            "venue",
+        ]
+        for key in wrong:
+            self._line(key)
+        # The same keys on a training are the training's business.
+        training = Activity.objects.create(
+            activity_type="cluster_training", status="scheduled"
+        )
+        self._line("group_training_facilitation_fee", activity=training)
+
+        self.assertEqual(self._reported(), sorted(wrong))
+        self.assertEqual(
+            self._blockers(),
+            [
+                "6 cluster meeting cost line(s) carry a rate the meeting "
+                "recipe does not charge."
+            ],
+        )
+
+
+def _catalogue_item(code):
+    from apps.activity_catalogue.models import ActivityCatalogueItem
+
+    return ActivityCatalogueItem.objects.create(
+        stable_code=f"HEALTH_CONTRACT_{code}",
+        source_name=f"Health contract {code}",
+        display_name=f"Health contract {code}",
+        activity_type="cluster_meeting",
+        delivery_method="cluster_meeting",
+        workflow_kind="cluster_meeting",
+        status="active",
+        salesforce_record_type="MEETING",
+        evidence_profile="CLUSTER_MEETING_FORM",
+        costing_profile="CLUSTER_MEETING",
+    )
 
 
 def _school():

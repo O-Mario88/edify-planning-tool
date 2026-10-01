@@ -233,6 +233,20 @@ RETIRED_VISIT_RATE_KEYS = frozenset(
     {"client_staff_visit", "core_staff_visit", "ssa_support"}
 )
 
+# Rates an earlier cluster meeting recipe charged, which a meeting priced at
+# the time still carries on its saved cost lines: the snacks under their
+# first name (until 2026-09-15) and the per-meeting rate (2026-09-06 to
+# 2026-09-26), first on the row meetings shared with trainings and from
+# 2026-09-17 on its own. System Health reads them as history, not as a wrong
+# cost on a meeting.
+CLUSTER_MEETING_FORMER_RATE_KEYS = frozenset(
+    {
+        "cluster_meeting_participant_meal_cost_per_head",
+        "cluster_meetings_trainings",
+        "cluster_meeting",
+    }
+)
+
 RETIRED_COST_SETTING_KEYS = (
     LEGACY_VISIT_COST_KEYS
     | LEGACY_CLUSTER_ACTIVITY_COST_KEYS

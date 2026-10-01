@@ -492,6 +492,44 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     )
 
 
+def cluster_meeting_rate_keys() -> frozenset[str]:
+    """Every rate the recipe above can charge a cluster meeting, read off the
+    recipe itself.
+
+    Each meeting type is priced on a card that carries every canonical rate,
+    staff-run and partner-run, in a primary and a secondary district, with
+    people in the room and handouts printed and copied; the keys of the lines
+    are the answer. Whatever needs to know which costs belong on a meeting
+    (System Health, the data repair) asks here rather than keeping a list of
+    its own: the health check kept one, and reported the room every meeting
+    is charged for as a wrong cost.
+    """
+    from apps.budget.reference import CANONICAL_RATE_KEYS
+
+    card = dict.fromkeys(CANONICAL_RATE_KEYS, 1)
+    stated = {
+        "expectedParticipants": 1,
+        "printingPages": 1,
+        "photocopyPages": 1,
+        "photocopyCopies": 1,
+    }
+    return frozenset(
+        line.key
+        for activity_type in CLUSTER_MEETING_TYPES
+        for delivery in ("staff", "partner")
+        for district in ("primary", "secondary")
+        for line in cost_for_activity(
+            {
+                **stated,
+                "activityType": activity_type,
+                "deliveryType": delivery,
+                "districtType": district,
+            },
+            card,
+        ).lines
+    )
+
+
 # NOTE: a `resolve_activity_cost` helper used to live here ("prefer the
 # snapshot; recalc when actuals exist"). It had no callers, and its recalc
 # branch would have re-priced completed work at CURRENT rates — the exact
@@ -513,6 +551,7 @@ __all__ = [
     "materials_quantities",
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
+    "cluster_meeting_rate_keys",
 ]
 
 
