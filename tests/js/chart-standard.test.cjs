@@ -75,6 +75,19 @@ test('value labels stay silent when their bar has no room for them',()=>{
  assert.equal(o.dataLabels.formatter(12,{w:{globals:{gridWidth:600,gridHeight:200,labels:['One'],series:[[12]]}}}),'12');
  assert.equal(o.dataLabels.formatter(12,{w:{globals:{gridWidth:200,gridHeight:200,labels:Array(10).fill('x'),series:Array(8).fill([1])}}}),'');
 });
+test('a missing value says so without the unit, and only where the words have room',()=>{
+ const rate=options(panels({series:[{name:'Rate',data:[null,40]}],labels:['A','B'],yaxis:{title:{text:'Completed (%)'}}})[0]);
+ assert.equal(rate.dataLabels.formatter(40),'40%');
+ assert.equal(rate.dataLabels.formatter(null),'Not measured');
+ const one={w:{globals:{gridWidth:600,gridHeight:200,labels:['A','B'],series:[[null,40]]}}};
+ assert.equal(rate.dataLabels.formatter(null,one),'Not measured');
+ // Six people over one month: side-by-side bars leave the words no room.
+ const six={w:{globals:{gridWidth:600,gridHeight:200,labels:['Oct'],series:Array(6).fill([null])}}};
+ assert.equal(rate.dataLabels.formatter(null,six),'');
+ assert.equal(rate.dataLabels.formatter(0,six),'0%');
+ const narrow={w:{globals:{gridWidth:600,gridHeight:200,labels:Array(12).fill('x'),series:[[null]]}}};
+ assert.equal(rate.dataLabels.formatter(null,narrow),'');
+});
 test('heatmaps retain each district and intervention without zero-filling missing scores',()=>{
  const result=panels({chart:{type:'heatmap'},series:[{name:'District A',data:[{x:'Literacy',y:2},{x:'Leadership',y:null}]}]});
  assert.deepEqual(result[0].categories,['Literacy','Leadership']);assert.deepEqual(result[0].series[0].data,[2,null]);

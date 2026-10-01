@@ -129,7 +129,7 @@
     const horizontal = panel.horizontal;
     const trend = panel.trend === true;
     const percent = !!(panel.axis?.opposite || panel.axis?.title?.text?.includes('%') || panel.axis?.title?.text === 'Percent');
-    const formatter = percent ? value => `${format(value)}%` : format;
+    const formatter = percent ? value => value == null ? format(value) : `${format(value)}%` : format;
     const wholeNumbers = values.every(v => Number.isInteger(v));
     const colors = panel.series.map(s => colorFor(s.colorIndex ?? 0));
     const axis = {...panel.axis, opposite: false, show: true, seriesName: undefined, forceNiceScale: true, tickAmount: 4,
@@ -150,6 +150,17 @@
       const bars = (g.labels.length || 1) * (g.series.length || 1);
       return (horizontal ? g.gridHeight : g.gridWidth) / bars >= (horizontal ? 14 : (percent ? 36 : 26));
     };
+    // A missing value says "Not measured", without the axis unit, so it is
+    // never read as a zero. The words are about 92px wide and side-by-side
+    // bars sit at most BAR_MAX_PX apart, so among several series they stay
+    // silent like any label without room: six of them over one month piled
+    // into a blot on the first day of a fiscal year.
+    const missingFits = opts => {
+      const g = opts && opts.w && opts.w.globals;
+      if (!g || !g.gridWidth || !g.gridHeight) return true;
+      if (horizontal) return labelFits(opts);
+      return (g.series.length || 1) === 1 && g.gridWidth / (g.labels.length || 1) >= 92;
+    };
     return {
       _edifyStandard: true,
       chart: {type: trend ? 'area' : 'bar',
@@ -164,7 +175,8 @@
         dataLabels: {position: 'top'}}},
       dataLabels: {enabled: !trend, offsetY: horizontal ? 0 : -16, offsetX: horizontal ? 6 : 0,
         textAnchor: horizontal ? 'start' : 'middle',
-        formatter: (value, opts) => labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
+        formatter: (value, opts) => value == null ? (missingFits(opts) ? format(value) : '')
+          : labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
         style: {fontSize: '12px', fontWeight: 500, colors: [ink]}, background: {enabled: false}},
       xaxis: {crosshairs: {show: trend, stroke: {color: colors[0], width: 1, dashArray: 0}}, categories: panel.categories, type: 'category',
         title: horizontal ? (panel.axis?.title || {}) : {},
