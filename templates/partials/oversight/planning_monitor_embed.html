@@ -10,14 +10,25 @@ hx-headers), which planning_monitor_view answers with this fragment and no
 history entry; static/js/dashboard-embed.js keeps the links htmx does not own
 (the figures' drill-downs, the pager) inside it too.
 {% endcomment %}
-<div class="space-y-4">
-  <div class="edify-view-toolbar">
+{% comment %}One head row (owner, 2026-09-30: "Tabs, Filters, KPI tiles are
+repeated"): the section's name, its two tabs and the chosen tab's filters on
+one line, then the figures and the table. The name rides in the fragment so
+the row is whole; the section's placeholder carries it until this arrives.
+{% endcomment %}
+<div class="space-y-3">
+  <div class="edify-view-toolbar" data-pl-section-head>
+    <h2 id="pl-monitor-title" class="rpl-section-title">Planning Monitor</h2>
     <nav data-edify-tablist aria-label="Planning Monitor views">
       <a href="/planning-monitor/?view=planning" data-edify-tab{% if active_oversight_view != "execution" %} aria-current="page"{% endif %}
          hx-get="/planning-monitor/?view=planning" hx-target="#oversight-workspace" hx-swap="innerHTML">Planning</a>
       <a href="/planning-monitor/?view=execution" data-edify-tab{% if active_oversight_view == "execution" %} aria-current="page"{% endif %}
          hx-get="/planning-monitor/?view=execution" hx-target="#oversight-workspace" hx-swap="innerHTML">Execution &amp; Completion</a>
     </nav>
+    {% if active_oversight_view == "execution" %}
+      {% include "partials/oversight/_execution_filters.html" %}
+    {% else %}
+      {% include "partials/oversight/_monitor_filters.html" %}
+    {% endif %}
   </div>
   {% if active_oversight_view == "execution" %}
     {% include "partials/oversight/execution_workspace.html" %}

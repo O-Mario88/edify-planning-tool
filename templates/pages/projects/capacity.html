@@ -37,6 +37,8 @@ class="btn btn-primary h-8">+ Set Staff Capacity</button>
 </div>
 {% endif %}
 </div>
+{# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+{% include "partials/_section_nav.html" %}
 
 {% if project_options|length > 1 %}
 <form method="get" action="/projects/capacity" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Project" x-data>
@@ -49,19 +51,23 @@ class="btn btn-primary h-8">+ Set Staff Capacity</button>
 </form>
 {% endif %}
 
+{% comment %}The rule a project without allocations follows, said once for the page
+rather than in every card (owner, 2026-09-30: show each thing once).{% endcomment %}
+{% if sections %}<p class="edify-text-caption edify-text-muted" data-capacity-rule>A project with no allocations is open: any staff member may add its schools. Once you set the first allocation, only staff with an allocation can add them.</p>{% endif %}
 {% for section in sections %}
 {% with project=section.project summary=section.summary %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="capacity-{{ project.id }}-title" data-capacity-project="{{ project.id }}">
   <div class="capacity-section-head border-b border-[var(--edify-border)] px-4 py-3">
     <div class="min-w-0">
-      <h2 id="capacity-{{ project.id }}-title" class="text-[15px] font-semibold text-slate-800">{% firstof project.code project.name %}</h2>
-      {% if project.code %}<p class="edify-text-caption edify-text-muted">{{ project.name }}</p>{% endif %}
+      {# The project's name is the title, its code beside it, as on Project Monitoring (owner, 2026-09-30). #}
+      <h2 id="capacity-{{ project.id }}-title" class="text-[15px] font-semibold text-slate-800">{{ project.name }}{% if project.code %} <span class="edify-text-caption edify-text-muted font-mono">{{ project.code }}</span>{% endif %}</h2>
       <dl class="project-capacity-line" data-capacity-summary>
         <div><dt>Schools</dt><dd>{{ summary.assigned }} / {{ summary.capacity }} allocated</dd></div>
         <div><dt>Staff</dt><dd>{{ summary.staff }}</dd></div>
         <div><dt>Capacity remaining</dt><dd><strong>{{ summary.remaining }}</strong></dd></div>
         {% if summary.outside_allocations %}<div><dt>Added outside allocations</dt><dd>{{ summary.outside_allocations }}</dd></div>{% endif %}
         {% if section.blocked %}<div><dt>Project</dt><dd>{{ project.status_label }} — takes no new schools</dd></div>{% endif %}
+        {% if not section.allocations %}<div data-capacity-unmanaged><dt>Allocations</dt><dd>None set · open to every staff member</dd></div>{% endif %}
       </dl>
     </div>
     {% row_actions project.name %}
@@ -105,8 +111,6 @@ class="btn btn-primary h-8">+ Set Staff Capacity</button>
   </div>
   {% include "components/table_pager.html" with pager=staff_pager param=page_key pagination_label="Staff allocations for "|add:project.name %}
   {% endwith %}
-  {% else %}
-  <p class="px-4 py-4 edify-text-caption edify-text-muted" data-capacity-unmanaged>No staff allocations yet. Until you set the first one, staff add schools to this project without a limit; after it, only staff with an allocation can add them.</p>
   {% endif %}
 </section>
 {% endwith %}

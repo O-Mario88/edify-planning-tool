@@ -18,8 +18,10 @@
            data-pl-monitor data-oversight-workspace
            data-dashboard-embed="/planning-monitor/" data-embed-target="#oversight-workspace"
            hx-headers='{"X-Edify-Embed": "dashboard"}'>
-    <h2 id="pl-monitor-title" class="rpl-section-title">Planning Monitor</h2>
+    {% comment %}The heading arrives with the monitor, in its one head row beside
+    the tabs and filters; the placeholder holds it until then.{% endcomment %}
     <div id="oversight-workspace" hx-get="/planning-monitor/?{{ pl_monitor_query }}" hx-trigger="load" hx-swap="innerHTML">
+      <h2 id="pl-monitor-title" class="rpl-section-title">Planning Monitor</h2>
       {% include "partials/dashboards/pl/_embed_loading.html" with label="Loading the Planning Monitor…" %}
     </div>
   </section>

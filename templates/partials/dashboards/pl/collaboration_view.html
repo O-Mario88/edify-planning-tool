@@ -51,7 +51,7 @@ the lead has recorded with them.
           {% include "components/table_pager.html" with pager=regional_rows_pager param="regional_rows_page" %}
         </div>
         {% else %}
-        {% include "components/empty_state.html" with message="Nothing from the Regional Lead is waiting on you." hint="Feedback on your team's trainings and coaching the Regional Lead shares with you appear here to acknowledge." compact="true" %}
+        {% include "components/empty_state.html" with message="Nothing from the Regional Lead is waiting on you." hint="Feedback on your team's trainings and coaching the Regional Lead shares with you appear here to acknowledge." line="true" %}
         {% endif %}
       </section>
 
@@ -93,7 +93,7 @@ the lead has recorded with them.
           {% include "components/table_pager.html" with pager=cd_rows_pager param="cd_rows_page" %}
         </div>
         {% else %}
-        {% include "components/empty_state.html" with message="No open flags or escalations with the Country Director." compact="true" %}
+        {% include "components/empty_state.html" with message="No open flags or escalations with the Country Director." line="true" %}
         {% endif %}
       </section>
 

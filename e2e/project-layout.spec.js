@@ -35,13 +35,13 @@ test('project filters, queue tabs, and closed action menus survive interaction',
  await page.setViewportSize({width:1366,height:768});
  await signIn(page,'admin@edify.org','edify',{acceptRequiredAgreements:false});
  await page.goto('/projects');
- // The portfolio row's menu is the shared Actions menu since 2026-09-30
- // (its hand-rolled list was clipped by the table scroller).
- const row=page.locator('[data-record-action] .row-menu').first();
+ // The portfolio is its project cards alone since 2026-09-30 (the table under
+ // them drew the same projects twice); a card carries the shared Actions menu.
+ const row=page.locator('[data-project-card] .row-menu').first();
  const menu=row.locator('.row-menu__list');await expect(menu).toBeHidden();
  await row.locator('.row-menu__trigger').click();await expect(menu).toBeVisible();
  await page.getByRole('heading',{name:'Projects',exact:true}).first().click();await expect(menu).toBeHidden();
- const detail=await menu.locator('a').first().getAttribute('href');await page.goto(detail);
+ const detail=await menu.locator('a',{hasText:'Open Project'}).first().getAttribute('href');await page.goto(detail);
  for(const id of ['assign-project-staff-title','add-project-school-title']){const panel=page.locator('details[aria-labelledby="'+id+'"]');await expect(panel.locator('form')).toBeHidden();await panel.locator('summary').first().click();await expect(panel.locator('form')).toBeVisible();}
  await page.goto('/projects/planning');
  await page.locator('.spp-readiness summary').click();await expect(page.locator('.spp-band').first()).toBeVisible();
@@ -55,9 +55,10 @@ test('project filters, queue tabs, and closed action menus survive interaction',
  await page.goto('/projects/my-plan');
  await expect(page.locator('.sp-more-filters')).toHaveCount(0);
  await page.getByRole('tab',{name:'Month',exact:true}).click();await expect(page).toHaveURL(/period=month/);
+ // The filters are fields of the page, with no button to hide them behind
+ // (owner, 2026-09-30).
  await expect(page.locator('#sp-plan-filters')).toBeVisible();
- await page.getByRole('button',{name:'Filters',exact:true}).click();await expect(page.locator('#sp-plan-filters')).toBeHidden();
- await page.getByRole('button',{name:'Filters',exact:true}).click();await expect(page.locator('#sp-plan-filters')).toBeVisible();
+ await expect(page.getByRole('button',{name:'Filters',exact:true})).toHaveCount(0);
 });
 test('overfull tables preserve action widths instead of forcing an impossible fit',async({page})=>{
  const {snapshotServer}=require('./helpers/snapshot-server');

@@ -1511,6 +1511,172 @@ REGIONAL_LEAD_SECTIONS = [
     },
 ]
 
+# The Project Coordinator's sidebar, one page per job (owner, 2026-09-30:
+# "Cut the sidebar from 23 entries to about 12 ... fold To-Do and My Actions
+# into the Dashboard; make Capacity a tab of Projects and Analytics a tab of
+# Monitoring; put Budget, Weekly Advance and Work Plan under one Finance page;
+# remove the duplicate Priorities entry"). Each page keeps its URL and its
+# permission; the pages a sidebar entry stands for are drawn as a strip on
+# each of them (partials/_section_nav.html), and NAV_FOLDS below keeps the
+# entry lit on all of them.
+PROJECT_WORK_SECTIONS = [
+    {
+        "key": "today",
+        "label": "Today",
+        "url": "/dashboard?view=today",
+        "page_key": "dashboard",
+        "cluster": "project_work",
+        "description": "Your route, the next action and what waits on you.",
+    },
+    {
+        "key": "operations",
+        "label": "Operations",
+        "url": "/dashboard?view=operations",
+        "page_key": "dashboard",
+        "cluster": "project_work",
+        "description": "Portfolio, impact, partners and actions.",
+    },
+    {
+        "key": "map",
+        "label": "Map",
+        "url": "/dashboard?view=map",
+        "page_key": "dashboard",
+        "cluster": "project_work",
+        "description": "The country map and its distribution table.",
+    },
+    {
+        "key": "todos",
+        "label": "To-Do",
+        "url": "/todos",
+        "page_key": "todos",
+        "cluster": "project_work",
+        "description": "Everything waiting on you, by priority.",
+    },
+    {
+        "key": "my_actions",
+        "label": "My Actions",
+        "url": "/actions/mine",
+        "page_key": "my_actions",
+        "cluster": "project_work",
+        "description": "School issues assigned to you.",
+    },
+]
+
+PROJECT_PORTFOLIO_SECTIONS = [
+    {
+        "key": "projects",
+        "label": "Projects",
+        "url": "/projects",
+        "match": "exact",
+        "page_key": "projects",
+        "cluster": "project_portfolio",
+        "description": "The projects you coordinate and their schools.",
+    },
+    {
+        "key": "capacity",
+        "label": "Capacity",
+        "url": "/projects/capacity",
+        "page_key": "project_capacity",
+        "cluster": "project_portfolio",
+        "description": "How many schools each staff member may add to each project.",
+    },
+]
+
+PROJECT_MONITORING_SECTIONS = [
+    {
+        "key": "monitoring",
+        "label": "Monitoring",
+        "url": "/projects/monitoring",
+        "page_key": "project_monitoring",
+        "cluster": "project_monitoring",
+        "description": "Every school in your projects, planned, delivered and moved.",
+    },
+    {
+        "key": "analytics",
+        "label": "Analytics",
+        "url": "/projects/analytics",
+        "page_key": "projects",
+        "cluster": "project_monitoring",
+        "description": "Verified impact, partner effectiveness and cost across projects.",
+    },
+]
+
+PROJECT_PLAN_SECTIONS = [
+    {
+        "key": "my_plan",
+        "label": "My Plan",
+        "url": "/projects/my-plan",
+        "page_key": "projects",
+        "cluster": "project_plan",
+        "description": "Your scheduled project activities by week, month, quarter and year.",
+    },
+    {
+        "key": "calendar",
+        "label": "Calendar",
+        "url": "/calendar",
+        "page_key": "calendar",
+        "cluster": "project_plan",
+        "description": "Your work, leave, holidays and organisation events on one calendar.",
+    },
+]
+
+FINANCE_SECTIONS = [
+    {
+        "key": "budget",
+        "label": "Budget",
+        "url": "/budget",
+        "page_key": "monthly_budget",
+        "cluster": "finance",
+        "description": "The cost of your planned activities by month, quarter and year.",
+    },
+    {
+        "key": "weekly_advance",
+        "label": "Weekly Advance Request",
+        "url": "/fund-requests/weekly",
+        "page_key": "fund_requests",
+        "cluster": "finance",
+        "description": "Submit this week's advance and follow its approval.",
+    },
+    {
+        "key": "work_plan",
+        "label": "Work Plan",
+        "url": "/work-plan",
+        "page_key": "work_plan",
+        "cluster": "finance",
+        "description": "The monthly work plan and its costs, for approval.",
+    },
+]
+
+MY_PERFORMANCE_SECTIONS = [
+    {
+        "key": "priorities",
+        "label": "Priorities",
+        "url": "/priorities",
+        "page_key": "priorities_master",
+        "cluster": "my_performance",
+        "description": "Your agreed priorities and performance conversations.",
+    },
+    {
+        "key": "targets",
+        "label": "Targets",
+        "url": "/my-targets",
+        "page_key": "my_target",
+        "cluster": "my_performance",
+        "description": "Your monthly, quarterly and yearly targets.",
+    },
+    {
+        "key": "development",
+        # The page's own title. The Priorities page already has a
+        # "Professional Development" tab (that section of the agreement); a
+        # second link of the same name beside it read as the same place.
+        "label": "My Professional Development",
+        "url": "/my-professional-development",
+        "page_key": "my_professional_development",
+        "cluster": "my_performance",
+        "description": "Your courses, requests and development fund.",
+    },
+]
+
 # Every multi-page workspace, keyed by the eyebrow its section strip shows.
 WORKSPACE_CLUSTER_LABELS = {
     "overview": "Overview",
@@ -1548,7 +1714,77 @@ WORKSPACES = {
         "sections": REGIONAL_LEAD_SECTIONS,
         "visible_to": {PL},
     },
+    # The Project Coordinator's folded pages (PROJECT_WORK_SECTIONS above).
+    # After "analytics", so the Analytics pages keep their own strip.
+    "project_work": {
+        "label": "Dashboard",
+        "sections": PROJECT_WORK_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
+    "project_portfolio": {
+        "label": "Projects",
+        "sections": PROJECT_PORTFOLIO_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
+    "project_monitoring": {
+        "label": "Project Monitoring",
+        "sections": PROJECT_MONITORING_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
+    "project_plan": {
+        "label": "My Plan",
+        "sections": PROJECT_PLAN_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
+    "finance": {
+        "label": "Finance",
+        "sections": FINANCE_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
+    "my_performance": {
+        "label": "My Performance",
+        "sections": MY_PERFORMANCE_SECTIONS,
+        "visible_to": {PROJECT_COORDINATOR},
+    },
 }
+
+#: Sidebar entries that stand for several pages for a role (owner,
+#: 2026-09-30, the Project Coordinator): host page_key -> the entries folded
+#: into it (left out of that role's sidebar), the paths that keep the host lit,
+#: and the host's name for that role. "analytics" lights the host anywhere in
+#: the role's Analytics workspace.
+NAV_FOLDS: dict[str, dict[str, dict]] = {
+    PROJECT_COORDINATOR: {
+        "dashboard": {
+            "folds": ("todos", "my_actions"),
+            "paths": ("/todos", "/actions/mine"),
+        },
+        "projects": {
+            "folds": ("project_capacity",),
+            "paths": ("/projects/capacity",),
+        },
+        "project_monitoring": {
+            "folds": ("analytics",),
+            "paths": ("/projects/analytics",),
+            "analytics": True,
+        },
+        "my_plan": {"folds": ("calendar",), "paths": ("/calendar",)},
+        "monthly_budget": {
+            "label": "Finance",
+            "folds": ("weekly_fund_request", "work_plan"),
+            "paths": ("/fund-requests/weekly", "/work-plan"),
+        },
+        "priorities_master": {
+            "label": "My Performance",
+            "folds": ("my_performance", "my_target", "my_professional_development"),
+            "paths": ("/my-performance", "/my-targets", "/my-professional-development"),
+        },
+    },
+}
+
+
+def _folded_page_keys(role: str) -> set[str]:
+    return {key for fold in NAV_FOLDS.get(role, {}).values() for key in fold["folds"]}
 
 
 def _path_matches(url: str, path: str, match: str = "prefix") -> bool:
@@ -3114,6 +3350,8 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
         return []
 
     analytics_sections = build_analytics_sections(user, current_path)
+    folds = NAV_FOLDS.get(role, {})
+    folded = _folded_page_keys(role)
 
     # An item may declare a narrower nav audience than route authorization
     # (see the `visible_to` note below). Admin overrides that so the super-role
@@ -3151,6 +3389,9 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
         visible_items = []
         for item in sec["items"]:
+            # A page this role reads as a tab of another entry (NAV_FOLDS).
+            if item.get("page_key") in folded:
+                continue
             # Staff have one direct Partner Oversight entry; the Partners
             # directory remains available to its other audiences.
             if (
@@ -3236,10 +3477,20 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                         _path_matches(extra, current_path)
                         for extra in item.get("extra_active_paths", ())
                     )
+                # The pages folded into this entry for this role keep it lit.
+                fold = folds.get(item["page_key"], {})
+                if not is_active and fold:
+                    is_active = any(
+                        _path_matches(path, current_path) for path in fold["paths"]
+                    ) or bool(
+                        fold.get("analytics")
+                        and any(s["active"] for s in analytics_sections)
+                    )
 
                 visible_items.append(
                     {
-                        "label": item.get("role_labels", {}).get(role, item["label"]),
+                        "label": fold.get("label")
+                        or item.get("role_labels", {}).get(role, item["label"]),
                         "url": url,
                         "icon": ICONS.get(
                             item.get("icon_key", item["page_key"]),

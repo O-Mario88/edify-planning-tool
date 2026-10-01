@@ -16,10 +16,11 @@ apart on the details that matter (state labels, due-date tone, tab counts).
 
   {% comment %}
   Actions Sent is a section of the Programme Lead's Team Assignments workspace
-  (with Extra Work, 2026-09-13). My Actions belongs to no workspace, so only the
-  sender's end carries the strip.
+  (with Extra Work, 2026-09-13). My Actions is a tab of the Project
+  Coordinator's dashboard (owner, 2026-09-30) and of no one else's workspace,
+  so the strip renders there for the Coordinator alone.
   {% endcomment %}
-  {% if perspective == "sender" %}{% include "partials/_section_nav.html" %}{% endif %}
+  {% include "partials/_section_nav.html" %}
 
   {% comment %}
   There is deliberately no KPI strip here. Open / Overdue / Resolved / All are

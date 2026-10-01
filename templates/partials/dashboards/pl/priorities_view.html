@@ -31,7 +31,7 @@ verified SSA, and the guidance the lead has issued to the team.
         </div>
         {% if priorities.rows|length > 12 %}<div class="rpl-card__footnote">Showing 12 of {{ priorities.rows|length }} milestones. Priorities lists every one.</div>{% endif %}
         {% else %}
-        {% include "components/empty_state.html" with message="No team allocation is approved for this year yet." hint="Your team's priorities appear here once Impact Assessment approves the distribution to your team." compact="true" %}
+        {% include "components/empty_state.html" with message="No team allocation is approved for this year yet." hint="Your team's priorities appear here once Impact Assessment approves the distribution to your team." line="true" %}
         {% endif %}
       </section>
 
@@ -70,7 +70,7 @@ verified SSA, and the guidance the lead has issued to the team.
               {% empty %}
               <tr>
                 <td colspan="6" class="rpl-table__empty">
-                  {% include "components/empty_state.html" with message="No team target has reached you this year." hint="Impact Assessment distributes the country targets to Programme Leads; you then share yours across the team." compact="true" %}
+                  {% include "components/empty_state.html" with message="No team target has reached you this year." hint="Impact Assessment distributes the country targets to Programme Leads; you then share yours across the team." line="true" %}
                 </td>
               </tr>
               {% endfor %}
@@ -109,7 +109,7 @@ verified SSA, and the guidance the lead has issued to the team.
           {% endfor %}
         </div>
         {% else %}
-        {% include "components/empty_state.html" with message="No guidance issued yet." hint="Issue guidance on a priority to your officers from Team Guidance; each one acknowledges it." compact="true" %}
+        {% include "components/empty_state.html" with message="No guidance issued yet." hint="Issue guidance on a priority to your officers from Team Guidance; each one acknowledges it." line="true" %}
         {% endif %}
       </section>
 
@@ -139,7 +139,7 @@ verified SSA, and the guidance the lead has issued to the team.
               {% empty %}
               <tr>
                 <td colspan="3" class="rpl-table__empty ps-4 pe-4 py-3">
-                  {% include "components/empty_state.html" with message="No officers are on your team yet." compact="true" %}
+                  {% include "components/empty_state.html" with message="No officers are on your team yet." line="true" %}
                 </td>
               </tr>
               {% endfor %}

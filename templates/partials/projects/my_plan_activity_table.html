@@ -3,9 +3,13 @@
 <section class="sp-card sp-table-card sp-table-card--{{ accent }}" aria-labelledby="sp-table-{{ kind }}">
   <div class="sp-card__header">
     <div><h2 id="sp-table-{{ kind }}">{{ title }} <span class="sp-count">{{ count }}</span>{% if readonly %}<span class="sp-readonly">Read only</span>{% endif %}</h2></div>
+    {% if not count %}<span data-sp-table-none>{{ empty }}</span>{% endif %}
     {% comment %}No link in a table's header (owner, 2026-09-27): Planning is
     in the navigation.{% endcomment %}
   </div>
+  {% comment %}An empty list is its title band alone (owner, 2026-09-30: no column
+  headings over nothing).{% endcomment %}
+  {% if count %}
   <div class="sp-table-wrap">
     {% paginate rows "rows_page" as rows_pager %}
 <table class="edify-record-table sp-table">
@@ -28,4 +32,5 @@
     </table>
 {% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
   </div>
+  {% endif %}
 </section>

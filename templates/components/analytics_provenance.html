@@ -1,8 +1,10 @@
+{% comment %}What the figures on the page were drawn from. The engine's name and its
+libraries are not for the reader (owner, 2026-09-30: "remove the technical
+text"); they stay in the metadata for the API.{% endcomment %}
 {% if engine %}
 <details class="platform-analytics-note">
   <summary>Data details{% if engine.record_count is not None %} · {{ engine.record_count }} records{% endif %}</summary>
   <div class="platform-analytics-note__body" role="note">
-  <span><strong>{{ engine.name }}</strong> · {{ engine.runtime }}</span>
   <span>
     {% if engine.record_count is not None %}{{ engine.record_count }} scoped record{{ engine.record_count|pluralize }} · {% endif %}
     {% if engine.quality %}{{ engine.quality.label|lower }} evidence · {% endif %}

@@ -781,10 +781,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn("background: #f8fbfe", desktop_table)
 
     def test_reference_record_grids_expose_table_semantics(self):
+        # The projects page is one card per project since 2026-09-30 (owner:
+        # "Show each dataset once"); its comparison table repeated the cards.
         for relative_path in (
             "templates/pages/trainings/index.html",
             "templates/pages/admin/audit_log.html",
-            "templates/partials/projects/portfolio_list.html",
         ):
             template = _read(relative_path)
             self.assertIn("<caption", template, relative_path)

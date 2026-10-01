@@ -496,6 +496,9 @@ def planning_monitor_view(request):
         "lens_base_url": PLANNING_MONITOR_PATH,
         "monitor_is_country": is_country_reader(request.user),
         "fy_options": fy_options(),
+        # On the Lead's dashboard the filters ride in the section's one head
+        # row, beside its name and tabs (owner, 2026-09-30).
+        "monitor_embedded": dashboard_embed.is_embedded(request),
     }
     if dashboard_embed.is_embedded(request):
         return dashboard_embed.fragment(
