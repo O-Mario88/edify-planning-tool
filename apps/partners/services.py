@@ -792,7 +792,7 @@ def mark_assignment_scheduled(assignment, *, scheduled_date, activity):
     Idempotent: re-running it on an already-scheduled assignment rewrites the
     same values rather than raising, so a retried HTMX POST is harmless.
     """
-    assignment.status = "partner_scheduled"
+    assignment.status = PartnerAssignment.STATUS_PARTNER_SCHEDULED
     assignment.scheduled_date = scheduled_date
     assignment.scheduled_activity = activity
     assignment.save(
@@ -1119,6 +1119,9 @@ def create_assignment(**fields):
     school = fields.get("school")
     assert_operating(school)
     _assert_school_takes_partner_work(school)
+    _assert_partner_half_open(school, fields)
+    _assert_project_partner(fields)
+    _assert_partner_delivers(fields)
     try:
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.
@@ -1152,6 +1155,62 @@ def create_assignment(**fields):
             "assigned to this partner and is waiting for the partner to "
             "schedule it. A school is assigned to the same partner only once."
         ) from exc
+
+
+def _assert_partner_delivers(fields: dict) -> None:
+    """The training a hand-over delivers is one the partner is recorded as
+    delivering (`capabilities.delivers`) — the course a training hand-over
+    names, or a course chosen as the hand-over's catalogue item."""
+    from .capabilities import assert_delivers
+
+    partner = fields.get("partner")
+    for item in (fields.get("training_course"), fields.get("catalogue_item")):
+        assert_delivers(partner, item)
+
+
+def _assert_project_partner(fields: dict) -> None:
+    """Project work goes to the project's own partners, or carries a reason
+    (`projects.services.assert_partner_on_project`). Here, at the one creation
+    door, so the coordinator's bulk hand-over, the Planning drawer with a
+    project and a reassignment all keep the same list."""
+    project = fields.get("project")
+    if project is None and fields.get("project_id"):
+        from apps.projects.models import Project
+
+        project = Project.objects.filter(id=fields["project_id"]).first()
+    if project is None:
+        return
+    from apps.projects.services import assert_partner_on_project
+
+    from .models import Partner
+
+    partner = fields.get("partner")
+    if partner is None and fields.get("partner_id"):
+        partner = Partner.all_objects.filter(id=fields["partner_id"]).first()
+    assert_partner_on_project(project, partner, fields.get("override_reason") or "")
+
+
+def _assert_partner_half_open(school, fields: dict) -> None:
+    """A Core package's partner half is two visits and two trainings (owner,
+    2026-09-30). Here, at the one creation door, so the Core Schools drawer,
+    the Planning drawer, a project's hand-over and every bulk path refuse the
+    same third one. A replacement for a returned hand-over takes its place
+    rather than adding one: the returned row no longer counts."""
+    if school is None or getattr(school, "school_type", None) != "core":
+        return
+    from apps.core_schools.package_credit import assignment_kind
+    from apps.core_schools.package_split import PARTNER, assert_side_open
+
+    from .models import PartnerAssignment
+
+    shape = PartnerAssignment(
+        support_type=fields.get("support_type"),
+        visit_number=fields.get("visit_number"),
+        training_number=fields.get("training_number"),
+        expected_activity_type=fields.get("expected_activity_type"),
+        purpose_of_visit=fields.get("purpose_of_visit"),
+    )
+    assert_side_open(school, assignment_kind(shape), PARTNER)
 
 
 def _assert_school_takes_partner_work(school) -> None:
@@ -1293,6 +1352,9 @@ def resolve_returned_assignment(assignment_id: str, data: dict, principal) -> di
                 source_ssa=assignment.source_ssa,
                 source_activity=assignment.source_activity,
                 project=assignment.project,
+                # A project's work to a partner outside its list needs a
+                # reason; the decision's note is that reason.
+                override_reason=note,
                 purpose=assignment.purpose,
                 focus_intervention=assignment.focus_intervention,
                 purpose_of_visit=assignment.purpose_of_visit,

@@ -10,11 +10,11 @@ So the CLIENT school's allowance no longer refuses anything. It is still
 counted — that is what the pages show — but the count stopped being a
 permission, and the buttons that used to grey out of it stay live.
 
-The CORE package is not part of that. Its 2 + 2 split rests on the owner's
-own later instruction (2026-09-17) and is enforced half here and half in
-`core_planning_services.assert_can_schedule`, which delegates the partner
-side to this module; the two must agree or a Core Schools row offers what
-the POST refuses. `_decide` marks which half is which.
+The CORE package is not part of that. Its 2 + 2 split (owner, 2026-09-30:
+two of the four visits and two of the four trainings are staff's, two are
+partners') is counted once, in `apps.core_schools.package_split`, which every
+door asks; this module reads the same split for the buttons, so a Core
+Schools row never offers what the POST refuses.
 
 Owner, 2026-09-21:
 
@@ -41,13 +41,11 @@ Partner pages:
   does not count. ``partner_pending`` names a live partner assignment
   nobody has scheduled yet — which is worth SAYING on the row, and no longer
   closes the school to staff.
-* Core schools: ``core_visit`` activities in the fiscal year, split by
-  ``delivery_type``, beside the package's trainings. Staff may hold two and
-  the partner side (scheduled partner visits plus visit slots assigned to a
-  partner and not yet scheduled) may hold two. These are the halves of the
-  package's four visits, and the same two the core scheduling service caps
-  at. Trainings are not visits: the Core Schools row keeps its own Training
-  entry open while staff trainings remain.
+* Core schools: the package's visits and trainings (`package_split`), each
+  split by who delivers them. Staff hold two of each; the partner side
+  (partner work plus hand-overs not yet dated) holds two of each. Donor,
+  story, invitation and social visits are not package work and are never
+  refused.
 
 Two answers per side, because a row button and a purpose inside a drawer are
 gated differently: ``staff_can_schedule`` says whether the visit itself may be
@@ -69,6 +67,8 @@ from dataclasses import asdict, dataclass, field
 
 from django.db.models import Count
 
+from apps.core_schools.package_split import SIDE_CAP
+
 # The shape of a year's support, as the pages display it — "1/2 visits" on a
 # Core Schools row, "2 of 2" beside a client school.
 #
@@ -78,11 +78,11 @@ from django.db.models import Count
 # staff support visit a year at a client-rule school — and it is the only
 # cap the client rule has: partner visits are counted, never refused.
 #
-# The CORE package keeps one condition (owner, the same day): "staff may plan
-# more core schools visits but only if the partner has not planned." Staff
-# hold CORE_STAFF_VISIT_CAP visits while the partner has a core visit planned
-# at the school; with none planned, staff may take the rest. The partner side
-# and the trainings are no longer capped. See `_decide_by_rule`.
+# The CORE package is split 2 + 2 (owner, 2026-09-30, replacing that day's
+# "staff may plan more core visits only if the partner has not planned"):
+# CORE_STAFF_VISIT_CAP visits and as many trainings are staff's, and
+# CORE_PARTNER_VISIT_CAP of each are the partner's. Counted in
+# `apps.core_schools.package_split`; see `_decide_by_rule`.
 #
 # Owner, later the same day, on what the one visit is: "other visits that are
 # allowed for clients schools and core trained, core graduate after the
@@ -97,10 +97,11 @@ CLIENT_STAFF_SSA_VISIT_CAP = 1
 #: The figure a client school's visits were once counted against. Kept for
 #: the pages and reports that still name it; nothing refuses by it.
 CLIENT_VISIT_CAP = CLIENT_STAFF_VISIT_CAP
-CORE_STAFF_VISIT_CAP = 2
-CORE_PARTNER_VISIT_CAP = 2
-#: The package's four visits, which staff may fill alone while the partner
-#: has planned none.
+CORE_STAFF_VISIT_CAP = SIDE_CAP
+CORE_PARTNER_VISIT_CAP = SIDE_CAP
+CORE_STAFF_TRAINING_CAP = SIDE_CAP
+CORE_PARTNER_TRAINING_CAP = SIDE_CAP
+#: The package's four visits: two staff, two partner.
 CORE_PACKAGE_VISITS = CORE_STAFF_VISIT_CAP + CORE_PARTNER_VISIT_CAP
 
 # School types under the once-a-year client rule. Core schools carry the
@@ -212,21 +213,30 @@ class VisitGate:
         return self.partner_visits + self.partner_pending
 
     @property
-    def staff_trainings_open(self) -> bool:
-        """Core only: staff may schedule a core training.
+    def partner_held_trainings(self) -> int:
+        return self.partner_trainings + self.partner_pending_trainings
 
-        Always, since 2026-09-28 ("lift all restrictions"): the training cap
-        went with the package's partner half. It stays a property so the Core
-        Schools row and `core_planning_services.assert_can_schedule` keep
-        asking one place.
-        """
-        return self.rule == "core"
+    @property
+    def staff_trainings_open(self) -> bool:
+        """Core only: staff may schedule a core training — while the staff
+        half of the package's trainings has room (owner, 2026-09-30)."""
+        return self.rule == "core" and self.staff_trainings < CORE_STAFF_TRAINING_CAP
+
+    @property
+    def partner_trainings_open(self) -> bool:
+        """Core only: a core training may still go to a partner."""
+        return (
+            self.rule == "core"
+            and self.partner_held_trainings < CORE_PARTNER_TRAINING_CAP
+        )
 
     def as_dict(self) -> dict:
         data = asdict(self)
         data["total_visits"] = self.total_visits
         data["partner_held_visits"] = self.partner_held_visits
+        data["partner_held_trainings"] = self.partner_held_trainings
         data["staff_trainings_open"] = self.staff_trainings_open
+        data["partner_trainings_open"] = self.partner_trainings_open
         return data
 
 
@@ -417,25 +427,30 @@ def visit_gates(
         _tally(counted.filter(_support_visit_q()), "staff_visits", "partner_visits")
         _tally(counted.filter(_ssa_visit_q()), "staff_ssa_visits", "partner_ssa_visits")
     if core_ids:
-        from apps.core_schools.core_planning_services import (
-            core_training_q,
-            core_visit_q,
-        )
+        # The package's own split, the one every core door asks
+        # (`package_split`), so a row button and its POST agree.
+        from apps.core_schools.package_split import package_splits
 
-        _tally(
-            live.filter(school_id__in=core_ids).filter(core_visit_q()),
-            "staff_visits",
-            "partner_visits",
+        splits = package_splits(
+            [s for s in rows if s.id in set(core_ids)],
+            fy,
+            exclude_activity_id=exclude_activity_id,
         )
-        _tally(
-            live.filter(school_id__in=core_ids).filter(core_training_q()),
-            "staff_trainings",
-            "partner_trainings",
-        )
+        for sid in core_ids:
+            split, gate = splits[sid], gates[sid]
+            gate.staff_visits = split.staff_visits
+            gate.partner_visits = split.partner_visits
+            gate.partner_pending = split.partner_pending_visits
+            gate.staff_trainings = split.staff_trainings
+            gate.partner_trainings = split.partner_trainings
+            gate.partner_pending_trainings = split.partner_pending_trainings
+            gate.extra["core_package"] = split.has_package
 
     # Partner assignments still waiting on the partner. A returned or
     # scheduled one is not pending: the scheduled one is counted above as
-    # the partner's activity, the returned one has let the school go.
+    # the partner's activity, the returned one has let the school go. A Core
+    # school's are counted by its package split above; here they only name
+    # the partner.
     pending = (
         PartnerAssignment.objects.filter(
             school_id__in=client_ids + core_ids,
@@ -446,9 +461,13 @@ def visit_gates(
     )
     for assignment in pending:
         gate = gates[assignment.school_id]
-        if gate.rule == "core" and not _is_core_visit_assignment(assignment):
-            if _is_core_training_assignment(assignment):
-                gate.partner_pending_trainings += 1
+        if gate.rule == "core":
+            if (
+                _is_core_visit_assignment(assignment)
+                and not gate.partner_name
+                and assignment.partner_id
+            ):
+                gate.partner_name = assignment.partner.name
             continue
         gate.partner_pending += 1
         if not gate.partner_name and assignment.partner_id:
@@ -500,9 +519,8 @@ def _decide(gate: VisitGate) -> None:
     * at a client-rule school (client, Core Trained and Core Graduate), a
       second staff support visit in the year — a Training Follow Up or an
       In-school Training — or a second SSA Support;
-    * at a Core school, a third staff core visit while the partner has one
-      planned there ("staff may plan more core schools visits but only if
-      the partner has not planned");
+    * at a Core school, a third visit or training on either side of the
+      package's 2 + 2 split (owner, 2026-09-30);
     * partner work at a Champion school, which takes only donor and story
       visits (kept by the owner the same day).
 
@@ -550,24 +568,39 @@ def _decide_by_rule(gate: VisitGate) -> None:
         return
 
     if gate.rule == "core":
-        # Owner, 2026-09-28: "staff may plan more core schools visits but
-        # only if the partner has not planned." Staff keep their two while a
-        # partner core visit is planned at the school this year; with none
-        # planned, the package is theirs to fill. A handover the partner has
-        # not dated yet is not a plan. The partner side is no longer capped,
-        # and neither are trainings (`staff_trainings_open`).
-        if gate.partner_visits:
-            gate.staff_cap = CORE_STAFF_VISIT_CAP
-            if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
-                gate.staff_can_schedule = False
-                gate.staff_reason = (
-                    f"Staff core visits complete for FY{gate.fy} "
-                    f"({gate.staff_visits}/{CORE_STAFF_VISIT_CAP}). The partner "
-                    "has planned the remaining visits."
-                )
-        else:
-            gate.staff_cap = max(CORE_PACKAGE_VISITS, gate.staff_visits + 1)
-        gate.partner_cap = 0  # counted, never capped
+        # Owner, 2026-09-30: "4 visits and 4 trainings (2 each for staff and
+        # the other 2 for partners)". Each side holds two of each kind
+        # (`package_split`); a hand-over the partner has not dated yet holds
+        # its place on the partner side. A school with no package has no
+        # split to keep. Partner DATING of a hand-over is not greyed here: the
+        # hand-over already holds its place, and the dating door asks the
+        # split without it (`partner_can_schedule` stays open).
+        gate.staff_cap = CORE_STAFF_VISIT_CAP
+        gate.partner_cap = CORE_PARTNER_VISIT_CAP
+        if not gate.extra.get("core_package"):
+            return
+        if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
+            gate.staff_can_schedule = False
+            gate.staff_reason = (
+                f"Staff core visits complete on this package "
+                f"({gate.staff_visits}/{CORE_STAFF_VISIT_CAP}). The other "
+                f"{CORE_PARTNER_VISIT_CAP} visits are the partner's."
+            )
+        if gate.partner_held_visits >= CORE_PARTNER_VISIT_CAP:
+            gate.can_assign_visit = False
+            gate.assign_visit_reason = (
+                f"Partner core visits complete on this package "
+                f"({gate.partner_held_visits}/{CORE_PARTNER_VISIT_CAP}). The "
+                f"other {CORE_STAFF_VISIT_CAP} visits are staff's."
+            )
+        if not gate.can_assign_visit and not gate.partner_trainings_open:
+            gate.can_assign_partner = False
+            gate.assign_reason = (
+                f"The partner's half of this package is taken: "
+                f"{gate.partner_held_visits}/{CORE_PARTNER_VISIT_CAP} visits and "
+                f"{gate.partner_held_trainings}/{CORE_PARTNER_TRAINING_CAP} "
+                "trainings."
+            )
         return
 
 

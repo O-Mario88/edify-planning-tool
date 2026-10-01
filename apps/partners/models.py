@@ -158,6 +158,27 @@ class PartnerReturnReason(models.TextChoices):
     OTHER = "other", "Other"
 
 
+class PartnerAssignmentStatus(models.TextChoices):
+    """Every state a hand-over can be in — and, enforced by the database
+    (``partner_assignment_status_known``), the only ones.
+
+    It was a bare CharField, and one spelling per writer reached the data.
+    Two legacy spellings stay because production rows hold them and readers
+    match them: ``assigned`` beside ``pending_scheduling`` (not yet dated) and
+    ``scheduled`` beside ``partner_scheduled`` (dated). ``completed`` is the
+    seed data's. New hand-overs start ``pending_scheduling``
+    (`partners.services.create_assignment`) and the partner's date moves them
+    to ``partner_scheduled``.
+    """
+
+    PENDING_SCHEDULING = "pending_scheduling", "Waiting for the partner to schedule"
+    ASSIGNED = "assigned", "Waiting for the partner to schedule (legacy)"
+    PARTNER_SCHEDULED = "partner_scheduled", "Scheduled by the partner"
+    SCHEDULED = "scheduled", "Scheduled (legacy)"
+    COMPLETED = "completed", "Completed"
+    RETURNED_TO_STAFF = "returned_to_staff", "Returned to staff"
+
+
 class PartnerAssignment(TimeStampedModel):
     """Tracks assignment of a school or cluster to a partner organization for interventions."""
 
@@ -167,11 +188,14 @@ class PartnerAssignment(TimeStampedModel):
     # "partner_assigned". Both unscheduled spellings are kept because both are
     # live in production data; UNSCHEDULED_STATUSES is the one place that
     # decides what "not yet scheduled" means, so callers stop re-listing them.
-    STATUS_ASSIGNED = "assigned"
-    STATUS_PENDING_SCHEDULING = "pending_scheduling"
-    STATUS_SCHEDULED = "scheduled"
-    STATUS_RETURNED_TO_STAFF = "returned_to_staff"
+    STATUS_ASSIGNED = PartnerAssignmentStatus.ASSIGNED.value
+    STATUS_PENDING_SCHEDULING = PartnerAssignmentStatus.PENDING_SCHEDULING.value
+    STATUS_SCHEDULED = PartnerAssignmentStatus.SCHEDULED.value
+    STATUS_PARTNER_SCHEDULED = PartnerAssignmentStatus.PARTNER_SCHEDULED.value
+    STATUS_COMPLETED = PartnerAssignmentStatus.COMPLETED.value
+    STATUS_RETURNED_TO_STAFF = PartnerAssignmentStatus.RETURNED_TO_STAFF.value
     UNSCHEDULED_STATUSES = (STATUS_ASSIGNED, STATUS_PENDING_SCHEDULING)
+    SCHEDULED_STATUSES = (STATUS_PARTNER_SCHEDULED, STATUS_SCHEDULED, STATUS_COMPLETED)
 
     id = CuidField()
     school = models.ForeignKey(
@@ -282,7 +306,11 @@ class PartnerAssignment(TimeStampedModel):
     purpose_of_visit = models.CharField(max_length=64, null=True, blank=True)
     expected_activity_type = models.CharField(max_length=64, null=True, blank=True)
     scheduled_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=32, default="assigned")
+    status = models.CharField(
+        max_length=32,
+        choices=PartnerAssignmentStatus.choices,
+        default=PartnerAssignmentStatus.ASSIGNED,
+    )
     notes = models.TextField(null=True, blank=True)
 
     # ── Return to staff ──────────────────────────────────────────────────────
@@ -564,6 +592,22 @@ class PartnerAssignment(TimeStampedModel):
                 ),
                 name="uniq_open_partner_school_assignment",
             ),
+            # The status vocabulary, held by the database rather than by each
+            # writer's spelling (see PartnerAssignmentStatus). Literals, as
+            # above: a migration freezes the values.
+            models.CheckConstraint(
+                condition=models.Q(
+                    status__in=[
+                        "pending_scheduling",
+                        "assigned",
+                        "partner_scheduled",
+                        "scheduled",
+                        "completed",
+                        "returned_to_staff",
+                    ]
+                ),
+                name="partner_assignment_status_known",
+            ),
         ]
 
 
@@ -596,7 +640,12 @@ class PartnerActivityAllowance(TimeStampedModel):
         ordering = ["-created_at"]
 
 
-__all__ = ["Partner", "PartnerAssignment", "PartnerActivityAllowance"]
+__all__ = [
+    "Partner",
+    "PartnerAssignment",
+    "PartnerAssignmentStatus",
+    "PartnerActivityAllowance",
+]
 
 
 # The withdrawal record and its vocabularies live in their own module — the

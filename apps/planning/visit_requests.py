@@ -177,6 +177,23 @@ def approve(activity_id: str, principal, note: str = "") -> Activity:
                 assert_staff_may_schedule_visit(
                     a.school, a.fy, pool=pool, exclude_activity_id=a.id
                 )
+        if a.school_id and a.school.school_type == "core":
+            # A Core package's 2 + 2 split (owner, 2026-09-30), checked when
+            # the request becomes a plan, as the client rule is above.
+            from apps.core_schools.package_credit import package_kind
+            from apps.core_schools.package_split import (
+                PARTNER,
+                STAFF,
+                assert_side_open,
+            )
+
+            assert_side_open(
+                a.school,
+                package_kind(a),
+                PARTNER if a.delivery_type == "partner" else STAFF,
+                fy=a.fy,
+                exclude_activity_id=a.id,
+            )
         a.status = "scheduled" if a.scheduled_date else "planned"
         a.owner_decided_at = timezone.now()
         a.owner_decided_by = getattr(principal, "user_id", None) or principal.id

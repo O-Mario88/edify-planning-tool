@@ -43,6 +43,13 @@
     <p class="edify-text-caption text-slate-500">Choose at least one. Choose General when the project does not work on one SSA intervention.</p>
     <div class="grid gap-2">{% for value, label in interventions %}<label class="flex items-center gap-2"><input type="checkbox" name="targetInterventions" value="{{ value }}" class="h-4 w-4" {% if value in selected_interventions %}checked{% endif %}><span>{{ label }}</span></label>{% endfor %}</div>
   </fieldset>
+  <input type="hidden" name="partnerIdsSent" value="1">
+  {% comment %}The partners contracted to deliver this project. Its work goes to them; anyone else needs a reason at hand-over.{% endcomment %}
+  <fieldset class="space-y-2" data-project-partners>
+    <legend class="block edify-text-caption font-semibold text-slate-600">Project partners</legend>
+    <p class="edify-text-caption text-slate-500">The partners delivering this project. Handing its work to another partner asks for a reason. Leave empty to allow any partner.</p>
+    <div class="max-h-48 grid gap-2 overflow-y-auto">{% for partner in partner_choices %}<label class="flex items-center gap-2"><input type="checkbox" name="partnerIds" value="{{ partner.id }}" class="h-4 w-4" {% if partner.id in selected_partner_ids %}checked{% endif %}><span>{{ partner.name }}</span></label>{% empty %}<p class="edify-text-caption text-slate-500">No partner can take new work right now.</p>{% endfor %}</div>
+  </fieldset>
   {% comment %}
   The approved Catalogue is not edited here. Activities already scheduled are
   filed against the item they were planned from, so removing one would leave

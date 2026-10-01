@@ -3550,7 +3550,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8789,
+      "bytes": 10125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3564,6 +3564,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "disabled",
         "open"
       ],
       "tables": 0,
@@ -3838,7 +3839,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4123,
+      "bytes": 4740,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-activity"
@@ -3893,7 +3894,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12730,
+      "bytes": 13195,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3922,7 +3923,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10954,
+      "bytes": 11078,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -12488,7 +12489,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3806,
+      "bytes": 5285,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -12503,7 +12504,8 @@
       "states": [
         "default",
         "empty",
-        "disabled"
+        "disabled",
+        "open"
       ],
       "tables": 0,
       "template": "partials/projects/bulk_partner_drawer.html",
@@ -12605,7 +12607,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4590,
+      "bytes": 5510,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -12619,6 +12621,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "empty",
         "disabled"
       ],
       "tables": 0,
@@ -12630,7 +12633,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4647,
+      "bytes": 5623,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"
@@ -12644,6 +12647,7 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
+        "empty",
         "disabled"
       ],
       "tables": 0,
@@ -32397,6 +32401,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -32697,6 +32702,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -32787,6 +32793,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -32880,6 +32887,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -32978,6 +32986,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33023,7 +33032,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_assign_partner_drawer",
       "card_count": 0,
@@ -33034,7 +33043,7 @@
         "test:referenced-by-automated-test",
         "permission:core_schools"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -33077,6 +33086,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33093,7 +33103,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false
@@ -33171,6 +33181,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33264,6 +33275,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33360,6 +33372,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33455,6 +33468,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33550,6 +33564,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33649,6 +33664,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33743,6 +33759,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33838,6 +33855,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -33932,6 +33950,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -34023,6 +34042,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.activities.services",
+        "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.audit.services",
         "apps.core.scoping",
@@ -77655,7 +77675,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_edit_drawer_view",
       "card_count": 0,
@@ -77739,7 +77759,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -78641,7 +78661,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_create_drawer_view",
       "card_count": 0,
@@ -78725,7 +78745,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },

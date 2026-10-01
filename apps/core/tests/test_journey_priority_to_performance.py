@@ -164,13 +164,15 @@ class PriorityToVerifiedPerformanceJourneyTest(TestCase):
         from apps.budget.reference import ensure_active_catalogue
 
         cls.catalogue = ensure_active_catalogue()
+        # Scoped to its catalogue: from 1 October the post_migrate reference
+        # data also seeds the new year's rates, so a key alone matches two.
         CostSetting.objects.update_or_create(
             key="primary_transport_per_day",
+            catalogue=cls.catalogue,
             defaults={
                 "label": "Primary Transport Per Day",
                 "unit_cost": TRANSPORT,
                 "fy": cls.catalogue.fy,
-                "catalogue": cls.catalogue,
             },
         )
 

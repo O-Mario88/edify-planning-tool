@@ -229,7 +229,6 @@
         "report_problem",
         "school_directory",
         "settings",
-        "ssa_performance",
         "team_coaching",
         "team_planning_oversight",
         "todos",
@@ -533,7 +532,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/accounts/presence_labels.py",
         "apps/activities/closure_services.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
@@ -639,7 +637,6 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
-        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -656,7 +653,6 @@
         "audit.AuditLog",
         "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
-        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1170,6 +1166,7 @@
         "apps/integrations/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
+        "apps/partners/capabilities.py",
         "apps/partners/models.py",
         "apps/partners/services.py",
         "apps/partners/signals.py",
@@ -1816,7 +1813,6 @@
         "audit.AuditLog",
         "audit.DomainEventLog",
         "budget.ActivityCostSnapshot",
-        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -2084,7 +2080,6 @@
         "activities.ActivityScheduleChange",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
-        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "fund_requests.AdvanceRequest",
@@ -2548,6 +2543,7 @@
         "activities.ActivitySalesforceReference",
         "audit.AuditLog",
         "budget.ActivityCostSnapshot",
+        "budget.CostCatalogue",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -4648,9 +4644,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "21d611a3b8d554c8fd722854ca1a79cce4258a8edf4ab4ceaef8979324104b19",
-    "sources": "e23f6965723190ff49216c3d8e0c0cc399bdf72a72eaa1d20e505dde5bb57a41",
-    "sourceCount": 230,
+    "payload": "e00535d5b6fb04eb5eb5654f6776efca01ce345b0862c94cd1f8bcc6f1f36a84",
+    "sources": "d552aac0dc08fc4844a6e6ff3f7b9ac28d3561288708d68b6323d0d48edcde2b",
+    "sourceCount": 231,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

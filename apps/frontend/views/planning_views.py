@@ -3,7 +3,7 @@ import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from apps.core.htmx_errors import error_fragment
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, ConflictError
 from apps.core.permissions import (
     get_visit_target_school_or_404,
     require_any_page_permission,
@@ -409,6 +409,8 @@ def special_projects_bulk_schedule_view(request):
             raise BadRequest(
                 "Select a Catalogue Activity eligible for every selected Project School."
             )
+        scheduled = 0
+        refused: list[str] = []
         with transaction.atomic():
             for assignment in assignments:
                 recommendation = by_assignment[assignment.id][catalogue_item_id]
@@ -424,9 +426,24 @@ def special_projects_bulk_schedule_view(request):
                     "activityPurposeText": f"Special project support: {assignment.project.name}",
                     "expectedOutcome": "Complete the planned project support and record evidence.",
                 }
-                schedule_school_visit(payload, request.user)
+                try:
+                    # A savepoint per school: one the scheduling rules refuse
+                    # (a Core package whose staff half is taken, a client
+                    # school's used support visit) is named and left out, and
+                    # the rest of the selection is still scheduled.
+                    with transaction.atomic():
+                        schedule_school_visit(payload, request.user)
+                except (BadRequest, ConflictError) as exc:
+                    refused.append(f"{assignment.school.name}: {exc}")
+                    continue
+                scheduled += 1
+        message = f"Scheduled {scheduled} project school activities."
+        if refused:
+            message += " Not scheduled: " + "; ".join(refused)
+        if not scheduled:
+            raise BadRequest(message)
         return _saved_without_leaving(
-            f"Scheduled {len(assignments)} project school activities.",
+            message,
             plan_url="/projects/my-plan",
             plan_link_label="Open My Plan",
         )
@@ -434,6 +451,24 @@ def special_projects_bulk_schedule_view(request):
         return error_fragment(
             exc, action="Could not schedule the selection", status=400
         )
+
+
+def _project_partner_ids(assignments) -> set[str] | None:
+    """The partners on the list of every selected project that keeps one.
+
+    None when no selected project lists its partners — there is then no list
+    to keep to. A project that lists none does not narrow the choice.
+    """
+    from apps.projects.models import ProjectPartnerAssignment
+
+    rosters: dict[str, set[str]] = {}
+    for row in ProjectPartnerAssignment.objects.filter(
+        project_id__in={a.project_id for a in assignments}
+    ).values("project_id", "partner_id"):
+        rosters.setdefault(row["project_id"], set()).add(row["partner_id"])
+    if not rosters:
+        return None
+    return set.intersection(*rosters.values())
 
 
 @require_page_permission("projects")
@@ -454,6 +489,9 @@ def special_projects_bulk_partner_view(request):
         return HttpResponse("No in-scope project schools were selected.", status=400)
 
     partners = assignable_partners()
+    # The projects' own partners first; anyone else needs a reason
+    # (`projects.services.assert_partner_on_project`).
+    project_partner_ids = _project_partner_ids(assignments)
     if request.method == "GET":
         catalogue_items, _ = _common_project_recommendations(
             assignments,
@@ -467,6 +505,17 @@ def special_projects_bulk_partner_view(request):
                 "assignments": assignments,
                 "assignment_ids": ",".join(item.id for item in assignments),
                 "partners": partners,
+                "project_partner_ids": project_partner_ids,
+                "keeps_partner_list": project_partner_ids is not None,
+                "project_partners": [
+                    p for p in partners if p.id in (project_partner_ids or set())
+                ],
+                "other_partners": [
+                    p
+                    for p in partners
+                    if project_partner_ids is not None
+                    and p.id not in project_partner_ids
+                ],
                 "interventions": SsaIntervention.choices,
                 "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
                 "drawer_size": "md",
@@ -480,6 +529,19 @@ def special_projects_bulk_partner_view(request):
     scheduled_date = request.POST.get("scheduled_date", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
+    override_reason = request.POST.get("override_reason", "").strip()
+    if (
+        project_partner_ids is not None
+        and partner.id not in project_partner_ids
+        and not override_reason
+    ):
+        return error_fragment(
+            BadRequest(
+                f"{partner.name} is not one of the selected projects' partners. "
+                "Give the reason for choosing them."
+            ),
+            status=400,
+        )
     if not scheduled_date:
         return HttpResponse(
             '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a partner delivery date.</div>',
@@ -516,37 +578,60 @@ def special_projects_bulk_partner_view(request):
         )
         created = []
         skipped = 0
+        refused: list[str] = []
         with transaction.atomic():
             for assignment in assignments:
                 recommendation = by_assignment[assignment.id][catalogue_item_id]
                 # A school the partner already has waiting is not handed to
                 # it again, from this project or any other (owner,
                 # 2026-09-24). Skipped rather than refused, so one such school
-                # does not cost the rest of the selection.
-                if PartnerAssignment.has_open_assignment(assignment.school, partner):
+                # does not cost the rest of the selection. Read as the
+                # database reads it (uniq_open_partner_school_assignment): a
+                # Core package slot the partner holds there is a different
+                # piece of work and does not hide the school.
+                if (
+                    PartnerAssignment(
+                        school=assignment.school, partner=partner
+                    ).open_duplicate()
+                    is not None
+                ):
                     skipped += 1
                     continue
-                handover = partner_services.create_assignment(
-                    school=assignment.school,
-                    partner=partner,
-                    assigning_staff_id=(
-                        request.user.staff_profile_id
-                        or request.user.user_id
-                        or request.user.id
-                    ),
-                    assignment_mode="specific_activity",
-                    catalogue_item=catalogue_item,
-                    project=assignment.project,
-                    source_ssa=latest_applicable_record(assignment.school),
-                    recommendation_reason=recommendation["recommendationReason"],
-                    catalogue_snapshot=catalogue_item.snapshot(),
-                    purpose=f"Special project support: {assignment.project.name}",
-                    purpose_of_visit=purpose_of_visit,
-                    focus_intervention=recommendation["targetIntervention"],
-                    expected_activity_type=catalogue_item.workflow_kind,
-                    scheduled_date=parsed_date,
-                    notes=f"Project: {assignment.project.name}",
-                )
+                try:
+                    # A savepoint per school: a school the rules refuse (a
+                    # Core package whose partner half is taken, a third
+                    # partner at one school) is reported and left out, and
+                    # the rest of the selection is still handed over.
+                    with transaction.atomic():
+                        handover = partner_services.create_assignment(
+                            school=assignment.school,
+                            partner=partner,
+                            assigning_staff_id=(
+                                request.user.staff_profile_id
+                                or request.user.user_id
+                                or request.user.id
+                            ),
+                            assignment_mode="specific_activity",
+                            catalogue_item=catalogue_item,
+                            project=assignment.project,
+                            source_ssa=latest_applicable_record(assignment.school),
+                            recommendation_reason=recommendation[
+                                "recommendationReason"
+                            ],
+                            catalogue_snapshot=catalogue_item.snapshot(),
+                            purpose=(
+                                f"Special project support: {assignment.project.name}"
+                            ),
+                            purpose_of_visit=purpose_of_visit,
+                            focus_intervention=recommendation["targetIntervention"],
+                            expected_activity_type=catalogue_item.workflow_kind,
+                            scheduled_date=parsed_date,
+                            notes=f"Project: {assignment.project.name}",
+                            override_reason=override_reason,
+                        )
+                except (BadRequest, ConflictError) as exc:
+                    refused.append(f"{assignment.school.name}: {exc}")
+                    continue
                 created.append(handover.id)
         message = (
             f"Assigned {len(created)} project school activities to {partner.name}."
@@ -556,6 +641,10 @@ def special_projects_bulk_partner_view(request):
                 f" {skipped} school{'s were' if skipped != 1 else ' was'} "
                 f"already assigned to {partner.name} and left as they were."
             )
+        if refused:
+            message += " Not assigned: " + "; ".join(refused)
+        if not created and refused:
+            raise BadRequest(message)
         return _saved_without_leaving(
             message,
             plan_url="/projects/my-plan",
@@ -2632,7 +2721,8 @@ def bulk_action_view(request):
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Select a partner before confirming.</div>',
                 status=400,
             )
-        partner = get_object_or_404(Partner, id=partner_id)
+        # Only a partner who may take new work: active, and not on hold.
+        partner = get_object_or_404(assignable_partners(), id=partner_id)
         from datetime import date as _date
         from apps.activity_catalogue.services import recommend_activities
         from apps.ssa.services import latest_applicable_record
@@ -2682,24 +2772,36 @@ def bulk_action_view(request):
                     item = ActivityCatalogueItem.objects.get(
                         id=recommendation["catalogueItemId"]
                     )
-                    handover = partner_services.create_assignment(
-                        school=s,
-                        partner=partner,
-                        assigning_staff_id=monitored_by_staff_id,
-                        assignment_mode="specific_activity",
-                        catalogue_item=item,
-                        source_ssa=latest_applicable_record(s),
-                        recommendation_reason=recommendation["recommendationReason"],
-                        catalogue_snapshot=item.snapshot(),
-                        purpose=item.display_name,
-                        purpose_of_visit="ssa_support",
-                        focus_intervention=recommendation["targetIntervention"],
-                        expected_activity_type=item.workflow_kind,
-                        scheduled_date=bulk_date,
-                        notes=(
-                            "Bulk Partner Assignment · final schedule and cost pending"
-                        ),
-                    )
+                    try:
+                        # A savepoint per school: one the hand-over rules
+                        # refuse (a Core package whose partner half is taken,
+                        # a third partner at one school) is left out and
+                        # named, and the rest of the selection still goes.
+                        with transaction.atomic():
+                            handover = partner_services.create_assignment(
+                                school=s,
+                                partner=partner,
+                                assigning_staff_id=monitored_by_staff_id,
+                                assignment_mode="specific_activity",
+                                catalogue_item=item,
+                                source_ssa=latest_applicable_record(s),
+                                recommendation_reason=recommendation[
+                                    "recommendationReason"
+                                ],
+                                catalogue_snapshot=item.snapshot(),
+                                purpose=item.display_name,
+                                purpose_of_visit="ssa_support",
+                                focus_intervention=recommendation["targetIntervention"],
+                                expected_activity_type=item.workflow_kind,
+                                scheduled_date=bulk_date,
+                                notes=(
+                                    "Bulk Partner Assignment · final schedule "
+                                    "and cost pending"
+                                ),
+                            )
+                    except (BadRequest, ConflictError):
+                        gated.append(s.name)
+                        continue
                     created_ids.append(handover.id)
         except Exception as exc:
             return error_fragment(exc, status=400)

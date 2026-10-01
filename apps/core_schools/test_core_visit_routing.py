@@ -103,13 +103,11 @@ class CoreVisitRoutingTest(_CoreFixture):
         self.assertEqual(activity.activity_type, "school_visit")
         self.assertFalse(CoreActivitySlot.objects.filter(activity_id=activity.id))
 
-    def test_project_work_at_a_core_school_stays_project_work(self):
-        """The project funds it, from its own approved activity list.
-
-        The project scheduler shares this entry point, and it has already
-        validated its Catalogue item as eligible for every school in the
-        batch. Routing it would re-cost it against the Core Visit item and
-        count the project's delivery as core package support.
+    def test_project_work_at_a_core_school_keeps_its_costing_and_counts(self):
+        """The project funds it, from its own approved activity list, so it is
+        not re-costed as a Core Visit. It still counts toward the package
+        (owner, 2026-09-30: "all scheduling visit or training can contribute
+        to the core school packages") — the slot is linked once it commits.
         """
         from apps.projects.models import Project, ProjectCategory
 
@@ -117,13 +115,14 @@ class CoreVisitRoutingTest(_CoreFixture):
             name="Literacy Project",
             category=ProjectCategory.INTERVENTION_SPECIFIC,
         )
-        result = schedule_school_visit(
-            self._payload(self.school, projectId=project.id), self.cceo
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            result = schedule_school_visit(
+                self._payload(self.school, projectId=project.id), self.cceo
+            )
 
         activity = Activity.objects.get(id=result["id"])
         self.assertEqual(activity.activity_type, "school_visit")
-        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=activity.id))
+        self.assertTrue(CoreActivitySlot.objects.filter(activity_id=activity.id))
 
     def test_a_core_school_with_no_package_still_schedules(self):
         """Routing must never make a school unschedulable."""
@@ -168,13 +167,16 @@ class CoreAndClientVisitsShareADayTest(_CoreFixture):
             ("secondary_overnight_dinner_per_day", 50000),
             ("secondary_accommodation_per_night", 150000),
         ):
+            # Scoped to its catalogue: from 1 October the post_migrate
+            # reference data also seeds the new year's rates, so a key alone
+            # matches two rows.
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": cost,
                     "fy": catalogue.fy,
-                    "catalogue": catalogue,
                     "version": catalogue.version,
                 },
             )

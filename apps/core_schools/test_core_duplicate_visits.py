@@ -137,9 +137,11 @@ class TheCoreDrawerRefusesTheSecondCopyTest(_CoreFixture):
         # core rule for the same visit booked as another type.
         self.assertEqual(second.status_code, 400)
         self.assertIn("already", second.content.decode())
+        # A donor visit is booked as itself, not as a core visit (owner,
+        # 2026-09-30: not package work).
         self.assertEqual(
             Activity.objects.filter(
-                school=self.school, activity_type="core_visit", planned_date=day
+                school=self.school, activity_type="donor_visit", planned_date=day
             ).count(),
             1,
         )

@@ -820,6 +820,78 @@ def assign_partner(project_id: str, data: dict, principal=None) -> dict:
     return {"ok": True, "projectId": project_id, "partnerId": partner.id}
 
 
+def set_partners(project, partner_ids, principal=None) -> list[str]:
+    """Make the project's partner list exactly ``partner_ids``.
+
+    The partners contracted to deliver a project. It existed only behind the
+    API, so no page could keep it and nothing read it when work was handed
+    over; the project drawers now tick it, and a hand-over to anyone else
+    needs a reason (`assert_partner_on_project`). Returns the ids kept.
+    """
+    from apps.audit.services import log as audit_log
+    from apps.partners.models import Partner
+
+    wanted = {str(pid).strip() for pid in partner_ids or () if str(pid).strip()}
+    known = set(
+        Partner.objects.filter(id__in=wanted, deleted_at__isnull=True).values_list(
+            "id", flat=True
+        )
+    )
+    unknown = wanted - known
+    if unknown:
+        raise BadRequest("One of the chosen partners no longer exists.")
+    current = set(
+        ProjectPartnerAssignment.objects.filter(project=project).values_list(
+            "partner_id", flat=True
+        )
+    )
+    added, removed = known - current, current - known
+    if removed:
+        ProjectPartnerAssignment.objects.filter(
+            project=project, partner_id__in=removed
+        ).delete()
+    for partner_id in sorted(added):
+        ProjectPartnerAssignment.objects.get_or_create(
+            project=project, partner_id=partner_id
+        )
+    if added or removed:
+        audit_log(
+            action="project.partners_changed",
+            subject_kind="Project",
+            subject_id=project.id,
+            actor_id=getattr(principal, "user_id", None) if principal else None,
+            actor_role=getattr(principal, "active_role", None) if principal else None,
+            payload={"added": sorted(added), "removed": sorted(removed)},
+        )
+    return sorted(known)
+
+
+def assert_partner_on_project(project, partner, override_reason: str = "") -> None:
+    """A project's work goes to the project's own partners, or says why not.
+
+    A project that records no partners has no list to keep to — every
+    partner may take its work, as before the list was read. Otherwise a
+    partner outside it needs a reason, which the hand-over keeps
+    (``PartnerAssignment.override_reason``) so the choice can be reviewed.
+    """
+    if project is None or partner is None:
+        return
+    roster = set(
+        ProjectPartnerAssignment.objects.filter(project=project).values_list(
+            "partner_id", flat=True
+        )
+    )
+    if not roster or partner.id in roster:
+        return
+    if (override_reason or "").strip():
+        return
+    raise BadRequest(
+        f"{partner.name} is not one of {project.name}'s partners. Give the "
+        "reason for handing this project's work to them, or add them to the "
+        "project first."
+    )
+
+
 def remove_partner(project_id: str, partner_id: str, principal=None) -> dict:
     _assert_directs_project(project_id, principal, "unlink a partner from it")
     ProjectPartnerAssignment.objects.filter(
@@ -1054,6 +1126,8 @@ def create_project(data: dict, principal) -> dict:
             "schoolFocus": school_focus,
         },
     )
+    if data.get("partnerIds"):
+        set_partners(project, data["partnerIds"], principal)
     return _serialize(project)
 
 
@@ -1308,6 +1382,11 @@ def update_project(project_id: str, data: dict, principal) -> dict:
         # focus at assignment time, so a project that tightens its focus keeps
         # its cohort and applies the new rule to the next school only.
         _set("school_focus", school_focus)
+
+    if "partnerIds" in data:
+        # Only when the drawer sent its partner list: a caller editing three
+        # other fields cannot empty it by leaving it out.
+        set_partners(project, data.get("partnerIds") or [], principal)
 
     if not changes:
         return _serialize(project)

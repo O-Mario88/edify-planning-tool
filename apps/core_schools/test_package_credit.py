@@ -138,17 +138,14 @@ class WorkFromAnyDoorIsCountedTest(_PackageFixture):
         )
 
     def test_work_that_is_not_the_package_s_is_left_alone(self):
-        from apps.projects.models import Project, ProjectCategory
-
-        project = Project.objects.create(
-            name="Reading Project", category=ProjectCategory.INTERVENTION_SPECIFIC
-        )
-        project_visit = self._activity(project_id=project.id)
+        # Donor, story, invitation and social visits are not package work
+        # (owner, 2026-09-30). Special Project work now is: it is credited.
+        donor_visit = self._activity("donor_visit", purpose_type="donor_visit")
         cancelled = self._activity(status="cancelled")
         request = self._activity(status="awaiting_owner_approval")
         last_year = self._activity(fy=str(int(self.fy) - 1))
 
-        for activity in (project_visit, cancelled, request, last_year):
+        for activity in (donor_visit, cancelled, request, last_year):
             self.assertFalse(
                 CoreActivitySlot.objects.filter(activity_id=activity.id).exists(),
                 activity.status,

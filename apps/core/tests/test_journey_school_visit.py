@@ -153,13 +153,15 @@ class SchoolVisitSpineJourneyTest(TestCase):
             ("primary_transport_per_day", TRANSPORT),
             ("primary_lunch_per_day", LUNCH),
         ):
+            # Scoped to its catalogue: from 1 October the post_migrate reference
+            # data also seeds the new year's rates, so a key alone matches two.
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=cls.catalogue,
                 defaults={
                     "label": key.replace("_", " ").title(),
                     "unit_cost": cost,
                     "fy": cls.fy,
-                    "catalogue": cls.catalogue,
                 },
             )
 
