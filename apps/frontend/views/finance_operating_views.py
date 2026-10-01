@@ -65,12 +65,16 @@ def _lacks_payment_authority(request):
 def accountant_dashboard_view(request):
     """Main Accountant Dashboard / Finance Command Center."""
     from datetime import date
-    from apps.core.fy import get_operational_fy
+    from apps.core.fy import fy_options, get_operational_fy
     from apps.fund_requests.models import WeeklyFundRequest
     from apps.accounts.models import User, StaffProfile
     from apps.geography.models import District
 
-    fy = get_operational_fy()
+    # The operational year unless the reader asks for another the platform
+    # knows (`?fy=`): a year that has just closed still has advances to
+    # account for, and the page otherwise had no way back to it.
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
     fy_qs = WeeklyFundRequest.objects.filter(fy=fy)
 
     # 1. FY KPIs across every fund type with a financial year — monthly fund
@@ -1189,6 +1193,11 @@ def _accountant_workspace(
 
     q = (request.GET.get("q") or "").strip().lower()
     status_filter = (request.GET.get("status") or "").strip()
+    # A year other than the operational one travels with every requester
+    # link, so opening a person keeps the reader in the year they chose.
+    from apps.core.fy import get_operational_fy
+
+    year_query = f"&fy={fy}" if str(fy) != get_operational_fy() else ""
     district_filter = (request.GET.get("district") or "").strip()
     sort = (
         request.GET.get("sort")
@@ -1242,7 +1251,8 @@ def _accountant_workspace(
                 "selected": f["id"] == selected_id,
                 "hx_get": f"/accounts?selected={f['id']}"
                 + (f"&status={status_filter}" if status_filter else "")
-                + (f"&q={q}" if q else ""),
+                + (f"&q={q}" if q else "")
+                + year_query,
                 "hx_target": "#accounts-fund-detail",
                 "chips": chips,
             }

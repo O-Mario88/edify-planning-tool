@@ -3951,7 +3951,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 238,
+   "line": 242,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -3971,7 +3971,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 245,
+   "line": 249,
    "label": "Approved",
    "keys": [
     "color",
@@ -3991,7 +3991,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 252,
+   "line": 256,
    "label": "Pending",
    "keys": [
     "color",
@@ -4011,7 +4011,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 259,
+   "line": 263,
    "label": "Returned",
    "keys": [
     "color",
@@ -4031,7 +4031,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1392,
+   "line": 1402,
    "label": "Week",
    "keys": [
     "label",
@@ -4048,7 +4048,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1393,
+   "line": 1403,
    "label": "Amount",
    "keys": [
     "label",
@@ -4065,7 +4065,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1394,
+   "line": 1404,
    "label": "Name",
    "keys": [
     "label",
