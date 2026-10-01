@@ -584,6 +584,69 @@ class CorePartnerPurposeTest(_CoreFixture):
         self.assertEqual(activity.activity_name_snapshot, course.display_name)
         self.assertEqual(self._slot("t", 1).activity_id, activity.id)
 
+    def test_a_partners_in_school_training_is_priced_as_a_partner_school_visit(self):
+        """Owner, 2026-10-01: an in-school training "should be costed as a
+        normal visit ... if it is partner it should carry the same partner
+        school visit cost", and at a core school it "is the same as the
+        in-school training visit for client schools". So here, at a Core
+        School, the partner's package visit fetches Core Partner Visit and
+        the partner's in-school training fetches the partner school visit
+        rate: on the hand-over table, in the schedule drawer and on the
+        saved cost line."""
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.activities.services import partner_schedule
+        from apps.budget.costing_service import active_catalogue
+        from apps.budget.models import CostSetting
+        from apps.planning import partner_oversight_service as oversight
+
+        card = active_catalogue()
+        for key, rate in (
+            ("core_partner_visit", 55_000),
+            ("client_partner_visit", 41_000),
+        ):
+            CostSetting.objects.filter(catalogue=card, key=key).update(unit_cost=rate)
+        self.assertEqual(oversight.core_partner_visit_rate(), 55_000)
+        self.assertEqual(oversight.partner_school_visit_rate(), 41_000)
+
+        def schedule_and_read(amount, **purpose):
+            response = self._assign(**purpose)
+            self.assertEqual(response.status_code, 200, response.content[:300])
+            pa = PartnerAssignment.objects.filter(school=self.school).latest(
+                "created_at"
+            )
+            drawer = self._client(self.partner_user).get(
+                f"/partner/assignments/{pa.id}/schedule-drawer"
+            )
+            self.assertContains(drawer, amount)
+            partner_schedule(
+                pa.id,
+                {
+                    "scheduledDate": _today().isoformat(),
+                    "deliveryContactName": "Field Lead",
+                },
+                self.partner_user,
+            )
+            pa.refresh_from_db()
+            return list(
+                ActivityScheduleCostLine.objects.filter(
+                    activity_id=pa.scheduled_activity_id
+                ).values_list("cost_setting_key", "amount")
+            )
+
+        self.assertEqual(
+            schedule_and_read("55,000", purpose_of_visit="ssa_support"),
+            [("core_partner_visit", 55_000)],
+        )
+        course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
+        self.assertEqual(
+            schedule_and_read(
+                "41,000",
+                purpose_of_visit="in_school_training",
+                training_course_id=course.id,
+            ),
+            [("client_partner_visit", 41_000)],
+        )
+
     def test_an_in_school_training_handoff_takes_any_intervention(self):
         """Owner, 2026-09-30: the planner chooses the focus, not the course."""
         self._take_first_visit()

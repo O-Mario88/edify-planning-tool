@@ -430,7 +430,13 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             key = "onetest"
             basis = "per OneTest visit"
         elif is_in_school_training:
-            key = "core_partner_visit" if is_core else "client_partner_visit"
+            # Owner, 2026-10-01: an in-school training "should be costed as
+            # a normal visit ... if it is partner it should carry the same
+            # partner school visit cost", and "in-school training visit for
+            # core is the same as the in-school training visit for client
+            # schools, core trained and core graduate". One row, whatever
+            # the school: the partner school visit rate.
+            key = "client_partner_visit"
             basis = "per school mission"
         elif activity_type in VISIT_TYPES or is_ssa:
             # SSA Support is a partner school visit and costs as one.
