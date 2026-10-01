@@ -255,6 +255,12 @@ class Activity(SoftDeleteModel):
         choices=ExecutorType.choices,
         default=ExecutorType.STAFF,
     )
+    # Who put the date on Partner-delivered work: "partner" or "staff" (owner,
+    # 2026-10-01: staff assign a school, the Partner schedules it — Partner
+    # planning counts only what a Partner dated). Blank on staff work, on
+    # Partner work not yet dated, and on rows written before this was kept;
+    # apps.planning.country_oversight.rules.partner_planned_q reads all three.
+    partner_date_set_by = models.CharField(max_length=8, blank=True, default="")
     # The partner that facilitates a staff-run group training and is paid its
     # facilitation fee (owner, 2026-09-26). The work stays staff work — the
     # officer completes it with the attendance and the Salesforce ID, and the
