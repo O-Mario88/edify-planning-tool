@@ -81,7 +81,7 @@ IA_SIDEBAR = [
             ("Country Map", "/country-map/"),
             ("Cluster Oversight", "/cluster-oversight/"),
             ("Core School Oversight", "/core-schools-oversight/"),
-            ("Partner Oversight", "/partner-oversight/"),
+            ("Partner Monitoring", "/partner-oversight/"),
             ("Project Monitoring", "/projects/monitoring"),
         ],
     ),
@@ -90,7 +90,7 @@ IA_SIDEBAR = [
         [
             ("Weekly Advance Request", "/fund-requests/weekly"),
             ("Field Debrief", "/debriefs"),
-            ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
+            ("Staff Setup Queue", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
             ("Upload Center", "/uploads"),
@@ -210,7 +210,7 @@ class IaSidebarTest(SimpleTestCase):
         """
         doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
         self.assertEqual(
-            doors.get("/admin-panel/staff-setup-queue"), "Unassigned Schools"
+            doors.get("/admin-panel/staff-setup-queue"), "Staff Setup Queue"
         )
         self.assertIn(IA, PAGE_PERMISSIONS["staff_setup_queue"])
         # The widening is the queue alone — not the pages `users` still gates.

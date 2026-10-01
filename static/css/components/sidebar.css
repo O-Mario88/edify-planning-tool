@@ -25,19 +25,77 @@
   }
 }
 
+/* ── Find a page (components/sidebar.html). The field's surface is the
+   platform's (form-refinement.css); size and its two marks are set here. */
+.app-sidebar__find {
+  position: relative;
+  margin: 14px 0 0;
+}
+
+.app-sidebar__find-glyph {
+  position: absolute;
+  inset-inline-start: 10px;
+  inset-block-start: 50%;
+  width: 15px;
+  height: 15px;
+  translate: 0 -50%;
+  color: var(--edify-text-muted);
+  pointer-events: none;
+}
+
+.app-sidebar .app-sidebar__find-field {
+  width: 100%;
+  height: 34px;
+  padding: 0 52px 0 32px;
+  border-radius: 8px;
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+}
+
+.app-sidebar__find-key {
+  position: absolute;
+  inset-inline-end: 8px;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  padding: 2px 6px;
+  border: 1px solid var(--edify-border);
+  border-radius: 5px;
+  color: var(--edify-text-muted);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.app-sidebar__find-none {
+  margin: 8px 12px;
+  color: rgba(189, 216, 233, 0.72);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.4;
+}
+
+.app-sidebar__find + .app-sidebar__nav-container {
+  margin-top: 8px;
+}
+
 /* Scrollbar */
 .app-sidebar__nav-container {
   flex: 1;
   overflow-y: auto;
   margin-top: 20px;
-  padding-bottom: 16px;
+  /* Fades out over its last 24px so a long menu reads as continued; the
+     padding clears the last item of the fade. */
+  padding-bottom: 28px;
   padding-right: 4px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 .app-sidebar__nav-container::-webkit-scrollbar { width: 4px; }
 .app-sidebar__nav-container::-webkit-scrollbar-track { background: transparent; }
 .app-sidebar__nav-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 9999px;
+  border-radius: var(--edify-radius-pill);
 }
 .app-sidebar__nav-container::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
 
@@ -101,55 +159,6 @@
   object-position: left center;
 }
 
-.app-sidebar__brand-mark {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: var(--brand-primary-soft);
-  color: var(--brand-primary);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
-  font-family: var(--edify-font-sans);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.app-sidebar__brand-name {
-  min-width: 0;
-  color: #edf0eb;
-  font-size: var(--edify-text-label-size);
-  font-weight: 600;
-  line-height: 1.25;
-  white-space: nowrap;
-}
-
-.app-sidebar__logo {
-  font-family: var(--edify-font-sans);
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: lowercase;
-  display: block;
-}
-
-.app-sidebar__subtitle {
-  font-family: var(--edify-font-sans);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 500;
-  color: rgba(189, 216, 233, 0.68);
-  text-transform: uppercase;
-  letter-spacing: 0.075em;
-  line-height: 1.4;
-  margin-top: 0;
-  display: block;
-}
-
 /* Section groups */
 .app-sidebar__section {
   margin-top: 10px;
@@ -164,12 +173,6 @@
   color: rgba(189, 216, 233, 0.50);
   margin: 0;
   padding: 0;
-}
-
-.app-sidebar__section-header {
-  padding: 6px 10px 4px 12px;
-  display: flex;
-  align-items: center;
 }
 
 .app-sidebar__section-toggle {
@@ -191,11 +194,46 @@
   background: rgba(123, 189, 232, 0.055);
 }
 
-.app-sidebar__section-chevron {
-  width: 13px;
-  height: 13px;
-  transition: transform var(--edify-transition-fast);
+.app-sidebar__section-toggle:focus-visible {
+  outline: 2px solid rgba(123, 189, 232, 0.75);
+  outline-offset: -2px;
 }
+
+.app-sidebar__section-toggle .app-sidebar__section-title { color: inherit; }
+
+/* A closed group: its page count (data-count) and a chevron down; open, a
+   chevron up. Drawn here, not in markup — the sidebar is on every page twice. */
+.app-sidebar__section[data-closed] > .app-sidebar__section-toggle::before {
+  content: attr(data-count);
+  order: 1;
+  margin-left: auto;
+  margin-right: 8px;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.app-sidebar__section-toggle::after {
+  content: "";
+  order: 2;
+  width: 6px;
+  height: 6px;
+  margin: 2px 3px 0;
+  border: solid currentColor;
+  border-width: 1.5px 0 0 1.5px;
+  rotate: 45deg;
+}
+
+.app-sidebar__section[data-closed] > .app-sidebar__section-toggle::after {
+  margin-top: -3px;
+  rotate: 225deg;
+}
+
+/* Closed hides its links, except on the rail and while filtering. */
+.app-sidebar__section[data-closed] > .app-sidebar__section-items { display: none; }
+.app-sidebar--collapsed .app-sidebar__section[data-closed] > .app-sidebar__section-items,
+[data-nav-filtering] .app-sidebar__section[data-closed] > .app-sidebar__section-items { display: flex; }
+[data-nav-filtering] .app-sidebar__section-toggle { display: none; }
 
 .app-sidebar__section-items {
   display: flex;
@@ -211,12 +249,12 @@
   gap: 2px;
 }
 
-/* Nav items — shorter (40px), lighter at rest, refined hover */
+/* Nav items. The height is a floor: a long label takes a second line. */
 .app-sidebar__item {
-  height: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 4px 10px;
   border-radius: 8px;
   color: rgba(221, 237, 247, 0.76) !important;
@@ -255,13 +293,16 @@
   flex-shrink: 0;
 }
 
+/* A label is never cut short: the longest wrap onto a second, balanced line
+   rather than end in an ellipsis (2026-10-01). */
 .app-sidebar__item-label {
+  min-width: 0;
   font-size: var(--edify-text-label-size);
   font-weight: 500;
+  line-height: 1.2;
   color: inherit;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 /* Count badge inside a nav item */
@@ -270,20 +311,12 @@
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 9999px;
+  border-radius: var(--edify-radius-pill);
   line-height: 1.4;
 }
 .app-sidebar__item-badge--blue {
   background: color-mix(in srgb, var(--brand-primary-soft) 24%, transparent);
   color: var(--brand-primary-soft);
-}
-.app-sidebar__item-badge--amber {
-  background: rgba(245, 158, 11, 0.18);
-  color: #fcd34d;
-}
-.app-sidebar__item-badge--red {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fca5a5;
 }
 
 /* Active item — subtle pill, no heavy border */
@@ -307,14 +340,6 @@
 
 .app-sidebar__item--active .app-sidebar__item-icon {
   color: var(--brand-primary-soft);
-}
-
-/* Divider between sections */
-.app-sidebar__section-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 14px 12px;
-  border: 0;
 }
 
 /* Footer / user */
@@ -389,7 +414,7 @@
   right: 0;
   z-index: 60;
   padding: 8px;
-  border-radius: 10px;
+  border-radius: var(--edify-radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #12203a;
   box-shadow: 0 18px 38px -12px rgba(0, 0, 0, 0.65);
@@ -499,9 +524,6 @@
   width: 72px;
   padding: 18px 8px;
 }
-.app-sidebar--collapsed .app-sidebar__logo,
-.app-sidebar--collapsed .app-sidebar__subtitle,
-.app-sidebar--collapsed .app-sidebar__brand-name,
 .app-sidebar--collapsed .app-sidebar__section-title,
 .app-sidebar--collapsed .app-sidebar__item-label,
 .app-sidebar--collapsed .app-sidebar__item-badge {
@@ -579,22 +601,12 @@
   left: -8px;
 }
 
-/* ── The collapsed brand on a 10 or 11 inch tablet ──────────────────────────
-   The landscape tablet band (64rem–79.99rem) is the one width where the
-   sidebar collapses on its own: layouts/shell.html opens it as a rail there,
-   so this mark is what a tablet user sees on every screen, not something they
-   opted into.
-
-   At the desktop size the compact mark is the wordmark cropped to a 36px
-   square — the image is 88px wide in a 36px box with the overflow hidden, so
-   only its first letters show. On a 72px rail that crop reads as "ec": a
-   partial word rather than a mark, and taller than the nav icons beneath it.
-
-   Here it is the whole wordmark instead, scaled to the rail's usable width.
-   Smaller, as the owner asked (2026-09-07), and the brand is legible rather
-   than cut mid-letter. Nothing outside this band changes.
+/* ── The collapsed brand ────────────────────────────────────────────────────
+   On the 72px rail the wordmark was cropped to a 36px square, which reads as
+   "ec". It is the whole wordmark, scaled to the rail: on the landscape-tablet
+   band since 2026-09-07 (owner), at every rail width since 2026-10-01.
    ───────────────────────────────────────────────────────────────────────── */
-@media (min-width: 64rem) and (max-width: 79.99rem) {
+@media (min-width: 64rem) {
   .app-sidebar--collapsed .app-sidebar__brand-logo-compact {
     /* The rail is 72px with 8px of padding each side. */
     width: 100%;
