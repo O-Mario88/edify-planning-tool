@@ -1772,10 +1772,22 @@ def core_partner_visit_rate() -> int | None:
     rate the Partner's scheduling prices the work at (budget.costing:
     ``core_partner_visit``). None when the Country Director has published
     none."""
+    return _partner_rate("core_partner_visit")
+
+
+def partner_school_visit_rate() -> int | None:
+    """The Cost Catalogue's rate for a partner's school visit
+    (``client_partner_visit``), which is also what a partner's in-school
+    training is priced at, at a Core School as at any other (owner,
+    2026-10-01)."""
+    return _partner_rate("client_partner_visit")
+
+
+def _partner_rate(key: str) -> int | None:
     from apps.budget.costing_service import _rate_card, active_catalogue
 
     rates, _settings = _rate_card(active_catalogue())
-    value = rates.get("core_partner_visit")
+    value = rates.get(key)
     return int(value) if value is not None else None
 
 
@@ -1795,6 +1807,7 @@ def annotate_core_support(items) -> None:
     if not core:
         return
     rate = core_partner_visit_rate()
+    training_rate = partner_school_visit_rate()
     by_activity = {
         activity_id: (kind, sequence)
         for activity_id, kind, sequence in CoreActivitySlot.objects.filter(
@@ -1810,10 +1823,20 @@ def annotate_core_support(items) -> None:
         ).select_related("school")
     }
     for item in core:
-        item.partner_rate = rate
+        handover = handovers.get(item.partner_assignment_id)
+        # An in-school training is priced as a partner school visit whatever
+        # the school (owner, 2026-10-01); only a core visit carries the Core
+        # Partner Visit rate.
+        is_training = item.activity_type in TRAINING_TYPES or (
+            handover is not None
+            and (
+                handover.support_type == "Training"
+                or handover.purpose_of_visit == "in_school_training"
+            )
+        )
+        item.partner_rate = training_rate if is_training else rate
         held = by_activity.get(item.partner_activity_id)
         if held is None and item.stage == STAGE_AWAITING_SCHEDULE:
-            handover = handovers.get(item.partner_assignment_id)
             slot = slot_held_by_assignment(handover) if handover else None
             if slot is not None:
                 held = (slot.activity_type, slot.sequence_number)
