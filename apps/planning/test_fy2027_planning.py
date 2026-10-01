@@ -154,6 +154,15 @@ class Fy2027CostingTest(StandardSupportBase):
     def setUp(self):
         # Deliberately not calling StandardSupportBase.setUp (it patches the
         # cost snapshot away).
+        #
+        # The class runs on a late-FY2026 clock, but the test database was
+        # migrated on the real one: from 1 October 2026 its reference data
+        # already holds a published FY2027 card, which this class is about
+        # NOT existing yet. Take the later years' cards away so the database
+        # says what the frozen clock says.
+        from apps.budget.models import CostCatalogue
+
+        CostCatalogue.objects.filter(fy__gt=get_operational_fy()).delete()
         ensure_cost_reference(ensure_active_catalogue())
         self.cd = User.objects.create_user(
             email="fy27-cd@edify.org",

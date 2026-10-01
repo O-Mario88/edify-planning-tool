@@ -10,7 +10,9 @@ from django.test import TestCase
 from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
-from apps.budget.models import CostCatalogue, CostSetting
+from apps.budget.models import CostSetting
+from apps.budget.costing_service import active_catalogue
+from apps.budget.reference import ensure_active_catalogue
 from apps.core.rbac import EdifyRole
 from apps.geography.models import (
     District,
@@ -72,16 +74,9 @@ class RouteIntelligenceTestCase(TestCase):
             name="Ntenjeru", district=self.primary
         )
 
-        self.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda",
-            fy="2026",
-            version=1,
-            defaults={
-                "is_active": True,
-                "label": "Route Test Catalogue",
-                "required_school_visits_per_day": 3,
-            },
-        )
+        # The active catalogue the reference data publishes, whichever year
+        # the test database was migrated in (FY2027 from 1 October 2026).
+        self.catalogue = active_catalogue() or ensure_active_catalogue()
         self.catalogue.required_school_visits_per_day = 3
         self.catalogue.is_active = True
         self.catalogue.save(
@@ -90,11 +85,11 @@ class RouteIntelligenceTestCase(TestCase):
         for key, cost in PRIMARY_RATES + SECONDARY_RATES:
             CostSetting.objects.update_or_create(
                 key=key,
+                catalogue=self.catalogue,
                 defaults={
                     "label": key,
                     "unit_cost": cost,
-                    "fy": "2026",
-                    "catalogue": self.catalogue,
+                    "fy": self.catalogue.fy,
                     "version": 1,
                 },
             )
