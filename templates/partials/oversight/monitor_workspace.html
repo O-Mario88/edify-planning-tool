@@ -103,7 +103,7 @@ and every gap count opens the list of the schools behind it.
           {% for school in gap_pager.rows %}
           <tr>
             <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{% school_identity school.name school.code %}</a></td>
-            <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% else %}Client{% endif %}</td>
+            <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% elif school.school_type == "core_graduate" %}Core Graduate{% else %}Client{% endif %}</td>
             <td class="px-3 py-2" data-label="Staff">{{ school.officer_name }}</td>
             <td class="px-3 py-2" data-label="District">{{ school.district|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Cluster">{% if school.clustered and school.cluster_url %}<a href="{{ school.cluster_url }}" class="hover:underline">{{ school.cluster_name|default:"Cluster" }}</a>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not clustered</span>{% endif %}</td>

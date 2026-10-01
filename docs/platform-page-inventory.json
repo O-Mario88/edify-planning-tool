@@ -10314,7 +10314,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 889,
+      "bytes": 1125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10366,7 +10366,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3610,
+      "bytes": 3580,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10826,7 +10826,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8522,
+      "bytes": 8583,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
