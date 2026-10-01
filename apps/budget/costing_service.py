@@ -254,8 +254,8 @@ COSTING_PROFILE_CHOICES = tuple(_COSTING_PROFILES)
 # What a person calls each recipe, for the catalogue's New activity form.
 COSTING_PROFILE_LABELS = {
     "IN_SCHOOL_TRAINING": "In-school training (a visit day)",
-    "CLUSTER_TRAINING": "Cluster training (session + meals + room + facilitator)",
-    "CLUSTER_MEETING": "Cluster meeting (session + meals + room)",
+    "CLUSTER_TRAINING": "Cluster training (meals + room + facilitator)",
+    "CLUSTER_MEETING": "Cluster meeting (snacks + room)",
     "ONLINE_TRAINING": "Online training (meals + room + facilitator)",
     "STAFF_SCHOOL_VISIT": "Client school visit (visit day shared across the day's schools)",
     "CORE_SCHOOL_VISIT": "Core school visit (visit day shared across the day's schools)",
@@ -795,9 +795,10 @@ def _line_item_type(key: str) -> str:
         "ssa_support",
         "onetest",
         "cluster_meetings_trainings",
-        # The cluster meeting's own rate, split from the shared row on
-        # 2026-09-17. Without it here the meeting's headline line reported as
-        # "other" in every itemized budget.
+        # The cluster meeting's own rate, charged from 2026-09-17 to
+        # 2026-09-26 and retired with the shared row above on 2026-10-01.
+        # Both stay here so a line saved at the time still reads as a rate,
+        # not as "other", in an itemized budget.
         "cluster_meeting",
         "tot_trainings",
         "student_conference",

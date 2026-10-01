@@ -308,18 +308,14 @@ class Command(BaseCommand):
         """
         from apps.activities.models import ActivityScheduleCostLine
         from apps.budget.models import CostSetting
-
-        from apps.daily_visit_batches.pricing import KEY_LABELS as day_pool_keys
+        from apps.system_health.services import cluster_meeting_lines_off_recipe
 
         canonical_key = "cluster_meeting_participant_meal_cost_per_head"
         canonical = CostSetting.objects.filter(key=canonical_key).first()
-        # Pooled field-day lines belong to the day, not the meeting.
-        candidates = ActivityScheduleCostLine.objects.filter(
-            activity__activity_type__in=[
-                "cluster_meeting",
-                "cluster_meeting_ssa_review",
-            ]
-        ).exclude(cost_setting_key__in=[canonical_key, *day_pool_keys])
+        # The lines System Health reports, and no others: what the recipe
+        # charges a meeting (its snacks, room, handouts and day) is not a
+        # legacy key to rename or to send for manual review.
+        candidates = cluster_meeting_lines_off_recipe()
 
         eligible_ids = []
         ambiguous = 0
