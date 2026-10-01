@@ -1,0 +1,56 @@
+{% comment %}
+The Execution & Completion Monitor's filters. On a page of its own they
+are the workspace's filter row; on the Programme Lead's dashboard
+(monitor_embedded) they sit at the end of the section's one head row,
+beside its name and tabs, as compact controls (owner, 2026-09-30: no second
+row of filters), the year named for what it is, since the page's own year
+sits above it.
+{% endcomment %}
+<form {% if monitor_embedded %}data-pl-section-tools{% else %}class="edify-filter-bar oversight-portfolio-filters"{% endif %}
+      aria-label="Execution monitor filters"
+      hx-get="{{ lens_base_url }}"
+      hx-target="#oversight-workspace"
+      hx-swap="innerHTML"
+      hx-trigger="change"
+      hx-push-url="true">
+  <input type="hidden" name="view" value="execution">
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">{% if monitor_embedded %}Delivery year{% else %}FY{% endif %}</span>
+    <select name="fy" aria-label="Financial year">
+      {% for option in fy_options %}
+      <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if execution.lead_options|length > 1 %}
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
+    <select name="program_lead" aria-label="Programme Lead">
+      <option value="">All leads</option>
+      {% for lead in execution.lead_options %}
+      <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Follow up</span>
+    <select name="list" aria-label="Activities to list">
+      <option value="">Choose a list</option>
+      {% for key, label in execution_lists %}
+      <option value="{{ key }}" {% if execution_list == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if execution_list %}
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Staff</span>
+    <select name="person" aria-label="Staff">
+      <option value="">Everyone</option>
+      {% for person in execution.person_options %}
+      <option value="{{ person.id }}" {% if execution_person == person.id %}selected{% endif %}>{{ person.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+</form>

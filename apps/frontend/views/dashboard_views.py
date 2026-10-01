@@ -1410,6 +1410,10 @@ def dashboard_view(request):
                 ("map", "Map", "The country map and its distribution table"),
             ],
             keep=(),
+            # The Coordinator's day queue and school actions are tabs of the
+            # dashboard, not sidebar pages of their own (owner, 2026-09-30:
+            # "fold To-Do and My Actions into the Dashboard").
+            links=PROJECT_DASHBOARD_LINK_TABS,
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context
@@ -1661,6 +1665,15 @@ def dashboard_view(request):
     if view_explicit:
         remember_dashboard_view(response, role_key="admin", view=dashboard_view)
     return response
+
+
+#: Pages the Project Coordinator reads as tabs of their dashboard (owner,
+#: 2026-09-30). apps.core.navigation.PROJECT_WORK_SECTIONS draws the same
+#: rail on the pages themselves.
+PROJECT_DASHBOARD_LINK_TABS = [
+    ("todos", "To-Do", "Everything waiting on you, by priority", "/todos"),
+    ("my_actions", "My Actions", "School issues assigned to you", "/actions/mine"),
+]
 
 
 @require_page_permission("dashboard")

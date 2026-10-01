@@ -27,13 +27,44 @@ queue ("View all N").
             <th scope="col" class="ps-3 pe-5 py-2.5 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-          {% for todo in waiting %}
-          {% include "partials/today/queue_row.html" %}
-          {% empty %}
-          <tr><td colspan="5" class="ps-5 pe-5 py-4 text-[12px] text-slate-500" data-today-waiting-empty>Nothing waits on you right now.</td></tr>
+        {% comment %}Identical To-Dos are one entry (owner, 2026-09-30: "group
+        identical to-dos"): a heading row with their count that opens to the
+        rows, each keeping its own decisions. apps.command_center.todo_groups.
+        {% endcomment %}
+        {% for entry in waiting_entries %}
+        {% if entry.group %}
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60" x-data="{ open: false }" data-today-group="{{ entry.key }}">
+          <tr class="edify-group-head">
+            <th colspan="5" scope="colgroup">
+              <button type="button" class="today-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-expanded="false">
+                <svg class="today-group__chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true" :class="open && 'is-open'"><path d="m7 5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="edify-group-head__label">{{ entry.title }}</span>
+                <span class="edify-group-head__count">{{ entry.count }} · {{ entry.category|default:"To-Do" }}</span>
+              </button>
+            </th>
+          </tr>
+          {% for todo in entry.items %}
+          {% include "partials/today/queue_row.html" with grouped=True %}
           {% endfor %}
+          {% comment %}The list is bounded: a group draws its first few rows
+          (todo_groups.GROUP_PREVIEW) and sends the reader to the To-Do page
+          for the others.{% endcomment %}
+          {% if entry.more %}
+          <tr x-show="open" x-cloak data-today-group-more>
+            <td colspan="5" class="ps-5 pe-5 py-2.5 text-[12px] text-slate-600 dark:text-slate-400"><a href="/todos" class="font-semibold underline underline-offset-2">{{ entry.more }} more in To-Do</a></td>
+          </tr>
+          {% endif %}
         </tbody>
+        {% else %}
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          {% include "partials/today/queue_row.html" with todo=entry.todo %}
+        </tbody>
+        {% endif %}
+        {% empty %}
+        <tbody>
+          <tr><td colspan="5" class="ps-5 pe-5 py-4 text-[12px] text-slate-500" data-today-waiting-empty>Nothing waits on you right now.</td></tr>
+        </tbody>
+        {% endfor %}
       </table>
     </div>
   </section>

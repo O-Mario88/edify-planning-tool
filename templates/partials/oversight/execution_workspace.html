@@ -15,63 +15,15 @@ the activities behind it.
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title=monitor_is_country|yesno:"Country execution & completion,Team execution & completion" %}
 
-  <form class="edify-filter-bar oversight-portfolio-filters"
-        aria-label="Execution monitor filters"
-        hx-get="{{ lens_base_url }}"
-        hx-target="#oversight-workspace"
-        hx-swap="innerHTML"
-        hx-trigger="change"
-        hx-push-url="true">
-    <input type="hidden" name="view" value="execution">
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
-      <select name="fy" aria-label="Financial year">
-        {% for option in fy_options %}
-        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% if execution.lead_options|length > 1 %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
-      <select name="program_lead" aria-label="Programme Lead">
-        <option value="">All leads</option>
-        {% for lead in execution.lead_options %}
-        <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Follow up</span>
-      <select name="list" aria-label="Activities to list">
-        <option value="">Choose a list</option>
-        {% for key, label in execution_lists %}
-        <option value="{{ key }}" {% if execution_list == key %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% if execution_list %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Staff</span>
-      <select name="person" aria-label="Staff">
-        <option value="">Everyone</option>
-        {% for person in execution.person_options %}
-        <option value="{{ person.id }}" {% if execution_person == person.id %}selected{% endif %}>{{ person.name }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
-  </form>
+  {% if not monitor_embedded %}{% include "partials/oversight/_execution_filters.html" %}{% endif %}
 
   <section class="card p-0 overflow-hidden" aria-labelledby="execution-title">
     <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
       <h3 id="execution-title">Execution &amp; completion · FY {{ fy }}</h3>
       <span class="tabular-nums">{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete</span>
     </header>
-    <p class="px-4 pt-3 edify-text-caption edify-text-muted">Each person's own staff work in the year, as My Plan lists it. Delivered: submitted, awaiting verification or verified. Complete: delivered with the Salesforce ID and the form both in. Overdue: the planned day has passed and it is not delivered. Partner activities are the partner-delivered work each person monitors.</p>
     {% if execution.teams %}
-    <div class="overflow-x-auto mt-2">
+    <div class="overflow-x-auto">
       <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-execution-table>
         <caption class="sr-only">Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.</caption>
         <thead>
@@ -112,6 +64,7 @@ the activities behind it.
         {% endif %}
       </table>
     </div>
+    {% include "partials/oversight/_execution_about.html" %}
     {% else %}
     {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
     {% endif %}

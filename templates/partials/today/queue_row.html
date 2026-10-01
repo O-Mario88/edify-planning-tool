@@ -22,7 +22,7 @@ scroll region cannot clip). Its menu item raises `today-form` with the operation
 shows that operation's form and puts focus in its first field, and Cancel or
 Escape hands focus back to the Actions button.
 {% endcomment %}
-<tr id="{{ todo.today.slug }}" class="today-row" hx-vals='{"layout": "table"}' data-today-item data-todo-kind="{{ todo.today.kind }}">
+<tr id="{{ todo.today.slug }}" class="today-row" hx-vals='{"layout": "table"}' data-today-item data-todo-kind="{{ todo.today.kind }}"{% if grouped %} x-show="open" x-cloak{% endif %}>
   {% comment %}Title over context, which the platform's one-line table rule
   joins as "Title · where · what" and cuts with one ellipsis at the cell's
   edge. The refusal message leads the cell as an <output> (empty, and

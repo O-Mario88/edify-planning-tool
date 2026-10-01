@@ -164,6 +164,9 @@ def budget_view(request):
         selected_district=request.GET.get("district", ""),
         # The header names the person's role; "CountryDirector" is a code.
         role=_ROLE_LABELS.get(ctx.get("role") or role, ctx.get("role") or role),
+        # The year is chosen from the years there are, written "FY 2026" like
+        # every other page (owner, 2026-09-30), not typed into a number box.
+        fy_options=sorted(set(fy_options()) | {str(ctx.get("fy"))}, reverse=True),
     )
     if is_country:
         ctx["districts"] = District.objects.order_by("name")

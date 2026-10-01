@@ -31,6 +31,8 @@
       <p class="edify-page-header__description">Your action queue — generated automatically from workflow state, and auto-closed the moment the underlying action completes.</p>
     </div>
   </div>
+  {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+  {% include "partials/_section_nav.html" %}
 
   {% legacy_kpi_item "Critical" counts.critical helper="Highest-priority work" tone="danger" icon="warning" as critical_kpi %}
   {% legacy_kpi_item "Due today" counts.due_today helper="Complete before day end" tone="warning" icon="clock" as due_kpi %}
@@ -58,12 +60,30 @@
     </div>
   </div>
 
-  <!-- List -->
+  <!-- List. Identical To-Dos are one entry that opens to them (owner,
+       2026-09-30: "group identical to-dos"); a group shares one category and
+       one priority, so the filters above treat it as one row. -->
   <div class="card px-4 divide-y divide-slate-50">
-    {% for t in todos %}
-    <div x-show="(cat === 'all' || cat === '{{ t.category }}') && (prio === 'all' || prio === '{{ t.priority }}')">
-      {% include "partials/todos/row.html" with t=t %}
+    {% for entry in todo_entries %}
+    {% if entry.group %}
+    <details class="todo-group" data-todo-group="{{ entry.key }}" x-show="(cat === 'all' || cat === '{{ entry.category }}') && (prio === 'all' || prio === '{{ entry.priority }}')">
+      <summary class="todo-group__summary">
+        <svg class="todo-group__chevron" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m7 5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[13px] font-bold text-slate-800 truncate leading-tight">{{ entry.title }}</span>
+          <span class="block edify-text-caption font-semibold text-slate-400 truncate">{{ entry.count }} · {% for t in entry.items|slice:":3" %}{{ t.linked }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if entry.count > 3 %} and {{ entry.count|add:"-3" }} more{% endif %}</span>
+        </span>
+        <span class="todo-group__count" aria-hidden="true">{{ entry.count }}</span>
+      </summary>
+      <div class="todo-group__rows divide-y divide-slate-50">
+        {% for t in entry.items %}{% include "partials/todos/row.html" with t=t %}{% endfor %}
+      </div>
+    </details>
+    {% else %}
+    <div x-show="(cat === 'all' || cat === '{{ entry.todo.category }}') && (prio === 'all' || prio === '{{ entry.todo.priority }}')">
+      {% include "partials/todos/row.html" with t=entry.todo %}
     </div>
+    {% endif %}
     {% endfor %}
   </div>
   {% else %}

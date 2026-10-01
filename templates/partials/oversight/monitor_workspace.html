@@ -19,63 +19,15 @@ and every gap count opens the list of the schools behind it.
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title=monitor_is_country|yesno:"Country planning monitor,Team planning monitor" %}
 
-  <form class="edify-filter-bar oversight-portfolio-filters"
-        aria-label="Planning monitor filters"
-        hx-get="{{ lens_base_url }}"
-        hx-target="#oversight-workspace"
-        hx-swap="innerHTML"
-        hx-trigger="change"
-        hx-push-url="true">
-    <input type="hidden" name="view" value="monitor">
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
-      <select name="fy" aria-label="Financial year">
-        {% for option in fy_options %}
-        <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% if monitor.lead_options|length > 1 %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
-      <select name="program_lead" aria-label="Programme Lead">
-        <option value="">All leads</option>
-        {% for lead in monitor.lead_options %}
-        <option value="{{ lead.id }}" {% if selected_program_lead == lead.id %}selected{% endif %}>{{ lead.name }} ({{ lead.count }})</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Schools</span>
-      <select name="gap" aria-label="Schools to list">
-        <option value="">Choose a gap to list</option>
-        {% for key, label in monitor_gaps %}
-        <option value="{{ key }}" {% if monitor_gap == key %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% if monitor_gap %}
-    <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Staff</span>
-      <select name="officer" aria-label="Staff">
-        <option value="">Everyone</option>
-        {% for officer in monitor.officer_options %}
-        <option value="{{ officer.id }}" {% if monitor_officer == officer.id %}selected{% endif %}>{{ officer.name }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
-  </form>
+  {% if not monitor_embedded %}{% include "partials/oversight/_monitor_filters.html" %}{% endif %}
 
   <section class="card p-0 overflow-hidden" aria-labelledby="monitor-cceo-title">
     <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
       <h3 id="monitor-cceo-title">Planning against target · FY {{ fy }}</h3>
       <span class="tabular-nums">{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_totals.staff_visits|intcomma }} of {{ monitor_totals.visits_target|intcomma }} visits planned</span>
     </header>
-    <p class="px-4 pt-3 edify-text-caption edify-text-muted">A Programme Lead plans {{ pl_visits_target }} visits a year and a CCEO {{ default_visits_target }}: two at each Core school, the rest at Client and Core Trained schools. Visits count every visit and SSA Support the person planned, as Team Plan lists them. Partner schools are the schools each person handed to a partner; partner activities are those the partner has dated, with handovers still awaiting a date. Training counts a school invited to a group training or cluster meeting, or given an in-school training.</p>
     {% if monitor.leads %}
-    <div class="overflow-x-auto mt-2">
+    <div class="overflow-x-auto">
       <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-monitor-table>
         <caption class="sr-only">Each Programme Lead's and CCEO's schools, visits planned against their target, partner work, training coverage and planning gaps, grouped by Programme Lead.</caption>
         <thead>
@@ -119,6 +71,7 @@ and every gap count opens the list of the schools behind it.
         {% endif %}
       </table>
     </div>
+    {% include "partials/oversight/_monitor_about.html" %}
     {% else %}
     {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
     {% endif %}

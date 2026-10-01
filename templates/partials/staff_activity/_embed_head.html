@@ -2,7 +2,9 @@
 The log's heading on the Programme Lead's dashboard (owner, 2026-09-29: the
 Staff Activity Log moved onto This Week, out of the sidebar). It rides in the
 workspace, so Export always carries the filters the table shows; on the page
-of its own the header holds the same two actions.
+of its own the header holds the same two actions. On a phone the two are
+icons (their names stay for screen readers), so the description keeps the
+width (owner, 2026-09-30).
 {% endcomment %}
 <div class="plwk-head" data-sal-embed-head>
   <div class="plwk-head__lead">
@@ -12,13 +14,13 @@ of its own the header holds the same two actions.
   <div class="plwk-arrows">
     <a href="/staff-activity/export?{{ query }}" class="edify-action-button secondary h-9" download>
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-      Export
+      <span data-sal-label>Export</span>
     </a>
     {% if log.scope.can_follow_up %}
     <button type="button" class="edify-action-button primary h-9"
             hx-get="/staff-activity/follow-ups" hx-target="#drawer-container" hx-swap="innerHTML">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M3 12h12M3 19h8m9-5l-3 3-2-2"/></svg>
-      Follow-up Queue{% if follow_up_count %} <span class="sal-count" aria-label="{{ follow_up_count }} open">{{ follow_up_count }}</span>{% endif %}
+      <span data-sal-label>Follow-up Queue</span>{% if follow_up_count %} <span class="sal-count" aria-label="{{ follow_up_count }} open">{{ follow_up_count }}</span>{% endif %}
     </button>
     {% endif %}
   </div>

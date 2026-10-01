@@ -31,7 +31,8 @@ the dark themes (static/css/components/pl-week.css).
 {% for table in person.tables %}
 {% if table.count or not week.solo %}
 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}">
-  <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+  {# The title band is named here, not left to micro-ux.js, so an empty list keeps it too. #}
+  <div class="edify-table-titlebar px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <span class="text-slate-600 dark:text-slate-300">
         {% if table.key == "visits" %}
@@ -47,9 +48,12 @@ the dark themes (static/css/components/pl-week.css).
         {{ table.count }}
       </span>
     </div>
-    <span class="text-xs font-semibold text-slate-400">Ordered by date</span>
+    {% comment %}An empty list is its title line alone (owner, 2026-09-30: no
+    column headings over nothing): the count reads 0 and the note says so.{% endcomment %}
+    <span class="text-xs font-semibold text-slate-400">{% if table.count %}Ordered by date{% elif person.listing_is_overdue %}None overdue{% else %}None left this week{% endif %}</span>
   </div>
 
+  {% if table.count %}
   <div class="overflow-x-auto edify-record-table-wrap">
     {% paginate table.rows table.page_param week.rows_per_page as table_pager %}
     {% if table.key == "visits" %}
@@ -192,6 +196,7 @@ the dark themes (static/css/components/pl-week.css).
     {% endif %}
     {% include "components/table_pager.html" with pager=table_pager param=table.page_param %}
   </div>
+  {% endif %}
 </div>
 {% endif %}
 {% endfor %}

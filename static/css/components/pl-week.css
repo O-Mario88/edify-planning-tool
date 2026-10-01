@@ -88,6 +88,20 @@
   min-inline-size: 0;
 }
 
+/* Which list, Overdue or Due this week, and the week's figures share one
+   row (owner, 2026-09-30); they wrap under each other when it is short. */
+.plwk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  min-inline-size: 0;
+}
+.plwk-bar > .plwk-rail {
+  flex: 0 1 auto;
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────── */
 .plwk-box {
   display: flex;

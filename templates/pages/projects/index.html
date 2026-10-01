@@ -38,6 +38,8 @@
     {% endif %}
   </div>
 </div>
+{# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+{% include "partials/_section_nav.html" %}
 
 {% comment %}Live filter form on the page canvas. It targets #project-list so
    a change swaps only the table/cards; hx-push-url keeps the state shareable.
@@ -112,7 +114,7 @@
 <!-- Supporting context follows the full-width project queue. -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-  <!-- ───────────── LEFT (2/3): Project table ───────────── -->
+  <!-- ───────────── LEFT (2/3): budget, impact and risks ───────────── -->
   <div class="lg:col-span-2 space-y-6">
 
   {% comment %}Project table + mobile cards. Swapped in place by the
@@ -146,7 +148,7 @@
       <div class="h-2 rounded-pill bg-slate-100 overflow-hidden">
         <div class="h-full rounded-pill edify-primary-solid" style="width: {{ budget_summary.utilization }}%"></div>
       </div>
-      <p class="edify-text-caption text-slate-400 font-medium mt-1.5">Disbursed ÷ planned — clearly labelled, not mixed with approved or actual.</p>
+      <p class="edify-text-caption text-slate-400 font-medium mt-1.5">Disbursed as a share of planned.</p>
     </div>
   </div>
 
@@ -176,11 +178,39 @@
       </div>
       {% endfor %}
     {% else %}
-      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon_path="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
+      {% include "components/empty_state.html" with title="No verified deliveries yet." message="Intervention impact appears here once activities are delivered and verified." line="true" %}
     {% endif %}
     <a href="/projects/analytics" class="block text-center text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline pt-1">View full Impact Analytics →</a>
   </div>
 
+
+  <!-- Project Risks / Attention: in the wide column, so the two columns end together (owner, 2026-09-30). -->
+  {% if selected %}
+  <div class="card p-5 space-y-3">
+    <div>
+      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Attention Needed</h2>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Risk signals on {{ selected.name }}</p>
+    </div>
+    <ul class="space-y-2">
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold text-slate-600">Schools without SSA</span>
+        <span class="text-[12px] font-bold {% if selected.attention.no_ssa %}text-amber-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.no_ssa }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold text-slate-600">Partner pending schedule</span>
+        <span class="text-[12px] font-bold {% if selected.attention.partner_pending %}text-purple-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.partner_pending }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-600{% endif %}">Evidence overdue</span>
+        <span class="text-[12px] font-bold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.evidence_overdue }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2">
+        <span class="text-[12px] font-semibold text-slate-600">IA returns</span>
+        <span class="text-[12px] font-bold {% if selected.attention.ia_returns %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.ia_returns }}</span>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
   </div>
 
   <!-- ───────────── RIGHT RAIL (1/3) ───────────── -->
@@ -240,33 +270,6 @@
     {% endif %}
   </div>
 
-  <!-- Project Risks / Attention (from selected.attention when available) -->
-  {% if selected %}
-  <div class="card p-5 space-y-3">
-    <div>
-      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Attention Needed</h2>
-      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Risk signals on {{ selected.name }}</p>
-    </div>
-    <ul class="space-y-2">
-      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
-        <span class="text-[12px] font-semibold text-slate-600">Schools without SSA</span>
-        <span class="text-[12px] font-bold {% if selected.attention.no_ssa %}text-amber-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.no_ssa }}</span>
-      </li>
-      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
-        <span class="text-[12px] font-semibold text-slate-600">Partner pending schedule</span>
-        <span class="text-[12px] font-bold {% if selected.attention.partner_pending %}text-purple-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.partner_pending }}</span>
-      </li>
-      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
-        <span class="text-[12px] font-semibold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-600{% endif %}">Evidence overdue</span>
-        <span class="text-[12px] font-bold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.evidence_overdue }}</span>
-      </li>
-      <li class="flex items-center justify-between gap-3 py-2">
-        <span class="text-[12px] font-semibold text-slate-600">IA returns</span>
-        <span class="text-[12px] font-bold {% if selected.attention.ia_returns %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.ia_returns }}</span>
-      </li>
-    </ul>
-  </div>
-  {% endif %}
 
   <!-- Partner Delivery -->
   {% if partner_rows %}
@@ -295,14 +298,6 @@
   </div>
   {% endif %}
 
-  <!-- My Plan Sync (workflow explainer, not a duplicate of My Plan) -->
-  <div class="card p-5 space-y-2 border-slate-200">
-    <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Same engine as Planning</h2>
-    <p class="text-[12px] text-slate-500 font-medium leading-relaxed">Projects ride on the canonical workflow — assignment → planning → schedule → budget → evidence → IA → finance → closure. No duplicate system.</p>
-    <a href="/projects/my-plan" class="inline-flex items-center gap-1.5 h-8 px-3 mt-1 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold shadow-sm w-fit">
-      Open Project My Plan
-    </a>
-  </div>
 
   </div>
 
