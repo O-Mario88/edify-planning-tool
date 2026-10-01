@@ -32,6 +32,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.command_center import today_actions
+from apps.command_center.todo_groups import group_identical, limit_entries
 from apps.core.permissions import require_page_permission
 
 WAITING_LIMIT = 8
@@ -88,7 +89,11 @@ def _split_todos(
     ]
     if leadership_first:
         waiting.sort(key=lambda todo: 0 if is_leadership_handoff(todo) else 1)
-    return waiting[:WAITING_LIMIT], exceptions, payload.get("total", len(todos))
+    # Identical To-Dos count once (apps.command_center.todo_groups): eight
+    # "Plan Activities for Newly Added Project School" rows no longer fill the
+    # whole list (owner, 2026-09-30).
+    waiting = limit_entries(waiting, WAITING_LIMIT)
+    return waiting, exceptions, payload.get("total", len(todos))
 
 
 def _team_today(principal) -> dict:
@@ -227,10 +232,13 @@ def build_today_context(request, *, include_team: bool = True) -> dict:
     )
     next_ssa = today_actions.next_ssa_row(principal)
     if next_ssa:
-        waiting = [next_ssa, *waiting][:WAITING_LIMIT]
+        waiting = limit_entries([next_ssa, *waiting], WAITING_LIMIT)
+    waiting = today_actions.decorate(waiting, principal)
     context = {
         "mode": "desk" if desk else ("lead" if is_program_lead else "field"),
-        "waiting": today_actions.decorate(waiting, principal),
+        "waiting": waiting,
+        # The same rows as entries: identical ones under one heading.
+        "waiting_entries": group_identical(waiting),
         "exceptions": today_actions.decorate(exceptions, principal),
         "queue_total": queue_total,
         "cleared_count": today_actions.cleared_today(principal),

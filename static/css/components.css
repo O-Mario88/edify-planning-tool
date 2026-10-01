@@ -2761,6 +2761,9 @@ select:not([multiple]):not(.select-native) {
 
 .edify-section-nav__workspace {
   display: grid;
+  /* A fixed track: Safari sized the implicit one to the strip's content, so
+     the page scrolled sideways on a phone instead of the strip. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
 }
 
@@ -5063,6 +5066,34 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   padding-block: 1.25rem;
 }
 
+/* The line (owner, 2026-09-30: "design for zero data"). A dashboard card
+   with nothing in it says so in one line, not in a 7rem panel of its own:
+   no box and no mark, the sentence and its hint side by side, wrapping when
+   the card is narrow. The doubled class outranks the workspace's empty-state
+   panel in mobile-micro-ux.css, which loads later; `main` lifts the inset over
+   the empty-state padding contract in consistency.css. */
+.edify-empty-state.edify-empty-state--line {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 0.125rem 0.5rem;
+  min-block-size: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-align: start;
+}
+main .edify-empty-state--line.edify-empty-state--line {
+  padding: 0.25rem 0 !important;
+}
+.edify-empty-state--line .edify-empty-state__mark {
+  display: none;
+}
+.edify-empty-state--line :is(.edify-empty-state__title, .edify-empty-state__message, .edify-empty-state__hint) {
+  max-inline-size: none;
+}
+
 /* THE NOTE. Neutral by default; `data-tone` says what kind of news it is. */
 .edify-note {
   --edify-note-tone: var(--edify-text-muted);
@@ -5666,6 +5697,58 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 }
 /* end of the phone KPI grid */
 
+/* Desktops: the whole strip on one row (owner, 2026-09-30: "Tabs, Filters,
+   KPI tiles are repeated ... enterprise grade UI"). A fact used to be as wide
+   as its words, so six to twelve facts overran a 1440px desktop and the strip
+   scrolled behind "Swipe for more" on eight of the Project Coordinator's
+   pages. From 64rem the facts share the row: labels and helpers wrap inside
+   it, a value never wraps, and a fact is never narrower than its value or its
+   longest word. When they cannot fit so, the strip still scrolls, and
+   kpi-strips.js shows its navigation as before. Tablets keep the strip as it
+   was; phones keep the grid above. */
+@media (min-width: 64rem) {
+  .context-metrics .context-metrics__fact {
+    flex: 1 1 0 !important;
+    min-width: auto !important;
+  }
+  .context-metrics :is(.context-metrics__text, .context-metrics__link) {
+    white-space: normal !important;
+  }
+  .context-metrics .context-metrics__label {
+    overflow-wrap: normal;
+  }
+  .context-metrics .context-metrics__value {
+    white-space: nowrap;
+  }
+  /* The two-line cut kept a long helper from widening its fact. Here a
+     fact's width is its share of the row, so the helper wraps inside it and
+     is read whole ("With in-flight…" told nobody anything). */
+  .context-metrics .context-metrics__helper {
+    display: block;
+    max-inline-size: none;
+    overflow: visible;
+    overflow-wrap: break-word;
+    -webkit-line-clamp: none;
+  }
+
+  /* Nine facts or more cannot share one desktop row at a readable width
+     (twelve at 1280px were 80px slivers), and the strip is one continuous
+     row by contract, not a grid: they keep the scrolling row as it was,
+     130px a fact, and kpi-strips.js shows its navigation. */
+  .context-metrics .context-metrics__sentence:has(> .context-metrics__fact:nth-child(9)) > .context-metrics__fact {
+    flex: 1 0 auto !important;
+    min-width: 130px !important;
+  }
+  /* There a fact is as wide as its words again, so its helper keeps the
+     two-line measure that stops it widening the fact. */
+  .context-metrics .context-metrics__sentence:has(> .context-metrics__fact:nth-child(9)) .context-metrics__helper {
+    display: -webkit-box;
+    max-inline-size: 22ch;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+  }
+}
+
 .context-metrics__link[aria-current="page"] { box-shadow: inset 0 -2px var(--kpi-text); background: color-mix(in srgb, var(--kpi-text) 6%, transparent); }
 
 .context-metrics__value--compact { overflow-wrap: normal; }
@@ -5823,4 +5906,87 @@ table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+/* Identical To-Dos in the Today table are one entry (owner, 2026-09-30:
+   "group identical to-dos"): the group's heading row opens to its rows.
+   templates/partials/today/waiting_table.html, apps.command_center.todo_groups. */
+.today-group__toggle.today-group__toggle:not(#today-group-none) {
+  justify-content: flex-start !important;
+}
+/* A To-Do is a task, not a name: its title keeps its own case. */
+[data-today-group] .edify-group-head__label {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.today-group__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.today-group__chevron {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform 0.15s ease;
+}
+.today-group__chevron.is-open {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .today-group__chevron {
+    transition: none;
+  }
+}
+
+/* The To-Do page's group of identical To-Dos (owner, 2026-09-30):
+   templates/pages/todos/index.html. One row that opens to its To-Dos. */
+.todo-group__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.25rem;
+  cursor: pointer;
+  list-style: none;
+}
+.todo-group__summary::-webkit-details-marker {
+  display: none;
+}
+.todo-group__chevron {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--edify-text-subtle);
+  transition: transform 0.15s ease;
+}
+.todo-group[open] > .todo-group__summary .todo-group__chevron {
+  transform: rotate(90deg);
+}
+.todo-group__count {
+  flex: none;
+  min-inline-size: 1.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.todo-group__rows {
+  padding-inline-start: 1.625rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .todo-group__chevron {
+    transition: none;
+  }
 }

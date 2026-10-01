@@ -3,7 +3,7 @@
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20260927legend1">{% comment %}The Planning Monitor and the Staff Activity Log ride on This Week (owner, 2026-09-29).{% endcomment %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1"><link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20260929sal16">{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20260930bar1">{% comment %}The Planning Monitor and the Staff Activity Log ride on This Week (owner, 2026-09-29).{% endcomment %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1"><link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20260929sal16">{% comment %}The page's order: one head row per section, strips on one row (owner, 2026-09-30).{% endcomment %}<link rel="stylesheet" href="{% static 'css/components/pl-dashboard.css' %}?v=20260930layout6">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -16,7 +16,7 @@ The dashboard is a read — every control opens the page where the work is done.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-pl-dashboard>
 
-  {# No FY in this header: the FY picker sits right under it (owner, 2026-09-27). #}
+  {# The phone's header names no FY: its picker shows it (2026-09-27). #}
   {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Lead the team forward" description="Start with what your team is waiting on, then coach, direct and follow up." status_label=mobile_status_label primary_action=mobile_primary_action %}
 
   <header class="edify-page-header mobile-home-hide">
@@ -35,15 +35,17 @@ The dashboard is a read — every control opens the page where the work is done.
   </header>
 
   {% comment %}One filter, the year: every figure on the page reads it. The view
-  travels with the form so a year change keeps the tab you are on.{% endcomment %}
-  <form id="pl-dashboard-filters"
+  travels with the form so a year change keeps the tab you are on. On a
+  desktop it sits on the title's line, at its end (owner, 2026-09-30: no row
+  of its own); on a phone, under the phone's header.{% endcomment %}
+  <form id="pl-dashboard-filters" data-pl-fy
         hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
         hx-trigger="change delay:80ms" hx-push-url="true"
         class="edify-filter-bar" aria-label="Program lead dashboard filters">
     <input type="hidden" id="pl-filter-view" name="view" value="{{ dashboard_view }}">
     {% if fy_options|length > 1 %}
     <div class="edify-page-header-control platform-filter-compact edify-filter-field--short">
-      <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
+      <span class="sr-only">FY</span>
       <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>

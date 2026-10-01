@@ -63,9 +63,15 @@ def dashboard_view_tabs(
     base_url: str = "/dashboard",
     keep: tuple[str, ...] = ("fy", "month", "activity_type"),
     values: dict | None = None,
+    links: list[tuple[str, str, str, str]] | None = None,
 ) -> dict:
     """The context the shared tab rail renders: one real URL per view, carrying
-    the dashboard's own filters so a tab never resets the period."""
+    the dashboard's own filters so a tab never resets the period.
+
+    `links` are (key, label, description, url) tabs that open a page of their
+    own rather than a view of this one: pages folded into the dashboard
+    (owner, 2026-09-30: the Project Coordinator's To-Do and My Actions), which
+    draw the same rail at their top so the dashboard reads as one place."""
     filters = request.GET if values is None else values
     carried = [(k, filters.get(k)) for k in keep if filters.get(k)]
     out = []
@@ -78,6 +84,17 @@ def dashboard_view_tabs(
                 "description": description,
                 "url": f"{base_url}?{query}",
                 "active": key == active,
+            }
+        )
+    for key, label, description, url in links or ():
+        out.append(
+            {
+                "key": key,
+                "label": label,
+                "description": description,
+                "url": url,
+                "active": False,
+                "external": True,
             }
         )
     return {

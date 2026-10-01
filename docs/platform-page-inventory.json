@@ -32,7 +32,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 613,
+      "bytes": 762,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -266,7 +266,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1773,
+      "bytes": 2038,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -805,11 +805,11 @@
         "/actions/mine",
         "/actions/sent",
         "/admin-panel/data-quality-center",
+        "/budget",
+        "/budget/",
+        "/calendar",
         "/candidate-pipeline",
-        "/cce-leadership/coaching",
-        "/cce-leadership/engagements",
-        "/cce-leadership/feedback",
-        "/cce-leadership/reports"
+        "/cce-leadership/coaching"
       ],
       "findings": [],
       "forms": 0,
@@ -5212,7 +5212,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3461,
+      "bytes": 3973,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -5954,7 +5954,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4693,
+      "bytes": 5146,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6002,7 +6002,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 15243,
+      "bytes": 15672,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6092,7 +6092,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7168,
+      "bytes": 7165,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6118,7 +6118,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10909,
+      "bytes": 10903,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6206,7 +6206,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10180,
+      "bytes": 10168,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6233,7 +6233,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13152,
+      "bytes": 13847,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6280,7 +6280,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8320,
+      "bytes": 8314,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6418,7 +6418,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4752,
+      "bytes": 4915,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8020,7 +8020,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 14076,
+      "bytes": 14249,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -10152,6 +10152,56 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 705,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Execution About",
+      "purpose": "Reusable  execution about interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_execution_about.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2730,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Execution Filters",
+      "purpose": "Reusable  execution filters interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_execution_filters.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 3012,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -10229,6 +10279,58 @@
       ],
       "tables": 0,
       "template": "partials/oversight/_lens_tabs.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 889,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Monitor About",
+      "purpose": "Reusable  monitor about interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_about.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2704,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Monitor Filters",
+      "purpose": "Reusable  monitor filters interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_filters.html",
       "variants": []
     },
     {
@@ -10639,7 +10741,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9844,
+      "bytes": 7322,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10648,8 +10750,8 @@
         "/team-targets/"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Execution Workspace",
       "purpose": "Reusable execution workspace interface primitive",
@@ -10693,7 +10795,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11234,
+      "bytes": 8522,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10703,8 +10805,8 @@
         "/team-targets/"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 1,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Monitor Workspace",
       "purpose": "Reusable monitor workspace interface primitive",
@@ -11043,7 +11145,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1546,
+      "bytes": 2175,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/"
@@ -12429,7 +12531,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15948,
+      "bytes": 16037,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -12704,7 +12806,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2754,
+      "bytes": 2987,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -12750,7 +12852,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11814,
+      "bytes": 10764,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -12766,8 +12868,7 @@
         "default",
         "loading",
         "empty",
-        "selected",
-        "open"
+        "selected"
       ],
       "tables": 0,
       "template": "partials/projects/my_plan_workspace.html",
@@ -12802,7 +12903,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 18726,
+      "bytes": 18260,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -12831,7 +12932,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9962,
+      "bytes": 1208,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -12843,22 +12944,20 @@
       "kind": "application-partial",
       "name": "Portfolio List",
       "purpose": "Reusable portfolio list interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/projects/portfolio_list.html",
-      "variants": [
-        "sm"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4804,
+      "bytes": 4869,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -13667,7 +13766,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1651,
+      "bytes": 1831,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -13684,6 +13783,29 @@
       ],
       "tables": 0,
       "template": "partials/staff_activity/_embed_head.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2906,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/staff-activity"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": " Filters",
+      "purpose": "Reusable  filters interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/staff_activity/_filters.html",
       "variants": []
     },
     {
@@ -13899,14 +14021,14 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8071,
+      "bytes": 5568,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": " Workspace",
       "purpose": "Reusable  workspace interface primitive",
@@ -14304,7 +14426,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1567,
+      "bytes": 1605,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today/panel",
@@ -14410,7 +14532,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9573,
+      "bytes": 9622,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -14441,7 +14563,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2745,
+      "bytes": 4681,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -14457,7 +14579,8 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "open"
       ],
       "tables": 1,
       "template": "partials/today/waiting_table.html",
@@ -14467,7 +14590,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11652,
+      "bytes": 11634,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -14482,7 +14605,8 @@
       "purpose": "Reusable workbench interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "empty"
       ],
       "tables": 0,
       "template": "partials/today/workbench.html",
@@ -73260,7 +73384,7 @@
         "test:referenced-by-automated-test",
         "permission:planning_monitor"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
@@ -77423,8 +77547,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -77440,8 +77564,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
         "text-[15px]",
         "text-[16px]"
       ]
@@ -78965,8 +79087,8 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -78982,8 +79104,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
         "text-[15px]",
         "text-[16px]"
       ]
@@ -79803,7 +79923,7 @@
         "css/pages/special-project-my-plan.css"
       ],
       "permission_key": "projects",
-      "primary_action": "Open Calendar",
+      "primary_action": "Open Special Projects",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Special-project My Plan \u2014 the coordinator's scheduled project activities (staff-owned actionable; partner-planned read-only monitoring).",
       "remediation": "No automated remediation outstanding",
@@ -86760,14 +86880,12 @@
         "test:referenced-by-automated-test",
         "permission:staff_activity"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /staff-activity",
-        "GET {{ link.href }}",
         "GET /staff-activity/follow-ups"
       ],
       "implementation_status": "existing-routed-surface",
@@ -86797,9 +86915,7 @@
       "route": "/staff-activity",
       "route_name": "staff_activity",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/staff-activity"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.staff_activity.models",
@@ -86819,8 +86935,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 2,
-        "type": "segmented-control"
+        "count": 0,
+        "type": "none"
       },
       "templates": [
         "partials/staff_activity/_workspace.html",
@@ -91525,6 +91641,7 @@
       "todos": true,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[15px]"
       ]
     },
@@ -113338,7 +113455,7 @@
     "activity_states": 24,
     "all_routes": 1347,
     "api_routes": 360,
-    "component_templates": 586,
+    "component_templates": 591,
     "full_pages": 261,
     "mobile_contract_pass": 570,
     "nonvisual_actions": 277,

@@ -83,6 +83,8 @@
     </div>
     {% endif %}
   </header>
+  {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+  {% include "partials/_section_nav.html" %}
 
   {% if can_add_calendar_event %}
   <details class="calendar-event-composer">

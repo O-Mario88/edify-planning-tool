@@ -37,6 +37,12 @@ rail a moment later, and an error puts the old one back.{% endcomment %}
        "
        x-data>
     {% for tab in dashboard_tabs.tabs %}
+    {% if tab.external %}
+    {% comment %}A page folded into the dashboard (owner, 2026-09-30): a tab of
+    the rail that opens its own page, which draws this rail with it chosen.{% endcomment %}
+    <a href="{{ tab.url }}" id="dashboard-tab-{{ tab.key }}" role="tab" aria-selected="false" aria-controls="{{ dashboard_tabs.panel_id }}" tabindex="-1"
+       class="edify-section-nav__link" title="{{ tab.description }}" data-dashboard-link-tab="{{ tab.key }}">{{ tab.label }}</a>
+    {% else %}
     <a href="{{ tab.url }}"
        id="dashboard-tab-{{ tab.key }}"
        role="tab"
@@ -58,6 +64,7 @@ rail a moment later, and an error puts the old one back.{% endcomment %}
        hx-sync="closest [data-dashboard-views]:replace"
        hx-push-url="true"
        hx-indicator="#{{ dashboard_tabs.panel_id }}-updating">{{ tab.label }}</a>
+    {% endif %}
     {% endfor %}
     <span id="{{ dashboard_tabs.panel_id }}-updating" class="htmx-indicator dashboard-view-nav__updating" role="status" aria-live="polite">Updating…</span>
   </div>

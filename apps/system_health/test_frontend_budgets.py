@@ -231,7 +231,11 @@ class PagePayloadBudgetTest(TestCase):
         # Was 35 KB / 320: each Today row's decisions became one Actions
         # menu (owner, 2026-09-26), carrying its forms and snooze choices
         # inside the row. Measured 44 KB / 335 on this fixture.
-        ("/today/panel", 46, 350),
+        # Elements were 350 (measured 335). Identical To-Dos became one entry
+        # (owner, 2026-09-30): a heading row with its count, its first rows
+        # and a link to the rest. Measured 45 KB / 362 on this fixture; the
+        # rows drawn are no more than before, so the bytes did not move.
+        ("/today/panel", 46, 385),
         ("/my-targets", 170, 940),
         ("/calendar", 285, 2210),
     )

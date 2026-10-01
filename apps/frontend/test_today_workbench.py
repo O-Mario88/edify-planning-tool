@@ -57,17 +57,21 @@ class TodayWorkbenchTests(TestCase):
         response = self.client.get("/dashboard?view=today")
         self.assertEqual(response.context["dashboard_view"], "week")
         # The workbench itself is still served, for every field role.
-        self.assertContains(self.client.get("/today/panel"), "Your next activity")
+        self.assertContains(self.client.get("/today/panel"), "data-dashboard-today")
 
     def test_a_field_role_gets_the_workbench(self):
         self.client.force_login(self.cceo)
         response = self.client.get("/today/panel")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Your next activity")
-        self.assertContains(response, "Exceptions requiring attention")
         self.assertContains(response, "Your proposed week")
-        # Honest empty states, never fabricated content.
+        # Honest empty states, never fabricated content: a day with nothing
+        # on it is one line, and a card with nothing in it is not drawn
+        # (owner, 2026-09-30: "hide Today cards that have nothing to show").
         self.assertContains(response, "Nothing scheduled for today")
+        self.assertContains(response, "data-today-quiet")
+        self.assertNotContains(response, "Your next activity")
+        self.assertNotContains(response, "Exceptions requiring attention")
+        self.assertNotContains(response, "No route today")
 
     def test_non_field_roles_never_see_it(self):
         self.client.force_login(self.accountant)
@@ -231,7 +235,10 @@ class ProgramLeadTodayTests(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertLess(html.index("data-today-waiting"), html.index("data-today-team"))
-        self.assertLess(html.index("data-today-team"), html.index("Your next activity"))
+        # Then the lead's own day: with nothing of their own, its one line.
+        self.assertLess(
+            html.index("data-today-team"), html.index("data-today-no-portfolio")
+        )
         team = response.context["today"]["team_today"]
         self.assertEqual(
             [
@@ -288,6 +295,64 @@ class ProgramLeadTodayTests(TestCase):
             response = self.client.get("/today/panel")
         self.assertContains(response, 'href="/todos"')
         self.assertContains(response, "View all 9")
+
+    def test_identical_to_dos_are_one_group_that_opens_to_its_rows(self):
+        """Owner, 2026-09-30: "group identical to-dos" — eight schools newly
+        added to a project are one entry, not eight identical lines."""
+        import re
+        from unittest.mock import patch
+
+        from apps.command_center.todo_groups import GROUP_PREVIEW
+
+        rows = [
+            {
+                "id": f"act-{n}",
+                "title": "Plan Activities for Newly Added Project School",
+                "linked": f"School {n}",
+                "description": "",
+                "category": "Projects",
+                "priority": "medium",
+                "status_key": "waiting_me",
+                "actionable": True,
+                "action_url": "/projects/planning",
+            }
+            for n in range(8)
+        ] + [
+            {
+                "id": "act-other",
+                "title": "Fix School Contact",
+                "description": "",
+                "category": "Data Quality",
+                "priority": "low",
+                "status_key": "waiting_me",
+                "actionable": True,
+                "action_url": "/schools",
+            }
+        ]
+        with patch(
+            "apps.command_center.todo_service.get_cached_todos",
+            return_value={"todos": rows, "total": 9},
+        ):
+            self.client.force_login(self.pl)
+            response = self.client.get("/today/panel")
+        html = response.content.decode()
+        self.assertEqual(html.count("data-today-group="), 1)
+        # The group says how many it stands for, and draws its first rows —
+        # each with its own decisions — the rest a link away. Eight rows of
+        # menus were four times the panel a field officer's phone loads.
+        self.assertContains(response, "8 · Projects")
+        self.assertEqual(
+            len(
+                re.findall(
+                    r'data-today-item data-todo-kind="[^"]*" x-show="open" x-cloak>',
+                    html,
+                )
+            ),
+            GROUP_PREVIEW,
+        )
+        self.assertContains(response, f"{8 - GROUP_PREVIEW} more in To-Do")
+        # The group counts once, so the lone chore still makes the list.
+        self.assertContains(response, "Fix School Contact")
 
     def test_leadership_handoffs_are_listed_before_the_lead_s_own_chores(self):
         from unittest.mock import patch

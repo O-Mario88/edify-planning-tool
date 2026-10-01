@@ -46,9 +46,10 @@ class FieldTodayWaitingTableTest(TestCase):
             ["Item", "Kind", "Status", "Due", "Actions"],
         )
         self.assertIn("Waiting on you", html)
-        # The old bullet list is gone; exceptions keep their own panel.
+        # The old bullet list is gone; exceptions keep their own panel, drawn
+        # only when there are some (owner, 2026-09-30: no empty Today cards).
         self.assertNotIn("Waiting for your confirmation", html)
-        self.assertIn("Exceptions requiring attention", html)
+        self.assertNotIn("Exceptions requiring attention", html)
 
 
 class ProgrammeLeadCollaborationTablesTest(TestCase):

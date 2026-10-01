@@ -2787,9 +2787,16 @@ def special_projects_my_plan_view(request):
 def todos_view(request):
     """The dedicated To-Do operating queue — system-generated, role-scoped,
     auto-closing action items derived live from workflow state."""
+    from apps.command_center.todo_groups import group_identical
     from apps.command_center.todo_service import get_cached_todos
 
-    return render(request, "pages/todos/index.html", get_cached_todos(request.user))
+    context = get_cached_todos(request.user)
+    # Identical To-Dos are one entry that opens to them (owner, 2026-09-30).
+    return render(
+        request,
+        "pages/todos/index.html",
+        {**context, "todo_entries": group_identical(context.get("todos") or [])},
+    )
 
 
 @require_export_permission

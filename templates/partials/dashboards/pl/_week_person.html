@@ -15,14 +15,6 @@ request made inside it, so the workbench leaves out the team, whose weeks
 have their own tabs.
 {% endcomment %}
 <div class="space-y-4" data-pl-week-person="{{ person.key }}">
-  <div class="plwk-facts" role="list" aria-label="{% if person.is_me %}Your week{% else %}{{ person.name }}'s week{% endif %} in figures">
-    <span class="plwk-fact" role="listitem"><strong>{{ person.planned }}</strong> planned this week</span>
-    <span class="plwk-fact" role="listitem" data-tone="success" title="Verified, or with Impact Assessment: done, and off the lists"><strong>{{ person.closed }}</strong> verified</span>
-    {% if not person.is_me %}<span class="plwk-fact" role="listitem"{% if person.awaiting_you %} data-tone="info"{% endif %}><strong>{{ person.awaiting_you }}</strong> awaiting your verification</span>{% endif %}
-    <span class="plwk-fact" role="listitem"{% if person.behind %} data-tone="danger"{% endif %}><strong>{{ person.behind }}</strong> past their day, not completed</span>
-    {% if week.solo %}<a class="plwk-fact" role="listitem" href="#what-needs-you-now"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> past due, any age</a>{% else %}<span class="plwk-fact" role="listitem"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> overdue from last week</span>{% endif %}
-  </div>
-
   {% if person.leave %}
   <p class="rpl-card__footnote" data-tone="warning" data-pl-week-leave>{% if person.is_everyone %}On approved leave: {{ person.leave|join:"; " }}.{% else %}On approved leave {{ person.leave|join:", " }}.{% endif %}</p>
   {% endif %}
@@ -36,40 +28,53 @@ have their own tabs.
   </div>
   {% endif %}
 
-  {% comment %}Overdue or Due this week. Each is a real URL (?list=), so a
-  refresh, the back button and the tables' pagers keep the list.{% endcomment %}
-  {% if person.lists|length > 1 %}
-  <nav class="edify-section-nav plwk-rail" aria-label="{% if person.is_me %}Your lists{% else %}{{ person.name }}'s lists{% endif %}">
-    <div class="edify-section-nav__inner" role="tablist" aria-label="Overdue or due this week"
-         @click="
-           const tab = $event.target.closest('[role=tab]');
-           if (!tab) return;
-           [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
-             const chosen = other === tab;
-             other.classList.toggle('is-active', chosen);
-             other.setAttribute('aria-selected', chosen ? 'true' : 'false');
-             other.setAttribute('tabindex', chosen ? '0' : '-1');
-           });
-         "
-         x-data>
-      {% for item in person.lists %}
-      <a href="/dashboard?{{ item.query }}"
-         id="pl-week-list-{{ item.key }}"
-         role="tab"
-         aria-selected="{% if item.active %}true{% else %}false{% endif %}"
-         aria-controls="pl-week-list"
-         tabindex="{% if item.active %}0{% else %}-1{% endif %}"
-         class="edify-section-nav__link{% if item.active %} is-active{% endif %}"
-         data-pl-week-list-tab="{{ item.key }}"
-         hx-get="/dashboard?{{ item.query }}"
-         hx-target="#pl-week-panel"
-         hx-swap="innerHTML"
-         hx-sync="closest [role=tablist]:replace"
-         hx-push-url="true">{{ item.label }} <span data-edify-tab-count>{{ item.count }}</span></a>
-      {% endfor %}
+  {% comment %}One row (owner, 2026-09-30: no repeated tabs and figures): which
+  list, Overdue from last week or Due this week, and the week in figures
+  beside it. A list tab carries its own count, so the figures leave out
+  "overdue from last week" whenever the tabs are there.{% endcomment %}
+  <div class="plwk-bar" data-pl-week-bar>
+    {% comment %}Overdue or Due this week. Each is a real URL (?list=), so a
+    refresh, the back button and the tables' pagers keep the list.{% endcomment %}
+    {% if person.lists|length > 1 %}
+    <nav class="edify-section-nav plwk-rail" aria-label="{% if person.is_me %}Your lists{% else %}{{ person.name }}'s lists{% endif %}">
+      <div class="edify-section-nav__inner" role="tablist" aria-label="Overdue or due this week"
+           @click="
+             const tab = $event.target.closest('[role=tab]');
+             if (!tab) return;
+             [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+               const chosen = other === tab;
+               other.classList.toggle('is-active', chosen);
+               other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+               other.setAttribute('tabindex', chosen ? '0' : '-1');
+             });
+           "
+           x-data>
+        {% for item in person.lists %}
+        <a href="/dashboard?{{ item.query }}"
+           id="pl-week-list-{{ item.key }}"
+           role="tab"
+           aria-selected="{% if item.active %}true{% else %}false{% endif %}"
+           aria-controls="pl-week-list"
+           tabindex="{% if item.active %}0{% else %}-1{% endif %}"
+           class="edify-section-nav__link{% if item.active %} is-active{% endif %}"
+           data-pl-week-list-tab="{{ item.key }}"
+           hx-get="/dashboard?{{ item.query }}"
+           hx-target="#pl-week-panel"
+           hx-swap="innerHTML"
+           hx-sync="closest [role=tablist]:replace"
+           hx-push-url="true">{{ item.label }} <span data-edify-tab-count>{{ item.count }}</span></a>
+        {% endfor %}
+      </div>
+    </nav>
+    {% endif %}
+    <div class="plwk-facts" role="list" aria-label="{% if person.is_me %}Your week{% else %}{{ person.name }}'s week{% endif %} in figures">
+      <span class="plwk-fact" role="listitem"><strong>{{ person.planned }}</strong> planned this week</span>
+      <span class="plwk-fact" role="listitem" data-tone="success" title="Verified, or with Impact Assessment: done, and off the lists"><strong>{{ person.closed }}</strong> verified</span>
+      {% if not person.is_me %}<span class="plwk-fact" role="listitem"{% if person.awaiting_you %} data-tone="info"{% endif %}><strong>{{ person.awaiting_you }}</strong> awaiting your verification</span>{% endif %}
+      <span class="plwk-fact" role="listitem"{% if person.behind %} data-tone="danger"{% endif %}><strong>{{ person.behind }}</strong> past their day, not completed</span>
+      {% if week.solo %}<a class="plwk-fact" role="listitem" href="#what-needs-you-now"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> past due, any age</a>{% elif person.lists|length < 2 %}<span class="plwk-fact" role="listitem"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> overdue from last week</span>{% endif %}
     </div>
-  </nav>
-  {% endif %}
+  </div>
 
   <div id="pl-week-list" role="tabpanel" tabindex="0" aria-labelledby="pl-week-list-{{ person.listing }}" class="space-y-4" data-pl-week-list="{{ person.listing }}">
     {% include "partials/dashboards/pl/_week_tables.html" %}

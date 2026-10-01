@@ -23,7 +23,8 @@
 </div>
 
 {% kpi_strip %}
-{% kpi_metric %}{% kpi_label %}Active projects{% endkpi_label %}{{ active_project_count }}{% endkpi_metric %}
+{# "Active projects 0" alone read as an empty portfolio while every project was still in planning (owner, 2026-09-30): it carries the portfolio it counts from. #}
+{% kpi_metric %}{% kpi_label %}Active projects{% endkpi_label %}{{ active_project_count }}<span class="edify-metric__unit"> / {{ total_projects }}</span>{% endkpi_metric %}
 {% kpi_metric %}{% kpi_label %}Planned activities{% endkpi_label %}{{ activities_in_plan }}{% endkpi_metric %}
 {% kpi_metric %}{% kpi_label %}Evidence pending{% endkpi_label %}{{ evidence_pending }}{% endkpi_metric %}
 {% kpi_metric %}{% kpi_label %}Needs attention{% endkpi_label %}{{ action_count }}{% endkpi_metric %}

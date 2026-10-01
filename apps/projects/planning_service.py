@@ -575,7 +575,6 @@ def get_planning(principal, filters=None) -> dict:
 
     all_filtered_rows = rows
     baseline_count = sum(1 for row in all_filtered_rows if row["bucket"] == "baseline")
-    partner_count = sum(1 for row in all_filtered_rows if row["bucket"] == "partner")
     high_risk = sum(
         1
         for row in all_filtered_rows
@@ -739,38 +738,6 @@ def get_planning(principal, filters=None) -> dict:
         if "training" in activity.activity_type
         and activity.status in ACTIVE_ACTIVITY_STATES
     )
-    delivery = [
-        render_precomputed_metric_item(
-            "projects_planning_service_ssa_required",
-            baseline_count,
-            tone="red",
-            helper="SSA needed",
-        ),
-        render_precomputed_metric_item(
-            "projects_planning_service_visit_pending",
-            visit_pending,
-            tone="orange",
-            helper="active workflow",
-        ),
-        render_precomputed_metric_item(
-            "projects_planning_service_training_pending",
-            training_pending,
-            tone="blue",
-            helper="active workflow",
-        ),
-        render_precomputed_metric_item(
-            "projects_planning_service_partner_assignment_pending",
-            partner_count,
-            tone="purple",
-            helper="partner-led",
-        ),
-        render_precomputed_metric_item(
-            "projects_planning_service_high_risk_schools",
-            high_risk,
-            tone="red",
-            helper="SSA below 5.0",
-        ),
-    ]
 
     region_ids = {assignment.school.region_id for assignment in assignments_qs}
     district_options = District.objects.filter(
@@ -880,8 +847,13 @@ def get_planning(principal, filters=None) -> dict:
         "kpis": kpis,
         "band_cards": band_cards,
         "summary": summary[:8],
-        "delivery": delivery,
         "analytics": analytics,
+        # Visits and trainings in the workflow, which the readiness tiles
+        # carried beside the strip's own counts (owner, 2026-09-30: show each
+        # thing once): they ride in the summary's title band. The strip keeps
+        # its six signals.
+        "visit_pending": visit_pending,
+        "training_pending": training_pending,
         "budget": _fmt_ugx(budget),
         "export_url": export_url,
         "can_schedule": RolePermissionService.can_schedule_activity(principal),
