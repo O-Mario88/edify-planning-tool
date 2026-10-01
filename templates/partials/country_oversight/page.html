@@ -104,7 +104,7 @@ anything else. Every figure arrives formatted; the page divides nothing.
         <select name="cceo">
           <option value="">All CCEOs</option>
           {% for owner in options.owners %}
-          <option value="{{ owner.key }}"{% if owner.key == filters.cceo %} selected{% endif %}>{{ owner.name }}{% if owner.kind == "pl_personal" %} (PL personal){% endif %}</option>
+          <option value="{{ owner.key }}"{% if owner.key == filters.cceo %} selected{% endif %}>{{ owner.name }}{% if owner.kind == "pl_personal" %} (Programme Lead){% endif %}</option>
           {% endfor %}
         </select>
       </label>
@@ -142,11 +142,11 @@ anything else. Every figure arrives formatted; the page divides nothing.
         </select>
       </label>
       <label class="cpo-field">
-        <span class="cpo-caption">School Family</span>
-        <select name="family">
-          <option value="">All Families</option>
-          {% for key, label in options.families %}
-          <option value="{{ key }}"{% if key == filters.family %} selected{% endif %}>{{ label }}</option>
+        <span class="cpo-caption">School Type</span>
+        <select name="school_type">
+          <option value="">All Types</option>
+          {% for key, label in options.types %}
+          <option value="{{ key }}"{% if key == filters.school_type %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
       </label>

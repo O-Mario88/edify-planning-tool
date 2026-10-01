@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **591**
+Components and application partials: **592**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -192,7 +192,7 @@ Components and application partials: **591**
 | `partials/country_execution/table_partners.html` | application-partial | Reusable table partners interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /country-planning-oversight/<br>/country-planning-oversight/execution/table | 0 |
 | `partials/country_execution/table_schools.html` | application-partial | Reusable table schools interface primitive | canonical; default, empty | explicit responsive contract | inherits semantic parent contract | /country-planning-oversight/<br>/country-planning-oversight/execution/table | 0 |
 | `partials/country_execution/workspace.html` | application-partial | Reusable workspace interface primitive | {{ card.tone }}; default | inherits containing page contract | accessible name and label | /country-planning-oversight/ | 0 |
-| `partials/country_oversight/_cells.html` | application-partial | Reusable  cells interface primitive | {{ cells.meeting_tone }}, {{ cells.training_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/country-planning-oversight/rows | 0 |
+| `partials/country_oversight/_cells.html` | application-partial | Reusable  cells interface primitive | {{ cells.meeting_tone }}, {{ cells.plan_tone }}, {{ cells.training_tone }}, {{ cells.visit_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/country-planning-oversight/rows | 0 |
 | `partials/country_oversight/_charts.html` | application-partial | Reusable  charts interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_drawer_pager.html` | application-partial | Reusable  drawer pager interface primitive | canonical; default | inherits containing page contract | accessible name and label | /country-planning-oversight/drawer | 0 |
 | `partials/country_oversight/_figures.html` | application-partial | Reusable  figures interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/drawer | 0 |
@@ -201,6 +201,7 @@ Components and application partials: **591**
 | `partials/country_oversight/_gaps.html` | application-partial | Reusable  gaps interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/drawer | 0 |
 | `partials/country_oversight/_glyph.html` | application-partial | Reusable  glyph interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_table.html` | application-partial | Reusable  table interface primitive | canonical; default, empty, open | explicit responsive contract | accessible name and label | /country-planning-oversight/ | 0 |
+| `partials/country_oversight/_types.html` | application-partial | Reusable  types interface primitive | {{ row.training_tone }}, {{ row.visit_tone }}; default, empty | explicit responsive contract | accessible name and label | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_uganda_outline.html` | application-partial | Reusable  uganda outline interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/drawer_follow_up.html` | application-partial | Reusable drawer follow up interface primitive | canonical; default, error, disabled, open | inherits containing page contract | accessible name and label, announced dynamic state | /country-planning-oversight/follow-up | 0 |
 | `partials/country_oversight/drawer_followups.html` | application-partial | Reusable drawer followups interface primitive | {{ item.tone }}; default, empty, open | inherits containing page contract | accessible name and label, announced dynamic state | /country-planning-oversight/drawer | 0 |
