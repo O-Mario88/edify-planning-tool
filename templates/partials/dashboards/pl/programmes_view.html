@@ -27,10 +27,30 @@ Programme Rollout holds the full picture behind each card.
         {% endkpi_strip %}
       </section>
 
-      <section class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-ssa-intelligence-title">
-        <h2 id="pl-ssa-intelligence-title" class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
-        <p class="text-[12px] mb-2 edify-text-subtle">By cluster, latest confirmed cycle (score out of 10)</p>
-        {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+      {# The monthly chart takes the wide column, the short cards the narrow one (owner, 2026-09-30: no half-empty column). #}
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-completion-title">
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-completion-title" class="rpl-card__title">Monthly completion by team member</h2>
+            <span class="rpl-card__subtitle">Completed ÷ planned activities in each month · latest six elapsed months in FY {{ fy }} · includes the current month’s plans · field execution, not IA-verified</span>
+          </div>
+        </header>
+        {% if planning_progress_chart.has_data %}
+        <div id="plCompletionChart" class="w-full min-h-[220px]" role="img" aria-label="Monthly activity completion percentages for you and every supervised officer"></div>
+        {{ planning_progress_chart|json_script:"pl-completion-payload" }}
+        <details>
+          <summary>View completion percentages</summary>
+          <div class="overflow-x-auto">
+            <table class="edify-data-table w-full">
+              <caption class="sr-only">Monthly completion percentages. A dash means no activities were planned.</caption>
+              <thead><tr><th scope="col">Team member</th>{% for month in planning_progress_chart.labels %}<th scope="col">{{ month }}</th>{% endfor %}</tr></thead>
+              <tbody>{% for member in planning_progress_chart.series %}<tr><th scope="row">{{ member.name }}</th>{% for value in member.data %}<td>{% if value is not None %}{{ value }}%{% else %}—{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+            </table>
+          </div>
+        </details>
+        {% else %}
+        {% include "components/empty_state.html" with message="No planned work in this reporting period." hint="Monthly completion appears once you or a supervised officer has planned activities." line="true" %}
+        {% endif %}
       </section>
 
     </div>
@@ -56,7 +76,7 @@ Programme Rollout holds the full picture behind each card.
           {% endfor %}
         </div>
         {% else %}
-        {% include "components/empty_state.html" with message="Nothing is planned for your team this year yet." compact="true" %}
+        {% include "components/empty_state.html" with message="Nothing is planned for your team this year yet." line="true" %}
         {% endif %}
       </section>
 
@@ -81,48 +101,30 @@ Programme Rollout holds the full picture behind each card.
         </div>
       </section>
 
-      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-completion-title">
-        <header class="rpl-card__header">
-          <div class="rpl-card__heading">
-            <h2 id="pl-completion-title" class="rpl-card__title">Monthly completion by team member</h2>
-            <span class="rpl-card__subtitle">Completed ÷ planned activities in each month · latest six elapsed months in FY {{ fy }} · includes the current month’s plans · field execution, not IA-verified</span>
-          </div>
-        </header>
-        {% if planning_progress_chart.has_data %}
-        <div id="plCompletionChart" class="w-full min-h-[220px]" role="img" aria-label="Monthly activity completion percentages for you and every supervised officer"></div>
-        {{ planning_progress_chart|json_script:"pl-completion-payload" }}
-        <details>
-          <summary>View completion percentages</summary>
-          <div class="overflow-x-auto">
-            <table class="edify-data-table w-full">
-              <caption class="sr-only">Monthly completion percentages. A dash means no activities were planned.</caption>
-              <thead><tr><th scope="col">Team member</th>{% for month in planning_progress_chart.labels %}<th scope="col">{{ month }}</th>{% endfor %}</tr></thead>
-              <tbody>{% for member in planning_progress_chart.series %}<tr><th scope="row">{{ member.name }}</th>{% for value in member.data %}<td>{% if value is not None %}{{ value }}%{% else %}—{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
-            </table>
-          </div>
-        </details>
-        {% else %}
-        {% include "components/empty_state.html" with message="No planned work in this reporting period." hint="Monthly completion appears once you or a supervised officer has planned activities." compact="true" %}
-        {% endif %}
-      </section>
-
-      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
-        <header class="rpl-card__header">
-          <div class="rpl-card__heading">
-            <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
-            <span class="rpl-card__subtitle">Completed work by month for you and each officer you supervise, with the share of the year's plan done · field execution, not IA-verified</span>
-          </div>
-        </header>
-        {% if delivery_by_month.has_work %}
-        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed activities by month for you and each team member, FY {{ fy }}"></div>
-        {{ delivery_by_month|json_script:"pl-execution-payload" }}
-        {% else %}
-        {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." compact="true" %}
-        {% endif %}
+      <section class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-ssa-intelligence-title">
+        <h2 id="pl-ssa-intelligence-title" class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
+        <p class="text-[12px] mb-2 edify-text-subtle">By cluster, latest confirmed cycle (score out of 10)</p>
+        {% include "partials/dashboards/pl/ssa_intelligence.html" %}
       </section>
 
     </div>
   </div>
+
+  {# Twelve months in two panels: the whole width, under both columns, so neither column runs past the other. #}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
+          <span class="rpl-card__subtitle">Completed work by month for you and each officer you supervise, with the share of the year's plan done · field execution, not IA-verified</span>
+        </div>
+      </header>
+      {% if delivery_by_month.has_work %}
+      <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed activities by month for you and each team member, FY {{ fy }}"></div>
+      {{ delivery_by_month|json_script:"pl-execution-payload" }}
+      {% else %}
+      {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." line="true" %}
+      {% endif %}
+    </section>
 
   <div class="pl-intelligence-grid">
     <div id="urgent-schools" class="pl-intelligence-card rounded-surface overflow-hidden flex flex-col scroll-mt-20 edify-surface border edify-border edify-shadow-sm">
@@ -146,50 +148,58 @@ Programme Rollout holds the full picture behind each card.
   /* Completed work by month, stacked by delivery family, with the cumulative
      share of the year's plan on the rate axis. The shared mixed-trend form, so
      it reads as the same chart family as every other role dashboard. */
-  var el = document.getElementById('plExecutionChart');
-  var payloadEl = document.getElementById('pl-execution-payload');
-  if (!el || !payloadEl || !window.EdifyChartSystem) { return; }
-  var payload = JSON.parse(payloadEl.textContent);
+  /* The chart system loads deferred: on a full load of this tab the script
+     ran before it and drew nothing, leaving an empty card (2026-09-30). It
+     waits for the document, as the completion chart above does. */
+  function drawExecution() {
+    var el = document.getElementById('plExecutionChart');
+    var payloadEl = document.getElementById('pl-execution-payload');
+    if (!el || !payloadEl || !window.EdifyChartSystem) { return; }
+    var payload = JSON.parse(payloadEl.textContent);
 
-  function build() {
-    var isDark = document.documentElement.classList.contains('dark');
-    var seriesCount = payload.series.length + 1;
-    var cfg = window.EdifyChartSystem.mixedTrend(seriesCount);
-    /* People are columns, one hue each; the shared bar standard draws the
-       share-of-plan rate as its own panel rather than a second axis. */
-    cfg.chart.type = 'bar';
-    cfg.series = payload.series.map(function (s) {
-      return { name: s.name, type: 'column', data: s.data };
+    function build() {
+      var isDark = document.documentElement.classList.contains('dark');
+      var seriesCount = payload.series.length + 1;
+      var cfg = window.EdifyChartSystem.mixedTrend(seriesCount);
+      /* People are columns, one hue each; the shared bar standard draws the
+         share-of-plan rate as its own panel rather than a second axis. */
+      cfg.chart.type = 'bar';
+      cfg.series = payload.series.map(function (s) {
+        return { name: s.name, type: 'column', data: s.data };
+      });
+      cfg.series.push({ name: 'Share of plan done', type: 'line', data: payload.cumulative_pct });
+      cfg.chart.height = 220;
+      cfg.chart.stacked = true;
+      cfg.labels = payload.labels;
+      cfg.xaxis.type = 'category';
+      var first = payload.series[0].name;
+      cfg.yaxis = payload.series.map(function (s, i) {
+        return i === 0
+          ? window.EdifyChartSystem.countAxis('', { seriesName: first })
+          : { seriesName: first, show: false };
+      });
+      cfg.yaxis.push(window.EdifyChartSystem.rateAxis('Share of plan done (%)'));
+      cfg.tooltip.theme = isDark ? 'dark' : 'light';
+      return cfg;
+    }
+
+    var chart = window.EdifyChartSystem.renderDetached(el, build());
+    var _themeTimer = null;
+    window.addEventListener('edify-theme-change', function () {
+      if (_themeTimer) clearTimeout(_themeTimer);
+      _themeTimer = setTimeout(function () {
+        // A parked or swapped-out panel is not redrawn: building a chart into
+        // a detached element is main-thread work nobody sees.
+        if (!el.isConnected) { return; }
+        if (chart) { chart.destroy(); }
+        el.replaceChildren();
+        chart = window.EdifyChartSystem.renderDetached(el, build());
+      }, 50);
     });
-    cfg.series.push({ name: 'Share of plan done', type: 'line', data: payload.cumulative_pct });
-    cfg.chart.height = 220;
-    cfg.chart.stacked = true;
-    cfg.labels = payload.labels;
-    cfg.xaxis.type = 'category';
-    var first = payload.series[0].name;
-    cfg.yaxis = payload.series.map(function (s, i) {
-      return i === 0
-        ? window.EdifyChartSystem.countAxis('', { seriesName: first })
-        : { seriesName: first, show: false };
-    });
-    cfg.yaxis.push(window.EdifyChartSystem.rateAxis('Share of plan done (%)'));
-    cfg.tooltip.theme = isDark ? 'dark' : 'light';
-    return cfg;
   }
-
-  var chart = window.EdifyChartSystem.renderDetached(el, build());
-  var _themeTimer = null;
-  window.addEventListener('edify-theme-change', function () {
-    if (_themeTimer) clearTimeout(_themeTimer);
-    _themeTimer = setTimeout(function () {
-      // A parked or swapped-out panel is not redrawn: building a chart into
-      // a detached element is main-thread work nobody sees.
-      if (!el.isConnected) { return; }
-      if (chart) { chart.destroy(); }
-      el.replaceChildren();
-      chart = window.EdifyChartSystem.renderDetached(el, build());
-    }, 50);
-  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', drawExecution, { once: true });
+  } else { drawExecution(); }
 })();
 </script>
 {% endif %}

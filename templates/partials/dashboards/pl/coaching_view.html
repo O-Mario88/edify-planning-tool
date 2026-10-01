@@ -66,7 +66,7 @@ to the page where it is acted on; nothing is decided here.
           {% empty %}
           <tr>
             <td colspan="9" class="rpl-table__empty">
-              {% include "components/empty_state.html" with message="No officers are on your team yet." hint="Officers appear here once they are assigned to you as their supervisor." compact="true" %}
+              {% include "components/empty_state.html" with message="No officers are on your team yet." hint="Officers appear here once they are assigned to you as their supervisor." line="true" %}
             </td>
           </tr>
           {% endfor %}

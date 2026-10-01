@@ -91,7 +91,7 @@ grouped by the page where each is decided, and the follow-ups the lead has sent.
           {% endfor %}
         </div>
         {% if not team_week.leave_conflicts and not team_week.overloaded %}
-        {% include "components/empty_state.html" with message="No leave or load risk for your team this week." compact="true" %}
+        {% include "components/empty_state.html" with message="No leave or load risk for your team this week." line="true" %}
         {% endif %}
         <div class="rpl-card__footnote"><a href="/dashboard?view=week&amp;fy={{ fy }}">See where each officer is working this week</a></div>
       </section>
@@ -124,7 +124,7 @@ grouped by the page where each is decided, and the follow-ups the lead has sent.
           {% endfor %}
         </div>
         {% else %}
-        {% include "components/empty_state.html" with message="No follow-ups are open." hint="Send one from Schools Needing Urgent Attention on the Programmes view." compact="true" %}
+        {% include "components/empty_state.html" with message="No follow-ups are open." hint="Send one from Schools Needing Urgent Attention on the Programmes view." line="true" %}
         {% endif %}
       </section>
     </div>
