@@ -153,7 +153,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--agreement-rule);
-    border-radius: 999px;
+    border-radius: var(--edify-radius-pill);
     background: var(--agreement-paper);
     color: var(--agreement-blue);
     font-size: .75rem;

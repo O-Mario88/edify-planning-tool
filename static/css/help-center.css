@@ -30,7 +30,7 @@
   inline-size: 22rem;
   block-size: 22rem;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   content: "";
   pointer-events: none;
 }
@@ -140,7 +140,7 @@
   line-height: 1.5;
 }
 
-.help-role-note span { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; margin-inline-end: .2rem; border-radius: 999px; background: rgba(94, 210, 170, .2); color: #9ce6ca; font-weight: 900; }
+.help-role-note span { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; margin-inline-end: .2rem; border-radius: var(--edify-radius-pill); background: rgba(94, 210, 170, .2); color: #9ce6ca; font-weight: 900; }
 .help-role-note strong { color: var(--brand-primary-on-solid); }
 
 .help-topic-section { margin-block-start: clamp(2rem, 4vw, 3.5rem); }
@@ -498,7 +498,7 @@
   min-width: 1.5rem;
   text-align: center;
   padding: 0.1rem 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-micro-size);

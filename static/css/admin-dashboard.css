@@ -330,6 +330,51 @@
 .admin-target-row > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-target-row > strong { color: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 620; font-variant-numeric: tabular-nums; }
 .admin-target-row > .admin-status { grid-column: 2; }
+/* A row's next step is a link that looks like one — the danger ink says it is
+   urgent, the underline and arrow say it can be pressed. */
+.admin-target-row > .admin-next-step {
+  grid-column: 2;
+  justify-self: end;
+  color: var(--edify-danger-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+.admin-target-row > .admin-next-step:hover { text-decoration-thickness: 2px; }
+.admin-target-row > a:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--edify-text); }
+.admin-target-row > a:first-child:hover { text-decoration: underline; }
+
+/* Sign-ins: a day, its count, and a bar of that count against the busiest day.
+   The bar's rules went out with presence.css when Who's Online became the
+   Staff Activity Log (2026-09-29) and the markup stayed, so each day drew an
+   empty second line and the panel ran twice its height with nothing to
+   compare (2026-10-01). */
+[data-admin-logins] .admin-target-row {
+  grid-template-columns: 6.5rem 3.5rem minmax(0, 1fr);
+  padding-block: 0.5rem;
+}
+[data-admin-logins] .admin-target-row > strong { text-align: end; }
+[data-admin-logins] .admin-target-row > span:last-child { grid-column: auto; }
+.admin-presence-bar {
+  display: block;
+  block-size: 0.45rem;
+  overflow: hidden;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+}
+.admin-presence-bar > i {
+  display: block;
+  block-size: 100%;
+  inline-size: var(--w, 0%);
+  border-radius: inherit;
+  background: var(--edify-accent);
+}
+.admin-target-row--head {
+  color: var(--edify-text-subtle);
+  font-weight: 650;
+}
+.admin-target-row--head > strong { color: inherit; font-weight: inherit; }
 
 /* Lower dashboard */
 

@@ -28,11 +28,11 @@ school (apps/frontend/views/programme_rollout_views.py).
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-chart-green);"></span>
         <span>{% if scope.support_view %}{{ scope.lead_name }} · {% endif %}{{ scope.officer_count }} officer{{ scope.officer_count|pluralize }} · {{ scope.school_count|intcomma }} school{{ scope.school_count|pluralize }}</span>
       </span>
-      <a href="/team-planning-oversight/?fy={{ fy }}" class="btn btn-secondary h-8">Open Team Oversight</a>
+      <a href="/team-planning-oversight/?fy={{ fy }}" class="btn btn-secondary h-8">Open Planning Oversight</a>
     </div>
   </div>
 
-  <form method="get" id="rollout-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Programme rollout filters">
+  <form method="get" id="rollout-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Programme rollout filters" x-data @change="$el.requestSubmit()">
     <input type="hidden" id="rollout-filter-view" name="view" value="{{ view }}">
     {% if lead_options %}
     <div class="edify-filter-field platform-filter-compact"><label for="rollout-lead" class="edify-filter-label">Programme Lead</label>
@@ -45,7 +45,7 @@ school (apps/frontend/views/programme_rollout_views.py).
       {% for opt in fy_options %}<option value="{{ opt }}"{% if fy == opt %} selected{% endif %}>FY {{ opt }}</option>{% endfor %}
     </select></div>
     <div class="edify-filter-actions">
-      <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+      <noscript><button type="submit" class="btn btn-primary h-9">Apply filters</button></noscript>
       <a id="rollout-filter-reset" href="/programme-rollout?view={{ view }}" class="btn btn-secondary h-9">Reset</a>
     </div>
   </form>

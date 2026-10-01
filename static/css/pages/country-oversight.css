@@ -113,7 +113,7 @@
   inline-size: 4.25rem;
   block-size: auto;
   flex: none;
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(16, 31, 46, 0.12);
 }
 .cpo-headline-copy { min-inline-size: 0; }
@@ -157,7 +157,7 @@
   margin: 0;
   font-style: italic;
   font-weight: 600;
-  font-size: 1.12rem;
+  font-size: var(--edify-text-heading-size);
   line-height: 1.15;
   color: var(--cpo-accent);
   transform: rotate(-7deg);
@@ -176,12 +176,12 @@
 .cpo-stamp-label,
 .cpo-stamp-asof {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-3);
 }
 .cpo-stamp-time {
   margin: 0.1rem 0 0;
-  font-size: 0.95rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 500;
   color: var(--cpo-ink-2);
 }
@@ -190,7 +190,7 @@
   place-items: center;
   inline-size: 2.25rem;
   block-size: 2.25rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   color: var(--cpo-ink-2);
   transition: background-color 120ms ease, color 120ms ease;
 }
@@ -227,7 +227,7 @@
   min-inline-size: 0;
 }
 .cpo-caption {
-  font-size: 0.75rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-2);
   font-weight: 500;
 }
@@ -238,10 +238,10 @@
   block-size: 2.15rem;
   padding-inline: 0.6rem 1.8rem;
   border: 1px solid var(--cpo-line-2);
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   background-color: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.84rem;
+  font-size: var(--edify-text-label-size);
 }
 .cpo-controls input[type="week"] { padding-inline-end: 0.5rem; }
 .cpo-controls select:focus-visible,
@@ -253,8 +253,8 @@
 .cpo-reset {
   block-size: 2.15rem;
   padding-inline: 1.1rem;
-  border-radius: 6px;
-  font-size: 0.84rem;
+  border-radius: var(--edify-radius-xs);
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -286,7 +286,7 @@
   border: 0;
   background: none;
   padding: 0;
-  font-size: 0.78rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--cpo-accent);
   cursor: pointer;
@@ -300,7 +300,7 @@
   background: var(--cpo-info-bg);
   border: 1px solid var(--cpo-info-line);
   color: var(--cpo-ink-2);
-  font-size: 0.85rem;
+  font-size: var(--edify-text-label-size);
 }
 .cpo-notice--attention { background: var(--cpo-fair-soft); border-color: color-mix(in srgb, var(--cpo-fair) 35%, transparent); }
 .cpo-link {
@@ -365,7 +365,7 @@
 .cpo-metric[data-tone="low"] .cpo-glyph { color: var(--tone); }
 .cpo-glyph svg { inline-size: 1.3rem; block-size: 1.3rem; }
 .cpo-metric-name {
-  font-size: 0.9rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 600;
   line-height: 1.2;
   color: var(--cpo-ink);
@@ -384,18 +384,18 @@
   gap: 0.3rem;
   font-variant-numeric: tabular-nums;
 }
-.cpo-metric-part { font-size: 1.4rem; font-weight: 700; color: var(--cpo-ink); line-height: 1; }
-.cpo-metric-whole { font-size: 1.1rem; font-weight: 600; color: var(--cpo-ink-2); line-height: 1; }
+.cpo-metric-part { font-size: var(--edify-text-hero-size); font-weight: 700; color: var(--cpo-ink); line-height: 1; }
+.cpo-metric-whole { font-size: var(--edify-text-heading-size); font-weight: 600; color: var(--cpo-ink-2); line-height: 1; }
 .cpo-metric-share {
   margin-inline-start: auto;
-  font-size: 0.95rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 700;
   color: var(--tone);
 }
 .cpo-meter {
   display: block;
   block-size: 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--cpo-meter-track);
   overflow: hidden;
 }
@@ -418,19 +418,19 @@
   overflow: hidden;
 }
 .cpo-metric-foot {
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-2);
   line-height: 1.3;
 }
 .cpo-metric-foot strong {
-  font-size: 0.95rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 700;
   color: var(--tone);
   margin-inline-end: 0.3rem;
 }
 .cpo-metric-extra,
 .cpo-metric-note {
-  font-size: 0.75rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-3);
   line-height: 1.3;
   margin-block-start: -0.2rem;
@@ -457,7 +457,7 @@
    the follow-ups and the lists under the execution table. */
 .cpo-chart-name {
   margin: 0 0 0.3rem;
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
   font-weight: 600;
   line-height: 1.3;
   color: var(--cpo-ink);
@@ -474,11 +474,11 @@
 .cpo-chart-data { margin-block-start: 0.25rem; }
 .cpo-chart-data > summary {
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-3);
   font-weight: 600;
 }
-.cpo-mini { font-size: 0.78rem; }
+.cpo-mini { font-size: var(--edify-text-micro-size); }
 
 /* ── Drill-down table and follow-ups ───────────────────────────────────── */
 .cpo-lower {
@@ -506,7 +506,7 @@
 .cpo-drill-name,
 .cpo-side-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
   font-weight: 600;
   line-height: 1.3;
   color: var(--cpo-ink);
@@ -521,10 +521,10 @@
   block-size: 2.1rem;
   padding-inline: 0.85rem;
   border: 1px solid var(--cpo-line-2);
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   background: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.85rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
@@ -655,10 +655,10 @@
   block-size: 1.7rem;
   padding-inline: 0.8rem;
   border: 1px solid var(--cpo-line-2);
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   background: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.78rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -687,7 +687,7 @@
   place-items: center;
   inline-size: 1.6rem;
   block-size: 1.7rem;
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   color: var(--cpo-ink-2);
   cursor: pointer;
 }
@@ -711,10 +711,10 @@
   block-size: 1.45rem;
   padding-inline: 0.45rem;
   margin-inline-start: 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--cpo-low-soft);
   color: var(--cpo-low);
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   vertical-align: middle;
 }
@@ -722,7 +722,7 @@
   border: 0;
   background: none;
   color: var(--cpo-accent);
-  font-size: 0.88rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   cursor: pointer;
   padding: 0.2rem 0;
@@ -744,7 +744,7 @@
 .cpo-fu-title {
   all: unset;
   display: block;
-  font-size: 0.82rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--cpo-ink);
   cursor: pointer;
@@ -754,13 +754,13 @@
 }
 .cpo-fu-title:hover { color: var(--cpo-accent); text-decoration: underline; }
 .cpo-fu-title:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 2px; }
-.cpo-fu-to { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--cpo-ink-3); }
+.cpo-fu-to { margin: 0.15rem 0 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
 .cpo-tag {
   display: inline-flex;
   align-items: center;
   block-size: 1.35rem;
   padding-inline: 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   white-space: nowrap;
@@ -772,9 +772,9 @@
 .cpo-tag[data-tone="back"] { background: var(--cpo-low-soft); color: var(--cpo-low); }
 .cpo-tag[data-tone="done"] { background: var(--cpo-sunk); color: var(--cpo-ink-2); }
 .cpo-tag[data-tone="off"] { background: var(--cpo-sunk); color: var(--cpo-ink-3); }
-.cpo-fu-date { font-size: 0.75rem; color: var(--cpo-ink-3); white-space: nowrap; }
+.cpo-fu-date { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); white-space: nowrap; }
 .cpo-fu-date.is-late { color: var(--cpo-low); font-weight: 600; }
-.cpo-fu-empty { margin: 0; padding: 0.4rem 1.1rem 0.8rem; font-size: 0.85rem; color: var(--cpo-ink-3); }
+.cpo-fu-empty { margin: 0; padding: 0.4rem 1.1rem 0.8rem; font-size: var(--edify-text-label-size); color: var(--cpo-ink-3); }
 .cpo-info {
   display: flex;
   gap: 0.6rem;
@@ -784,7 +784,7 @@
   border-radius: 8px;
   background: var(--cpo-info-bg);
   border: 1px solid var(--cpo-info-line);
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.45;
   color: var(--cpo-ink-2);
 }
@@ -813,12 +813,12 @@
   .cpo-metric-top { gap: 0.5rem; min-block-size: 2rem; }
   .cpo-glyph { inline-size: 1.9rem; block-size: 1.9rem; border-radius: 7px; }
   .cpo-glyph svg { inline-size: 1.1rem; block-size: 1.1rem; }
-  .cpo-metric-name { font-size: 0.84rem; }
-  .cpo-metric-part { font-size: 1.2rem; }
-  .cpo-metric-whole { font-size: 0.95rem; }
-  .cpo-metric-share { font-size: 0.85rem; }
-  .cpo-metric-foot { font-size: 0.76rem; }
-  .cpo-metric-foot strong { font-size: 0.88rem; margin-inline-end: 0.2rem; }
+  .cpo-metric-name { font-size: var(--edify-text-label-size); }
+  .cpo-metric-part { font-size: var(--edify-text-heading-size); }
+  .cpo-metric-whole { font-size: var(--edify-text-body-size); }
+  .cpo-metric-share { font-size: var(--edify-text-label-size); }
+  .cpo-metric-foot { font-size: var(--edify-text-micro-size); }
+  .cpo-metric-foot strong { font-size: var(--edify-text-label-size); margin-inline-end: 0.2rem; }
 }
 @container cpo (max-width: 1079px) {
   .cpo-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -888,12 +888,12 @@
 .cpo-sheet > section + div { margin-block-start: 0.35rem; }
 .cpo-sub {
   margin: 0.4rem 0 0.5rem;
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--cpo-ink-2);
 }
-.cpo-muted { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--cpo-ink-3); line-height: 1.45; }
+.cpo-muted { margin: 0.25rem 0 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); line-height: 1.45; }
 .cpo-figs {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
@@ -907,13 +907,13 @@
   background: var(--cpo-surface);
 }
 .cpo-figs dt { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 600; }
-.cpo-figs dd { margin: 0.15rem 0 0; font-size: 1.05rem; font-weight: 700; color: var(--cpo-ink); font-variant-numeric: tabular-nums; }
+.cpo-figs dd { margin: 0.15rem 0 0; font-size: var(--edify-text-title-size); font-weight: 700; color: var(--cpo-ink); font-variant-numeric: tabular-nums; }
 .cpo-figs dd small { display: block; margin-block-start: 0.1rem; font-size: var(--edify-text-micro-size); font-weight: 400; color: var(--cpo-ink-3); }
 .cpo-figs dd.is-late { color: var(--cpo-low); }
 .cpo-figs--tight { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
 .cpo-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.4rem 1rem; margin: 0; }
 .cpo-facts dt { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
-.cpo-facts dd { margin: 0; font-size: 0.88rem; font-weight: 600; }
+.cpo-facts dd { margin: 0; font-size: var(--edify-text-label-size); font-weight: 600; }
 .cpo-needs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .cpo-need {
   display: flex;
@@ -926,8 +926,8 @@
   background: var(--cpo-surface);
 }
 .cpo-need.is-clear { opacity: 0.72; }
-.cpo-need-name { margin: 0; font-size: 0.85rem; font-weight: 600; }
-.cpo-need-figs { margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--cpo-ink-3); }
+.cpo-need-name { margin: 0; font-size: var(--edify-text-label-size); font-weight: 600; }
+.cpo-need-figs { margin: 0.1rem 0 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
 .cpo-need-figs strong { color: var(--cpo-low); }
 .cpo-need.is-clear .cpo-need-figs strong { color: var(--cpo-good); }
 .cpo-form { display: flex; flex-direction: column; gap: 0.65rem; }
@@ -936,15 +936,15 @@
 .cpo-form input[type="date"] {
   inline-size: 100%;
   border: 1px solid var(--cpo-line-2);
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   padding: 0.45rem 0.6rem;
-  font-size: 0.875rem;
+  font-size: var(--edify-text-label-size);
   background: var(--cpo-surface);
   color: var(--cpo-ink);
 }
 .cpo-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.cpo-inline select { block-size: 2rem; border: 1px solid var(--cpo-line-2); border-radius: 6px; padding-inline: 0.5rem; background: var(--cpo-surface); color: var(--cpo-ink); }
-.cpo-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0; font-size: 0.85rem; }
+.cpo-inline select { block-size: 2rem; border: 1px solid var(--cpo-line-2); border-radius: var(--edify-radius-xs); padding-inline: 0.5rem; background: var(--cpo-surface); color: var(--cpo-ink); }
+.cpo-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; margin: 0; font-size: var(--edify-text-label-size); }
 .cpo-links a { color: var(--cpo-accent); font-weight: 600; }
 .cpo-fu--flush { padding: 0; }
 .cpo-schools { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -957,7 +957,7 @@
   grid-template-columns: minmax(9rem, 12rem) auto minmax(0, 1fr) auto;
   gap: 0.6rem;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   text-align: start;
 }
 .cpo-slot-name { font-weight: 600; }
@@ -975,18 +975,18 @@
 }
 .cpo-fu-entry.is-focus { border-color: var(--cpo-accent); box-shadow: 0 0 0 2px var(--cpo-accent-soft); }
 .cpo-fu-entry-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
-.cpo-fu-entry-name { margin: 0; font-size: 0.9rem; font-weight: 600; }
-.cpo-trail { margin: 0.2rem 0 0; padding-inline-start: 1.1rem; font-size: 0.8rem; color: var(--cpo-ink-2); }
+.cpo-fu-entry-name { margin: 0; font-size: var(--edify-text-body-size); font-weight: 600; }
+.cpo-trail { margin: 0.2rem 0 0; padding-inline-start: 1.1rem; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-2); }
 .cpo-trail small { color: var(--cpo-ink-3); margin-inline-start: 0.3rem; }
 .cpo-dq { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .cpo-dq-item details { border: 1px solid var(--cpo-line); border-radius: 8px; padding: 0.55rem 0.75rem; background: var(--cpo-surface); }
 .cpo-dq-item summary { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; cursor: pointer; }
-.cpo-dq-name { font-size: 0.85rem; font-weight: 600; }
+.cpo-dq-name { font-size: var(--edify-text-label-size); font-weight: 600; }
 .cpo-dq-item[data-level="clear"] .cpo-dq-name { color: var(--cpo-ink-3); font-weight: 500; }
-.cpo-dq-samples { margin: 0.4rem 0 0; padding-inline-start: 1rem; font-size: 0.8rem; }
+.cpo-dq-samples { margin: 0.4rem 0 0; padding-inline-start: 1rem; font-size: var(--edify-text-micro-size); }
 .cpo-dq-samples small { color: var(--cpo-ink-3); }
-.cpo-opened .cpo-big { margin: 0; font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.cpo-opened .cpo-big strong { margin-inline-start: 0.5rem; font-size: 1.1rem; }
+.cpo-opened .cpo-big { margin: 0; font-size: var(--edify-text-display-size); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cpo-opened .cpo-big strong { margin-inline-start: 0.5rem; font-size: var(--edify-text-heading-size); }
 .cpo-opened[data-tone="good"] .cpo-big strong { color: var(--cpo-good); }
 .cpo-opened[data-tone="fair"] .cpo-big strong { color: var(--cpo-fair); }
 .cpo-opened[data-tone="low"] .cpo-big strong { color: var(--cpo-low); }
@@ -994,7 +994,7 @@
   padding: 0.9rem 1.1rem;
   border: 1px solid color-mix(in srgb, var(--cpo-accent) 35%, var(--cpo-line));
   border-inline-start: 4px solid var(--cpo-accent);
-  border-radius: 10px;
+  border-radius: var(--edify-radius-sm);
   background: var(--cpo-surface);
   display: flex;
   flex-direction: column;
@@ -1002,9 +1002,9 @@
   color: var(--cpo-ink);
 }
 .cpo-banner-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
-.cpo-banner-kicker { margin: 0; font-size: 0.75rem; color: var(--cpo-ink-3); font-weight: 600; }
-.cpo-banner-name { margin: 0.1rem 0 0; font-size: 1.05rem; font-weight: 700; }
-.cpo-banner-ask { margin: 0; font-size: 0.92rem; color: var(--cpo-ink-2); }
+.cpo-banner-kicker { margin: 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 600; }
+.cpo-banner-name { margin: 0.1rem 0 0; font-size: var(--edify-text-title-size); font-weight: 700; }
+.cpo-banner-ask { margin: 0; font-size: var(--edify-text-body-size); color: var(--cpo-ink-2); }
 
 /* ── Execution & Completion (owner design, 2026-09-28) ─────────────────────
    The second Country Oversight tab. It shares the planning page's surfaces
@@ -1072,7 +1072,7 @@
   align-items: center;
   gap: 0.35rem;
   margin-block-end: 0.35rem;
-  font-size: 0.85rem;
+  font-size: var(--edify-text-label-size);
   color: var(--cpo-ink-3);
 }
 .cxo-crumbs a { color: var(--cpo-ink-3); text-decoration: none; }
@@ -1094,14 +1094,14 @@
   block-size: 2.15rem;
   padding-inline: 0.4rem;
   color: var(--cxo-exec);
-  font-size: 0.84rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
   white-space: nowrap;
 }
 .cxo-reset svg { inline-size: 1.1rem; block-size: 1.1rem; }
-.cxo-narrowed { margin: 0; font-size: 0.82rem; color: var(--cpo-ink-2); }
+.cxo-narrowed { margin: 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-2); }
 
 /* The six figures (owner design): the icon beside the name, then the figure,
    its note and the bar across the foot, each on the card's whole width. Beside
@@ -1126,7 +1126,7 @@
 .cxo-metric .cxo-glyph svg { inline-size: 1.15rem; block-size: 1.15rem; }
 .cxo-metric .cxo-label {
   grid-area: label;
-  font-size: 0.88rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   line-height: 1.2;
   color: var(--cpo-ink);
@@ -1155,14 +1155,14 @@
 .cxo-metric[data-tone="alert"] .cxo-figure,
 .cxo-metric[data-tone="alert"] .cxo-metric-note { color: var(--cxo-overdue); }
 .cxo-figure {
-  font-size: 1.6rem;
+  font-size: var(--edify-text-display-size);
   font-weight: 700;
   line-height: 1.05;
   color: var(--cpo-ink);
   font-variant-numeric: tabular-nums;
   padding-inline-start: 0.1rem;
 }
-.cxo-metric-note { font-size: 0.78rem; line-height: 1.3; color: var(--cpo-ink-2); }
+.cxo-metric-note { font-size: var(--edify-text-micro-size); line-height: 1.3; color: var(--cpo-ink-2); }
 .cxo-meter .cpo-meter-fill { background: var(--tone); }
 
 /* Funnel and trend. */
@@ -1199,7 +1199,7 @@
   padding: 0;
   display: grid;
   gap: 0.15rem;
-  font-size: 0.8rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-2);
 }
 .cxo-legend li { display: flex; align-items: center; gap: 0.45rem; }
@@ -1219,7 +1219,7 @@
 .cxo-swatch {
   inline-size: 0.6rem;
   block-size: 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   flex: none;
   background: var(--cpo-none);
 }
@@ -1235,11 +1235,11 @@
 .cxo-swatch[data-part="owner-partner"] { background: var(--cxo-owner-partner); }
 .cxo-swatch[data-part="owner-finance"] { background: var(--cxo-owner-finance); }
 .cxo-swatch[data-part="owner-external"] { background: var(--cxo-owner-external); }
-.cxo-foot { margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--cpo-ink-3); line-height: 1.35; }
+.cxo-foot { margin: 0.25rem 0 0; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); line-height: 1.35; }
 .cxo-verdict {
   margin: -0.5rem 0 0;
   text-align: center;
-  font-size: 1.25rem;
+  font-size: var(--edify-text-heading-size);
   font-weight: 700;
   color: var(--cpo-ink-2);
 }
@@ -1259,7 +1259,7 @@
   border-radius: 7px;
   background: var(--cpo-surface);
   color: var(--cpo-ink);
-  font-size: 0.84rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -1297,7 +1297,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.12rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   background: var(--cpo-sunk);
@@ -1319,7 +1319,7 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.6rem 1.1rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: var(--edify-text-micro-size);
   color: var(--cpo-ink-3);
 }
 
@@ -1340,7 +1340,7 @@
   block-size: 1.4rem;
   margin-inline-start: 0.35rem;
   padding-inline: 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--cpo-low-soft);
   color: var(--cpo-low);
   font-size: var(--edify-text-micro-size);
@@ -1349,7 +1349,7 @@
 .cxo-small {
   inline-size: 100%;
   border-collapse: collapse;
-  font-size: 0.84rem;
+  font-size: var(--edify-text-label-size);
 }
 .cxo-small :is(th, td) {
   padding: 0.35rem 0.4rem;
@@ -1411,7 +1411,7 @@
   display: inline-block;
   padding: 0.05rem 0.4rem;
   border: 1px dashed color-mix(in srgb, var(--cpo-fair) 60%, transparent);
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   color: var(--cpo-fair);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
@@ -1426,7 +1426,7 @@
   .cxo-reading { padding-inline: 0.85rem; }
   /* Five readings to a row: each name holds one line ("Completion
      Forecast"), so the rings and the dial start on one line. */
-  .cxo-readings .cpo-chart-name { font-size: 0.95rem; }
+  .cxo-readings .cpo-chart-name { font-size: var(--edify-text-body-size); }
 }
 @container cpo (max-width: 1100px) {
   /* Five readings on a tablet: three to the first row and two sharing the
@@ -1450,7 +1450,7 @@
   .cxo-readings > :nth-child(n + 4) { grid-column: auto; }
   /* The period and its value are two selects: two columns of the three. */
   .cxo-fields .cxo-field--period { grid-column: span 2; }
-  .cxo-figure { font-size: 1.35rem; }
+  .cxo-figure { font-size: var(--edify-text-hero-size); }
   .cxo-readings > .cxo-shortcuts { grid-column: 1 / -1; }
 }
 @container cpo (max-width: 520px) {

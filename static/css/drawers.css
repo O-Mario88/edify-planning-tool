@@ -359,7 +359,7 @@
   z-index: 5;
   color: var(--edify-text-muted);
   border: 1px solid var(--edify-border-strong);
-  border-radius: 0.625rem;
+  border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   box-shadow: 0 0.5rem 1.25rem -0.75rem rgba(4, 15, 24, 0.42);
 }
@@ -473,7 +473,7 @@
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
   color: var(--edify-text) !important;
-  border-radius: 0.375rem;
+  border-radius: var(--edify-radius-xs);
   background: var(--edify-surface-muted);
   font-size: 0.9375rem !important;
   font-weight: 600 !important;
@@ -524,7 +524,7 @@
     max-width: none;
     max-height: none !important;
     height: auto;
-    border-radius: 0.75rem !important;
+    border-radius: var(--edify-radius-md) !important;
     transform: translateY(1rem) scale(0.985);
   }
 
@@ -1444,7 +1444,7 @@
   padding: 0.7rem 0.9rem;
   color: var(--edify-text) !important;
   border: 1px solid var(--edify-border-strong) !important;
-  border-radius: 0.75rem !important;
+  border-radius: var(--edify-radius-md) !important;
   outline: 0;
   background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
   box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
@@ -1520,7 +1520,7 @@
 .drawer-body form > :where(.flex):last-child > :where(button, a) {
   min-height: 2.75rem;
   padding: 0.65rem 1.05rem;
-  border-radius: 0.75rem !important;
+  border-radius: var(--edify-radius-md) !important;
   font-size: var(--edify-text-label-size) !important;
   font-weight: 500 !important;
   line-height: 1.2;
@@ -1571,7 +1571,7 @@
 
 .drawer-discard__panel {
   border-color: var(--edify-border-strong);
-  border-radius: 1rem;
+  border-radius: var(--edify-radius-lg);
   box-shadow: var(--drawer-shadow);
 }
 
@@ -1604,7 +1604,7 @@
   min-height: 3rem;
   padding: 0.7rem 0.9rem;
   border: 1px solid var(--edify-border-strong) !important;
-  border-radius: 0.75rem !important;
+  border-radius: var(--edify-radius-md) !important;
   background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
   box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
   font-size: 0.875rem;
@@ -1684,7 +1684,7 @@
   padding: 0.7rem 0.9rem;
   color: var(--edify-text) !important;
   border: 1px solid var(--edify-border-strong) !important;
-  border-radius: 0.75rem !important;
+  border-radius: var(--edify-radius-md) !important;
   outline: 0 !important;
   background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
   box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
@@ -1728,7 +1728,7 @@
     width: 2.5rem;
     height: 0.25rem;
     content: "";
-    border-radius: 999px;
+    border-radius: var(--edify-radius-pill);
     background: var(--edify-border-strong);
     transform: translateX(-50%);
     pointer-events: none;
@@ -1898,7 +1898,7 @@
   padding: 0;
   color: var(--edify-text-muted);
   border: 1px solid var(--edify-border-strong);
-  border-radius: 0.625rem;
+  border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   box-shadow: 0 0.5rem 1.25rem -0.75rem rgba(4, 15, 24, 0.42);
 }
@@ -1939,7 +1939,7 @@
     width: auto !important;
     max-width: none !important;
     max-height: none !important;
-    border-radius: 0.75rem !important;
+    border-radius: var(--edify-radius-md) !important;
     transform: translateY(1rem) scale(0.985) !important;
   }
 
@@ -2287,7 +2287,7 @@
   padding: 0 !important;
   color: var(--edify-text-muted) !important;
   border: 0 !important;
-  border-radius: 999px !important;
+  border-radius: var(--edify-radius-pill) !important;
   background: transparent !important;
   box-shadow: none !important;
   transform: none !important;

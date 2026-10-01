@@ -19,7 +19,7 @@
   {% collect_kpi_items overdue_kpi action_kpi as team_plan_kpis %}
   {% include "components/context_metrics.html" with items=team_plan_kpis variant="executive" density="compact" title="Team plan attention" %}
 
-  <form method="get" class="edify-filter-bar" aria-label="Team plan filters">
+  <form method="get" class="edify-filter-bar" aria-label="Team plan filters" x-data @change="$el.requestSubmit()">
     <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
       <select name="role" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
         <option value="">All roles</option>
@@ -48,7 +48,7 @@
       <input type="checkbox" name="overdue" value="1" {% if filters.overdue %}checked{% endif %} class="rounded">
       <span class="text-[12px] font-semibold text-slate-600">Overdue only</span>
     </label>
-    <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button>
+    <noscript><button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button></noscript>
     <a href="/admin-ops/team-plans" class="h-8 px-3 rounded-control border border-slate-200 text-[12px] font-bold text-slate-500 inline-flex items-center">Reset</a>
   </form>
 

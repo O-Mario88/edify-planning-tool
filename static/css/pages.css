@@ -1133,7 +1133,7 @@
 .sp-matrix thead th { text-align: center; }
 .sp-matrix thead th:first-child, .sp-matrix tbody th { text-align: left; }
 .sp-matrix td { text-align: center; }
-.sp-matrix td span { display: block; padding: 7px 5px; border: 1px solid var(--sp-tone-border); border-radius: 6px; background: var(--sp-tone-bg); color: var(--sp-tone); font-weight: 850; font-variant-numeric: tabular-nums; }
+.sp-matrix td span { display: block; padding: 7px 5px; border: 1px solid var(--sp-tone-border); border-radius: var(--edify-radius-xs); background: var(--sp-tone-bg); color: var(--sp-tone); font-weight: 850; font-variant-numeric: tabular-nums; }
 
 .sp-urgent-card { grid-column: 1 / span 2; }
 /* Micro chips pair the -text tones with the tints (fill tones measured 2.41:1). */
@@ -1255,7 +1255,7 @@
 .kicon, .round-mini {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--edify-radius-md);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -1359,7 +1359,7 @@
   background-color: var(--edify-primary-light);
   color: var(--edify-accent-text);
   padding: 1px 7px;
-  border-radius: 9999px;
+  border-radius: var(--edify-radius-pill);
   font-weight: 800;
   margin-left: 6px;
 }
@@ -1970,7 +1970,7 @@
   width: 2.25rem;
   aspect-ratio: 1;
   border: 1px solid currentColor;
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -2129,7 +2129,7 @@
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border-radius: 0.625rem;
+  border-radius: var(--edify-radius-sm);
   background: var(--edify-accent-light);
   color: var(--edify-accent-text);
   flex: 0 0 auto;
@@ -2264,7 +2264,7 @@
   display: inline-flex;
   gap: 0.15rem;
   border: 1px solid var(--edify-border);
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
 }
 
@@ -2311,7 +2311,7 @@
   display: grid;
   place-content: center;
   border: 1px solid var(--edify-border);
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
   text-align: center;
 }
@@ -2421,7 +2421,7 @@
   min-height: 2.25rem;
   padding-inline: 0.8rem;
   border: 1px solid var(--edify-border-strong);
-  border-radius: 0.625rem;
+  border-radius: var(--edify-radius-sm);
   background: var(--edify-surface);
   color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
@@ -2670,7 +2670,7 @@
   display: grid;
   place-content: center;
   border: 1px solid var(--edify-border);
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
   text-align: center;
 }
@@ -3314,7 +3314,7 @@
   gap: 0.15rem;
   padding: 0.2rem;
   border: 1px solid var(--edify-border);
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
 }
 
@@ -4801,7 +4801,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   max-width: 14rem;
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--edify-accent) 22%, var(--edify-border));
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: color-mix(in srgb, var(--edify-accent) 6%, transparent);
   padding: 0.3rem 0.6rem;
   color: var(--edify-text, #334155);

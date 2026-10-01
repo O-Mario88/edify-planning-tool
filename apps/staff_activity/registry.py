@@ -60,18 +60,20 @@ MEANINGFUL_ACTIONS: dict[str, ActionDefinition] = {
     "cluster.membership_changed": _A("Changed a cluster's schools", "Clusters", True),
     "escalation_raise": _A("Raised an escalation", "Escalations"),
     # ── Team leadership (Programme Lead) ──
-    "pl_review_confirm": _A("Confirmed an activity", "Team Oversight", True),
-    "pl_review_return": _A("Returned an activity", "Team Oversight", True),
+    "pl_review_confirm": _A("Confirmed an activity", "Planning Oversight", True),
+    "pl_review_return": _A("Returned an activity", "Planning Oversight", True),
     "pl_approve_completion": _A(
-        "Confirmed a completed activity", "Team Oversight", True
+        "Confirmed a completed activity", "Planning Oversight", True
     ),
-    "pl_return_completion": _A("Returned a completed activity", "Team Oversight", True),
-    "supervisor_approve": _A("Approved a team request", "Team Oversight"),
-    "supervisor_return": _A("Returned a team request", "Team Oversight"),
-    "visit_request_approve": _A("Approved a visit request", "Team Oversight", True),
-    "school_action.sent": _A("Sent a school to an officer", "Team Oversight", True),
-    "oversight.role_queue_nudged": _A("Followed up a team queue", "Team Oversight"),
-    "send_reminder": _A("Sent a reminder", "Team Oversight"),
+    "pl_return_completion": _A(
+        "Returned a completed activity", "Planning Oversight", True
+    ),
+    "supervisor_approve": _A("Approved a team request", "Planning Oversight"),
+    "supervisor_return": _A("Returned a team request", "Planning Oversight"),
+    "visit_request_approve": _A("Approved a visit request", "Planning Oversight", True),
+    "school_action.sent": _A("Sent a school to an officer", "Planning Oversight", True),
+    "oversight.role_queue_nudged": _A("Followed up a team queue", "Planning Oversight"),
+    "send_reminder": _A("Sent a reminder", "Planning Oversight"),
     "weekly_fund_request.approve": _A(
         "Approved a weekly fund request", "Fund Approvals"
     ),

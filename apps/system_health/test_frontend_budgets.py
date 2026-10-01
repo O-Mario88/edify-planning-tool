@@ -108,7 +108,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: `apexcharts-tooltip-series-group-4`, which holds the legacy pattern
     #: "p-4", so the name joined that pattern's index in two shared sheets
     #: (the route audit checks every class on a page against the index).
-    CSS_GZIP_KB = 204
+    #:
+    #: Raised to 205 on 2026-10-01 (203.6 to 204.2 KB, +0.3%) for the audit
+    #: pass the owner asked for: the wide-screen frame and 144rem canvas, the
+    #: sidebar's group disclosures and Find a page, disabled primaries that
+    #: look disabled, cluster facts in columns and HR Today's folded rows. Dead
+    #: sidebar rules and comments were cut first; this is what was left.
+    CSS_GZIP_KB = 205
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

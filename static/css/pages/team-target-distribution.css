@@ -21,7 +21,7 @@
    title over a muted caption (owner, 2026-09-14). */
 .team-priority-workspace__header h2 { margin: .125rem 0 0; color: var(--edify-text); font-size: .875rem; font-weight: 600; letter-spacing: normal; }
 .team-priority-workspace__header p:last-child { margin: .125rem 0 0; color: var(--edify-text-muted); }
-.team-priority-workspace__count { display: inline-flex; min-height: 2rem; align-items: center; border: 1px solid var(--edify-border); border-radius: 999px; padding: .35rem .68rem; background: var(--edify-surface-muted); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 780; white-space: nowrap; }
+.team-priority-workspace__count { display: inline-flex; min-height: 2rem; align-items: center; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-pill); padding: .35rem .68rem; background: var(--edify-surface-muted); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 780; white-space: nowrap; }
 .team-priority-list { display: grid; background: var(--edify-surface-muted); }
 
 .team-priority-card { background: var(--edify-surface); border-bottom: 1px solid var(--ia-line); }

@@ -1121,7 +1121,7 @@
   flex: 0 0 auto;
   inline-size: .4rem;
   block-size: .4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-success, #059669);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-success, #059669) 12%, transparent);
 }
@@ -1564,7 +1564,7 @@ main #impact-workspace .impact-group-pagination a {
 .sr-distribution-key {
   inline-size: .1875rem;
   block-size: .8125rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background-color: var(--sr-key, var(--edify-border));
   align-self: center;
 }

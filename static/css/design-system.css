@@ -570,10 +570,14 @@
   --edify-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.75rem);
   --edify-card-padding: clamp(0.875rem, 0.7rem + 0.5vw, 1.5rem);
   --edify-content-gap: clamp(0.75rem, 0.65rem + 0.35vw, 1.25rem);
-  /* Operational pages stop at 1600px; analytics and wide tables may use the
-     dense canvas; a record form keeps a readable measure. */
+  /* Four measures. Since 2026-10-01 every page takes the wide canvas
+     (--edify-page-max-size in platform.css), so a 2560px monitor is filled
+     beside the sidebar and wide tables stop scrolling there; the standard and
+     dense ones remain for a surface that wants them, and a record form keeps a
+     readable measure. */
   --edify-content-max-standard: 100rem;
   --edify-content-max-dense: 120rem;
+  --edify-content-max-wide: 144rem;
   --edify-content-max-form: 48rem;
   --edify-touch-target: 2.75rem;
   --edify-app-bar-height: 3.5rem;

@@ -46,7 +46,7 @@ anything else. Every figure arrives formatted; the page divides nothing.
   without scripts; with them it redraws the page in place.{% endcomment %}
   <form class="cpo-controls" action="/country-planning-oversight/" method="get"
         hx-get="/country-planning-oversight/" hx-target="#cpo-root" hx-select="#cpo-root" hx-swap="outerHTML"
-        hx-push-url="true" data-edify-filter-row="off" aria-label="Country planning filters"
+        hx-push-url="true" hx-trigger="change, submit" data-edify-filter-row="off" aria-label="Country planning filters"
         :data-more="more ? 'true' : 'false'">
     <div class="cpo-fields">
       <label class="cpo-field">
@@ -127,7 +127,9 @@ anything else. Every figure arrives formatted; the page divides nothing.
         </select>
       </label>
       <div class="cpo-go">
-        <button type="submit" class="cpo-apply">Apply Filters</button>
+        {% comment %}The filters apply as they are chosen, as on the Execution tab
+        beside this one (2026-10-01).{% endcomment %}
+        <noscript><button type="submit" class="cpo-apply">Apply Filters</button></noscript>
         <a class="cpo-reset" href="/country-planning-oversight/" hx-get="/country-planning-oversight/" hx-target="#cpo-root" hx-select="#cpo-root" hx-swap="outerHTML" hx-push-url="true">Clear</a>
       </div>
     </div>

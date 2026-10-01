@@ -111,7 +111,7 @@ scrolls sideways with the names pinned, never turned into cards.
                           hx-target="#drawer-container" hx-swap="innerHTML">Open {{ row.name }}'s detail</button>
                   {% if not row.is_no_lead %}
                   <a class="row-menu__item" role="menuitem" href="/country-planning-oversight/?view=plan&amp;program_lead={{ row.key }}&amp;lead={{ row.key }}">Country Plan (activities)</a>
-                  <a class="row-menu__item" role="menuitem" href="/team-planning-oversight/?program_lead={{ row.key }}">Team Oversight</a>
+                  <a class="row-menu__item" role="menuitem" href="/team-planning-oversight/?program_lead={{ row.key }}">Planning Oversight</a>
                   <a class="row-menu__item" role="menuitem" href="/country-planning-oversight/?view=monitor&amp;program_lead={{ row.key }}">Planning Monitor</a>
                   <a class="row-menu__item" role="menuitem" href="/country-map/?program_lead={{ row.key }}#country-portfolio">Country Portfolio</a>
                   <a class="row-menu__item" role="menuitem" href="/country-planning-oversight/?view=execution&amp;program_lead={{ row.key }}">Execution &amp; Completion</a>

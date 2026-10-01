@@ -601,6 +601,26 @@ main table tbody tr:hover,
   box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
 }
 
+/* A disabled primary button looks disabled (2026-10-01). platform.css mutes
+   every disabled button, but the rule above repaints a primary with the brand
+   fill at a weight that mute cannot reach, so a primary that could not be
+   pressed stayed solid blue — Fund Approvals' "Approve All Valid" with nothing
+   to approve was the one that showed it. Same selector, plus the state, placed
+   after it. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
+  .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+  .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary
+):is(:disabled, [aria-disabled="true"]) {
+  color: var(--edify-text-disabled) !important;
+  background-color: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
 :root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
@@ -4233,7 +4253,7 @@ main textarea,
   max-block-size: 1.75rem !important;
   min-inline-size: max-content !important;
   padding: 0 .625rem !important;
-  border-radius: 6px !important;
+  border-radius: var(--edify-radius-xs) !important;
   gap: .375rem !important;
   font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
@@ -4503,6 +4523,39 @@ main .tt-panel__header .tt-segmented {
 }
 
 /* Empty queues retain their heading and status without displacing active work. */
+/* HR Today folds an exception that several people share into one row; this is
+   the count that opens the list of them (hr_today_views._fold_identical). */
+main .hr-today-people > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--edify-accent-text, var(--edify-accent));
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+main .hr-today-people > summary::-webkit-details-marker { display: none; }
+main .hr-today-people > summary::after {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  rotate: 45deg;
+  translate: 0 -0.1rem;
+  transition: rotate var(--edify-transition-fast);
+}
+main .hr-today-people[open] > summary::after { rotate: -135deg; translate: 0 0.1rem; }
+main .hr-today-people > summary:focus-visible { outline: var(--edify-focus-outline); outline-offset: 2px; }
+main .hr-today-people > ul {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 500;
+}
+main .hr-today-people a { text-decoration: underline; text-underline-offset: 2px; }
 main .hr-today-queue--empty { padding-block: .75rem; }
 main .hr-today-queue--empty .edify-section {
   display: flex;
@@ -4826,9 +4879,12 @@ main .edify-avatar-neutral {
 
 .cluster-card__summary { cursor: pointer; }
 .cluster-card .cluster-card__name-toggle {
+  position: relative;
   padding: 0; border: 0; background: transparent; color: inherit;
   font: inherit; text-align: start; cursor: pointer;
 }
+/* The name is 21px of type; its target is 24px, without moving the card. */
+.cluster-card .cluster-card__name-toggle::after { content: ""; position: absolute; inset: -0.15rem -0.25rem; }
 
 /* ── A title band's own count and buttons (owner, 2026-09-27) ───────────────
    The dashboards' and My Plan's tables carry their count and a button in the

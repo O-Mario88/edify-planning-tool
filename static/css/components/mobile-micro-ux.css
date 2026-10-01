@@ -1075,7 +1075,7 @@ main #filters-form .school-filter-grid > * {
     min-block-size: var(--edify-pagination-control-size) !important;
     max-block-size: var(--edify-pagination-control-size) !important;
     padding: 0 !important;
-    border-radius: 6px !important;
+    border-radius: var(--edify-radius-xs) !important;
   }
 
   /* Every page is a bordered square, the current one filled. */

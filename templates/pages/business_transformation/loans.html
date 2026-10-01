@@ -6,7 +6,7 @@
 
 {% block shell_content %}
 <div class="edify-page-canvas space-y-6" data-mobile-family="directory">
-  {% include "components/page_header.html" with eyebrow="Uganda lending portfolio" title="Loan dashboard" description="Track every governed school loan across lending partners, Salesforce confirmation, disbursement, repayment position, and student reach." %}
+  {% include "components/page_header.html" with eyebrow="Uganda lending portfolio" title="Loans" description="Track every governed school loan across lending partners, Salesforce confirmation, disbursement, repayment position, and student reach." %}
   {% if not mfi_user %}{% include "partials/business_transformation/workspace_nav.html" %}{% endif %}
 
   <div class="flex items-center justify-between gap-4">
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <form id="bt-loan-filters" method="get" action="/loans" class="edify-filter-bar" aria-label="Loan register filters">
+  <form id="bt-loan-filters" method="get" action="/loans" class="edify-filter-bar" aria-label="Loan register filters" x-data @change="$el.requestSubmit()">
     {% comment %}The loan search lives in the top bar (one search per page):
     the shell binds its input to this form via
     topbar_search.attach_to.{% endcomment %}
@@ -62,7 +62,7 @@
     <label for="loan-salesforce-filter"><span class="edify-filter-label">Salesforce status</span><select id="loan-salesforce-filter" name="salesforce_status"><option value="">All Salesforce states</option>{% for value, label in salesforce_statuses %}<option value="{{ value }}" {% if filters.salesforce_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
     <label for="loan-application-status-filter"><span class="edify-filter-label">Application status</span><select id="loan-application-status-filter" name="application_status"><option value="">All application states</option>{% for value, label in application_statuses %}<option value="{{ value }}" {% if filters.application_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
     <label for="loan-report-month"><span class="edify-filter-label">Report month</span><input id="loan-report-month" type="month" name="report_month" value="{{ filters.report_month }}"></label>
-    {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
+    <noscript>{% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}</noscript>
   </form>
 
   {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Uganda loan scorecard" %}

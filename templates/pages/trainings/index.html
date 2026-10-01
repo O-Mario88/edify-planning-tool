@@ -21,7 +21,7 @@ Schedule
 </div>
 
 <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
-<form id="trainings-filters" method="get" action="/trainings" class="platform-filter-bar flex flex-wrap gap-3">
+<form id="trainings-filters" method="get" action="/trainings" class="platform-filter-bar flex flex-wrap gap-3" x-data @change="$el.requestSubmit()">
 {% comment %}Search moved to the top bar.{% endcomment %}
 <span class="edify-filter-label">Status</span>
 <select aria-label="Status" name="status" class="h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none">
@@ -29,7 +29,7 @@ Schedule
 <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
 <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
 </select>
-<button type="submit" class="h-8 px-4 bg-violet-600 text-white rounded-control text-[12px] font-bold hover:bg-violet-700 transition-all">Filter</button>
+<noscript><button type="submit" class="btn btn-primary h-8">Filter</button></noscript>
 </form>
 
 <!-- Trainings List -->

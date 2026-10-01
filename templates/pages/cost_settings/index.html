@@ -2,7 +2,7 @@
 {% load table_pagination %}
 {% load frontend_filters table_pagination %}
 
-{% block title %}Cost Catalogue — Edify{% endblock %}
+{% block title %}{% if request.resolver_match.url_name == 'cost_intelligence' %}Cost Intelligence{% else %}Cost Catalogue{% endif %} — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -10,7 +10,10 @@
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Finance</p>
-<h1 class="edify-page-title edify-page-header__title">Cost Catalogue</h1>
+{% comment %}One register, two doors: the Country Director edits it as the Cost
+Catalogue; the RVP and the Accountant read it as Cost Intelligence. Each door
+says the name its sidebar entry carries.{% endcomment %}
+<h1 class="edify-page-title edify-page-header__title">{% if request.resolver_match.url_name == 'cost_intelligence' %}Cost Intelligence{% else %}Cost Catalogue{% endif %}</h1>
 <p class="edify-page-header__description">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
 {% comment %}

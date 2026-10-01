@@ -60,7 +60,7 @@ enforce. Nothing here can hold a different opinion of either.
   {% endkpi_strip %}
 
   {% comment %}Filters on the canvas, not in a drawer — the page contract.{% endcomment %}
-  <form method="get" action="/programme-schools" class="edify-filter-bar flex flex-wrap items-end gap-3">
+  <form method="get" action="/programme-schools" class="edify-filter-bar flex flex-wrap items-end gap-3" x-data @change="$el.requestSubmit()">
     <label class="block">
       <span class="edify-filter-label">School type</span>
       <select name="school_type" aria-label="School type" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
@@ -91,7 +91,9 @@ enforce. Nothing here can hold a different opinion of either.
     page (§17), and a body input named `q` is a second one however it is
     styled — so applying a filter starts from the whole list, as it does on
     every other filtered page.{% endcomment %}
-    <button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button>
+    {% comment %}Filters apply as they are chosen, like every other filter row
+    (2026-10-01). The button remains for a browser without JavaScript.{% endcomment %}
+    <noscript><button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button></noscript>
   </form>
 
   {% if rows %}

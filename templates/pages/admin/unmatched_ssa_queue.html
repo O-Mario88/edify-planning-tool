@@ -21,7 +21,7 @@
 {% include "partials/_section_nav.html" %}
 
 <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
-<form method="get" action="" class="platform-filter-bar grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
+<form method="get" action="" class="platform-filter-bar grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-end" x-data @change="$el.requestSubmit()">
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
 <span class="edify-filter-label">Status</span>
@@ -63,7 +63,7 @@
 <input aria-label="Date to" type="date" name="date_to" value="{{ filters.date_to }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div class="col-span-2 sm:col-span-4 lg:col-span-7 flex items-center gap-2">
-<button type="submit" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold edify-text-caption rounded-control transition-all shadow-sm">Apply Filters</button>
+<noscript><button type="submit" class="btn btn-primary h-8">Apply Filters</button></noscript>
 <a href="?" class="px-4 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold edify-text-caption rounded-surface transition-all">Clear</a>
 </div>
 </form>

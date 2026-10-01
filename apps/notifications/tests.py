@@ -234,7 +234,11 @@ class NotificationsWorkflowTest(TestCase):
         self.client.force_login(self.cceo)
         response = self.client.get("/notifications")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Notifications Center")
+        self.assertContains(
+            response,
+            '<h1 class="edify-page-title edify-page-header__title">Notifications</h1>',
+            html=False,
+        )
 
         # Check KPIs
         self.assertEqual(response.context["kpis"]["total"], 2)

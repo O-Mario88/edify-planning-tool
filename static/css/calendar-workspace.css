@@ -394,7 +394,10 @@
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.035em;
-  text-align: right;
+  /* Over the date it heads: the day numbers sit at the start of their cells,
+     so the weekday does too. Right-aligned, "MON" read as the heading of the
+     column to its right (2026-10-01). */
+  text-align: start;
   text-transform: uppercase;
 }
 
@@ -937,7 +940,7 @@ a.calendar-event:focus-visible {
     gap: 0.16rem;
     padding: 0;
     border: 0;
-    border-radius: 0.75rem;
+    border-radius: var(--edify-radius-md);
     background: transparent;
     color: var(--edify-text);
     font: inherit;

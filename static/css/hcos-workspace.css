@@ -103,7 +103,7 @@
 .hcos-register {
   overflow: hidden;
   border: 1px solid var(--edify-border);
-  border-radius: 0.75rem;
+  border-radius: var(--edify-radius-md);
   background: var(--edify-surface-treatment, var(--edify-surface));
   box-shadow: var(--edify-shadow-md);
 }

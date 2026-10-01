@@ -41,7 +41,14 @@ workspace, so the roles differ only where their work differs.
       </a>
       {% endif %}
       {% if workspace.primary_action %}
-      {% if workspace.primary_action.hx_post %}
+      {% if workspace.primary_action.disabled %}
+      {% comment %}Nothing for the action to act on: greyed in place with the
+      reason, the way a state lock is shown everywhere else.{% endcomment %}
+      <button type="button" class="btn btn-primary h-8" disabled aria-disabled="true" title="{{ workspace.primary_action.disabled_reason }}">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ workspace.primary_action.label }}
+      </button>
+      {% elif workspace.primary_action.hx_post %}
       <button type="button" hx-post="{{ workspace.primary_action.hx_post }}" hx-target="{{ workspace.primary_action.hx_target }}" hx-swap="innerHTML"
               {% if workspace.primary_action.confirm %}hx-confirm="{{ workspace.primary_action.confirm }}"{% endif %}
               hx-indicator="#fund-workspace-updating"
@@ -81,6 +88,7 @@ workspace, so the roles differ only where their work differs.
       page, so the selected request's ledger reads at full width. Each tab
       swaps the detail beside it; the strip scrolls sideways on small screens.
     {% endcomment %}
+    {% if workspace.queue.items %}
     <div class="fund-requesters">
       <p class="fund-requesters__label">{{ workspace.queue.title }} <span class="fund-queue__count">{{ workspace.queue.count }}</span></p>
       <nav class="fund-requesters__strip" data-edify-tablist aria-label="{{ workspace.queue.title }}"
@@ -97,15 +105,24 @@ workspace, so the roles differ only where their work differs.
           <span class="fund-requester__dot fund-requester__dot--{{ item.status_tone|default:'neutral' }}" aria-hidden="true"></span>
           <span class="fund-requester__name">{{ item.name }}</span>
         </button>
-        {% empty %}
-        <span class="fund-requesters__empty">{{ workspace.queue.empty_title }}. {{ workspace.queue.empty_text }}</span>
         {% endfor %}
       </nav>
     </div>
+    {% endif %}
 
   <div class="fund-workspace__grid">
     <section class="card fund-detail" id="{{ workspace.detail_id }}" aria-live="polite">
+      {% if workspace.queue.items %}
       {% include workspace.detail_template %}
+      {% else %}
+      {% comment %}An empty queue is said once, here (2026-10-01). It used to be a
+      line above the card and then, inside the card, "Select a CCEO to review
+      their fund plan" — an instruction with nobody to select.{% endcomment %}
+      <div class="py-16 text-center">
+        <p class="text-[14px] font-semibold text-slate-500">{{ workspace.queue.empty_title }}</p>
+        <p class="text-[12px] font-medium text-slate-400 mt-1">{{ workspace.queue.empty_text }}</p>
+      </div>
+      {% endif %}
     </section>
 
     <aside class="card fund-side" aria-label="This month">

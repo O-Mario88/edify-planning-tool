@@ -89,7 +89,7 @@ School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'm
 {% comment %}The platform empty state, inside the card's padded body so its outline
 never meets the card edge (it was a hand-built block with its own icon size
 and, for visits and trainings, a danger-red sentence).{% endcomment %}
-<div class="px-5 py-4">{% include "components/empty_state.html" with message="No school visits planned for this period." cta_label="Open Planning" cta_href="/planning" icon_path="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4" %}</div>
+<div class="px-5 py-4">{% include "components/empty_state.html" with message="No school visits planned for this period." line="true" cta_label="Open Planning" cta_href="/planning" icon_path="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4" %}</div>
 {% endif %}
 </div>
 </div>

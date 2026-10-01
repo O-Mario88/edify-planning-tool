@@ -311,6 +311,69 @@
   scrollbar-gutter: stable;
 }
 
+/* ── Wide-screen frame (owner, 2026-10-01) ────────────────────────────────
+   A page stops at --edify-page-max-size and centres itself in <main>, but the
+   sidebar stayed pinned to the viewport's left edge. On a wide monitor the two
+   drifted apart: a 2560px screen left 375px of empty canvas between the
+   navigation and the page it navigates.
+
+   The shell is one frame instead. Its ::before and ::after are the two outer
+   margins, each half of whatever the viewport has beyond "sidebar + page", so
+   sidebar, top bar and page travel together in the middle and the stage (top
+   bar + main) is left exactly the page width. They take a deeper tone than the
+   page, so the frame reads as the application and the rest as the desk it sits
+   on; the shell's own background stays the page canvas.
+
+   The page is 144rem wide (platform.css), so up to a 2560px monitor there is
+   nothing to centre: the shell is edge to edge and the page fills it. The
+   margins are for what lies beyond — an ultra-wide or a zoomed-out screen —
+   and one only appears once it would be at least --edify-shell-margin-min.
+   Centring from the first spare pixel would put a sliver of canvas to the left
+   of the sidebar on a monitor barely wider than the frame, which reads as a
+   rendering fault;
+   below the threshold both margins are zero and the shell is edge to edge
+   exactly as before. clamp() makes the switch without a media query, so it
+   follows the real sidebar width: the middle term is hugely negative while the
+   margin is too small (clamped to 0) and hugely positive once it is large
+   enough (clamped to the margin). --edify-shell-rail must match the sidebar
+   widths in components/sidebar.css. */
+.edify-shell {
+  --edify-shell-rail: 260px;
+  --edify-shell-margin-min: 4.5rem;
+  --edify-shell-margin: calc((100vw - var(--edify-shell-rail) - var(--edify-page-max-size, var(--edify-content-max-standard))) / 2);
+  --edify-shell-desk: color-mix(in srgb, var(--edify-bg) 88%, var(--edify-navy-950));
+}
+
+:is(.theme-dark, .theme-blue) .edify-shell {
+  --edify-shell-desk: color-mix(in srgb, var(--edify-bg) 62%, #000);
+}
+
+.theme-dark .edify-shell {
+  --edify-shell-rail: 272px;
+}
+
+.edify-shell:has(> .app-sidebar--collapsed) {
+  --edify-shell-rail: 72px;
+}
+
+.edify-shell::before,
+.edify-shell::after {
+  content: "";
+  flex: 0 0 auto;
+  inline-size: clamp(
+    0px,
+    (var(--edify-shell-margin) - var(--edify-shell-margin-min)) * 9999,
+    var(--edify-shell-margin)
+  );
+  background-color: var(--edify-shell-desk);
+}
+
+/* The sidebar's own colour is the frame's left edge; the right edge is a
+   hairline, drawn inside the margin so it costs no width and vanishes with it. */
+.edify-shell::after {
+  box-shadow: inset 1px 0 0 var(--edify-border);
+}
+
 /* ═══ GLOBAL PAGE CONTENT WRAPPER ═════════════════════════════════════════
    Every page wraps its content in a div with p-6/p-4 + space-y. These rules
    apply the gold standard spacing and text color to ALL pages at once,
@@ -3594,6 +3657,13 @@ search:has(.edify-search-submit) input[type="search"] {
     color var(--edify-transition-fast),
     box-shadow var(--edify-transition-fast);
 }
+/* A count on a top-bar control starts at the icon's shoulder and grows away
+   from it, so "99+" sits beside the bell rather than over it. */
+.edify-topbar__icon-control > .notification-badge,
+.edify-topbar__icon-control > div > .notification-badge {
+  inset-inline: 52% auto;
+  inset-block-start: 0;
+}
 .edify-topbar__icon-control:hover {
   background: var(--edify-surface-muted, var(--edify-surface));
   color: var(--edify-text);
@@ -3614,6 +3684,19 @@ search:has(.edify-search-submit) input[type="search"] {
   gap: 0.125rem;
   margin-inline-end: 0.25rem;
 }
+/* Back · Forward · Refresh are for the installed app, which has no browser
+   chrome (owner, 2026-09-12). In a browser tab the browser draws the same
+   three an inch above these, so there they were three controls doing nothing
+   new at the head of every page; they are drawn only where they are the only
+   way back (2026-10-01). `browser` is the display mode of an ordinary tab —
+   an installed app runs as standalone, minimal-ui, fullscreen or
+   window-controls-overlay. */
+@media (display-mode: browser) {
+  .edify-topbar__history {
+    display: none;
+  }
+}
+
 .edify-topbar__history-control:disabled {
   opacity: 0.38;
   cursor: default;

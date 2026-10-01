@@ -352,6 +352,19 @@
   mask-image: linear-gradient(to left, transparent 0, var(--edify-surface) var(--edify-table-fade-size));
 }
 
+/* A table that pins its Actions column on the trailing edge (components.css,
+   data-pinned-actions; 64rem up) takes no fade there: the fade landed on the
+   pinned column itself and washed out the one control it was pinned to keep
+   reachable — Planning Oversight's "View" read as half a button
+   (2026-10-01). The pinned column, with the rest sliding under it, already
+   says there is more. */
+@media (min-width: 64rem) {
+  .edify-table-scroll-region:has(table[data-pinned-actions]):is([data-scroll-state="start"], [data-scroll-state="middle"]) {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
 /* The first-use hint. micro-ux.js adds it to the first table on the page
    that overflows, until any table has been scrolled once in the session;
    it is decoration (aria-hidden) because the region's own accessible name

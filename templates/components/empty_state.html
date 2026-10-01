@@ -29,5 +29,8 @@
   {% if title %}<p class="edify-empty-state__title">{{ title }}</p>{% endif %}
   <p class="edify-empty-state__message">{{ message }}</p>
   {% if hint %}<p class="edify-empty-state__hint">{{ hint }}</p>{% endif %}
-  {% if cta_label and cta_href %}<a href="{{ cta_href }}" class="btn btn-primary min-h-9">{{ cta_label }}</a>{% endif %}
+  {% comment %}On one line the way out is a link, not a button: a page of empty
+  sections drew one filled primary per section — seven "Open Planning" buttons
+  on My Plan — and a page has one primary (2026-10-01).{% endcomment %}
+  {% if cta_label and cta_href %}<a href="{{ cta_href }}" class="{% if line == 'true' %}font-semibold edify-primary-text edify-primary-text-hover underline underline-offset-2{% else %}btn btn-primary min-h-9{% endif %}">{{ cta_label }}{% if line == 'true' %} <span aria-hidden="true">→</span>{% endif %}</a>{% endif %}
 </div>

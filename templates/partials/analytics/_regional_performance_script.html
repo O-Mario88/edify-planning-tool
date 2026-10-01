@@ -405,6 +405,14 @@ window.subregionMap = function (){
       // ---- district labels, from the centroids UBOS ships in the file ----
       const labels = document.createElementNS(NS,'g');
       labels.setAttribute('class','sr-labels');
+      // The names wait for their places. They are created at their centroids,
+      // where 135 of them overlap in 133 pairs, and placeDistrictLabels moves
+      // them a second or two later: for that long the country was an
+      // unreadable pile of type (2026-10-01). The layer is drawn once its
+      // first placement has been written — or after four seconds whatever
+      // happens, because a name in the wrong spot beats no name.
+      labels.style.opacity = '0';
+      labels.style.transition = 'opacity 160ms ease';
       f.forEach(ft => {
         const p = ft.properties;
         const t = document.createElementNS(NS,'text');
@@ -527,6 +535,8 @@ window.subregionMap = function (){
       svg.replaceChildren(cam);
       this.cam = cam; this.labels = labels; this.subLabels = subLabels;
       this.pinLayer = pinLayer; this.districtShapes = shapes;
+      clearTimeout(this._labelReveal);
+      this._labelReveal = setTimeout(() => { labels.style.opacity = ''; }, 4000);
       this.$nextTick(() => {
         this.placeDistrictLabels();
         requestAnimationFrame(() => this.placeDistrictLabels());
@@ -1132,7 +1142,10 @@ window.subregionMap = function (){
         labelScales:[0.82, 0.74, 0.68],
         allowOverlapFallback:true,
       }).then(completed => {
-        if(completed) this.keepSubRegionLabelsOnCanvas();
+        if(completed){
+          this.keepSubRegionLabelsOnCanvas();
+          if(this.labels) this.labels.style.opacity = '';
+        }
         return completed;
       });
     },
