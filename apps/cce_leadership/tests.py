@@ -555,10 +555,12 @@ class TodoHandoffTest(CceFixture):
         self.assertTrue(any(t.startswith("Review the ") for t in rvp_titles))
         kenya = _cce_leadership_todos(self.kenya_rvp, "RegionalVicePresident", TODAY)
         self.assertEqual(kenya, [])
+        # Two months on, the month after the one just reported is overdue.
+        # Relative to today: a fixed 20 November 2026 only held while today's
+        # month was September, and stopped on 1 October 2026.
+        later = (TODAY.replace(day=1) + timedelta(days=62)).replace(day=20)
         lead_titles = [
             t["title"]
-            for t in _cce_leadership_todos(
-                self.lead, "RegionalProgramLead", date(2026, 11, 20)
-            )
+            for t in _cce_leadership_todos(self.lead, "RegionalProgramLead", later)
         ]
         self.assertTrue(any("CCE report" in t for t in lead_titles), lead_titles)

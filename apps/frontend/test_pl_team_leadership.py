@@ -534,11 +534,18 @@ class TeamAssignmentsTests(TeamFixture):
         self._login(kenyan_pl)
         page = self.client.get(f"/extra-work/assign-drawer?fy={FY}")
         self.assertEqual({m.id for m in page.context["milestones"]}, {kenya.id})
-        # A country with no priorities of its own links to the regional ones.
+        # A country with no priorities of its own links to the regional ones:
+        # this test's, and the regional FY2027 priorities the reference data
+        # publishes, which share the operational year from 1 October 2026.
         tanzanian, _ = _person("tpl", "Program Lead", country="Tanzania")
         self._login(tanzanian)
         page = self.client.get(f"/extra-work/assign-drawer?fy={FY}")
-        self.assertEqual({m.id for m in page.context["milestones"]}, {regional.id})
+        listed = list(page.context["milestones"])
+        self.assertIn(regional.id, {m.id for m in listed})
+        self.assertEqual(
+            {(m.priority.level, m.priority.country_id) for m in listed},
+            {("regional", None)},
+        )
 
 
 # ── Field Debrief supervision ────────────────────────────────────────────────

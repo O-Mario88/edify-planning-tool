@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from freezegun import freeze_time
+
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
@@ -450,6 +452,10 @@ class EngagementTodoTest(EngagementFixture):
 
 
 # ── Pages and drawers ────────────────────────────────────────────────────────
+# The page lists the operational year's engagements, and this class records
+# one "20 days ago". In the first weeks of a fiscal year that is last year's
+# (found 1 October 2026), so the class runs on a mid-year clock.
+@freeze_time("2027-02-10 09:00:00")
 @override_settings(CACHES=LOCMEM)
 class EngagementPagesTest(EngagementFixture):
     def test_partner_oversight_carries_the_log_for_the_programme_lead(self):

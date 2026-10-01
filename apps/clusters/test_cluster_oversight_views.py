@@ -314,7 +314,9 @@ class OversightViewsAccessTest(TestCase):
         # 6. Test CD (leadership oversight) access
         url = reverse("frontend:country_planning_oversight_team", args=[self.pl.id])
         self.client.force_login(self.cd)
-        resp = self.client.get(url)
+        # The year the fixture's work is filed in: the page otherwise opens on
+        # the operational one, which stopped being FY2026 on 1 October 2026.
+        resp = self.client.get(url, {"fy": "2026"})
         self.assertEqual(resp.status_code, 200)
 
         # Verify all 4 tables are present
