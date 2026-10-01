@@ -30,6 +30,8 @@
       </a>
     </div>
   </div>
+  {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+  {% include "partials/_section_nav.html" %}
 
   <form hx-get="/my-targets" hx-target="#my-targets-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
         class="edify-filter-bar" aria-label="Target filters">

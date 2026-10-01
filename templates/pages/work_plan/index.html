@@ -34,6 +34,8 @@ Add Non-School Activity
 {% endif %}
 </div>
 </header>
+{# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
+{% include "partials/_section_nav.html" %}
 
 {% if scope_tabs %}
 <nav aria-label="Activity plan audience" data-edify-tablist>
@@ -111,7 +113,8 @@ Submit completed plan to RVP
 {% endfor %}
 </nav>
 
-<form method="get" action="/work-plan" data-component="filter-toolbar" class="relative flex flex-wrap items-end gap-2.5">
+{# Filters apply as they change, as on every other page (owner, 2026-09-30). #}
+<form method="get" action="/work-plan" data-component="filter-toolbar" class="relative flex flex-wrap items-end gap-2.5" x-data @change="$el.requestSubmit()">
 <input type="hidden" name="view" value="{{ view }}">
 <input type="hidden" name="fy_prev" value="{{ fy_prev }}">
 {% if scope_tabs %}<input type="hidden" name="scope" value="{{ plan_scope }}">{% endif %}
@@ -172,7 +175,7 @@ More dropdown (micro-ux.js).{% endcomment %}
 </select>
 </label>
 
-<button type="submit" class="btn btn-primary h-9 px-4 text-[12px] font-semibold">Apply</button>
+<noscript><button type="submit" class="btn btn-primary h-9 px-4 text-[12px] font-semibold">Apply</button></noscript>
 {% if filters_active %}
 <a href="{{ clear_filters_url }}" data-component="clear-filters" class="inline-flex items-center gap-1 h-9 px-2 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

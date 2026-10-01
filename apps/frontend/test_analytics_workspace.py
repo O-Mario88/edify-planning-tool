@@ -15,6 +15,7 @@ from apps.accounts.models import StaffProfile, User
 from apps.core.navigation import (
     ANALYTICS_SECTIONS,
     IA_SECTIONS,
+    PROJECT_MONITORING_SECTIONS,
     PAGE_PERMISSIONS,
     SIDEBAR_ITEMS,
     build_analytics_sections,
@@ -123,6 +124,16 @@ class AnalyticsWorkspaceStructureTest(TestCase):
                     ia_urls = {s["url"] for s in IA_SECTIONS}
                     for url in ("/ssa", "/impact", "/declining-schools", "/reports"):
                         self.assertIn(url, ia_urls)
+                elif role == EdifyRole.PROJECT_COORDINATOR:
+                    # The coordinator's one door is the Analytics tab of
+                    # Project Monitoring (owner, 2026-09-30: "Analytics a tab
+                    # of Monitoring"): the sidebar carries no entry of its
+                    # own, and the tab opens the first section they can reach.
+                    self.assertEqual(hub_items, [])
+                    self.assertIn(
+                        sections[0]["url"],
+                        {s["url"] for s in PROJECT_MONITORING_SECTIONS},
+                    )
                 elif sections:
                     self.assertEqual(len(hub_items), 1)
                     # It opens the first section the role can actually reach.

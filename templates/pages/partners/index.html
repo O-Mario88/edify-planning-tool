@@ -14,11 +14,12 @@
     </div>
   </header>
 
-    <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters" aria-label="Partner activity filters">
+    {# Filters apply as they change, as on every other page; the year reads "FY 2026" like everywhere else (owner, 2026-09-30). #}
+    <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters" aria-label="Partner activity filters" x-data @change="$el.requestSubmit()">
       <label>
         <span>Financial Year</span>
         <select name="fy" aria-label="Financial Year">
-          {% for fy in fy_options %}<option value="{{ fy }}" {% if fy == selected_fy %}selected{% endif %}>FY {{ fy|add:"-1" }}/{{ fy }}</option>{% endfor %}
+          {% for fy in fy_options %}<option value="{{ fy }}" {% if fy == selected_fy %}selected{% endif %}>FY {{ fy }}</option>{% endfor %}
         </select>
       </label>
       <label>
@@ -38,7 +39,7 @@
         </select>
       </label>
 {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
-      <button type="submit" class="btn-premium-secondary partner-workspace__filter-button">Apply</button>
+      <noscript><button type="submit" class="btn-premium-secondary partner-workspace__filter-button">Apply</button></noscript>
       <button type="submit" name="export" value="csv" class="btn-premium-primary partner-workspace__export-button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
         Export

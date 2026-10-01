@@ -324,6 +324,14 @@
   contain-intrinsic-size: auto 260px;
 }
 
+/* A table with nothing in it is its title band: nothing to defer, and a
+   260px placeholder for a 73px band made the page jump under a thumb in
+   Safari. */
+.sp-plan-main > .sp-card:has([data-sp-table-none]) {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
 @media (max-width: 1380px) {
   .sp-filter-grid { grid-template-columns: repeat(5, minmax(130px, 1fr)); }
   .sp-kpi-grid { grid-template-columns: repeat(4, 1fr); }
@@ -368,3 +376,8 @@
 @media (prefers-contrast: more) {
   .sp-filter-panel, .sp-card, .sp-kpi, .sp-period-bar, .sp-button, .sp-field select { border-color: var(--edify-text-muted); }
 }
+
+/* An empty list is its title band alone, the "none" note at its end
+   (owner, 2026-09-30: no column headings over nothing). */
+[data-sp-table-none] { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; text-align: end; }
+.sp-table-card .sp-card__header:only-child { border-bottom: 0; }
