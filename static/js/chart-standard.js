@@ -129,7 +129,7 @@
     const horizontal = panel.horizontal;
     const trend = panel.trend === true;
     const percent = !!(panel.axis?.opposite || panel.axis?.title?.text?.includes('%') || panel.axis?.title?.text === 'Percent');
-    const formatter = percent ? value => `${format(value)}%` : format;
+    const formatter = percent ? value => value == null ? format(value) : `${format(value)}%` : format;
     const wholeNumbers = values.every(v => Number.isInteger(v));
     const colors = panel.series.map(s => colorFor(s.colorIndex ?? 0));
     const axis = {...panel.axis, opposite: false, show: true, seriesName: undefined, forceNiceScale: true, tickAmount: 4,
@@ -164,7 +164,9 @@
         dataLabels: {position: 'top'}}},
       dataLabels: {enabled: !trend, offsetY: horizontal ? 0 : -16, offsetX: horizontal ? 6 : 0,
         textAnchor: horizontal ? 'start' : 'middle',
-        formatter: (value, opts) => labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
+        // A missing value has no bar to label: six "Not measured" over one
+        // month piled into a blot. The tooltip and the data table still say it.
+        formatter: (value, opts) => value != null && labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
         style: {fontSize: '12px', fontWeight: 500, colors: [ink]}, background: {enabled: false}},
       xaxis: {crosshairs: {show: trend, stroke: {color: colors[0], width: 1, dashArray: 0}}, categories: panel.categories, type: 'category',
         title: horizontal ? (panel.axis?.title || {}) : {},
