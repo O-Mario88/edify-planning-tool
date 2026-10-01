@@ -1127,7 +1127,7 @@
    "audit_id": "KPI-SOURCE-058",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2747,
+   "line": 2753,
    "label": null,
    "keys": [
     "aging",
@@ -1147,7 +1147,7 @@
    "audit_id": "KPI-SOURCE-059",
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1241,
+   "line": 1247,
    "label": null,
    "keys": [
     "achieved",
@@ -1170,7 +1170,7 @@
    "audit_id": "KPI-SOURCE-060",
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1303,
+   "line": 1309,
    "label": null,
    "keys": [
     "achieved",
@@ -1193,7 +1193,7 @@
    "audit_id": "KPI-SOURCE-061",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1542,
+   "line": 1548,
    "label": null,
    "keys": [
     "band",
@@ -1217,7 +1217,7 @@
    "audit_id": "KPI-SOURCE-062",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2665,
+   "line": 2671,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1235,7 +1235,7 @@
    "audit_id": "KPI-SOURCE-063",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2666,
+   "line": 2672,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1253,7 +1253,7 @@
    "audit_id": "KPI-SOURCE-064",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2667,
+   "line": 2673,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1271,7 +1271,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2668,
+   "line": 2674,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1289,7 +1289,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2669,
+   "line": 2675,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1307,7 +1307,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2670,
+   "line": 2676,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1325,7 +1325,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1506,
+   "line": 1512,
    "label": null,
    "keys": [
     "band",
@@ -1847,7 +1847,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 313,
+   "line": 316,
    "label": null,
    "keys": [
     "action",
@@ -1867,7 +1867,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 812,
+   "line": 815,
    "label": null,
    "keys": [
     "count",
@@ -1884,7 +1884,7 @@
    "audit_id": "KPI-SOURCE-097",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 914,
+   "line": 917,
    "label": "General Budget Approval Delayed",
    "keys": [
     "aging",
@@ -1904,7 +1904,7 @@
    "audit_id": "KPI-SOURCE-098",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 929,
+   "line": 932,
    "label": "Projects Underperforming",
    "keys": [
     "aging",
@@ -5355,7 +5355,7 @@
    "audit_id": "KPI-SOURCE-290",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/hr_today_views.py",
-   "line": 43,
+   "line": 80,
    "label": null,
    "keys": [
     "count",
@@ -10017,7 +10017,7 @@
    "audit_id": "KPI-SOURCE-554",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 790,
+   "line": 797,
    "label": "Amount",
    "keys": [
     "label",
@@ -10034,7 +10034,7 @@
    "audit_id": "KPI-SOURCE-555",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 791,
+   "line": 798,
    "label": "Name",
    "keys": [
     "label",
@@ -10051,7 +10051,7 @@
    "audit_id": "KPI-SOURCE-556",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 792,
+   "line": 799,
    "label": "Status",
    "keys": [
     "label",
@@ -12899,7 +12899,7 @@
   {
    "audit_id": "KPI-SURFACE-020",
    "template": "templates/pages/dashboards/main.html",
-   "line": 41,
+   "line": 35,
    "source_pattern": "shared-component",
    "items_expression": "dashboard_kpi_items",
    "presentation": "context",
@@ -13683,7 +13683,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/notifications",
-   "page_title": "Notifications Center",
+   "page_title": "Notifications",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -13773,7 +13773,7 @@
   {
    "audit_id": "KPI-SURFACE-050",
    "template": "templates/pages/planning/index.html",
-   "line": 221,
+   "line": 214,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -15533,7 +15533,7 @@
   {
    "audit_id": "KPI-SURFACE-115",
    "template": "templates/partials/finance/fund_workspace.html",
-   "line": 69,
+   "line": 76,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -15558,7 +15558,7 @@
   {
    "audit_id": "KPI-SURFACE-116",
    "template": "templates/partials/finance/fund_workspace.html",
-   "line": 71,
+   "line": 78,
    "source_pattern": "shared-component",
    "items_expression": "workspace.kpis",
    "presentation": "context",
@@ -16157,7 +16157,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Oversight",
+   "page_title": "Partner Monitoring",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -16275,7 +16275,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Oversight",
+   "page_title": "Partner Monitoring",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -16300,7 +16300,7 @@
   {
    "audit_id": "KPI-SURFACE-144",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 83,
+   "line": 79,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -16326,7 +16326,7 @@
   {
    "audit_id": "KPI-SURFACE-145",
    "template": "templates/partials/priorities/distribution_view.html",
-   "line": 131,
+   "line": 127,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",

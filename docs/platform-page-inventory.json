@@ -266,7 +266,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2038,
+      "bytes": 2473,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -658,9 +658,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 7070,
+      "bytes": 11554,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -885,7 +886,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 75977,
+      "bytes": 76711,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-map/",
@@ -981,7 +982,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4714,
+      "bytes": 4710,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1002,7 +1003,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3963,
+      "bytes": 3959,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1024,7 +1025,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3264,
+      "bytes": 3260,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1046,7 +1047,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3464,
+      "bytes": 3461,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1070,7 +1071,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6483,
+      "bytes": 6480,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1117,7 +1118,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2390,
+      "bytes": 2387,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1138,7 +1139,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1793,
+      "bytes": 1763,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1159,7 +1160,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3050,
+      "bytes": 3047,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1181,7 +1182,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2576,
+      "bytes": 2573,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1200,7 +1201,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3847,
+      "bytes": 3844,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1222,7 +1223,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2572,
+      "bytes": 2569,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1244,7 +1245,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1356,
+      "bytes": 1352,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1265,7 +1266,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2642,
+      "bytes": 2639,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1286,7 +1287,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2936,
+      "bytes": 2933,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1814,7 +1815,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 774,
+      "bytes": 776,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2054,7 +2055,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 833,
+      "bytes": 830,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2100,7 +2101,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3371,
+      "bytes": 3368,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2146,7 +2147,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3970,
+      "bytes": 3967,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2212,7 +2213,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1869,
+      "bytes": 1866,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2233,7 +2234,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2891,
+      "bytes": 2888,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2282,7 +2283,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2297,
+      "bytes": 2294,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -4259,7 +4260,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5404,
+      "bytes": 5408,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/follow-up"
@@ -4757,7 +4758,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9419,
+      "bytes": 9423,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4805,7 +4806,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5376,
+      "bytes": 5380,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/follow-up"
@@ -4884,7 +4885,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4448,
+      "bytes": 4452,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -5032,7 +5033,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10124,
+      "bytes": 10310,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5291,7 +5292,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3176,
+      "bytes": 3952,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6465,7 +6466,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1916,
+      "bytes": 1920,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6513,7 +6514,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5278,
+      "bytes": 5282,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6711,7 +6712,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2012,
+      "bytes": 2009,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6780,7 +6781,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36781,
+      "bytes": 36753,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -7288,7 +7289,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1187,
+      "bytes": 1414,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7668,7 +7669,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11951,
+      "bytes": 13064,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -7690,7 +7691,8 @@
         "default",
         "loading",
         "empty",
-        "error"
+        "error",
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/finance/fund_workspace.html",
@@ -9430,7 +9432,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5177,
+      "bytes": 5189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9477,7 +9479,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7339,
+      "bytes": 7351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9552,7 +9554,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6103,
+      "bytes": 6115,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9573,7 +9575,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6034,
+      "bytes": 6046,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9670,7 +9672,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5373,
+      "bytes": 5385,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9790,7 +9792,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4340,
+      "bytes": 4352,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9881,7 +9883,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5045,
+      "bytes": 5057,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10059,7 +10061,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 3714,
+      "bytes": 3876,
       "deprecated_alternatives": [],
       "example_pages": [
         "/notifications/<str:notif_id>/read",
@@ -10078,7 +10080,10 @@
       ],
       "tables": 0,
       "template": "partials/notifications/notification_drawer_list.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "sm"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -10365,7 +10370,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 33228,
+      "bytes": 33126,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -12004,7 +12009,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 531,
+      "bytes": 523,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -12063,7 +12068,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31963,
+      "bytes": 31794,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -34321,7 +34326,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-AD648BAC50",
-      "page_title": "Cost Catalogue",
+      "page_title": "Cost Intelligence Cost Catalogue",
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "cost_settings",
@@ -37275,7 +37280,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-6E4DAD286B",
-      "page_title": "CPD & Learning",
+      "page_title": "Professional Development",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cpd_learning",
@@ -64839,7 +64844,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-E808A3A1BC",
-      "page_title": "Notifications Center",
+      "page_title": "Notifications",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "dashboard",
@@ -64944,7 +64949,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-D4CC699CE9",
-      "page_title": "Notifications Center",
+      "page_title": "Notifications",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "dashboard",
@@ -67344,7 +67349,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A14F031C98",
-      "page_title": "Partner Oversight",
+      "page_title": "Partner Monitoring",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
@@ -81030,7 +81035,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-734A2B48B5",
-      "page_title": "Quality Checks",
+      "page_title": "Quality Flags",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "quality_checks",
@@ -85450,9 +85455,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": true,
-      "typography_exceptions": [
-        "text-[13px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -86101,7 +86104,7 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "data_quality_center",
-      "primary_action": "Link",
+      "primary_action": "Apply Filters",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Manually link SSA records that were uploaded with unknown School IDs \u2014 matching this filter.",
       "remediation": "No automated remediation outstanding",
@@ -89290,7 +89293,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-040D721C96",
-      "page_title": "Team Oversight \u00b7 Edify",
+      "page_title": "Planning Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
@@ -89390,7 +89393,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-87A552B53C",
-      "page_title": "Team Oversight \u00b7 Edify",
+      "page_title": "Planning Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
@@ -91679,7 +91682,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Open next queue record",
+      "primary_action": "Filter",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "All group training sessions for the current user.",
       "remediation": "No automated remediation outstanding",
@@ -91949,7 +91952,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Open next queue record",
+      "primary_action": "Filter",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "All school visits for the current user \u2014 filterable by status.",
       "remediation": "No automated remediation outstanding",
