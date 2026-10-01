@@ -311,21 +311,23 @@ class DisbursementRoundingTest(TestCase):
 
 
 class RepairCommandTest(TestCase):
-    def test_dry_run_and_apply_are_idempotent(self):
-        from apps.audit.models import AuditLog
+    def _meeting_line(self, key, world):
+        """A cluster meeting's cost line under `key`, priced exactly as the
+        retired Participant snacks rate: the provenance the repair needs
+        before it renames a line."""
         from apps.budget.models import CostCatalogue, CostSetting
 
-        school = _world("RC1")
+        school = _world(world)
         activity = Activity.objects.create(
             school=school,
             activity_type="cluster_meeting",
             status="scheduled",
             fy=get_operational_fy(),
         )
-        catalogue = CostCatalogue.objects.create(
+        catalogue, _ = CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=99,
-            is_active=False,
+            defaults={"is_active": False},
         )
         canonical, _ = CostSetting.objects.update_or_create(
             key="cluster_meeting_participant_meal_cost_per_head",
@@ -337,9 +339,9 @@ class RepairCommandTest(TestCase):
                 "catalogue": catalogue,
             },
         )
-        line = ActivityScheduleCostLine.objects.create(
+        return ActivityScheduleCostLine.objects.create(
             activity=activity,
-            cost_setting_key="cluster_meeting_cost",
+            cost_setting_key=key,
             label="Cluster meeting",
             unit_cost=canonical.unit_cost,
             quantity=2,
@@ -347,6 +349,32 @@ class RepairCommandTest(TestCase):
             catalogue_id=catalogue.id,
             catalogue_version=catalogue.version,
         )
+
+    def test_a_line_the_meeting_recipe_wrote_is_not_renamed(self):
+        """The repair renames legacy keys. The meeting's current snacks rate
+        and its room are what the recipe charges; a line that happens to
+        match the retired rate's amount used to be renamed to the retired
+        key."""
+        from apps.audit.models import AuditLog
+
+        for key, world in (
+            ("cluster_meetings_trainings_meals", "RC2"),
+            ("group_training_venue_cost", "RC3"),
+        ):
+            line = self._meeting_line(key, world)
+            call_command("repair_ecosystem_data", "--apply")
+            line.refresh_from_db()
+            self.assertEqual(line.cost_setting_key, key)
+        self.assertFalse(
+            AuditLog.objects.filter(
+                action="data_repair.cluster_meeting_cost_key"
+            ).exists()
+        )
+
+    def test_dry_run_and_apply_are_idempotent(self):
+        from apps.audit.models import AuditLog
+
+        line = self._meeting_line("cluster_meeting_cost", "RC1")
         call_command("repair_ecosystem_data")  # dry-run, must not raise
         line.refresh_from_db()
         self.assertEqual(line.cost_setting_key, "cluster_meeting_cost")

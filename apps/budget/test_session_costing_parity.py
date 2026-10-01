@@ -22,9 +22,9 @@ secondary_breakfast_per_day          breakfast_rate
 secondary_overnight_dinner_per_day   dinner_rate
 secondary_accommodation_per_night    accommodation_rate
 
-The engine adds what the spec leaves to the catalogue: a session's own rate
-(Cluster Meeting, Cluster Training), 0 on this card so the two sides compare
-line for line.
+A cluster meeting or training has no rate of its own on top (the Cluster
+Meeting and Cluster Training rows were removed on 2026-10-01), so the two
+sides compare line for line.
 """
 
 from __future__ import annotations
@@ -47,8 +47,6 @@ from apps.daily_visit_batches.pricing import (
 )
 
 CARD = {
-    "cluster_meeting": 0,
-    "cluster_meetings_trainings": 0,
     "cluster_meetings_trainings_meals": 12_000,
     "group_training_meals": 12_000,
     "group_training_venue_cost": 50_000,
