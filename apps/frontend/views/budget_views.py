@@ -784,7 +784,22 @@ def _build_fund_requests_context(request):
     _self_heal_weekly_request(
         user, activities_qs, selected_week_start, selected_week_end
     )
-    active_wfr = wfr_qs.filter(week_start_date=selected_week_start).first()
+    # A week's request is filed under the year its Monday falls in, which is
+    # the year before the page's in the one week that crosses 1 October
+    # (Mon 28 Sep - Sun 4 Oct 2026). Looked up in the page's year alone, that
+    # week read "No Request" from 1 October although the officer had raised
+    # it. Same scope, the week's own year — only for that week: a page on a
+    # year the week does not touch keeps to its own.
+    week_fy = get_operational_fy(selected_week_start)
+    crosses_into_page_year = str(week_fy) != str(fy) and str(
+        get_operational_fy(selected_week_end)
+    ) == str(fy)
+    week_wfr_qs = (
+        _scoped_base_querysets(request, week_fy)["wfr_qs"]
+        if crosses_into_page_year
+        else wfr_qs
+    )
+    active_wfr = week_wfr_qs.filter(week_start_date=selected_week_start).first()
     weekly_lines = []
     weekly_total = 0
     accountability_activity_id = None

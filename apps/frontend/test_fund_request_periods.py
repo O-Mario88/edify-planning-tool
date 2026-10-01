@@ -218,6 +218,29 @@ class FourPeriodBudgetTest(TestCase):
         self.assertEqual(week["total"], 0)
         self.assertEqual(fy["total"], 75_000)
 
+    def test_the_week_that_crosses_the_fiscal_year_keeps_all_seven_days(self):
+        """Mon 28 Sep - Sun 4 Oct 2026 holds days of FY2026 and of FY2027.
+
+        The card cut the week to the page's year: opened from 1 October it
+        showed only the October days, and "No Request" for a week whose
+        request the officer had raised (it is filed under the year of its
+        Monday). A week is its seven days."""
+        from django.test import RequestFactory
+
+        from apps.frontend.views.budget_views import _build_fund_requests_context
+        from apps.fund_requests.weekly_service import generate_weekly_fund_request
+
+        with freeze_time("2026-10-01 09:00:00"):
+            self._costed(date(2026, 9, 28), 30_000)
+            self._costed(date(2026, 10, 2), 45_000)
+            generate_weekly_fund_request(self.user.id, "2026-09-28")
+            request = RequestFactory().get("/fund-requests/weekly")
+            request.user = self.user
+            context = _build_fund_requests_context(request)
+        self.assertEqual(context["period_budgets"]["total"], 75_000)
+        self.assertIsNotNone(context["active_wfr"])
+        self.assertEqual(str(context["active_wfr"].week_start_date), "2026-09-28")
+
     def test_with_no_week_chosen_the_page_opens_on_the_current_week(self):
         """Today is the only default that cannot go stale. The old rule opened
         on the newest scheduled work, so an officer opening the page in

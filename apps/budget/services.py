@@ -1493,9 +1493,24 @@ def budget_workspace(principal, query: dict) -> dict:
                 ),
             ]
 
+    # A week is its seven days, whichever fiscal years they fall in. The one
+    # week a year that crosses 1 October (Mon 28 Sep - Sun 4 Oct 2026) holds
+    # lines of two years; cut to the page's year alone it showed only its
+    # October days on the Weekly Advance page and only its September days on
+    # the Budget page, and neither agreed with the request the week raises,
+    # which takes every line in the week by date
+    # (apps.fund_requests.weekly_service.generate_weekly_fund_request).
+    # The month, quarter and year stay one fiscal year's (`in_year` below),
+    # and so does the week when the page is on a year it does not touch.
+    week_touches = {
+        str(get_operational_fy(periods["week"]["start"])),
+        str(get_operational_fy(periods["week"]["end"])),
+    }
+    week_years = {str(fy)} | (week_touches if str(fy) in week_touches else set())
+    in_year = Q(fiscal_year=fy)
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
-            fiscal_year=fy,
+            fiscal_year__in=week_years,
             activity__deleted_at__isnull=True,
         )
         .filter(
@@ -1582,7 +1597,9 @@ def budget_workspace(principal, query: dict) -> dict:
     operational_totals = base_lines.aggregate(
         **{
             f"{key}_total": Sum(
-                "amount", filter=planned_period_q(period["start"], period["end"])
+                "amount",
+                filter=planned_period_q(period["start"], period["end"])
+                & (Q() if key == "week" else in_year),
             )
             for key, period in periods.items()
         }
@@ -1604,7 +1621,11 @@ def budget_workspace(principal, query: dict) -> dict:
         )
 
     selected_lines = cost_line_rows(
-        planned_lines_for_period(base_lines, selected["start"], selected["end"]),
+        planned_lines_for_period(
+            base_lines if selected_period == "week" else base_lines.filter(in_year),
+            selected["start"],
+            selected["end"],
+        ),
         _LEDGER_LINE_FIELDS,
         _LEDGER_ACTIVITY_FIELDS,
     )
@@ -1643,8 +1664,9 @@ def budget_workspace(principal, query: dict) -> dict:
         selected_period=selected_period,
     )
 
+    # A week's request is filed under the year its Monday falls in.
     weekly_requests = WeeklyFundRequest.objects.filter(
-        fy=fy,
+        fy__in=week_years if selected_period == "week" else {str(fy)},
         week_start_date__lte=selected["end"],
         week_end_date__gte=selected["start"],
     )
