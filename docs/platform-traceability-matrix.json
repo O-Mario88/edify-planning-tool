@@ -4205,7 +4205,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/accounts/presence_labels.py",
         "apps/accounts/staff_matching.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
@@ -4252,7 +4251,6 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
-        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -4677,8 +4675,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "992ea75ef29d33069512ec9205ec788e1ca1815f51d9b6b29525aaab64c88549",
-    "sources": "1a1b33ef4ccbaf66767d75ecc348384ccae9b5e29f595f09f9cea8feda456ef9",
+    "payload": "4529971deb9773e2e07cfeed1ecbec3db99a1e528a9224258e8e7a9215d95f08",
+    "sources": "781583de40866025eac872b8e12bd55d3cb14cd4eabc05d44081a4ca70d6c1a8",
     "sourceCount": 234,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

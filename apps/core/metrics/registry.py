@@ -1385,7 +1385,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
     # six figures are the table's country total.
     MetricSpec(
         key="cxo_activities_due",
-        label="Activities Planned",
+        # Everything dated in the period, the days still to come included:
+        # "planned", not "due" (owner, 2026-10-02). The Work Plan's own
+        # "Activities Planned" keeps that label; labels are unique.
+        label="Planned for the Period",
         definition=(
             "Valid activities whose approved scheduled date falls in the "
             "selected period; cancelled and deferred work is counted apart."

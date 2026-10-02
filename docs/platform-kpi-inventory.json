@@ -19385,7 +19385,7 @@
     "RegionalVicePresident",
     "Admin"
    ],
-   "metric_name": "Activities Planned",
+   "metric_name": "Planned for the Period",
    "definition": "Valid activities whose approved scheduled date falls in the selected period; cancelled and deferred work is counted apart.",
    "value_type": "count",
    "period": "month",

@@ -251,7 +251,7 @@ class OnTimeTest(World):
         self.assertNotIn("Started late", labels)
         cards = {card["key"]: card for card in esvc.kpis(snapshot)}
         # Everything dated in the period, the days to come included: planned.
-        self.assertEqual(cards["due"]["label"], "Activities Planned")
+        self.assertEqual(cards["due"]["label"], "Planned for the Period")
         self.assertIn("of planned", cards["started"]["note"])
         funnel = esvc.charts(snapshot)["funnel"]
         self.assertEqual(funnel["categories"][0], "Planned")

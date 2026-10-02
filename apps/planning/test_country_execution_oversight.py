@@ -1209,7 +1209,7 @@ class ExecutionPageTest(ExecutionWorld):
             "Execution &amp; Completion",
             "Country General Planning Oversight",
             "Country Execution &amp; Completion Oversight",
-            "Activities Planned",
+            "Planned for the Period",
             "Started",
             "Execution Completed",
             "IA Verified",
