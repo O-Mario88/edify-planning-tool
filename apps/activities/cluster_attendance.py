@@ -132,14 +132,15 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
     )
     from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
 
-    # Champion and Core Graduate schools receive no cluster training or
-    # meeting (owner, 2026-09-25), so they are never invited to one.
+    # Champion schools receive no cluster training or meeting (owner,
+    # 2026-09-25), so they are never invited to one. A Core Graduate school
+    # is invited like a client school (owner, 2026-10-02).
     if School.objects.filter(
         id__in=wanted & members, school_type__in=OWN_TABLE_SCHOOL_TYPES
     ).exists():
         raise BadRequest(
-            "Champion and Core Graduate schools receive no cluster training "
-            "or meeting, so they cannot be invited to this session."
+            "Champion schools receive no cluster training or meeting, so "
+            "they cannot be invited to this session."
         )
     unknown = wanted - members
     if unknown:

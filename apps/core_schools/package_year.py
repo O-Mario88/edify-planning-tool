@@ -22,14 +22,23 @@ gives a Core school its package for a year the first time work is planned
 into it, and ``refile`` moves the links already written.
 
 **What fills it.** A cluster training or meeting took a training slot at
-every Core school it invited, with no limit, so two group trainings and two
-meetings read "4/4 trainings" with the Partner's half never assigned; and a
-data collection (SSA Support) visit took one of the four visits. The owner,
-the same day: cluster sessions are outside the package, and "the only visits
-that count are in-school visits and Training Follow Up visits". So a
-package's four trainings are in-school trainings and its four visits are
-follow-up visits, two by staff and two assigned to a Partner, and ``refile``
-gives back every slot a cluster session or a data collection visit holds.
+every Core school it invited, with no limit and on neither half, so two group
+trainings and two meetings read "4/4 trainings" with the Partner's half never
+assigned; and a data collection (SSA Support) visit took one of the four
+visits. The owner, the same day: "the only visits that count are in-school
+visits and Training Follow Up visits", and the package's trainings "should
+include both in-school training and group trainings planned through clusters.
+So if a core school is part of a group training, it should be counted in the
+core package."
+
+So a package's four visits are follow-up visits and its four trainings are
+in-school trainings and group trainings, two by staff and two by a Partner. A
+group training is on the half of whoever delivers it and takes a slot while
+that half has room; past it the session is still the school's training, on
+its history, and fills no slot (a group session is never refused over one
+school). A cluster meeting is not a training and a data collection visit is
+not a package visit: ``refile`` gives back every slot either holds, and puts
+the group trainings where this rule has them.
 
 ``refile`` is written against whichever models it is handed, so the deploy
 migration (historical models) and ``manage.py refile_core_package_work`` (the
@@ -57,14 +66,56 @@ CLOSED_PLAN_STATUSES = frozenset(
 UNCREDITED = frozenset(
     {"cancelled", "rejected", "deferred", "not_planned", "awaiting_owner_approval"}
 )
-CLUSTER_SESSION_TYPES = frozenset(
+#: A group training planned through a school's cluster: one of the package's
+#: trainings. A cluster meeting is not a training.
+CLUSTER_TRAINING_TYPES = frozenset(
+    {"cluster_training", "cluster_training_ssa_collection"}
+)
+CLUSTER_MEETING_TYPES = frozenset({"cluster_meeting", "cluster_meeting_ssa_review"})
+CLUSTER_SESSION_TYPES = CLUSTER_TRAINING_TYPES | CLUSTER_MEETING_TYPES
+#: A training delivered at the school (``cluster_attendance``).
+SCHOOL_TRAINING_TYPES = frozenset(
+    {"training", "in_school_training", "school_improvement_training", "core_training"}
+)
+
+#: A session whose register has been confirmed and that has not been
+#: abandoned. `completion_started` is deliberately absent: attendance recorded
+#: while the session is still being completed is a draft, and a slot left in a
+#: status the scheduler reads as open could be scheduled over.
+SESSION_CREDITED_STATUSES = frozenset(
     {
-        "cluster_training",
-        "cluster_training_ssa_collection",
-        "cluster_meeting",
-        "cluster_meeting_ssa_review",
+        "submitted_to_pl",
+        "awaiting_ia_verification",
+        "returned",
+        "returned_by_pl",
+        "completed",
+        "ia_verified",
+        "accountant_confirmed",
+        "closed",
     }
 )
+#: A session that is booked but whose register has not been confirmed. The
+#: invitation alone takes the slot here, so the package reads "planned" from
+#: the day the session is scheduled (owner, 2026-09-21) — the same reading a
+#: training booked from the Core Schools page gives.
+SESSION_PLANNED_STATUSES = frozenset(
+    {
+        "planned",
+        "scheduled",
+        "rescheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "in_progress",
+        "completion_started",
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+        "returned_by_ia",
+    }
+)
+#: Every status in which a session holds a slot at all. Outside it — a
+#: cancelled, rejected, deferred or unplanned session — the slots go back.
+SESSION_LIVE_STATUSES = SESSION_CREDITED_STATUSES | SESSION_PLANNED_STATUSES
 #: Visits that are not package work: data collection, and the donor, story,
 #: invitation and social visits (``package_credit.NON_PACKAGE_VISIT_*``).
 NON_PACKAGE_TYPES = frozenset(
@@ -316,12 +367,45 @@ def misfiled(Slot, Activity) -> list[tuple]:
     return found
 
 
+def is_group_training(activity) -> bool:
+    """A training planned through a cluster, for the schools on its list."""
+    return bool(activity.cluster_id) and (
+        activity.activity_type in CLUSTER_TRAINING_TYPES
+    )
+
+
+def side_of(activity) -> str:
+    """The half of the package work is on: whoever delivers it."""
+    return "partner" if activity.delivery_type == "partner" else "staff"
+
+
+def session_school_ids(rows, activity) -> set:
+    """School pks whose place at this session counts as their training, from
+    its attendance ``rows`` of ``(school_id, invited, attended, is_guest)``.
+
+    Booked and not yet registered, the invitation is the commitment: every
+    invited member school. Register confirmed: attended *and* invited, so a
+    school that was invited and did not come gives its slot back. A session
+    scheduled before invitations were recorded by name has no invitation row
+    at all; the whole cluster was invited, so attendance alone counts.
+    """
+    invited = {school_id for school_id, i, _a, guest in rows if i and not guest}
+    if activity.status in SESSION_PLANNED_STATUSES:
+        return invited
+    attended = {school_id for school_id, _i, a, _g in rows if a}
+    attended |= set(activity.attended_school_ids or [])
+    if not invited:
+        guests = {school_id for school_id, _i, _a, guest in rows if guest}
+        return attended - guests
+    return attended & invited
+
+
 def is_package_work(activity) -> bool:
-    """Whether a visit or training at a school is package work: not a cluster
-    session, not data collection, not a donor, story, invitation or social
-    visit."""
+    """Whether work is package work: a visit or training at the school, or a
+    group training planned through its cluster. Not a cluster meeting, not
+    data collection, not a donor, story, invitation or social visit."""
     if activity.cluster_id or activity.activity_type in CLUSTER_SESSION_TYPES:
-        return False
+        return is_group_training(activity)
     return not (
         activity.activity_type in NON_PACKAGE_TYPES
         or (activity.purpose_type or "") in NON_PACKAGE_PURPOSES
@@ -330,7 +414,7 @@ def is_package_work(activity) -> bool:
 
 def outside_package(Slot, Activity, *, from_fy: str) -> list[tuple]:
     """``(slot, activity)`` for every slot of a package of ``from_fy`` onward
-    held by work that is no part of a package: a cluster session or a data
+    held by work that is no part of a package: a cluster meeting or a data
     collection visit (owner, 2026-10-02)."""
     slots = list(
         Slot.objects.exclude(activity_id__isnull=True)
@@ -356,31 +440,301 @@ def outside_package(Slot, Activity, *, from_fy: str) -> list[tuple]:
     ]
 
 
+def _slot_status(activity_status) -> str:
+    """The status a slot takes from the work that fills it: a slot's own
+    "Planned" means open (``core_planning_services.core_slot_status``)."""
+    status = activity_status or ""
+    return "Scheduled" if status.strip().lower() == "planned" else status
+
+
+def _fill_from_session(slot, activity) -> None:
+    from django.utils import timezone
+
+    when = activity.planned_date
+    if when is None and activity.scheduled_date:
+        when = timezone.localtime(activity.scheduled_date).date()
+    slot.activity_id = activity.id
+    slot.status = _slot_status(activity.status)
+    slot.owner = side_of(activity)
+    slot.assigned_staff_id = activity.responsible_staff_id
+    slot.assigned_partner_id = activity.assigned_partner_id
+    slot.scheduled_for = when
+    slot.scheduled_month = (
+        str(activity.planned_month) if activity.planned_month else None
+    )
+    slot.scheduled_week = activity.planned_week
+
+
+class _GroupTrainings:
+    """The group trainings of the years re-read, put where the rule has them.
+
+    A group training fills a training slot of each Core school it counts for
+    (``session_school_ids``), in the package of the year it is dated in, on
+    the half of whoever delivers it, earliest first while that half has room.
+    What each half already holds is the trainings at the school dated in the
+    year and the hand-overs holding a slot — ``package_split``'s count, read
+    here from the models in hand.
+
+    ``release`` gives back the slots that rule does not have a group training
+    in; ``place`` fills the slots it does. They are two passes because the
+    school's own misfiled work moves between them (``refile``).
+    """
+
+    def __init__(self, Plan, Slot, Activity, Attendance, School, *, from_fy, skip):
+        from collections import defaultdict
+
+        from django.db.models import Count, Q
+
+        self.Plan, self.Slot = Plan, Slot
+        from_fy = str(from_fy)
+        group = Activity.objects.filter(
+            cluster_id__isnull=False, activity_type__in=CLUSTER_TRAINING_TYPES
+        )
+        live = group.filter(
+            deleted_at__isnull=True,
+            status__in=SESSION_LIVE_STATUSES,
+            fy__gte=from_fy,
+        )
+        if skip:
+            # Alumni: a project no SSA intervention measures is no part of a
+            # package (``package_credit.outside_package``).
+            live = live.exclude(project_id__in=list(skip))
+        self.sessions = {a.id: a for a in live}
+
+        rows = defaultdict(list)
+        for (
+            activity_id,
+            school_pk,
+            invited,
+            attended,
+            guest,
+        ) in Attendance.objects.filter(activity_id__in=list(self.sessions)).values_list(
+            "activity_id", "school_id", "invited", "attended", "is_guest"
+        ):
+            rows[activity_id].append((school_pk, invited, attended, guest))
+        counted = {
+            activity_id: session_school_ids(rows.get(activity_id, []), activity)
+            for activity_id, activity in self.sessions.items()
+        }
+        code_of = dict(
+            School.objects.filter(
+                id__in={pk for pks in counted.values() for pk in pks},
+                school_type="core",
+                deleted_at__isnull=True,
+            ).values_list("id", "school_id")
+        )
+        #: (school code, fiscal year) -> the group trainings that count there.
+        self.wanted = defaultdict(list)
+        for activity_id, pks in counted.items():
+            activity = self.sessions[activity_id]
+            for pk in pks:
+                if pk in code_of:
+                    self.wanted[(code_of[pk], str(activity.fy))].append(activity)
+
+        #: (school code, package year) -> the slots a group training holds.
+        self.current = defaultdict(list)
+        for slot in (
+            Slot.objects.filter(
+                activity_type="training", activity_id__in=group.values("id")
+            )
+            .select_related("core_plan")
+            .order_by("core_plan_id", "sequence_number")
+        ):
+            if str(slot.core_plan.fy) >= from_fy or slot.activity_id in self.sessions:
+                self.current[(slot.school_id, str(slot.core_plan.fy))].append(slot)
+
+        self.keys = sorted(set(self.wanted) | set(self.current))
+        codes = {code for code, _fy in self.keys}
+        self.used = defaultdict(lambda: {"staff": 0, "partner": 0})
+        if not codes:
+            return
+        at_school = (
+            Activity.objects.filter(
+                school__school_id__in=codes,
+                fy__gte=from_fy,
+                deleted_at__isnull=True,
+                cluster_id__isnull=True,
+                activity_type__in=SCHOOL_TRAINING_TYPES,
+            )
+            .exclude(status__in=UNCREDITED)
+            .exclude(purpose_type__in=NON_PACKAGE_PURPOSES)
+        )
+        if skip:
+            at_school = at_school.exclude(project_id__in=list(skip))
+        for code, fy, delivery, n in (
+            at_school.values_list("school__school_id", "fy", "delivery_type")
+            .annotate(n=Count("id"))
+            .order_by()
+        ):
+            side = "partner" if delivery == "partner" else "staff"
+            self.used[(code, str(fy))][side] += n
+        for slot in (
+            Slot.objects.filter(
+                activity_type="training",
+                school_id__in=codes,
+                core_plan__fy__gte=from_fy,
+                owner="partner",
+            )
+            .filter(Q(activity_id__isnull=True) | Q(activity_id=""))
+            .select_related("core_plan")
+        ):
+            # A hand-over a Partner has not dated holds its slot.
+            if not is_open(slot.status):
+                self.used[(slot.school_id, str(slot.core_plan.fy))]["partner"] += 1
+
+        #: What ``release`` leaves for ``place``.
+        self.to_place: dict[tuple, list] = {}
+        self.carried: dict[tuple, dict] = {}
+
+    def _why_not(self, slot, key, full) -> str:
+        session = self.sessions.get(slot.activity_id)
+        if session is None:
+            return "the session is not a live group training of this year"
+        if str(session.fy) != key[1]:
+            return f"it is dated in FY{session.fy}"
+        if session not in self.wanted.get(key, []):
+            return "the school is not on its list"
+        side = side_of(session)
+        if session.id in full:
+            return f"the {side} half already has its {SIDE_CAP} trainings"
+        return "it already holds a slot of this package"
+
+    def release(self, *, write, say, report, touched, label_of) -> None:
+        for key in self.keys:
+            count = dict(self.used[key])
+            kept, full = [], set()
+            for session in sorted(
+                self.wanted.get(key, []),
+                key=lambda a: (_day(a), str(a.created_at), a.id),
+            ):
+                side = side_of(session)
+                if count[side] < SIDE_CAP:
+                    count[side] += 1
+                    kept.append(session)
+                else:
+                    full.add(session.id)
+            kept_ids = {session.id for session in kept}
+            holding: set[str] = set()
+            for slot in self.current.get(key, []):
+                if slot.activity_id in kept_ids and slot.activity_id not in holding:
+                    holding.add(slot.activity_id)
+                    continue
+                plan = slot.core_plan
+                self.carried.setdefault(
+                    (key[0], slot.activity_id),
+                    {name: getattr(slot, name) for name in SLOT_WORK_FIELDS},
+                )
+                report["released"].append(
+                    {"slot": slot.id, "activity": slot.activity_id}
+                )
+                say(
+                    f"school {plan.school_id}: FY{plan.fy} {label_of(slot)} released "
+                    f"from group training {slot.activity_id}: "
+                    f"{self._why_not(slot, key, full)}"
+                )
+                if write:
+                    _clear(slot)
+                    slot.save()
+                    touched[plan.id] = plan
+            self.to_place[key] = [s for s in kept if s.id not in holding]
+
+    def place(self, *, write, say, report, touched, label_of) -> None:
+        for key in self.keys:
+            code, fy = key
+            for session in self.to_place.get(key, []):
+                plan, created = (
+                    ensure_plan(self.Plan, self.Slot, code, fy)
+                    if write
+                    else (
+                        self.Plan.objects.filter(school_id=code, fy=fy)
+                        .exclude(status__in=CLOSED_PLAN_STATUSES)
+                        .first(),
+                        False,
+                    )
+                )
+                if created:
+                    report["plans"].append(plan.id)
+                    say(f"school {code}: FY{fy} package made")
+                entry = {"activity": session.id, "school": code, "to_fy": fy}
+                if write:
+                    slot = None
+                    if plan is not None:
+                        slot = next(
+                            (
+                                candidate
+                                for candidate in self.Slot.objects.filter(
+                                    core_plan=plan, activity_type="training"
+                                ).order_by("sequence_number")
+                                if is_open(candidate.status)
+                                and not candidate.activity_id
+                            ),
+                            None,
+                        )
+                    if slot is None:
+                        report["unplaced"].append(session.id)
+                        say(
+                            f"school {code}: group training {session.id} "
+                            f"({_day(session)}) takes no FY{fy} slot: none is open"
+                        )
+                        continue
+                    carried = self.carried.get((code, session.id))
+                    if carried:
+                        for name, value in carried.items():
+                            setattr(slot, name, value)
+                        slot.owner = side_of(session)
+                    else:
+                        _fill_from_session(slot, session)
+                    slot.save()
+                    touched[plan.id] = plan
+                    entry["to"] = f"FY{fy} {label_of(slot)}"
+                report["credited"].append(entry)
+                say(
+                    f"school {code}: group training {session.id} ({_day(session)}) "
+                    f"-> {entry.get('to', 'a training slot of FY' + fy)} "
+                    f"({side_of(session)} half)"
+                )
+
+
 def refile(
     Plan,
     Slot,
     Activity,
+    Attendance,
+    School,
     *,
     from_fy: str,
     write: bool = True,
     out=print,
     tag: str = "refile_core_package_work",
+    outside_projects=(),
 ) -> dict:
     """Put every Core package's work in the package of its own year, and take
     out of the packages what is no part of one.
 
-    1. For packages of ``from_fy`` onward: a slot held by a cluster training
-       or meeting, or by a data collection visit, is given back.
-    2. School visits and trainings linked to another year's package move to
+    1. For packages of ``from_fy`` onward: a slot held by a cluster meeting or
+       by a data collection visit is given back.
+    2. A slot a group training holds where the rule does not have it — another
+       year's package, a school off its list, a half that already has its two
+       — is given back (``_GroupTrainings``).
+    3. School visits and trainings linked to another year's package move to
        the package of the year they are dated in, oldest first so the
        earliest is V1. The slot they leave is open again.
-    3. The packages touched in those years lose their gaps: taken slots first,
+    4. The group trainings that count and hold no slot take one.
+    5. The packages touched in those years lose their gaps: taken slots first,
        earliest dated first.
 
-    Nothing is removed and no activity is changed: only which package slot
-    points at it. Returns what was (or, with ``write=False``, would be) done.
+    ``outside_projects`` are the projects no SSA intervention measures
+    (Alumni), whose work is no part of a package. Nothing is removed and no
+    activity is changed: only which package slot points at it. Returns what
+    was (or, with ``write=False``, would be) done.
     """
-    report = {"moved": [], "unplaced": [], "released": [], "plans": []}
+    report = {
+        "moved": [],
+        "unplaced": [],
+        "released": [],
+        "credited": [],
+        "plans": [],
+    }
     touched: dict[str, object] = {}
 
     def say(line: str) -> None:
@@ -393,7 +747,7 @@ def refile(
     for slot, activity in outside_package(Slot, Activity, from_fy=from_fy):
         plan = slot.core_plan
         why = (
-            "a cluster session is outside the package"
+            "a cluster meeting is not a training"
             if activity.cluster_id or activity.activity_type in CLUSTER_SESSION_TYPES
             else "it is not a package visit"
         )
@@ -407,7 +761,26 @@ def refile(
             slot.save()
             touched[plan.id] = plan
 
-    # 2. School-level work in another year's package.
+    # 2. Group trainings where the rule does not have them.
+    group = _GroupTrainings(
+        Plan,
+        Slot,
+        Activity,
+        Attendance,
+        School,
+        from_fy=from_fy,
+        skip=outside_projects,
+    )
+    passes = {
+        "write": write,
+        "say": say,
+        "report": report,
+        "touched": touched,
+        "label_of": label_of,
+    }
+    group.release(**passes)
+
+    # 3. School-level work in another year's package.
     for slot, activity in misfiled(Slot, Activity):
         source = slot.core_plan
         target, created = (
@@ -455,6 +828,9 @@ def refile(
             f"{entry.get('to', 'FY' + str(activity.fy))}"
         )
 
+    # 4. The group trainings that count take their slots.
+    group.place(**passes)
+
     if write:
         for plan in touched.values():
             # A year this repair re-read keeps no gaps; an earlier year's
@@ -468,22 +844,32 @@ def refile(
                         )
             _recount(Slot, plan)
     say(
-        f"{len(report['released'])} slot(s) released from cluster sessions and "
-        f"data collection visits, {len(report['moved'])} visit(s)/training(s) "
-        f"moved to their own year's package, {len(report['plans'])} package(s) "
-        f"made, {len(report['unplaced'])} left in place"
+        f"{len(report['released'])} slot(s) given back, "
+        f"{len(report['moved'])} visit(s)/training(s) moved to their own year's "
+        f"package, {len(report['credited'])} group training place(s) filled, "
+        f"{len(report['plans'])} package(s) made, {len(report['unplaced'])} "
+        "left in place"
     )
     return report
 
 
 __all__ = [
+    "CLUSTER_MEETING_TYPES",
+    "CLUSTER_SESSION_TYPES",
+    "CLUSTER_TRAINING_TYPES",
+    "SESSION_CREDITED_STATUSES",
+    "SESSION_LIVE_STATUSES",
+    "SESSION_PLANNED_STATUSES",
     "SIDE_CAP",
     "ensure_plan",
+    "is_group_training",
     "is_open",
     "is_package_work",
     "misfiled",
     "outside_package",
     "plan_id",
     "refile",
+    "session_school_ids",
+    "side_of",
     "slot_id",
 ]

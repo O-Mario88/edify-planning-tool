@@ -955,8 +955,8 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
             icon="school",
             drill=f"{monitor_url}&gap=no_visit",
         ),
-        # Against the schools that take a training (Core, Client and Core
-        # Trained): a Core Graduate school takes its visit and none.
+        # Against the schools that take a training (Core, Client, Core
+        # Trained and Core Graduate).
         share(
             "monitor_schools_with_training",
             totals.schools_with_training,

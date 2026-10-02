@@ -235,8 +235,8 @@ def visit_status(school, **kwargs) -> VisitStatus:
 # ── Cluster training coverage ────────────────────────────────────────────────
 TRAINING_PLANNED = "training_planned"
 NO_TRAINING_PLANNED = "no_training_planned"
-#: The school's type takes no training in the year (Core Graduate, Champion:
-#: the planning rulebook), so having none planned is not a gap.
+#: The school's type takes no training in the year (Champion: the planning
+#: rulebook), so having none planned is not a gap.
 TRAINING_NOT_REQUIRED = "training_not_required"
 
 #: Why a school has no cluster training or meeting planned, in the words the
@@ -381,10 +381,9 @@ def cluster_training_coverage(
         cluster_id = getattr(school, "cluster_id", None)
         school_type = getattr(school, "school_type", None)
         if school_type and not rules.takes_training(school_type):
-            # A Core Graduate school takes its visit and no training, and a
-            # Champion school neither: none planned is the rule, not a gap
-            # (owner, 2026-10-02: "Core graduate planned are still showing as
-            # not trained").
+            # A Champion school takes no training: none planned is the rule,
+            # not a gap. Core Graduate is read like a client school (owner,
+            # 2026-10-02).
             coverage[school_id] = TrainingCoverage(
                 school_id=school_id,
                 key=TRAINING_NOT_REQUIRED,

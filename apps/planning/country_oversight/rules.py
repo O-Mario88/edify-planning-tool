@@ -510,8 +510,13 @@ REQUIREMENTS: dict[str, TypeRequirement] = {
     ),
     SchoolType.CLIENT.value: TypeRequirement(either_visits=1, either_trainings=1),
     SchoolType.CORE_TRAINED.value: TypeRequirement(either_visits=1, either_trainings=1),
-    # Client for its visits (owner, 2026-09-28), untrained (owner, 2026-09-25).
-    SchoolType.CORE_GRADUATE.value: TypeRequirement(either_visits=1),
+    # As a client school (owner, 2026-10-02: "core trained, core graduate and
+    # client schools should be treated the same"). From 2026-09-25 until then
+    # it took its visit and no training, so a training planned for one was
+    # counted nowhere and the school read as having none.
+    SchoolType.CORE_GRADUATE.value: TypeRequirement(
+        either_visits=1, either_trainings=1
+    ),
     # Donor and story visits only: outside the requirement (owner, 2026-10-01).
     SchoolType.CHAMPION.value: NO_REQUIREMENT,
 }
@@ -521,10 +526,9 @@ def requirement_for(school_type: str | None) -> TypeRequirement:
     return REQUIREMENTS.get(str(school_type or ""), NO_REQUIREMENT)
 
 
-#: The types that take a training in the year. A Core Graduate school takes a
-#: visit and no training, and a Champion school neither: a page that lists
-#: schools "with no training planned" lists only these (owner, 2026-10-02:
-#: "Core graduate planned are still showing as not trained").
+#: The types that take a training in the year: Core, Client, Core Trained
+#: and Core Graduate. A Champion school takes neither a visit nor a training,
+#: so a page that lists schools "with no training planned" lists only these.
 TRAINED_TYPES: tuple[str, ...] = tuple(
     school_type for school_type in TYPE_ORDER if REQUIREMENTS[school_type].trainings
 )

@@ -20,17 +20,21 @@ is the work dated in its year):
   by who delivers them (``Activity.delivery_type``) — whichever slot they are
   linked to, or none yet, so a bulk save, an old row or a link the repair has
   not reached cannot slip past the count;
+* the group trainings planned through the school's cluster that fill one of
+  the package's training slots, by who delivers the session (owner,
+  2026-10-02: "if a core school is part of a group training, it should be
+  counted in the core package"). A session takes a slot only while its half
+  has room (`cluster_credit`), so the slots it holds are its count;
 * on the partner side, the partner hand-overs at the school still waiting to
   be dated (each holds its slot from the moment it is made), counted in the
   running year.
 
 Not on either side, and never refused over a package: the companion visit of
 an in-school training pair; donor, story, invitation and social visits; data
-collection (SSA Support) visits; cluster trainings and meetings, which are
-outside the package altogether (owner, 2026-10-02 — the package's four
-trainings are in-school trainings, two by staff and two assigned to a
-Partner; `cluster_credit`); and the work of a project no SSA intervention
-measures (Alumni; owner, 2026-10-02).
+collection (SSA Support) visits; cluster meetings, which are not trainings; a
+group training past its half's two, which is on the school's history and in
+no slot (a group session is never refused over one school); and the work of a
+project no SSA intervention measures (Alumni; owner, 2026-10-02).
 
 Nothing here touches work that already exists. It answers whether NEW work
 fits, and a package already over a side (planned before the rule) simply takes
@@ -147,7 +151,7 @@ def package_splits(
     exclude_assignment_id: str | None = None,
 ) -> dict[str, PackageSplit]:
     """The split of each Core school's package for ``fy`` (the operational
-    year by default), keyed by ``School.id``, in five queries whatever the
+    year by default), keyed by ``School.id``, in seven queries whatever the
     count. ``schools`` are School rows (id, school_id, school_type are read);
     a school that is not Core, or has never had a package, gets an empty split
     that is open on every side.
@@ -165,6 +169,8 @@ def package_splits(
         package_kind_for,
         package_work_q,
     )
+    from apps.core_schools import package_year
+    from apps.core_schools.models import CoreActivitySlot
     from apps.partners.models import PartnerAssignment
 
     operational_fy = str(get_operational_fy())
@@ -177,11 +183,13 @@ def package_splits(
 
     plans_by_code = _plans_by_school({s.school_id for s in core})
     packaged: list[str] = []
+    school_of_plan: dict[str, str] = {}
     for s in core:
         plans = plans_by_code.get(s.school_id, [])
         exact = next((p for p in plans if str(p.fy) == fy), None)
         if exact is not None:
             out[s.id].plan_id = exact.id
+            school_of_plan[exact.id] = s.id
         elif plans and fy >= operational_fy:
             out[s.id].plan_id = PACKAGE_NOT_MADE_YET
         else:
@@ -218,7 +226,34 @@ def package_splits(
         if kind is not None:
             _add(out[row["school_id"]], kind, row["delivery_type"])
 
-    # 2. Partner hand-overs still waiting to be dated. They have no date, so
+    # 2. Group trainings in the packages' training slots. A session takes a
+    #    slot only while its half has room, so what it holds is what it counts.
+    held = [
+        (activity_id, plan_id)
+        for activity_id, plan_id in CoreActivitySlot.objects.filter(
+            core_plan_id__in=list(school_of_plan),
+            activity_type="training",
+            activity_id__isnull=False,
+        ).values_list("activity_id", "core_plan_id")
+        if activity_id and activity_id != exclude_activity_id
+    ]
+    if held:
+        delivered_by = dict(
+            Activity.objects.filter(
+                id__in={activity_id for activity_id, _plan in held},
+                cluster_id__isnull=False,
+                activity_type__in=package_year.CLUSTER_TRAINING_TYPES,
+                deleted_at__isnull=True,
+            )
+            .filter(not_outside_package_q())
+            .exclude(status__in=UNCREDITED_STATUSES)
+            .values_list("id", "delivery_type")
+        )
+        for activity_id, plan_id in held:
+            if activity_id in delivered_by:
+                _add(out[school_of_plan[plan_id]], TRAINING, delivered_by[activity_id])
+
+    # 3. Partner hand-overs still waiting to be dated. They have no date, so
     #    they are the running year's (`package_credit.reserve_for_assignment`).
     if fy == operational_fy:
         for handover in PartnerAssignment.objects.filter(

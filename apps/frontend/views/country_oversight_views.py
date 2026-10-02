@@ -1022,7 +1022,7 @@ HIERARCHY_HEADERS = [
     "Visits planned",
     "Follow up",
     "In-school Training",
-    "Data collection, donor, story and social visits (not counted)",
+    "SSA Support, donor, story and social visits (not counted)",
     "Trainings planned",
     "Cluster trainings planned",
     "Cluster meetings planned",

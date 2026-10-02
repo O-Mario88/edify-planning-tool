@@ -1012,24 +1012,38 @@ class CorePackageProgressService:
 
         gate_map = visit_gates(iterator, fy)
 
-        # Cluster trainings and meetings each school is on the list of this
-        # year: shown on their own, outside the package (owner, 2026-10-02).
+        # Group trainings a school is on the list of this year that fill no
+        # slot of its package: its half already had its two (owner,
+        # 2026-10-02 — a group training counts in the package, on the half of
+        # whoever delivers it). Said on the row, so a training the school
+        # takes is never simply missing from it.
         from apps.activities.models import ClusterActivityAttendance
-        from apps.activities.training_history import CLUSTER_SESSION_TYPES
-        from apps.planning.visit_gate import DEAD_STATUSES, NOT_YET_PLANNED_STATUSES
+        from apps.core_schools import package_year
 
-        cluster_session_counts = dict(
+        in_a_slot = {
+            (plan.school_id, slot.activity_id)
+            for plan in plans
+            for slot in plan.slots.all()
+            if slot.activity_id
+        }
+        code_of_school = {school.id: school.school_id for school in iterator}
+        extra_group_trainings: dict[str, int] = {}
+        for school_pk, activity_id in (
             ClusterActivityAttendance.objects.filter(
                 school_id__in=db_ids,
                 invited=True,
                 activity__fy=fy,
                 activity__deleted_at__isnull=True,
-                activity__activity_type__in=[str(t) for t in CLUSTER_SESSION_TYPES],
+                activity__activity_type__in=package_year.CLUSTER_TRAINING_TYPES,
+                activity__status__in=package_year.SESSION_LIVE_STATUSES,
             )
-            .exclude(activity__status__in=DEAD_STATUSES + NOT_YET_PLANNED_STATUSES)
-            .values_list("school_id")
-            .annotate(n=Count("activity_id", distinct=True))
-        )
+            .values_list("school_id", "activity_id")
+            .distinct()
+        ):
+            if (code_of_school[school_pk], activity_id) not in in_a_slot:
+                extra_group_trainings[school_pk] = (
+                    extra_group_trainings.get(school_pk, 0) + 1
+                )
 
         # Prefetch school geo details and latest SSA
         schools_data = []
@@ -1201,7 +1215,7 @@ class CorePackageProgressService:
                     "cluster_name": cluster_name,
                     "project_assignment_count": project_count,
                     "partner_support_count": partner_counts_map.get(s.id, 0),
-                    "cluster_session_count": cluster_session_counts.get(s.id, 0),
+                    "extra_group_training_count": extra_group_trainings.get(s.id, 0),
                     "score_pct": score_pct,
                     "score_label": score_label,
                     "score_badge_class": badge_class,

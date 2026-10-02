@@ -233,10 +233,6 @@ class SchoolFacts:
     staff_ssa: int = 0
     # In a Partner's hands: any live Partner work, a visit or not.
     with_partner: bool = False
-    # A Core school's cluster trainings: [before, inside, total, verified
-    # inside]. Outside its package (owner, 2026-10-02), so they fill none of
-    # its four training slots; they still say the school has training planned.
-    session: list = field(default_factory=lambda: [0, 0, 0, 0])
 
     @property
     def clustered(self) -> bool:
@@ -284,7 +280,6 @@ class SchoolFacts:
             same(self.training_partner),
             self.staff_ssa,
             self.with_partner,
-            same(self.session),
         )
 
 
@@ -324,7 +319,6 @@ class SchoolRecord(NamedTuple):
     training_partner: tuple = (0, 0, 0, 0)
     staff_ssa: int = 0
     with_partner: bool = False
-    session: tuple = (0, 0, 0, 0)
 
     @property
     def clustered(self) -> bool:
@@ -549,18 +543,7 @@ def load_facts(
             )
             .order_by()
         ):
-            school = facts.get(row["school_id"])
-            if (
-                attribute == "training"
-                and school is not None
-                and school.family == policy.CORE_FAMILY
-            ):
-                # Outside a Core school's package: the four trainings there
-                # are in-school trainings (owner, 2026-10-02).
-                attribute_for = "session"
-            else:
-                attribute_for = attribute
-            _add(school, attribute_for, row)
+            _add(facts.get(row["school_id"]), attribute, row)
 
     _load_handovers(facts, window, school_ids)
     return facts
@@ -594,9 +577,6 @@ def _load_partner_activities(
             fy=str(window.fy), deleted_at__isnull=True, school_id__in=school_ids
         )
         .filter(rules.partner_held_q())
-        # Data collection is assigned on any school and counts nowhere: it
-        # does not put a school in a Partner's hands (owner, 2026-10-02).
-        .exclude(rules.data_collection_q())
         # Alumni work does not put a school in a Partner's hands.
         .filter(rules.not_outside_ssa_q())
         .exclude(id__in=carried)
@@ -773,12 +753,8 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
         if school is None or not school.is_governed:
             continue
         handover = _Handover(*kind_fields)
-        if rules.is_data_collection(
-            handover.expected_activity_type, handover.purpose_of_visit
-        ):
-            # Assigned and listed; it puts no school in a Partner's hands
-            # and counts nowhere (owner, 2026-10-02).
-            continue
+        # A data collection (SSA Support) hand-over is a school in a Partner's
+        # hands like any other; it is no visit of the school's (``handover_kind``).
         is_visit = handover_kind(school.school_type, handover) == "visit"
         if status == PartnerAssignment.STATUS_RETURNED_TO_STAFF:
             moment = returned_at or created_at
@@ -1036,11 +1012,7 @@ def claims_for(
     claims.cum_training = before + claims.training
     # Verified inside the window, never more than the window's claims.
     claims.training_verified = min(tv + pv, claims.training)
-    # A Core school on a cluster training's list has training planned, though
-    # the session fills none of its package's slots.
-    claims.any_training = (
-        bool(claims.training_slots) and (ti + pi + school.session[1]) > 0
-    )
+    claims.any_training = bool(claims.training_slots) and (ti + pi) > 0
     mb, mi, _ = school.meeting
     claims.meeting_covered = mi > 0
     claims.cum_meeting_covered = (mb + mi) > 0
@@ -1345,14 +1317,7 @@ def school_slots(school: SchoolFacts, allocation, window: Window) -> list[SlotRo
             }
         )
     trainings.sort(key=lambda row: (row["day"], row["id"]))
-    outside_package = []
-    if school.family == policy.CORE_FAMILY:
-        # Outside a Core package (owner, 2026-10-02): listed, in no slot.
-        outside_package = [t for t in trainings if t.get("cluster")]
-        trainings = [t for t in trainings if not t.get("cluster")]
-    staff_names.update(
-        _staff_names({t["responsible_staff_id"] for t in trainings + outside_package})
-    )
+    staff_names.update(_staff_names({t["responsible_staff_id"] for t in trainings}))
     partner_names.update(
         Partner.objects.filter(
             id__in={t["assigned_partner_id"] for t in trainings} - set(partner_names)
@@ -1394,12 +1359,6 @@ def school_slots(school: SchoolFacts, allocation, window: Window) -> list[SlotRo
                 else SlotRow(label, "training", expected, "open")
             )
         beyond += [beyond_row(row) for row in rows[need:]]
-    beyond += [
-        beyond_row(
-            row, note=f"Cluster session · {row['cluster']} · outside the package"
-        )
-        for row in outside_package
-    ]
 
     meetings = list(
         _roster(fy, CLUSTER_MEETING_TYPES)

@@ -1021,7 +1021,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             + f": {counted['core']:,} at Core schools, {counted['client']:,} at "
             "Client, Core Trained and Core Graduate schools."
             + (
-                f" {outreach:,} data collection, donor, story, social or "
+                f" {outreach:,} SSA Support, donor, story, social or "
                 f"invitation visit{'' if outreach == 1 else 's'} planned as "
                 "well, not counted toward the target."
                 if outreach

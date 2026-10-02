@@ -110,8 +110,8 @@ class PeopleTablesTest(TableWorld):
         table = self.table("visits")
         self.assertEqual(len(table.rows), self.country().p_visits)
         # Under whoever holds the school; who planned the visit is a column.
-        # The Lead's data collection visit is not one of them: only a Follow
-        # up and an In-school Training count (owner, 2026-10-02).
+        # The Lead's SSA Support (data collection) visit is not one of them:
+        # only a Follow up and an In-school Training count (owner, 2026-10-02).
         self.assertEqual(
             [
                 (row["lead"], row["holder"], row["staff"], row["activity"])
@@ -126,7 +126,7 @@ class PeopleTablesTest(TableWorld):
         self.assertEqual(table.summary, "2 visits planned · 2 of 2,240 · 2,238 to plan")
         # It is listed with everything planned, and says it is not counted.
         self.assertIn(
-            ("Lead A", "Data collection (SSA Support)", "No"),
+            ("Lead A", "SSA Support", "No"),
             [
                 (row["staff"], row["activity"], row["counted"])
                 for row in self.table("plans").rows
@@ -163,8 +163,10 @@ class PeopleTablesTest(TableWorld):
             monitored_by_staff_id=self.cceo3.id,
             partner_date_set_by="partner",
         )
-        # Data collection is assigned on any school and puts none in a
-        # Partner's hands (owner, 2026-10-02): not a row here, not on the card.
+        # A school handed to a Partner for data collection is assigned to that
+        # Partner and shows as SSA Support (owner, 2026-10-02: "it should show
+        # SSA support"): a row here and on the card, and no visit of the
+        # school's.
         collected = self.school("client", self.cceo)
         self.activity(
             collected,
@@ -177,7 +179,6 @@ class PeopleTablesTest(TableWorld):
         table = self.table("partners")
         country = self.country()
         self.assertEqual(len(table.rows), country.pa_work)
-        self.assertNotIn(collected.school_id, [row["school_id"] for row in table.rows])
         states = {row["school_id"]: row["state"] for row in table.rows}
         self.assertEqual(states[waiting.school_id], "Awaiting partner schedule")
         # A day staff entered is not the Partner's plan (owner, 2026-10-02).
@@ -192,7 +193,16 @@ class PeopleTablesTest(TableWorld):
         self.assertEqual(by_school[waiting.school_id]["staff"], "Officer One")
         self.assertEqual(by_school[dated.school_id]["partner"], "Partner Beta")
         self.assertEqual(by_school[dated.school_id]["activity"], "Follow up")
-        self.assertIn("1 of 3 planned by the Partner", table.summary)
+        self.assertEqual(
+            (
+                by_school[collected.school_id]["activity"],
+                by_school[collected.school_id]["partner"],
+                by_school[collected.school_id]["state"],
+            ),
+            ("SSA Support", "Partner Beta", "Planned by the Partner"),
+        )
+        self.assertEqual(country.p_visits, 0)
+        self.assertIn("2 of 4 planned by the Partner", table.summary)
         # Until the Partner sets it, no date is shown — only that staff
         # entered one, for the workbook.
         self.assertIsNone(by_school[booked.school_id]["date"])
@@ -605,14 +615,8 @@ class ImpactAssessmentTablesTest(TableWorld):
             [
                 (school.school_id, "Follow up", "Staff", "Officer Three", "Yes"),
                 (school.school_id, "Donor Visit", "Staff", "Officer One", "No"),
-                # A Partner's data collection is a visit plan, not a counted one.
-                (
-                    other.school_id,
-                    "Data collection (SSA Support)",
-                    "Partner",
-                    "Partner Beta",
-                    "No",
-                ),
+                # A Partner's SSA Support is a visit plan, not a counted one.
+                (other.school_id, "SSA Support", "Partner", "Partner Beta", "No"),
             ],
         )
         self.assertEqual(table.place_of(table.rows[0]), PLACE)
@@ -993,12 +997,7 @@ class ImpactAssessmentTablesTest(TableWorld):
                 for r in table.rows
             ],
             [
-                (
-                    "Data collection (SSA Support)",
-                    "Staff",
-                    "Officer One",
-                    "Data Gathering",
-                ),
+                ("SSA Support", "Staff", "Officer One", "Data Gathering"),
                 ("Field Event", "Staff", "Officer One", ""),
                 ("Cluster Training", "Staff", "Officer One", "Leadership"),
                 ("Cluster Training", "Partner", "Partner Beta", "Financial Health"),

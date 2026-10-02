@@ -1442,7 +1442,7 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             more=[
                 f"Follow up {_fmt(t.p_follow_up)} · In-school Training "
                 f"{_fmt(t.p_in_school)}",
-                f"{_fmt(t.p_outreach)} data collection, donor, story and social "
+                f"{_fmt(t.p_outreach)} SSA Support, donor, story and social "
                 "visits not counted"
                 if t.p_outreach
                 else "",
@@ -1665,7 +1665,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Still to\nplan",
                 "Assigned to\nPartners",
                 "Partner\nplanned",
-                "Data collection, donor,\nstory, social (not counted)",
+                "SSA Support, donor,\nstory, social (not counted)",
             ],
             "rows": [
                 [

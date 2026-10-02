@@ -109,11 +109,11 @@ class RulebookDefinitionsTest(World):
         core = rules.requirement_for("core")
         self.assertEqual((core.staff_visits, core.partner_visits), (2, 2))
         self.assertEqual((core.staff_trainings, core.partner_trainings), (2, 2))
-        for school_type in ("client", "core_trained"):
+        # "core trained, core graduate and client schools should be treated
+        # the same" (owner, 2026-10-02).
+        for school_type in ("client", "core_trained", "core_graduate"):
             need = rules.requirement_for(school_type)
             self.assertEqual((need.visits, need.trainings), (1, 1))
-        graduate = rules.requirement_for("core_graduate")
-        self.assertEqual((graduate.visits, graduate.trainings), (1, 0))
         champion = rules.requirement_for("champion")
         self.assertEqual((champion.visits, champion.trainings), (0, 0))
         # 2 visits per Core school and 1 per client-rule school.
@@ -381,7 +381,7 @@ class SchoolYearTest(World):
                 "core": (1, 4, 4),
                 "client": (1, 1, 1),
                 "core_trained": (1, 1, 1),
-                "core_graduate": (1, 1, 0),
+                "core_graduate": (1, 1, 1),
                 "champion": (1, 0, 0),
             },
         )
@@ -639,8 +639,9 @@ class PeopleFirstPageTest(World):
         )
         self.assertEqual(rows["client"]["duplicates"], 1)
         self.assertEqual(rows["core_trained"]["no_visit"], "1")
-        self.assertFalse(rows["core_graduate"]["needs_trainings"])
+        self.assertTrue(rows["core_graduate"]["needs_trainings"])
         self.assertFalse(rows["champion"]["needs_visits"])
+        self.assertFalse(rows["champion"]["needs_trainings"])
         t = snapshot.tree.country
         self.assertEqual(
             sum(tally.visit_slots for tally in snapshot.tree.by_type.values()),

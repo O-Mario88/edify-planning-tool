@@ -73,26 +73,32 @@ class SchoolTypePlanningTest(BadgeFixture):
         self.assertIn(self.trained.id, client_tab)
         self.assertIn(self.hope.id, client_tab)
 
-    def test_champion_and_core_graduate_are_on_no_planning_tab(self):
+    def test_core_graduate_is_planned_with_the_client_schools_too(self):
+        """Owner, 2026-10-02: "core trained, core graduate and client schools
+        should be treated the same"."""
+        client_tab = self._planning_ids("client")
+        self.assertIn(self.grace.id, client_tab)
+        self.assertIn(self.grace.id, self._planning_ids("all"))
+
+    def test_a_champion_school_is_on_no_planning_tab(self):
         for tab in ("client", "core", "all", "scheduled"):
             with self.subTest(tab=tab):
-                ids = self._planning_ids(tab)
-                self.assertNotIn(self.victory.id, ids)
-                self.assertNotIn(self.grace.id, ids)
+                self.assertNotIn(self.victory.id, self._planning_ids(tab))
 
-    def test_the_cluster_lists_leave_them_out(self):
+    def test_the_cluster_lists_hold_the_graduate_and_leave_the_champion_out(self):
+        expected = {self.hope.id, self.trained.id, self.grace.id}
         members = {s.id for s in active_schools(self.cluster.id)}
-        self.assertEqual(members, {self.hope.id, self.trained.id})
-        self.assertEqual(active_school_count(self.cluster.id), 2)
+        self.assertEqual(members, expected)
+        self.assertEqual(active_school_count(self.cluster.id), 3)
         listed = {row["id"] for row in cluster_schools(self.cluster.id, self.user)}
-        self.assertEqual(listed, {self.hope.id, self.trained.id})
+        self.assertEqual(listed, expected)
 
-    def test_they_are_never_invited_to_a_cluster_session(self):
+    def test_a_champion_is_never_invited_to_a_cluster_session(self):
         session = self._session(invited=[self.hope])
         with self.assertRaises(BadRequest):
             set_invited_schools(session, [self.hope.id, self.victory.id])
-        with self.assertRaises(BadRequest):
-            set_invited_schools(session, [self.grace.id])
+        # A Core Graduate school is invited like a client school.
+        set_invited_schools(session, [self.hope.id, self.grace.id])
 
     def test_only_donor_and_story_visits_are_planned_for_champions(self):
         for school in (self.victory,):

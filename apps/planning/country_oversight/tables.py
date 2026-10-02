@@ -59,7 +59,7 @@ ASSIGNED = "Assigned to Partner"
 UNCLUSTERED = "Unclustered"
 #: What a data collection visit is called in a list: shown, never counted
 #: (owner, 2026-10-02).
-DATA_COLLECTION = "Data collection (SSA Support)"
+DATA_COLLECTION = "SSA Support"
 #: Partner work in these states has not happened yet: without the Partner's
 #: own date it is still waiting for one.
 _WAITING_STATES = frozenset(
@@ -243,9 +243,9 @@ SPECS: dict[str, Spec] = {
             "visit",
             "Every visit planned for the year, by staff and by Partners. A "
             "Partner's visit is listed once the Partner has set its date; "
-            "until then it is in Schools Assigned to Partners. Data "
-            "collection, donor, story, social and invitation visits are "
-            "listed and marked as not counted toward a person's target.",
+            "until then it is in Schools Assigned to Partners. SSA Support, "
+            "donor, story, social and invitation visits are listed and "
+            "marked as not counted toward a person's target.",
             (
                 *PLACE,
                 *SCHOOL,
@@ -400,9 +400,8 @@ SPECS: dict[str, Spec] = {
             "Every activity planned for the year — visits, trainings, cluster "
             "meetings and other work, by staff and with Partners — with its "
             "SSA intervention. The workbook carries every planning detail, "
-            "for analysis. Data collection, donor, story, social and "
-            "invitation visits are marked as not counted toward a person's "
-            "target.",
+            "for analysis. SSA Support, donor, story, social and invitation "
+            "visits are marked as not counted toward a person's target.",
             (
                 *PLACE,
                 *SCHOOL,
@@ -1162,30 +1161,29 @@ def _partner_session_rows(book: _Book, *, meetings: bool | None = None) -> list:
     return rows
 
 
-def _partner_rows(
-    book: _Book, *, every: bool = False, data_collection: bool = False
-) -> list:
-    """Every piece of work in a Partner's hands, under who assigned it: the
-    in-school trainings and follow ups a school is assigned for.
+def _partner_rows(book: _Book, *, every: bool = False) -> list:
+    """Every piece of work in a Partner's hands, under who assigned it.
 
-    The lists of what is planned, counted or not, add the rest: ``every``
-    the work the rulebook does not count — Alumni, a project no SSA
-    intervention measures; ``data_collection`` the data collection assigned
-    beside a school's support, alone (owner, 2026-10-02)."""
+    A school handed to a Partner for data collection is assigned to that
+    Partner like any other and reads SSA Support (owner, 2026-10-02: "it
+    should show SSA support"); the work is marked as not counted, because it
+    is no visit of the school's. ``every`` adds the work the rulebook does
+    not count at all — Alumni, a project no SSA intervention measures — for
+    the list of every activity."""
     from apps.planning.partner_oversight_service import describe_work
 
     if not book.partner_side:
         return []
     reads = book.reads
     handovers = list(
-        reads.handovers(every=every, data_collection=data_collection).select_related(
+        reads.handovers(every=every).select_related(
             "school",
             "training_course",
             "catalogue_item",
             "source_activity__training_course",
         )
     )
-    work = _read(reads.partner_work(every=every, data_collection=data_collection))
+    work = _read(reads.partner_work(every=every))
     book.learn(
         work,
         staff_ids={
@@ -1238,6 +1236,7 @@ def _partner_rows(
         )
         expected = h.expected_activity_type or ""
         kind = rules.visit_kind(expected or "school_visit", h.purpose_of_visit)
+        data_collection = rules.is_data_collection(expected, h.purpose_of_visit)
         course, purpose, intervention = describe_work(
             purpose_code=h.purpose_of_visit or "",
             activity_type=expected,
@@ -1303,6 +1302,7 @@ def _partner_rows(
             a.school.account_owner_id,
         )
         kind = rules.visit_kind(a.activity_type, a.purpose_type)
+        data_collection = rules.is_data_collection(a.activity_type, a.purpose_type)
         label = DATA_COLLECTION if data_collection else rules.KIND_LABELS.get(kind, "")
         row = book.row(
             a,
@@ -1629,7 +1629,6 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             + [
                 row
                 for row in _partner_rows(book)
-                + _partner_rows(book, data_collection=True)
                 if (row["is_visit"] or not row["is_training"])
                 and row["state"] == PARTNER_PLANNED
             ],
@@ -1651,13 +1650,8 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
         )
     elif key == "project-partners":
         # Every project's, whether the rulebook counts its work or not:
-        # Alumni and data collection are a coordinator's assignments too.
-        rows = [
-            row
-            for row in _partner_rows(book, every=True)
-            + _partner_rows(book, data_collection=True)
-            if row["_project"]
-        ]
+        # Alumni's are a coordinator's assignments too.
+        rows = [row for row in _partner_rows(book, every=True) if row["_project"]]
         table.rows = places.sort(rows, "project", "partner", "school", "date")
         schools = len({row["school_id"] for row in rows})
         table.summary = (
@@ -1676,7 +1670,6 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
                 + [
                     row
                     for row in _partner_rows(book, every=True)
-                    + _partner_rows(book, data_collection=True)
                     + _partner_session_rows(book)
                     if row["state"] == PARTNER_PLANNED
                 ]
@@ -1698,10 +1691,8 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             + _training_rows(book, skip_counted_visits=True)
             + _other_rows(book)
             + _session_rows(book)
-            # Listed, counted nowhere: Alumni work and data collection in a
-            # Partner's hands too.
+            # Listed, counted nowhere: Alumni work in a Partner's hands too.
             + _partner_rows(book, every=True)
-            + _partner_rows(book, data_collection=True)
             + _partner_session_rows(book),
             twice,
         )

@@ -107,7 +107,7 @@ class OnePlanOnEveryPage(MonitorFixture):
         self.assertEqual(tile["helper"], "of 560 a year · 2 Core, 1 Client")
         # The fixture's donor visit and the story visit added here.
         self.assertIn(
-            "2 data collection, donor, story, social or invitation visits",
+            "2 SSA Support, donor, story, social or invitation visits",
             tile["helper_exact"],
         )
         self.assertIn("not counted toward the target", tile["helper_exact"])

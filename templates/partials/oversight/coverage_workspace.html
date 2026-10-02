@@ -104,7 +104,7 @@ quarter inside a year.
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="no-training-title" data-no-training-table>
     <div class="border-b border-[var(--edify-border)] px-4 py-3">
       <h2 id="no-training-title" class="text-[15px] font-semibold">Schools with No Training Planned</h2>
-      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training, cluster meeting or in-school training in this period. Core, Client and Core Trained schools are listed: a Core Graduate or Champion school takes no training. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training, cluster meeting or in-school training in this period. Core, Client, Core Trained and Core Graduate schools are listed: a Champion school takes no training. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}

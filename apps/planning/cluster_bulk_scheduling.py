@@ -174,8 +174,8 @@ def schedulable_members(cluster, principal) -> BulkSelection:
             deleted_at__isnull=True,
             operational_status__in=OPERATING_STATUSES,
         )
-        # Champion and Core Graduate schools are planned from their own
-        # tables on Core Schools (owner, 2026-09-25).
+        # Champion schools are planned from their own table on Core Schools
+        # (owner, 2026-09-25).
         .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         .select_related("district")
         .order_by("name")

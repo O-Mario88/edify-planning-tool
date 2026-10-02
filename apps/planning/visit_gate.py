@@ -131,11 +131,17 @@ CORE_RULE_SCHOOL_TYPES = ("core",)
 #
 # Owner, 2026-09-28: Core Graduate now follows the client rule for its visits
 # — the one support visit, SSA Support, and donor, story, invitation and
-# social visits without limit. Champion keeps the donor/story-only rule. Both
-# keep their own tables on Core Schools, off the Planning page and the
-# cluster lists (OWN_TABLE_SCHOOL_TYPES); only where they are listed was not
-# part of the change.
-OWN_TABLE_SCHOOL_TYPES = ("champion", "core_graduate")
+# social visits without limit. Champion keeps the donor/story-only rule.
+#
+# Owner, 2026-10-02: "core graduate should also be planned for so any
+# training they are in should be counted for and trained when the training
+# is completed. basically core trained, core graduate and client schools
+# should be treated the same." So Core Graduate is planned where a client
+# school is — the Planning page, the cluster lists, a cluster session's
+# invitations — and takes the same one training a year
+# (``country_oversight.rules.REQUIREMENTS``). Only Champion keeps its own
+# table, off those lists (OWN_TABLE_SCHOOL_TYPES).
+OWN_TABLE_SCHOOL_TYPES = ("champion",)
 OUTREACH_ONLY_SCHOOL_TYPES = ("champion",)
 OUTREACH_ACTIVITY_TYPES = ("donor_visit", "story_gathering_visit")
 OUTREACH_VISIT_PURPOSES = ("donor_visit", "story_gathering")

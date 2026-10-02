@@ -603,10 +603,9 @@ class PLAnalyticsService:
         )
         # Both routes, one answer. A cluster session has no school FK, so
         # filtering on school_id alone missed every school it trained.
-        # Against the schools that take a training (Core, Client and Core
-        # Trained): a Core Graduate school takes its visit and no training
-        # and a Champion school neither, so neither is ever "not trained"
-        # (owner, 2026-10-02; the planning rulebook's TRAINED_TYPES).
+        # Against the schools that take a training (Core, Client, Core
+        # Trained and Core Graduate; the planning rulebook's TRAINED_TYPES):
+        # a Champion school takes none, so it is never "not trained".
         training_schools = schools.filter(school_type__in=TRAINED_TYPES)
         trained_ids = trained_school_ids(training_schools.values("id"), fy=fy)
         schools_not_trained = max(0, training_schools.count() - len(trained_ids))

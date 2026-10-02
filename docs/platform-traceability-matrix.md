@@ -18,7 +18,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-01` | Priority to verified performance | ✓ | 2 | 117 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 45 | 10 | 1 | 11 | 0 | 0 | 29 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 110 | 33 | 3 | 8 | 10 | 26 | 80 |
-| `journey-04` | Cluster training | ✓ | 1 | 68 | 17 | 1 | 2 | 0 | 1 | 76 |
+| `journey-04` | Cluster training | ✓ | 1 | 70 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 57 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 118 | 29 | 3 | 5 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 87 | 27 | 4 | 10 | 9 | 23 | 80 |
@@ -113,7 +113,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Permissions checked | `cluster.catchmentManage` |
 | Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/editing.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py`, `apps/activities/training_history.py` _+58 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/editing.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py`, `apps/activities/training_history.py` _+60 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |

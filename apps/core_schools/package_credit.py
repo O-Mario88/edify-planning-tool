@@ -37,8 +37,10 @@ Not credited here, each for its reason:
   (owner, 2026-09-30), and unlimited wherever they are planned;
 * data collection (SSA Support) visits — "those visits don't count" (owner,
   2026-10-02), and unlimited too;
-* cluster trainings and meetings — outside the package since 2026-10-02
-  (`cluster_credit`): the package's four trainings are in-school trainings;
+* a group training planned through the school's cluster — it does count
+  (owner, 2026-10-02), and is credited apart, by `cluster_credit`, on the half
+  of whoever delivers it; a cluster meeting is not a training and takes no
+  slot;
 * the work of a project no SSA intervention measures (owner, 2026-10-02:
   Alumni "is not an intervention ... it should not restrict another project
   from being assigned to that school") — it takes no slot and no side of the

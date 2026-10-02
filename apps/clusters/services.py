@@ -836,8 +836,8 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     cluster = _scoped_cluster(cluster_id, principal)
     schools = (
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
-        # Champion and Core Graduate schools have their own tables on Core
-        # Schools and take no cluster training (owner, 2026-09-25).
+        # Champion schools have their own table on Core Schools and take no
+        # cluster training (owner, 2026-09-25).
         .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         .select_related("district", "sub_county", "parish")
         .prefetch_related(
@@ -1053,9 +1053,8 @@ def active_school_count(cluster_id: str) -> int:
     activity each counted schools their own way, the three would disagree by
     whole participants and the difference would land in money.
 
-    Champion and Core Graduate schools are not counted: they receive no
-    cluster training or meeting (owner, 2026-09-25), so none is invited or
-    priced.
+    Champion schools are not counted: they receive no cluster training or
+    meeting (owner, 2026-09-25), so none is invited or priced.
 
     "Active" here means not soft-deleted AND still carrying the cluster link.
     Both conditions are needed, not one: School.cluster_id is a CharField

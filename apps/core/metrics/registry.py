@@ -162,8 +162,8 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "The user's own visits in the selected period that count toward "
             "the visits their role plans in a year (560 for a CCEO, 280 for a "
             "Programme Lead): Follow up and In-school Training "
-            "visits at a school, planned and dated. Data collection (SSA "
-            "Support), donor, story, social and invitation visits are named "
+            "visits at a school, planned and dated. SSA Support (data "
+            "collection), donor, story, social and invitation visits are named "
             "beside the figure and not counted. "
             "It is the count the Planning Monitor shows the person's "
             "Programme Lead (apps.planning.staff_plan). For a Partner's plan, "
@@ -1248,7 +1248,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "Follow up and In-school Training visits staff have "
             "planned, counted for the person who planned them, against the "
             "visits their roles plan in a year: 560 for each CCEO and 280 for "
-            "each Programme Lead. Data collection (SSA Support), donor, story, "
+            "each Programme Lead. SSA Support (data collection), donor, story, "
             "social and invitation visits are not counted."
         ),
         question="Have Programme Leads and CCEOs planned the visits their roles plan?",
@@ -1321,8 +1321,8 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         definition=(
             "Training slots with a dated training planned against what the "
             "schools need: four per Core school (two staff, two Partner) and "
-            "one per Client and Core Trained school; Core Graduate and "
-            "Champion schools take none. A cluster session fills one slot for "
+            "one per Client, Core Trained and Core Graduate school; Champion "
+            "schools take none. A cluster session fills one slot for "
             "each school on its planned roster, never for the rest of the "
             "cluster."
         ),
@@ -1827,8 +1827,8 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         definition=(
             "Schools invited to a live group training or cluster meeting in "
             "the fiscal year, or given an in-school training, out of the "
-            "schools that take a training: Core, Client and Core Trained. A "
-            "Core Graduate school takes its visit and no training."
+            "schools that take a training: Core, Client, Core Trained and "
+            "Core Graduate."
         ),
         question="How many schools will be trained this year?",
         category=Category.PROGRESS,

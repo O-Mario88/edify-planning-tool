@@ -292,13 +292,16 @@ class PlanningDashboardService:
                 )
 
         # Tab-specific filters for the table view
-        # Core Trained schools are planned as client schools, without the
-        # Core package; Champion and Core Graduate schools are planned from
-        # their own tables on Core Schools, not here (owner, 2026-09-25; see
-        # the exclusion below).
+        # Core Trained and Core Graduate schools are planned as client
+        # schools, without the Core package (owner, 2026-10-02: "core trained,
+        # core graduate and client schools should be treated the same");
+        # Champion schools are planned from their own table on Core Schools,
+        # not here (owner, 2026-09-25; see the exclusion below).
         if active_tab == "client":
             table_schools_qs = _without_active_work(
-                schools_qs.filter(school_type__in=["client", "core_trained"])
+                schools_qs.filter(
+                    school_type__in=["client", "core_trained", "core_graduate"]
+                )
             )
         elif active_tab == "core":
             table_schools_qs = _without_active_work(
@@ -368,8 +371,8 @@ class PlanningDashboardService:
                 cluster_status="clustered", cluster_id__isnull=False
             )
             .exclude(cluster_id="")
-            # Champion and Core Graduate schools have their own tables on
-            # Core Schools (owner, 2026-09-25), so no Planning tab lists them.
+            # Champion schools have their own table on Core Schools (owner,
+            # 2026-09-25), so no Planning tab lists them.
             .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
         )
 

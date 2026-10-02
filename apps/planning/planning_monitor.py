@@ -34,8 +34,8 @@ So, per person, for one fiscal year:
 
 * **The visit target** — 280 for a Programme Lead, 560 for a CCEO.
 * **Visits planned** — the counted staff visits the person planned, wherever
-  they are. Data collection, donor, story, social and invitation visits are
-  not counted.
+  they are. SSA Support (data collection), donor, story, social and
+  invitation visits are not counted.
 * **Core visits** — two staff visits a year at each Core school
   (``CORE_STAFF_VISITS_PER_SCHOOL``): the target is 2 × Core schools.
 * **Client visits** — the rest of the target, at Client, Core Trained and
@@ -53,9 +53,9 @@ So, per person, for one fiscal year:
   (invited to a live group training or cluster meeting, or given an in-school
   training), schools **not clustered**, **not planned** for a visit, for
   training, or for either, and schools **in a Special Project**. Training is
-  read against the schools that take one: Core, Client and Core Trained. A
-  Core Graduate school takes its visit and no training, so it is never
-  counted as having none planned (owner, 2026-10-02).
+  read against the schools that take one: Core, Client, Core Trained and
+  Core Graduate (owner, 2026-10-02: the last three "should be treated the
+  same").
 * **Execution** beside each plan: visits delivered and schools whose
   training has been delivered, counted from the same rows as it happens.
 
@@ -177,9 +177,9 @@ class SchoolState:
 
     @property
     def needs_training(self) -> bool:
-        """Whether a school of this type takes a training in the year. A Core
-        Graduate school takes its visit and no training (the rulebook), so it
-        is never a school "with no training planned" (owner, 2026-10-02)."""
+        """Whether a school of this type takes a training in the year (the
+        rulebook): every type the monitor counts does; a type the rulebook
+        gives none is never a school "with no training planned"."""
         from apps.planning.country_oversight import rules
 
         return rules.takes_training(self.school_type)
@@ -849,10 +849,6 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
         at_schools.filter(deleted_at__isnull=True)
         .filter(rules.partner_held_q())
         .exclude(rules.partner_planned_q())
-        # Data collection puts no school in a Partner's hands (owner,
-        # 2026-10-02): the figure is the schools assigned for an in-school
-        # training or a follow up.
-        .exclude(rules.data_collection_q())
         .values_list("school_id")
         .annotate(n=Count("id"))
         .order_by()
@@ -931,7 +927,6 @@ def _count_partner_work(officers, fy: str) -> None:
         Activity.objects.filter(fy=fy, deleted_at__isnull=True)
         .filter(rules.partner_held_q())
         .filter(rules.not_outside_ssa_q())
-        .exclude(rules.data_collection_q())
         .filter(
             Q(monitored_by_staff_id__in=ids)
             | Q(responsible_staff_id__in=ids)
@@ -966,16 +961,12 @@ def _count_partner_work(officers, fy: str) -> None:
         if school_id:
             schools.setdefault(id(officer), set()).add(school_id)
 
-    handovers = (
-        PartnerAssignment.objects.filter(
-            Q(monitoring_staff_id__in=ids)
-            | Q(assigning_staff_id__in=ids)
-            | Q(school__account_owner_id__in=ids),
-            status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
-        )
-        .filter(rules.not_outside_ssa_q())
-        .exclude(rules.handover_data_collection_q())
-    )
+    handovers = PartnerAssignment.objects.filter(
+        Q(monitoring_staff_id__in=ids)
+        | Q(assigning_staff_id__in=ids)
+        | Q(school__account_owner_id__in=ids),
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+    ).filter(rules.not_outside_ssa_q())
     for monitor, assigner, holder, school_id in handovers.values_list(
         "monitoring_staff_id",
         "assigning_staff_id",
@@ -1004,7 +995,6 @@ def _count_partner_handovers(schools: dict, school_ids) -> None:
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         )
         .filter(rules.not_outside_ssa_q())
-        .exclude(rules.handover_data_collection_q())
         .values("school_id")
         .annotate(n=Count("id"))
         .values_list("school_id", "n")

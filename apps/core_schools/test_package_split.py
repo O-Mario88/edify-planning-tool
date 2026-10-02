@@ -158,27 +158,44 @@ class SplitCountsEachSideTest(_SplitFixture):
             3,
         )
 
-    def test_a_cluster_session_is_outside_the_package(self):
-        # Owner, 2026-10-02: on neither half, even where an older link still
-        # points a training slot at it (the deploy repair removes those).
+    def test_a_group_training_in_a_slot_is_on_the_half_of_who_delivers_it(self):
+        # Owner, 2026-10-02: "if a core school is part of a group training, it
+        # should be counted in the core package." A cluster meeting is not a
+        # training: on neither half, even where an older link still points a
+        # slot at it (the deploy repair removes those).
         from apps.clusters.models import Cluster
 
         cluster = Cluster.objects.create(
             name="Split Cluster", region=self.region, district=self.district
         )
-        session = Activity.objects.create(
-            activity_type="cluster_training",
-            cluster=cluster,
-            fy=self.fy,
-            quarter="Q1",
-            status="scheduled",
-        )
-        CoreActivitySlot.objects.filter(
-            id=cslot_id("SPLIT-1", "t", 1, fy=self.fy)
-        ).update(activity_id=session.id, status="Scheduled", owner="staff")
+        made = {}
+        for sequence, (kind, delivery) in enumerate(
+            (
+                ("cluster_training", "staff"),
+                ("cluster_training", "partner"),
+                ("cluster_meeting", "staff"),
+            ),
+            start=1,
+        ):
+            session = Activity.objects.create(
+                activity_type=kind,
+                cluster=cluster,
+                fy=self.fy,
+                quarter="Q1",
+                status="scheduled",
+                delivery_type=delivery,
+            )
+            CoreActivitySlot.objects.filter(
+                id=cslot_id("SPLIT-1", "t", sequence, fy=self.fy)
+            ).update(activity_id=session.id, status="Scheduled", owner=delivery)
+            made[sequence] = session
 
-        self.assertEqual(self._split().used(TRAINING, STAFF), 0)
-        self.assertEqual(self._split().used(TRAINING, PARTNER), 0)
+        self.assertEqual(self._split().used(TRAINING, STAFF), 1)
+        self.assertEqual(self._split().used(TRAINING, PARTNER), 1)
+        # The session being saved does not count against itself.
+        self.assertEqual(
+            self._split(exclude_activity_id=made[1].id).used(TRAINING, STAFF), 0
+        )
 
     def test_a_school_with_no_package_has_no_split(self):
         CorePlan.objects.filter(id=self.plan.id).update(status="Archived")

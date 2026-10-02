@@ -180,39 +180,55 @@ class OctoberWorkPlannedInSeptemberTest(_YearFixture):
 
 
 @freeze_time(OCTOBER)
-class ClusterSessionsAreOutsideThePackageTest(_YearFixture):
-    """Owner, 2026-10-02: "They should be separate" — outside the package."""
+class GroupTrainingsCountInThePackageTest(_YearFixture):
+    """Owner, 2026-10-02: the package's trainings "should include both
+    in-school training and group trainings planned through clusters"."""
 
-    def test_a_session_fills_no_training_slot_and_is_on_neither_half(self):
+    def test_a_group_training_fills_a_slot_on_its_deliverers_half(self):
         self._session(date(2026, 10, 20))
+        # A meeting is not a training.
         self._session(date(2026, 10, 27), "cluster_meeting")
         self._session(
             date(2026, 11, 3), delivery_type="partner", status="partner_scheduled"
         )
-        self.assertEqual(self._taken("2027", "training"), [])
+        slots = self._slots("2027", "training")
+        self.assertEqual(self._taken("2027", "training"), ["T1", "T2"])
+        self.assertEqual([slot.owner for slot in slots[:2]], ["staff", "partner"])
         split = package_split(self.school, "2027")
         self.assertEqual(
-            (split.used(TRAINING, STAFF), split.used(TRAINING, PARTNER)), (0, 0)
+            (split.used(TRAINING, STAFF), split.used(TRAINING, PARTNER)), (1, 1)
         )
 
-    def test_the_four_trainings_are_in_school_two_and_two(self):
+    def test_two_group_trainings_are_staffs_two_and_the_rest_is_the_partners(self):
         self._session(date(2026, 10, 20))
         self._session(date(2026, 10, 27))
-        self._work("in_school_training", date(2026, 10, 14))
-        self._work("in_school_training", date(2026, 10, 21))
         self.assertEqual(self._taken("2027", "training"), ["T1", "T2"])
         with self.assertRaisesMessage(BadRequest, "2 staff core trainings"):
             assert_side_open(self.school, TRAINING, STAFF, fy="2027")
         # The other two are the Partner's to be assigned.
         assert_side_open(self.school, TRAINING, PARTNER, fy="2027")
+        # A third staff session is the school's training all the same, in no
+        # slot: the package does not read 3 of 4 by staff.
+        third = self._session(date(2026, 11, 10))
+        self.assertEqual(self._taken("2027", "training"), ["T1", "T2"])
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=third.id).exists())
 
-    def test_a_session_saved_again_gives_back_a_slot_it_held(self):
-        session = self._session(date(2026, 10, 20))
+    def test_in_school_and_group_trainings_share_staffs_two(self):
+        self._work("in_school_training", date(2026, 10, 14))
+        self._session(date(2026, 10, 20))
+        self.assertEqual(self._taken("2027", "training"), ["T1", "T2"])
+        late = self._session(date(2026, 10, 27))
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=late.id).exists())
+        split = package_split(self.school, "2027")
+        self.assertEqual(split.used(TRAINING, STAFF), 2)
+
+    def test_a_meeting_saved_again_gives_back_a_slot_it_held(self):
+        meeting = self._session(date(2026, 10, 20), "cluster_meeting")
         plan = ensure_core_plan(self.school, "2027")
         CoreActivitySlot.objects.filter(
             core_plan=plan, activity_type="training", sequence_number=1
-        ).update(activity_id=session.id, status="scheduled", owner="staff")
-        session.save()
+        ).update(activity_id=meeting.id, status="scheduled", owner="staff")
+        meeting.save()
         self.assertEqual(self._taken("2027", "training"), [])
 
 
@@ -312,6 +328,8 @@ class RefileTest(_YearFixture):
             CorePlan,
             CoreActivitySlot,
             Activity,
+            ClusterActivityAttendance,
+            School,
             from_fy="2027",
             out=lines.append,
             **kwargs,
@@ -321,12 +339,14 @@ class RefileTest(_YearFixture):
     def test_a_dry_run_reports_and_writes_nothing(self):
         report, lines = self._refile(write=False)
         self.assertEqual(len(report["moved"]), 2)
-        self.assertEqual(len(report["released"]), 4)
+        # The two meetings; the two group trainings are staff's two.
+        self.assertEqual(len(report["released"]), 2)
+        self.assertEqual(report["credited"], [])
         self.assertEqual(self._taken("2026", "visit"), ["V1", "V2"])
         self.assertEqual(self._taken("2027", "training"), ["T1", "T2", "T3", "T4"])
         self.assertTrue(any("FY2026 V1 -> " in line for line in lines))
 
-    def test_visits_move_to_their_year_and_sessions_leave_the_package(self):
+    def test_visits_move_to_their_year_and_meetings_leave_the_package(self):
         before = list(
             Activity.objects.order_by("id").values_list(
                 "id", "status", "fy", "planned_date"
@@ -341,13 +361,17 @@ class RefileTest(_YearFixture):
         )
         self.assertEqual(visits[0].status, "scheduled")
         self.assertEqual(visits[0].scheduled_for, "2026-10-13")
-        # Every training slot is open again: for two in-school trainings by
-        # staff and two assigned to a Partner.
+        # The two group trainings are staff's two; the slots the meetings
+        # held are open again, for the two assigned to a Partner.
         trainings = self._slots("2027", "training")
-        self.assertEqual(self._taken("2027", "training"), [])
-        self.assertTrue(all(package_year.is_open(s.status) for s in trainings))
+        self.assertEqual(self._taken("2027", "training"), ["T1", "T2"])
+        self.assertEqual(
+            [slot.activity_id for slot in trainings[:2]],
+            [session.id for session in self.sessions[:2]],
+        )
+        self.assertTrue(all(package_year.is_open(s.status) for s in trainings[2:]))
         self.assertEqual(len(report["moved"]), 2)
-        self.assertEqual(len(report["released"]), 4)
+        self.assertEqual(len(report["released"]), 2)
         # No activity was touched.
         self.assertEqual(
             before,
@@ -359,13 +383,107 @@ class RefileTest(_YearFixture):
         )
         split = package_split(self.school, "2027")
         self.assertEqual(
-            (split.used(VISIT, STAFF), split.used(TRAINING, STAFF)), (2, 0)
+            (split.used(VISIT, STAFF), split.used(TRAINING, STAFF)), (2, 2)
         )
+        self.assertTrue(split.is_open(TRAINING, PARTNER))
 
     def test_running_it_twice_changes_nothing_more(self):
         self._refile()
         report, _lines = self._refile()
-        self.assertEqual((report["moved"], report["released"]), ([], []))
+        self.assertEqual(
+            (report["moved"], report["released"], report["credited"]), ([], [], [])
+        )
+
+    def _group_training(self, day, *, delivery="staff", fy="2027", invited=True):
+        session = Activity.objects.create(
+            activity_type="cluster_training",
+            cluster=self.cluster,
+            fy=fy,
+            planned_date=day,
+            status="partner_scheduled" if delivery == "partner" else "scheduled",
+            delivery_type=delivery,
+        )
+        # Written as an import or an older release left them: no credit pass.
+        ClusterActivityAttendance.objects.create(
+            activity=session, school=self.school, invited=invited
+        )
+        return session
+
+    def _hold(self, plan, sequence, session, owner="staff"):
+        CoreActivitySlot.objects.filter(
+            core_plan=plan, activity_type="training", sequence_number=sequence
+        ).update(
+            activity_id=session.id,
+            status="scheduled",
+            owner=owner,
+            scheduled_for=session.planned_date.isoformat(),
+        )
+
+    def test_a_third_staff_group_training_gives_its_slot_back(self):
+        """Staff plan two trainings; the other two are the Partner's."""
+        # In the slot a meeting holds now: T3, earlier than staff's second.
+        early = self._group_training(date(2026, 10, 6))
+        self._hold(self.new_plan, 3, early)
+        report, lines = self._refile()
+        linked = [
+            s.activity_id for s in self._slots("2027", "training") if s.activity_id
+        ]
+        # Earliest first: the 6 and 20 October sessions; 24 November's is on
+        # the school's history, in no slot.
+        self.assertEqual(linked, [early.id, self.sessions[0].id])
+        self.assertTrue(any("staff half already has its 2" in line for line in lines))
+        self.assertEqual(package_split(self.school, "2027").used(TRAINING, STAFF), 2)
+        self.assertEqual(report["unplaced"], [])
+
+    def test_a_partners_group_training_takes_the_partners_half(self):
+        theirs = self._group_training(date(2026, 11, 3), delivery="partner")
+        report, _lines = self._refile()
+        slots = self._slots("2027", "training")
+        self.assertEqual(self._taken("2027", "training"), ["T1", "T2", "T3"])
+        self.assertEqual(
+            [(slot.activity_id, slot.owner) for slot in slots[:3]],
+            [
+                (self.sessions[0].id, "staff"),
+                (theirs.id, "partner"),
+                (self.sessions[1].id, "staff"),
+            ],
+        )
+        self.assertEqual([c["activity"] for c in report["credited"]], [theirs.id])
+        split = package_split(self.school, "2027")
+        self.assertEqual(
+            (split.used(TRAINING, STAFF), split.used(TRAINING, PARTNER)), (2, 1)
+        )
+
+    def test_a_group_training_in_last_years_package_moves_to_its_own(self):
+        # Planned in September for October: booked into the FY2026 package.
+        for session in self.sessions[:2]:
+            session.delete()
+        CoreActivitySlot.objects.filter(
+            core_plan=self.new_plan, activity_type="training", sequence_number__lte=2
+        ).update(activity_id=None, status="Planned", owner="unassigned")
+        misfiled = self._group_training(date(2026, 10, 13))
+        self._hold(self.old_plan, 1, misfiled)
+        self._refile()
+        self.assertEqual(self._taken("2026", "training"), [])
+        slots = self._slots("2027", "training")
+        self.assertEqual(self._taken("2027", "training"), ["T1"])
+        self.assertEqual(
+            (slots[0].activity_id, slots[0].owner, slots[0].scheduled_for),
+            (misfiled.id, "staff", "2026-10-13"),
+        )
+
+    def test_a_school_off_the_list_and_a_cancelled_session_hold_nothing(self):
+        uninvited = self._group_training(date(2026, 10, 6), invited=False)
+        cancelled = self._group_training(date(2026, 10, 7))
+        Activity.objects.filter(id=cancelled.id).update(status="cancelled")
+        # In the slots the two meetings hold.
+        self._hold(self.new_plan, 3, uninvited)
+        self._hold(self.new_plan, 4, cancelled)
+        self._refile()
+        linked = [
+            s.activity_id for s in self._slots("2027", "training") if s.activity_id
+        ]
+        self.assertEqual(linked, [session.id for session in self.sessions[:2]])
 
     def test_a_data_collection_visit_gives_its_slot_back_and_the_rest_close_up(self):
         # V1 a data collection visit, V2 a follow up, both in FY2027.

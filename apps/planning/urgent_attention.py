@@ -171,9 +171,9 @@ def _resolve_issue(
         }
 
     visit_done = school.id in facts["visited"]
-    # A Core Graduate school takes its visit and no training, and a Champion
-    # school neither (the planning rulebook): no training is owed, so none is
-    # missing (owner, 2026-10-02).
+    # A Champion school takes no training (the planning rulebook): none is
+    # owed, so none is missing. Core Graduate is read like a client school
+    # (owner, 2026-10-02).
     from apps.planning.country_oversight import rules
 
     school_type = getattr(school, "school_type", None)

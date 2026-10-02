@@ -441,14 +441,13 @@ def training_coverage(
     2026-09-28: "nothing hidden"): a session planned in September for October
     is a plan, and the school is not reported as missing training.
 
-    Read against the schools that take a training — Core, Client and Core
-    Trained (the planning rulebook). A Core Graduate school takes its visit
-    and no training and a Champion school neither, and both are kept off
-    cluster invitations, so every one of them sat in "no training planned"
-    however fully it was planned (owner, 2026-10-02: "Core graduate planned
-    are still showing as not trained on the PL summaries"). A school given an
-    in-school training has a training planned too, and is not listed as
-    having none.
+    Read against the schools that take a training — Core, Client, Core
+    Trained and Core Graduate (the planning rulebook; owner, 2026-10-02: the
+    last three "should be treated the same"). A Champion school takes none
+    and is kept off cluster invitations, so it is not listed. A school given
+    an in-school training has a training planned too, and is not listed as
+    having none (owner, 2026-10-02: "Core graduate planned are still showing
+    as not trained on the PL summaries").
     """
     from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity, ClusterActivityAttendance
