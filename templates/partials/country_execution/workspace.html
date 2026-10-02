@@ -64,7 +64,7 @@ do (owner, 2026-10-02); they can still be folded away.
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.funnel.table "funnel_page" as funnel_pager %}
-          <table class="cpo-mini">
+          <table class="cpo-mini" data-table-wrap="off">
             <thead><tr><th scope="col">Stage</th><th scope="col">Total</th><th scope="col">Staff</th><th scope="col">Partner</th></tr></thead>
             <tbody>{% for row in funnel_pager.rows %}<tr><th scope="row">{{ row.0 }}</th><td>{{ row.1 }}</td><td>{{ row.2 }}</td><td>{{ row.3 }}</td></tr>{% endfor %}</tbody>
           </table>
@@ -81,7 +81,7 @@ do (owner, 2026-10-02); they can still be folded away.
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.trend.table "trend_page" as trend_pager %}
-          <table class="cpo-mini">
+          <table class="cpo-mini" data-table-wrap="off">
             <thead><tr><th scope="col">Period</th>{% for s in charts.trend.series %}<th scope="col">{{ s.name }}</th>{% endfor %}</tr></thead>
             <tbody>
               {% for row in trend_pager.rows %}
@@ -107,7 +107,7 @@ do (owner, 2026-10-02); they can still be folded away.
         <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate chart.table.rows "lead_chart_page" as lead_chart_pager %}
-          <table class="cpo-mini">
+          <table class="cpo-mini" data-table-wrap="off">
             <thead><tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr></thead>
             <tbody>
               {% for row in lead_chart_pager.rows %}

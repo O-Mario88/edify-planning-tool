@@ -6,6 +6,10 @@ script (static/js/country-oversight.js) on the platform chart system's shared
 forms. The data table under each chart carries every figure and sits open, so
 nobody has to expand it to read the chart's numbers (owner, 2026-10-02); it
 can still be folded away. Clicking a Lead's bar opens that Lead in the table.
+The data tables' headings carry their own line break, so they are kept out of
+the platform's long-text wrapping (data-table-wrap="off"): a table too wide
+for its half of the page scrolls in its box rather than breaking a heading a
+third time.
 {% endcomment %}
 <section class="cpo-charts" aria-label="Planning charts by Programme Lead">
   {% for chart in charts %}
@@ -16,7 +20,7 @@ can still be folded away. Clicking a Lead's bar opens that Lead in the table.
     <details class="cpo-chart-data" open>
       <summary>Chart data</summary>
       <div class="cpo-tscroll">
-        <table class="cpo-mini">
+        <table class="cpo-mini" data-table-wrap="off">
           <thead>
             <tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr>
           </thead>
