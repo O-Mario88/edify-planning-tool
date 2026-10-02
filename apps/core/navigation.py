@@ -3624,29 +3624,33 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     short_menu = sum(len(sec["items"]) for sec in sections) <= SIDEBAR_DISCLOSURE_FROM
     for index, sec in enumerate(sections):
         sec["active"] = any(item["active"] for item in sec["items"])
-        # The most visited group stays open on first load, and so does
-        # OVERSIGHT, which is daily pages lifted out of it; every other group
+        # The person's own work stays open on first load; every other group
         # opens when it holds the page being viewed. The sidebar draws each
         # group as a disclosure from this, and a person's own choice in the
         # browser outranks it (components/sidebar.html).
-        sec["expanded"] = (
-            short_menu
-            or sec["active"]
-            or sec["standalone"]
-            or index == 0
-            or sec["label"] == "OVERSIGHT"
-        )
+        sec["expanded"] = short_menu or sec["active"] or sec["standalone"] or index == 0
 
     return sections
 
 
 def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
-    """The role's sidebar regrouped by how often each page is visited (owner,
-    2026-09-14): daily work first, then weekly, monthly, the planning cycle and
-    reference pages, most visited first inside each group
-    (apps.core.nav_cadence). Items keep their order from the registry where
-    two rank the same."""
-    from apps.core.nav_cadence import TIERS, visit_rank
+    """The role's sidebar grouped by what each page is about, most visited
+    first inside each group.
+
+    From 2026-09-14 the groups themselves were visit frequency (Daily, Weekly,
+    Monthly, Planning Cycle, Reference). The owner had them revisited on
+    2026-10-02 after the UI audit: a reader looking for a page knows what it
+    is about, not how often they open it. The groups are apps.core.nav_groups;
+    the order inside one is still apps.core.nav_cadence, so the frequency
+    ranking decides which page leads each group. Items keep their order from
+    the registry where two rank the same."""
+    from apps.core.nav_cadence import visit_rank
+    from apps.core.nav_groups import (
+        LONE_PAGE_JOINS,
+        MY_WORK,
+        group_order,
+        object_group,
+    )
 
     # Two registrations of one destination are one link: the specific page
     # (a partner's Assigned Schools, an MFI's portal Dashboard) is kept rather
@@ -3673,56 +3677,59 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     ranked = [
         (rank[0], rank[1], position, item) for rank, position, item in by_url.values()
     ]
-    grouped: dict[int, list[dict]] = {}
-    for tier, _weight, _order, item in sorted(ranked, key=lambda r: r[:3]):
-        grouped.setdefault(tier, []).append(item)
-    result = [
-        {
-            "label": TIERS[tier],
-            "items": items,
-            "active": any(item["active"] for item in items),
-            "standalone": len(items) == 1,
-            "expanded": False,
-        }
-        for tier, items in sorted(grouped.items())
-    ]
-
+    # The oversight pages keep the order the owner gave them: the plan, the
+    # country, its map (which carries the country portfolio, 2026-09-28), then
+    # clusters, core schools, partners and projects. The rest of the group
+    # follows by visit rank.
     oversight_keys = (
         "team_planning_oversight",
         "country_planning_oversight",
-        # The country map carries the country portfolio that was Country
-        # Oversight's third tab (owner, 2026-09-28), so it sits beside it.
         "country_map",
         "cluster_oversight",
         "core_schools_oversight",
         "partner_oversight",
         "project_monitoring",
     )
-    oversight_items = [
-        item
-        for group in result
-        for item in group["items"]
-        if item["page_key"] in oversight_keys
-    ]
-    for group in result:
-        group["items"] = [
-            i for i in group["items"] if i["page_key"] not in oversight_keys
-        ]
-        group["standalone"] = len(group["items"]) == 1
-    result = [group for group in result if group["items"]]
-    if oversight_items:
-        oversight_items.sort(key=lambda i: oversight_keys.index(i["page_key"]))
-        result.insert(
-            1 if result and result[0]["label"] == "DAILY" else 0,
-            {
-                "label": "OVERSIGHT",
-                "items": oversight_items,
-                "active": any(i["active"] for i in oversight_items),
-                "standalone": False,
-                "expanded": False,
-            },
+    grouped: dict[str, list[tuple]] = {}
+    for entry in sorted(ranked, key=lambda r: r[:3]):
+        item = entry[3]
+        # The role's home is its work whatever page stands behind it.
+        label = (
+            MY_WORK
+            if "dashboard" in item.get("alias_keys", ())
+            or item.get("page_key") == "dashboard"
+            else object_group(role, item.get("page_key"))
         )
-    return result
+        grouped.setdefault(label, []).append(entry)
+    # A heading over one line says nothing the line does not: a lone page
+    # joins a neighbouring group the role already has (nav_groups).
+    for label in list(grouped):
+        if label == MY_WORK or len(grouped.get(label, ())) != 1:
+            continue
+        home = next((g for g in LONE_PAGE_JOINS.get(label, ()) if g in grouped), None)
+        if home:
+            grouped[home] = sorted(
+                grouped[home] + grouped.pop(label), key=lambda r: r[:3]
+            )
+    grouped = {
+        label: [entry[3] for entry in entries] for label, entries in grouped.items()
+    }
+    if "OVERSIGHT" in grouped:
+        grouped["OVERSIGHT"].sort(
+            key=lambda i: oversight_keys.index(i["page_key"])
+            if i["page_key"] in oversight_keys
+            else len(oversight_keys)
+        )
+    return [
+        {
+            "label": label,
+            "items": items,
+            "active": any(item["active"] for item in items),
+            "standalone": len(items) == 1,
+            "expanded": False,
+        }
+        for label, items in sorted(grouped.items(), key=lambda g: group_order(g[0]))
+    ]
 
 
 # ── Mobile bottom navigation ─────────────────────────────────────────────────

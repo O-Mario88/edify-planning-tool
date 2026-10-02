@@ -56,23 +56,33 @@ IA_RESPONSIBILITY_ORDER = (
 
 IA_SIDEBAR = [
     (
-        "DAILY",
+        "MY WORK",
         [
             ("Dashboard", "/ia/dashboard/"),
-            # No Planning Monitor: IA reads it as Planning Oversight tabs
-            # (owner, 2026-09-30).
-            ("Planning", "/planning"),
-            ("School Directory", "/schools"),
             ("Calendar", "/calendar"),
-            ("Programme Schools", "/programme-schools"),
-            ("Verification Queue", "/ia/verification/"),
-            ("SSA Verification", "/ssa/verification/"),
-            ("Partner Evidence", "/ia/partner-evidence/"),
             ("To-Do", "/todos"),
+            ("Weekly Advance Request", "/fund-requests/weekly"),
+            ("Field Debrief", "/debriefs"),
+            ("Ownership Transfers", "/ownership-transfers/"),
         ],
     ),
-    # Since 2026-09-23 the oversight pages share one group after the day's
-    # work, in a fixed order rather than by visit rank.
+    (
+        "PLANNING",
+        [
+            ("Planning", "/planning"),
+            ("Priorities", "/target-distribution"),
+        ],
+    ),
+    (
+        "SCHOOLS",
+        [
+            ("School Directory", "/schools"),
+            ("Programme Schools", "/programme-schools"),
+            ("Staff Setup Queue", "/admin-panel/staff-setup-queue"),
+            ("Loans", "/loans"),
+            ("Closed Schools", "/schools/closed"),
+        ],
+    ),
     (
         "OVERSIGHT",
         [
@@ -86,55 +96,46 @@ IA_SIDEBAR = [
         ],
     ),
     (
-        "WEEKLY",
+        "EVIDENCE & QUALITY",
         [
-            ("Weekly Advance Request", "/fund-requests/weekly"),
-            ("Field Debrief", "/debriefs"),
-            ("Staff Setup Queue", "/admin-panel/staff-setup-queue"),
+            ("Verification Queue", "/ia/verification/"),
+            ("SSA Verification", "/ssa/verification/"),
+            ("Partner Evidence", "/ia/partner-evidence/"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
             ("Upload Center", "/uploads"),
+            ("Measurement Framework", "/ia/framework/"),
         ],
     ),
     (
-        "MONTHLY",
+        "REPORTS",
         [
-            ("My Targets", "/my-targets"),
             ("Impact Reports", "/ia/impact-reports/"),
             ("Programme Learning", "/ia/learning/"),
             ("Most Significant Change", "/ia/stories/"),
             ("Lending Evidence", "/ia/lending-evidence/"),
-            ("Loans", "/loans"),
         ],
     ),
     (
-        "PLANNING CYCLE",
+        "MY PERFORMANCE",
         [
-            ("Priorities", "/target-distribution"),
-            ("Measurement Framework", "/ia/framework/"),
+            ("My Targets", "/my-targets"),
             ("My Performance Agreement", "/my-performance"),
             ("My Professional Development", "/my-professional-development"),
-        ],
-    ),
-    (
-        "REFERENCE",
-        [
             ("Leave & Personal Time Off", "/personal-time-off/"),
-            ("Closed Schools", "/schools/closed"),
-            ("Ownership Transfers", "/ownership-transfers/"),
         ],
     ),
 ]
 
 
 class IaSidebarTest(SimpleTestCase):
-    def test_groups_run_from_most_to_least_visited(self):
+    def test_groups_run_in_subject_order(self):
         self.assertEqual(
             [g["label"] for g in _groups(IA)], [label for label, _ in IA_SIDEBAR]
         )
         self.assertEqual(ROLE_SIDEBAR_GROUP_ORDER[IA], IA_RESPONSIBILITY_ORDER)
 
-    def test_each_page_sits_in_the_rhythm_it_is_worked(self):
+    def test_each_page_sits_with_the_pages_about_the_same_thing(self):
         self.assertEqual(
             [
                 (g["label"], [(i["label"], i["url"]) for i in g["items"]])

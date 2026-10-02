@@ -30,25 +30,42 @@ def _user(role):
     return SimpleNamespace(is_authenticated=True, active_role=role)
 
 
-# Grouped by how often a Programme Lead opens each page, most visited first
-# (owner, 2026-09-14; apps.core.nav_cadence).
+# Grouped by what each page is about (owner, 2026-10-02; apps.core.nav_groups),
+# most visited first inside each group (owner, 2026-09-14;
+# apps.core.nav_cadence). The Staff Activity Log and the Planning Monitor are
+# on the Dashboard (owner, 2026-09-29), so neither has an entry; Closed Schools
+# is here because the owner put it in this sidebar (2026-09-15).
 EXPECTED_PL_SIDEBAR = [
     (
-        "DAILY",
+        "MY WORK",
         [
-            # The Staff Activity Log and the Planning Monitor moved onto the
-            # Dashboard (owner, 2026-09-29): no sidebar entry of their own.
             ("Dashboard", "/dashboard"),
-            ("Planning", "/planning"),
             ("My Plan", "/my-plan"),
-            ("School Directory", "/schools"),
-            ("Clusters", "/clusters"),
             ("Calendar", "/calendar"),
-            ("Core Schools", "/core-schools"),
-            ("Programme Schools", "/programme-schools"),
             ("Completion Reviews", "/pl/review-queue"),
             ("To-Do", "/todos"),
             ("My Actions", "/actions/mine"),
+            ("Field Debrief", "/debriefs"),
+            ("Analytics", "/analytics/program-lead"),
+        ],
+    ),
+    (
+        "PLANNING",
+        [
+            ("Planning", "/planning"),
+            ("Programme Rollout", "/programme-rollout"),
+            ("Work Plan", "/work-plan"),
+            ("Priorities", "/priorities/master"),
+        ],
+    ),
+    (
+        "SCHOOLS",
+        [
+            ("School Directory", "/schools"),
+            ("Clusters", "/clusters"),
+            ("Core Schools", "/core-schools"),
+            ("Programme Schools", "/programme-schools"),
+            ("Closed Schools", "/schools/closed"),
         ],
     ),
     (
@@ -62,45 +79,33 @@ EXPECTED_PL_SIDEBAR = [
         ],
     ),
     (
-        "WEEKLY",
+        "TEAM & PEOPLE",
         [
-            ("Fund Approvals", "/fund-approvals"),
             ("My Team", "/my-team"),
-            ("Weekly Advance Request", "/fund-requests/weekly"),
             ("Team Leave", "/leave/approvals"),
-            ("Field Debrief", "/debriefs"),
             ("Coaching", "/team/coaching"),
             ("Escalations", "/escalations"),
             ("Team Assignments", "/actions/sent"),
             ("Quality Flags", "/quality-checks"),
-            ("Programme Rollout", "/programme-rollout"),
             ("Regional Lead", "/cce-leadership/feedback"),
-        ],
-    ),
-    (
-        "MONTHLY",
-        [
-            ("Budget", "/budget"),
-            ("Work Plan", "/work-plan"),
-            ("Analytics", "/analytics/program-lead"),
-            ("My Targets", "/my-targets"),
-        ],
-    ),
-    (
-        "PLANNING CYCLE",
-        [
-            ("Priorities", "/priorities/master"),
-            ("My Performance Agreement", "/my-performance"),
             ("Team Performance", "/performance-reviews"),
-            ("My Professional Development", "/my-professional-development"),
         ],
     ),
     (
-        "REFERENCE",
+        "FINANCE",
         [
+            ("Fund Approvals", "/fund-approvals"),
+            ("Weekly Advance Request", "/fund-requests/weekly"),
+            ("Budget", "/budget"),
+        ],
+    ),
+    (
+        "MY PERFORMANCE",
+        [
+            ("My Targets", "/my-targets"),
+            ("My Performance Agreement", "/my-performance"),
+            ("My Professional Development", "/my-professional-development"),
             ("Leave & Personal Time Off", "/personal-time-off/"),
-            # The owner put Closed Schools in the PL sidebar (2026-09-15).
-            ("Closed Schools", "/schools/closed"),
         ],
     ),
 ]
@@ -110,7 +115,7 @@ class ProgramLeadSidebarTest(SimpleTestCase):
     def _sidebar(self, role, path="/dashboard"):
         return build_sidebar_for_user(_user(role), path)
 
-    def test_the_sidebar_is_ordered_by_how_often_each_page_is_visited(self):
+    def test_the_sidebar_is_grouped_by_subject_and_ordered_by_visits(self):
         sidebar = [
             (group["label"], [(item["label"], item["url"]) for item in group["items"]])
             for group in self._sidebar(PL)
