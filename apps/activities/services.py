@@ -2931,6 +2931,9 @@ def _create(
             facilitating_partner_id=facilitating_partner_id,
             delivery_type="partner" if is_partner else "staff",
             executor_type=executor_type,
+            # Staff chose a certified agency's day; an assigned partner has
+            # no date yet (country_oversight.rules: who dated Partner work).
+            partner_date_set_by="staff" if is_certified_agency_booking else "",
             cluster_slot=data.get("clusterSlot"),
             purpose_intervention=focus or data.get("purposeIntervention"),
             activity_purpose_text=p_text,
@@ -4741,6 +4744,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         a.reschedule_count += 1
         a.last_reason = data.get("reason")
         if a.status == "assigned_to_partner" or a.delivery_type == "partner":
+            from apps.planning.country_oversight.rules import date_author
+
+            a.partner_date_set_by = date_author(
+                principal, a.partner_date_set_by, already_dated=old_date is not None
+            )
             a.status = "partner_scheduled"
         else:
             a.status = (
@@ -4752,6 +4760,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "fy",
                 "quarter",
                 "planned_date",
+                "partner_date_set_by",
                 # end_date was recomputed above for multi-day work but was
                 # missing from this list — the re-priced cost lines followed
                 # the new range while the persisted activity kept the OLD end
@@ -5058,6 +5067,13 @@ def set_facilitator(activity_id: str, partner_id, principal) -> dict:
     return _serialize(a)
 
 
+def _date_author(principal, current: str = "", *, already_dated: bool = False) -> str:
+    """Whose date a Partner activity carries once ``principal`` has set it."""
+    from apps.planning.country_oversight.rules import date_author
+
+    return date_author(principal, current, already_dated=already_dated)
+
+
 def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -> dict:
     """Turn one locked PartnerAssignment into one costed canonical Activity."""
 
@@ -5308,6 +5324,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             planned_month=planned_month,
             planned_week=planned_week,
             status="partner_scheduled",
+            partner_date_set_by=_date_author(principal),
             # The canonical create() path stamps these; this one did not, so
             # every partner-scheduled activity was born already failing the
             # platform's own `activity_without_planning_source` health check
@@ -5592,6 +5609,11 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         if _avail["status"] == "blocked":
             raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
 
+        a.partner_date_set_by = _date_author(
+            principal,
+            a.partner_date_set_by,
+            already_dated=a.scheduled_date is not None or a.planned_date is not None,
+        )
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)
         a.quarter = get_quarter_for_date(new_date)
@@ -5635,6 +5657,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                 "planned_month",
                 "planned_week",
                 "expected_participants",
+                "partner_date_set_by",
                 "status",
                 "updated_at",
             ]

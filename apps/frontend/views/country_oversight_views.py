@@ -864,10 +864,26 @@ def coverage_export_view(request):
     sheets = [_school_sheet(request, filters)] if _may_see_schools(request.user) else []
     sheets.append(_hierarchy_sheet(snapshot, counts))
     sheets.append(_followup_sheet(filters.fy))
+    sheets.extend(_check_sheets(request, filters))
     stamp = timezone.localdate().isoformat()
     return table_download(
         request, f"country-planning-oversight-{filters.fy}-{stamp}", sheets
     )
+
+
+def _check_sheets(request, filters) -> list[dict]:
+    """The figures check (owner, 2026-10-01): today's dashboard beside the
+    same year by the planning rulebook, for the Country Director and the
+    Admin, until the page itself reads the rulebook. The year as a whole,
+    whatever the page is filtered to; a CSV asks for the school sheet only."""
+    from apps.planning.country_oversight import figures_check
+
+    if not figures_check.may_check(request.user):
+        return []
+    if (request.GET.get("format") or "").strip().lower() == "csv":
+        return []
+    year = svc.snapshot_for(request.user, svc.Filters(fy=filters.fy))
+    return figures_check.sheets(request.user, year)
 
 
 HIERARCHY_HEADERS = [
