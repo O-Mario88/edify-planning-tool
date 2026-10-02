@@ -22,7 +22,7 @@ School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'm
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate school_visits "school_visits_page" 20 as school_visits_pager %}
+{% paginate school_visits "school_visits_page" as school_visits_pager %}
 {% if school_visits %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>

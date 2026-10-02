@@ -66,7 +66,10 @@ class CostSettingsFiscalYearTest(TestCase):
 class UsersPageScopeTest(TestCase):
     def setUp(self):
         self.cd = _person("usr-cd@t.org", "Usr CD", EdifyRole.COUNTRY_DIRECTOR.value)
-        for i in range(12):
+        from apps.core.pagination import TABLE_PAGE_SIZE
+
+        # One more person than a page holds, with the Country Director.
+        for i in range(TABLE_PAGE_SIZE):
             _person(f"usr-{i}@t.org", f"Usr Local {i:02d}", EdifyRole.CCEO.value)
         _person("usr-abroad@t.org", "Usr Abroad", EdifyRole.CCEO.value, country="Kenya")
 

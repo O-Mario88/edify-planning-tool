@@ -181,7 +181,7 @@ class NotificationsWorkflowTest(TestCase):
     def test_every_notification_is_reachable_a_page_at_a_time(self):
         """The list stopped at the latest hundred and drew them all at once
         (~550 KB of HTML for a busy officer); older ones could not be reached.
-        It now pages all of them, 25 at a time, newest first."""
+        It now pages all of them, 50 at a time, newest first."""
         from datetime import timedelta
 
         from django.utils import timezone
@@ -202,10 +202,10 @@ class NotificationsWorkflowTest(TestCase):
         self.client.force_login(self.cceo)
         first = self.client.get("/notifications").content.decode()
         drawn = [n for n in range(120) if f"Paged notice {n:03d}" in first]
-        self.assertEqual(drawn, list(range(25)))
+        self.assertEqual(drawn, list(range(50)))
         self.assertIn('aria-label="Notification pages"', first)
 
-        last = self.client.get("/notifications?page=5").content.decode()
+        last = self.client.get("/notifications?page=3").content.decode()
         drawn = [n for n in range(120) if f"Paged notice {n:03d}" in last]
         self.assertEqual(drawn, list(range(100, 120)), "past the old hundred")
 

@@ -32,7 +32,7 @@ from django.db import DatabaseError, transaction
 
 from apps.core.exceptions import BadRequest, NotFoundError
 
-DEFAULT_PAGE_SIZE = 25
+DEFAULT_PAGE_SIZE = 50
 CANDIDATE_LIMIT = 200  # hard cap on the Python-fallback candidate pool
 
 

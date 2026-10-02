@@ -101,8 +101,8 @@ DUE_THIS_WEEK = "week"
 #: How far either side of today the week arrows reach. Far enough to review a
 #: quarter; near enough that a stray link cannot ask for a decade.
 WEEK_REACH = 26
-#: Rows per table page; a busy officer's week fits on one.
-ROWS_PER_PAGE = 20
+#: Rows per table page: the platform's table page (owner, 2026-10-02).
+ROWS_PER_PAGE = 50
 
 _CSS = {
     "success": "bg-emerald-50 text-emerald-700 border-emerald-200",

@@ -2815,7 +2815,7 @@ def evidence_center_view(request):
             "cluster",
             "cluster__district",
         ).order_by("-updated_at", "-id"),
-        24,
+        50,
     ).get_page(request.GET.get("page"))
 
     owner_ids = {

@@ -111,7 +111,7 @@ COHORT_CAVEAT = (
     "cohort whose loans have run for less than the purpose's follow-up window "
     "is immature: its conclusions are early, not final."
 )
-PAGE_SIZE = 25
+PAGE_SIZE = 50
 
 
 def _metric(label: str, value, helper: str, tone="info") -> dict:

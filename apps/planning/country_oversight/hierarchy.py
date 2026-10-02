@@ -120,6 +120,10 @@ FIELDS: tuple[str, ...] = (
     "partner_only",
     "both",
     "no_visit",
+    # No visit planned and none in a Partner's hands: nobody has it to plan
+    # (owner, 2026-10-02: a school assigned to a Partner is the Partner's to
+    # plan, and is followed in the Partner table).
+    "unplanned",
     # Training.
     "training_slots",
     "training",
@@ -272,6 +276,8 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
         v[IDX["partner_only"]] = 1
     else:
         v[IDX["no_visit"]] = 1
+        if not claims.any_partner_assigned:
+            v[IDX["unplanned"]] = 1
     state = planning_state(claims)
     v[
         IDX[
@@ -372,6 +378,11 @@ class Tally:
     @staticmethod
     def share(part: int, whole: int) -> int | None:
         return round(100 * part / whole) if whole else None
+
+    @property
+    def partner_to_plan(self) -> int:
+        """Schools with no visit planned whose visit a Partner holds."""
+        return self.no_visit - self.unplanned
 
     # The page's ratios, each named for the figure it is.
     @property

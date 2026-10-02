@@ -28,6 +28,7 @@ from apps.frontend.views.priority_workspace import (
     wants_panel_only,
 )
 from apps.hr.target_distribution import milestone_plan_progress
+from apps.core.pagination import TABLE_PAGE_SIZE
 
 
 def _permission(permission):
@@ -133,7 +134,7 @@ def target_distribution_page(request):
             master_rows.append(row)
         if group_has_field:
             distribution_groups.append(group["priority"])
-    paginator = Paginator(master_rows, 25)
+    paginator = Paginator(master_rows, TABLE_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
     query = request.GET.copy()
     query.pop("page", None)

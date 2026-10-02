@@ -2532,11 +2532,11 @@ def _intervention_school_portfolio_context(
     performance_by_school = _portfolio_performance(score_rows)
 
     try:
-        per_page = int(filters.get("per_page") or 20)
+        per_page = int(filters.get("per_page") or 50)
     except (TypeError, ValueError):
-        per_page = 20
+        per_page = 50
     if per_page not in _PORTFOLIO_PAGE_SIZES:
-        per_page = 20
+        per_page = 50
     page_obj = Paginator(schools, per_page).get_page(filters.get("page") or 1)
     page_schools = list(page_obj.object_list)
     page_school_ids = [school.id for school in page_schools]

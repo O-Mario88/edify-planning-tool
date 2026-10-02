@@ -38,7 +38,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 
-PAGE_SIZE = 25
+PAGE_SIZE = 50
 PAGE_PARAM = "collection_page"
 
 NEVER_ASSESSED = "never_assessed"
