@@ -259,3 +259,5 @@ class CoreSchoolWorkflowTest(TestCase):
         self.assertEqual(activity.planned_date, date(2026, 7, 20))
         self.assertIsNone(activity.responsible_staff_id)
         self.assertNotEqual(activity.responsible_staff_id, self.partner_user.id)
+        # The date is the Partner's own: Partner planning counts it.
+        self.assertEqual(activity.partner_date_set_by, "partner")
