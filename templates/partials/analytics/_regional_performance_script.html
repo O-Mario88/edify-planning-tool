@@ -921,6 +921,7 @@ window.subregionMap = function (){
     placeBoundaryLabels({
       labelLayer, pathLayer, pinLayer, key, scale=1,
       labelScales=[1], allowOverlapFallback=false, sync=false,
+      allowAnchoredFallback=false,
     }){
       const labels = [...(labelLayer?.querySelectorAll('text') || [])];
       const paths = [...(pathLayer?.querySelectorAll('path:not(.sr-boundary-lift)') || [])];
@@ -1068,15 +1069,50 @@ window.subregionMap = function (){
               ? (anchor.fullFit ? 'boundary-fit' : 'boundary-anchor')
               : 'centroid-fallback';
           }else{
-            // The accessible boundary and hover snapshot still carry the
-            // name. Omit the visual label instead of shrinking or colliding.
-            writes.push(() => {
-              label.style.opacity = 0;
-              label.dataset.labelOffset = '0.00,0.00';
-              label.dataset.labelScale = '1.00';
-              label.dataset.labelPlacement = 'hidden';
-            });
-            return;
+            // A district too small to hold its own name keeps it where the
+            // name is centred inside the boundary and touches no other name
+            // or pin: the text may run over a neighbour's ground, never over
+            // a neighbour's name.
+            const anchored = allowAnchoredFallback
+              ? labelScales.flatMap(candidateScale =>
+                  candidates.map(candidate => {
+                    const x = baseX + candidate[0] / scale;
+                    const y = baseY + candidate[1] / scale;
+                    if(!this.boundaryContainsPoint(path, x, y)) return null;
+                    const rect = rectFor(candidate, candidateScale);
+                    if(
+                      markerRects.some(marker => overlaps(rect, marker)) ||
+                      placed.some(existing => overlaps(rect, existing))
+                    ) return null;
+                    return {
+                      candidate,
+                      labelScale:candidateScale,
+                      penalty:
+                        (1 - candidateScale) * 120 +
+                        Math.hypot(candidate[0], candidate[1]) / 100,
+                    };
+                  }).filter(Boolean)
+                ).reduce(
+                  (current, option) =>
+                    !current || option.penalty < current.penalty ? option : current,
+                  null,
+                )
+              : null;
+            if(anchored){
+              offset = anchored.candidate;
+              labelScale = anchored.labelScale;
+              placement = 'anchored';
+            }else{
+              // The accessible boundary and hover snapshot still carry the
+              // name. Omit the visual label instead of shrinking or colliding.
+              writes.push(() => {
+                label.style.opacity = 0;
+                label.dataset.labelOffset = '0.00,0.00';
+                label.dataset.labelScale = '1.00';
+                label.dataset.labelPlacement = 'hidden';
+              });
+              return;
+            }
           }
         }
 
@@ -1140,7 +1176,16 @@ window.subregionMap = function (){
         key:'district',
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
-        allowOverlapFallback:true,
+        /* No two names touch on the national overview (owner, 2026-10-02).
+           From 2026-09-11 a name with no clear place took the least crowded
+           spot, and some twenty names of small neighbouring districts sat on
+           top of each other and of the sub-region names. A name now needs a
+           place of its own — inside its boundary, or centred there and clear
+           of every other name — and one with none is not drawn. That district
+           is still named by its tooltip, by the table beside the map, and by
+           the map itself once its sub-region is opened, where there is room. */
+        allowOverlapFallback:false,
+        allowAnchoredFallback:true,
       }).then(completed => {
         if(completed){
           this.keepSubRegionLabelsOnCanvas();

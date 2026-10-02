@@ -378,10 +378,25 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn(": 'centroid-fallback';", template)
 
-    def test_national_overview_keeps_every_district_label_visible(self):
+    def test_national_overview_draws_no_district_name_over_another(self):
+        """Owner, 2026-10-02: no two names touch on the national overview.
+
+        From 2026-09-11 every district kept its name there, the crowded ones
+        in "the least crowded spot" — on top of each other. A name now needs a
+        place of its own: inside its boundary, or centred there and clear of
+        every other name ('anchored'); one with none is hidden, and the
+        tooltip, the table and the sub-region zoom still name the district.
+        Sub-county labels keep the overlap fallback: a zoomed district has no
+        other layer to name them.
+        """
         template = _regional_source()
 
         self.assertIn("labelScales:[0.82, 0.74, 0.68],", template)
+        overview = template[template.index("placeDistrictLabels(){") :]
+        overview = overview[: overview.index("}).then(completed =>")]
+        self.assertIn("allowOverlapFallback:false,", overview)
+        self.assertIn("allowAnchoredFallback:true,", overview)
+        self.assertIn("placement = 'anchored';", template)
         self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("}else if(allowOverlapFallback){", template)
         self.assertNotIn("anchor-overlap", template)
