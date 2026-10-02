@@ -86,7 +86,7 @@ class FieldNavigationRoleTest(SimpleTestCase):
         ):
             with self.subTest(label=label):
                 self.assertIn(label, labels)
-        self.assertEqual(groups["MY WORK"]["items"][0]["label"], "Assigned Schools")
+        self.assertEqual(groups["DAILY"]["items"][0]["label"], "Assigned Schools")
 
     def test_admin_carries_both_the_platform_and_field_workspaces(self):
         """Admin also works the field as a CCEO, so it is offered both the
@@ -102,15 +102,13 @@ class FieldNavigationRoleTest(SimpleTestCase):
         """Admin's own administration opens the sidebar: the visit-frequency
         regroup had left Users and Upload Center deep in a fifty-link WEEKLY
         group where the owner could not find them (2026-09-15)."""
-        # Grouped by subject since 2026-10-02: they stay in the first, open
-        # group, and the rest of the administration has a group of its own.
-        mine = self._groups(ADMIN)["MY WORK"]["items"]
-        urls = [item["url"] for item in mine]
+        daily = self._groups(ADMIN)["DAILY"]["items"]
+        urls = [item["url"] for item in daily]
         self.assertEqual(
             urls[:4], ["/dashboard", "/todos", "/admin-panel/users", "/uploads"]
         )
-        admin = {item["url"] for item in self._groups(ADMIN)["ADMINISTRATION"]["items"]}
-        self.assertLessEqual({"/admin-panel/roles-permissions", "/data-repair"}, admin)
+        weekly = [item["url"] for item in self._groups(ADMIN)["WEEKLY"]["items"]]
+        self.assertEqual(weekly[:2], ["/admin-panel/roles-permissions", "/data-repair"])
         # User administration is not offered to IA or the field roles.
         for role in (IA, PL, CCEO, PARTNER):
             with self.subTest(role=role):
@@ -138,32 +136,14 @@ class FieldNavigationRoleTest(SimpleTestCase):
         duplicates = {label for label in labels if labels.count(label) > 1}
         self.assertEqual(duplicates, set())
 
-    def test_groups_run_in_subject_order_and_start_with_the_persons_own_work(self):
-        """Groups by what a page is about (owner, 2026-10-02), always in the
-        order apps.core.nav_groups names them, the person's own work first."""
-        from apps.core.nav_groups import GROUPS
+    def test_groups_run_from_most_to_least_visited(self):
+        from apps.core.nav_cadence import TIERS
 
         for role in (ADMIN, CCEO, CD, PL, IA, HR, ACCOUNTANT, PARTNER):
             with self.subTest(role=role):
                 labels = [g["label"] for g in build_sidebar_for_user(_user(role), "/")]
-                self.assertEqual(labels, [g for g in GROUPS if g in labels])
-                self.assertEqual(labels[0], "MY WORK")
-
-    def test_no_group_is_a_heading_over_one_page(self):
-        """A lone page joins a neighbouring group rather than sitting under a
-        heading of its own (nav_groups.LONE_PAGE_JOINS)."""
-        for role in (ADMIN, CCEO, CD, PL, IA, HR, ACCOUNTANT, PARTNER):
-            with self.subTest(role=role):
-                for group in build_sidebar_for_user(_user(role), "/"):
-                    if group["label"] != "MY WORK":
-                        self.assertGreater(len(group["items"]), 1, group["label"])
-
-    def test_every_registered_page_has_a_subject_group(self):
-        """A page with no group would land in My Work by default, silently."""
-        from apps.core.nav_groups import PAGE_GROUP
-        from apps.core.navigation import SIDEBAR_ITEMS
-
-        registered = {
-            item["page_key"] for section in SIDEBAR_ITEMS for item in section["items"]
-        }
-        self.assertEqual(sorted(registered - set(PAGE_GROUP)), [])
+                self.assertEqual(
+                    labels,
+                    [t for t in (TIERS[0], "OVERSIGHT", *TIERS[1:]) if t in labels],
+                )
+                self.assertEqual(labels[0], "DAILY")

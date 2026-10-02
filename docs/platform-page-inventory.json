@@ -700,10 +700,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
+        "accessible name and label"
       ],
-      "bytes": 11600,
+      "bytes": 7070,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -38000,7 +37999,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-6E4DAD286B",
-      "page_title": "Professional Development",
+      "page_title": "CPD & Learning",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cpd_learning",
@@ -68281,7 +68280,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A14F031C98",
-      "page_title": "Partner Monitoring",
+      "page_title": "Partner Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"

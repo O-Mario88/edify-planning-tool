@@ -278,10 +278,10 @@ class RoleGatingPermissionTest(APITestCase):
             section["label"]: [item["label"] for item in section["items"]]
             for section in sections
         }
-        # Work Plan is a planning page, not the day's own work (groups by
-        # subject, owner 2026-10-02).
-        self.assertNotIn("Work Plan", labels_by_group["MY WORK"])
-        self.assertIn("Work Plan", labels_by_group["PLANNING"])
+        # Work Plan is read monthly, not worked daily (visit-frequency groups,
+        # owner 2026-09-14).
+        self.assertNotIn("Work Plan", labels_by_group["DAILY"])
+        self.assertIn("Work Plan", labels_by_group["MONTHLY"])
 
     def test_partner_plan_redirects_to_unified_my_plan(self):
         """Verify that partner/my-plan redirects to /my-plan."""
