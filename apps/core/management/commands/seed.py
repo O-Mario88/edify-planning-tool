@@ -41,15 +41,11 @@ from apps.core.rbac import EdifyRole, ROLE_PERMISSIONS, all_permission_keys
 
 SUPER_ADMIN_EMAIL = "edwin.omario@gmail.com"
 
-# The super-admin runs the platform AND works the field as a CCEO, so the
-# account carries both hats and switches between them at /auth/switch-role
-# (which writes an audit row each time, so every action stays attributable to
-# the hat it was taken under). `roles` is the set of hats the account may wear;
-# `active_role` is the one it is wearing.
-#
-# Admin stays first because that is where the account should land on a fresh
-# login -- the field hat is chosen deliberately, not by default.
-SUPER_ADMIN_ROLES = [EdifyRole.ADMIN.value, EdifyRole.CCEO.value]
+# The super-admin runs the platform and is nothing else. It used to carry a
+# CCEO hat as well, and so stood in every list of CCEOs; an Admin account is
+# never a CCEO (owner, 2026-10-02; apps.core.rbac.admin_is_also_cceo). Field
+# work is done from a CCEO account of its own.
+SUPER_ADMIN_ROLES = [EdifyRole.ADMIN.value]
 
 # Demo role accounts — shared DEMO_LOGIN_PASSWORD. LOCAL DEVELOPMENT ONLY.
 DEMO_ACCOUNTS = [
@@ -263,6 +259,7 @@ class Command(BaseCommand):
             defaults={
                 "name": "Omario Edwin",
                 "roles": SUPER_ADMIN_ROLES,
+                "active_role": EdifyRole.ADMIN.value,
                 "status": "active",
                 "is_active": True,
                 # Django-admin access: /admin/ is the day-1 bootstrap surface
@@ -272,14 +269,9 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
-        # `active_role` is deliberately absent from `defaults`: it is the hat
-        # currently being worn, and re-running seed must not pull the account
-        # out of the field hat mid-shift. Set it on creation (the model's own
-        # default is CCEO, and a new super-admin should land in the admin
-        # workspace), and otherwise only to correct a hat this account may not
-        # wear at all.
-        if created or u.active_role not in SUPER_ADMIN_ROLES:
-            u.active_role = EdifyRole.ADMIN.value
+        # `active_role` has to be in `defaults`, not set afterwards: the
+        # model's own default is CCEO, and an Admin account acting as a CCEO
+        # is refused by user_admin_is_never_cceo before it could be corrected.
         u.set_password(super_pw)
         u.password_set_at = timezone.now()
 
@@ -308,9 +300,9 @@ class Command(BaseCommand):
         # environment, which helps nobody.
         u.must_change_password = False
         u.save()
-        # Field work binds to a StaffProfile, not to the User row: targets,
-        # visit plans and assignments all key off it. Without one the CCEO hat
-        # signs in to a set of empty surfaces with no way to populate them.
+        # Kept from when this account also worked the field: the profile may
+        # carry that work, and staff surfaces key off it rather than the User
+        # row.
         StaffProfile.objects.get_or_create(
             user=u, defaults={"onboarding_state": "active"}
         )
