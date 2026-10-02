@@ -1,0 +1,33 @@
+{% comment %}
+A record table in its card: components.py, {% data_table %}.
+
+The anatomy the platform's record tables share, written once:
+
+  section.card             the surface, labelled by the title
+    .edify-table-titlebar  the title band: the table's name, and a one-line
+                           summary of what it holds
+    .overflow-x-auto       the scroll region micro-ux.js watches and labels
+      table.edify-record-table.edify-data-table[data-mobile-table="scroll"]
+    footer                 what follows the table: its pager, its notes
+
+A record table keeps its cells on one line and scrolls as one piece on a
+phone; on a desktop its long text wraps before it scrolls (interactions.css).
+With no rows, the `empty` slot is drawn in the card in the table's place.
+{% endcomment %}
+<section class="card p-0 overflow-hidden"{% if name %} aria-labelledby="{{ name }}-title"{% endif %}>
+  <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+    <h3{% if name %} id="{{ name }}-title"{% endif %}>{{ title }}</h3>
+    {% if summary %}<span class="tabular-nums">{{ summary }}</span>{% endif %}
+  </header>
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+      {% if caption %}<caption class="sr-only">{{ caption }}</caption>{% endif %}
+      {{ rows }}
+    </table>
+  </div>
+  {{ footer }}
+  {% else %}
+  {{ empty }}
+  {% endif %}
+</section>

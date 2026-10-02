@@ -2,7 +2,7 @@
 {% load kpi_metrics %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
-  <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">H. Activity Tracking</h3>
+  <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Activity Tracking</h3>
   {% kpi_strip %}
     {% for c in activity_tracking.cards %}
     {% kpi_metric %}

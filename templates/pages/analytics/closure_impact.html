@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% comment %}
 School Closures became a tab of the one Analytics page on 2026-09-05: the view
@@ -11,23 +12,18 @@ same panel, so the two can never drift apart.
 {% endcomment %}
 
 {% block title %}School Closures · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20261002tokens2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      {% comment %}
+  {% comment %}
       The eyebrow names whose ground this is. An RVP reading "the country lost
       40 schools" would reasonably assume the country, when the figure covers
       their regions — naming the scope is cheaper than the misread.
       {% endcomment %}
-      <p class="edify-page-eyebrow">{{ scope_label }}</p>
-      <h1 class="edify-page-title edify-page-header__title">School Closures</h1>
-      <p class="edify-page-header__description">Where the programme is losing schools, how many learners that removed, and what closing them did to planned work.</p>
-    </div>
-  </header>
+  {% page_header eyebrow=scope_label title="School Closures" description="Where the programme is losing schools, how many learners that removed, and what closing them did to planned work." %}
+  {% endpage_header %}
 
   {% include "partials/analytics/section_nav.html" %}
   {% include "components/analytics_decision_frame.html" with question="Where are school closures concentrated, what capacity was lost, and how did they change the delivery plan?" evidence="Closed-school ledger, enrolment and planned work" freshness="Live to the selected period" confidence="Qualified by closure data quality" %}

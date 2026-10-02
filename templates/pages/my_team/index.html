@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}My Team · Edify{% endblock %}
@@ -14,17 +15,10 @@ every link opens the page where the action is taken. Cards and tables take the
 register grammar of the CCE leadership pages (rpl-card, rpl-table).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-my-team>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Team leadership</p>
-      <h1 class="edify-page-title edify-page-header__title">My Team</h1>
-      <p class="edify-page-header__description">The officers you line-manage: their delivery, targets, reviews, coaching and leave, and what is waiting on you.</p>
-    </div>
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Team leadership" title="My Team" description="The officers you line-manage: their delivery, targets, reviews, coaching and leave, and what is waiting on you." element="div" %}
       <a href="/team/coaching" class="btn btn-secondary h-8">Coaching</a>
       <a href="/leave/approvals" class="btn btn-secondary h-8">Team Leave</a>
-    </div>
-  </div>
+  {% endpage_header %}
 
   {% comment %}The compact short filter field the platform's filter bars use, on the
   canvas under the header — the year select had grown to the full page width on

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -8,13 +9,7 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Page header -->
-<header class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Planning &amp; Execution</p>
-<h1 class="edify-page-title edify-page-header__title">Work Plan</h1>
-<p class="max-w-[640px] edify-page-header__description">Review all planned Activities, responsible staff, execution status and plan-derived costs across the selected period.</p>
-</div>
-<div class="edify-page-header__controls">
+{% page_header eyebrow="Planning &amp; Execution" title="Work Plan" description="Review all planned Activities, responsible staff, execution status and plan-derived costs across the selected period." %}
 {% if can_export %}
 <a href="/work-plan/export.xlsx?{{ request.GET.urlencode }}"
    class="btn btn-secondary h-8">
@@ -32,8 +27,7 @@ Export Excel
 Add Non-School Activity
 </button>
 {% endif %}
-</div>
-</header>
+{% endpage_header %}
 {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
 {% include "partials/_section_nav.html" %}
 

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load frontend_filters %}
 
 {% block title %}Upload SSA Scores — Edify{% endblock %}
@@ -7,13 +8,7 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="upload">
 
 <!-- Header -->
-<div class="edify-page-header">
-  <div class="edify-page-header__lead">
-    <p class="edify-page-eyebrow">Quality & Insights</p>
-    <h1 class="edify-page-title edify-page-header__title">Upload SSA Scores</h1>
-    <p class="edify-page-header__description">Upload a sheet of initial and monitoring SSA scores to map directly to school records in your country. Imported scores wait for a verifier other than you before they count.</p>
-  </div>
-  <div class="edify-page-header__controls">
+{% page_header eyebrow="Quality & Insights" title="Upload SSA Scores" description="Upload a sheet of initial and monitoring SSA scores to map directly to school records in your country. Imported scores wait for a verifier other than you before they count." element="div" %}
     <a href="/ssa/upload/history/" class="btn btn-secondary h-8">Upload history</a>
     {% if can_add_ssa %}
     <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
@@ -21,8 +16,7 @@
     </a>
     {% endif %}
     {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
-  </div>
-</div>
+{% endpage_header %}
 
 {% if messages %}
 <div class="space-y-2">

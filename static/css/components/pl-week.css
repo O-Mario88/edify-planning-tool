@@ -354,7 +354,7 @@
   block-size: 0.75rem;
   border: 1px solid var(--plw-line);
   border-inline-start-width: 3px;
-  border-radius: 0.1875rem;
+  border-radius: var(--edify-radius-2xs);
   background: var(--plw-fill);
 }
 

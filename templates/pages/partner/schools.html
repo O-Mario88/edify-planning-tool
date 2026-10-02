@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -7,13 +8,9 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Partner Portal</p>
-      <h1 class="edify-page-title edify-page-header__title">Assigned Schools</h1>
-      <p class="edify-page-header__description">{{ total }} school(s) your organization works with.</p>
-    </div>
-  </div>
+  {% page_header eyebrow="Partner Portal" title="Assigned Schools" element="div" %}
+    {% slot description %}{{ total }} school(s) your organization works with.{% endslot %}
+  {% endpage_header %}
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     {% if schools %}

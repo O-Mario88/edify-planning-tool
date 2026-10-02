@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}School Evidence · Edify{% endblock %}
 
@@ -15,20 +16,14 @@ Tabs are links (?tab=…) so a To-Do, a notification and the back button land on
 the same register; `autoload_drawer` opens the record a link asked for.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ia-school-evidence>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-header__eyebrow">Baseline &amp; field data</p>
-      <h1 class="edify-page-title edify-page-header__title">School Evidence</h1>
-      <p class="edify-page-header__description">Class learning results, discipleship practice and EdTech use in partner schools — recorded by one person, confirmed by another, and only then counted.</p>
-    </div>
+  {% page_header eyebrow="Baseline &amp; field data" title="School Evidence" description="Class learning results, discipleship practice and EdTech use in partner schools — recorded by one person, confirmed by another, and only then counted." element="div" %}
     {% if header_actions %}
-    <div class="edify-page-header__controls">
       {% for action in header_actions %}
       <button type="button" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
       {% endfor %}
-    </div>
-    {% endif %}
-  </div>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

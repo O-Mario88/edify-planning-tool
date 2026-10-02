@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Programme Learning · Edify{% endblock %}
 
@@ -16,18 +17,12 @@ filter with nothing to choose is not drawn. Tabs are links (?view=…); the old
 /ia/attribution/ address lands on ?view=training.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ia-learning data-ia-learning-view="{{ view }}">
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-header__eyebrow">Analysis &amp; learning</p>
-      <h1 class="edify-page-title edify-page-header__title">Programme Learning</h1>
-      <p class="edify-page-header__description">Which programmes are associated with school change, how strong that evidence is, and what Impact Assessment concludes from it.</p>
-    </div>
+  {% page_header eyebrow="Analysis &amp; learning" title="Programme Learning" description="Which programmes are associated with school change, how strong that evidence is, and what Impact Assessment concludes from it." element="div" %}
     {% if may_record %}
-    <div class="edify-page-header__controls">
       <button type="button" class="btn btn-secondary h-8" hx-get="/ia/learning/findings/new?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">Record finding</button>
-    </div>
-    {% endif %}
-  </div>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

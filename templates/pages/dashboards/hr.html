@@ -43,7 +43,7 @@ benefits. Every figure is bounded by apps.hr.reach; the filters narrow it.
   {% comment %}A plain GET form: the export link and the reach chip above read the
   same filters, so the page reloads whole rather than swapping a body that
   would leave them describing the old scope.{% endcomment %}
-  <form method="get" action="/dashboard" id="hr-workflow-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="HR dashboard filters" data-hr-filters x-data>
+  <form method="get" action="/dashboard" id="hr-workflow-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="HR dashboard filters" data-hr-filters x-data @change="$el.requestSubmit()">
     <input type="hidden" id="hr-filter-view" name="view" value="{{ dashboard_view }}">
     <div class="edify-filter-field platform-filter-compact"><label for="hr-fy" class="edify-filter-label">Fiscal year</label>
     <select aria-label="Fiscal year" id="hr-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
@@ -64,7 +64,7 @@ benefits. Every figure is bounded by apps.hr.reach; the filters narrow it.
     </select></div>
     {% endif %}
     <div class="edify-filter-actions">
-      <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+      <noscript><button type="submit" class="btn btn-primary h-9">Apply filters</button></noscript>
       <a id="hr-filter-reset" href="/dashboard?view={{ dashboard_view }}" class="btn btn-secondary h-9">Reset</a>
     </div>
   </form>

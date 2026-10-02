@@ -3,7 +3,7 @@
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--edify-border-strong); border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: var(--edify-border-strong); border-radius: var(--edify-radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
 
 /* Global input/select — premium defaults */

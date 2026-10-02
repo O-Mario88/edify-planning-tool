@@ -124,7 +124,7 @@ class RouteAccessTest(OversightPageFixture):
     def test_the_program_lead_page_opens_for_a_program_lead(self):
         response = self.as_user(self.pl_user).get(PL_URL)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Team Oversight")
+        self.assertContains(response, "Planning Oversight")
         # The lens strip, renamed when Country Planning Oversight started
         # drawing the same one (owner, 2026-09-16): "Planning & Portfolio"
         # became "Team Plan", beside the portfolio lens it used to stand for.

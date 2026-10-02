@@ -19,15 +19,62 @@
   </div>
 </div>
 
+{% comment %}
+The menu's controller (2026-10-01): one object for the whole sidebar, because
+the sidebar is drawn twice on every page (the phone drawer and the desktop
+aside) and anything written per group or per link is paid for sixty times a
+page — the first version of this added 7 KB to every field-officer page and
+broke their payload budgets (apps/system_health/test_frontend_budgets.py).
+
+Groups are disclosures. A Country Director's sidebar is 50 destinations and an
+Admin's 110; drawn all at once it was a site map to scroll, not a menu to read.
+The groups are what the pages are about (owner, 2026-10-02; apps.core.nav_groups),
+most visited page first inside each: the server opens the person's own work
+and the group holding the current page (`data-closed` is its answer,
+`data-keep` marks a group that stays as served), and a person's own choice is
+remembered in this browser. Collapsed to its rail
+the sidebar shows every icon, as before: there are no headings there to press.
+
+Find a page narrows the menu to the links that carry every word typed, across
+all groups; Enter opens the first, Escape clears it, and Ctrl+K or Cmd+K puts
+the cursor there. It filters the links already drawn rather than opening a
+second list, so what it finds is exactly what this role may open, and it reads
+each link's own `title`. A role with a short menu gets no field. The wrapper
+is `display: contents`: it carries the state and adds no box.
+{% endcomment %}
+<div class="contents" data-nav
+     x-data="{q:'',none:false,
+       init(){this.$root.querySelectorAll('[data-nav-group]:not([data-keep])').forEach(g=>{let s;try{s=localStorage.getItem('edify-nav-group:'+g.dataset.navGroup)}catch(e){}if(s==='1'||s==='0')this.set(g,s==='1')})},
+       set(g,open){g.toggleAttribute('data-closed',!open);const b=g.querySelector('.app-sidebar__section-toggle');if(b)b.setAttribute('aria-expanded',open)},
+       toggle(e){const b=e.target.closest('.app-sidebar__section-toggle');if(!b)return;const g=b.parentElement,open=g.hasAttribute('data-closed');this.set(g,open);try{localStorage.setItem('edify-nav-group:'+g.dataset.navGroup,open?'1':'0')}catch(e){}},
+       links(){return[...this.$root.querySelectorAll('a.app-sidebar__item')]},
+       filter(){const w=this.q.trim().toLowerCase().split(/\s+/).filter(Boolean);this.$root.toggleAttribute('data-nav-filtering',w.length>0);let n=0;this.links().forEach(a=>{const hit=w.every(x=>a.title.toLowerCase().includes(x));a.hidden=!hit;n+=hit});this.$root.querySelectorAll('[data-nav-group]').forEach(g=>{g.hidden=w.length>0&&!g.querySelector('a.app-sidebar__item:not([hidden])')});this.none=w.length>0&&!n},
+       go(){const a=this.links().find(a=>!a.hidden);if(a&&this.q.trim())location.assign(a.href)}}"
+     @click="toggle($event)"
+     @keydown.window="if(($event.metaKey||$event.ctrlKey)&&!$event.altKey&&$event.key.toLowerCase()==='k'&&$refs.find&&$refs.find.closest('.app-sidebar').offsetParent){$event.preventDefault();if(collapsed)collapsed=false;$nextTick(()=>{$refs.find.focus();$refs.find.select()})}">
+{% if sidebar_is_long %}
+<div class="app-sidebar__find" x-show="!collapsed">
+  <svg class="app-sidebar__find-glyph" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+  {% comment %}A text field, not type="search": the top bar is the page's one
+  search (apps/frontend/test_search_consolidation.py). This narrows the menu;
+  it looks nothing up.{% endcomment %}
+  <input type="text" inputmode="search" enterkeyhint="go" x-ref="find" x-model="q" class="app-sidebar__find-field"
+         placeholder="Find a page" aria-label="Find a page in the menu" autocomplete="off" spellcheck="false"
+         @input="filter()" @keydown.enter.prevent="go()" @keydown.escape.stop="q='';filter();$el.blur()"
+         @keydown.arrow-down.prevent="links().find(a=>!a.hidden)?.focus()">
+  <kbd class="app-sidebar__find-key" x-show="!q" aria-hidden="true" x-text="/Mac|iP/.test(navigator.platform)?'⌘K':'Ctrl K'">Ctrl K</kbd>
+</div>
+{% endif %}
 <div class="app-sidebar__nav-container">
   <nav class="app-sidebar__nav" aria-label="Main Navigation">
+    <p class="app-sidebar__find-none" x-show="none" x-cloak role="status">No page matches. Try another word.</p>
     {% for section in sidebar_sections %}
       {% if section.items %}
-        <div class="app-sidebar__section">
+        <div class="app-sidebar__section" data-nav-group="{{ section.label|slugify }}"{% if not section.expanded %} data-closed{% endif %}{% if section.active or section.standalone %} data-keep{% endif %}>
           {% if not section.standalone %}
-          <div class="app-sidebar__section-header" x-show="!collapsed">
+          <button type="button" class="app-sidebar__section-toggle" x-show="!collapsed" aria-expanded="{{ section.expanded|yesno:'true,false' }}" data-count="{{ section.items|length }}">
             <span class="app-sidebar__section-title">{{ section.label }}</span>
-          </div>
+          </button>
           {% endif %}
           <div class="app-sidebar__section-items">
             {% for item in section.items %}
@@ -53,6 +100,7 @@
       {% endif %}
     {% endfor %}
   </nav>
+</div>
 </div>
 
 {% comment %}
@@ -119,7 +167,7 @@ a second permanent row beneath it.
       returns to the dashboard, so the link is drawn only when it leads
       somewhere (owner, 2026-09-27: hide what a role cannot use).{% endcomment %}
       {% if request.user.must_change_password %}<a href="/change-password" class="app-sidebar__settings-item">Change password</a>{% endif %}
-      <a href="/notifications" class="app-sidebar__settings-item">Notification centre</a>
+      <a href="/notifications" class="app-sidebar__settings-item">Notifications</a>
     </div>
   </div>
 </div>

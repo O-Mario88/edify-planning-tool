@@ -59,7 +59,7 @@ coaching first. Each figure is a fold of that Lead's Team Oversight rows, and
     {% include "components/table_pager.html" with pager=roster_rows_pager param="roster_rows_page" %}
   </div>
   {% if roster.total > 60 %}
-  <div class="rpl-card__footnote">Showing 60 of {{ roster.total }} Programme Leads, most in need of coaching first. Team Oversight lists every one.</div>
+  <div class="rpl-card__footnote">Showing 60 of {{ roster.total }} Programme Leads, most in need of coaching first. Planning Oversight lists every one.</div>
   {% endif %}
   {% if roster.unassigned %}
   <div class="rpl-card__footnote" data-tone="warning" data-rpl-unassigned-work>

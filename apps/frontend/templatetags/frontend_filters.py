@@ -125,6 +125,21 @@ def currency(value):
 
 
 @register.filter
+def badge_count(value):
+    """A count as a badge shows it: "99+" past two digits.
+
+    The bell's badge is an 18px pill over a 20px icon. An Admin with 138 unread
+    notifications got "138" spilling across the neighbouring control
+    (2026-10-01); the exact figure is one press away in the drawer.
+    """
+    try:
+        count = int(value)
+    except (TypeError, ValueError):
+        return value
+    return "99+" if count > 99 else str(count)
+
+
+@register.filter
 def avatar_initials(value):
     if not value:
         return "ED"

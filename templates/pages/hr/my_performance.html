@@ -1,21 +1,16 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load kpi_metrics table_pagination %}
 {% block title %}Priorities · Edify{% endblock %}
 {% block shell_content %}
 <div class="edify-page-canvas space-y-4" data-mobile-family="performance">
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Priority Setting Dashboard</p>
-      <h1 class="edify-page-title">Priorities</h1>
-      <p class="edify-page-subtitle edify-page-header__description">{{ distributed.scope }} · FY{{ fy }}</p>
-    </div>
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Priority Setting Dashboard" title="Priorities" %}
+    {% slot description %}{{ distributed.scope }} · FY{{ fy }}{% endslot %}
       {% if can_distribute %}<a class="btn btn-secondary" href="/target-distribution?fy={{ fy }}">Distribute targets</a>{% endif %}
       {% if can_distribute_team %}<a class="btn btn-secondary" href="/target-distribution/team?fy={{ fy }}">Distribute to my team</a>{% endif %}
       {% if can_configure %}<a class="btn btn-secondary" href="/strategic-priorities?fy={{ fy }}">Strategy &amp; approval</a>{% endif %}
       {% if review %}{% if show_open_conversation %}{% if caps %}<a data-control="open-conversation" href="/performance-conversation" class="btn btn-secondary">Performance conversation</a>{% else %}<span data-control="open-conversation" role="button" aria-disabled="true" class="btn btn-secondary">Conversation window closed</span>{% endif %}{% else %}<a class="btn btn-secondary" href="/performance-conversation">Performance conversation</a>{% endif %}{% endif %}
-    </div>
-  </header>
+  {% endpage_header %}
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}
   {% legacy_kpi_item "Agreement status" stage_label helper=review.updated_at|date:"j M Y" tone="success" icon="check" as agreement_kpi %}
@@ -39,11 +34,11 @@
   {% comment %}end S1{% endcomment %}
   {% comment %}The platform's compact short filter field; it was a bare label, a
   number box and Apply laid out as loose inline text (owner, 2026-09-14).{% endcomment %}
-  <form method="get" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Priority year">
+  <form method="get" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Priority year" x-data @change="$el.requestSubmit()">
     <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="priority-year" class="edify-filter-label">Financial year</label>
     <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface"></div>
     <input type="hidden" name="tab" value="{{ tab }}">
-    <button class="btn btn-secondary h-8 self-end" type="submit">Apply</button>
+    <noscript><button class="btn btn-primary h-9" type="submit">Apply</button></noscript>
   </form>
   <nav data-edify-tablist class="flex flex-wrap" aria-label="Priority sections">
     {% for key, label in tab_defs %}

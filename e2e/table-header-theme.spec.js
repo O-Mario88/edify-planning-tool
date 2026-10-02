@@ -11,16 +11,18 @@ test('table title bands and column ink respect theme and viewport',async({page})
   await expect(page.locator('header')).toHaveClass(/edify-table-titlebar/);
   for(const width of [390,768,1290]){
    await page.setViewportSize({width,height:900});
-   await expect(page.locator('header')).toHaveCSS('background-color','rgb(40, 91, 150)');
-   await expect(page.locator('h2')).toHaveCSS('color','rgb(255, 255, 255)');
+   // A quiet band in the table-header tone with ink text since 2026-10-02 (it was solid navy with white text).
+   await expect(page.locator('header')).toHaveCSS('background-color','rgb(220, 230, 236)');
+   await expect(page.locator('h2')).toHaveCSS('color','rgb(23, 35, 43)');
    await expect(page.locator('th').first()).toHaveCSS('color','rgb(40, 91, 150)');
    const background=await page.locator('th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
    expect(background).toBe(await page.locator('td').first().evaluate(e=>getComputedStyle(e).backgroundColor));
   }
   await expect(page.locator('h1')).not.toHaveClass(/edify-table-titlebar/);
-  for(const theme of ['dark','theme-blue']){
+  // The classes base.html writes for each theme: the band then takes that theme's own table-header tone.
+  for(const theme of ['dark theme-dark','dark theme-blue']){
    await page.evaluate(t=>document.documentElement.className=t,theme);
-   await expect(page.locator('header')).not.toHaveCSS('background-color','rgb(40, 91, 150)');
+   await expect(page.locator('header')).not.toHaveCSS('background-color','rgb(220, 230, 236)');
   }
  }finally{await server.close()}
 });

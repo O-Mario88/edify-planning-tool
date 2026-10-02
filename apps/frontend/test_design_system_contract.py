@@ -414,8 +414,10 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(
             "btn-premium-primary partner-workspace__export-button", partner_template
         )
+        # The filters are the shared component, which applies on change and
+        # owns the one fallback button (components.py, {% filter_bar %}).
         self.assertIn(
-            "btn-premium-secondary partner-workspace__filter-button", partner_template
+            '{% filter_bar label="Partner activity filters"', partner_template
         )
 
     def test_filter_wrappers_are_canvas_level_in_every_theme(self):

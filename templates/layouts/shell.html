@@ -239,11 +239,13 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 </search>
 </div>
 
-<!-- Today's date + ISO week (shown on every page) -->
-<div class="edify-topbar__date flex shrink-0 items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date" aria-label="Today is {{ today|date:'F j, Y' }}, week {{ current_week_number }}">
+<!-- Today's date + ISO week (shown on every page). Plain text beside its
+icon: it is a fact, not a control, and a bordered chip among the top bar's
+buttons read as one more thing to press (2026-10-01). -->
+<div class="edify-topbar__date flex shrink-0 items-center gap-1.5 text-[12px] font-semibold text-slate-600" title="Today's date" aria-label="Today is {{ shell_today|date:'F j, Y' }}, week {{ current_week_number }}">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
-<span class="edify-topbar__date-short xl:hidden whitespace-nowrap">{{ today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
-<span class="edify-topbar__date-long hidden xl:inline whitespace-nowrap">{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
+<span class="edify-topbar__date-short xl:hidden whitespace-nowrap">{{ shell_today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
+<span class="edify-topbar__date-long hidden xl:inline whitespace-nowrap">{{ shell_today|date:"D, N j, Y" }} &middot; Week {{ current_week_number }}</span>
 </div>
 <!-- Header Right Utilities -->
 <div class="edify-topbar__utilities flex items-center gap-2 shrink-0">
@@ -260,7 +262,7 @@ aria-label="Messages"
 <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
 </svg>
 {% if unread_messages_count > 0 %}
-<span class="notification-badge absolute top-1 right-1">{{ unread_messages_count }}</span>
+<span class="notification-badge absolute top-1 right-1">{{ unread_messages_count|badge_count }}</span>
 {% endif %}
 </button>
 
@@ -278,7 +280,7 @@ aria-label="Notifications"
 <div id="notification-badge-container">
 {% if unread_notifications_count > 0 %}
 <span id="notification-badge-count" class="notification-badge absolute top-1 right-1">
-{{ unread_notifications_count }}
+{{ unread_notifications_count|badge_count }}
 </span>
 {% endif %}
 </div>

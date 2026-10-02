@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}HR Leave & Policy Settings — Edify{% endblock %}
 
@@ -6,13 +7,8 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
   <!-- Header -->
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Time & Availability</p>
-      <h1 class="edify-page-title edify-page-header__title">HR Leave Policies & Holiday Settings</h1>
-      <p class="edify-page-header__description">Configure entitlements, required documents, approval roles, and global public holidays</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Time & Availability" title="HR Leave Policies & Holiday Settings" description="Configure entitlements, required documents, approval roles, and global public holidays" %}
+  {% endpage_header %}
 
   {% comment %}
   The platform card grammar (owner, 2026-09-14): each area is one card with a

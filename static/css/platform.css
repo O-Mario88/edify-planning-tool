@@ -18,7 +18,18 @@
 [x-cloak] { display: none !important; }
 
 :root {
-  --edify-page-max-size: var(--edify-content-max-standard);
+  /* One canvas for every page, and it is the wide one (2026-10-01). Pages
+     used to stop at 100rem while their widest tables — twelve to sixteen
+     columns of activity, plan and oversight rows — needed more: on a 2560px
+     monitor 51 of 197 tables scrolled sideways beside 700px of empty screen,
+     and the sidebar sat 375px from the page it navigates. At 144rem a 2560px
+     monitor is filled edge to edge, the way a 1900px window always was, and
+     all but the five widest of those tables show every column. A laptop never
+     reaches the cap, so nothing changes below 1860px; past 144rem the shell
+     centres as one frame (components.css, "Wide-screen frame"). It is one
+     width for all pages on purpose: a per-page canvas would move the sidebar
+     as you navigate. */
+  --edify-page-max-size: var(--edify-content-max-wide);
   --edify-control-block-size: 2.5rem;
   --edify-action-button-block-size: 2.75rem;
   --edify-action-button-padding-inline: 1.125rem;
@@ -32,6 +43,34 @@
 ::selection {
   background: var(--edify-accent);
   color: var(--edify-on-accent);
+}
+
+/* A KPI strip's heading is read, not drawn (2026-10-01). Seventy-odd strips
+   carried one — "School list context", "Approval context", "Workforce
+   attention", "Team pulse", "Finance headline" — a line of display type that
+   said only "these are the numbers" and pushed every table below it down a
+   row; a page with three strips had three of them. Each fact names itself, so
+   the strip needs no caption. The <h2> stays in the document for the outline
+   and for a screen reader moving by heading, and the section keeps its
+   aria-label; a subtitle, which does say something, is still drawn. */
+.context-metrics__title {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.context-metrics {
+  position: relative;
+}
+
+.context-metrics__header:not(:has(.context-metrics__subtitle)) {
+  margin: 0 !important;
 }
 
 main {
@@ -86,6 +125,17 @@ main > :where(div, section)[class*="p-6"]:not([class*="drawer"]) {
   max-inline-size: var(--edify-page-max-size) !important;
   margin-inline: auto;
   padding-inline: var(--edify-page-gutter) !important;
+}
+
+/* A reading page keeps a reading measure (2026-10-01). The canvas rule above
+   gives every page the full width, which suits a table and not a page of
+   settings: an account card ran 1,200px wide to hold an e-mail address and a
+   button, and wider still on the 144rem canvas. A page that is prose and
+   short forms opts in with data-page-measure="reading"; its wrapper keeps the
+   canvas — so its title starts where every other page's does — and its
+   sections stop at 60rem. */
+main > [data-page-measure="reading"] > * {
+  max-inline-size: 60rem;
 }
 
 /* ── Typography: confident hierarchy, never indiscriminate heaviness. ───── */
@@ -2155,7 +2205,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   block-size: 1rem;
   margin: 0;
   border: 1px solid var(--edify-border-strong);
-  border-radius: 0.25rem;
+  border-radius: var(--edify-radius-xs);
   accent-color: var(--edify-accent);
   cursor: pointer;
 }
@@ -2284,7 +2334,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-row__name {
   overflow: hidden;
   color: var(--edify-text);
-  font-size: 0.9375rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -2756,7 +2806,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .planning-school-row__name {
   overflow: hidden;
   color: var(--edify-text);
-  font-size: 0.9375rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -3242,6 +3292,40 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
+/* A cluster card's fifteen facts line up (2026-10-01). On a desktop they ran
+   on as wrapped text — "Location: Mukono, Central Division  Cluster Leader:
+   Not Assigned  Cluster Leader Phone: Not Entered …" — so each pair started
+   wherever the one before it ended, and no two cards put "Avg SSA" in the same
+   place. They are still "Label: value" pairs that wrap (owner, 2026-09-27),
+   but in columns: every pair takes one cell of a grid whose columns are the
+   same on every card, so the eye runs down a column to compare clusters. A
+   phone keeps the flowing rows above. */
+@media (min-width: 64rem) {
+  main .cluster-card .cluster-card__metadata {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    align-items: baseline;
+    gap: 0.4rem 1.5rem;
+  }
+
+  main .cluster-card .cluster-card__metadata > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-inline-size: 0;
+  }
+
+  main .cluster-card .cluster-card__metadata dt {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  main .cluster-card .cluster-card__metadata dd {
+    min-inline-size: 0;
+    overflow-wrap: break-word;
+  }
+}
+
 /* Hiding the metadata alone barely moved the row: at 1280px it went 151px to
    142px, because the height was never set by the metadata — it was set by the
    actions column, whose 17rem cap wrapped two buttons onto two lines (98px).
@@ -3275,7 +3359,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   z-index: 1;
   inset: -.35rem;
   border: 0;
-  border-radius: .9rem;
+  border-radius: var(--edify-radius-lg);
   background: transparent;
   cursor: pointer;
 }
@@ -3401,7 +3485,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row__title a:focus-visible {
   outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
   outline-offset: 3px;
-  border-radius: .2rem;
+  border-radius: var(--edify-radius-2xs);
 }
 
 .school-record-row__metadata {
@@ -3917,7 +4001,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   inline-size: .32rem;
   block-size: .32rem;
   flex: 0 0 auto;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: currentColor;
 }
 
@@ -4125,7 +4209,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 @media (max-width: 33rem) {
   .school-record-row__summary { gap: .75rem; padding: 1rem; }
   .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
-  .school-record-row__title { font-size: 1.13rem; }
+  .school-record-row__title { font-size: var(--edify-text-heading-size); }
   .school-record-row__metadata { gap: .38rem .75rem; }
   .school-record-action { padding-inline: .65rem; }
   .school-record-action span { font-size: var(--edify-text-micro-size); }
@@ -4146,7 +4230,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   @container school-record (max-width: 38rem) {
     .school-record-row__summary { gap: .75rem; padding: 1rem; }
     .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
-    .school-record-row__title { font-size: 1.13rem; }
+    .school-record-row__title { font-size: var(--edify-text-heading-size); }
     .school-record-row__metadata { gap: .38rem .75rem; }
     .school-record-action { padding-inline: .65rem; }
     .school-record-action span { font-size: var(--edify-text-micro-size); }

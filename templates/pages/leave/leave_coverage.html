@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Delegated Coverage Access — Edify{% endblock %}
@@ -7,13 +8,8 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
   <!-- Header -->
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Time & Availability</p>
-      <h1 class="edify-page-title edify-page-header__title">Temporary Leave Coverage Assignments</h1>
-      <p class="edify-page-header__description">Audit temporary delegated permissions and revoke access windows manually</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Time & Availability" title="Temporary Leave Coverage Assignments" description="Audit temporary delegated permissions and revoke access windows manually" %}
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

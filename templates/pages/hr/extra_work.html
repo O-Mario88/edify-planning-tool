@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load frontend_filters table_pagination %}
 
 {% block title %}Extra Work · Edify{% endblock %}
@@ -6,13 +7,7 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1300px] mx-auto">
 
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Performance</p>
-      <h1 class="edify-page-title edify-page-header__title">Extra Assigned Work</h1>
-      <p class="edify-page-header__description">Governed assignments beyond your targets — assigned by the CD or your Program Lead, verified independently, and counted in performance separately from target achievement.</p>
-    </div>
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Performance" title="Extra Assigned Work" description="Governed assignments beyond your targets — assigned by the CD or your Program Lead, verified independently, and counted in performance separately from target achievement." element="div" %}
       {% if can_assign %}
       <button type="button"
               hx-get="/extra-work/assign-drawer?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
@@ -20,8 +15,7 @@
         Assign Extra Work
       </button>
       {% endif %}
-    </div>
-  </div>
+  {% endpage_header %}
 
   {% comment %}Actions Sent and Extra Work are one Team Assignments strip for a Programme Lead (2026-09-13).{% endcomment %}
   {% include "partials/_section_nav.html" %}

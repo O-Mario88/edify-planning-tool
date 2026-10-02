@@ -35,19 +35,19 @@ they have sent (full role description, 2026-09-13).
       <a href="/team-planning-oversight/?fy={{ fy }}"
          class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors btn-primary shadow-sm edify-primary-solid">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-        Open Team Oversight
+        Open Planning Oversight
       </a>
     </div>
   </div>
 
-  <form method="get" id="rpl-workflow-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Regional dashboard filters" x-data>
+  <form method="get" id="rpl-workflow-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Regional dashboard filters" x-data @change="$el.requestSubmit()">
     <input type="hidden" id="rpl-filter-view" name="view" value="{{ dashboard_view }}">
     <div class="edify-filter-field platform-filter-compact"><label for="rpl-fy" class="edify-filter-label">Fiscal year</label>
     <select aria-label="Fiscal year" id="rpl-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
       {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}
     </select></div>
     <div class="edify-filter-actions">
-      <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+      <noscript><button type="submit" class="btn btn-primary h-9">Apply filters</button></noscript>
       <a id="rpl-filter-reset" href="/dashboard?view={{ dashboard_view }}" class="btn btn-secondary h-9">Reset</a>
     </div>
   </form>

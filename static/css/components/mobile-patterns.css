@@ -126,7 +126,7 @@
 .mobile-home-section__header h2 {
   margin: 0;
   color: var(--edify-text);
-  font-size: 0.9375rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 760;
   letter-spacing: -0.01em;
 }
@@ -173,7 +173,7 @@
   display: block;
   margin-block-start: 0.3rem;
   color: var(--edify-text);
-  font-size: 1.15rem;
+  font-size: var(--edify-text-heading-size);
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
   /* A figure is data, not decoration: "UGX 4,000,000" wraps to a second
@@ -271,7 +271,7 @@
 .mobile-sheet__header h2 {
   margin: 0;
   color: var(--edify-text);
-  font-size: 1.125rem;
+  font-size: var(--edify-text-heading-size);
   font-weight: 760;
 }
 
@@ -485,7 +485,7 @@
 
 .mobile-record-card > header > div { min-inline-size: 0; }
 .mobile-record-card > header p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
-.mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: 0.9375rem; font-weight: 740; line-height: 1.25; }
+.mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: var(--edify-text-body-size); font-weight: 740; line-height: 1.25; }
 .mobile-record-card > header small { display: block; margin-block-start: 0.2rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 
 .mobile-record-card dl,

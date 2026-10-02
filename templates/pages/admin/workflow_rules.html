@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Workflow Rules — Edify{% endblock %}
 
@@ -6,13 +7,8 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto" data-mobile-family="settings">
 
 <!-- Header -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Administration</p>
-<h1 class="edify-page-title edify-page-header__title">Workflow & Automation Rules</h1>
-<p class="edify-page-header__description">Reference list of validation checks, planning bounds, and automatic budget creation rules enforced by the system</p>
-</div>
-</div>
+{% page_header eyebrow="Administration" title="Workflow & Automation Rules" description="Reference list of validation checks, planning bounds, and automatic budget creation rules enforced by the system" element="div" %}
+{% endpage_header %}
 
 <!-- Rules Stack (read-only reference — these are enforced in code, not configurable) -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm divide-y divide-slate-100">

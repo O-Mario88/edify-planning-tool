@@ -173,7 +173,10 @@ class RVPDashboardService:
             card(
                 "target",
                 "Regional Target Achievement",
-                f"{overall_pct}%" if overall_pct is not None else "No Target Set",
+                # No target is not zero per cent (see the CD card).
+                f"{overall_pct}%"
+                if overall_pct is not None and overall_t
+                else "No Target Set",
                 "primary",
                 "approved country allocations · verified delivery",
             ),

@@ -108,7 +108,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: `apexcharts-tooltip-series-group-4`, which holds the legacy pattern
     #: "p-4", so the name joined that pattern's index in two shared sheets
     #: (the route audit checks every class on a page against the index).
-    CSS_GZIP_KB = 204
+    #:
+    #: Raised to 205 on 2026-10-01 (203.6 to 204.2 KB, +0.3%) for the audit
+    #: pass the owner asked for: the wide-screen frame and 144rem canvas, the
+    #: sidebar's group disclosures and Find a page, disabled primaries that
+    #: look disabled, cluster facts in columns and HR Today's folded rows. Dead
+    #: sidebar rules and comments were cut first; this is what was left.
+    CSS_GZIP_KB = 205
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -149,7 +155,12 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: screen: one observer and a timer in micro-ux.js, 0.29 KB gzipped, with
     #: the reasoning kept in responsive-system.css. Half a kilobyte, not a
     #: whole one: the ceiling had 0.02 KB left and this is a ratchet.
-    JS_GZIP_KB = 138.5
+    #: Raised again to 140 the same day (+1.3 KB) for micro-ux.js
+    #: letting a record table's long text and long headings wrap on a desktop
+    #: when that makes it fit its card, instead of scrolling sideways (owner:
+    #: Work Plan and My Plan still scrolled on a 2560px monitor). Its
+    #: rationale lives in interactions.css, which is minified.
+    JS_GZIP_KB = 140
     INLINE_SCRIPT_KB = 40
 
     @classmethod

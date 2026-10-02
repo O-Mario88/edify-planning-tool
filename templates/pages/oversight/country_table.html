@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load components static %}
 
 {% block title %}{{ spec.title }} · Country Planning Oversight · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
@@ -23,14 +23,9 @@ five tables Impact Assessment asked for in one workbook, a sheet each.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow"><a href="/country-planning-oversight/?{{ query }}" class="hover:underline">Country Planning Oversight</a></p>
-      <h1 class="edify-page-title edify-page-header__title">{{ spec.title }}</h1>
-      <p class="edify-page-header__description">{{ spec.description }}</p>
-    </div>
+  {% page_header title=spec.title description=spec.description %}
+    {% slot eyebrow %}<a href="/country-planning-oversight/?{{ query }}" class="hover:underline">Country Planning Oversight</a>{% endslot %}
     {% if may_export and not withheld %}
-    <div class="edify-page-header__controls">
       <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
          href="/country-planning-oversight/table-export/{{ spec.key }}?{{ query }}"
          aria-label="Export {{ spec.title }} to Excel" title="Export to Excel" download>
@@ -42,9 +37,8 @@ five tables Impact Assessment asked for in one workbook, a sheet each.
          aria-label="Export all the consolidated tables to one Excel workbook" title="All Visit Plans, Schools Assigned to Partners, Project Schools, Unplanned Schools and All Activities in one workbook" download>
         <span>All Tables</span>
       </a>
-    </div>
     {% endif %}
-  </header>
+  {% endpage_header %}
 
   <div class="edify-view-toolbar">
     {% include "partials/oversight/_lens_tabs.html" %}

@@ -718,7 +718,13 @@ class CDAnalyticsService:
                 "country_overall_target_achievement_pct",
                 "target",
                 "Overall Target Achievement",
-                f"{overall_target}%" if overall_target is not None else "No Target Set",
+                # No target is not zero per cent. With nothing approved and no
+                # signed agreement the pooled figure comes back 0 of 0, and the
+                # card read "0%" directly under the Performance overview strip
+                # saying "No Target Set" for the same measure (2026-10-01).
+                f"{overall_target}%"
+                if overall_target is not None and total_t
+                else "No Target Set",
                 "primary",
                 "approved country allocations · verified delivery",
             ),

@@ -165,15 +165,15 @@ class AnalyticsWorkspaceStructureTest(TestCase):
         lead = _user(
             "standalone-reference@door.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value
         )
-        reference = next(
+        schools = next(
             g
             for g in build_sidebar_for_user(lead, "/dashboard")
-            if g["label"] == "REFERENCE"
+            if g["label"] == "SCHOOLS"
         )
-        # Two links since Closed Schools joined the Programme Lead's sidebar
-        # (owner, 2026-09-15), so it is an ordinary group rather than a link.
-        self.assertIn("Closed Schools", [i["label"] for i in reference["items"]])
-        self.assertFalse(reference["standalone"])
+        # Closed Schools joined the Programme Lead's sidebar (owner,
+        # 2026-09-15); it sits with the other school pages, an ordinary group.
+        self.assertIn("Closed Schools", [i["label"] for i in schools["items"]])
+        self.assertFalse(schools["standalone"])
 
     def test_a_role_with_one_section_gets_that_section_by_name(self):
         """An "Analytics" link that opens a single page is a lie about scope."""

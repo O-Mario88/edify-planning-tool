@@ -372,7 +372,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
             {"label": first["action"], "url": first["url"]}
             if first
             else {
-                "label": "Open Team Oversight",
+                "label": "Open Planning Oversight",
                 "url": f"{TEAM_OVERSIGHT_URL}?fy={fy}",
             }
         ),
@@ -477,7 +477,7 @@ def _regional_lead_dashboard(request):
             {"label": first["action"], "url": first["url"]}
             if first
             else {
-                "label": "Open Team Oversight",
+                "label": "Open Planning Oversight",
                 "url": f"/team-planning-oversight/?fy={fy}",
             }
         ),

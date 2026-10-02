@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load frontend_filters table_pagination %}
 
 {% block title %}Partner Activities — Edify{% endblock %}
@@ -15,7 +16,7 @@
   </header>
 
     {# Filters apply as they change, as on every other page; the year reads "FY 2026" like everywhere else (owner, 2026-09-30). #}
-    <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters" aria-label="Partner activity filters" x-data @change="$el.requestSubmit()">
+    {% filter_bar label="Partner activity filters" form_id="partner-activity-filters" extra_class="partner-workspace__filters" %}
       <label>
         <span>Financial Year</span>
         <select name="fy" aria-label="Financial Year">
@@ -39,12 +40,11 @@
         </select>
       </label>
 {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
-      <noscript><button type="submit" class="btn-premium-secondary partner-workspace__filter-button">Apply</button></noscript>
       <button type="submit" name="export" value="csv" class="btn-premium-primary partner-workspace__export-button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
         Export
       </button>
-    </form>
+    {% endfilter_bar %}
 
   <div class="partner-workspace__layout">
     <section class="partner-workspace__main" aria-label="Partner activity records">

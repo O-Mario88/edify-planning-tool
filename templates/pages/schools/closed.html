@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity %}
 {% load kpi_metrics %}
 
@@ -21,25 +22,20 @@ school's future, not its history.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">School lifecycle</p>
-      <h1 class="edify-page-title edify-page-header__title">Closed Schools</h1>
-      <p class="edify-page-header__description">Schools that have stopped operating. Their records, history and finance remain intact and readable here.</p>
-    </div>
+  {% page_header eyebrow="School lifecycle" title="Closed Schools" description="Schools that have stopped operating. Their records, history and finance remain intact and readable here." %}
     {% comment %}
     No search box here. The top bar's is the one search on every page, and this
     view binds it through topbar_search — a second field competing with it is
     the thing the search-consolidation contract exists to prevent.
     {% endcomment %}
-    {% if q %}
-    <div class="edify-page-header__controls">
+    
+{% if q %}
       <a href="/schools/closed" class="btn h-8 inline-flex items-center gap-1.5">
         Clear search<span class="edify-text-muted">“{{ q|truncatechars:24 }}”</span>
       </a>
-    </div>
-    {% endif %}
-  </header>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% kpi_strip %}
     {% kpi_metric %}

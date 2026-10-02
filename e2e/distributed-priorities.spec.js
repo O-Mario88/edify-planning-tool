@@ -15,7 +15,8 @@ for(const [email,analytics,priorities='/priorities'] of [
  const response=await page.goto(priorities+'?fy=2026');expect(response.status()).toBe(200);
  await expect(page.locator('[data-edify-tab][aria-current=page]')).toHaveText('Distributed Priorities');
  for(const label of ['Core Values','Spiritual Formation','Professional Development']){
-  await page.getByRole('link',{name:label,exact:true}).click();
+  // The tab, not the sidebar: HR's sidebar entry for /cpd-learning is also "Professional Development" since 2026-10-01.
+  await page.locator('a[data-edify-tab]').filter({hasText:label}).first().click();
   await expect(page.locator('[data-edify-tab][aria-current=page]')).toHaveText(label);
  }
  await page.getByRole('link',{name:'Distributed Priorities',exact:true}).click();

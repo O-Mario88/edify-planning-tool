@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Calendar Blocks & Public Holidays — Edify{% endblock %}
 
@@ -6,14 +7,7 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ showAddDrawer: false }">
 
   <!-- Header -->
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Time & Availability</p>
-      <h1 class="edify-page-title edify-page-header__title">Public Holidays & Blackout Dates</h1>
-      <p class="edify-page-header__description">Configure organization blackout dates, public holidays, and staff conference weeks</p>
-    </div>
-
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Time & Availability" title="Public Holidays & Blackout Dates" description="Configure organization blackout dates, public holidays, and staff conference weeks" element="div" %}
       {% if is_editor %}
       <a
         href="?action=seed"
@@ -31,8 +25,7 @@
         <span>Add Block</span>
       </button>
       {% endif %}
-    </div>
-  </div>
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

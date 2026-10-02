@@ -10,10 +10,17 @@
   <section class="admin-panel" aria-labelledby="admin-ops-critical-title">
     <header class="admin-panel__header"><h2 id="admin-ops-critical-title">Critical Now</h2></header>
     {% for item in admin_ops.critical_now %}
+    {% comment %}A critical row leads somewhere (2026-10-01). Its next step —
+    "Acknowledge Incident" — was drawn as a red status chip on a row that
+    linked nowhere, so the one thing the row asked for could not be done from
+    it. The title and the step now open the incident, where the step is taken;
+    an item that came from a ticket opens the support queue, and anything else
+    Admin's own plan, where work items are scheduled and closed.{% endcomment %}
+    {% if item.incident_id %}{% firstof "/admin-ops/incidents/"|add:item.incident_id as item_url %}{% elif item.ticket_id %}{% firstof "/admin-ops/support" as item_url %}{% else %}{% firstof "/admin-ops/my-plan" as item_url %}{% endif %}
     <div class="admin-target-row">
-      <span>{{ item.reference }} · {{ item.title }}</span>
+      <a href="{{ item_url }}">{{ item.reference }} · {{ item.title }}</a>
       <strong>{{ item.get_category_display }}</strong>
-      <span class="admin-status s-red">{% firstof item.next_action item.get_status_display %}</span>
+      <a href="{{ item_url }}" class="admin-next-step">{% firstof item.next_action item.get_status_display %}<span aria-hidden="true"> →</span></a>
     </div>
     {% empty %}
     <p class="admin-panel__empty">Nothing critical is open. Incidents and critical tickets appear here the moment they are detected.</p>
