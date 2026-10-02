@@ -79,7 +79,8 @@ ONE_OFF_DATA_MIGRATIONS = {
     "accounts": (
         "0020 grants the Admin role every canonical permission and 0021 adds "
         "the super-admin's field hat plus the StaffProfile that field work "
-        "keys off. Both are one-offs about one named account and the role "
+        "keys off (0036 takes that hat off again, from every Admin account, "
+        "and creates nothing). Both are one-offs about one named account and the role "
         "matrix that already exists: they touch the row for SUPER_ADMIN_EMAIL "
         "and nothing else, so on a test database — where that account is never "
         "created — they match nothing and write nothing. Restoring them on "

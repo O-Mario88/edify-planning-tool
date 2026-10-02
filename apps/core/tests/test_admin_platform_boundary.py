@@ -12,8 +12,9 @@ all of them lets one account approve a budget, disburse against it, and then
 verify the activity it paid for, which is the entire control this platform's
 audit chain exists to make meaningful.
 
-It does not constrain the admin *person*: roles are per user and switched via
-active_role, so an admin who is also a CCEO does field work as the CCEO.
+Nor is a second hat a way around it: an Admin account is never also a CCEO
+(apps.core.rbac.admin_is_also_cceo), so field work is done from a CCEO account
+of its own.
 
 Domain invariants still apply: state transitions, required evidence, audit
 logging, and the global ban on deleting execution history are not
