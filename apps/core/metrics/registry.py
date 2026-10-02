@@ -1226,27 +1226,30 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         drilldown="/country-planning-oversight/",
         refresh_events=("activity_scheduled", "partner_assignment_created"),
     ),
-    # ── Country Planning Oversight: the annual obligation against the plan ──
-    # Six shares, each against a requirement the governed policy defines
-    # (apps.planning.country_oversight.policy): 4 visit slots and 4 training
-    # slots per Core-family school, 1 and 1 per Client-family school, Core
-    # staff slots before Client, staff ceilings as capacity. Every one is a
+    # ── Country Planning Oversight: the year's plan against what it should be ──
+    # Six shares by the planning rulebook (apps.planning.country_oversight.rules,
+    # owner 2026-10-01). Two are a person's own plan — the visits each Programme
+    # Lead and CCEO planned against 280 and 560, and the Partner work they
+    # handed over against what Partners have dated. Four are the schools' — what
+    # each school's type needs against what is planned for it. Every one is a
     # field of the same fold the table and the four charts read.
     MetricSpec(
         key="cpo_staff_visit_planning",
         label="Staff Visit Planning",
         definition=(
-            "Staff-planned visit slots against the visit slots internal staff "
-            "are expected to deliver: two per Core-family school, plus the "
-            "Client slots each owner's remaining staff capacity covers."
+            "Follow up, In-school Training and SSA Support visits staff have "
+            "planned, counted for the person who planned them, against the "
+            "visits their roles plan in a year: 560 for each CCEO and 280 for "
+            "each Programme Lead. Donor, story, social and invitation visits "
+            "are not counted."
         ),
-        question="Have staff planned the visits their capacity is meant to cover?",
+        question="Have Programme Leads and CCEOs planned the visits their roles plan?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Required staff visit slots (2 per Core-family school + allocated Client slots)",
+        denominator="CCEOs × 560 + Programme Leads × 280",
         service="apps.planning.country_oversight.service.kpis",
         source_models=("activities.Activity", "schools.School"),
-        numerator="Visit slots claimed by dated, scheduled-or-later staff visits",
+        numerator="Dated, scheduled-or-later counted staff visits, by who planned them",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's country portfolio",
@@ -1259,18 +1262,18 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cpo_partner_planning",
         label="Partner Planning",
         definition=(
-            "Visit slots assigned to a Partner against the slots Partners are "
-            "required to deliver: two per Core-family school, plus the Client "
-            "slots staff capacity does not cover. Assigned is not planned; the "
-            "Partner-scheduled figure beside it is."
+            "Work Partners have dated themselves, against the work staff "
+            "assigned to Partners. Staff assign a school and the Partner sets "
+            "the date: nothing counts as Partner planned until a Partner does, "
+            "and a day staff chose for a Partner is assigned, not planned."
         ),
-        question="Have the Partner slots been handed to a Partner, and dated?",
+        question="How much of what staff handed to Partners have Partners dated?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Required Partner visit slots",
+        denominator="Work staff assigned to Partners (dated or not)",
         service="apps.planning.country_oversight.service.kpis",
         source_models=("partners.PartnerAssignment", "activities.Activity"),
-        numerator="Partner slots held by an undated handover or a dated Partner visit",
+        numerator="Partner work the Partner has put a date on",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's country portfolio",
@@ -1283,17 +1286,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cpo_total_visit_coverage",
         label="Total Visit Coverage",
         definition=(
-            "Visit slots planned by staff or scheduled by a Partner against the "
-            "year's whole visit requirement, four slots per Core-family school "
-            "and one per Client-family school (4C + L)."
+            "Visit slots planned by staff or dated by a Partner against what "
+            "the schools need in the year: four per Core school (two staff, "
+            "two Partner) and one per Client, Core Trained and Core Graduate "
+            "school. Champion schools are outside it. A slot counts once, "
+            "however many plans land on it."
         ),
         question="How much of the year's visit obligation is on the calendar?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Total required visit slots (4C + L)",
+        denominator="Visit slots the schools need (4 per Core, 1 per client-rule school)",
         service="apps.planning.country_oversight.service.kpis",
         source_models=("activities.Activity", "schools.School"),
-        numerator="Staff-planned slots plus Partner-scheduled slots",
+        numerator="Staff-planned slots plus slots a Partner has dated",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's country portfolio",
@@ -1306,15 +1311,17 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cpo_training_planning",
         label="Training Planning",
         definition=(
-            "School-training slots with a dated training planned against the "
-            "requirement: four per Core-family school and one per Client-family "
-            "school. A cluster session fills one slot for each school on its "
-            "planned roster, never for the rest of the cluster."
+            "Training slots with a dated training planned against what the "
+            "schools need: four per Core school (two staff, two Partner) and "
+            "one per Client and Core Trained school; Core Graduate and "
+            "Champion schools take none. A cluster session fills one slot for "
+            "each school on its planned roster, never for the rest of the "
+            "cluster."
         ),
         question="How much of the year's training obligation is planned?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Required school-training slots (4C + L)",
+        denominator="Training slots the schools need (4 per Core, 1 per Client and Core Trained)",
         service="apps.planning.country_oversight.service.kpis",
         source_models=("activities.Activity", "activities.ClusterActivityAttendance"),
         numerator="Training slots filled by in-school trainings and planned rosters",

@@ -208,11 +208,16 @@ def owner_directory(owner_ids) -> dict[str, OwnerInfo]:
         .select_related("user")
         .order_by("pk")
     )
+    # A Lead is a Lead by the role they hold, whichever role they are using
+    # today (rules.planning_role): switching roles moves nobody's team.
     leads: dict[str, list[tuple[str, str]]] = {}
     for link in (
         StaffSupervisorAssignment.objects.filter(
             supervisee_id__in=[p.id for p in profiles],
-            supervisor__user__active_role=policy.PROGRAM_LEAD_ROLE,
+        )
+        .filter(
+            Q(supervisor__user__roles__overlap=[policy.PROGRAM_LEAD_ROLE])
+            | Q(supervisor__user__active_role=policy.PROGRAM_LEAD_ROLE)
         )
         .exclude(supervisor_id=None)
         .select_related("supervisor__user")
@@ -225,9 +230,12 @@ def owner_directory(owner_ids) -> dict[str, OwnerInfo]:
         if pair not in leads.setdefault(link.supervisee_id, []):
             leads[link.supervisee_id].append(pair)
 
+    from apps.planning.country_oversight import rules
+
     for profile in profiles:
         user = profile.user
-        role = getattr(user, "active_role", "") or ""
+        in_use = getattr(user, "active_role", "") or ""
+        role = rules.planning_role(getattr(user, "roles", None), in_use) or in_use
         active = (
             getattr(profile, "deleted_at", None) is None
             and getattr(user, "status", "active") == "active"
@@ -257,36 +265,58 @@ def owner_directory(owner_ids) -> dict[str, OwnerInfo]:
     return directory
 
 
-def system_leads() -> list[LeadInfo]:
-    """Every Programme Lead by role — a Lead with no schools still gets a row."""
-    from apps.planning.oversight_service import system_program_leads
-
-    return [
-        LeadInfo(key=lead["id"], name=lead["name"], user_id=lead.get("user_id"))
-        for lead in system_program_leads()
-    ]
+def system_leads(country: str = "") -> list[LeadInfo]:
+    """Every Programme Lead by the role they hold — a Lead with no schools
+    still gets a row."""
+    return roster_for(country)[0]
 
 
-def lead_rosters(lead_keys) -> dict[str, list[OwnerInfo]]:
+def lead_rosters(
+    lead_keys=None, country: str = "", *, with_lead: bool = False
+) -> dict[str, list[OwnerInfo]]:
     """Each Programme Lead's direct reports, so a CCEO holding no school still
-    reads as a row of zeroes under their Lead rather than vanishing."""
-    from apps.planning.oversight_service import program_lead_rosters
+    reads as a row of zeroes under their Lead rather than vanishing.
 
+    ``with_lead`` puts the Lead's own row first: the planning page follows a
+    Lead's own plan against 280 whether or not they hold a school.
+    """
+    rosters = roster_for(country)[1]
+    if lead_keys is not None:
+        wanted = {str(key) for key in lead_keys}
+        rosters = {key: people for key, people in rosters.items() if key in wanted}
+    if with_lead:
+        return rosters
+    return {
+        key: [person for person in people if not person.is_lead_personal]
+        for key, people in rosters.items()
+    }
+
+
+def roster_for(country: str = "") -> tuple[list[LeadInfo], dict[str, list[OwnerInfo]]]:
+    """(Programme Leads, lead key → the Lead and their CCEOs) from the
+    rulebook's roster, in the shapes the hierarchy folds."""
+    from apps.planning.country_oversight import rules
+
+    leads: list[LeadInfo] = []
     rosters: dict[str, list[OwnerInfo]] = {}
-    for lead_key, members in program_lead_rosters(lead_keys).items():
-        people = []
-        for member in members[1:]:
-            people.append(
-                OwnerInfo(
-                    key=member["id"],
-                    name=member["name"],
-                    role=policy.CCEO_ROLE,
-                    lead_key=lead_key,
-                    ids=set(member["ids"]),
-                )
+    for team in rules.roster(country):
+        if not team.is_no_lead:
+            lead = team.people[0]
+            leads.append(LeadInfo(key=team.key, name=team.name, user_id=lead.user_id))
+        rosters[team.key] = [
+            OwnerInfo(
+                key=person.key,
+                name=person.name,
+                role=person.role,
+                user_id=person.user_id or None,
+                lead_key=team.key,
+                lead_name=team.name,
+                lead_keys=(team.key,),
+                ids=set(person.ids),
             )
-        rosters[lead_key] = people
-    return rosters
+            for person in team.people
+        ]
+    return leads, rosters
 
 
 # ── Capacity allocation ──────────────────────────────────────────────────────
@@ -334,7 +364,12 @@ def allocate(owner: OwnerInfo | None, schools) -> dict[str, Allocation]:
     per_core = policy.requirement_for(policy.CORE_FAMILY)
     per_client = policy.requirement_for(policy.CLIENT_FAMILY)
 
-    allocations: dict[str, Allocation] = {}
+    # Outreach-only and ungoverned schools ask nothing of anyone's capacity.
+    allocations: dict[str, Allocation] = {
+        s.id: _allocation()
+        for s in schools
+        if s.family not in (policy.CORE_FAMILY, policy.CLIENT_FAMILY)
+    }
     core_staff_required = per_core.staff_visit_slots * len(core)
     over = max(0, core_staff_required - ceiling)
     ranked_core = sorted(core, key=lambda s: (-s.annual_staff_claims, s.code or s.id))

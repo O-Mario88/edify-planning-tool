@@ -299,6 +299,16 @@ def visit_kind_case(prefix: str = "") -> Case:
     return Case(*whens, default=Value(KIND_FOLLOW_UP), output_field=CharField())
 
 
+def kind_q(kind: str, prefix: str = "") -> Q:
+    """Rows ``counted_visit_q`` kept that are of this kind (``visit_kind``)."""
+    purposes = [p for p, k in _PURPOSE_KIND.items() if k == kind]
+    types = [t for t, k in _TYPE_KIND.items() if k == kind]
+    return Q(**{f"{prefix}purpose_type__in": purposes}) | (
+        Q(**{f"{prefix}activity_type__in": types})
+        & ~Q(**{f"{prefix}purpose_type__in": list(_PURPOSE_KIND)})
+    )
+
+
 def outreach_visit_q(prefix: str = "") -> Q:
     """Donor, story, invitation and social visits at a school: shown beside
     the counted visits, never among them."""

@@ -23,6 +23,7 @@ from apps.planning.country_oversight import policy
 from apps.planning.country_oversight.coverage import (
     P_SCHED_T,
     _partner_totals,
+    duplicate_reasons,
 )
 from apps.planning.country_oversight.hierarchy import IDX, add_into, blank
 from apps.planning.country_oversight.requirements import NO_LEAD_KEY, NO_OWNER_KEY
@@ -62,14 +63,14 @@ def checks(dataset, tree) -> list[Check]:
     results.append(
         Check(
             "unmapped_family",
-            "School type with no governed planning family",
+            "School type with no planning rule",
             " ".join(
                 policy.PENDING_FAMILY_DECISIONS.get(
-                    t, f"'{t}' is not in either planning family."
+                    t, f"'{t}' is not a school type the planning rulebook knows."
                 )
                 for t in reasons
             )
-            or "Every school's type belongs to a planning family.",
+            or "Every school's type is one the planning rulebook knows.",
             len(unmapped),
             "warning" if unmapped else "info",
             [_school_sample(s) for s in unmapped[:SAMPLE]],
@@ -141,8 +142,8 @@ def checks(dataset, tree) -> list[Check]:
         Check(
             "no_owner",
             "School with no account owner",
-            "Its Core staff slots count as a capacity deficit and its Client "
-            "slot falls to Partners until somebody holds it.",
+            "Its Core staff slots count as a capacity deficit and its one "
+            "client-rule visit falls to Partners until somebody holds it.",
             len(no_owner),
             "critical" if no_owner else "info",
             [_school_sample(s) for s in no_owner[:SAMPLE]],
@@ -258,6 +259,7 @@ def checks(dataset, tree) -> list[Check]:
 
     # 6. More planned work than slots: the extra work claims nothing.
     over = []
+    twice = []
     for school in facts.values():
         if not school.is_governed:
             continue
@@ -265,14 +267,15 @@ def checks(dataset, tree) -> list[Check]:
         partner_totals, _ = _partner_totals(school, None)
         if school.family == policy.CORE_FAMILY:
             beyond = max(0, partner_totals[P_SCHED_T] - requirement.partner_visit_slots)
-            beyond += max(
-                0,
-                school.staff[2]
-                - requirement.staff_visit_slots
-                - requirement.partner_visit_slots,
-            )
-        else:
+            beyond += max(0, school.staff[2] - requirement.staff_visit_slots)
+        elif school.family == policy.CLIENT_FAMILY:
             beyond = max(0, school.staff[2] + partner_totals[P_SCHED_T] - 1)
+            reasons = duplicate_reasons(school)
+            if reasons:
+                twice.append((reasons, school))
+        else:
+            # Outreach only: whatever counted visit was planned claims nothing.
+            beyond = school.staff[2] + partner_totals[P_SCHED_T]
         if beyond:
             over.append((beyond, school))
     over.sort(key=lambda pair: -pair[0])
@@ -292,6 +295,29 @@ def checks(dataset, tree) -> list[Check]:
                     "detail": f"{school.code} · {beyond} beyond the slots",
                 }
                 for beyond, school in over[:SAMPLE]
+            ],
+            "The school's plan (cancel the duplicate)",
+        )
+    )
+    from apps.planning.country_oversight import rules
+
+    results.append(
+        Check(
+            "planned_twice",
+            "Client-rule school planned twice",
+            "A Client, Core Trained or Core Graduate school is visited by staff "
+            "or by a Partner, never both, and once for each kind of visit. "
+            "These are planned by staff and held by a Partner, or carry the "
+            "same kind of visit twice. The page lists every one of them.",
+            len(twice),
+            "warning" if twice else "info",
+            [
+                {
+                    **_school_sample(school),
+                    "detail": f"{school.code} · "
+                    + "; ".join(rules.DUPLICATE_LABELS[r] for r in reasons),
+                }
+                for reasons, school in twice[:SAMPLE]
             ],
             "The school's plan (cancel the duplicate)",
         )
@@ -469,28 +495,7 @@ def checks(dataset, tree) -> list[Check]:
         )
     )
 
-    # 12. Slots the scheduling rules refuse.
-    undeliverable = (
-        tree.country.undeliverable_partner + tree.country.undeliverable_training
-    )
-    results.append(
-        Check(
-            "undeliverable_slots",
-            "Requirement the scheduling rules cannot deliver",
-            "Champion schools are Core-family (four visit and four training "
-            "slots), but the platform plans them only for donor and story visits "
-            "and never assigns them to a Partner. "
-            f"{tree.country.undeliverable_partner:,} Partner and "
-            f"{tree.country.undeliverable_training:,} training slots cannot close "
-            "until the product owner reconciles the two rules.",
-            undeliverable,
-            "warning" if undeliverable else "info",
-            [],
-            "Product-owner decision",
-        )
-    )
-
-    # 13. Totals that must reconcile.
+    # 12. Totals that must reconcile.
     mismatches = _reconciliation(tree)
     results.append(
         Check(
@@ -505,7 +510,7 @@ def checks(dataset, tree) -> list[Check]:
         )
     )
 
-    # 14. Possible duplicate records, still counted.
+    # 13. Possible duplicate records, still counted.
     count, samples = _potential_duplicates(school_ids)
     results.append(
         Check(

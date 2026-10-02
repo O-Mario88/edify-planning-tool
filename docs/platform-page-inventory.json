@@ -4575,7 +4575,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1028,
+      "bytes": 1696,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4595,7 +4595,9 @@
       "template": "partials/country_oversight/_cells.html",
       "variants": [
         "{{ cells.meeting_tone }}",
-        "{{ cells.training_tone }}"
+        "{{ cells.plan_tone }}",
+        "{{ cells.training_tone }}",
+        "{{ cells.visit_tone }}"
       ]
     },
     {
@@ -4646,7 +4648,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1875,
+      "bytes": 2702,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4757,7 +4759,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9419,
+      "bytes": 9821,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4777,6 +4779,33 @@
       "tables": 1,
       "template": "partials/country_oversight/_table.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3914,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Types",
+      "purpose": "Reusable  types interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/_types.html",
+      "variants": [
+        "{{ row.training_tone }}",
+        "{{ row.visit_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -4859,7 +4888,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2470,
+      "bytes": 2491,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4884,7 +4913,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4448,
+      "bytes": 4548,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4908,7 +4937,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4997,
+      "bytes": 5198,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -5032,7 +5061,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10124,
+      "bytes": 10129,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5056,7 +5085,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2526,
+      "bytes": 2806,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/rows"
@@ -5081,7 +5110,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1154,
+      "bytes": 1695,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/rows"
@@ -5105,7 +5134,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4750,
+      "bytes": 5056,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/schools"
@@ -5154,7 +5183,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3231,
+      "bytes": 3451,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -35658,10 +35687,10 @@
         "POST /country-planning-oversight/follow-up/{{ item.id }}/close",
         "POST /country-planning-oversight/follow-up/{{ item.id }}/cancel",
         "GET /country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}",
-        "GET /country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=unallocated&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=no_visit&amp;{{ query }}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}",
-        "GET /country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;gap=unallocated&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;{{ query }}",
         "GET /country-planning-oversight/schools?gap={{ gap }}&amp;{{ query }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -113455,7 +113484,7 @@
     "activity_states": 24,
     "all_routes": 1347,
     "api_routes": 360,
-    "component_templates": 591,
+    "component_templates": 592,
     "full_pages": 261,
     "mobile_contract_pass": 570,
     "nonvisual_actions": 277,
