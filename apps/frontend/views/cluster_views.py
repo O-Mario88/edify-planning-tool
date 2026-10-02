@@ -997,6 +997,78 @@ def _catchment_context(user, cluster) -> dict:
     }
 
 
+def _facilitator_cluster(request, cluster_id):
+    """The cluster, for a reader who may assign it to a partner."""
+    from apps.core.permissions import get_operational_cluster_or_404
+
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return None
+    return get_operational_cluster_or_404(request.user, id=cluster_id)
+
+
+@require_page_permission("planning")
+def cluster_facilitator_drawer_view(request, cluster_id):
+    """Assign a cluster to a partner to facilitate (owner, 2026-10-02:
+    "Assigning a cluster to the partner ONLY means they facilitate the
+    cluster activity NOT assigned to them to do school visit").
+
+    A standing choice: no date, no cost and no school handed over
+    (apps.clusters.facilitation). What it changes is who facilitates the
+    trainings and meetings staff plan for the cluster from here on.
+    """
+    from apps.activities.facilitation import facilitator_partners
+    from apps.clusters.facilitation import facilitator_of, upcoming_sessions
+
+    cluster = _facilitator_cluster(request, cluster_id)
+    if cluster is None:
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to assign to partner."
+        )
+    current = facilitator_of(cluster)
+    return render(
+        request,
+        "partials/clusters/facilitator_drawer.html",
+        {
+            "cluster": cluster,
+            "partners": facilitator_partners(),
+            "current_facilitator": current,
+            "planned_sessions": upcoming_sessions(cluster),
+            "drawer_size": "sm",
+        },
+    )
+
+
+@require_page_permission("planning")
+def cluster_facilitator_action(request, cluster_id):
+    """Save the partner a cluster is assigned to facilitate; blank is Staff."""
+    from apps.clusters.facilitation import assign_facilitator, facilitator_of
+
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    cluster = _facilitator_cluster(request, cluster_id)
+    if cluster is None:
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to assign to partner."
+        )
+    try:
+        cluster = assign_facilitator(
+            cluster, request.POST.get("facilitating_partner_id", ""), request.user
+        )
+    except Exception as exc:
+        return error_fragment(exc, action="Cluster not assigned", status=400)
+    partner = facilitator_of(cluster)
+    messages.success(
+        request,
+        f"{cluster.name} is assigned to {partner.name} to facilitate. Its "
+        "trainings and meetings name them as you plan each one."
+        if partner
+        else f"{cluster.name} is facilitated by Edify staff.",
+    )
+    response = HttpResponse("<script>window.location.reload();</script>")
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
 @require_page_permission("cluster_detail")
 def cluster_catchment_drawer_view(request, cluster_id):
     """Approve a neighbouring district for a cluster (CD, Admin)."""

@@ -259,6 +259,10 @@ def my_plan_view(request):
         from apps.planning.partner_oversight_service import partner_facilitations
 
         context["training_facilitations"] = partner_facilitations(request.user)
+        # The clusters it is assigned to facilitate (owner, 2026-10-02).
+        from apps.clusters.facilitation import facilitated_clusters
+
+        context["facilitated_clusters"] = facilitated_clusters(request.user)
         return render(request, "pages/partner/my_plan.html", context)
 
     # Which of the reader's clusters have a group training and a cluster
@@ -294,6 +298,20 @@ def _return_context(a) -> dict:
         "return_note": return_notes.note_for(a) or "Correction required",
         "returned_by": return_notes.returned_by(a),
     }
+
+
+def _edit_state(activity, user) -> str:
+    from apps.activities.editing import edit_state
+
+    return edit_state(activity, user)
+
+
+def _can_reschedule(activity) -> bool:
+    """Whether Reschedule is offered: never on work already carried out,
+    which `services.reschedule` refuses (owner, 2026-10-02)."""
+    from apps.activities.editing import is_executed
+
+    return not is_executed(activity)
 
 
 @require_page_permission("my_plan")
@@ -438,6 +456,11 @@ def activity_detail_view(request, activity_id):
             and a.status == "awaiting_ia_verification"
         ),
         "ssa_verdict": verdict_display(a),
+        # Edit (owner, 2026-10-02): "open" while the work is still scheduled,
+        # "locked" (greyed) once it has been carried out, "" when it is not
+        # this reader's to edit. Reschedule follows the same line.
+        "edit_state": _edit_state(a, request.user),
+        "can_reschedule": _can_reschedule(a),
         **_return_context(a),
         **_facilitator_context(request.user, a),
     }
@@ -928,6 +951,16 @@ def reschedule_drawer_view(request, activity_id):
         )
         return HttpResponseForbidden(
             "Access Denied: You do not have permission to access this activity drawer."
+        )
+
+    # Work already carried out keeps its day (owner, 2026-10-02): the service
+    # refuses the move, so the drawer says so instead of offering a form.
+    from apps.activities.editing import is_executed
+
+    if is_executed(a):
+        return notice_fragment(
+            "This activity has already been carried out, so it can no longer "
+            "be rescheduled. Only an activity that is still scheduled can be."
         )
 
     # Rescheduling deliberately reuses the shared schedule drawer in its safe
@@ -1778,12 +1811,180 @@ def facilitator_drawer_view(request, activity_id):
             return response
         return local_redirect("/my-plan")
 
+    from apps.activities.facilitation import session_noun
+
     context = {
         "act": a,
         "current_facilitator": facilitator_label(a),
+        "session_noun": session_noun(a.activity_type),
         "drawer_size": "sm",
     }
     return render(request, "partials/my_plan/facilitator_drawer.html", context)
+
+
+def _edit_drawer_context(user, a) -> dict:
+    """What the Edit drawer shows for one planned activity."""
+    from apps.activities import editing
+    from apps.activities.facilitation import session_noun, takes_facilitator
+    from apps.core.clock import local_day
+    from apps.core.enums import SsaIntervention
+
+    context = {
+        "act": a,
+        "edit_day": a.planned_date or local_day(a.scheduled_date),
+        "takes_facilitator": takes_facilitator(a.activity_type),
+        "session_noun": session_noun(a.activity_type),
+        "interventions": SsaIntervention.choices,
+        "is_cluster_session": editing.is_cluster_session(a),
+        "may_move_school": editing.may_move_school(a),
+        "drawer_size": "md",
+    }
+    if context["is_cluster_session"]:
+        from apps.activities.models import ClusterActivityAttendance
+        from apps.clusters.services import active_schools
+
+        invited = set(
+            ClusterActivityAttendance.objects.filter(
+                activity=a, invited=True
+            ).values_list("school_id", flat=True)
+        )
+        context["member_schools"] = [
+            {
+                "id": school.id,
+                "name": school.name,
+                "school_id": school.school_id,
+                "invited": school.id in invited,
+            }
+            for school in active_schools(a.cluster_id)
+        ]
+        context["schools_invited"] = len(invited)
+    elif context["may_move_school"]:
+        context["movable_schools"] = list(
+            editing.movable_schools(a, user).values("id", "school_id", "name")
+        )
+    try:
+        pair = in_school_training_pair(a.id, user)
+    except Exception:  # noqa: BLE001 — a broken pair is the save's to refuse
+        pair = None
+    if pair is not None:
+        training, visit = pair
+        context["other_half"] = visit if a.id == training.id else training
+    return context
+
+
+@require_page_permission("my_plan")
+def edit_activity_drawer_view(request, activity_id):
+    """The Edit drawer for a planned activity (owner, 2026-10-02: "when one
+    opens view activities, they should be able to click edit button which
+    then allows them to edit the activities").
+
+    Opens only for staff work that is still scheduled and that the reader
+    may run; `apps.activities.editing.edit` repeats every check on save.
+    """
+    from apps.activities import editing
+
+    a = get_object_or_404(
+        Activity.objects.select_related("school", "cluster"),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
+    if not RolePermissionService.can_view_record(request.user, a):
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to edit this activity."
+        )
+    state = editing.edit_state(a, request.user)
+    if state == "locked":
+        return notice_fragment(editing.LOCKED_REASON)
+    if state != "open":
+        return notice_fragment(
+            "This activity is not yours to edit, or it is no longer a "
+            "scheduled plan."
+        )
+    return render(
+        request,
+        "partials/my_plan/edit_activity_drawer.html",
+        _edit_drawer_context(request.user, a),
+    )
+
+
+@require_page_permission("my_plan")
+def edit_activity_action(request, activity_id):
+    """Save the Edit drawer through `apps.activities.editing.edit`."""
+    from apps.activities import editing
+
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not RolePermissionService.can_view_record(request.user, a):
+        audit_log(
+            action="unauthorized_mutation_attempt",
+            subject_kind="Activity",
+            subject_id=str(a.id),
+            actor_id=str(request.user.id),
+            actor_role=request.user.active_role,
+            success=False,
+            reason="User attempted to edit an activity outside their scoped schools/ownership.",
+        )
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to edit this activity."
+        )
+    if request.method != "POST":
+        return local_redirect(f"/my-plan/{activity_id}")
+
+    data = {"reason": request.POST.get("reason", "").strip()}
+    for key, name in (
+        ("scheduledDate", "scheduled_date"),
+        ("endDate", "end_date"),
+    ):
+        value = request.POST.get(name, "").strip()
+        if value:
+            data[key] = value
+    for key, name in (
+        ("activityPurposeText", "activity_purpose_text"),
+        ("expectedOutcome", "expected_outcome"),
+        ("focusIntervention", "focus_intervention"),
+        ("facilitatingPartnerId", "facilitating_partner_id"),
+        ("schoolId", "school_id"),
+    ):
+        if name in request.POST:
+            data[key] = request.POST.get(name, "").strip()
+    # The checklist posts nothing when every box is unticked, so the form
+    # says it was shown; an empty list is then a real answer, and refused.
+    if request.POST.get("invited_schools_shown"):
+        data["invitedSchoolIds"] = [
+            s.strip() for s in request.POST.getlist("invited_school_ids") if s.strip()
+        ]
+
+    try:
+        result = editing.edit(activity_id, data, request.user)
+    except Exception as exc:
+        audit_log(
+            action="edit_activity",
+            subject_kind="Activity",
+            subject_id=str(a.id),
+            actor_id=str(request.user.id),
+            actor_role=request.user.active_role,
+            success=False,
+            reason=str(exc),
+        )
+        return error_fragment(exc, action="Activity not saved", status=400)
+
+    audit_log(
+        action="edit_activity",
+        subject_kind="Activity",
+        subject_id=str(a.id),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=True,
+        payload={
+            "fields": sorted(key for key in data if key != "reason"),
+            "reason": data["reason"],
+            "result_activity_id": result.get("id"),
+        },
+    )
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse("<script>window.location.reload();</script>")
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    return local_redirect(f"/my-plan/{result.get('id') or activity_id}")
 
 
 @require_page_permission("my_plan")

@@ -297,60 +297,22 @@ changes cannot price an activity on a stale count.
   </div>
 </div>
 
-{% comment %}
-  §15 — this control said "Certified Partner Agency" and submitted the
-  ASSIGNED-partner workflow, which left the activity awaiting a date the
-  agency was supposed to choose. Two different commitments under one label.
-  Booking a certified agency means staff have chosen the date: it submits
-  executor_type=certified_partner_agency, the Activity is scheduled on save,
-  and it lands dated in the agency's My Plan. The picker therefore lists only
-  agencies that are actually certified and free to take the work.
-{% endcomment %}
-{% if action == 'meeting' %}
-<div class="space-y-1">
-<label for="delivery_type" class="block edify-text-caption font-semibold text-slate-600">Delivery type</label>
-<select
-id="delivery_type"
-@change="onDeliveryChange($event.target.value); $dispatch('training-delivery-changed')"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="staff">Internal Field Staff (CCEO)</option>
-<option value="certified_partner_agency">Certified Partner Agency</option>
-</select>
-<input type="hidden" name="executor_type" :value="executorType">
-<input type="hidden" name="delivery_type" :value="isAgency ? 'partner' : 'staff'">
-
-<template x-if="isAgency">
-<div class="mt-3 space-y-1">
-<label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">Certified partner agency <span class="text-rose-500">*</span></label>
-<select
-name="assigned_partner_id"
-id="assigned_partner_id"
-x-model="selectedAgency"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">Select a certified agency…</option>
-{% for p in certified_agencies %}
-<option value="{{ p.id }}">{{ p.name }}</option>
-{% endfor %}
-</select>
-{% if certified_agencies %}
-<p class="edify-text-caption text-slate-500">The booking lands dated on the agency&rsquo;s My&nbsp;Plan; they do not schedule it again.</p>
-{% else %}
-<p class="edify-text-caption text-amber-700" role="status">No certified agency is available for this cluster. Choose Internal Field Staff, or ask the Country Director to certify one.</p>
-{% endif %}
-</div>
-</template>
-</div>
-{% else %}
-{% comment %}A group training is always run by staff; "Facilitated by" names
-who facilitates it: Staff, or any active partner (owner, 2026-09-29). It
-replaced the delivery choice that listed only certified agencies.{% endcomment %}
+{% comment %}A cluster session is always run by staff; "Facilitated by"
+names who facilitates it: Staff, or any active partner (owner, 2026-09-29).
+A cluster meeting takes one exactly as a group training does (owner,
+2026-10-02: "it should allow them to organize the cluster meeting and
+facilitate it so they will be paid facilitation fee. Just like when a partner
+is selected to facilitate when the staff schedules a training"). It replaced
+the delivery choice that booked a certified agency to run the meeting itself:
+handing a cluster to a partner only ever means the partner facilitates. The
+partner the cluster is assigned to (apps.clusters.facilitation) is chosen
+already; the planner may still name Staff or another partner for one session.{% endcomment %}
 <input type="hidden" name="executor_type" value="staff">
 <input type="hidden" name="delivery_type" value="staff">
-{% include "partials/activities/facilitated_by_field.html" with field_id="cluster_facilitating_partner_id" %}
-<p class="edify-text-caption text-slate-500">Staff run the training and complete it with the attendance and the Salesforce ID. A partner facilitator is told the date and invoices the facilitation fee.</p>
-{% endif %}
+{% include "partials/activities/facilitated_by_field.html" with field_id="cluster_facilitating_partner_id" selected=cluster_facilitator_id session_noun=session_noun %}
+{% if cluster_facilitator_id %}<p class="edify-text-caption text-slate-500" data-cluster-facilitator-note>{{ cluster.name }} is assigned to <strong>{{ cluster_facilitator_name }}</strong> to facilitate.</p>{% endif %}
+<p class="edify-text-caption text-slate-500">Staff run the {{ session_noun }}, carry its meals, venue, materials and transport, and complete it with the attendance and the Salesforce ID. A partner facilitator is told the date and is paid the facilitation fee only.</p>
+
 
 {% if action != 'meeting' %}
 {% comment %}Training first. Every governed course is listed, the ones for the

@@ -150,7 +150,7 @@ class ClusterActionsAreOneMenuTest(SimpleTestCase):
                 "Schedule Group Training",
                 "Schedule Cluster Meeting",
                 "Schedule a Day of Visits",
-                "Assign",
+                "Partner to Facilitate",
                 "Add Schools",
             ],
         )

@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from unittest.mock import patch
 
@@ -737,13 +738,17 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "(7/10)")
         self.assertContains(response, "(6/10)")
         self.assertContains(response, "Schedule")
-        # The card's Schedule and Assign share one Actions menu (owner,
-        # 2026-09-26), rather than two buttons that wrapped on a tablet.
+        # The card's Schedule and partner actions share one Actions menu
+        # (owner, 2026-09-26), rather than two buttons that wrapped on a
+        # tablet. "Assign" said neither what nor to whom; it is the partner
+        # who facilitates the cluster (owner, 2026-10-02).
         self.assertContains(response, "data-row-actions")
         self.assertContains(
-            response, f'aria-label="Assign staff to {self.cluster.name}"'
+            response,
+            f'hx-get="/clusters/{self.cluster.id}/facilitator-drawer"',
         )
-        self.assertContains(response, ">Assign</button>")
+        self.assertContains(response, ">Partner to Facilitate</button>")
+        self.assertNotContains(response, ">Assign</button>")
         self.assertNotContains(response, "Cluster Intervention Scores")
 
         cluster_card = next(
@@ -1513,47 +1518,68 @@ class FrontendViewsTestCase(TestCase):
         self.school.cluster_id = self.cluster.id
         self.school.save()
 
-        # 2. Assign cluster to partner via POST — no target date yet, so this
-        # only records the handoff (PartnerAssignment); the Activity itself
-        # is correctly deferred to schedule-time (activities.services.
-        # partner_schedule's own documented contract, same as Core Schools'
-        # assign -> schedule flow) instead of persisting an un-costed
-        # activity via raw ORM writes.
+        # 2. A cluster is assigned to a partner to FACILITATE (owner,
+        # 2026-10-02): a standing choice on the cluster with no hand-over
+        # record, no date and no cost. The old cluster hand-over, which the
+        # partner dated into work it ran itself, is refused.
         from apps.partners.models import PartnerAssignment
 
-        handoff = {
-            "cluster_id": self.cluster.id,
-            "partner_id": partner.id,
-            # Free-text activity types are gone: a partner handoff names
-            # an approved Activity Catalogue item (stable code accepted).
-            "catalogue_item_id": "ACCOUNTING_FINANCIAL_MANAGEMENT",
-            # Not the engine's primary recommendation for this cluster
-            # (members lack a verified SSA), so an authorized override
-            # reason is required.
-            "override_reason": "Cluster committee requested financial management support.",
-        }
-
-        # The supervising Programme Lead cannot make this handoff. The cluster
-        # reaches them only through their CCEO's school, and supervision is not
-        # ownership — handing a supervisee's cluster to a partner is the
-        # supervisee's decision. This used to succeed.
+        # The supervising Programme Lead cannot make this assignment. The
+        # cluster reaches them only through their CCEO's school, and
+        # supervision is not ownership — assigning a supervisee's cluster to
+        # a partner is the supervisee's decision. This used to succeed.
         self.client.force_login(pl_user)
-        refused = self.client.post("/planning/assign-partner-action", handoff)
+        refused = self.client.post(
+            f"/clusters/{self.cluster.id}/facilitator",
+            {"facilitating_partner_id": partner.id},
+        )
         self.assertEqual(refused.status_code, 403)
+        self.cluster.refresh_from_db()
+        self.assertIsNone(self.cluster.facilitating_partner_id)
+
+        # The CCEO who owns the school in that cluster makes it.
+        self.client.force_login(self.cceo_user)
+        response = self.client.post(
+            f"/clusters/{self.cluster.id}/facilitator",
+            {"facilitating_partner_id": partner.id},
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.cluster.refresh_from_db()
+        self.assertEqual(self.cluster.facilitating_partner_id, partner.id)
+        self.assertFalse(
+            PartnerAssignment.objects.filter(cluster=self.cluster).exists()
+        )
+        old_handover = self.client.post(
+            "/planning/assign-partner-action",
+            {"cluster_id": self.cluster.id, "partner_id": partner.id},
+        )
+        self.assertEqual(old_handover.status_code, 400)
         self.assertFalse(
             PartnerAssignment.objects.filter(cluster=self.cluster).exists()
         )
 
-        # The CCEO who owns the school in that cluster makes it.
-        self.client.force_login(self.cceo_user)
-        response = self.client.post("/planning/assign-partner-action", handoff)
+        # 2a. A SCHOOL is what staff hand to a partner for visits and
+        # in-school work. No target date yet, so this only records the
+        # handoff (PartnerAssignment); the Activity itself is correctly
+        # deferred to schedule-time (activities.services.partner_schedule's
+        # own documented contract, same as Core Schools' assign -> schedule
+        # flow) instead of persisting an un-costed activity via raw ORM
+        # writes.
+        response = self.client.post(
+            "/planning/assign-partner-action",
+            {
+                "school_id": self.school.school_id,
+                "partner_id": partner.id,
+                "purpose_of_visit": "ssa_support",
+            },
+        )
         self.assertEqual(response.status_code, 200, response.content)
 
-        pa = PartnerAssignment.objects.get(cluster=self.cluster, partner=partner)
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
         self.assertEqual(pa.status, "pending_scheduling")
         self.assertFalse(
             Activity.objects.filter(
-                cluster=self.cluster, assigned_partner_id=partner.id
+                school=self.school, assigned_partner_id=partner.id
             ).exists()
         )
 
@@ -2060,6 +2086,7 @@ class FrontendViewsTestCase(TestCase):
             "/planning/bulk-action",
             {
                 "action": "partner",
+                "purpose_of_visit": "ssa_support",
                 "school_ids": [self.school.school_id, second_school.school_id],
                 "partner_id": partner.id,
                 "scheduled_date": "2026-07-21",
@@ -2124,6 +2151,7 @@ class FrontendViewsTestCase(TestCase):
             "/planning/bulk-action",
             {
                 "action": "partner",
+                "purpose_of_visit": "ssa_support",
                 "school_ids": [self.school.school_id],
                 "partner_id": partner.id,
             },
@@ -2156,6 +2184,7 @@ class FrontendViewsTestCase(TestCase):
             "/planning/bulk-action",
             {
                 "action": "partner",
+                "purpose_of_visit": "ssa_support",
                 "school_ids": [self.school.school_id],
                 "partner_id": partner.id,
             },
@@ -2206,6 +2235,7 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.cceo_user)
         payload = {
             "action": "partner",
+            "purpose_of_visit": "ssa_support",
             "school_ids": [self.school.school_id],
             "partner_id": partner.id,
             "scheduled_date": "2026-07-21",
@@ -2256,6 +2286,7 @@ class FrontendViewsTestCase(TestCase):
             "/planning/bulk-action",
             {
                 "action": "partner",
+                "purpose_of_visit": "ssa_support",
                 "school_ids": [self.school.school_id],
                 "partner_id": partner.id,
                 "scheduled_date": "2026-07-21",
@@ -2273,16 +2304,14 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertTrue(activity.cost_missing)
 
-    def test_assign_partner_action_cluster_uses_default_participant_costing(self):
-        """Cluster scheduling uses a sensible default when no count is supplied."""
+    def test_assign_partner_action_no_longer_hands_a_cluster_over(self):
+        """Owner, 2026-10-02: "Assigning a cluster to the partner ONLY means
+        they facilitate the cluster activity NOT assigned to them to do school
+        visit." The cluster hand-over wrote a PartnerAssignment the partner
+        dated into work it ran and was paid for in full; a cluster is now
+        assigned to a partner to facilitate (apps.clusters.facilitation)."""
         from apps.partners.models import Partner, PartnerAssignment
-        from apps.activities.models import Activity
-        from apps.budget.models import CostSetting
 
-        CostSetting.objects.get_or_create(
-            key="partner_cluster_activity_rate",
-            defaults={"label": "Partner cluster activity rate", "unit_cost": 40000},
-        )[0]
         self.school.cluster_id = self.cluster.id
         self.school.save()
         partner = Partner.objects.create(
@@ -2296,22 +2325,183 @@ class FrontendViewsTestCase(TestCase):
                 "cluster_id": self.cluster.id,
                 "partner_id": partner.id,
                 "catalogue_item_id": "FEES_ENROLMENT_MARKETING",
-                "override_reason": "Cluster committee requested an enrolment drive review.",
                 "expected_date": "2026-07-20",
             },
         )
-        self.assertEqual(response.status_code, 200, response.content)
-        pa = PartnerAssignment.objects.get(cluster=self.cluster, partner=partner)
 
-        from apps.activities.services import partner_schedule
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Partner to Facilitate", response.content)
+        self.assertFalse(PartnerAssignment.objects.filter(partner=partner).exists())
 
-        partner_user = self._partner_user_for(partner, "cluster")
-        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
-        self.assertTrue(
-            Activity.objects.filter(
-                cluster=self.cluster, assigned_partner_id=partner.id
-            ).exists()
+    def test_bulk_assign_partner_asks_for_the_reason(self):
+        """Owner, 2026-10-02: "assigning activities to a partner are still
+        bringing the old projects." Bulk used to hand each school its top
+        Catalogue recommendation, unasked; the planner now says what the
+        selection is handed over for."""
+        from apps.partners.models import Partner, PartnerAssignment
+
+        partner = Partner.objects.create(name="Bulk Reason Partner", active_status=True)
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/planning/bulk-action",
+            {
+                "action": "partner",
+                "school_ids": [self.school.school_id],
+                "partner_id": partner.id,
+            },
         )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Select the reason for assigning", response.content)
+        self.assertFalse(PartnerAssignment.objects.filter(partner=partner).exists())
+
+    def test_bulk_assign_partner_hands_over_the_chosen_training(self):
+        """One of the governed trainings, by name — including a course that
+        is normally delivered to a cluster — through the standard In-school
+        Training workflow, as a staff or Core School hand-over names it."""
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+        from apps.partners.models import Partner, PartnerAssignment
+
+        course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
+        self.assertFalse(course.individual_school_allowed)
+        partner = Partner.objects.create(name="Bulk Course Partner", active_status=True)
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/planning/bulk-action",
+            {
+                "action": "partner",
+                "purpose_of_visit": "in_school_training",
+                "training_course_id": course.id,
+                "school_ids": [self.school.school_id],
+                "partner_id": partner.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        self.assertEqual(pa.training_course_id, course.id)
+        self.assertEqual(pa.catalogue_item.workflow_kind, "in_school_training")
+        self.assertEqual(pa.expected_activity_type, "in_school_training")
+        self.assertEqual(pa.purpose_of_visit, "in_school_training")
+        self.assertEqual(pa.purpose, "Leadership")
+
+    def test_bulk_assign_partner_training_needs_its_training(self):
+        from apps.partners.models import Partner, PartnerAssignment
+
+        partner = Partner.objects.create(name="Bulk No Course", active_status=True)
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/planning/bulk-action",
+            {
+                "action": "partner",
+                "purpose_of_visit": "in_school_training",
+                "school_ids": [self.school.school_id],
+                "partner_id": partner.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Select the Training", response.content)
+        self.assertFalse(PartnerAssignment.objects.filter(partner=partner).exists())
+
+    def test_bulk_assign_partner_ssa_support_is_the_ssa_visit(self):
+        """The reason decides the work: SSA Support is the SSA collection
+        visit, never whichever project activity ranked first."""
+        from apps.partners.models import Partner, PartnerAssignment
+
+        partner = Partner.objects.create(name="Bulk SSA Partner", active_status=True)
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/planning/bulk-action",
+            {
+                "action": "partner",
+                "purpose_of_visit": "ssa_support",
+                "school_ids": [self.school.school_id],
+                "partner_id": partner.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        self.assertEqual(pa.purpose_of_visit, "ssa_support")
+        self.assertEqual(pa.expected_activity_type, "school_visit_ssa_collection")
+        self.assertIsNone(pa.training_course_id)
+
+    def test_bulk_assign_drawer_asks_for_the_reason_and_the_training(self):
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        self.client.force_login(self.cceo_user)
+        response = self.client.get(
+            "/planning/bulk-assign-partner-drawer",
+            {"school_ids": [self.school.school_id]},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('name="purpose_of_visit"', html)
+        self.assertIn("In-school Training", html)
+        self.assertIn('name="training_course_id"', html)
+        courses = json.loads(response.context["training_courses_json"])
+        self.assertEqual(
+            len(courses),
+            ActivityCatalogueItem.objects.filter(
+                is_training_course=True, status="active", partner_delivery_allowed=True
+            ).count(),
+        )
+        self.assertIn("Leadership", [course["label"] for course in courses])
+        self.assertNotIn("top eligible Catalogue recommendation", html)
+
+    def test_assign_partner_drawer_lists_every_training(self):
+        """The single hand-over offered only the courses flagged for
+        individual-school delivery — the EdTech and Early Childhood project
+        courses. It lists the governed trainings, as the staff drawer does."""
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        self.client.force_login(self.cceo_user)
+        response = self.client.get(
+            f"/planning/assign-partner-modal?school_id={self.school.school_id}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        courses = json.loads(response.context["training_activity_options_json"])
+        labels = [course["label"] for course in courses]
+        self.assertEqual(
+            len(courses),
+            ActivityCatalogueItem.objects.filter(
+                is_training_course=True, status="active", partner_delivery_allowed=True
+            ).count(),
+        )
+        for name in ("Leadership", "Biblical Integration", "Literacy/ Numeracy"):
+            self.assertIn(name, labels)
+
+    def test_assign_partner_action_hands_over_a_cluster_delivered_course(self):
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+        from apps.partners.models import Partner, PartnerAssignment
+
+        course = ActivityCatalogueItem.objects.get(stable_code="BIBLICAL_INTEGRATION")
+        partner = Partner.objects.create(name="Course Partner", active_status=True)
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/planning/assign-partner-action",
+            {
+                "school_id": self.school.school_id,
+                "partner_id": partner.id,
+                "purpose_of_visit": "in_school_training",
+                "catalogue_item_id": course.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        self.assertEqual(pa.training_course_id, course.id)
+        self.assertEqual(pa.catalogue_item.workflow_kind, "in_school_training")
+        self.assertEqual(pa.purpose, "Biblical Integration")
+        self.assertEqual(pa.focus_intervention, "exposure_to_word_of_god")
 
     def test_notification_drawer_and_mark_read(self):
         from apps.notifications.models import Notification

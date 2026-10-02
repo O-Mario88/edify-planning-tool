@@ -105,11 +105,15 @@ class RouteValidationService:
             }
         )
         if unclassified:
+            # A note, no longer a block (owner, 2026-10-02: "lift that
+            # restrictions"): the day is planned and priced as a primary
+            # district until somebody classifies it, so its route is not
+            # held as Blocked for a master-data field either.
             issues.append(
                 {
                     "code": "unclassified_district",
-                    "severity": "blocking",
-                    "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
+                    "severity": "warning",
+                    "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. Priced as a primary district until the CD/Admin classifies it.",
                 }
             )
         no_district = [s.name for s in schools if not s.district_id]

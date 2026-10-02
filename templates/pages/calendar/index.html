@@ -4,7 +4,7 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260927legend2">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261002outside">
 {% endblock %}
 
 {% block shell_content %}
@@ -210,8 +210,6 @@
           aria-label="{{ day.date|date:'l, F j, Y' }}, outside this month"
           role="gridcell"
         >
-          <span class="calendar-mobile__day-number">{{ day.date|date:"j" }}</span>
-          <span class="calendar-mobile__day-dots" aria-hidden="true"></span>
         </span>
         {% else %}
         <button
@@ -317,7 +315,13 @@
           {% for week in calendar_weeks %}
             <div class="calendar-month__row" role="row">
             {% for day in week %}
-            <article class="calendar-day{% if not day.is_current_month %} calendar-day--outside{% endif %}{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
+            {% if not day.is_current_month %}
+            {% comment %}A neighbouring month's day is a blank cell, as in the
+            date picker: its number beside the month's own read as extra days
+            (owner, 2026-10-02: "some months have more days like feb").{% endcomment %}
+            <div class="calendar-day calendar-day--outside" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}, outside this month"></div>
+            {% else %}
+            <article class="calendar-day{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
               <div class="calendar-day__topline">
                 <time datetime="{{ day.date|date:'Y-m-d' }}" class="calendar-day__number">{{ day.date|date:"j" }}</time>
                 {% if day.is_today %}<span class="calendar-day__today-label">Today</span>{% endif %}
@@ -326,6 +330,7 @@
                 {% for event in day.events %}{% include "partials/calendar/event.html" %}{% endfor %}
               </div>
             </article>
+            {% endif %}
             {% endfor %}
             </div>
           {% endfor %}

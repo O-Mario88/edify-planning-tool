@@ -12,9 +12,9 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 >
 <div id="facilitator-errors"></div>
 
-<p class="edify-text-caption text-slate-500">Now facilitated by <strong>{{ current_facilitator }}</strong>. Staff still run the training and complete it; a partner facilitator is told the date and invoices the facilitation fee.</p>
+<p class="edify-text-caption text-slate-500">Now facilitated by <strong>{{ current_facilitator }}</strong>. Staff still run the {{ session_noun|default:"training" }} and complete it; a partner facilitator is told the date and invoices the facilitation fee.</p>
 
-{% include "partials/activities/facilitated_by_field.html" with field_id="change_facilitating_partner_id" selected=act.facilitating_partner_id %}
+{% include "partials/activities/facilitated_by_field.html" with field_id="change_facilitating_partner_id" selected=act.facilitating_partner_id session_noun=session_noun %}
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>

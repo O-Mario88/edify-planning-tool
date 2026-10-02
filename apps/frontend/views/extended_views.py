@@ -2,6 +2,7 @@
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
+from apps.core.clock import local_day
 from apps.core.metrics import render_precomputed_metric_item
 
 from apps.core.donut import build_gauge
@@ -421,7 +422,7 @@ def calendar_view(request):
 
     for activity in activity_rows:
         start_date = (
-            activity.scheduled_date.date()
+            local_day(activity.scheduled_date)
             if activity.scheduled_date
             else activity.planned_date
         )

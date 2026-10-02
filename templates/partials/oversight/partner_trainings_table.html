@@ -18,10 +18,10 @@ drawer, so this page stays read-only (no write from the table itself).
 {% endcomment %}
 {% paginate facilitated_trainings "partner_trainings_page" as page %}
 <section class="partner-plan-group" aria-labelledby="partner-plan-trainings">
-  <h3 id="partner-plan-trainings" class="partner-plan-group__title" data-no-titlebar>Trainings facilitated ({{ facilitated_trainings|length }})</h3>
+  <h3 id="partner-plan-trainings" class="partner-plan-group__title" data-no-titlebar>Trainings and meetings facilitated ({{ facilitated_trainings|length }})</h3>
   <div class="school-plan-table-scroll">
     <table class="school-plan-table partner-plan-table" data-pinned-actions data-partner-trainings-table>
-      <caption class="sr-only">Group trainings {{ active_partner.name }} facilitates{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
+      <caption class="sr-only">Group trainings and cluster meetings {{ active_partner.name }} facilitates{% if plan_period_label %}, {{ plan_period_label }}{% endif %}</caption>
       <thead><tr>
         <th scope="col">Cluster Name</th>
         <th scope="col">District</th>

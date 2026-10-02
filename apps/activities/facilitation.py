@@ -20,17 +20,34 @@ facilitating partner:
   materials) stays staff money, exactly as for any staff training.
 
 This module is the one place that says which lines are the partner's.
+
+Cluster meetings (owner, 2026-10-02): "Assigning a cluster to the partner ONLY
+means they facilitate the cluster activity NOT assigned to them to do school
+visit … it should allow them to organize the cluster meeting and facilitate it
+so they will be paid facilitation fee. Just like when a partner is selected to
+facilitate when the staff schedules a training." So a cluster meeting takes a
+facilitating partner exactly as a group training does: it stays the officer's
+work, and a meeting a partner facilitates carries the facilitation fee, which
+is the partner's. A meeting staff facilitate still has no fee.
 """
 
 from __future__ import annotations
 
 from django.db.models import Q, Sum
 
+from apps.core.activity_types import CLUSTER_MEETING_TYPES
 from apps.core.enums import ActivityType
 
-#: The group trainings a partner may facilitate. A cluster meeting has no
-#: facilitation fee, and school-level trainings are not group sessions.
-FACILITATED_TRAINING_TYPES = frozenset({ActivityType.CLUSTER_TRAINING.value})
+#: The cluster sessions a partner facilitates when staff hand one to it: the
+#: group trainings and, since 2026-10-02, the cluster meetings. School-level
+#: trainings are not cluster sessions; they name a facilitator directly.
+FACILITATED_TRAINING_TYPES = frozenset(
+    {
+        ActivityType.CLUSTER_TRAINING.value,
+        ActivityType.CLUSTER_TRAINING_SSA_COLLECTION.value,
+        *(str(value) for value in CLUSTER_MEETING_TYPES),
+    }
+)
 
 #: The cost-line type of the facilitation fee (costing_service._line_item_type).
 FEE_LINE_TYPE = "facilitation"
@@ -118,7 +135,15 @@ FACILITATOR_TRAINING_TYPES = frozenset(
         ActivityType.CORE_TRAINING.value,
         ActivityType.TRAINING.value,
         ActivityType.SCHOOL_IMPROVEMENT_TRAINING.value,
+        # A cluster meeting a partner organises and facilitates (owner,
+        # 2026-10-02).
+        *(str(value) for value in CLUSTER_MEETING_TYPES),
     }
+)
+
+#: What a refusal calls the work that takes a facilitator.
+FACILITATOR_ONLY_MESSAGE = (
+    "Only a training or a cluster meeting takes a Facilitated by partner."
 )
 
 #: What "Facilitated by" reads when Edify staff facilitate.
@@ -134,6 +159,16 @@ FACILITATOR_EDITABLE_STATUSES = frozenset(
 def takes_facilitator(activity_type) -> bool:
     """Whether staff name who facilitates this type of work."""
     return (activity_type or "") in FACILITATOR_TRAINING_TYPES
+
+
+def is_meeting(activity_type) -> bool:
+    """Whether this is a cluster meeting rather than a training."""
+    return (activity_type or "") in CLUSTER_MEETING_TYPES
+
+
+def session_noun(activity_type) -> str:
+    """ "meeting" or "training", for a sentence about facilitated work."""
+    return "meeting" if is_meeting(activity_type) else "training"
 
 
 def facilitator_partners():

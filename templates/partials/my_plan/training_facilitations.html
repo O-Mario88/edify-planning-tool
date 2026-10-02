@@ -6,7 +6,8 @@ partner side. Create a table for training facilitation on the partner side and
 each facilitation fetches the facilitation fee from the database ... and also
 help the partner make the invoices."
 
-One row per training this partner facilitates. The training is the officer's
+One row per training or cluster meeting (owner, 2026-10-02) this partner
+facilitates. The training is the officer's
 record (apps.activities.facilitation), so it is not copied: the partner sees
 it here with the facilitation fee its cost lines carry, where the fee's
 invoice stands, and a button that opens the period invoice drawer on that
@@ -17,7 +18,7 @@ partner_facilitations).
 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3">
 <div class="flex items-center gap-2 min-w-0">
 <span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.2-3.4v5.2A2 2 0 0117 12.6 9.7 9.7 0 0112 14a9.7 9.7 0 01-5-1.4 2 2 0 01-1.2-1.8V9.6L12 14z"/></svg></span>
-<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Training Facilitation</h2>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Training and Meeting Facilitation</h2>
 </div>
 <div class="flex items-center gap-1.5 shrink-0">
 <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] border border-[var(--edify-primary)]/20">{{ training_facilitations|length }}</span>
@@ -69,7 +70,7 @@ partner_facilitations).
 </table>
 {% include "components/table_pager.html" with pager=facilitations_pager param="training_facilitations_page" pagination_label="Training facilitation pages" %}
 {% else %}
-<div class="px-5 py-4">{% include "components/empty_state.html" with message="No trainings facilitated by your organisation yet." %}</div>
+<div class="px-5 py-4">{% include "components/empty_state.html" with message="No trainings or meetings facilitated by your organisation yet." %}</div>
 {% endif %}
 </div>
 </div>

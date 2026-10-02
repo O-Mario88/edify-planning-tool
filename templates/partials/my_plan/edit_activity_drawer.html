@@ -1,0 +1,142 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+{% comment %}
+Edit a planned activity (owner, 2026-10-02): "the users should be able to edit
+and change the activities, add or remove schools, change dates which should
+ask them for reason to reschedule … only planned activities that are still at
+scheduled mode should be editable."
+
+One form for what a plan may still change: its day, its school or the schools
+it invites, who facilitates it, and what it is for. Moving the day or the
+school asks why, as Reschedule always has. Every rule is the service's
+(apps.activities.editing.edit); the drawer opens only for work the reader may
+run that is still scheduled.
+{% endcomment %}
+
+{% block drawer_title %}Edit {% firstof act.activity_name_snapshot act.get_activity_type_display %}{% endblock %}
+{% block drawer_subtitle %}{% if act.cluster %}{{ act.cluster.name }}{% elif act.school %}{{ act.school.name }}{% endif %}{% if edit_day %} · {{ edit_day|date:"j M Y" }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<form
+  hx-post="/my-plan/{{ act.id }}/edit"
+  hx-target="#edit-activity-errors"
+  hx-disabled-elt="find button[type=submit]"
+  class="space-y-4 text-[12px] font-medium text-slate-600"
+  data-edit-activity
+  x-data="{
+    planDay: '{{ edit_day|date:'Y-m-d' }}',
+    firstDay: '{{ edit_day|date:'Y-m-d' }}',
+    lastDay: '{{ act.end_date|date:'Y-m-d' }}',
+    firstLastDay: '{{ act.end_date|date:'Y-m-d' }}',
+    schoolCode: '{{ act.school.school_id|default:''|escapejs }}',
+    firstSchoolCode: '{{ act.school.school_id|default:''|escapejs }}',
+    invitedCount: {{ schools_invited|default:0 }},
+    get dayMoved() { return this.planDay !== this.firstDay || this.lastDay !== this.firstLastDay; },
+    get schoolMoved() { return this.schoolCode !== this.firstSchoolCode; },
+    get asksWhy() { return this.dayMoved || this.schoolMoved; },
+    syncInvited() {
+      this.invitedCount = this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked').length;
+    }
+  }"
+>
+  {% csrf_token %}
+  <div id="edit-activity-errors" aria-live="polite"></div>
+
+  {% if other_half %}
+  <p class="edify-note" data-tone="info" role="note" data-edit-pair-note>This in-school training and its school visit are one mission: a new date or school moves both.</p>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="edit_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Scheduled date <span class="text-rose-500">*</span></label>
+    <input id="edit_scheduled_date" type="date" name="scheduled_date" x-model="planDay" value="{{ edit_day|date:'Y-m-d' }}" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+  </div>
+  {% if act.end_date %}
+  <div class="space-y-1">
+    <label for="edit_end_date" class="block edify-text-caption font-semibold text-slate-600">End date</label>
+    <input id="edit_end_date" type="date" name="end_date" x-model="lastDay" value="{{ act.end_date|date:'Y-m-d' }}" class="w-full rounded-control border border-slate-200 px-3 py-2">
+    <p class="edify-text-caption text-slate-500">Left as it is, the activity keeps its length when the start moves.</p>
+  </div>
+  {% endif %}
+
+  {% if is_cluster_session %}
+  <div data-edit-invited-schools>
+    <input type="hidden" name="invited_schools_shown" value="1">
+    <div class="flex items-baseline justify-between gap-2">
+      <span id="edit-schools-invited-title" class="edify-text-caption font-semibold text-slate-600">Schools invited <span class="text-rose-500">*</span></span>
+      <span class="edify-text-caption text-slate-500" aria-live="polite"><span x-text="invitedCount"></span> of {{ member_schools|length }}</span>
+    </div>
+    <div role="group" aria-labelledby="edit-schools-invited-title" x-ref="invitedList"
+         class="mt-1.5 max-h-56 overflow-y-auto rounded-control border border-slate-200 bg-slate-50">
+      {% for s in member_schools %}
+      <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100/50">
+        <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
+               {% if s.invited %}checked{% endif %}
+               @change="syncInvited()"
+               class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+        <span class="min-w-0 flex-1">
+          <span class="block text-[13px] font-semibold text-slate-700 truncate">{{ s.name }}</span>
+          <span class="block edify-text-caption font-medium text-slate-400">{{ s.school_id }}</span>
+        </span>
+      </label>
+      {% empty %}
+      <p class="px-3 py-4 text-[13px] font-semibold text-slate-500">This cluster has no active schools to invite.</p>
+      {% endfor %}
+    </div>
+    <p class="mt-1 edify-text-caption text-slate-500">Tick a school to add it and untick one to remove it. The head count and the cost follow the schools invited.</p>
+  </div>
+  {% elif may_move_school %}
+  <div class="space-y-1" data-edit-school>
+    <label for="edit_school_id" class="block edify-text-caption font-semibold text-slate-600">School</label>
+    <select id="edit_school_id" name="school_id" x-model="schoolCode"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="{{ act.school.school_id }}">{{ act.school.name }}</option>
+      {% for s in movable_schools %}{% if s.id != act.school_id %}<option value="{{ s.school_id }}">{{ s.name }}</option>{% endif %}{% endfor %}
+    </select>
+    <p x-show="schoolMoved" style="display:none" class="edify-text-caption text-slate-500" role="status" data-edit-school-note>This activity is cancelled at {{ act.school.name }} and scheduled again at the school you chose, under that school's own rules.</p>
+  </div>
+  {% elif act.school %}
+  <p class="edify-text-caption text-slate-500" data-edit-school-fixed>At <strong>{{ act.school.name }}</strong>. This activity holds a place in the school's Core package, so it stays with this school.</p>
+  {% endif %}
+
+  <template x-if="asksWhy">
+    <div class="space-y-1" data-edit-reason>
+      <label for="edit_reason" class="block edify-text-caption font-semibold text-slate-600">Reason for the change <span class="text-rose-500">*</span></label>
+      <textarea name="reason" id="edit_reason" required rows="3"
+                placeholder="Why the date or the school is changing"
+                class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"></textarea>
+      <p class="edify-text-caption text-slate-500">Recorded with the activity, as for any reschedule.</p>
+    </div>
+  </template>
+
+  {% if takes_facilitator %}
+  {% include "partials/activities/facilitated_by_field.html" with field_id="edit_facilitating_partner_id" selected=act.facilitating_partner_id session_noun=session_noun %}
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="edit_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+    <select id="edit_focus_intervention" name="focus_intervention"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="">None</option>
+      {% for code, label in interventions %}<option value="{{ code }}"{% if code == act.focus_intervention %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit_activity_purpose_text" class="block edify-text-caption font-semibold text-slate-600">Goal</label>
+    <textarea name="activity_purpose_text" id="edit_activity_purpose_text" rows="2"
+              placeholder="What should this activity achieve?"
+              class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400">{{ act.activity_purpose_text|default:"" }}</textarea>
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit_expected_outcome" class="block edify-text-caption font-semibold text-slate-600">Expected outcome</label>
+    <textarea name="expected_outcome" id="edit_expected_outcome" rows="2"
+              class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400">{{ act.expected_outcome|default:"" }}</textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Save changes</button>
+  </div>
+</form>
+{% endblock %}

@@ -547,15 +547,20 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(training.count("\nchecked\n"), 1)
         self.assertEqual(meeting.count("\nchecked\n"), 1)
 
-    def test_a_meeting_submits_the_agency_booking_workflow(self):
+    def test_a_meeting_asks_who_facilitates_it(self):
+        """Owner, 2026-10-02: a cluster meeting takes a facilitator "just
+        like when a partner is selected to facilitate when the staff schedules
+        a training". The choice that booked a certified agency to run the
+        meeting itself is gone: staff run it, and a partner facilitates."""
         html = self._drawer_for("meeting")
-        self.assertIn('value="certified_partner_agency"', html)
-        self.assertIn('name="executor_type"', html)
-
-    def test_a_meeting_offers_only_certified_agencies(self):
-        html = self._drawer_for("meeting")
-        self.assertIn(self.certified.name, html)
-        self.assertNotIn(self.uncertified.name, html)
+        self.assertIn('name="facilitating_partner_id"', html)
+        self.assertIn('<option value="">Staff</option>', html)
+        for partner in (self.certified, self.uncertified):
+            self.assertIn(f'<option value="{partner.id}">{partner.name}</option>', html)
+        self.assertIn('name="executor_type" value="staff"', html)
+        self.assertIn('name="delivery_type" value="staff"', html)
+        self.assertNotIn('value="certified_partner_agency"', html)
+        self.assertNotIn('name="assigned_partner_id"', html)
 
     def test_a_training_asks_who_facilitates_it(self):
         """Owner, 2026-09-29: "scheduling training should have a Facilitated
