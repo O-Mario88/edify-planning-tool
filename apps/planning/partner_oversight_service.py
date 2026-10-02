@@ -2057,7 +2057,11 @@ def _facilitated_rows(activities) -> list[FacilitatedTraining]:
                 partner_name=names.get(activity.facilitating_partner_id, ""),
                 cluster_name=getattr(place, "name", "") or "",
                 district=getattr(getattr(place, "district", None), "name", "") or "",
-                training_name=training,
+                # A facilitated cluster meeting names no course (owner,
+                # 2026-10-02): it reads as what it is.
+                training_name=training
+                or activity.activity_name_snapshot
+                or activity.get_activity_type_display(),
                 intervention_label=intervention,
                 target_intervention=activity.focus_intervention or "",
                 training_date=activity_day(activity),

@@ -259,6 +259,10 @@ class NotificationLinkResolver:
         # the notice leads to where its facilitation fee is invoiced.
         if event_type == "partner_facilitation_booked":
             return "/partner/my-plan", "Open Partner Invoices"
+        # A cluster assigned to the partner to facilitate (owner, 2026-10-02):
+        # it is listed under "Clusters You Facilitate" on the partner's plan.
+        if event_type == "partner_cluster_facilitation_assigned":
+            return "/partner/my-plan", "Open My Plan"
         # ── end S2 ──
         # ── IA review · IA-N ──
         # Impact Assessment's handoffs open the record or the queue that

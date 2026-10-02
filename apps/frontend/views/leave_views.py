@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from apps.core.clock import local_clock, local_day
 from apps.core.metrics import render_precomputed_metric_item
 
 import logging
@@ -256,7 +257,7 @@ def personal_time_off_view(request):
                     "school": act.school.name
                     if act.school
                     else (act.cluster.name if act.cluster else "General"),
-                    "date": act.scheduled_date.date().isoformat(),
+                    "date": local_day(act.scheduled_date).isoformat(),
                     "blockers": avail["calendarConflicts"],
                 }
             )
@@ -1432,7 +1433,7 @@ def _calendar_activities(request, month_start):
     by_day: dict = {}
     for activity in activities:
         when = (
-            activity.scheduled_date.date()
+            local_day(activity.scheduled_date)
             if activity.scheduled_date
             else activity.planned_date
         )
@@ -1464,9 +1465,7 @@ def _calendar_activities(request, month_start):
                 "label": label,
                 "where": where,
                 "status": activity.get_status_display(),
-                "time": activity.scheduled_date.strftime("%-I:%M %p")
-                if activity.scheduled_date
-                else "",
+                "time": local_clock(activity.scheduled_date),
             }
         )
 

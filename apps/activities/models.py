@@ -12,6 +12,7 @@ from __future__ import annotations
 from django.db import models, transaction
 from django.contrib.postgres.fields import ArrayField
 
+from apps.core.clock import local_day
 from apps.core.enums import (
     ActivityStatus,
     ActivityType,
@@ -561,7 +562,7 @@ class Activity(SoftDeleteModel):
 
                     slot.status = core_slot_status(self.status)
                     if self.scheduled_date:
-                        slot.scheduled_for = self.scheduled_date.date()
+                        slot.scheduled_for = local_day(self.scheduled_date)
                     # The DRF-only "complete" branch of _apply_slot_action
                     # records the Activity SF ID and the evidence URI and
                     # REFUSES to complete a slot without them. This mirror is

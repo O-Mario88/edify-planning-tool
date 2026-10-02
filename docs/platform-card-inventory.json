@@ -907,7 +907,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 156,
+   "line": 163,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
@@ -916,7 +916,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 338,
+   "line": 345,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -925,7 +925,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 373,
+   "line": 380,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -934,7 +934,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 396,
+   "line": 403,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2209,7 +2209,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 172,
+   "line": 190,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2218,7 +2218,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 208,
+   "line": 226,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2372,14 +2372,14 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 107,
+   "line": 112,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
    "branch_path": [
     [
-     12,
+     13,
      0
     ]
    ]
@@ -2519,15 +2519,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/pages/planning/index.html",
-   "line": 304,
-   "title": "Assign Partner",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3",
-   "branch_path": []
   },
   {
    "template": "templates/pages/planning/schedule.html",
@@ -6303,6 +6294,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/my_plan/facilitated_clusters.html",
+   "line": 13,
+   "title": "Clusters You Facilitate",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/my_plan/group_trainings.html",
    "line": 5,
    "title": "Group Trainings Planned for This WeekThis MonthThis QuarterThis FY",
@@ -6349,8 +6349,8 @@
   },
   {
    "template": "templates/partials/my_plan/training_facilitations.html",
-   "line": 16,
-   "title": "Training Facilitation",
+   "line": 17,
+   "title": "Training and Meeting Facilitation",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",

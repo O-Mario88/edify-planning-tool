@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
+from apps.core.clock import local_day
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.notifications.models import Notification
 
@@ -357,7 +358,7 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
         first_name = owner_name.split()[0] if owner_name else "Team Member"
 
         planned_dt = a.planned_date or (
-            a.scheduled_date.date() if a.scheduled_date else None
+            local_day(a.scheduled_date) if a.scheduled_date else None
         )
         days_overdue = (today - planned_dt).days if planned_dt else 0
 

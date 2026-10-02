@@ -11,6 +11,7 @@ import json
 
 from django.shortcuts import render
 
+from apps.core.clock import local_day
 from apps.core.rbac import EdifyRole
 from apps.core.permissions import require_page_permission
 
@@ -118,7 +119,7 @@ def _visit_feedback_review(principal) -> list[dict]:
                 row.activity.actual_delivery_date
                 or row.activity.planned_date
                 or (
-                    row.activity.scheduled_date.date()
+                    local_day(row.activity.scheduled_date)
                     if row.activity.scheduled_date
                     else None
                 )

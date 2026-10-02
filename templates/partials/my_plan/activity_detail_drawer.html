@@ -211,6 +211,25 @@ class="btn btn-primary h-8"
 Update SSA &amp; complete
 </button>
 {% elif act.status != 'completed' and act.delivery_type != 'partner' %}
+{% comment %}Edit (owner, 2026-10-02): open while the activity is still
+scheduled, greyed and disabled once it has been carried out, absent when it is
+not this reader's to edit (apps.activities.editing.edit_state).{% endcomment %}
+{% if edit_state == 'open' %}
+<button
+type="button"
+data-edit-trigger
+hx-get="/my-plan/{{ act.id }}/edit-drawer"
+hx-trigger="click consume"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-secondary h-8"
+>
+Edit
+</button>
+{% elif edit_state == 'locked' %}
+<button type="button" class="btn btn-secondary h-8" disabled aria-disabled="true" data-edit-locked title="Already carried out, so it can no longer be edited.">Edit</button>
+{% endif %}
+{% if can_reschedule %}
 <button
 type="button"
 data-reschedule-trigger
@@ -222,6 +241,7 @@ class="btn btn-secondary h-8"
 >
 Reschedule
 </button>
+{% endif %}
 <button
 hx-get="/my-plan/{{ act.id }}/complete-drawer"
 hx-target="#drawer-container"
@@ -230,6 +250,8 @@ class="btn btn-primary h-8"
 >
 Complete activity
 </button>
+{% elif edit_state == 'locked' %}
+<button type="button" class="btn btn-secondary h-8" disabled aria-disabled="true" data-edit-locked title="Already carried out, so it can no longer be edited.">Edit</button>
 {% endif %}
 </div>
 

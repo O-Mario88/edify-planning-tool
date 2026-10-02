@@ -583,6 +583,16 @@ urlpatterns = [
         name="cluster_impact_partial",
     ),
     path(
+        "clusters/<str:cluster_id>/facilitator-drawer",
+        cluster_views.cluster_facilitator_drawer_view,
+        name="cluster_facilitator_drawer",
+    ),
+    path(
+        "clusters/<str:cluster_id>/facilitator",
+        cluster_views.cluster_facilitator_action,
+        name="cluster_facilitator",
+    ),
+    path(
         "clusters/<str:cluster_id>/catchment-drawer",
         cluster_views.cluster_catchment_drawer_view,
         name="cluster_catchment_drawer",
@@ -1071,6 +1081,16 @@ urlpatterns = [
         "my-plan/<str:activity_id>/complete",
         my_plan_views.complete_activity_action,
         name="complete_activity",
+    ),
+    path(
+        "my-plan/<str:activity_id>/edit-drawer",
+        my_plan_views.edit_activity_drawer_view,
+        name="edit_activity_drawer",
+    ),
+    path(
+        "my-plan/<str:activity_id>/edit",
+        my_plan_views.edit_activity_action,
+        name="edit_activity",
     ),
     path(
         "my-plan/<str:activity_id>/cancel-drawer",
