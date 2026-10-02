@@ -158,7 +158,9 @@ class SplitCountsEachSideTest(_SplitFixture):
             3,
         )
 
-    def test_a_cluster_session_is_nobody_s_half(self):
+    def test_a_cluster_session_is_outside_the_package(self):
+        # Owner, 2026-10-02: on neither half, even where an older link still
+        # points a training slot at it (the deploy repair removes those).
         from apps.clusters.models import Cluster
 
         cluster = Cluster.objects.create(
@@ -176,6 +178,7 @@ class SplitCountsEachSideTest(_SplitFixture):
         ).update(activity_id=session.id, status="Scheduled", owner="staff")
 
         self.assertEqual(self._split().used(TRAINING, STAFF), 0)
+        self.assertEqual(self._split().used(TRAINING, PARTNER), 0)
 
     def test_a_school_with_no_package_has_no_split(self):
         CorePlan.objects.filter(id=self.plan.id).update(status="Archived")

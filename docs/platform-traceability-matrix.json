@@ -1449,6 +1449,7 @@
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/country_oversight/freshness.py",
+        "apps/planning/country_oversight/rules.py",
         "apps/planning/fy_policy.py",
         "apps/planning/services.py",
         "apps/planning/visit_gate.py",
@@ -4684,9 +4685,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "488fbd5291a337b84408f65387c1ab810eb836f9b43785bd06daed9e01aea45d",
-    "sources": "032fbb538fb1223e31b2d71b5185f428bdf1caf0eade16489212c3290ec2d8d9",
-    "sourceCount": 234,
+    "payload": "b838dfe1f51300e2747a6447c2015f64efd0354e7456a3b0028839464d0324ea",
+    "sources": "30afa9299948d8915675d93ba85aeec003eee0598423420b59d77efeef721b28",
+    "sourceCount": 235,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

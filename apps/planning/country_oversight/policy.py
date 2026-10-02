@@ -40,7 +40,7 @@ from apps.core.enums import ActivityStatus, SchoolType
 
 #: Bumped whenever a rule below changes, and stored on every follow-up and in
 #: every cache key, so a snapshot always names the policy it was taken under.
-POLICY_VERSION = "2026-10-01.1"
+POLICY_VERSION = "2026-10-02.1"
 
 # ── School groups ────────────────────────────────────────────────────────────
 CORE_FAMILY = "core_family"

@@ -57,6 +57,9 @@ AWAITING_PARTNER = "Awaiting partner schedule"
 AWAITING_COORDINATOR = "Awaiting Project Coordinator"
 ASSIGNED = "Assigned to Partner"
 UNCLUSTERED = "Unclustered"
+#: What a data collection visit is called in a list: shown, never counted
+#: (owner, 2026-10-02).
+DATA_COLLECTION = "Data collection (SSA Support)"
 #: Partner work in these states has not happened yet: without the Partner's
 #: own date it is still waiting for one.
 _WAITING_STATES = frozenset(
@@ -216,7 +219,7 @@ SPECS: dict[str, Spec] = {
             "visits",
             "Staff Visit Plans",
             "visit",
-            "Every Follow up, In-school Training and SSA Support visit staff "
+            "Every Follow up and In-school Training visit staff "
             "have planned, with who planned it. These are the visits counted "
             "against each CCEO's 560 and each Programme Lead's 280.",
             (
@@ -240,9 +243,9 @@ SPECS: dict[str, Spec] = {
             "visit",
             "Every visit planned for the year, by staff and by Partners. A "
             "Partner's visit is listed once the Partner has set its date; "
-            "until then it is in Schools Assigned to Partners. Donor, story, "
-            "social and invitation visits are listed and marked as not "
-            "counted toward a person's target.",
+            "until then it is in Schools Assigned to Partners. Data "
+            "collection, donor, story, social and invitation visits are "
+            "listed and marked as not counted toward a person's target.",
             (
                 *PLACE,
                 *SCHOOL,
@@ -333,14 +336,73 @@ SPECS: dict[str, Spec] = {
             short="Projects",
         ),
         Spec(
+            "project-partners",
+            "Project Schools With Partners",
+            "assignment",
+            "Every piece of project work a Project Coordinator has put in a "
+            "Partner's hands: the project, the Partner, the school, the "
+            "activity and its SSA intervention, who assigned it and when. "
+            "The Planned Date is the date the Partner has set; until then it "
+            "reads Awaiting partner schedule.",
+            (
+                *PLACE,
+                C("project", "Project"),
+                C("partner", "Partner"),
+                *SCHOOL,
+                C("activity", "Activity"),
+                INTERVENTION,
+                C("staff", "Assigned By"),
+                C("assigned_on", "Assigned On", is_date=True),
+                PLANNED_DATE,
+                C("status", "Status"),
+                C("state", "Partner Planning"),
+                C("staff_date", "Date Entered by Staff", is_date=True),
+                COURSE,
+                *_without(DETAILS, "project", "partner", "assigned_by", "invited"),
+            ),
+            export_only=(
+                "state",
+                "staff_date",
+                "course",
+                *(key for key in DETAIL_KEYS if key not in ("project", "partner")),
+            ),
+            short="Project Partners",
+        ),
+        Spec(
+            "project-activities",
+            "Project Activities Scheduled",
+            "activity",
+            "Every project activity with a date on it: scheduled by a Project "
+            "Coordinator or other staff, or by the Partner it was assigned "
+            "to. One row an activity, so a school with three project "
+            "activities is three rows. Work a Partner has not dated yet is in "
+            "Project Schools With Partners.",
+            (
+                *PLACE,
+                C("project", "Project"),
+                *SCHOOL,
+                C("activity", "Activity"),
+                COURSE,
+                INTERVENTION,
+                C("channel", "By"),
+                C("by_name", "Scheduled By"),
+                C("date", "Planned Date", is_date=True),
+                C("status", "Status"),
+                *_without(DETAILS, "project"),
+            ),
+            export_only=tuple(key for key in DETAIL_KEYS if key != "project"),
+            short="Project Activities",
+        ),
+        Spec(
             "plans",
             "All Activities",
             "activity",
             "Every activity planned for the year — visits, trainings, cluster "
             "meetings and other work, by staff and with Partners — with its "
             "SSA intervention. The workbook carries every planning detail, "
-            "for analysis. Donor, story, social and invitation visits are "
-            "marked as not counted toward a person's target.",
+            "for analysis. Data collection, donor, story, social and "
+            "invitation visits are marked as not counted toward a person's "
+            "target.",
             (
                 *PLACE,
                 *SCHOOL,
@@ -490,6 +552,8 @@ TAB_ORDER = (
     "visits",
     "partners",
     "projects",
+    "project-partners",
+    "project-activities",
     "trainings",
     "clusters",
     "meetings",
@@ -501,7 +565,19 @@ TAB_ORDER = (
 )
 #: The workbook "Export all" downloads: the tables Impact Assessment asked
 #: for, a sheet each.
-WORKBOOK = ("plans", "all-visits", "partners", "projects", "not-planned")
+WORKBOOK = (
+    "plans",
+    "all-visits",
+    "partners",
+    "projects",
+    "project-partners",
+    "project-activities",
+    "not-planned",
+)
+#: The three tables Impact Assessment follows the projects from (owner,
+#: 2026-10-02: "all the schools assigned to project, assigned by project
+#: coordinators to partners and scheduled").
+PROJECT_TABLES = ("projects", "project-partners", "project-activities")
 
 
 def table_url(key: str, query: str = "") -> str:
@@ -916,6 +992,7 @@ class _Book:
             "status": self.statuses.get(activity.status, activity.status),
             "counted": counted,
             "project": self.projects.get(activity.project_id, ""),
+            "_project": activity.project_id or "",
             "partner": partner if channel == "Partner" else "",
             "assigned_by": "",
             "facilitator": self.partners.get(activity.facilitating_partner_id, ""),
@@ -932,6 +1009,12 @@ class _Book:
             "rescheduled": activity.reschedule_count or 0,
             "recorded": _local(activity.created_at),
             "is_training": activity.activity_type in self.training_types,
+            # A Follow up or an In-school Training: the two visits that count
+            # (an in-school training is a training too).
+            "is_visit": rules.visit_kind(
+                activity.activity_type, activity.purpose_type, activity.project_id
+            )
+            is not None,
         }
         if activity.school_id is None:
             row["invited"] = self.invited.get(activity.id, 0)
@@ -966,7 +1049,13 @@ def _outreach_rows(book: _Book) -> list:
     book.learn(found)
     return _kept(
         book.row(
-            a, book.staff.get(a.responsible_staff_id), channel="Staff", counted="No"
+            a,
+            book.staff.get(a.responsible_staff_id),
+            channel="Staff",
+            counted="No",
+            label=DATA_COLLECTION
+            if rules.is_data_collection(a.activity_type, a.purpose_type)
+            else "",
         )
         for a in found
     )
@@ -1073,25 +1162,30 @@ def _partner_session_rows(book: _Book, *, meetings: bool | None = None) -> list:
     return rows
 
 
-def _partner_rows(book: _Book, *, every: bool = False) -> list:
-    """Every piece of work in a Partner's hands, under who assigned it.
+def _partner_rows(
+    book: _Book, *, every: bool = False, data_collection: bool = False
+) -> list:
+    """Every piece of work in a Partner's hands, under who assigned it: the
+    in-school trainings and follow ups a school is assigned for.
 
-    ``every`` adds the work the rulebook does not count — Alumni, a project
-    no SSA intervention measures — for the list of every activity."""
+    The lists of what is planned, counted or not, add the rest: ``every``
+    the work the rulebook does not count — Alumni, a project no SSA
+    intervention measures; ``data_collection`` the data collection assigned
+    beside a school's support, alone (owner, 2026-10-02)."""
     from apps.planning.partner_oversight_service import describe_work
 
     if not book.partner_side:
         return []
     reads = book.reads
     handovers = list(
-        reads.handovers(every=every).select_related(
+        reads.handovers(every=every, data_collection=data_collection).select_related(
             "school",
             "training_course",
             "catalogue_item",
             "source_activity__training_course",
         )
     )
-    work = _read(reads.partner_work(every=every))
+    work = _read(reads.partner_work(every=every, data_collection=data_collection))
     book.learn(
         work,
         staff_ids={
@@ -1166,21 +1260,25 @@ def _partner_rows(book: _Book, *, every: bool = False) -> list:
                 "partner": partner,
                 "assigned_by": who,
                 "activity": (
-                    rules.KIND_LABELS.get(kind, "Visit")
+                    DATA_COLLECTION
+                    if data_collection
+                    else rules.KIND_LABELS.get(kind, "Visit")
                     if is_visit
                     else (book.type_label(expected) or "Training")
                 ),
                 "course": course,
                 "purpose": purpose,
                 "intervention": intervention,
-                "is_training": not is_visit,
+                "is_training": not is_visit and not data_collection,
+                "is_visit": is_visit,
                 "assigned_on": _local(h.created_at),
                 "date": None,
                 "staff_date": None,
                 "state": AWAITING_PARTNER,
                 "status": ASSIGNED,
-                "counted": "",
+                "counted": "No" if data_collection else "",
                 "project": book.projects.get(h.project_id, ""),
+                "_project": h.project_id or "",
                 "facilitator": "",
                 "monitor": who if h.monitoring_staff_id else "",
                 "quarter": "",
@@ -1205,8 +1303,13 @@ def _partner_rows(book: _Book, *, every: bool = False) -> list:
             a.school.account_owner_id,
         )
         kind = rules.visit_kind(a.activity_type, a.purpose_type)
+        label = DATA_COLLECTION if data_collection else rules.KIND_LABELS.get(kind, "")
         row = book.row(
-            a, person, channel="Partner", label=rules.KIND_LABELS.get(kind) or ""
+            a,
+            person,
+            channel="Partner",
+            label=label,
+            counted="No" if data_collection else "",
         )
         if row is None:
             continue
@@ -1399,9 +1502,7 @@ def _duplicate_table(user, filters, table: Table, extra: Extra) -> Table:
         ),
     )
     book = _Book(user, everyone, reads=reads)
-    plans = _visit_rows(book) + [
-        row for row in _partner_rows(book) if not row["is_training"]
-    ]
+    plans = _visit_rows(book) + [row for row in _partner_rows(book) if row["is_visit"]]
     rows = []
     for plan in plans:
         school = schools.get(plan["school_id"])
@@ -1528,7 +1629,9 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             + [
                 row
                 for row in _partner_rows(book)
-                if not row["is_training"] and row["state"] == PARTNER_PLANNED
+                + _partner_rows(book, data_collection=True)
+                if (row["is_visit"] or not row["is_training"])
+                and row["state"] == PARTNER_PLANNED
             ],
             twice,
         )
@@ -1546,6 +1649,48 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             f"{_count_line(len(rows), spec.unit)} at {schools:,} "
             f"school{'' if schools == 1 else 's'} · {_partner_balance(rows)}"
         )
+    elif key == "project-partners":
+        # Every project's, whether the rulebook counts its work or not:
+        # Alumni and data collection are a coordinator's assignments too.
+        rows = [
+            row
+            for row in _partner_rows(book, every=True)
+            + _partner_rows(book, data_collection=True)
+            if row["_project"]
+        ]
+        table.rows = places.sort(rows, "project", "partner", "school", "date")
+        schools = len({row["school_id"] for row in rows})
+        table.summary = (
+            f"{_count_line(len(rows), spec.unit)} at {schools:,} "
+            f"school{'' if schools == 1 else 's'} · {_partner_balance(rows)}"
+        )
+    elif key == "project-activities":
+        rows = [
+            row
+            for row in (
+                _visit_rows(book)
+                + _outreach_rows(book)
+                + _training_rows(book, skip_counted_visits=True)
+                + _other_rows(book)
+                + _session_rows(book)
+                + [
+                    row
+                    for row in _partner_rows(book, every=True)
+                    + _partner_rows(book, data_collection=True)
+                    + _partner_session_rows(book)
+                    if row["state"] == PARTNER_PLANNED
+                ]
+            )
+            if row["_project"]
+        ]
+        table.rows = places.sort(rows, "project", "date", "school", "activity")
+        by_staff = sum(1 for row in rows if row["channel"] == "Staff")
+        projects = len({row["_project"] for row in rows})
+        table.summary = (
+            f"{_count_line(len(rows), spec.unit)} in {projects:,} "
+            f"project{'' if projects == 1 else 's'} · {by_staff:,} by staff · "
+            f"{len(rows) - by_staff:,} by Partners"
+        )
     elif key == "plans":
         rows = _flag(
             _visit_rows(book)
@@ -1553,8 +1698,10 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             + _training_rows(book, skip_counted_visits=True)
             + _other_rows(book)
             + _session_rows(book)
-            # Listed, counted nowhere: Alumni work in a Partner's hands too.
+            # Listed, counted nowhere: Alumni work and data collection in a
+            # Partner's hands too.
             + _partner_rows(book, every=True)
+            + _partner_rows(book, data_collection=True)
             + _partner_session_rows(book),
             twice,
         )

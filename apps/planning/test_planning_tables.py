@@ -110,19 +110,28 @@ class PeopleTablesTest(TableWorld):
         table = self.table("visits")
         self.assertEqual(len(table.rows), self.country().p_visits)
         # Under whoever holds the school; who planned the visit is a column.
+        # The Lead's data collection visit is not one of them: only a Follow
+        # up and an In-school Training count (owner, 2026-10-02).
         self.assertEqual(
             [
                 (row["lead"], row["holder"], row["staff"], row["activity"])
                 for row in table.rows
             ],
             [
-                ("Lead A", "Officer One", "Lead A", "SSA Support"),
                 ("Lead A", "Officer One", "Officer Two", "Follow up"),
                 ("Lead B", "Officer Three", "Officer Three", "Follow up"),
             ],
         )
         self.assertEqual(table.rows[0]["school_id"], here.school_id)
-        self.assertEqual(table.summary, "3 visits planned · 3 of 2,240 · 2,237 to plan")
+        self.assertEqual(table.summary, "2 visits planned · 2 of 2,240 · 2,238 to plan")
+        # It is listed with everything planned, and says it is not counted.
+        self.assertIn(
+            ("Lead A", "Data collection (SSA Support)", "No"),
+            [
+                (row["staff"], row["activity"], row["counted"])
+                for row in self.table("plans").rows
+            ],
+        )
         # The page's Programme Lead choice keeps that Lead's team.
         self.assertEqual(len(self.table("visits", program_lead=self.pl2.id).rows), 1)
         self.assertEqual(len(self.table("visits", school_type="core").rows), 1)
@@ -148,15 +157,27 @@ class PeopleTablesTest(TableWorld):
         )
         self.activity(
             dated,
-            "school_visit_ssa_collection",
+            "training_follow_up_visit",
             partner=self.partner2,
             status="partner_scheduled",
             monitored_by_staff_id=self.cceo3.id,
             partner_date_set_by="partner",
         )
+        # Data collection is assigned on any school and puts none in a
+        # Partner's hands (owner, 2026-10-02): not a row here, not on the card.
+        collected = self.school("client", self.cceo)
+        self.activity(
+            collected,
+            "school_visit_ssa_collection",
+            partner=self.partner2,
+            status="partner_scheduled",
+            monitored_by_staff_id=self.cceo.id,
+            partner_date_set_by="partner",
+        )
         table = self.table("partners")
         country = self.country()
         self.assertEqual(len(table.rows), country.pa_work)
+        self.assertNotIn(collected.school_id, [row["school_id"] for row in table.rows])
         states = {row["school_id"]: row["state"] for row in table.rows}
         self.assertEqual(states[waiting.school_id], "Awaiting partner schedule")
         # A day staff entered is not the Partner's plan (owner, 2026-10-02).
@@ -170,7 +191,7 @@ class PeopleTablesTest(TableWorld):
         self.assertIsNone(by_school[waiting.school_id]["date"])
         self.assertEqual(by_school[waiting.school_id]["staff"], "Officer One")
         self.assertEqual(by_school[dated.school_id]["partner"], "Partner Beta")
-        self.assertEqual(by_school[dated.school_id]["activity"], "SSA Support")
+        self.assertEqual(by_school[dated.school_id]["activity"], "Follow up")
         self.assertIn("1 of 3 planned by the Partner", table.summary)
         # Until the Partner sets it, no date is shown — only that staff
         # entered one, for the workbook.
@@ -240,7 +261,8 @@ class SchoolTablesTest(TableWorld):
         )
         self.activity(
             twice,
-            "school_visit_ssa_collection",
+            "in_school_training",
+            purpose_type="in_school_training",
             partner=self.partner2,
             status="partner_scheduled",
             partner_date_set_by="partner",
@@ -265,7 +287,13 @@ class SchoolTablesTest(TableWorld):
         row = table.rows[0]
         # Under whoever HOLDS the school, whoever planned there.
         self.assertEqual((row["lead"], row["holder"]), ("Lead A", "Officer One"))
-        self.assertEqual(row["why"], "Planned by staff and held by a Partner")
+        # A client school takes one support visit, a Follow up or an
+        # In-school Training: two Partners holding one each is a duplicate too.
+        self.assertEqual(
+            row["why"],
+            "Planned by staff and held by a Partner; "
+            "The same kind of Partner visit assigned twice",
+        )
         self.assertEqual(table.summary, "1 school planned twice · 3 plans between them")
 
     def test_a_plan_at_a_school_planned_twice_is_flagged_where_it_is_listed(self):
@@ -319,7 +347,7 @@ class FlatTablesTest(TableWorld):
     def test_a_page_is_rows_only_and_the_summary_states_the_balance(self):
         school = self.school("client", self.cceo)
         self.activity(school, "training_follow_up_visit", owner=self.cceo)
-        self.activity(school, "school_visit_ssa_collection", owner=self.pl, on=40)
+        self.activity(school, "training_follow_up_visit", owner=self.pl, on=40)
         table = self.table("visits")
         page = tables.page_of(table, 1)
         self.assertEqual(len(page["lines"]), 2)
@@ -577,7 +605,14 @@ class ImpactAssessmentTablesTest(TableWorld):
             [
                 (school.school_id, "Follow up", "Staff", "Officer Three", "Yes"),
                 (school.school_id, "Donor Visit", "Staff", "Officer One", "No"),
-                (other.school_id, "SSA Support", "Partner", "Partner Beta", ""),
+                # A Partner's data collection is a visit plan, not a counted one.
+                (
+                    other.school_id,
+                    "Data collection (SSA Support)",
+                    "Partner",
+                    "Partner Beta",
+                    "No",
+                ),
             ],
         )
         self.assertEqual(table.place_of(table.rows[0]), PLACE)
@@ -801,6 +836,125 @@ class ImpactAssessmentTablesTest(TableWorld):
             [waiting.school_id],
         )
 
+    def test_project_partner_work_and_scheduled_activities_have_their_tables(self):
+        # Owner, 2026-10-02: IA follows the projects from "all the schools
+        # assigned to project, assigned by project coordinators to partners
+        # and scheduled". Project Schools is one row a school; these two are
+        # one row a hand-over and one row an activity.
+        self.placed()
+        project = self.project()
+        waiting = self.school("client", self.cceo, cluster=self.cluster)
+        planned = self.school("core", self.cceo3)
+        handed = self.school("client", self.cceo2)
+        dated = self.school("client", self.cceo2)
+        for school in (waiting, planned, handed, dated):
+            ProjectSchoolAssignment.objects.create(
+                project=project, school=school, assigned_by=self.cceo_user.id
+            )
+        # The coordinator scheduled two activities at one school.
+        for on, kind in ((20, "school_visit"), (27, "in_school_training")):
+            Activity.objects.create(
+                activity_type=kind,
+                school=planned,
+                fy=FY,
+                quarter="Q1",
+                planned_date=day(on),
+                status="scheduled",
+                responsible_staff_id=self.coord.id,
+                delivery_type="staff",
+                project_id=project.id,
+                focus_intervention="leadership",
+            )
+        # One school is with a Partner who has not dated it; another's
+        # Partner has.
+        self.handover(
+            handed,
+            self.partner,
+            status="pending_scheduling",
+            project=project,
+            assigning_staff_id=self.coord.id,
+        )
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=dated,
+            fy=FY,
+            quarter="Q1",
+            planned_date=day(33),
+            status="partner_scheduled",
+            delivery_type="partner",
+            assigned_partner_id=self.partner2.id,
+            partner_date_set_by="partner",
+            monitored_by_staff_id=self.coord.id,
+            project_id=project.id,
+            purpose_type="training_follow_up",
+        )
+        # Work outside any project is in neither table.
+        self.activity(waiting, "school_visit", owner=self.cceo, on=22)
+        self.handover(waiting, self.partner, status="pending_scheduling")
+
+        for reader in (self.cd_user, self.ia_user):
+            with self.subTest(role=reader.active_role):
+                partners = self.table("project-partners", user=reader)
+                self.assertEqual(
+                    sorted(row["school_id"] for row in partners.rows),
+                    sorted([handed.school_id, dated.school_id]),
+                )
+                by_school = {row["school_id"]: row for row in partners.rows}
+                row = by_school[handed.school_id]
+                self.assertEqual(
+                    (row["project"], row["partner"], row["staff"], row["date"]),
+                    ("Rule Project", "Partner Alpha", "Coordinator Cee", None),
+                )
+                self.assertEqual(row["state"], "Awaiting partner schedule")
+                row = by_school[dated.school_id]
+                self.assertEqual(
+                    (row["partner"], row["date"], row["state"]),
+                    (self.partner2.name, day(33), "Planned by the Partner"),
+                )
+                self.assertEqual(
+                    partners.summary,
+                    "2 assignments at 2 schools · 1 of 2 planned by the Partner · "
+                    "1 awaiting partner schedule",
+                )
+
+                scheduled = self.table("project-activities", user=reader)
+                self.assertEqual(
+                    sorted((row["school_id"], row["date"]) for row in scheduled.rows),
+                    sorted(
+                        [
+                            (planned.school_id, day(20)),
+                            (planned.school_id, day(27)),
+                            (dated.school_id, day(33)),
+                        ]
+                    ),
+                )
+                staff_rows = [r for r in scheduled.rows if r["channel"] == "Staff"]
+                self.assertEqual(
+                    {row["by_name"] for row in staff_rows}, {"Coordinator Cee"}
+                )
+                self.assertEqual(
+                    scheduled.summary,
+                    "3 activities in 1 project · 2 by staff · 1 by Partners",
+                )
+        # Both open on the five place columns and the project, like the rest.
+        for key in ("project-partners", "project-activities"):
+            self.assertEqual(
+                self.shown(key)[:6],
+                [
+                    "Programme Lead",
+                    "Sub-region",
+                    "District",
+                    "CCEO / PL",
+                    "Cluster",
+                    "Project",
+                ],
+            )
+            self.assertIn("School ID", self.shown(key))
+        self.assertEqual(
+            tables.PROJECT_TABLES,
+            ("projects", "project-partners", "project-activities"),
+        )
+
     def test_all_activities_names_every_activity_and_its_ssa_intervention(self):
         self.placed()
         self.cluster.responsible_staff_id = self.cceo.id
@@ -839,7 +993,12 @@ class ImpactAssessmentTablesTest(TableWorld):
                 for r in table.rows
             ],
             [
-                ("SSA Support", "Staff", "Officer One", "Data Gathering"),
+                (
+                    "Data collection (SSA Support)",
+                    "Staff",
+                    "Officer One",
+                    "Data Gathering",
+                ),
                 ("Field Event", "Staff", "Officer One", ""),
                 ("Cluster Training", "Staff", "Officer One", "Leadership"),
                 ("Cluster Training", "Partner", "Partner Beta", "Financial Health"),

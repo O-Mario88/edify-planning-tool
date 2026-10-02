@@ -37,7 +37,12 @@ as "no change".
 
   {# The lens note under this header said the description again (owner, 2026-09-30: show each thing once); its period is the sentence above. #}
   {% page_header eyebrow="Special Projects" title="Project Monitoring" %}
-    {% slot description %}{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners; you can withdraw a school you added until its project work begins.{% endif %}{% if result.plan_period_label %} Activities read for {{ result.plan_period_label }}.{% endif %}{% endslot %}
+    {% slot description %}{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% elif result.whole_project %}Every school in every live project: whether the coordinator or a partner has planned it, whether the work happened, and whether its focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners; you can withdraw a school you added until its project work begins.{% endif %}{% if result.plan_period_label %} Activities read for {{ result.plan_period_label }}.{% endif %}{% endslot %}
+    {% comment %}The projects as three consolidated tables — every school in a
+    project, the work coordinators assigned to Partners, and the activities
+    scheduled — for the readers who follow the country's planning from them
+    (owner, 2026-10-02).{% endcomment %}
+    {% if consolidated_tables_url %}<a href="{{ consolidated_tables_url }}" class="edify-action-button h-9" data-project-consolidated-tables>Consolidated tables</a>{% endif %}
   {% endpage_header %}
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}

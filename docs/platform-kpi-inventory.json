@@ -1547,7 +1547,7 @@
    "audit_id": "KPI-SOURCE-080",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1768,
+   "line": 1775,
    "label": null,
    "keys": [
     "bar_color",
@@ -1567,7 +1567,7 @@
    "audit_id": "KPI-SOURCE-081",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2233,
+   "line": 2242,
    "label": null,
    "keys": [
     "delta_pct",
@@ -1588,7 +1588,7 @@
    "audit_id": "KPI-SOURCE-082",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1090,
+   "line": 1096,
    "label": null,
    "keys": [
     "band",
@@ -1612,7 +1612,7 @@
    "audit_id": "KPI-SOURCE-083",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1050,
+   "line": 1056,
    "label": null,
    "keys": [
     "band",
@@ -8662,7 +8662,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1147,
+   "line": 1149,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8681,7 +8681,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1157,
+   "line": 1159,
    "label": "My Work",
    "keys": [
     "count",
@@ -8700,7 +8700,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2735,
+   "line": 2737,
    "label": null,
    "keys": [
     "count",
@@ -8718,7 +8718,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1166,
+   "line": 1168,
    "label": null,
    "keys": [
     "count",
@@ -8737,7 +8737,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1217,
+   "line": 1219,
    "label": null,
    "keys": [
     "count",
@@ -8756,7 +8756,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1257,
+   "line": 1259,
    "label": null,
    "keys": [
     "count",
@@ -8775,7 +8775,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2766,
+   "line": 2768,
    "label": "All team members",
    "keys": [
     "count",
@@ -8793,7 +8793,7 @@
    "audit_id": "KPI-SOURCE-486",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 2772,
+   "line": 2774,
    "label": null,
    "keys": [
     "count",
@@ -8811,7 +8811,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1242,
+   "line": 1244,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -11029,7 +11029,7 @@
    "audit_id": "KPI-SOURCE-608",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1646,
+   "line": 1658,
    "label": "All Activities",
    "keys": [
     "count",
@@ -11048,7 +11048,7 @@
    "audit_id": "KPI-SOURCE-609",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1655,
+   "line": 1667,
    "label": null,
    "keys": [
     "count",
@@ -11844,7 +11844,7 @@
    "audit_id": "KPI-SOURCE-653",
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
-   "line": 72,
+   "line": 76,
    "label": null,
    "keys": [
     "clean",
@@ -14010,7 +14010,7 @@
   {
    "audit_id": "KPI-SURFACE-056",
    "template": "templates/pages/projects/monitoring.html",
-   "line": 46,
+   "line": 51,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -17081,24 +17081,24 @@
     "ProjectCoordinator"
    ],
    "metric_name": "School Visits Scheduled This Period",
-   "definition": "Activities of a school-visit type owned by the user within the selected period.",
+   "definition": "The user's own visits in the selected period that count toward the visits their role plans in a year (560 for a CCEO, 280 for a Programme Lead): Follow up and In-school Training visits at a school, planned and dated. Data collection (SSA Support), donor, story, social and invitation visits are named beside the figure and not counted. It is the count the Planning Monitor shows the person's Programme Lead (apps.planning.staff_plan). For a Partner's plan, which carries no such target, it is the visit-type activities assigned to the Partner.",
    "value_type": "count",
    "period": "month",
    "scope": "Signed-in user's own activities, narrowed to the selected period",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Visit-type activities owned by the user in the period",
+   "numerator": "Counted visits (planning rulebook) owned by the user in the period",
    "denominator": null,
    "date_basis": "activity_planned_date",
    "finance_stage": null,
    "primary_home": "my_plan",
    "approved_contextual_pages": [],
-   "user_question": "How much of my selected period is school contact?",
-   "user_decision": "How much of my selected period is school contact?",
+   "user_question": "How many of the visits I am expected to plan have I planned?",
+   "user_decision": "How many of the visits I am expected to plan have I planned?",
    "user_action": "my_plan",
    "drill_down": "my_plan",
    "metric_class": "context-kpi",
    "recommendation": "convert",
-   "reason": "How much of my selected period is school contact?",
+   "reason": "How many of the visits I am expected to plan have I planned?",
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
@@ -19183,7 +19183,7 @@
     "Admin"
    ],
    "metric_name": "Staff Visit Planning",
-   "definition": "Follow up, In-school Training and SSA Support visits staff have planned, counted for the person who planned them, against the visits their roles plan in a year: 560 for each CCEO and 280 for each Programme Lead. Donor, story, social and invitation visits are not counted.",
+   "definition": "Follow up and In-school Training visits staff have planned, counted for the person who planned them, against the visits their roles plan in a year: 560 for each CCEO and 280 for each Programme Lead. Data collection (SSA Support), donor, story, social and invitation visits are not counted.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's country portfolio",
@@ -20141,7 +20141,7 @@
     "Admin"
    ],
    "metric_name": "Schools Planned For Training",
-   "definition": "Schools invited to a live group training or cluster meeting in the fiscal year, or given an in-school training. Every school is to be trained.",
+   "definition": "Schools invited to a live group training or cluster meeting in the fiscal year, or given an in-school training, out of the schools that take a training: Core, Client and Core Trained. A Core Graduate school takes its visit and no training.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
@@ -20348,7 +20348,7 @@
     "Admin"
    ],
    "metric_name": "Visits Delivered Against Target",
-   "definition": "The visits that count toward a person's target \u2014 Follow up, In-school Training and SSA Support, by the planning rulebook \u2014 each person delivered in the fiscal year (submitted, awaiting verification or verified), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
+   "definition": "The visits that count toward a person's target \u2014 Follow up and In-school Training, by the planning rulebook \u2014 each person delivered in the fiscal year (submitted, awaiting verification or verified), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",

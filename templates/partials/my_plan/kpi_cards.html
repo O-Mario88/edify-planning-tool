@@ -1,2 +1,11 @@
 <!-- KPI Strip for My Plan -->
 {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Plan progress" %}
+{% comment %}
+The tiles count the whole plan; the tables below list what is still ahead,
+delivered or sent back. Work planned for a day that has passed and not yet
+delivered is the difference, and it is worked from the Dashboard (owner,
+2026-10-02: a CCEO's figures and their Programme Lead's are one plan).
+{% endcomment %}
+{% if past_due_count %}
+<p class="edify-note" data-tone="warning" role="note" data-my-plan-past-due>{{ past_due_count }} planned activit{{ past_due_count|pluralize:"y is,ies are" }} past {{ past_due_count|pluralize:"its,their" }} date and not yet completed. {{ past_due_count|pluralize:"It is,They are" }} counted above and listed under <a href="/dashboard" class="font-semibold underline">What needs you now</a> on the Dashboard, not in the tables below.</p>
+{% endif %}

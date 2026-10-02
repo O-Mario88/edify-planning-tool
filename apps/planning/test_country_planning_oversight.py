@@ -619,7 +619,10 @@ class TrainingAndClusterTest(World):
         self.session("cluster_training", [client, core])
         t = self.tree().country
         self.assertEqual(t.training_slots, 1 + 4)
-        self.assertEqual(t.training, 1 + 1)
+        # The client school's one slot. The Core school's four are in-school
+        # trainings: a cluster training is outside its package (owner,
+        # 2026-10-02) and fills none, though the school has training planned.
+        self.assertEqual(t.training, 1 + 0)
         self.assertEqual(t.any_training, 2)
 
     def test_journey_seven_meeting_coverage_is_the_planned_roster(self):

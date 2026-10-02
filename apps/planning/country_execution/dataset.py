@@ -27,8 +27,8 @@ the planning tab, this tab and the monitors (owner audit, 2026-10-02).
 
 **Which visits count.** Every activity is execution to follow, and the six
 figures count them all. Beside them, the visits the rulebook counts toward a
-person's 280 or 560 (apps.planning.country_oversight.rules: staff Follow up,
-In-school Training and SSA Support) are counted on their own — planned,
+person's 280 or 560 (apps.planning.country_oversight.rules: staff Follow up and
+In-school Training) are counted on their own — planned,
 delivered, verified — so delivery can be read against the same target the
 plan is read against.
 """
@@ -417,15 +417,11 @@ def _handed_by(activity_ids) -> dict:
 
 
 def _is_outreach(row: dict) -> bool:
-    """A donor, story, invitation or social visit at a school
-    (rules.outreach_visit_q, for a row already read)."""
+    """A donor, story, invitation or social visit, or data collection, at a
+    school (rules.outreach_visit_q, for a row already read)."""
     if not row["school_id"]:
         return False
-    activity_type = str(row["activity_type"] or "")
-    return activity_type in rules.OUTREACH_TYPES or (
-        activity_type in rules.COUNTED_VISIT_TYPES
-        and str(row["purpose_type"] or "") in rules.OUTREACH_PURPOSES
-    )
+    return rules.is_uncounted_visit(row["activity_type"], row["purpose_type"])
 
 
 def build(

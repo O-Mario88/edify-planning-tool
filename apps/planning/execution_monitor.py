@@ -491,14 +491,11 @@ def _planned_states() -> frozenset:
 
 
 def _is_outreach(activity_type: str, purpose_type) -> bool:
-    """A donor, story, invitation or social visit (rules.outreach_visit_q,
-    for a row already read at a school)."""
+    """A donor, story, invitation or social visit, or data collection
+    (rules.outreach_visit_q, for a row already read at a school)."""
     from apps.planning.country_oversight import rules
 
-    return activity_type in rules.OUTREACH_TYPES or (
-        activity_type in rules.COUNTED_VISIT_TYPES
-        and str(purpose_type or "") in rules.OUTREACH_PURPOSES
-    )
+    return rules.is_uncounted_visit(activity_type, purpose_type)
 
 
 __all__ = [

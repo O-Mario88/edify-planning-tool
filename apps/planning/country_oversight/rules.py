@@ -13,12 +13,17 @@ person is a Lead or a CCEO by the roles they HOLD, not the one they happen to
 be switched to: a Lead who also holds another role and is using it today is
 still a Lead with a team. Somebody holding both is a Lead.
 
-**Which visits count.** Three kinds, delivered by staff: SSA Support,
-In-school Training and Follow up. An in-school training is one visit and one
-training — its companion visit is the same mission written twice for
-Salesforce and never counts again. Donor, content/story, social and
-invitation visits are real work and are shown, but they are not among the
-visits a person is expected to plan.
+**Which visits count.** Two kinds, delivered by staff: In-school Training and
+Follow up (owner, 2026-10-02: "the only visits that count are in-school
+visits and Training Follow Up visits"). An in-school training is one visit
+and one training — its companion visit is the same mission written twice for
+Salesforce and never counts again. Data collection (SSA Support) counted as
+a third kind from 2026-10-01 until the owner took it out the next day: it is
+collection, not support, so it is not a school's visit, not a Core package
+visit and not one of a person's 560 or 280, and no school is limited in how
+many it takes. Donor, content/story, social and invitation visits are the
+same: real work, shown and costed, and not among the visits a person is
+expected to plan.
 
 **What a school needs in a year.** By its own type, never a family:
 
@@ -39,9 +44,9 @@ for a Partner (a certified agency booked onto a day) is assigned, not Partner
 planned.
 
 **Planned twice.** A Client, Core Trained or Core Graduate school is visited
-by staff or by a Partner, never both. A support visit and an SSA Support in
-one year are two planned visits at one covered school; two of the same kind
-are a duplicate, and so is a school that staff planned and a Partner holds.
+by staff or by a Partner, never both: two counted visits in one year are a
+duplicate, and so is a school that staff planned and a Partner holds. A data
+collection visit is neither, whoever makes it and however many there are.
 A Core school takes two staff visits and two Partner visits; more than two on
 either side is more than it takes. Nothing here removes a plan: a duplicate
 is counted once as coverage and SHOWN, so the Country Director can have it
@@ -58,7 +63,7 @@ from apps.core.enums import SchoolType
 from apps.planning.country_oversight import policy
 
 #: Named in every cache key and export, so a figure says which rules made it.
-RULES_VERSION = "2026-10-01.1"
+RULES_VERSION = "2026-10-02.1"
 
 # ── Who plans ────────────────────────────────────────────────────────────────
 PROGRAM_LEAD_ROLE = policy.PROGRAM_LEAD_ROLE
@@ -217,7 +222,10 @@ KIND_LABELS = {
     KIND_IN_SCHOOL: "In-school Training",
     KIND_FOLLOW_UP: "Follow up",
 }
-KIND_ORDER = (KIND_FOLLOW_UP, KIND_IN_SCHOOL, KIND_SSA)
+#: The kinds that count, in the order the pages show them. ``KIND_SSA`` keeps
+#: its name and label for the lists that show a data collection visit; it is
+#: no longer one of them (owner, 2026-10-02).
+KIND_ORDER = (KIND_FOLLOW_UP, KIND_IN_SCHOOL)
 
 #: The visit an in-school training writes beside itself: the same mission.
 COMPANION_PURPOSE = "in_school_training_delivery_visit"
@@ -236,9 +244,19 @@ OUTREACH_TYPES = (
     "social_visit",
 )
 
+#: Data collection: SSA Support and the assessment visits. Shown and costed,
+#: counted nowhere and limited nowhere (owner, 2026-10-02).
+DATA_COLLECTION_PURPOSES = ("ssa_support",)
+DATA_COLLECTION_TYPES = (
+    "school_visit_ssa_collection",
+    "baseline_ssa_visit",
+    "partner_ssa_collection",
+    "ssa_activity",
+    "core_assessment_visit",
+)
+
 #: The purpose a planner chose says what kind of visit it is ...
 _PURPOSE_KIND = {
-    "ssa_support": KIND_SSA,
     "in_school_training": KIND_IN_SCHOOL,
     # Retired purpose the owner called "the same as In-school training".
     "in_school_coaching": KIND_IN_SCHOOL,
@@ -247,11 +265,6 @@ _PURPOSE_KIND = {
 #: ... and a row written without one is read by its activity type. Every
 #: counted type is here: a type left out is never a counted visit.
 _TYPE_KIND = {
-    "school_visit_ssa_collection": KIND_SSA,
-    "baseline_ssa_visit": KIND_SSA,
-    "partner_ssa_collection": KIND_SSA,
-    "ssa_activity": KIND_SSA,
-    "core_assessment_visit": KIND_SSA,
     "in_school_training": KIND_IN_SCHOOL,
     "in_school_coaching_visit": KIND_IN_SCHOOL,
     "training_follow_up_visit": KIND_FOLLOW_UP,
@@ -301,7 +314,52 @@ def visit_kind(
             return None
     if purpose_type == COMPANION_PURPOSE or purpose_type in OUTREACH_PURPOSES:
         return None
+    if purpose_type in DATA_COLLECTION_PURPOSES:
+        return None
     return _PURPOSE_KIND.get(purpose_type) or _TYPE_KIND[activity_type]
+
+
+def is_data_collection(
+    activity_type: str | None, purpose_type: str | None = None
+) -> bool:
+    """Whether work of this shape is a data collection visit: by its type, or
+    by the purpose a planner chose on a visit of any other type (a Core
+    Schools visit booked as SSA Support is a ``core_visit``)."""
+    return (
+        str(activity_type or "") in DATA_COLLECTION_TYPES
+        or str(purpose_type or "") in DATA_COLLECTION_PURPOSES
+    )
+
+
+def data_collection_q(prefix: str = "") -> Q:
+    """``is_data_collection`` for rows in the database."""
+    return Q(**{f"{prefix}activity_type__in": DATA_COLLECTION_TYPES}) | Q(
+        **{f"{prefix}purpose_type__in": DATA_COLLECTION_PURPOSES}
+    )
+
+
+def is_uncounted_visit(activity_type: str | None, purpose_type=None) -> bool:
+    """A donor, story, invitation or social visit, or a data collection
+    visit: ``outreach_visit_q`` for a row already read at a school."""
+    activity_type = str(activity_type or "")
+    purpose_type = str(purpose_type or "")
+    return (
+        activity_type in OUTREACH_TYPES
+        or activity_type in DATA_COLLECTION_TYPES
+        or (
+            activity_type in COUNTED_VISIT_TYPES
+            and purpose_type in (*OUTREACH_PURPOSES, *DATA_COLLECTION_PURPOSES)
+        )
+    )
+
+
+def handover_data_collection_q(prefix: str = "") -> Q:
+    """Partner hand-overs that ask for data collection: assigned on any
+    school, and no part of "the schools assigned to Partners" for an
+    in-school training or a follow up (owner, 2026-10-02)."""
+    return Q(**{f"{prefix}purpose_of_visit__in": DATA_COLLECTION_PURPOSES}) | Q(
+        **{f"{prefix}expected_activity_type__in": DATA_COLLECTION_TYPES}
+    )
 
 
 def counted_visit_q(prefix: str = "") -> Q:
@@ -312,6 +370,7 @@ def counted_visit_q(prefix: str = "") -> Q:
         & Q(**{f"{prefix}cluster_id__isnull": True})
         & ~Q(**{f"{prefix}purpose_type": COMPANION_PURPOSE})
         & ~Q(**{f"{prefix}purpose_type__in": OUTREACH_PURPOSES})
+        & ~Q(**{f"{prefix}purpose_type__in": DATA_COLLECTION_PURPOSES})
         & not_outside_ssa_q(prefix)
     )
 
@@ -340,13 +399,25 @@ def kind_q(kind: str, prefix: str = "") -> Q:
 
 
 def outreach_visit_q(prefix: str = "") -> Q:
-    """Donor, story, invitation and social visits at a school: shown beside
-    the counted visits, never among them."""
-    return Q(**{f"{prefix}school_id__isnull": False}) & (
-        Q(**{f"{prefix}activity_type__in": OUTREACH_TYPES})
-        | (
-            Q(**{f"{prefix}activity_type__in": COUNTED_VISIT_TYPES})
-            & Q(**{f"{prefix}purpose_type__in": OUTREACH_PURPOSES})
+    """Donor, story, invitation and social visits, and data collection, at a
+    school: shown beside the counted visits, never among them."""
+    return (
+        Q(**{f"{prefix}school_id__isnull": False})
+        & Q(**{f"{prefix}cluster_id__isnull": True})
+        & (
+            Q(**{f"{prefix}activity_type__in": OUTREACH_TYPES})
+            | Q(**{f"{prefix}activity_type__in": DATA_COLLECTION_TYPES})
+            | (
+                Q(**{f"{prefix}activity_type__in": COUNTED_VISIT_TYPES})
+                & Q(
+                    **{
+                        f"{prefix}purpose_type__in": (
+                            *OUTREACH_PURPOSES,
+                            *DATA_COLLECTION_PURPOSES,
+                        )
+                    }
+                )
+            )
         )
     )
 
@@ -363,8 +434,10 @@ def planned_q(prefix: str = "") -> Q:
     )
 
 
-#: The two yearly counts at a client-rule school (apps.planning.visit_gate):
-#: SSA Support is counted apart from the support visit.
+#: The yearly count at a client-rule school (apps.planning.visit_gate): its
+#: one support visit. SSA Support was a second count until the owner took data
+#: collection out of every count (2026-10-02); ``POOL_SSA`` stays for the
+#: callers that still name it and is always empty.
 POOL_SSA = "ssa"
 POOL_SUPPORT = "support"
 
@@ -372,7 +445,7 @@ POOL_SUPPORT = "support"
 def pool_of(kind: str | None) -> str | None:
     if kind is None:
         return None
-    return POOL_SSA if kind == KIND_SSA else POOL_SUPPORT
+    return POOL_SUPPORT
 
 
 # ── What a school needs ──────────────────────────────────────────────────────
@@ -446,6 +519,19 @@ REQUIREMENTS: dict[str, TypeRequirement] = {
 
 def requirement_for(school_type: str | None) -> TypeRequirement:
     return REQUIREMENTS.get(str(school_type or ""), NO_REQUIREMENT)
+
+
+#: The types that take a training in the year. A Core Graduate school takes a
+#: visit and no training, and a Champion school neither: a page that lists
+#: schools "with no training planned" lists only these (owner, 2026-10-02:
+#: "Core graduate planned are still showing as not trained").
+TRAINED_TYPES: tuple[str, ...] = tuple(
+    school_type for school_type in TYPE_ORDER if REQUIREMENTS[school_type].trainings
+)
+
+
+def takes_training(school_type: str | None) -> bool:
+    return str(school_type or "") in TRAINED_TYPES
 
 
 def portfolio_reach(schools_by_type: dict) -> int:
@@ -582,13 +668,17 @@ def check() -> None:
     """The rulebook agrees with the enums it reads."""
     from apps.core.enums import ActivityType
 
-    unknown = set(COUNTED_VISIT_TYPES) | set(OUTREACH_TYPES)
+    unknown = (
+        set(COUNTED_VISIT_TYPES) | set(OUTREACH_TYPES) | set(DATA_COLLECTION_TYPES)
+    )
     unknown -= set(ActivityType.values)
     if unknown:
         raise ValueError(f"rulebook names unknown activity types: {sorted(unknown)}")
-    overlap = set(COUNTED_VISIT_TYPES) & set(OUTREACH_TYPES)
+    overlap = set(COUNTED_VISIT_TYPES) & (
+        set(OUTREACH_TYPES) | set(DATA_COLLECTION_TYPES)
+    )
     if overlap:
-        raise ValueError(f"types both counted and outreach: {sorted(overlap)}")
+        raise ValueError(f"types both counted and not counted: {sorted(overlap)}")
     missing = set(SchoolType.values) - set(REQUIREMENTS)
     if missing:
         raise ValueError(

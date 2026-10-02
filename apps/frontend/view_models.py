@@ -291,6 +291,7 @@ class SchoolDirectoryViewModel:
             "is_scheduled_for_visit": visit_status.is_scheduled,
             "next_visit_date": visit_status.next_date,
             "cluster_training_planned": training_coverage.planned,
+            "cluster_training_required": training_coverage.required,
             "cluster_training_status_label": training_coverage.label,
             "cluster_training_reason": training_coverage.reason,
             "project_assignment_count": project_count,

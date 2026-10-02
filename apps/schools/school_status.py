@@ -235,6 +235,9 @@ def visit_status(school, **kwargs) -> VisitStatus:
 # ── Cluster training coverage ────────────────────────────────────────────────
 TRAINING_PLANNED = "training_planned"
 NO_TRAINING_PLANNED = "no_training_planned"
+#: The school's type takes no training in the year (Core Graduate, Champion:
+#: the planning rulebook), so having none planned is not a gap.
+TRAINING_NOT_REQUIRED = "training_not_required"
 
 #: Why a school has no cluster training or meeting planned, in the words the
 #: table shows. Ordered most specific first.
@@ -244,6 +247,7 @@ REASON_CANCELED = "Existing plan canceled"
 REASON_RETURNED = "Existing plan returned"
 REASON_NO_TRAINING = "No cluster training planned"
 REASON_NO_MEETING = "No cluster meeting planned"
+REASON_NOT_REQUIRED = "This school type takes no training"
 
 
 @dataclass
@@ -266,7 +270,14 @@ class TrainingCoverage:
         return self.key == TRAINING_PLANNED
 
     @property
+    def required(self) -> bool:
+        """Whether a school of this type takes a training at all."""
+        return self.key != TRAINING_NOT_REQUIRED
+
+    @property
     def label(self) -> str:
+        if not self.required:
+            return "No Training Required"
         if not self.planned:
             return "No Training Planned"
         if self.activity_type in CLUSTER_MEETING_TYPES:
@@ -289,6 +300,7 @@ def cluster_training_coverage(
     rejected or returned session is not a plan, and the row says so.
     """
     from apps.activities.models import Activity, ClusterActivityAttendance
+    from apps.planning.country_oversight import rules
 
     rows = list(schools)
     by_id = {getattr(s, "id", s): s for s in rows}
@@ -367,6 +379,19 @@ def cluster_training_coverage(
             continue
 
         cluster_id = getattr(school, "cluster_id", None)
+        school_type = getattr(school, "school_type", None)
+        if school_type and not rules.takes_training(school_type):
+            # A Core Graduate school takes its visit and no training, and a
+            # Champion school neither: none planned is the rule, not a gap
+            # (owner, 2026-10-02: "Core graduate planned are still showing as
+            # not trained").
+            coverage[school_id] = TrainingCoverage(
+                school_id=school_id,
+                key=TRAINING_NOT_REQUIRED,
+                reason=REASON_NOT_REQUIRED,
+                cluster_id=cluster_id,
+            )
+            continue
         if not cluster_id:
             reason = REASON_NOT_CLUSTERED
         elif linked:

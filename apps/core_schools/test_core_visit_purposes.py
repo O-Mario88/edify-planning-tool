@@ -29,8 +29,7 @@ from django.test import TestCase
 from apps.activities.models import Activity, ClusterActivityAttendance
 from apps.activity_catalogue.availability import in_school_training_course_options
 from apps.activity_catalogue.models import ActivityCatalogueItem
-from apps.core_schools.core_planning_services import CorePackageSchedulingService
-from apps.core_schools.models import CoreActivitySlot, CorePlan, cslot_id
+from apps.core_schools.models import CoreActivitySlot, cslot_id
 from apps.core_schools import test_core_planning as _planning
 from apps.partners.models import Partner, PartnerAssignment
 
@@ -133,19 +132,48 @@ class CoreVisitPurposeTest(_CoreFixture):
         self.assertIsNone(self._slot("v", 1).activity_id)
 
     def test_ssa_support_still_collects_the_ssa_when_it_is_chosen(self):
+        """Data collection is booked as itself and takes no package slot
+        (owner, 2026-10-02: "the only visits that count are in-school visits
+        and Training Follow Up visits")."""
         response = self._post_visit(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
-        visit = Activity.objects.get(school=self.school, activity_type="core_visit")
+        visit = Activity.objects.get(
+            school=self.school, activity_type="school_visit_ssa_collection"
+        )
         self.assertEqual(visit.purpose_type, "ssa_support")
         self.assertTrue(visit.ssa_collection_expected)
         self.assertIsNone(visit.focus_intervention)
-        self.assertEqual(self._slot("v", 1).activity_id, visit.id)
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=visit.id))
+        self.assertIsNone(self._slot("v", 1).activity_id)
+
+    def test_data_collection_is_not_limited_by_the_package(self):
+        """Allowed "on every school irrespective of whether they have the 1
+        visit by staff or partner": three in a row, and no slot between them."""
+        for _ in range(3):
+            response = self._post_visit(purpose_of_visit="ssa_support")
+            self.assertEqual(response.status_code, 200, response.content[:300])
+            Activity.objects.filter(school=self.school).update(
+                planned_date=None, scheduled_date=None
+            )
+        self.assertEqual(
+            Activity.objects.filter(
+                school=self.school, activity_type="school_visit_ssa_collection"
+            ).count(),
+            3,
+        )
+        self.assertFalse(
+            CoreActivitySlot.objects.filter(
+                core_plan=self.plan, activity_id__isnull=False
+            ).exists()
+        )
 
     def test_a_first_visit_posted_without_a_purpose_is_ssa_support(self):
         """Unchanged: the DEFAULT is still SSA Support, it is just not forced."""
         response = self._post_visit()
         self.assertEqual(response.status_code, 200, response.content[:300])
-        visit = Activity.objects.get(school=self.school, activity_type="core_visit")
+        visit = Activity.objects.get(
+            school=self.school, activity_type="school_visit_ssa_collection"
+        )
         self.assertEqual(visit.purpose_type, "ssa_support")
         self.assertTrue(visit.ssa_collection_expected)
 
@@ -343,7 +371,11 @@ class CoreTrainingCatalogueTest(_CoreFixture):
             self.assertIn(f'<option value="{code}">', html)
 
 
-class ClusterSessionCoreCreditTest(_CoreFixture):
+class ClusterSessionsAreOutsideThePackageTest(_CoreFixture):
+    """Owner, 2026-10-02: cluster trainings and meetings are "outside the
+    package". From 2026-09-21 a session filled a training slot at every Core
+    school it invited; now it fills none, booked or attended."""
+
     def _session(self, activity_type="cluster_training", invited=None):
         session = Activity.objects.create(
             activity_type=activity_type,
@@ -367,106 +399,29 @@ class ClusterSessionCoreCreditTest(_CoreFixture):
         session.status = status
         session.save()
 
-    def test_an_invited_school_that_attended_gets_a_training_slot(self):
-        session = self._session(invited=[self.school, self.other_school])
-        self._attend(session, [self.school])
+    def _session_slots(self, session):
+        return CoreActivitySlot.objects.filter(activity_id=session.id)
 
-        slot = self._slot("t", 1)
-        self.assertEqual(slot.activity_id, session.id)
-        self.assertEqual(slot.status, "submitted_to_pl")
-        plan = CorePlan.objects.get(id=self.plan.id)
-        self.assertEqual(CorePackageSchedulingService.summary(plan)["trainings"], 1)
-        # Invited, not in the room: nothing is credited.
-        self.assertFalse(
-            CoreActivitySlot.objects.filter(
-                school_id=self.other_school.school_id, activity_id=session.id
-            ).exists()
-        )
-
-        session.status = "ia_verified"
-        session.save()
-        self.assertEqual(CorePlan.objects.get(id=self.plan.id).trainings_completed, 1)
-
-    def test_one_session_credits_every_core_school_in_the_room(self):
-        session = self._session(invited=[self.school, self.other_school])
-        self._attend(session, [self.school, self.other_school])
-        self.assertEqual(
-            CoreActivitySlot.objects.filter(activity_id=session.id).count(), 2
-        )
-        session.status = "ia_verified"
-        session.save()
-        self.assertEqual(
-            set(
-                CoreActivitySlot.objects.filter(activity_id=session.id).values_list(
-                    "status", flat=True
-                )
-            ),
-            {"ia_verified"},
-        )
-
-    def test_a_school_that_was_not_invited_is_not_credited(self):
-        session = self._session(invited=[self.other_school])
-        self._attend(session, [self.school, self.other_school])
-        self.assertFalse(
-            CoreActivitySlot.objects.filter(
-                school_id=self.school.school_id, activity_id=session.id
-            ).exists()
-        )
-
-    def test_a_cluster_meeting_counts_too(self):
-        session = self._session("cluster_meeting", invited=[self.school])
-        self._attend(session, [self.school])
-        self.assertEqual(self._slot("t", 1).activity_id, session.id)
-
-    def test_the_invitation_holds_the_slot_while_the_session_is_completed(self):
-        """Owner, 2026-09-21: a Core School trained through a cluster session
-        contributes to its package, and the booking "should move to core
-        school training planned table" — so the slot is taken at scheduling,
-        on the invitation, and the register only narrows it once submitted.
-
-        This used to assert the opposite: a session mid-completion credited
-        nobody, which RELEASED the slot back to the package for as long as
-        the register was being entered — the exact window in which the
-        scheduler could book a fifth training over it. Holding it on the
-        invitation closes that window. What the old name protected is
-        unchanged and is pinned by the two tests below: a register entered
-        mid-completion decides nothing, and a school that is not in the room
-        when it is submitted loses the slot.
-        """
-        session = self._session(invited=[self.school])
-        self._attend(session, [self.school], status="completion_started")
-        slot = self._slot("t", 1)
-        self.assertEqual(slot.activity_id, session.id)
-        self.assertEqual(slot.status, "completion_started")
-
-    def test_a_draft_register_decides_nothing_until_it_is_submitted(self):
-        """Mid-completion the slot follows the INVITATION, not the ticks: a
-        register still being entered is a draft, so unticking a school there
-        must not hand its slot back while the session is still open."""
-        session = self._session(invited=[self.school])
-        self._attend(session, [], status="completion_started")
-        self.assertEqual(self._slot("t", 1).activity_id, session.id)
-
-        # Submitted, and now the register is what counts.
-        self._attend(session, [])
+    def test_a_booked_session_takes_no_training_slot(self):
+        for kind in ("cluster_training", "cluster_meeting"):
+            session = self._session(kind, invited=[self.school, self.other_school])
+            session.save()
+            self.assertFalse(self._session_slots(session).exists(), kind)
         self.assertIsNone(self._slot("t", 1).activity_id)
 
-    def test_a_scheduled_session_takes_the_slot_before_anyone_attends(self):
-        """The reading the Core School Trainings Planned table needs: the
-        package shows 1/4 planned from the day the session is booked."""
+    def test_an_attended_session_takes_none_either(self):
+        session = self._session(invited=[self.school, self.other_school])
+        self._attend(session, [self.school, self.other_school])
+        self.assertFalse(self._session_slots(session).exists())
+
+    def test_a_slot_a_session_held_before_is_given_back_when_it_is_saved(self):
         session = self._session(invited=[self.school])
+        slot = self._slot("t", 1)
+        CoreActivitySlot.objects.filter(id=slot.id).update(
+            activity_id=session.id, status="scheduled", owner="staff"
+        )
         session.save()
-        slot = self._slot("t", 1)
-        self.assertEqual(slot.activity_id, session.id)
-        self.assertEqual(slot.status, "scheduled")
-
-    def test_removing_the_school_from_the_register_releases_the_slot(self):
-        session = self._session(invited=[self.school])
-        self._attend(session, [self.school])
-        self.assertEqual(self._slot("t", 1).activity_id, session.id)
-
-        self._attend(session, [])
-        slot = self._slot("t", 1)
+        slot.refresh_from_db()
         self.assertIsNone(slot.activity_id)
         self.assertEqual(slot.status, "Planned")
 
@@ -522,9 +477,32 @@ class CorePartnerPurposeTest(_CoreFixture):
         self.assertEqual(response.status_code, 200, response.content[:300])
         pa = PartnerAssignment.objects.get(school=self.school)
         self.assertEqual(pa.purpose_of_visit, "ssa_support")
-        self.assertEqual(pa.support_type, "Visit")
-        self.assertEqual(pa.catalogue_item.workflow_kind, "core_visit")
-        self.assertEqual(self._slot("v", 1).status, "Assigned")
+        # Data collection is assigned on any school and holds no package
+        # slot (owner, 2026-10-02).
+        self.assertEqual(pa.support_type, "")
+        self.assertEqual(pa.catalogue_item.workflow_kind, "school_visit_ssa_collection")
+        self.assertEqual(self._slot("v", 1).status, "Planned")
+
+    def test_data_collection_is_assigned_whatever_the_partner_already_holds(self):
+        """With both of the partner's package visits taken, and to the same
+        partner whose follow up is still waiting."""
+        for _ in range(2):
+            self.assertEqual(
+                self._assign(purpose_of_visit="training_follow_up").status_code, 200
+            )
+        refused = self._assign(purpose_of_visit="training_follow_up")
+        self.assertEqual(refused.status_code, 400)
+        response = self._assign(purpose_of_visit="ssa_support")
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.assertEqual(
+            PartnerAssignment.objects.filter(
+                school=self.school, purpose_of_visit="ssa_support"
+            ).count(),
+            1,
+        )
+        # One open data collection hand-over a partner, as for support.
+        again = self._assign(purpose_of_visit="ssa_support")
+        self.assertEqual(again.status_code, 400)
 
     def test_a_follow_up_handoff_names_the_training_followed_up(self):
         self._take_first_visit()
@@ -634,7 +612,7 @@ class CorePartnerPurposeTest(_CoreFixture):
             )
 
         self.assertEqual(
-            schedule_and_read("55,000", purpose_of_visit="ssa_support"),
+            schedule_and_read("55,000", purpose_of_visit="training_follow_up"),
             [("core_partner_visit", 55_000)],
         )
         course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")

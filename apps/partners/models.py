@@ -442,7 +442,11 @@ class PartnerAssignment(TimeStampedModel):
                     assert_school_accepts_another_partner,
                 )
 
-                assert_school_accepts_another_partner(self.school, self.partner_id)
+                # Data collection is not a school's support, so it neither
+                # counts as a Partner holding the school nor is held by that
+                # rule (owner, 2026-10-02).
+                if not self.is_data_collection:
+                    assert_school_accepts_another_partner(self.school, self.partner_id)
             if self.school_id and self.status in self.UNSCHEDULED_STATUSES:
                 # The same rule as uniq_open_partner_school_assignment, said
                 # in words before the database has to say it as an error.
@@ -459,6 +463,14 @@ class PartnerAssignment(TimeStampedModel):
                     )
         return super().save(*args, **kwargs)
 
+    #: The purpose of a data collection hand-over (SSA Support): assigned on
+    #: any school, counted nowhere (owner, 2026-10-02).
+    DATA_COLLECTION_PURPOSE = "ssa_support"
+
+    @property
+    def is_data_collection(self) -> bool:
+        return (self.purpose_of_visit or "") == self.DATA_COLLECTION_PURPOSE
+
     def open_duplicate(self):
         """The partner's existing open handover of this school, if any.
 
@@ -469,6 +481,9 @@ class PartnerAssignment(TimeStampedModel):
         """
         if not (self.school_id and self.partner_id):
             return None
+        # Data collection is kept apart from the school's support (owner,
+        # 2026-10-02): one open hand-over of each, never two of either.
+        data_collection = models.Q(purpose_of_visit=self.DATA_COLLECTION_PURPOSE)
         outside = self.outside_ssa
         if self._state.adding and self.project_id and not outside:
             from apps.projects.models import is_outside_ssa
@@ -486,6 +501,7 @@ class PartnerAssignment(TimeStampedModel):
                 partner_id=self.partner_id,
                 status__in=self.UNSCHEDULED_STATUSES,
             )
+            .filter(data_collection if self.is_data_collection else ~data_collection)
             .annotate(
                 _slot_support=Coalesce("support_type", models.Value("")),
                 _slot_visit=Coalesce("visit_number", models.Value("")),
@@ -626,6 +642,13 @@ class PartnerAssignment(TimeStampedModel):
             #
             # Literals rather than UNSCHEDULED_STATUSES for the same reason as
             # the condition above.
+            #
+            # Owner, 2026-10-02: "allow data collection assignment on every
+            # school irrespective of whether they have the 1 visit by staff or
+            # partner because those visits don't count." So a data collection
+            # (SSA Support) hand-over is kept apart: a partner may hold a
+            # school's follow up or in-school training and its data
+            # collection side by side, and still only one of each.
             models.UniqueConstraint(
                 "school",
                 "partner",
@@ -647,8 +670,36 @@ class PartnerAssignment(TimeStampedModel):
                 condition=(
                     models.Q(status__in=["assigned", "pending_scheduling"])
                     & models.Q(school__isnull=False)
+                    & ~models.Q(purpose_of_visit="ssa_support")
                 ),
                 name="uniq_open_partner_school_assignment",
+            ),
+            models.UniqueConstraint(
+                "school",
+                "partner",
+                Coalesce("support_type", models.Value("")),
+                Coalesce("visit_number", models.Value("")),
+                Coalesce("training_number", models.Value("")),
+                # The same key as above, project included for Alumni: every
+                # row the one constraint allowed is allowed by the two.
+                models.Case(
+                    models.When(
+                        outside_ssa=True,
+                        then=Coalesce(
+                            models.F("project"),
+                            models.Value(""),
+                            output_field=models.CharField(),
+                        ),
+                    ),
+                    default=models.Value(""),
+                    output_field=models.CharField(),
+                ),
+                condition=(
+                    models.Q(status__in=["assigned", "pending_scheduling"])
+                    & models.Q(school__isnull=False)
+                    & models.Q(purpose_of_visit="ssa_support")
+                ),
+                name="uniq_open_partner_data_collection",
             ),
             # The status vocabulary, held by the database rather than by each
             # writer's spelling (see PartnerAssignmentStatus). Literals, as

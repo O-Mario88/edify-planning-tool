@@ -159,15 +159,23 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="my_plan_visits_scheduled_period",
         label="School Visits Scheduled This Period",
         definition=(
-            "Activities of a school-visit type owned by the user within the "
-            "selected period."
+            "The user's own visits in the selected period that count toward "
+            "the visits their role plans in a year (560 for a CCEO, 280 for a "
+            "Programme Lead): Follow up and In-school Training "
+            "visits at a school, planned and dated. Data collection (SSA "
+            "Support), donor, story, social and invitation visits are named "
+            "beside the figure and not counted. "
+            "It is the count the Planning Monitor shows the person's "
+            "Programme Lead (apps.planning.staff_plan). For a Partner's plan, "
+            "which carries no such target, it is the visit-type activities "
+            "assigned to the Partner."
         ),
-        question="How much of my selected period is school contact?",
+        question="How many of the visits I am expected to plan have I planned?",
         category=Category.SCALE,
         unit=Unit.COUNT,
         service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
-        numerator="Visit-type activities owned by the user in the period",
+        numerator="Counted visits (planning rulebook) owned by the user in the period",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="Signed-in user's own activities, narrowed to the selected period",
@@ -1237,11 +1245,11 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cpo_staff_visit_planning",
         label="Staff Visit Planning",
         definition=(
-            "Follow up, In-school Training and SSA Support visits staff have "
+            "Follow up and In-school Training visits staff have "
             "planned, counted for the person who planned them, against the "
             "visits their roles plan in a year: 560 for each CCEO and 280 for "
-            "each Programme Lead. Donor, story, social and invitation visits "
-            "are not counted."
+            "each Programme Lead. Data collection (SSA Support), donor, story, "
+            "social and invitation visits are not counted."
         ),
         question="Have Programme Leads and CCEOs planned the visits their roles plan?",
         category=Category.PROGRESS,
@@ -1818,8 +1826,9 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         label="Schools Planned For Training",
         definition=(
             "Schools invited to a live group training or cluster meeting in "
-            "the fiscal year, or given an in-school training. Every school is "
-            "to be trained."
+            "the fiscal year, or given an in-school training, out of the "
+            "schools that take a training: Core, Client and Core Trained. A "
+            "Core Graduate school takes its visit and no training."
         ),
         question="How many schools will be trained this year?",
         category=Category.PROGRESS,
@@ -1939,8 +1948,8 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="execution_visits_delivered_target",
         label="Visits Delivered Against Target",
         definition=(
-            "The visits that count toward a person's target — Follow up, "
-            "In-school Training and SSA Support, by the planning rulebook — "
+            "The visits that count toward a person's target — Follow up "
+            "and In-school Training, by the planning rulebook — "
             "each person delivered in the fiscal year (submitted, awaiting "
             "verification or verified), against 280 for a Programme Lead and "
             "560 for a CCEO, summed. Donor, story, invitation and social "

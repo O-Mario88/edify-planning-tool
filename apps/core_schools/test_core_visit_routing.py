@@ -49,7 +49,10 @@ class CoreVisitRoutingTest(_CoreFixture):
             "activityType": "school_visit",
             "catalogueItemId": resolve_item_for_workflow_kind("school_visit").id,
             "scheduledDate": _weekday(TODAY + timedelta(days=3)).isoformat(),
-            "purposeType": "ssa_support",
+            # A package visit is a Training Follow Up; data collection (SSA
+            # Support) is outside the package since 2026-10-02.
+            "purposeType": "training_follow_up",
+            "focusIntervention": "leadership",
             "responsibleStaffId": self.cceo_sp.id,
             "deliveryType": "staff",
             "requireCatalogue": True,
@@ -190,7 +193,8 @@ class CoreAndClientVisitsShareADayTest(_CoreFixture):
                 "activityType": "school_visit",
                 "catalogueItemId": resolve_item_for_workflow_kind("school_visit").id,
                 "scheduledDate": self.day.isoformat(),
-                "purposeType": "ssa_support",
+                "purposeType": "training_follow_up",
+                "focusIntervention": "leadership",
                 "responsibleStaffId": self.cceo_sp.id,
                 "deliveryType": "staff",
                 "requireCatalogue": True,

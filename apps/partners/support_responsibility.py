@@ -138,6 +138,10 @@ def active_assignment_q(fy: str | None = None, prefix: str = "") -> Q:
     return (
         Q(**{f"{p}school__isnull": False})
         & ~Q(**{f"{p}status": "returned_to_staff"})
+        # Data collection (SSA Support) is assigned on any school and is not
+        # its support (owner, 2026-10-02): such a hand-over does not make the
+        # school Partner-supported, nor a second Partner one too many.
+        & ~Q(**{f"{p}purpose_of_visit": "ssa_support"})
         & (unscheduled | scheduled)
     )
 

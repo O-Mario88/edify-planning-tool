@@ -1,34 +1,24 @@
-"""A Core School trained in a cluster session fills a package training slot.
+"""A cluster session is outside a Core School's package.
 
-Owner, 2026-09-21:
+Owner, 2026-10-02, asked whether a cluster training or meeting counts as one
+of a Core package's trainings: "They should be separate" — outside the
+package. The package's four trainings are in-school trainings, two by staff
+and two assigned to a Partner.
 
-  "The core schools trained through cluster group training or cluster meeting
-  should contribute to the core school training packages and should be
-  counted as part of the 4 trainings. It should move to core school training
-  planned table."
-
-Two moments, and they are different questions:
-
-* **Booked.** The invitation is the commitment, so the slot is taken as soon
-  as the session is scheduled — which is what puts the school on the Core
-  School Trainings Planned table beside a training booked from the Core
-  Schools page.
-* **Registered.** Attendance narrows it. A school that was invited and did
-  not come gives its slot back, so the four trainings a package counts stay
-  the four the school actually took.
+From 2026-09-21 until then a session took the next open training slot at
+every Core school it invited, with no limit, so two group trainings and two
+meetings read "4/4 trainings" with the Partner's half never assigned. These
+tests pin the new rule and the hand-back of slots held from before.
 """
 
 from __future__ import annotations
 
-import threading
 from datetime import date, timedelta
-from unittest.mock import patch
 
-from django.db import connections
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 
 from apps.activities.cluster_attendance import confirm_attendance, set_invited_schools
-from apps.activities.models import Activity, ClusterActivityAttendance
+from apps.activities.models import Activity
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy
 from apps.core_schools import cluster_credit
@@ -38,7 +28,7 @@ from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 
 
-class ClusterTrainingCreditsThePackageTest(TestCase):
+class ClusterSessionsFillNoPackageSlotTest(TestCase):
     def setUp(self):
         self.fy = get_operational_fy()
         self.region = Region.objects.create(name="CTC Region")
@@ -95,172 +85,54 @@ class ClusterTrainingCreditsThePackageTest(TestCase):
             core_plan=self.plan, activity_type="training"
         ).order_by("sequence_number")
 
-    def test_the_slot_is_taken_when_the_session_is_scheduled(self):
-        session = self._session()
-        set_invited_schools(session, [self.core.id, self.client_school.id])
-        taken = self._training_slots().filter(activity_id=session.id)
-        self.assertEqual(taken.count(), 1, "one slot, not four")
-        slot = taken.first()
-        self.assertEqual(slot.sequence_number, 1)
-        self.assertEqual(slot.status, "scheduled")
-        # The column is a CharField; the day it carries is the plan's day.
-        self.assertEqual(str(slot.scheduled_for)[:10], session.planned_date.isoformat())
+    def _all_open(self) -> bool:
+        return self._training_slots().filter(status="Planned").count() == 4
 
-    def test_a_cluster_meeting_credits_the_package_too(self):
-        session = self._session(activity_type="cluster_meeting")
-        set_invited_schools(session, [self.core.id])
-        self.assertEqual(
-            self._training_slots().filter(activity_id=session.id).count(), 1
-        )
+    def test_a_booked_training_or_meeting_takes_no_slot(self):
+        for kind in ("cluster_training", "cluster_meeting"):
+            session = self._session(activity_type=kind)
+            set_invited_schools(session, [self.core.id, self.client_school.id])
+            self.assertFalse(
+                self._training_slots().filter(activity_id=session.id).exists(), kind
+            )
+        self.assertTrue(self._all_open())
 
-    def test_unticking_the_school_gives_the_slot_back(self):
-        session = self._session()
-        set_invited_schools(session, [self.core.id, self.client_school.id])
-        set_invited_schools(session, [self.client_school.id])
-        self.assertEqual(
-            self._training_slots().filter(activity_id=session.id).count(), 0
-        )
-        self.assertEqual(self._training_slots().filter(status="Planned").count(), 4)
-
-    def test_a_school_that_did_not_come_gives_its_slot_back(self):
-        session = self._session()
-        set_invited_schools(session, [self.core.id, self.client_school.id])
-        session.status = "completed"
-        session.save()
-        confirm_attendance(session, [self.client_school.id])
-        self.assertEqual(
-            self._training_slots().filter(activity_id=session.id).count(),
-            0,
-            "the package counts trainings the school took, not ones it missed",
-        )
-
-    def test_a_school_that_came_keeps_its_slot(self):
+    def test_a_session_the_school_attended_takes_none_either(self):
         session = self._session()
         set_invited_schools(session, [self.core.id, self.client_school.id])
         session.status = "completed"
         session.save()
         confirm_attendance(session, [self.core.id, self.client_school.id])
-        self.assertEqual(
-            self._training_slots().filter(activity_id=session.id).count(), 1
-        )
+        self.assertTrue(self._all_open())
 
-    def test_a_cancelled_session_releases_the_slot(self):
+    def test_however_many_sessions_the_package_stays_the_in_school_four(self):
+        for _ in range(5):
+            set_invited_schools(self._session(), [self.core.id])
+        self.assertTrue(self._all_open())
+
+    def test_a_slot_held_from_before_is_given_back_on_the_next_save(self):
         session = self._session()
         set_invited_schools(session, [self.core.id])
-        session.status = "cancelled"
+        slot = self._training_slots().first()
+        CoreActivitySlot.objects.filter(id=slot.id).update(
+            activity_id=session.id, status="scheduled", owner="staff"
+        )
         session.save()
-        self.assertEqual(
-            self._training_slots().filter(activity_id=session.id).count(), 0
-        )
+        slot.refresh_from_db()
+        self.assertIsNone(slot.activity_id)
+        self.assertEqual((slot.status, slot.owner), ("Planned", "unassigned"))
 
-    def test_four_sessions_fill_the_package_and_a_fifth_finds_nothing_open(self):
-        sessions = [self._session() for _ in range(5)]
-        for session in sessions:
-            set_invited_schools(session, [self.core.id])
-        filled = self._training_slots().exclude(activity_id=None)
-        self.assertEqual(filled.count(), 4, "the package holds four trainings")
-        self.assertEqual(sorted(slot.sequence_number for slot in filled), [1, 2, 3, 4])
-        # The fifth session still happened; it simply has no slot left to fill.
-        self.assertFalse(
-            self._training_slots().filter(activity_id=sessions[4].id).exists()
-        )
-
-    def test_a_client_school_takes_no_package_slot(self):
+    def test_the_session_still_says_which_schools_it_counts_for(self):
+        """Training coverage and follow-ups still read the register."""
         session = self._session()
-        set_invited_schools(session, [self.client_school.id])
-        self.assertEqual(self._training_slots().exclude(activity_id=None).count(), 0)
-
-
-class SimultaneousSessionSavesTest(TransactionTestCase):
-    """Every save of a cluster session runs the credit pass. Two saves at once
-    (a double-click, the officer and the planner on one session) both read the
-    school as unlinked before either took the slot lock."""
-
-    reset_sequences = False
-
-    def setUp(self):
-        fy = get_operational_fy()
-        region = Region.objects.create(name="Race CTC Region")
-        district = District.objects.create(name="Race CTC District", region=region)
-        sub_county = SubCounty.objects.create(name="Race CTC SC", district=district)
-        cluster = Cluster.objects.create(
-            name="Race CTC Cluster",
-            region=region,
-            district=district,
-            sub_county=sub_county,
-            cluster_type="mixed",
-            status="active",
-        )
-        core = School.objects.create(
-            school_id="RACE-CORE",
-            name="Race Core",
-            region=region,
-            district=district,
-            sub_county=sub_county,
-            school_type="core",
-        )
-        School.objects.filter(id=core.id).update(
-            cluster_id=cluster.id, cluster_status="clustered"
-        )
-        self.plan = CorePlan.objects.create(
-            id=cplan_id("RACE-CORE", fy=fy),
-            school_id="RACE-CORE",
-            fy=fy,
-            status="Active",
-        )
-        create_package_slots(self.plan, "RACE-CORE", ["leadership"])
-        self.session = Activity.objects.create(
-            activity_type="cluster_training",
-            cluster=cluster,
-            fy=fy,
-            quarter="Q1",
-            status="scheduled",
-            planned_date=date.today() + timedelta(days=10),
-        )
-        # Invited, no slot taken yet: where a school stands when it became a
-        # Core School, or got its plan, after the session was booked.
-        ClusterActivityAttendance.objects.create(
-            activity=self.session, school_id=core.id, invited=True
-        )
-
-    def test_two_simultaneous_saves_credit_one_slot(self):
-        workers = 2
-        both_have_read = threading.Barrier(workers)
-        credited = cluster_credit.credited_school_ids
-        past_the_read: list[str] = []
-        failures: list[str] = []
-
-        def read_then_wait(activity):
-            schools = credited(activity)
-            both_have_read.wait(timeout=10)
-            past_the_read.append(activity.pk)
-            return schools
-
-        def save():
-            try:
-                Activity.objects.get(pk=self.session.pk).save()
-            except Exception as exc:  # pragma: no cover - the assertion reports it
-                failures.append(repr(exc))
-            finally:
-                for db_connection in connections.all():
-                    db_connection.close()
-
-        with patch.object(
-            cluster_credit, "credited_school_ids", side_effect=read_then_wait
-        ):
-            threads = [threading.Thread(target=save) for _ in range(workers)]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join(timeout=30)
-
-        self.assertEqual(failures, [])
-        self.assertEqual(len(past_the_read), workers)
+        set_invited_schools(session, [self.core.id, self.client_school.id])
         self.assertEqual(
-            CoreActivitySlot.objects.filter(
-                core_plan=self.plan,
-                activity_type="training",
-                activity_id=self.session.id,
-            ).count(),
-            1,
+            cluster_credit.credited_school_ids(session),
+            {self.core.id, self.client_school.id},
+        )
+        session.status = "completed"
+        session.save()
+        confirm_attendance(session, [self.client_school.id])
+        self.assertEqual(
+            cluster_credit.credited_school_ids(session), {self.client_school.id}
         )

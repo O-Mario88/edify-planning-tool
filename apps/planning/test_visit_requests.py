@@ -698,6 +698,10 @@ class CoreVisitRequestTest(VisitRequestFixture):
             "visit_number": "1",
             "scheduled_date": self.day.isoformat(),
             "focus_intervention": "leadership",
+            # A package visit is a Training Follow Up: data collection (SSA
+            # Support), which an unnamed visit is read as, is outside the
+            # package since 2026-10-02.
+            "purpose_of_visit": "training_follow_up",
             "visit_purpose": "Core package check",
             "expected_outcome": "Slot fulfilled",
             "responsible_staff_id": self.cceo_sp.user_id,

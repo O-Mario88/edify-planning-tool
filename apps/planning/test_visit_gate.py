@@ -266,20 +266,26 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
             self.assertFalse(gate.staff_can_schedule, kind)
             self.assertTrue(gate.ssa_can_schedule, kind)
 
-    def test_ssa_support_is_counted_apart_one_a_year(self):
+    def test_data_collection_is_counted_apart_and_never_closed(self):
+        """Owner, 2026-10-02: "allow data collection assignment on every
+        school irrespective of whether they have the 1 visit by staff or
+        partner because those visits don't count." It was one a year from
+        2026-09-28 until then."""
         school = self._school("VG-6b")
         self._visit(school, kind="school_visit_ssa_collection")
+        self._visit(school, kind="school_visit_ssa_collection")
         gate = visit_gate(school)
-        self.assertEqual(gate.staff_ssa_visits, 1)
+        self.assertEqual(gate.staff_ssa_visits, 2)
         self.assertEqual(gate.staff_visits, 0)
-        self.assertFalse(gate.ssa_can_schedule)
-        self.assertIn("SSA Support visit", gate.ssa_reason)
-        # The support visit is still open beside it.
+        self.assertTrue(gate.ssa_can_schedule)
+        self.assertEqual(gate.ssa_reason, "")
+        # It is not the school's visit: the support visit is still open.
         self.assertTrue(gate.staff_can_schedule)
         self._visit(school, kind="training_follow_up_visit")
         gate = visit_gate(school)
         self.assertFalse(gate.staff_can_schedule)
-        self.assertEqual(gate.staff_ssa_visits, 1)
+        self.assertTrue(gate.ssa_can_schedule)
+        self.assertEqual(gate.staff_ssa_visits, 2)
 
     def test_partner_follow_up_and_ssa_visits_are_counted_not_capped(self):
         school = self._school("VG-6c")
@@ -489,14 +495,13 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         # after a follow-up, as a follow-up is after an In-school Training.
         with self.assertRaisesMessage(BadRequest, "staff support visit"):
             _assert_schedule_entitlement("in_school_training", school, self.fy, {})
-        # SSA Support once, and donor, story, invitation and social visits
-        # without limit.
-        _assert_schedule_entitlement("school_visit_ssa_collection", school, self.fy, {})
-        self._visit(school, kind="school_visit_ssa_collection")
-        with self.assertRaisesMessage(BadRequest, "SSA Support visit"):
+        # Data collection (SSA Support) and donor, story, invitation and
+        # social visits without limit (owner, 2026-10-02).
+        for _ in range(2):
             _assert_schedule_entitlement(
                 "school_visit_ssa_collection", school, self.fy, {}
             )
+            self._visit(school, kind="school_visit_ssa_collection")
         for kind in (
             "donor_visit",
             "story_gathering_visit",

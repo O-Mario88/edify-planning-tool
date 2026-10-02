@@ -488,15 +488,26 @@ class Reads:
             )
         )
 
-    def partner_work(self, *, every: bool = False):
+    def partner_work(self, *, every: bool = False, data_collection: bool = False):
         """Live Partner activities, each marked ``partner_planned`` (1/0).
 
-        Alumni work (a project no SSA intervention measures) is not counted
-        by this rulebook, so it is left out; ``every`` keeps it, for the one
-        list that holds every activity whether it counts or not."""
+        The schools assigned to Partners are the ones assigned for an
+        in-school training or a follow up (owner, 2026-10-02). Two kinds of
+        Partner work are therefore read apart, for the lists that show what
+        is planned whether it counts or not:
+
+        * Alumni work (a project no SSA intervention measures) — ``every``
+          keeps it beside the counted work;
+        * data collection, assigned on any school and counted nowhere —
+          ``data_collection`` reads it alone, whichever project it is for.
+        """
         held = _activities(self.fy, self.school_ids).filter(rules.partner_held_q())
-        if not every:
-            held = held.filter(rules.not_outside_ssa_q())
+        if data_collection:
+            held = held.filter(rules.data_collection_q())
+        else:
+            held = held.exclude(rules.data_collection_q())
+            if not every:
+                held = held.filter(rules.not_outside_ssa_q())
         if self.narrow.partner:
             held = held.filter(assigned_partner_id=self.narrow.partner)
         return _in_window(held, self.window).annotate(
@@ -507,16 +518,20 @@ class Reads:
             )
         )
 
-    def handovers(self, *, every: bool = False):
+    def handovers(self, *, every: bool = False, data_collection: bool = False):
         """Hand-overs that still put a school in a Partner's hands; ``every``
-        as for ``partner_work``."""
+        and ``data_collection`` as for ``partner_work``."""
         from apps.partners.models import PartnerAssignment
 
         rows = PartnerAssignment.objects.filter(school_id__in=self.school_ids).exclude(
             status__in=rules.CLOSED_HANDOVER_STATUSES
         )
-        if not every:
-            rows = rows.filter(rules.not_outside_ssa_q())
+        if data_collection:
+            rows = rows.filter(rules.handover_data_collection_q())
+        else:
+            rows = rows.exclude(rules.handover_data_collection_q())
+            if not every:
+                rows = rows.filter(rules.not_outside_ssa_q())
         if self.narrow.partner:
             rows = rows.filter(partner_id=self.narrow.partner)
         return rows
@@ -795,10 +810,15 @@ class SchoolYear:
     @property
     def training_slots(self) -> int:
         requirement = self.requirement
-        staff = self.staff_trainings + self.cluster_trainings
         if requirement.either_trainings:
+            # A client-rule school's one training is anybody's, a cluster
+            # training included.
+            staff = self.staff_trainings + self.cluster_trainings
             return min(staff + self.partner_trainings, requirement.either_trainings)
-        return min(staff, requirement.staff_trainings) + min(
+        # A Core school's four are in-school trainings, two by staff and two
+        # assigned to a Partner: a cluster training is outside its package
+        # (owner, 2026-10-02) and fills none of them.
+        return min(self.staff_trainings, requirement.staff_trainings) + min(
             self.partner_trainings, requirement.partner_trainings
         )
 
@@ -897,6 +917,9 @@ def school_year(user, fy: str, *, today: date | None = None) -> dict[str, School
         planned,
     ) in (
         in_scope.filter(rules.partner_held_q())
+        # Data collection puts no school in a Partner's hands and counts
+        # nowhere (owner, 2026-10-02).
+        .exclude(rules.data_collection_q())
         .annotate(
             partner_planned=Case(
                 When(rules.partner_planned_q(), then=Value(1)),
@@ -943,6 +966,7 @@ def school_year(user, fy: str, *, today: date | None = None) -> dict[str, School
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         )
         .filter(rules.not_outside_ssa_q())
+        .exclude(rules.handover_data_collection_q())
         .values_list(
             "school_id",
             "partner_id",

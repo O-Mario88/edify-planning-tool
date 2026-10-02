@@ -4523,6 +4523,16 @@ def project_monitoring_view(request):
             "selected_stage": selected_stage,
             "fy": fy,
             "fy_options": fy_options(),
+            # The country's projects as flat, exportable tables, for whoever
+            # reads Country Planning Oversight (Impact Assessment, the
+            # Country Director).
+            "consolidated_tables_url": (
+                f"/country-planning-oversight/table/projects?fy={fy}"
+                if RolePermissionService.can_view_page(
+                    request.user, "country_planning_oversight"
+                )
+                else ""
+            ),
         },
     )
 

@@ -13,22 +13,24 @@ The doors ask `assert_side_open`; the Core Schools row and drawers and the
 visit gate read `package_splits`, so a control never offers what its POST
 refuses.
 
-What one side of a package holds:
+What one side of a year's package holds (owner, 2026-10-02: a package's work
+is the work dated in its year):
 
-* the visits and trainings linked to the package's slots, by who delivers
-  them (``Activity.delivery_type``);
-* live package work at the school in the package's year that no slot links
-  yet — the post-commit credit (`package_credit`) has not run, or the work
-  predates it — so a bulk save or an old row cannot slip past the count;
+* the visits and trainings AT THE SCHOOL dated in the package's fiscal year,
+  by who delivers them (``Activity.delivery_type``) — whichever slot they are
+  linked to, or none yet, so a bulk save, an old row or a link the repair has
+  not reached cannot slip past the count;
 * on the partner side, the partner hand-overs at the school still waiting to
-  be dated (each holds its slot from the moment it is made).
+  be dated (each holds its slot from the moment it is made), counted in the
+  running year.
 
-Not on either side: cluster sessions (a group session is credited to the
-package by `cluster_credit`, but it is nobody's half of the split and is never
-refused over one school), the companion visit of an in-school training pair,
-donor, story, invitation and social visits, which are not package work, and
-the work of a project no SSA intervention measures (Alumni; owner,
-2026-10-02), which neither takes a side nor is refused over one.
+Not on either side, and never refused over a package: the companion visit of
+an in-school training pair; donor, story, invitation and social visits; data
+collection (SSA Support) visits; cluster trainings and meetings, which are
+outside the package altogether (owner, 2026-10-02 — the package's four
+trainings are in-school trainings, two by staff and two assigned to a
+Partner; `cluster_credit`); and the work of a project no SSA intervention
+measures (Alumni; owner, 2026-10-02).
 
 Nothing here touches work that already exists. It answers whether NEW work
 fits, and a package already over a side (planned before the rule) simply takes
@@ -108,21 +110,6 @@ class PackageSplit:
         }
 
 
-def _not_package_work(activity_type, purpose_type) -> bool:
-    from apps.core_schools.package_credit import (
-        NON_PACKAGE_VISIT_PURPOSES,
-        NON_PACKAGE_VISIT_TYPES,
-    )
-    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
-
-    purpose = str(purpose_type or "")
-    return (
-        str(activity_type or "") in NON_PACKAGE_VISIT_TYPES
-        or purpose in NON_PACKAGE_VISIT_PURPOSES
-        or purpose == COMPANION_VISIT_PURPOSE
-    )
-
-
 def side_of(data: dict) -> str:
     """The side an activity payload is delivered by."""
     partner = data.get("deliveryType") == "partner" or bool(
@@ -145,22 +132,11 @@ def _plans_by_school(codes) -> dict[str, list]:
     return plans
 
 
-def _plan_for(plans: list, fy: str, operational_fy: str):
-    """The package work of ``fy`` belongs to — `package_credit.plan_for_activity`
-    over rows already read: that year's plan; for a later year with none, the
-    school's live package; never a later package for an earlier year's work."""
-    exact = next((p for p in plans if str(p.fy) == fy), None)
-    if exact is not None or (fy and fy < operational_fy):
-        return exact
-    return _live_plan(plans, operational_fy)
-
-
-def _live_plan(plans: list, operational_fy: str):
-    """`services.get_live_core_plan` over rows already read."""
-    current = next((p for p in plans if str(p.fy) == operational_fy), None)
-    if current is not None:
-        return current
-    return max(plans, key=lambda p: str(p.fy), default=None)
+#: ``PackageSplit.plan_id`` for a Core school that has packages and none yet
+#: for the year asked about: the year's split applies all the same, and the
+#: package is made with the first work planned into it
+#: (``services.ensure_core_plan``).
+PACKAGE_NOT_MADE_YET = ""
 
 
 def package_splits(
@@ -173,8 +149,8 @@ def package_splits(
     """The split of each Core school's package for ``fy`` (the operational
     year by default), keyed by ``School.id``, in five queries whatever the
     count. ``schools`` are School rows (id, school_id, school_type are read);
-    a school that is not Core, or has no package, gets an empty split that is
-    open on every side.
+    a school that is not Core, or has never had a package, gets an empty split
+    that is open on every side.
 
     ``exclude_activity_id`` leaves out work being moved or re-dated;
     ``exclude_assignment_id`` leaves out the hand-over a partner is dating, so
@@ -182,7 +158,6 @@ def package_splits(
     """
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
-    from apps.core_schools.models import CoreActivitySlot
     from apps.core_schools.package_credit import (
         UNCREDITED_STATUSES,
         assignment_kind,
@@ -201,16 +176,19 @@ def package_splits(
         return out
 
     plans_by_code = _plans_by_school({s.school_id for s in core})
-    plan_of: dict[str, object] = {}
+    packaged: list[str] = []
     for s in core:
-        plan = _plan_for(plans_by_code.get(s.school_id, []), fy, operational_fy)
-        if plan is not None:
-            plan_of[s.id] = plan
-            out[s.id].plan_id = plan.id
-            out[s.id].fy = str(plan.fy)
-    if not plan_of:
+        plans = plans_by_code.get(s.school_id, [])
+        exact = next((p for p in plans if str(p.fy) == fy), None)
+        if exact is not None:
+            out[s.id].plan_id = exact.id
+        elif plans and fy >= operational_fy:
+            out[s.id].plan_id = PACKAGE_NOT_MADE_YET
+        else:
+            continue
+        packaged.append(s.id)
+    if not packaged:
         return out
-    school_of_plan = {plan.id: sid for sid, plan in plan_of.items()}
 
     def _add(split: PackageSplit, kind: str, delivery_type: str | None) -> None:
         partner = delivery_type == PARTNER
@@ -225,73 +203,26 @@ def package_splits(
             else:
                 split.staff_trainings += 1
 
-    # 1. Work the packages' slots already link.
-    linked = {
-        row["activity_id"]: (row["core_plan_id"], row["activity_type"])
-        for row in CoreActivitySlot.objects.filter(
-            core_plan_id__in=list(school_of_plan), activity_id__isnull=False
-        ).values("activity_id", "core_plan_id", "activity_type")
-    }
-    if linked:
-        live = (
-            Activity.objects.filter(
-                id__in=list(linked), deleted_at__isnull=True, cluster__isnull=True
-            )
-            .filter(not_outside_package_q())
-            .exclude(status__in=UNCREDITED_STATUSES)
-            .values("id", "activity_type", "purpose_type", "delivery_type")
-        )
-        for row in live:
-            if row["id"] == exclude_activity_id:
-                continue
-            plan_id, slot_kind = linked[row["id"]]
-            # A slot linked before the outreach rule to a donor or story
-            # visit is not package work any more, whatever the slot says.
-            # Any other linked work counts by the slot it fills.
-            if _not_package_work(row["activity_type"], row["purpose_type"]):
-                continue
-            _add(out[school_of_plan[plan_id]], slot_kind, row["delivery_type"])
-
-    # 2. Package work at these schools that no slot links yet.
-    unlinked = (
-        Activity.objects.filter(school_id__in=list(plan_of), deleted_at__isnull=True)
+    # 1. The visits and trainings at these schools dated in the year.
+    work = (
+        Activity.objects.filter(school_id__in=packaged, fy=fy, deleted_at__isnull=True)
         .filter(package_work_q())
         .filter(not_outside_package_q())
         .exclude(status__in=UNCREDITED_STATUSES)
-        .exclude(
-            id__in=CoreActivitySlot.objects.filter(activity_id__isnull=False).values(
-                "activity_id"
-            )
-        )
-        .values(
-            "id", "school_id", "fy", "activity_type", "purpose_type", "delivery_type"
-        )
+        .values("id", "school_id", "activity_type", "purpose_type", "delivery_type")
     )
-    code_of = {s.id: s.school_id for s in core}
-    for row in unlinked:
+    for row in work:
         if row["id"] == exclude_activity_id:
-            continue
-        sid = row["school_id"]
-        work_plan = _plan_for(
-            plans_by_code.get(code_of[sid], []), str(row["fy"] or ""), operational_fy
-        )
-        if work_plan is None or work_plan.id != plan_of[sid].id:
             continue
         kind = package_kind_for(row["activity_type"], row["purpose_type"])
         if kind is not None:
-            _add(out[sid], kind, row["delivery_type"])
+            _add(out[row["school_id"]], kind, row["delivery_type"])
 
-    # 3. Partner hand-overs still waiting to be dated. They belong to the
-    #    school's live package, as the slot each one holds does
-    #    (`package_credit.reserve_for_assignment`).
-    live_plan_ids = {
-        sid
-        for sid, plan in plan_of.items()
-        if _live_plan(plans_by_code.get(code_of[sid], []), operational_fy) is plan
-    }
-    if live_plan_ids:
+    # 2. Partner hand-overs still waiting to be dated. They have no date, so
+    #    they are the running year's (`package_credit.reserve_for_assignment`).
+    if fy == operational_fy:
         for handover in PartnerAssignment.objects.filter(
-            school_id__in=list(live_plan_ids),
+            school_id__in=packaged,
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         ).only(
             "id",

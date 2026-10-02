@@ -26,14 +26,16 @@ Owner, 2026-10-01: the monitor and Country Planning Oversight count by one
 rulebook (apps.planning.country_oversight.rules), so the two pages cannot
 give the Country Director two figures for one plan. The people are the
 rulebook's (a Lead or a CCEO by the role they hold); a visit that counts is a
-Follow up, an In-school Training or an SSA Support, planned and dated;
+Follow up or an In-school Training, planned and dated (data collection
+counts nowhere: owner, 2026-10-02);
 Partner work is planned once the Partner has dated it.
 
 So, per person, for one fiscal year:
 
 * **The visit target** — 280 for a Programme Lead, 560 for a CCEO.
 * **Visits planned** — the counted staff visits the person planned, wherever
-  they are. Donor, story, social and invitation visits are not counted.
+  they are. Data collection, donor, story, social and invitation visits are
+  not counted.
 * **Core visits** — two staff visits a year at each Core school
   (``CORE_STAFF_VISITS_PER_SCHOOL``): the target is 2 × Core schools.
 * **Client visits** — the rest of the target, at Client, Core Trained and
@@ -50,7 +52,10 @@ So, per person, for one fiscal year:
 * **Unique schools** with a visit planned, **schools planned for training**
   (invited to a live group training or cluster meeting, or given an in-school
   training), schools **not clustered**, **not planned** for a visit, for
-  training, or for either, and schools **in a Special Project**.
+  training, or for either, and schools **in a Special Project**. Training is
+  read against the schools that take one: Core, Client and Core Trained. A
+  Core Graduate school takes its visit and no training, so it is never
+  counted as having none planned (owner, 2026-10-02).
 * **Execution** beside each plan: visits delivered and schools whose
   training has been delivered, counted from the same rows as it happens.
 
@@ -171,6 +176,15 @@ class SchoolState:
         return self.group_training or self.meeting or self.in_school_training
 
     @property
+    def needs_training(self) -> bool:
+        """Whether a school of this type takes a training in the year. A Core
+        Graduate school takes its visit and no training (the rulebook), so it
+        is never a school "with no training planned" (owner, 2026-10-02)."""
+        from apps.planning.country_oversight import rules
+
+        return rules.takes_training(self.school_type)
+
+    @property
     def url(self) -> str:
         return f"/schools/{self.code or self.id}"
 
@@ -184,7 +198,7 @@ class SchoolState:
         if gap == "no_visit":
             return not self.has_visit
         if gap == "no_training":
-            return not self.has_training
+            return self.needs_training and not self.has_training
         if gap == "no_both":
             return not self.has_visit and not self.has_training
         if gap == "no_partner":
@@ -321,8 +335,14 @@ class OfficerMonitor:
         return sum(1 for s in self.schools if s.has_visit)
 
     @property
+    def training_schools(self) -> int:
+        """The schools that take a training in the year: the ones training
+        coverage is read against."""
+        return sum(1 for s in self.schools if s.needs_training)
+
+    @property
     def schools_with_training(self) -> int:
-        return sum(1 for s in self.schools if s.has_training)
+        return sum(1 for s in self.schools if s.needs_training and s.has_training)
 
     @property
     def schools_group_training(self) -> int:
@@ -346,7 +366,7 @@ class OfficerMonitor:
 
     @property
     def no_training(self) -> int:
-        return self.school_count - self.schools_with_training
+        return self.training_schools - self.schools_with_training
 
     @property
     def no_both(self) -> int:
@@ -829,6 +849,10 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
         at_schools.filter(deleted_at__isnull=True)
         .filter(rules.partner_held_q())
         .exclude(rules.partner_planned_q())
+        # Data collection puts no school in a Partner's hands (owner,
+        # 2026-10-02): the figure is the schools assigned for an in-school
+        # training or a follow up.
+        .exclude(rules.data_collection_q())
         .values_list("school_id")
         .annotate(n=Count("id"))
         .order_by()
@@ -846,33 +870,20 @@ def _count_planned_visits(officers, fy: str) -> None:
     560 (owner, 2026-09-28: "the PL are seeing exactly the number ... planned
     by the CCEO"). Core or client by the school's type. A Lead's visit counts
     for the Lead; a partner's delivery does not.
-    """
-    from apps.activities.models import Activity
-    from apps.planning.country_oversight import rules
 
-    by_id = {i: officer for officer in officers for i in officer.ids}
-    if not by_id:
-        return
-    delivered = _delivered_statuses()
-    rows = (
-        _counted_visits(
-            Activity.objects.filter(responsible_staff_id__in=list(by_id), fy=fy)
-        )
-        .filter(rules.staff_delivery_q())
-        .values("responsible_staff_id", "school__school_type", "status")
-        .annotate(n=Count("id"))
-        .order_by()
-    )
-    for row in rows:
-        officer = by_id.get(str(row["responsible_staff_id"]))
-        if officer is None:
-            continue
-        if row["school__school_type"] in CORE_TYPES:
-            officer.planned_core += row["n"]
-        else:
-            officer.planned_client += row["n"]
-        if row["status"] in delivered:
-            officer.planned_done += row["n"]
+    The count is ``staff_plan.visit_tallies``, the one My Plan shows each
+    person as their own visits toward the target (owner, 2026-10-02: the
+    Lead's figure and the CCEO's are one figure).
+    """
+    from apps.planning.staff_plan import visit_tallies
+
+    officers = list(officers)
+    tallies = visit_tallies({id(officer): officer.ids for officer in officers}, fy)
+    for officer in officers:
+        tally = tallies[id(officer)]
+        officer.planned_core = tally.core
+        officer.planned_client = tally.client
+        officer.planned_done = tally.delivered
 
 
 def _count_partner_work(officers, fy: str) -> None:
@@ -920,6 +931,7 @@ def _count_partner_work(officers, fy: str) -> None:
         Activity.objects.filter(fy=fy, deleted_at__isnull=True)
         .filter(rules.partner_held_q())
         .filter(rules.not_outside_ssa_q())
+        .exclude(rules.data_collection_q())
         .filter(
             Q(monitored_by_staff_id__in=ids)
             | Q(responsible_staff_id__in=ids)
@@ -954,12 +966,16 @@ def _count_partner_work(officers, fy: str) -> None:
         if school_id:
             schools.setdefault(id(officer), set()).add(school_id)
 
-    handovers = PartnerAssignment.objects.filter(
-        Q(monitoring_staff_id__in=ids)
-        | Q(assigning_staff_id__in=ids)
-        | Q(school__account_owner_id__in=ids),
-        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
-    ).filter(rules.not_outside_ssa_q())
+    handovers = (
+        PartnerAssignment.objects.filter(
+            Q(monitoring_staff_id__in=ids)
+            | Q(assigning_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids),
+            status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+        )
+        .filter(rules.not_outside_ssa_q())
+        .exclude(rules.handover_data_collection_q())
+    )
     for monitor, assigner, holder, school_id in handovers.values_list(
         "monitoring_staff_id",
         "assigning_staff_id",
@@ -988,6 +1004,7 @@ def _count_partner_handovers(schools: dict, school_ids) -> None:
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         )
         .filter(rules.not_outside_ssa_q())
+        .exclude(rules.handover_data_collection_q())
         .values("school_id")
         .annotate(n=Count("id"))
         .values_list("school_id", "n")

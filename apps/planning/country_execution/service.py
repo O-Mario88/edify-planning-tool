@@ -1038,7 +1038,7 @@ def lead_charts(snapshot: ExecSnapshot) -> list[dict]:
     visits = {
         "id": "cxo-visits-chart",
         "title": "Visits Delivered Against Target by Program Lead",
-        "hint": "Follow up, In-school Training and SSA Support",
+        "hint": "Follow up and In-school Training",
         "form": "stacked",
         "unit": "visits",
         "categories": names,

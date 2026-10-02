@@ -1118,7 +1118,19 @@ def course_intervention(activity) -> str:
 def _activity_item(
     activity, directory: _StaffDirectory, costs, partner_names
 ) -> PlanningOversightItem:
-    is_partner = bool(activity.assigned_partner_id)
+    # Partner work by the rule My Plan applies (`staff_my_plan_q`): the
+    # delivery channel and the two states only a Partner's work carries, as
+    # well as a named Partner. Reading the named Partner alone left a
+    # Partner-delivered row with none recorded on the officer's Team Plan tab
+    # while their own My Plan, rightly, did not list it (owner, 2026-10-02:
+    # "CCEO sees less and PL sees more").
+    from apps.planning.staff_plan import PARTNER_ONLY_STATUSES
+
+    is_partner = (
+        bool(activity.assigned_partner_id)
+        or getattr(activity, "delivery_type", "") == "partner"
+        or activity.status in PARTNER_ONLY_STATUSES
+    )
 
     # The internal owner. For partner work the partner executes but a member of
     # staff remains answerable for it, and that person is the monitor — not the

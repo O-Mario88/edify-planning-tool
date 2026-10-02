@@ -50,6 +50,10 @@ def report() -> dict:
         _replacement_carrying_inherited_cost(),
         _locked_withdrawal_without_amendment(),
         _performance_attributed_to_the_wrong_party(),
+        # The figures a budget is read from count by fiscal year: a row filed
+        # in the wrong one is counted in the wrong plan, silently.
+        _activities_filed_in_another_fiscal_year(),
+        _core_work_in_another_years_package(),
     ]
     issues = sum(check["count"] for check in checks)
     return {
@@ -1058,4 +1062,78 @@ def _performance_attributed_to_the_wrong_party() -> dict:
         count=len(wrong),
         examples=wrong[:10],
         route="/partner-oversight/",
+    )
+
+
+def _activities_filed_in_another_fiscal_year() -> dict:
+    """A planned activity whose ``fy`` is not the fiscal year of its date.
+
+    My Plan, Team Plan, the Planning Monitor and Country Planning Oversight
+    all select a year by the stored ``fy``. A visit dated 14 October and
+    filed under FY2026 is on nobody's FY2027 plan and is missing from every
+    FY2027 count (owner, 2026-10-02: the figures inform the budget).
+    """
+    from apps.activities.models import Activity
+    from apps.core.fy import get_operational_fy
+    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
+
+    rows = Activity.objects.filter(
+        deleted_at__isnull=True,
+        status__in=LIVE_ACTIVITY_STATUSES,
+        planned_date__isnull=False,
+    ).values("id", "fy", "planned_date", "activity_type", "school__name")
+    wrong = [
+        row
+        for row in rows.iterator(chunk_size=2000)
+        if str(row["fy"] or "") != str(get_operational_fy(row["planned_date"]))
+    ]
+    return _finding(
+        key="activity_in_another_fiscal_year",
+        label="Planned activities filed under a fiscal year their date is not in",
+        severity="error",
+        expected="An activity's fiscal year is the year its planned date falls in",
+        count=len(wrong),
+        examples=[
+            {
+                "id": row["id"],
+                "activity": row["activity_type"],
+                "school": row["school__name"] or "",
+                "actual": f"dated {row['planned_date']:%d %b %Y}, filed under "
+                f"FY{row['fy'] or '—'}",
+            }
+            for row in wrong[:10]
+        ],
+        route="/admin-panel/data-quality-center",
+    )
+
+
+def _core_work_in_another_years_package() -> dict:
+    """A Core package slot filled by work dated in another fiscal year.
+
+    The Core Schools page shows a year's package, so a visit planned for
+    October and linked to last year's V1 is on no V1..V4 the reader can see
+    (owner, 2026-10-02). New work is filed by its own year; this finds links
+    written before that, and any an import or a restore brings back.
+    """
+    from apps.activities.models import Activity
+    from apps.core_schools import package_year
+    from apps.core_schools.models import CoreActivitySlot
+
+    found = package_year.misfiled(CoreActivitySlot, Activity)
+    return _finding(
+        key="core_work_in_another_years_package",
+        label="Core visits and trainings counted in another year's package",
+        severity="error",
+        expected="A Core package's slots hold the work dated in its fiscal year",
+        count=len(found),
+        examples=[
+            {
+                "id": activity.id,
+                "school": slot.school_id,
+                "actual": f"dated FY{activity.fy}, linked to the FY"
+                f"{slot.core_plan.fy} package",
+            }
+            for slot, activity in found[:10]
+        ],
+        route="manage.py refile_core_package_work",
     )
