@@ -122,6 +122,13 @@ class="contents"
 {% endif %}
 </p>
 </div>
+{% comment %}The partner this cluster is assigned to facilitate (owner,
+2026-10-02): its trainings and meetings, for the facilitation fee. Not its
+schools.{% endcomment %}
+<div data-cluster-facilitator>
+<p class="edify-profile-field__label">Facilitated by</p>
+<p class="edify-profile-field__value mt-0.5">{{ cluster.facilitatorName|default:"Staff" }}{% if can_assign_partner %} <button type="button" hx-get="/clusters/{{ cluster.id }}/facilitator-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Change who facilitates {{ cluster.name }}" class="ml-1 edify-text-caption font-semibold edify-primary-text hover:underline cursor-pointer">Change</button>{% endif %}</p>
+</div>
 </div>
 {% comment %}The districts this cluster serves (owner, 2026-09-15): its own, and any neighbouring district approved for border communities. Schools join only from these districts; their own geography never changes.{% endcomment %}
 <div class="border-t border-slate-100 pt-4 space-y-3" data-cluster-catchment>

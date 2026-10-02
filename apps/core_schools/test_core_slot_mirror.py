@@ -16,9 +16,10 @@ Both facts already exist on the Activity being mirrored.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core_schools.models import CoreActivitySlot, CorePlan, cplan_id, cslot_id
@@ -78,6 +79,76 @@ class CoreSlotMirrorTest(TestCase):
         from apps.system_health.services import _workflow_issues
 
         return _workflow_issues()
+
+    def test_the_slot_takes_the_day_that_was_chosen(self):
+        """A day chosen in a drawer is local midnight — 21:00 UTC the day
+        before once read back. The slot keeps the chosen day, not the UTC one
+        (owner, 2026-10-02)."""
+        activity = self._linked_activity(
+            scheduled_date=timezone.make_aware(
+                datetime(2026, 9, 29), timezone.get_current_timezone()
+            )
+        )
+
+        reloaded = Activity.objects.get(pk=activity.pk)
+        reloaded.status = "completion_started"
+        reloaded.save()
+
+        self.slot.refresh_from_db()
+        self.assertEqual(str(self.slot.scheduled_for)[:10], "2026-09-29")
+
+    def test_slots_written_a_day_early_are_corrected(self):
+        """core_schools 0007: only a slot holding its activity's UTC day is
+        moved; one dated otherwise is left as it is."""
+        from importlib import import_module
+
+        correct_slot_days = import_module(
+            "apps.core_schools.migrations.0007_correct_slot_days"
+        ).correct_slot_days
+        activity = self._linked_activity(
+            scheduled_date=timezone.make_aware(
+                datetime(2026, 9, 29), timezone.get_current_timezone()
+            )
+        )
+        CoreActivitySlot.objects.filter(pk=self.slot.pk).update(
+            scheduled_for="2026-09-28"
+        )
+        other = CoreActivitySlot.objects.get(id=cslot_id("MIR-1", "v", 2, fy=self.fy))
+        other_activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            quarter="Q1",
+            planned_date=date(2026, 9, 15),
+            scheduled_date=timezone.make_aware(
+                datetime(2026, 9, 15), timezone.get_current_timezone()
+            ),
+            status="scheduled",
+        )
+        CoreActivitySlot.objects.filter(pk=other.pk).update(
+            activity_id=other_activity.id, scheduled_for="2026-09-20"
+        )
+        lines: list[str] = []
+
+        preview = correct_slot_days(
+            CoreActivitySlot, Activity, write=False, out=lines.append
+        )
+        self.slot.refresh_from_db()
+        self.assertEqual(self.slot.scheduled_for, "2026-09-28")
+        self.assertEqual(
+            [(row["activity"], row["from"], row["to"]) for row in preview],
+            [(activity.id, "2026-09-28", "2026-09-29")],
+        )
+
+        correct_slot_days(CoreActivitySlot, Activity, out=lines.append)
+
+        self.slot.refresh_from_db()
+        other.refresh_from_db()
+        self.assertEqual(self.slot.scheduled_for, "2026-09-29")
+        self.assertEqual(other.scheduled_for, "2026-09-20")
+        self.assertEqual(
+            correct_slot_days(CoreActivitySlot, Activity, out=lines.append), []
+        )
 
     def test_completion_carries_the_sf_id_and_evidence_onto_the_slot(self):
         activity = self._linked_activity()

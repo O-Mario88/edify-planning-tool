@@ -2,8 +2,9 @@
 {% comment %}
 One tab of the profile activities section (profile_activities.html). Each
 row's actions are decided by apps.activities.profile_activities: View on
-every row; Complete, Reschedule and Cancel only where the reader may run the
-work, so the menu never offers what the endpoint would refuse.
+every row; Edit, Complete, Reschedule and Cancel only where the reader may run
+the work, so the menu never offers what the endpoint would refuse. Edit stays
+on the list, greyed, once the work has been carried out (owner, 2026-10-02).
 {% endcomment %}
 <div class="overflow-x-auto mt-3">
   <table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse whitespace-nowrap"
@@ -33,6 +34,13 @@ work, so the menu never offers what the endpoint would refuse.
           {% row_actions row.title %}
             <button type="button" class="row-menu__item" role="menuitem"
                     hx-get="/my-plan/{{ row.id }}" hx-target="#drawer-container" hx-swap="innerHTML">View activity</button>
+            {% if row.may_edit %}
+            <button type="button" class="row-menu__item" role="menuitem" data-edit-trigger
+                    hx-get="/my-plan/{{ row.id }}/edit-drawer" hx-trigger="click consume" hx-target="#drawer-container" hx-swap="innerHTML">Edit</button>
+            {% elif row.edit_locked %}
+            <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" disabled data-edit-locked
+                    aria-label="Edit unavailable: already carried out">Edit<span class="row-menu__reason">Already carried out, so it can no longer be edited.</span></button>
+            {% endif %}
             {% if row.may_complete %}
             <button type="button" class="row-menu__item" role="menuitem"
                     hx-get="/my-plan/{{ row.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML">{{ row.complete_label }}</button>

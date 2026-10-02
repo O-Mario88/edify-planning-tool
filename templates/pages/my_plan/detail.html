@@ -123,12 +123,30 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span><strong>Complete Activity</strong><em>Mark activity as completed</em></span>
         </button>
+        {% comment %}Edit (owner, 2026-10-02): open while the activity is still
+        scheduled, greyed and disabled once it has been carried out, absent when it is
+        not this reader's to edit (apps.activities.editing.edit_state).{% endcomment %}
+        {% if edit_state == 'open' %}
+        <button type="button" data-edit-trigger
+                hx-get="/my-plan/{{ act.id }}/edit-drawer" hx-trigger="click consume"
+                hx-target="#drawer-container" hx-swap="innerHTML" class="ad-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          <span><strong>Edit Activity</strong><em>Change the date, schools, facilitator or goal</em></span>
+        </button>
+        {% elif edit_state == 'locked' %}
+        <button type="button" class="ad-action" disabled aria-disabled="true" data-edit-locked>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          <span><strong>Edit Activity</strong><em>Already carried out, so it can no longer be edited</em></span>
+        </button>
+        {% endif %}
+        {% if can_reschedule %}
         <button type="button" data-reschedule-trigger
                 hx-get="/my-plan/{{ act.id }}/reschedule-drawer" hx-trigger="click consume"
                 hx-target="#drawer-container" hx-swap="innerHTML" class="ad-action">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
           <span><strong>Reschedule Activity</strong><em>Change date, time or plan</em></span>
         </button>
+        {% endif %}
         {% if may_confirm_partner_work %}
         {% comment %}
           The partner has uploaded its form; the Salesforce entry is what

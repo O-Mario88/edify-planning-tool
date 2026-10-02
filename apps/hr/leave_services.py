@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from apps.core.clock import local_day
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import logging
 import threading
@@ -1427,7 +1428,7 @@ class LeaveImpactAnalysisService:
                 {
                     "id": a.id,
                     "type": a.activity_type.replace("_", " ").title(),
-                    "date": a.scheduled_date.date().isoformat()
+                    "date": local_day(a.scheduled_date).isoformat()
                     if a.scheduled_date
                     else "Not set",
                     "target": a.school.name
@@ -1585,7 +1586,7 @@ class LeaveConflictDetectionService:
                     "severity": "Critical",
                     "affected_activity": act,
                     "affected_user": staff_profile.user,
-                    "date_range": act.scheduled_date.date().isoformat()
+                    "date_range": local_day(act.scheduled_date).isoformat()
                     if act.scheduled_date
                     else "",
                     "recommended_action": "Reschedule or Reassign this activity.",

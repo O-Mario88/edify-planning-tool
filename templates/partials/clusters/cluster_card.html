@@ -86,11 +86,12 @@ aria-label="Schedule a day of visits across {{ cluster.name }}"
 type="button"
 class="row-menu__item"
 role="menuitem"
-hx-get="/planning/assign-partner-modal?cluster_id={{ cluster.id }}"
+hx-get="/clusters/{{ cluster.id }}/facilitator-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-aria-label="Assign staff to {{ cluster.name }}"
->Assign</button>
+aria-label="Assign a partner to facilitate trainings and meetings at {{ cluster.name }}"
+data-cluster-partner-facilitates
+>Partner to Facilitate</button>
 {% endif %}
 {% if can_add_cluster_schools %}
 <button
@@ -121,6 +122,10 @@ aria-label="Add schools to {{ cluster.name }}"
   <div>
     <dt>Cluster Leader Phone:</dt>
     <dd>{{ cluster.cluster_leader_phone }}</dd>
+  </div>
+  <div data-cluster-facilitator>
+    <dt>Facilitated by:</dt>
+    <dd>{{ cluster.facilitator_name|default:"Staff" }}</dd>
   </div>
   <div>
     <dt>Schools:</dt>

@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.clusters.models import Cluster, SchoolClusterAssignment
+from apps.core.clock import local_clock
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.command_center.planning_progress import (
@@ -257,9 +258,7 @@ class DashboardMetricsService:
             priorities.append(
                 {
                     "activity": f"{act.activity_type.replace('_', ' ').title()}",
-                    "time": act.scheduled_date.strftime("%I:%M %p")
-                    if act.scheduled_date
-                    else "—",
+                    "time": local_clock(act.scheduled_date, "%I:%M %p") or "—",
                     "related_to": act.school.name if act.school else "—",
                     "status": status_label,
                     "status_class": status_class,
@@ -636,9 +635,7 @@ class DashboardMetricsService:
                     if act.activity_type == "school_visit"
                     else "purple-bg",
                     "icon": "🏫" if act.activity_type == "school_visit" else "🎓",
-                    "time": act.scheduled_date.strftime("%I:%M %p")
-                    if act.scheduled_date
-                    else "—",
+                    "time": local_clock(act.scheduled_date, "%I:%M %p") or "—",
                     "title": act.school.name if act.school else "Cluster Activity",
                     "desc": act.focus_intervention.replace("_", " ").title()
                     if act.focus_intervention

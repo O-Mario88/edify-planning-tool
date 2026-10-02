@@ -28,6 +28,9 @@ the endpoint behind it would refuse (owner, 2026-09-27: role-blocked features
 are hidden, not greyed):
 
 * View — every row; the drawer re-checks `can_view_record`.
+* Edit — staff work the reader may run: open while it is still scheduled,
+  greyed with its reason once it has been carried out (owner, 2026-10-02;
+  apps.activities.editing). A status lock is shown; a role lock is hidden.
 * Complete, Reschedule, Cancel — open staff work the reader may execute: the
   same `_assert_in_scope`, `_assert_may_schedule` and `_assert_may_execute`
   the actions themselves run, and the `my_plan` page gate the drawers carry.
@@ -45,6 +48,7 @@ from datetime import date
 from django.db.models import F
 from django.db.models.functions import Coalesce
 
+from apps.core.clock import local_day
 from apps.core.pagination import paginate_rows
 from apps.planning.school_planning_badges import (
     AWAITING_VERIFICATION_STATUSES,
@@ -99,6 +103,10 @@ class ProfileActivityRow:
     complete_label: str = "Complete"
     may_reschedule: bool = False
     may_cancel: bool = False
+    #: Edit (owner, 2026-10-02): offered while the work is still scheduled,
+    #: greyed once it has been carried out (apps.activities.editing).
+    may_edit: bool = False
+    edit_locked: bool = False
 
     @property
     def has_owner_actions(self) -> bool:
@@ -338,7 +346,7 @@ def _decorate(principal, activities, *, subject: str, today: date) -> list:
             day=a.actual_delivery_date
             if a.status in DELIVERED_STATUSES and a.actual_delivery_date
             else a.planned_date
-            or (a.scheduled_date.date() if a.scheduled_date else None),
+            or (local_day(a.scheduled_date) if a.scheduled_date else None),
             end_day=a.end_date if a.end_date and a.end_date != a.planned_date else None,
             subject=where,
             subject_url=where_url,
@@ -349,6 +357,10 @@ def _decorate(principal, activities, *, subject: str, today: date) -> list:
             is_partner_work=is_partner,
         )
         if may_run_pages and not is_partner and _may_run(a, principal):
+            from apps.activities.editing import is_editable, is_executed
+
+            row.may_edit = is_editable(a)
+            row.edit_locked = is_executed(a)
             if a.status in OPEN_STATUSES:
                 awaiting = a.status == "awaiting_owner_approval"
                 # A visit request is the owner's to decide: the requester
@@ -356,7 +368,9 @@ def _decorate(principal, activities, *, subject: str, today: date) -> list:
                 row.may_complete = not awaiting and a.status not in (
                     NEEDS_REPLANNING_STATUSES
                 )
-                row.may_reschedule = not awaiting
+                # Work already under way keeps its day (services.reschedule
+                # refuses it; owner, 2026-10-02).
+                row.may_reschedule = not awaiting and not row.edit_locked
                 row.may_cancel = True
             elif a.status in _STILL_COMPLETING:
                 row.may_complete = True

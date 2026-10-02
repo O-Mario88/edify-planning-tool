@@ -157,9 +157,14 @@ class FacilitatedTrainingTest(APITestCase):
         self.assertIn("Fac Cluster", notice.body)
         self.assertEqual(notice.target_route, "/partner/my-plan")
 
-    def test_only_group_trainings_are_facilitated(self):
-        self.assertTrue(facilitates("cluster_training"))
-        for other in ("cluster_meeting", "school_visit", "in_school_training"):
+    def test_only_cluster_sessions_are_facilitated(self):
+        # A cluster meeting handed to a partner is facilitated too (owner,
+        # 2026-10-02: assigning a cluster to a partner "ONLY means they
+        # facilitate the cluster activity").
+        for session in ("cluster_training", "cluster_meeting"):
+            with self.subTest(activity_type=session):
+                self.assertTrue(facilitates(session))
+        for other in ("school_visit", "in_school_training"):
             with self.subTest(activity_type=other):
                 self.assertFalse(facilitates(other))
 
@@ -339,16 +344,19 @@ class FacilitatedTrainingTest(APITestCase):
         self.assertEqual(facilitator_label(activity), STAFF_FACILITATOR_LABEL)
         self.assertIsNone(self._fee_line(activity).partner_id)
 
-    def test_facilitated_by_is_for_trainings_only(self):
+    def test_facilitated_by_is_for_trainings_and_cluster_meetings(self):
         for kind in (
             "cluster_training",
             "in_school_training",
             "core_training",
             "training",
+            # A partner organises and facilitates a cluster meeting for the
+            # facilitation fee (owner, 2026-10-02).
+            "cluster_meeting",
         ):
             with self.subTest(kind=kind):
                 self.assertTrue(takes_facilitator(kind))
-        for kind in ("cluster_meeting", "school_visit"):
+        for kind in ("school_visit", "donor_visit"):
             with self.subTest(kind=kind):
                 self.assertFalse(takes_facilitator(kind))
                 with self.assertRaises(BadRequest):
@@ -480,7 +488,7 @@ class FacilitatedTrainingTest(APITestCase):
         activity = self._schedule(facilitatingPartnerId=self.partner.id)
         self.client.force_login(self.partner_user)
         html = self.client.get("/my-plan").content.decode()
-        self.assertIn("Training Facilitation", html)
+        self.assertIn("Training and Meeting Facilitation", html)
         self.assertIn(f'data-facilitation="{activity.id}"', html)
         self.assertIn("Ready to invoice (50% advance)", html)
         self.assertIn(

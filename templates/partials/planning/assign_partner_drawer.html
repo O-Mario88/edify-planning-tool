@@ -1,6 +1,6 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Assign {% if school %}{{ school.name }}{% else %}{{ cluster.name }}{% endif %} to a partner{% endblock %}
+{% block drawer_title %}Assign {{ school.name }} to a partner{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
@@ -11,11 +11,13 @@
   class="space-y-4 text-[12px] font-medium text-slate-600"
   x-data="{
     purposeOfVisit: '',
-    catalogueItemId: '{% if cluster and primary_catalogue_items %}{{ primary_catalogue_items.0.catalogueItemId }}{% endif %}',
-    activityType: '{% if cluster and primary_catalogue_items %}{{ primary_catalogue_items.0.workflowKind }}{% endif %}',
-    focusIntervention: '{% if cluster and primary_catalogue_items %}{{ primary_catalogue_items.0.targetIntervention|default:'' }}{% endif %}',
+    catalogueItemId: '',
+    activityType: '',
+    focusIntervention: '',
     sourceActivityId: '',
+    partnerId: '',
     trainingActivities: {{ training_activity_options_json|default:'[]' }},
+    partnerCourses: {{ partner_courses_json|default:'{}' }},
     followUpActivities: {{ follow_up_activity_options_json|default:'[]' }},
     followUpRequiresTraining: {{ follow_up_requires_training|yesno:"true,false" }},
     get showTraining() { return this.purposeOfVisit === 'in_school_training'; },
@@ -23,8 +25,15 @@
     get selectedSource() {
       return this.followUpActivities.find(item => item.id === this.sourceActivityId) || null;
     },
+    get coursesForPartner() {
+      const codes = this.partnerCourses[this.partnerId];
+      return codes ? this.trainingActivities.filter(course => codes.includes(course.stableCode)) : this.trainingActivities;
+    },
     get selectedTraining() {
-      return this.trainingActivities.find(item => item.id === this.catalogueItemId) || null;
+      return this.coursesForPartner.find(item => item.id === this.catalogueItemId) || null;
+    },
+    onPartnerChange() {
+      if (this.showTraining && !this.selectedTraining) { this.catalogueItemId = ''; this.activityType = ''; }
     },
     onPurposeChange() {
       this.catalogueItemId = '';
@@ -41,8 +50,7 @@
   }"
 >
   {% csrf_token %}
-  {% if school %}<input type="hidden" name="school_id" value="{{ school.school_id }}">{% endif %}
-  {% if cluster %}<input type="hidden" name="cluster_id" value="{{ cluster.id }}">{% endif %}
+  <input type="hidden" name="school_id" value="{{ school.school_id }}">
   <input type="hidden" name="catalogue_item_id" :value="catalogueItemId">
   <input type="hidden" name="activity_type" :value="activityType">
   <input type="hidden" name="focus_intervention" :value="focusIntervention">
@@ -51,14 +59,13 @@
 
   <div class="space-y-1">
     <label for="partner_id" class="block edify-text-caption font-semibold text-slate-600">Partner <span class="text-rose-500">*</span></label>
-    <select name="partner_id" id="partner_id" required
+    <select name="partner_id" id="partner_id" required x-model="partnerId" @change="onPartnerChange()"
       class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
       <option value="">Select partner…</option>
       {% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}
     </select>
   </div>
 
-  {% if school %}
   <div class="space-y-1">
     <label for="purpose_of_visit" class="block edify-text-caption font-semibold text-slate-600">Reason for assigning <span class="text-rose-500">*</span></label>
     <select name="purpose_of_visit" id="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()"
@@ -78,10 +85,11 @@
         aria-describedby="partner-training-help"
         class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
         <option value="">Select a training…</option>
-        <template x-for="activity in trainingActivities" :key="activity.id">
+        <template x-for="activity in coursesForPartner" :key="activity.id">
           <option :value="activity.id" x-text="activity.label"></option>
         </template>
       </select>
+      <p x-show="partnerCourses[partnerId]" style="display:none" class="edify-text-caption text-slate-500" data-partner-courses>Showing the trainings this partner is recorded as delivering.</p>
       <p x-show="selectedTraining" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.ssaIndicator : ''"></span></p>
       <p id="partner-training-help" class="edify-text-caption text-slate-500">After delivery, it is confirmed with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
       {% comment %}The planner's choice, any of the eight (owner,
@@ -125,13 +133,6 @@
       <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">Data Gathering</div>
     </div>
   </template>
-  {% else %}
-  {% if primary_catalogue_items %}
-  <p>Approved activity: <span class="font-semibold text-slate-800">{{ primary_catalogue_items.0.displayName }}</span></p>
-  {% else %}
-  <p class="edify-note" data-tone="danger" role="alert">No partner-deliverable activity is eligible for this cluster.</p>
-  {% endif %}
-  {% endif %}
 
   {% if prior_withdrawals %}
   <div class="edify-note" data-tone="warning" role="status">

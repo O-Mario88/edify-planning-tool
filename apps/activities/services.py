@@ -18,6 +18,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.core.clock import local_day
 from apps.core.enums import (
     ActivityType,
     ExecutorType,
@@ -1373,12 +1374,14 @@ def _requested_facilitator(data: dict, principal, *, activity_type: str):
     if not partner_id:
         return None
     if not takes_facilitator(activity_type):
-        raise BadRequest("Only a training takes a Facilitated by partner.")
+        from apps.activities.facilitation import FACILITATOR_ONLY_MESSAGE
+
+        raise BadRequest(FACILITATOR_ONLY_MESSAGE)
     if resolve_partner_ids(principal) or (
         _resolved_executor_type(data) in PARTNER_EXECUTOR_TYPES
     ):
         raise BadRequest(
-            "Facilitated by applies to training Edify staff run. Choose Staff "
+            "Facilitated by applies to work Edify staff run. Choose Staff "
             "delivery, or leave Facilitated by as Staff."
         )
     _assert_active_facilitator(partner_id)
@@ -1415,17 +1418,27 @@ def _tell_facilitating_partner(activity: Activity) -> None:
             user_id = getattr(getattr(partner, "user", None), "id", None)
             if not user_id:
                 return
-            day = activity.scheduled_date or activity.planned_date
-            where = getattr(activity.cluster, "name", "") or "a cluster"
+            from apps.activities.facilitation import is_meeting
+
+            day = activity.planned_date or local_day(activity.scheduled_date)
+            place = activity.cluster or activity.school
+            where = getattr(place, "name", "") or "a cluster"
             when = f" on {day:%d %b %Y}" if day else ""
+            what = (
+                "cluster meeting"
+                if is_meeting(activity.activity_type)
+                else "group training"
+                if activity.cluster_id
+                else "training"
+            )
             WorkflowNotificationService.trigger(
                 event_type="partner_facilitation_booked",
                 category="partner",
                 priority="normal",
-                title="You are facilitating a group training",
+                title=f"You are facilitating a {what}",
                 body=(
-                    f"Edify booked your organisation to facilitate the group "
-                    f"training at {where}{when}. Its facilitation fee is "
+                    f"Edify booked your organisation to facilitate the {what} "
+                    f"at {where}{when}. Its facilitation fee is "
                     "invoiced through Partner Invoices."
                 ),
                 context_type="Partner",
@@ -1500,7 +1513,7 @@ def _assert_bookable_certified_agency(
         clash = (
             Activity.objects.filter(
                 assigned_partner_id=partner.id,
-                planned_date=scheduled_date.date(),
+                planned_date=local_day(scheduled_date),
                 deleted_at__isnull=True,
             )
             .exclude(status__in=("cancelled", "rejected", "deferred", "rescheduled"))
@@ -2166,12 +2179,12 @@ def _create(
             end_date = _parse_date(str(end_raw)).date()
             if not scheduled_date:
                 raise BadRequest("A multi-day Activity needs its start date.")
-            if end_date < scheduled_date.date():
+            if end_date < local_day(scheduled_date):
                 raise BadRequest("The end date cannot precede the start date.")
-            if end_date != scheduled_date.date():
+            if end_date != local_day(scheduled_date):
                 if not catalogue_item.multi_day_allowed:
                     raise BadRequest("This Activity type is a single-day activity.")
-                if (end_date - scheduled_date.date()).days > 30:
+                if (end_date - local_day(scheduled_date)).days > 30:
                     raise BadRequest("A programme Activity may span at most 31 days.")
     if not non_school:
         # A non-school programme activity has no school/cluster target to
@@ -2238,6 +2251,16 @@ def _create(
         # training may name an active partner; blank means Staff.
         facilitating_partner_id = _requested_facilitator(
             data, principal, activity_type=activity_type
+        )
+    elif "facilitatingPartnerId" not in data:
+        # Nobody was asked who facilitates: a session of a cluster assigned
+        # to a partner is that partner's to facilitate (owner, 2026-10-02).
+        # A drawer that shows "Facilitated by" always answers, so a planner
+        # who chose Staff there keeps Staff.
+        from apps.clusters.facilitation import default_facilitator_id
+
+        facilitating_partner_id = default_facilitator_id(
+            cluster_id, activity_type=activity_type, data=data, principal=principal
         )
     executor_type = _resolved_executor_type(data)
     is_partner = executor_type in PARTNER_EXECUTOR_TYPES
@@ -2330,7 +2353,7 @@ def _create(
         # `check` coerces a plain date itself, so pass end_date straight in:
         # wrapping it in an aware datetime first only adds a timezone in which
         # a midnight boundary could shift the day being checked.
-        if end_date and end_date != scheduled_date.date():
+        if end_date and end_date != local_day(scheduled_date):
             end_check = _SchedulingPolicyService.check(resp_user, end_date)
             if end_check["status"] == "blocked":
                 raise BadRequest(
@@ -2551,7 +2574,7 @@ def _create(
             school=school,
             cluster=catalogue_cluster,
             fy=fy,
-            on_date=scheduled_date.date() if scheduled_date else None,
+            on_date=local_day(scheduled_date) if scheduled_date else None,
         )
         mapping_modes = set(mapping_modes)
         # §5 — the recommendation gate applies to the programme's NAMED
@@ -3129,7 +3152,7 @@ def _notify_scheduled_owner(activity: Activity, principal) -> None:
             title = "School visit scheduled"
         else:
             return
-        day = activity.planned_date or activity.scheduled_date.date()
+        day = activity.planned_date or local_day(activity.scheduled_date)
         if event == "cluster_meeting_scheduled":
             from apps.audit.services import log as audit_log
 
@@ -3251,7 +3274,9 @@ def _ensure_partner_handover(activity: Activity, data: dict) -> None:
                 focus_intervention=activity.focus_intervention,
                 expected_activity_type=activity.activity_type,
                 scheduled_date=(
-                    activity.scheduled_date.date() if activity.scheduled_date else None
+                    local_day(activity.scheduled_date)
+                    if activity.scheduled_date
+                    else None
                 ),
                 status=PartnerAssignment.STATUS_PARTNER_SCHEDULED,
                 scheduled_activity=activity,
@@ -4661,6 +4686,13 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
 
     assert_operating(a.school)
     _assert_not_awaiting_owner(a)
+    # Work that has started or been delivered keeps the day it happened on
+    # (owner, 2026-10-02). This accepted a completed visit and turned it back
+    # into "rescheduled": its evidence, its Salesforce ID and its verification
+    # then sat on something the plan said had not happened yet.
+    from apps.activities.editing import assert_not_executed
+
+    assert_not_executed(a, action="rescheduled")
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
     from apps.planning.fy_policy import assert_date_plannable, assert_same_fiscal_year
@@ -4695,6 +4727,9 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # used to discard it and save the copy read before the lock, which
         # lost the increment anyway.
         a = Activity.objects.select_for_update().get(pk=a.pk)
+        # Asked again on the locked row: a completion that landed between the
+        # read above and this lock must not be undone by the move.
+        assert_not_executed(a, action="rescheduled")
         old_date = a.scheduled_date
         from apps.activities.duplicate_visits import (
             assert_not_duplicate_client_visit,
@@ -4861,8 +4896,8 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                     title="A partner rescheduled their delivery",
                     body=(
                         f"{a.activity_name_snapshot or a.get_activity_type_display()} "
-                        f"for {_where(a)} moved from {old_date:%-d %b %Y} to "
-                        f"{new_date:%-d %b %Y}. "
+                        f"for {_where(a)} moved from {local_day(old_date):%-d %b %Y} to "
+                        f"{local_day(new_date):%-d %b %Y}. "
                         f"Reason: {(data.get('reason') or '—').strip()}"
                     ),
                     context_type="activity",
@@ -4877,7 +4912,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 (
                     f"{a.activity_name_snapshot or a.get_activity_type_display()} for "
                     f"{_where(a)} has moved from "
-                    f"{old_date:%-d %b %Y} to {new_date:%-d %b %Y}. "
+                    f"{local_day(old_date):%-d %b %Y} to {local_day(new_date):%-d %b %Y}. "
                     f"{(data.get('reason') or '').strip()}".strip()
                 ),
             )
@@ -5025,15 +5060,20 @@ def set_facilitator(activity_id: str, partner_id, principal) -> dict:
     if resolve_partner_ids(principal):
         raise Forbidden("Edify staff choose who facilitates a training.")
     if not takes_facilitator(a.activity_type):
-        raise BadRequest("Only a training takes a Facilitated by partner.")
+        from apps.activities.facilitation import FACILITATOR_ONLY_MESSAGE
+
+        raise BadRequest(FACILITATOR_ONLY_MESSAGE)
+    from apps.activities.facilitation import session_noun
+
+    noun = session_noun(a.activity_type)
     if a.delivery_type == "partner":
         raise BadRequest(
-            "A partner delivers this training itself, so it has no separate "
+            f"A partner delivers this {noun} itself, so it has no separate "
             "facilitator."
         )
     if a.status not in FACILITATOR_EDITABLE_STATUSES:
         raise BadRequest(
-            "This training has started, happened or been withdrawn; its "
+            f"This {noun} has started, happened or been withdrawn; its "
             "facilitator can no longer change."
         )
     partner_id = (partner_id or "").strip() or None
@@ -5202,7 +5242,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 school=pa.school,
                 cluster=pa.cluster,
                 fy=fy,
-                on_date=scheduled_date.date(),
+                on_date=local_day(scheduled_date),
             )
         planned_date, planned_month, planned_week = _schedule_period(
             scheduled_date, data
@@ -5450,7 +5490,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         )
 
         pa.status = "partner_scheduled"
-        pa.scheduled_date = scheduled_date.date()
+        pa.scheduled_date = local_day(scheduled_date)
         # The pairing, recorded rather than inferred. Oversight has to say that
         # this assignment and the activity it just became are one item; without
         # the id it would have to match on partner + school + status and would
