@@ -335,11 +335,11 @@ def school_directory_view(request):
         active_tab = "all"
     page_number = request.GET.get("page", 1)
     try:
-        per_page = int(request.GET.get("per_page", 15))
+        per_page = int(request.GET.get("per_page", 50))
     except (TypeError, ValueError):
-        per_page = 15
+        per_page = 50
     if per_page not in {15, 25, 50}:
-        per_page = 15
+        per_page = 50
 
     # Apply dropdown filters
     filtered_qs = base_qs.order_by("name")

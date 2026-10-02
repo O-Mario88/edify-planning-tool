@@ -28,6 +28,7 @@ from apps.activities.models import Activity
 from apps.notifications.models import Notification
 from apps.core.fy import get_operational_fy
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.pagination import TABLE_PAGE_SIZE
 
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
@@ -111,7 +112,7 @@ def staff_directory_view(request):
     # per-row N+1 (school_count + completed_visits) on top — paginate the
     # list itself so both the row count and the query count stay flat as
     # headcount grows.
-    paginator = Paginator(staff_qs, 20)
+    paginator = Paginator(staff_qs, TABLE_PAGE_SIZE)
     page_obj = paginator.get_page(page_number)
     from apps.core.pagination import elided_page_numbers
 

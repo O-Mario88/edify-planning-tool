@@ -5,8 +5,12 @@ from django.test import TestCase
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity, ClosureBlocker
+from apps.core.pagination import TABLE_PAGE_SIZE
 from apps.geography.models import District, Region
 from apps.schools.models import School
+
+#: Two full pages and part of a third.
+BLOCKERS = 2 * TABLE_PAGE_SIZE + 5
 
 
 class BlockedClosurePaginationTest(TestCase):
@@ -38,7 +42,7 @@ class BlockedClosurePaginationTest(TestCase):
                 status="closed",
                 responsible_staff_id=cls.user.user_id,
             )
-            for _ in range(35)
+            for _ in range(BLOCKERS)
         ]
         Activity.objects.bulk_create(activities)
         ClosureBlocker.objects.bulk_create(
@@ -59,14 +63,17 @@ class BlockedClosurePaginationTest(TestCase):
         response = self.client.get("/activities/closure/blocked")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.count(b"Resolve Blocker"), 10)
-        self.assertContains(response, "Showing 1–10 of 35")
+        self.assertEqual(response.content.count(b"Resolve Blocker"), TABLE_PAGE_SIZE)
+        self.assertContains(response, f"Showing 1–{TABLE_PAGE_SIZE} of {BLOCKERS}")
         self.assertContains(response, 'aria-label="Next page"')
 
     def test_page_parameter_reaches_the_next_window_without_duplicates(self):
         first = self.client.get("/activities/closure/blocked?blockers_page=1")
         second = self.client.get("/activities/closure/blocked?blockers_page=2")
 
-        self.assertEqual(first.content.count(b"Resolve Blocker"), 10)
-        self.assertEqual(second.content.count(b"Resolve Blocker"), 10)
-        self.assertContains(second, "Showing 11–20 of 35")
+        self.assertEqual(first.content.count(b"Resolve Blocker"), TABLE_PAGE_SIZE)
+        self.assertEqual(second.content.count(b"Resolve Blocker"), TABLE_PAGE_SIZE)
+        self.assertContains(
+            second,
+            f"Showing {TABLE_PAGE_SIZE + 1}–{2 * TABLE_PAGE_SIZE} of {BLOCKERS}",
+        )

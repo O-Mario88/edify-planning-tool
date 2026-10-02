@@ -48,6 +48,7 @@ from apps.core.enums import ActivityStatus
 from apps.core.exceptions import BadRequest
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.accounts.staff_matching import on_staff
+from apps.core.pagination import TABLE_PAGE_SIZE
 
 QUEUE_PAGE_SIZE = 50
 
@@ -2190,7 +2191,9 @@ def _ia_outcome_workspace_context(request, *, collection: bool = False) -> dict:
             rows = [row for row in rows if row["state"] == gap]
     return {
         "ia_outcomes": workspace,
-        "ia_evidence_page": Paginator(rows, 25).get_page(request.GET.get("page")),
+        "ia_evidence_page": Paginator(rows, TABLE_PAGE_SIZE).get_page(
+            request.GET.get("page")
+        ),
         "ia_gap": gap,
         "ia_can_export": RolePermissionService.can_export(request.user, "ia_dashboard"),
         "ia_view_template": "partials/ia/outcomes.html",

@@ -64,7 +64,7 @@ class QuerySetPaginationTest(TestCase):
     def test_the_template_tag_does_not_truth_test_the_queryset(self):
         template = Template(
             "{% load table_pagination %}"
-            '{% paginate regions "regions_page" as pager %}'
+            '{% paginate regions "regions_page" 10 as pager %}'
             "{% for r in pager.rows %}{{ r.name }};{% endfor %}|{{ pager.total }}"
         )
         request = RequestFactory().get("/?regions_page=4")

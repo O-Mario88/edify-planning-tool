@@ -40,7 +40,7 @@ from apps.impact.models import ReviewBasis
 
 PAGE_URL = "/ia/impact-reports/"
 REVIEW_BASIS_LABELS = dict(ReviewBasis.choices)
-PAGE_SIZE = 20
+PAGE_SIZE = 50
 
 
 def _cell(heading: str, text, *, primary=False, tone="") -> dict:

@@ -119,7 +119,7 @@ LENDING_DOMAINS = (
 )
 
 #: Rows shown per page of an outcome table.
-PAGE_SIZE = 25
+PAGE_SIZE = 50
 
 
 # ── The population ──────────────────────────────────────────────────────────

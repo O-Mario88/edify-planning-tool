@@ -322,11 +322,12 @@ class CoreSchoolsPaginationTest(TestCase):
             StaffSchoolAssignment.objects.create(staff=profile, school_id=school.id)
         self.client.force_login(self.user)
 
-    def test_the_default_page_shows_fifteen(self):
+    def test_the_default_page_holds_fifty(self):
+        """Owner, 2026-10-02: every table holds 50 records a page."""
         response = self.client.get("/core-schools")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context["matrix_rows"]), 15)
-        self.assertEqual(response.context["per_page"], 15)
+        self.assertEqual(len(response.context["matrix_rows"]), 25)
+        self.assertEqual(response.context["per_page"], 50)
         self.assertEqual(response.context["page_obj"].paginator.count, 25)
 
     def test_the_reader_may_choose_ten_or_fifty(self):
@@ -345,19 +346,21 @@ class CoreSchoolsPaginationTest(TestCase):
         for value in ("100000", "abc", "-1", "0", ""):
             with self.subTest(value=value):
                 response = self.client.get(f"/core-schools?per_page={value}")
-                self.assertEqual(response.context["per_page"], 15)
-                self.assertEqual(len(response.context["matrix_rows"]), 15)
+                self.assertEqual(response.context["per_page"], 50)
+                self.assertEqual(len(response.context["matrix_rows"]), 25)
 
     def test_pagination_is_server_side(self):
-        page_two = self.client.get("/core-schools?page=2")
+        page_two = self.client.get("/core-schools?per_page=15&page=2")
         self.assertEqual(len(page_two.context["matrix_rows"]), 10)
         self.assertEqual(page_two.context["page_obj"].number, 2)
 
     def test_the_count_in_the_header_is_the_query_total_not_the_page(self):
-        body = self.client.get("/core-schools").content.decode()
+        body = self.client.get("/core-schools?per_page=15").content.decode()
         self.assertIn("Core Schools Matrix (25 Schools)", body)
         self.assertIn("Showing 1\u201315 of 25", body)
 
-    def test_fifteen_rows_render_on_the_default_page(self):
-        body = self.client.get("/core-schools").content.decode()
+    def test_the_page_renders_the_rows_it_was_asked_for(self):
+        body = self.client.get("/core-schools?per_page=15").content.decode()
         self.assertEqual(body.count('<li class="core-school-row'), 15)
+        body = self.client.get("/core-schools").content.decode()
+        self.assertEqual(body.count('<li class="core-school-row'), 25)

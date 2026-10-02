@@ -310,7 +310,7 @@ was measured. Tables are plain text: a status is a word with a tone.
     list with the same parameter and the same size, so the rows the table draws
     and the pages the control offers are one answer rather than two that agree
     by coincidence.{% endcomment %}
-    {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
+    {% paginate ia_evidence_page.paginator.object_list "page" as evidence_pager %}
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">Project-school evidence and next actions</caption>
         <thead><tr><th scope="col">School</th><th scope="col">Project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Next action</th></tr></thead>

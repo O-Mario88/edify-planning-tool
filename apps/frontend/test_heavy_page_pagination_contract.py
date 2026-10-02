@@ -29,7 +29,7 @@ class HeavyPagePaginationContractTest(SimpleTestCase):
         # swaps, and the page around it is now the rail and nothing else.
         source = (ROOT / "templates/partials/priorities/setting_view.html").read_text()
 
-        self.assertIn('{% paginate milestone_rows "milestones_page" 10', source)
+        self.assertIn('{% paginate milestone_rows "milestones_page" as', source)
         self.assertIn("{% for item in milestones_pager.rows %}", source)
         self.assertIn(
             '{% include "components/table_pager.html" with pager=milestones_pager',
@@ -42,6 +42,6 @@ class HeavyPagePaginationContractTest(SimpleTestCase):
 
         self.assertIn('{% paginate blocked "blocked_page"', blocked)
         self.assertIn("{% for item in blocked_pager.rows %}", blocked)
-        self.assertIn('{% paginate pages "pages_page" 25', matrix)
+        self.assertIn('{% paginate pages "pages_page" as', matrix)
         self.assertIn("{% for page in pages_pager.rows %}", matrix)
         self.assertIn("{% for role in roles_pager.rows %}", matrix)

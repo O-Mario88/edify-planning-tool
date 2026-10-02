@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 from apps.core.redirects import local_redirect
 from apps.accounts.models import Leave, StaffProfile
 from apps.core.permissions import render_access_denied, require_page_permission
+from apps.core.pagination import TABLE_PAGE_SIZE
 from apps.hr.models import (
     Application,
     CompensationRecord,
@@ -160,7 +161,7 @@ def _render_workspace(
     Programme Lead's team register, which sits in Team Performance rather
     than under Human Capital.
     """
-    paginator = Paginator(rows, 25)
+    paginator = Paginator(rows, TABLE_PAGE_SIZE)
     page = paginator.get_page(request.GET.get("page") or 1)
     context = {
         "title": title,
@@ -2662,7 +2663,7 @@ def people_analytics_section_view(request):
     """People Analytics as a tab of the one Analytics page."""
 
     workspace = _hr_analytics_workspace(request)
-    paginator = Paginator(workspace["rows"], 25)
+    paginator = Paginator(workspace["rows"], TABLE_PAGE_SIZE)
     page = paginator.get_page(request.GET.get("page") or 1)
     from apps.frontend.views.analytics_render import render_analytics_section
 

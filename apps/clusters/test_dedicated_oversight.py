@@ -9,6 +9,7 @@ from apps.clusters.models import Cluster
 from apps.clusters.oversight_service import cluster_oversight_table_data
 from apps.clusters.test_cluster_oversight_views import _create_user
 from apps.core.fy import get_operational_fy
+from apps.core.pagination import TABLE_PAGE_SIZE
 from apps.core.rbac import EdifyRole
 from apps.geography.models import Region, District
 
@@ -235,6 +236,10 @@ class DedicatedClusterOversightTest(TestCase):
                 self.assertContains(response, 'class="card edify-data-chart"')
 
 
+#: One page of the platform's tables, and two rows over.
+ROWS = TABLE_PAGE_SIZE + 2
+
+
 class ClusterActivityTablePagesPerOfficerTest(SimpleTestCase):
     """Each officer's two activity tables turn their own pages.
 
@@ -251,7 +256,7 @@ class ClusterActivityTablePagesPerOfficerTest(SimpleTestCase):
                 "activity_type": "cluster_training",
                 "planned_date": date(2026, 9, 1),
             }
-            for i in range(12)
+            for i in range(ROWS)
         ]
         member = {"id": "O1", "name": "Officer", "trainings": rows, "meetings": []}
         request = RequestFactory().get("/cluster-oversight/" + query)
@@ -265,11 +270,11 @@ class ClusterActivityTablePagesPerOfficerTest(SimpleTestCase):
         self.assertIn("ct_page-O1=2", html)
         self.assertNotIn("cm_page-O1=2", html)
         self.assertIn("Cluster 0<", html)
-        self.assertNotIn("Cluster 11<", html)
+        self.assertNotIn(f"Cluster {ROWS - 1}<", html)
 
     def test_the_second_page_shows_the_remaining_rows(self):
         html = self._render("?ct_page-O1=2")
-        self.assertIn("Cluster 11<", html)
+        self.assertIn(f"Cluster {ROWS - 1}<", html)
         self.assertNotIn("Cluster 0<", html)
 
 
