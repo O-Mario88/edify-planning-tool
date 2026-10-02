@@ -9,18 +9,19 @@ share of it, and the schools behind its gap.{% endcomment %}
     <p class="cpo-big"><span>{{ card.part }}</span> / {{ card.whole }} <strong>{% if card.share is None %}—{% else %}{{ card.share }}%{% endif %}</strong></p>
     <p class="cpo-muted">{{ card.definition }}</p>
     {% if card.extras %}<p class="cpo-muted">{{ card.extras|join:" · " }}</p>{% endif %}
+    {% for line in card.more %}<p class="cpo-muted">{{ line }}</p>{% endfor %}
     {% if card.note %}<p class="cpo-muted">{{ card.note }}</p>{% endif %}
   </section>
   <section aria-labelledby="cpo-k-leads">
     <h3 class="cpo-sub" id="cpo-k-leads">By Programme Lead</h3>
     <div class="cpo-tscroll">
       <table class="cpo-mini">
-        <thead><tr><th scope="col">Programme Lead</th><th scope="col">Portfolio</th><th scope="col">Required visits</th><th scope="col">Staff planned</th><th scope="col">Partner assigned</th><th scope="col">Partner scheduled</th><th scope="col">Training</th><th scope="col">Clustered</th><th scope="col">Meetings</th></tr></thead>
+        <thead><tr><th scope="col">Programme Lead</th><th scope="col">Visits planned</th><th scope="col">Assigned to Partners</th><th scope="col">Partner planned</th><th scope="col">Portfolio</th><th scope="col">Schools planned</th><th scope="col">Training</th><th scope="col">Clustered</th><th scope="col">Meetings</th></tr></thead>
         <tbody>
           {% for row in chart_rows.rows %}
           <tr>
             <th scope="row">{{ row.name }}</th>
-            <td>{{ row.cells.schools }}</td><td>{{ row.cells.visit_slots }}</td><td>{{ row.cells.staff }} / {{ row.tally.staff_expected }}</td><td>{{ row.cells.partner_assigned }} / {{ row.tally.partner_expected }}</td><td>{{ row.cells.partner_scheduled }}</td><td>{{ row.cells.training }}</td><td>{{ row.tally.clustered }} / {{ row.tally.schools }}</td><td>{{ row.cells.meeting }}</td>
+            <td>{{ row.cells.p_visits }} / {{ row.cells.target }}</td><td>{{ row.cells.pa_work }}</td><td>{{ row.cells.pp_work }}</td><td>{{ row.cells.schools }}</td><td>{{ row.cells.any_visit }}</td><td>{{ row.cells.training }}</td><td>{{ row.tally.clustered }} / {{ row.tally.schools }}</td><td>{{ row.cells.meeting }}</td>
           </tr>
           {% endfor %}
         </tbody>

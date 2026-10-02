@@ -53,7 +53,12 @@ class TableBoundsTest(SimpleTestCase):
     #:   completion table behind the Program Lead's chart (8bb11a1): one row
     #:   per supervised officer, one column per month charted. Bounded by the team,
     #:   like the team targets matrix, and read side by side with the chart.
-    UNBOUNDED_CEILING = 6
+    #: * `partials/country_oversight/_types.html` — Country Planning
+    #:   Oversight's "Planned and Not Yet Planned by School Type" (owner,
+    #:   2026-10-01): one row per school type. Bounded by the SchoolType enum
+    #:   (five), and read as one table: the types beside each other are the
+    #:   point of it.
+    UNBOUNDED_CEILING = 7
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

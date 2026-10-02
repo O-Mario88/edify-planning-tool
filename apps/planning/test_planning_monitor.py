@@ -174,9 +174,10 @@ class TheYearAgainstItsTarget(MonitorFixture):
     def test_staff_visits_are_counted_by_kind_and_delivery(self):
         anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)
         self.assertEqual(anna.core_visits, 2)
-        # The client visit and the donor visit; not the cancelled one, not the
-        # partner's.
-        self.assertEqual(anna.client_visits, 2)
+        # The client visit. Not the donor visit (owner, 2026-10-01: the visits
+        # that count are SSA Support, In-school Training and Follow up), not
+        # the cancelled one, not the partner's.
+        self.assertEqual(anna.client_visits, 1)
         self.assertEqual(anna.visits_done, 1)
 
     def test_the_role_sets_the_target_not_a_saved_profile(self):
@@ -215,7 +216,7 @@ class VisitsCountForThePlanner(MonitorFixture):
         monitor = planning_monitor(self.cd_user, fy=FY)
         anna = self._officer(monitor, self.anna)
         ben = self._officer(monitor, self.ben)
-        self.assertEqual((anna.core_visits, anna.client_visits), (2, 3))
+        self.assertEqual((anna.core_visits, anna.client_visits), (2, 2))
         self.assertEqual(ben.staff_visits, 0)
         # The school is still visited, whoever planned it.
         self.assertEqual(ben.schools_with_visit, 1)
@@ -225,12 +226,14 @@ class CoverageAndGaps(MonitorFixture):
     def test_unique_schools_training_and_gaps(self):
         anna = self._officer(planning_monitor(self.cd_user, fy=FY), self.anna)
         self.assertEqual(anna.school_count, 5)  # the Champion is not counted
-        self.assertEqual(anna.schools_with_visit, 5)
+        # The Core Trained school has a donor visit and a handover the
+        # partner has not dated: neither is a visit planned.
+        self.assertEqual(anna.schools_with_visit, 4)
         self.assertEqual(anna.schools_group_training, 2)
         self.assertEqual(anna.schools_meeting, 1)
         self.assertEqual(anna.schools_with_training, 3)
         self.assertEqual(anna.not_clustered, 1)
-        self.assertEqual((anna.no_visit, anna.no_training, anna.no_both), (0, 2, 0))
+        self.assertEqual((anna.no_visit, anna.no_training, anna.no_both), (1, 2, 0))
         self.assertEqual(anna.in_projects, 1)
 
     def test_an_officer_with_nothing_planned_reads_every_gap(self):
@@ -297,3 +300,53 @@ class TheLensIsTheirs(MonitorFixture):
         self.client.force_login(self.anna_user)
         response = self.client.get("/planning-monitor/", {"fy": FY})
         self.assertNotIn("data-planning-monitor", response.content.decode())
+
+
+class OneRulebookWithCountryOversight(MonitorFixture):
+    """Owner, 2026-10-01: the monitor and Country Planning Oversight count by
+    one rulebook, so the Country Director reads one figure for one plan."""
+
+    def test_the_monitor_and_the_dashboard_agree(self):
+        from apps.planning.country_oversight import service as svc
+
+        monitor = planning_monitor(self.cd_user, fy=FY)["totals"]
+        country = svc.snapshot_for(self.cd_user, svc.Filters(fy=FY)).tree.country
+        self.assertEqual(monitor.visits_target, country.target)
+        self.assertEqual(monitor.staff_visits, country.p_visits)
+        self.assertEqual(monitor.partner_scheduled, country.pp_work)
+        self.assertEqual(
+            monitor.partner_scheduled + monitor.partner_awaiting, country.pa_work
+        )
+        self.assertEqual(monitor.partner_assigned_schools, country.pa_schools)
+        self.assertEqual(monitor.no_visit, country.no_visit)
+
+    def test_partner_work_is_scheduled_only_once_the_partner_dates_it(self):
+        Activity.objects.create(
+            school=self.ben_school,
+            activity_type="school_visit",
+            status="assigned_to_partner",
+            delivery_type="partner",
+            fy=FY,
+            monitored_by_staff_id=self.ben.id,
+        )
+        ben = self._officer(planning_monitor(self.cd_user, fy=FY), self.ben)
+        self.assertEqual((ben.partner_scheduled, ben.partner_awaiting), (0, 1))
+        self.assertEqual(ben.partner_assigned_schools, 1)
+        self.assertEqual(ben.no_visit, 1)
+
+    def test_a_core_graduate_school_is_followed_like_a_client_school(self):
+        self._school("MON-G1", "core_graduate", self.ben)
+        ben = self._officer(planning_monitor(self.cd_user, fy=FY), self.ben)
+        self.assertEqual((ben.school_count, ben.client_schools), (2, 2))
+
+    def test_a_lead_using_another_role_is_still_followed_with_their_team(self):
+        self.pl_user.roles = [
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.ADMIN.value,
+        ]
+        self.pl_user.active_role = EdifyRole.ADMIN.value
+        self.pl_user.save()
+        monitor = planning_monitor(self.cd_user, fy=FY)
+        lead = next(lead for lead in monitor["leads"] if lead.key == self.pl.id)
+        self.assertEqual(lead.officer_count, 3)
+        self.assertEqual(lead.visits_target, PL_VISITS_TARGET + 2 * CCEO_VISITS_TARGET)

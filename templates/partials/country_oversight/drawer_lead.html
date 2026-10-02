@@ -22,16 +22,16 @@ Plan page has always offered. Read-only except the asks.{% endcomment %}
     <h3 class="cpo-sub" id="cpo-l-people">People</h3>
     <div class="cpo-tscroll">
       <table class="cpo-mini">
-        <thead><tr><th scope="col">Name</th><th scope="col">Portfolio</th><th scope="col">Required</th><th scope="col">Staff planned</th><th scope="col">Partner assigned</th><th scope="col">Remaining</th><th scope="col">Training</th><th scope="col">Deficit</th><th scope="col">Action</th></tr></thead>
+        <thead><tr><th scope="col">Name</th><th scope="col">Visits planned</th><th scope="col">Portfolio</th><th scope="col">Schools planned</th><th scope="col">Assigned to Partners</th><th scope="col">Partner planned</th><th scope="col">Training</th><th scope="col">Schools short of target</th><th scope="col">Action</th></tr></thead>
         <tbody>
           {% for row in owners.rows %}
           <tr>
             <th scope="row">{{ row.name }}</th>
-            <td>{{ row.cells.schools }}</td><td>{{ row.cells.visit_slots }}</td><td>{{ row.cells.staff }}</td><td>{{ row.cells.partner_assigned }}</td><td>{{ row.cells.unallocated }}</td><td>{{ row.cells.training }}</td><td>{{ row.cells.deficit }}</td>
+            <td>{{ row.cells.p_visits }}{% if row.cells.has_target %} / {{ row.cells.target }}{% endif %}</td><td>{{ row.cells.schools }}</td><td>{{ row.cells.any_visit }}</td><td>{{ row.cells.pa_work }}</td><td>{{ row.cells.pp_work }}</td><td>{{ row.cells.training }}</td><td>{{ row.cells.shortfall }}</td>
             <td><button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">View</button></td>
           </tr>
           {% empty %}
-          <tr><td colspan="9">Nobody under this Lead holds a school in this selection.</td></tr>
+          <tr><td colspan="9">Nobody under this Lead holds a school or has a plan in this selection.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -42,7 +42,7 @@ Plan page has always offered. Read-only except the asks.{% endcomment %}
   {% if may_see_schools %}
   <section aria-labelledby="cpo-l-schools">
     <h3 class="cpo-sub" id="cpo-l-schools">Schools</h3>
-    <div hx-get="/country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=unallocated&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
+    <div hx-get="/country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=no_visit&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
   </section>
   {% endif %}
 

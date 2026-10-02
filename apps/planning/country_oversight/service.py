@@ -27,7 +27,8 @@ from functools import cached_property
 
 from django.utils import timezone
 
-from apps.planning.country_oversight import policy
+from apps.planning.country_oversight import freshness, policy, rules
+from apps.planning.country_oversight import people as people_read
 from apps.planning.country_oversight.coverage import (
     P_RETURNED,
     FactsTable,
@@ -35,6 +36,7 @@ from apps.planning.country_oversight.coverage import (
     Window,
     annual_position,
     claims_for,
+    duplicate_reasons,
     fy_label,
     load_facts,
     window_for,
@@ -43,11 +45,14 @@ from apps.planning.country_oversight.hierarchy import (
     I_AWAITING,
     I_UNALLOCATED,
     I_UNMAPPED,
+    I_PEOPLE,
     IDX,
+    TYPE_FIELDS,
     LeadRow,
     OwnerRow,
     Tally,
     Tree,
+    blank,
     phase,
     planning_state,
     school_values,
@@ -63,10 +68,9 @@ from apps.planning.country_oversight.requirements import (
     allocate,
     eligible_school_queryset,
     historical_adjustments,
-    lead_rosters,
     owner_directory,
     reporting_date,
-    system_leads,
+    roster_for,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,9 +79,9 @@ PAGE_PATH = "/country-planning-oversight/"
 
 # ── Filters ──────────────────────────────────────────────────────────────────
 PERIODS = ("fy", "quarter", "month", "week")
-FAMILY_OPTIONS = (
-    (policy.CORE_FAMILY, "Core-family"),
-    (policy.CLIENT_FAMILY, "Client-family"),
+#: The school types a reader can narrow the page to (the rulebook's order).
+TYPE_OPTIONS = tuple(
+    (school_type, rules.TYPE_LABELS[school_type]) for school_type in rules.TYPE_ORDER
 )
 CHANNEL_OPTIONS = (("staff", "Staff"), ("partner", "Partner"))
 CLUSTER_OPTIONS = (("clustered", "Clustered"), ("unclustered", "Unclustered"))
@@ -102,7 +106,7 @@ class Filters:
     district: str = ""
     program_lead: str = ""
     cceo: str = ""
-    family: str = ""
+    school_type: str = ""
     channel: str = ""
     partner: str = ""
     cluster_status: str = ""
@@ -114,7 +118,7 @@ class Filters:
         "district",
         "program_lead",
         "cceo",
-        "family",
+        "school_type",
         "channel",
         "partner",
         "cluster_status",
@@ -214,7 +218,9 @@ def read_filters(request) -> Filters:
         district=pick("district"),
         program_lead=pick("program_lead"),
         cceo=pick("cceo"),
-        family=pick("family", {key for key, _ in FAMILY_OPTIONS}),
+        school_type=pick("school_type", {key for key, _ in TYPE_OPTIONS})
+        # A link made before the page read schools by type named a family.
+        or {"core_family": "core"}.get(pick("family"), ""),
         channel=pick("channel", {key for key, _ in CHANNEL_OPTIONS}),
         partner=pick("partner"),
         cluster_status=pick("cluster_status", {key for key, _ in CLUSTER_OPTIONS}),
@@ -361,8 +367,8 @@ def build_dataset(
             roller.add_unmapped(record)
         records[record.id] = record
 
-    leads = system_leads()
-    rosters = lead_rosters([lead.key for lead in leads])
+    # Every Lead and their CCEOs, each Lead's own row first (see _tree).
+    leads, rosters = roster_for(getattr(scope, "country", "") or "")
 
     partner_ids = {
         pid for school in facts.values() for pid in (school.partners or {}) if pid
@@ -403,7 +409,7 @@ def _names(model_label: str, ids) -> dict[str, str]:
 
 def _key(kind: str, universe: str, window: Window) -> str:
     return (
-        f"cpo:{kind}:v3:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
+        f"cpo:{kind}:v4:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
         f"{reporting_date(window.fy).isoformat()}"
     )
 
@@ -432,7 +438,11 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> Dataset:
         _HELD.pop(key, None)
     elif timeout > 0:
         held = _HELD.get(key)
-        if held is not None and held.stamp == _read_stamp(key):
+        if (
+            held is not None
+            and held.stamp == _read_stamp(key)
+            and not freshness.overtaken(held.built_at)
+        ):
             return held
 
     built: list[Dataset] = []
@@ -449,6 +459,14 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> Dataset:
         _write_stamp(key, dataset.stamp, timeout=timeout, replace=bool(built))
         _HELD.clear()
         _HELD[key] = dataset
+    if (
+        not refresh
+        and not built
+        and freshness.overtaken(dataset.built_at)
+        and freshness.claim(key)
+    ):
+        # The plan has changed since these facts were read (see freshness).
+        return dataset_for(user, window, refresh=True)
     return dataset
 
 
@@ -491,8 +509,8 @@ def _write_stamp(key: str, stamp: str, *, timeout: int, replace: bool) -> None:
 class Rollup:
     """Every school's figures, summed by each attribute the page filters on.
 
-    A cell is one owner's schools in one region, district, family, cluster
-    state and planning state. Any combination of those filters is a set of
+    A cell is one owner's schools in one region, district, school type,
+    cluster state and planning state. Any combination of those filters is a set of
     whole cells, so the tree for new filters is a pass over a few thousand
     cells rather than every school — and the rollup is kept apart from the
     school facts, so a filter change never reads them. The figures in a cell
@@ -531,7 +549,7 @@ class _Roller:
             school.owner_key,
             school.region_id,
             school.district_id,
-            school.family,
+            school.school_type,
             school.cluster_id is not None,
             state_of(vector),
             vector[I_AWAITING],
@@ -614,11 +632,17 @@ def rollup_for(
     key = f"{_key('rollup', universe, window)}:{channel or 'all'}"
     if refresh:
         forget_snapshot(key)
-    return stampede_safe_get_or_compute(
-        key,
-        lambda: rollup_of(dataset_for(user, window, refresh=refresh), channel),
-        timeout=_timeout(),
-    )
+
+    def build():
+        return rollup_of(dataset_for(user, window, refresh=refresh), channel)
+
+    rollup = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    if not refresh and freshness.overtaken(rollup.built_at):
+        # Summed from facts the plan has since moved on from: read them again
+        # (dataset_for rebuilds them, one reader at a time) and sum afresh.
+        forget_snapshot(key)
+        rollup = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    return rollup
 
 
 # ── The tree ─────────────────────────────────────────────────────────────────
@@ -628,14 +652,14 @@ def _keeps_place(
     lead_key: str,
     region_id,
     district_id,
-    family: str,
+    school_type: str,
     clustered: bool,
 ) -> bool:
     if filters.region and region_id != filters.region:
         return False
     if filters.district and district_id != filters.district:
         return False
-    if filters.family and family != filters.family:
+    if filters.school_type and school_type != filters.school_type:
         return False
     if filters.cluster_status == "clustered" and not clustered:
         return False
@@ -657,7 +681,7 @@ def _keeps(school, owner: OwnerInfo | None, filters: Filters) -> bool:
         owner.lead_key if owner is not None else NO_LEAD_KEY,
         school.region_id,
         school.district_id,
-        school.family,
+        school.school_type,
         school.cluster_id is not None,
     )
 
@@ -698,31 +722,36 @@ def _partner_values(values, share) -> list:
 NO_PARTNER_KEY = "__staff__"
 
 
-def fold(source, filters: Filters, *, placement: bool = False) -> Tree:
+def fold(source, filters: Filters, *, placement: bool = False, plan=None) -> Tree:
     """Fold the schools through the filters into the hierarchy.
 
     From the rollup whenever the filters are made of whole cells — every
     filter but a single Partner — and school by school otherwise, or when the
     caller needs to know where each kept school landed (``placement``).
+
+    ``plan`` is the people-first read for the same filters (``people``): each
+    person's own plan, added to their row. Without it the rows carry their
+    schools' figures only, which is all a follow-up's gap needs.
     """
     if isinstance(source, Rollup):
         if filters.partner or (filters.channel or "") != source.channel:
             raise ValueError("This rollup cannot answer these filters.")
-        return _fold_rollup(source, filters)
+        return _fold_rollup(source, filters, plan)
     if placement or filters.partner:
-        return _fold_schools(source, filters, placement=placement)
-    return _fold_rollup(rollup_of(source, filters.channel), filters)
+        return _fold_schools(source, filters, placement=placement, plan=plan)
+    return _fold_rollup(rollup_of(source, filters.channel), filters, plan)
 
 
-def _fold_rollup(rollup: Rollup, filters: Filters) -> Tree:
+def _fold_rollup(rollup: Rollup, filters: Filters, plan=None) -> Tree:
     owners = rollup.owners
     lead_of = {key: owner.lead_key for key, owner in owners.items()}
     owner_parts: dict[str, list] = {}
+    type_parts: dict[tuple, list] = {}
     partner_parts: dict[tuple, list] = {}
     kept: dict[tuple, bool] = {}
 
-    def keeps(owner_key, region_id, district_id, family, clustered) -> bool:
-        place = (owner_key, region_id, district_id, family, clustered)
+    def keeps(owner_key, region_id, district_id, school_type, clustered) -> bool:
+        place = (owner_key, region_id, district_id, school_type, clustered)
         answer = kept.get(place)
         if answer is None:
             answer = kept[place] = _keeps_place(
@@ -731,7 +760,7 @@ def _fold_rollup(rollup: Rollup, filters: Filters) -> Tree:
                 lead_of.get(owner_key, NO_LEAD_KEY),
                 region_id,
                 district_id,
-                family,
+                school_type,
                 clustered,
             )
         return answer
@@ -740,27 +769,28 @@ def _fold_rollup(rollup: Rollup, filters: Filters) -> Tree:
         owner_key,
         region_id,
         district_id,
-        family,
+        school_type,
         clustered,
         state,
         awaiting,
     ), vector in rollup.cells.items():
         if keeps(
-            owner_key, region_id, district_id, family, clustered
+            owner_key, region_id, district_id, school_type, clustered
         ) and _state_matches(filters, state, awaiting):
             owner_parts.setdefault(owner_key, []).append(vector)
+            type_parts.setdefault((owner_key, school_type), []).append(vector)
     for (
         owner_key,
         region_id,
         district_id,
-        family,
+        school_type,
         clustered,
         state,
         awaiting,
         partner_key,
     ), vector in rollup.partner_cells.items():
         if keeps(
-            owner_key, region_id, district_id, family, clustered
+            owner_key, region_id, district_id, school_type, clustered
         ) and _state_matches(filters, state, awaiting):
             partner_parts.setdefault((owner_key, partner_key), []).append(vector)
     unmapped = sum(
@@ -771,7 +801,7 @@ def _fold_rollup(rollup: Rollup, filters: Filters) -> Tree:
             district_id,
             clustered,
         ), count in rollup.unmapped.items()
-        if keeps(owner_key, region_id, district_id, policy.UNMAPPED_FAMILY, clustered)
+        if keeps(owner_key, region_id, district_id, "", clustered)
     )
     return _tree(
         rollup,
@@ -780,16 +810,21 @@ def _fold_rollup(rollup: Rollup, filters: Filters) -> Tree:
         {key: sum_vectors(parts) for key, parts in partner_parts.items()},
         unmapped,
         {},
+        {key: sum_vectors(parts) for key, parts in type_parts.items()},
+        plan,
     )
 
 
-def _fold_schools(dataset: Dataset, filters: Filters, *, placement: bool) -> Tree:
+def _fold_schools(
+    dataset: Dataset, filters: Filters, *, placement: bool, plan=None
+) -> Tree:
     window = dataset.window
     owners = dataset.owners
     channel = filters.channel or None
     only_partner = filters.partner or None
 
     owner_parts: dict[str, list] = {}
+    type_parts: dict[tuple, list] = {}
     partner_parts: dict[tuple[str, str], list] = {}
     placed: dict[str, tuple[str, str]] = {}
     unmapped = 0
@@ -798,8 +833,8 @@ def _fold_schools(dataset: Dataset, filters: Filters, *, placement: bool) -> Tre
         if not _keeps(school, owner, filters):
             continue
         if not school.is_governed:
-            # Outside every denominator until its family is decided, and
-            # still counted, so the page can say how many schools that is.
+            # Outside every denominator until its type is decided, and still
+            # counted, so the page can say how many schools that is.
             unmapped += 1
             continue
         claims = claims_for(
@@ -813,6 +848,7 @@ def _fold_schools(dataset: Dataset, filters: Filters, *, placement: bool) -> Tre
             continue
         values = school_values(school, claims)
         owner_parts.setdefault(school.owner_key, []).append(values)
+        type_parts.setdefault((school.owner_key, school.school_type), []).append(values)
         if placement:
             placed[school.id] = (
                 school.owner_key,
@@ -841,7 +877,26 @@ def _fold_schools(dataset: Dataset, filters: Filters, *, placement: bool) -> Tre
         {key: sum_vectors(parts) for key, parts in partner_parts.items()},
         unmapped,
         placed,
+        {key: sum_vectors(parts) for key, parts in type_parts.items()},
+        plan,
     )
+
+
+def _plan_values(person) -> list:
+    """A person's own plan (``people.PersonPlan``) as the row's people fields."""
+    values = blank()
+    values[IDX["p_visits"]] = person.visits_planned
+    values[IDX["p_follow_up"]] = person.visits.get(rules.KIND_FOLLOW_UP, 0)
+    values[IDX["p_in_school"]] = person.visits.get(rules.KIND_IN_SCHOOL, 0)
+    values[IDX["p_ssa"]] = person.visits.get(rules.KIND_SSA, 0)
+    values[IDX["p_outreach"]] = person.outreach
+    values[IDX["p_trainings"]] = person.trainings
+    values[IDX["p_cluster_trainings"]] = person.cluster_trainings
+    values[IDX["p_meetings"]] = person.meetings
+    values[IDX["pa_work"]] = person.partner_assigned
+    values[IDX["pp_work"]] = person.partner_planned
+    values[IDX["pa_schools"]] = person.partner_schools
+    return values
 
 
 def _tree(
@@ -851,34 +906,85 @@ def _tree(
     partner_values: dict,
     unmapped: int,
     placement: dict,
+    type_values: dict | None = None,
+    plan=None,
 ) -> Tree:
-    """The hierarchy over owners' summed figures, phased per owner."""
+    """The hierarchy over each person's figures, phased per person.
+
+    A row is a person: the schools they hold (``owner_values``) and, when the
+    people-first read is given, their own plan against the visits their role
+    plans. Somebody who planned and holds no school is a row; so is every
+    Lead and CCEO on the roster when nothing narrows the schools.
+    """
     window = source.window
     owners = source.owners
+    plans = {person.key: person for person in plan.people} if plan else {}
+    roster = {
+        person.key: person for members in source.rosters.values() for person in members
+    }
+    show_roster = not filters.active_school_filters or (
+        filters.active_school_filters == 1 and filters.program_lead
+    )
+
+    keys = set(owner_values)
+    keys.update(key for key, person in plans.items() if person.has_anything)
+    if show_roster:
+        keys.update(roster)
+
     rows: dict[str, OwnerRow] = {}
-    for owner_key, values in owner_values.items():
-        owner = owners.get(owner_key)
+    for key in keys:
+        owner = owners.get(key) or roster.get(key)
+        person = plans.get(key)
+        if owner is None and person is None:
+            owner_name, kind, role, lead_key, ceiling = (
+                NO_OWNER_LABEL,
+                "unassigned",
+                "",
+                NO_LEAD_KEY,
+                0,
+            )
+        elif owner is None:
+            # Somebody the year's plans name who holds no school and is on no
+            # roster: shown, with no target.
+            owner_name, role, lead_key, ceiling = person.name, "", NO_LEAD_KEY, 0
+            kind = "unassigned" if key.startswith("__") else "other"
+        else:
+            owner_name, kind, role = owner.name, owner.kind, owner.role
+            lead_key, ceiling = owner.lead_key, owner.ceiling
+        if filters.program_lead and lead_key != filters.program_lead:
+            continue
+        if filters.cceo and key != filters.cceo:
+            continue
+        values = list(owner_values.get(key) or blank())
+        if person is not None:
+            for index, amount in zip(I_PEOPLE, _people_part(person)):
+                values[index] += amount
+        if plan is not None:
+            values[IDX["target"]] = ceiling
         row = OwnerRow(
-            key=owner_key,
-            name=owner.name if owner else NO_OWNER_LABEL,
-            kind=owner.kind if owner else "unassigned",
-            role=owner.role if owner else "",
-            lead_key=owner.lead_key if owner else NO_LEAD_KEY,
+            key=key,
+            name=owner_name,
+            kind=kind,
+            role=role,
+            lead_key=lead_key,
             tally=Tally(phase(values, window)),
-            ceiling=owner.ceiling if owner else 0,
+            ceiling=ceiling,
         )
-        rows[owner_key] = row
+        if person is not None:
+            for pid, (assigned, dated, school_ids) in person.by_partner.items():
+                hands = blank()
+                hands[IDX["pa_work"]] = assigned
+                hands[IDX["pp_work"]] = dated
+                hands[IDX["pa_schools"]] = len(school_ids)
+                row.assigned[pid] = Tally(hands)
+        rows[key] = row
     for (owner_key, pid), values in partner_values.items():
         row = rows.get(owner_key)
         if row is not None:
             row.partners[pid] = Tally(phase(values, window))
 
     # Every Programme Lead is a row whether or not the filters left them any
-    # schools; the CCEOs on a Lead's roster are rows of zeroes rather than
-    # missing when nothing narrows the schools.
-    show_roster = not filters.active_school_filters or (
-        filters.active_school_filters == 1 and filters.program_lead
-    )
+    # schools.
     leads: list[LeadRow] = []
     seen_leads: set[str] = set()
     for lead in source.leads:
@@ -886,21 +992,6 @@ def _tree(
             continue
         seen_leads.add(lead.key)
         members = [row for row in rows.values() if row.lead_key == lead.key]
-        if show_roster:
-            present = {row.key for row in members}
-            for person in source.rosters.get(lead.key, []):
-                if person.key not in present:
-                    members.append(
-                        OwnerRow(
-                            key=person.key,
-                            name=person.name,
-                            kind="cceo",
-                            role=person.role,
-                            lead_key=lead.key,
-                            tally=Tally(),
-                            ceiling=policy.ceiling_for(policy.CCEO_ROLE),
-                        )
-                    )
         leads.append(_lead_row(lead.key, lead.name, members))
     # Leads the role list does not know (an owner reporting to someone whose
     # role has since changed) keep their rows rather than dropping schools.
@@ -923,7 +1014,28 @@ def _tree(
 
     country = sum_vectors([lead.tally.values for lead in leads])
     country[I_UNMAPPED] += unmapped
-    return Tree(country=Tally(country), leads=leads, window=window, placement=placement)
+
+    # The same schools by their own type: each person's share phased as the
+    # person's is, so a type's row is the sum of its people's.
+    by_type: dict[str, list] = {}
+    for (owner_key, school_type), values in (type_values or {}).items():
+        if owner_key in rows:
+            by_type.setdefault(school_type, []).append(phase(values, window))
+    return Tree(
+        country=Tally(country),
+        leads=leads,
+        window=window,
+        placement=placement,
+        by_type={
+            school_type: Tally(sum_vectors(parts))
+            for school_type, parts in by_type.items()
+        },
+    )
+
+
+def _people_part(person) -> list:
+    values = _plan_values(person)
+    return [values[index] for index in I_PEOPLE]
 
 
 def _lead_row(key: str, name: str, members: list) -> LeadRow:
@@ -950,17 +1062,62 @@ class Snapshot:
     scope_label: str = ""
 
 
-def _snapshot(source, filters: Filters) -> Snapshot:
-    """Fold ``source`` (a Rollup or a Dataset) into what the page renders."""
+def _narrow(filters: Filters, school_ids=None) -> people_read.Narrow:
+    """The page's filters as the people-first read applies them."""
+    return people_read.Narrow(
+        region=filters.region,
+        district=filters.district,
+        school_type=filters.school_type,
+        cluster_status=filters.cluster_status,
+        channel=filters.channel,
+        partner=filters.partner,
+        school_ids=school_ids,
+    )
+
+
+def _people_window(window: Window) -> Window:
+    """A week has no approved phasing, so a person's plan is read for the
+    year so far, as the week's cards read the schools."""
+    if window.period == "week":
+        return replace(window, start=window.fy_start)
+    return window
+
+
+def _snapshot(source, filters: Filters, scope) -> Snapshot:
+    """Fold ``source`` (a Rollup or a Dataset) into what the page renders:
+    the schools' figures, and each person's own plan beside them."""
+    school_ids = None
+    if filters.planning_status or filters.partner:
+        # Only the school-by-school fold knows which schools these keep.
+        school_ids = tuple(fold(source, filters, placement=True).placement)
+    plan = people_read.people_plan(
+        None,
+        filters.fy,
+        window=_people_window(source.window),
+        scope=scope,
+        narrow=_narrow(filters, school_ids),
+        portfolio=False,
+    )
     return Snapshot(
-        tree=fold(source, filters),
+        tree=fold(source, filters, plan=plan),
         filters=filters,
         built_at=source.built_at,
         as_of=source.as_of,
         universe=source.universe,
         region_names=source.region_names,
         district_names=source.district_names,
-        partner_names=source.partner_names,
+        partner_names={
+            **source.partner_names,
+            **_names(
+                "partners.Partner",
+                {
+                    pid
+                    for person in plan.people
+                    for pid in person.by_partner
+                    if pid and pid not in source.partner_names
+                },
+            ),
+        },
         lead_options=[{"key": lead.key, "name": lead.name} for lead in source.leads],
         owner_options=sorted(
             (
@@ -970,7 +1127,14 @@ def _snapshot(source, filters: Filters) -> Snapshot:
                     "lead": owner.lead_key,
                     "kind": owner.kind,
                 }
-                for owner in source.owners.values()
+                for owner in {
+                    **{
+                        person.key: person
+                        for members in source.rosters.values()
+                        for person in members
+                    },
+                    **source.owners,
+                }.values()
                 if owner.kind != "unassigned"
             ),
             key=lambda option: option["name"].casefold(),
@@ -985,21 +1149,28 @@ def snapshot_for(user, filters: Filters, *, refresh: bool = False) -> Snapshot:
     from apps.core.scoping import resolve_user_scope
 
     window = filters.window
-    universe = universe_key(resolve_user_scope(user))
+    scope = resolve_user_scope(user)
+    universe = universe_key(scope)
     key = f"{_key('tree', universe, window)}:{filters.key()}"
     if refresh:
         forget_snapshot(key)
     _note_window(universe, filters)
 
     def build():
-        if filters.partner:
-            # One Partner's claims are read school by school.
+        if filters.partner or filters.planning_status:
+            # One Partner's claims, and which schools a planning status
+            # keeps, are read school by school.
             source = dataset_for(user, window, refresh=refresh)
         else:
             source = rollup_for(user, window, filters.channel, refresh=refresh)
-        return _snapshot(source, filters)
+        return _snapshot(source, filters, scope)
 
-    return stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    snapshot = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    if not refresh and freshness.overtaken(snapshot.built_at):
+        # Folded before the plan last changed: fold again from current facts.
+        forget_snapshot(key)
+        snapshot = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    return snapshot
 
 
 # ── Keeping the country's figures warm ───────────────────────────────────────
@@ -1130,7 +1301,7 @@ def warm(targets=None) -> int:
         try:
             dataset = build_dataset(scope, window, universe=universe)
             rollup = rollup_of(dataset, "")
-            snapshot = _snapshot(rollup, filters)
+            snapshot = _snapshot(rollup, filters, scope)
         except Exception as exc:  # noqa: BLE001 - one window must not stop the rest
             logger.exception("Could not warm %s %s", universe, window.cache_part)
             failed = failed or exc
@@ -1174,24 +1345,53 @@ KPI_KEYS = (
 )
 
 
+#: The consolidated table each card opens (``tables``): every row it counts.
+KPI_TABLES = {
+    "cpo_staff_visit_planning": "visits",
+    "cpo_partner_planning": "partners",
+    "cpo_total_visit_coverage": "plans",
+    "cpo_training_planning": "trainings",
+    "cpo_cluster_membership": "clusters",
+    "cpo_cluster_meeting_planning": "meetings",
+}
+
+
 def _fmt(value) -> str:
     return f"{int(value):,}"
 
 
+def headcount(snapshot: Snapshot) -> tuple[int, int]:
+    """(Programme Leads, CCEOs) whose rows the snapshot holds."""
+    leads = cceos = 0
+    for lead in snapshot.tree.leads:
+        for owner in lead.owners:
+            if not owner.ceiling:
+                continue
+            if owner.kind == "pl_personal":
+                leads += 1
+            elif owner.kind == "cceo":
+                cceos += 1
+    return leads, cceos
+
+
 def kpis(snapshot: Snapshot) -> list[dict]:
-    """The six planning cards, each bound to its registered metric."""
+    """The six planning cards, each bound to its registered metric, by the
+    planning rulebook (owner, 2026-10-01)."""
     from apps.core.metrics import MetricValue, render_metric
 
     t = snapshot.tree.country
     window = snapshot.tree.window
     phased = window.has_phased_target
     week = window.period == "week"
+    leads, cceos = headcount(snapshot)
 
-    def card(key, part, whole, *, headline, note, extras, tone_part=None, icon=""):
+    def card(
+        key, part, whole, *, headline, note, extras, tone_part=None, icon="", more=()
+    ):
         rendered = render_metric(
             key,
             MetricValue.ratio(part, whole),
-            drilldown_url=f"{PAGE_PATH}drawer?kind=kpi&metric={key}&{snapshot.filters.query()}",
+            drilldown_url=f"{PAGE_PATH}table/{KPI_TABLES[key]}?{snapshot.filters.query()}",
         ).as_dict()
         share = Tally.share(part, whole)
         rendered.update(
@@ -1203,6 +1403,8 @@ def kpis(snapshot: Snapshot) -> list[dict]:
                 "headline": headline,
                 "note": note,
                 "extras": [e for e in extras if e],
+                # Said in the opened card, where there is room for it.
+                "more": [m for m in more if m],
                 "tone": _tone(share if tone_part is None else tone_part),
                 "icon": icon,
             }
@@ -1215,73 +1417,70 @@ def kpis(snapshot: Snapshot) -> list[dict]:
     elif week:
         period_note = "Year to date against the annual requirement"
 
-    staff_part, partner_part, visit_part = t.staff, t.partner_assigned, t.planned
-    training_part, meeting_part = t.training, t.meeting_covered
-    staff_whole, partner_whole, visit_whole = (
-        t.staff_expected,
-        t.partner_expected,
-        t.visit_slots,
-    )
-    training_whole = t.training_slots
+    visit_part, training_part = t.planned, t.training
     if week:
-        # A week has no approved phasing: the card reads the year so far, and
-        # the week's own planning is named beside it.
-        staff_part, partner_part = t.cum_staff, t.cum_partner_assigned
+        # A week has no approved phasing: the card reads the year so far.
         visit_part = t.cum_staff + t.cum_partner_scheduled
-        training_part, meeting_part = t.cum_training, t.cum_meeting_covered
+        training_part = t.cum_training
 
+    lead_target = policy.ceiling_for(policy.PROGRAM_LEAD_ROLE)
+    cceo_target = policy.ceiling_for(policy.CCEO_ROLE)
     cards = [
         card(
             "cpo_staff_visit_planning",
-            staff_part,
-            staff_whole,
-            headline=(_fmt(t.any_staff), "Schools with staff visit planned"),
+            t.p_visits,
+            t.target,
+            headline=(
+                _fmt(t.plan_remaining),
+                "visits still to plan",
+            ),
             note=period_note,
             extras=[
-                f"{_fmt(t.staff_gap)} staff slots remaining",
-                f"{_fmt(t.deficit)} capacity deficit"
-                if t.deficit
-                else "No capacity deficit",
-                f"{_fmt(t.staff)} planned this week" if week else "",
+                f"{_fmt(cceos)} CCEOs × {cceo_target} + "
+                f"{_fmt(leads)} Leads × {lead_target}",
+            ],
+            more=[
+                f"Follow up {_fmt(t.p_follow_up)} · In-school Training "
+                f"{_fmt(t.p_in_school)} · SSA Support {_fmt(t.p_ssa)}",
+                f"{_fmt(t.p_outreach)} donor, story and social visits not counted"
+                if t.p_outreach
+                else "",
             ],
             icon="staff",
         ),
         card(
             "cpo_partner_planning",
-            partner_part,
-            partner_whole,
-            headline=(
-                _fmt(t.partner_scheduled if not week else t.cum_partner_scheduled),
-                "Partner scheduled slots",
-            ),
-            note=period_note,
+            t.pp_work,
+            t.pa_work,
+            headline=(_fmt(t.pa_schools), "Schools assigned to Partners"),
+            note="" if phased else period_note,
             extras=[
-                f"{_fmt(t.any_partner_assigned)} schools assigned",
-                f"{_fmt(t.partner_gap)} unassigned",
-                f"{_fmt(t.assigned_unscheduled)} awaiting schedule",
+                f"of {_fmt(t.visit_schools)} schools needing a visit",
+                f"{_fmt(t.partner_waiting)} awaiting the Partner's date",
             ],
             icon="partner",
         ),
         card(
             "cpo_total_visit_coverage",
             visit_part,
-            visit_whole,
-            headline=(_fmt(t.any_visit), "Unique schools with a visit plan"),
+            t.visit_slots,
+            headline=(_fmt(t.any_visit), "Schools with a visit planned"),
             note=period_note,
             extras=[
-                f"{_fmt(t.unallocated)} slots unallocated",
-                f"{_fmt(t.assigned_unscheduled)} awaiting Partner",
+                f"{_fmt(t.no_visit)} schools not yet planned",
+                f"{_fmt(max(0, t.visit_slots - visit_part))} visits remaining",
+                f"{_fmt(t.duplicates)} planned twice" if t.duplicates else "",
             ],
             icon="target",
         ),
         card(
             "cpo_training_planning",
             training_part,
-            training_whole,
+            t.training_slots,
             headline=(_fmt(t.any_training), "Schools with training planned"),
             note=period_note,
             extras=[
-                f"{_fmt(t.no_training)} schools without",
+                f"{_fmt(t.no_training)} schools not yet planned",
                 f"{_fmt(t.training_gap)} slots remaining",
             ],
             icon="training",
@@ -1295,22 +1494,80 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             extras=[],
             icon="cluster",
         ),
+        # Membership is not a meeting: of the schools in a cluster, the ones
+        # on the roster of a meeting staff have actually planned.
         card(
             "cpo_cluster_meeting_planning",
-            meeting_part,
-            t.schools,
-            headline=(
-                f"{t.meeting_clustered_share}%"
-                if t.meeting_clustered_share is not None
-                else "—",
-                f"of clustered schools ({_fmt(t.meeting_covered_clustered)} / {_fmt(t.clustered)})",
-            ),
-            note=period_note,
-            extras=[f"{_fmt(t.clustered_no_meeting)} clustered with no meeting"],
+            t.meeting_covered_clustered,
+            t.clustered,
+            headline=(_fmt(t.p_meetings), "Cluster meetings planned by staff"),
+            note="" if phased or week else period_note,
+            extras=[
+                f"{_fmt(t.clustered_no_meeting)} clustered schools on no planned "
+                "meeting",
+            ],
             icon="meeting",
         ),
     ]
     return cards
+
+
+def _type_row(key: str, label: str, tally: Tally, need) -> dict:
+    planned = tally.staff + tally.partner_scheduled
+    return {
+        "key": key,
+        "label": label,
+        "needs_visits": bool(need is None or need.visits),
+        "needs_trainings": bool(need is None or need.trainings),
+        "schools": _fmt(tally.schools),
+        "visit_slots": _fmt(tally.visit_slots),
+        "staff": _fmt(tally.staff),
+        "partner_scheduled": _fmt(tally.partner_scheduled),
+        "visit_remaining": _fmt(max(0, tally.visit_slots - planned)),
+        "slot_share": tally.visit_share,
+        "slot_tone": _tone(tally.visit_share),
+        "visit_share": tally.unique_visit_share,
+        "visit_tone": _tone(tally.unique_visit_share),
+        "any_visit": _fmt(tally.any_visit),
+        "no_visit": _fmt(tally.no_visit),
+        "with_partner": _fmt(tally.with_partner),
+        "training_slots": _fmt(tally.training_slots),
+        "training": _fmt(tally.training),
+        "training_remaining": _fmt(max(0, tally.training_slots - tally.training)),
+        "training_share": tally.training_share,
+        "training_tone": _tone(tally.training_share),
+        "no_training": _fmt(tally.no_training),
+        "duplicates": tally.duplicates,
+    }
+
+
+def type_rows(snapshot: Snapshot) -> list[dict]:
+    """The same schools by their own type (owner, 2026-10-01: "separate all
+    the plans for Core, Clients, Core Trained, Core Graduates ... how many
+    schools have been planned for and how many are not yet. Do the same for
+    trainings"). One row per type the selection holds, the rulebook's order:
+    what the type needs, what is planned, what remains. A type the
+    requirement asks nothing of shows what it has and no gap. The last row is
+    every type together — the cards' own figures."""
+    by_type = snapshot.tree.by_type
+    order = [
+        t for t in rules.TYPE_ORDER if t in by_type or not snapshot.filters.school_type
+    ]
+    order += sorted(t for t in by_type if t not in rules.TYPE_ORDER)
+    rows = [
+        _type_row(
+            school_type,
+            rules.type_label(school_type),
+            by_type.get(school_type) or Tally(),
+            rules.requirement_for(school_type),
+        )
+        for school_type in order
+    ]
+    if len(rows) > 1:
+        total = _type_row("", "All school types", snapshot.tree.country, None)
+        total["is_total"] = True
+        rows.append(total)
+    return rows
 
 
 def _tone(share) -> str:
@@ -1348,14 +1605,16 @@ def charts(snapshot: Snapshot) -> list[dict]:
     """The four planning charts, one category per Programme Lead row.
 
     Each chart's categories are the table's Lead rows and its values are
-    those rows' own figures, so a chart total is the table total. The visit
-    chart stacks a PARTITION of each Lead's required slots — nothing is drawn
-    twice, so a bar's length is its Required Visits figure.
+    those rows' own figures, so a chart total is the table total. A Lead's
+    bar is the Lead's own plan and their CCEOs' together. The visit chart
+    stacks a PARTITION of each team's target — the three counted kinds and
+    what is still to plan — so a bar's length is the team's target (or its
+    plan, where that is larger).
     """
     leads = [
         lead
         for lead in snapshot.tree.leads
-        if lead.tally.schools or not lead.is_no_lead
+        if lead.tally.schools or lead.tally.p_visits or not lead.is_no_lead
     ]
     names = [lead.name for lead in leads]
     keys = [lead.key for lead in leads]
@@ -1366,66 +1625,55 @@ def charts(snapshot: Snapshot) -> list[dict]:
 
     visit = {
         "id": "cpo-visit-chart",
-        "title": "Visit Requirement & Planning by Program Lead",
+        "title": "Visits Planned Against Target by Program Lead",
         "form": "stacked",
         "categories": names,
         "keys": keys,
         "series": [
             {
-                "name": "Planned Staff Core",
+                "name": "Follow up",
                 "color": CHART_COLOURS["staff_core"],
-                "data": [x.staff_core + x.staff_cover for x in t],
+                "data": [x.p_follow_up for x in t],
             },
             {
-                "name": "Planned Staff Client",
+                "name": "In-school Training",
                 "color": CHART_COLOURS["staff_client"],
-                "data": [x.staff_client for x in t],
+                "data": [x.p_in_school for x in t],
             },
             {
-                "name": "Partner Scheduled",
+                "name": "SSA Support",
                 "color": CHART_COLOURS["partner_scheduled"],
-                "data": [x.partner_scheduled for x in t],
+                "data": [x.p_ssa for x in t],
             },
             {
-                "name": "Partner Assigned, not scheduled",
-                "color": CHART_COLOURS["partner_waiting"],
-                "data": [x.assigned_unscheduled for x in t],
-            },
-            {
-                "name": "Remaining Gap",
+                "name": "Still to plan",
                 "color": CHART_COLOURS["gap"],
-                "data": [x.unallocated for x in t],
+                "data": [x.plan_remaining for x in t],
             },
         ],
         "table": {
             "columns": [
-                "Required visits",
-                "Req. Staff Core",
-                "Planned Staff Core",
-                "Req. Staff Client",
-                "Planned Staff Client",
-                "Req. Partner Core",
-                "Partner Core Assigned",
-                "Partner Core Scheduled",
-                "Req. Partner Client",
-                "Partner Client Assigned",
-                "Partner Client Scheduled",
-                "Remaining Gap",
+                "Visit target",
+                "Visits planned",
+                "Follow up",
+                "In-school Training",
+                "SSA Support",
+                "Still to plan",
+                "Assigned to Partners",
+                "Partner planned",
+                "Donor, story and social (not counted)",
             ],
             "rows": [
                 [
-                    x.visit_slots,
-                    x.core_staff_slots,
-                    x.staff_core + x.staff_cover,
-                    x.client_staff_expected,
-                    x.staff_client,
-                    x.core_partner_slots,
-                    x.partner_core_assigned,
-                    x.partner_core_scheduled,
-                    x.client_partner_expected,
-                    x.partner_client_assigned,
-                    x.partner_client_scheduled,
-                    x.unallocated,
+                    x.target,
+                    x.p_visits,
+                    x.p_follow_up,
+                    x.p_in_school,
+                    x.p_ssa,
+                    x.plan_remaining,
+                    x.pa_work,
+                    x.pp_work,
+                    x.p_outreach,
                 ]
                 for x in t
             ],
@@ -1433,7 +1681,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
     }
     unique = {
         "id": "cpo-unique-chart",
-        "title": "Unique School Visit Coverage by Program Lead",
+        "title": "Schools With a Visit Planned by Program Lead",
         "form": "share",
         "categories": names,
         "keys": keys,
@@ -1441,45 +1689,47 @@ def charts(snapshot: Snapshot) -> list[dict]:
             {
                 "name": "Staff Plan Only",
                 "color": CHART_COLOURS["staff_only"],
-                "data": pct([x.staff_only for x in t], [x.schools for x in t]),
+                "data": pct([x.staff_only for x in t], [x.visit_schools for x in t]),
                 "counts": [x.staff_only for x in t],
             },
             {
                 "name": "Partner Plan Only",
                 "color": CHART_COLOURS["partner_only"],
-                "data": pct([x.partner_only for x in t], [x.schools for x in t]),
+                "data": pct([x.partner_only for x in t], [x.visit_schools for x in t]),
                 "counts": [x.partner_only for x in t],
             },
             {
                 "name": "Both",
                 "color": CHART_COLOURS["both"],
-                "data": pct([x.both for x in t], [x.schools for x in t]),
+                "data": pct([x.both for x in t], [x.visit_schools for x in t]),
                 "counts": [x.both for x in t],
             },
             {
-                "name": "No Visit Plan",
+                "name": "Not Yet Planned",
                 "color": CHART_COLOURS["none"],
-                "data": pct([x.no_visit for x in t], [x.schools for x in t]),
+                "data": pct([x.no_visit for x in t], [x.visit_schools for x in t]),
                 "counts": [x.no_visit for x in t],
             },
         ],
         "table": {
             "columns": [
-                "Schools",
+                "Schools needing a visit",
                 "Staff plan only",
                 "Partner plan only",
                 "Both",
-                "No visit plan",
-                "Assigned, not scheduled",
+                "Not yet planned",
+                "In a Partner's hands",
+                "Planned twice",
             ],
             "rows": [
                 [
-                    x.schools,
+                    x.visit_schools,
                     x.staff_only,
                     x.partner_only,
                     x.both,
                     x.no_visit,
-                    x.assigned_unscheduled,
+                    x.with_partner,
+                    x.duplicates,
                 ]
                 for x in t
             ],
@@ -1554,6 +1804,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Unclustered",
                 "Covered by a planned meeting",
                 "Clustered, no meeting planned",
+                "Meetings planned by staff",
             ],
             "rows": [
                 [
@@ -1562,6 +1813,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.unclustered,
                     x.meeting_covered,
                     x.clustered_no_meeting,
+                    x.p_meetings,
                 ]
                 for x in t
             ],
@@ -1602,30 +1854,47 @@ def _even_shares(chart: dict) -> None:
 
 TABLE_COLUMNS = (
     ("name", "Name"),
+    ("p_visits", "Visits Planned"),
     ("schools", "Portfolio"),
-    ("core_schools", "Core Schools"),
-    ("client_schools", "Client Schools"),
-    ("visit_slots", "Required Visits"),
-    ("staff", "Staff Planned"),
-    ("partner_assigned", "Partner Assigned"),
-    ("partner_scheduled", "Partner Scheduled"),
-    ("unallocated", "Remaining"),
+    ("core_schools", "Core"),
+    ("client_schools", "Client"),
+    ("core_trained_schools", "Core Trained"),
+    ("core_graduate_schools", "Core Graduate"),
+    ("any_visit", "Schools Planned"),
+    ("pp_work", "Partner Planned"),
     ("training", "Training Coverage"),
     ("unclustered", "Unclustered"),
     ("meeting", "Cluster Meeting Coverage"),
     ("followups", "Open Follow-ups"),
     ("action", "Action"),
 )
+TABLE_WIDTH = len(TABLE_COLUMNS)
 
 
 def row_cells(tally: Tally) -> dict:
-    """The table's figures for one row, formatted on the server."""
+    """The table's figures for one row, formatted on the server.
+
+    The first two are the person's own plan against the visits their role
+    plans; the Partner pair is the work they handed over and what the
+    Partner has dated; the rest are the schools they hold.
+    """
     return {
+        "target": _fmt(tally.target),
+        "has_target": bool(tally.target),
+        "p_visits": _fmt(tally.p_visits),
+        "plan_share": tally.plan_share,
+        "plan_tone": _tone(tally.plan_share),
         "schools": _fmt(tally.schools),
-        "core_schools": _fmt(tally.core_schools),
-        "client_schools": _fmt(tally.client_schools),
+        **{field: _fmt(getattr(tally, field)) for field in TYPE_FIELDS.values()},
         "visit_slots": _fmt(tally.visit_slots),
         "staff": _fmt(tally.staff),
+        "any_visit": f"{_fmt(tally.any_visit)} / {_fmt(tally.visit_schools)}",
+        "visit_share": tally.unique_visit_share,
+        "visit_tone": _tone(tally.unique_visit_share),
+        "no_visit": _fmt(tally.no_visit),
+        "pa_work": _fmt(tally.pa_work),
+        "pp_work": _fmt(tally.pp_work),
+        "pa_schools": _fmt(tally.pa_schools),
         "partner_assigned": _fmt(tally.partner_assigned),
         "partner_scheduled": _fmt(tally.partner_scheduled),
         "unallocated": _fmt(tally.unallocated),
@@ -1633,10 +1902,12 @@ def row_cells(tally: Tally) -> dict:
         "training_share": tally.training_share,
         "training_tone": _tone(tally.training_share),
         "unclustered": _fmt(tally.unclustered),
-        "meeting": f"{_fmt(tally.meeting_covered)} / {_fmt(tally.schools)}",
-        "meeting_share": tally.meeting_share,
-        "meeting_tone": _tone(tally.meeting_share),
+        "meeting": f"{_fmt(tally.meeting_covered_clustered)} / {_fmt(tally.clustered)}",
+        "meeting_share": tally.meeting_clustered_share,
+        "meeting_tone": _tone(tally.meeting_clustered_share),
         "deficit": tally.deficit,
+        "shortfall": tally.shortfall,
+        "duplicates": tally.duplicates,
     }
 
 
@@ -1670,7 +1941,7 @@ def owner_rows(snapshot: Snapshot, lead_key: str, followup_counts: dict) -> list
                 "kind": owner.kind,
                 "cells": row_cells(owner.tally),
                 "followups": followup_counts.get(("owner", owner.key), 0),
-                "has_children": bool(owner.partners),
+                "has_children": bool(owner.assigned),
                 "ceiling": owner.ceiling,
             }
         )
@@ -1678,34 +1949,25 @@ def owner_rows(snapshot: Snapshot, lead_key: str, followup_counts: dict) -> list
 
 
 def partner_rows(snapshot: Snapshot, owner_key: str) -> list[dict]:
-    owner = None
-    for lead in snapshot.tree.leads:
-        owner = next((row for row in lead.owners if row.key == owner_key), None)
-        if owner is not None:
-            break
+    """The Partners one person handed work to: what they assigned to each,
+    and how much of it the Partner has dated."""
+    _lead, owner = find_owner(snapshot, owner_key)
     if owner is None:
         return []
     rows = []
     for pid, tally in sorted(
-        owner.partners.items(),
-        key=lambda item: (
-            item[0] == NO_PARTNER_KEY,
-            snapshot.partner_names.get(item[0], item[0]).casefold(),
-        ),
+        owner.assigned.items(),
+        key=lambda item: snapshot.partner_names.get(item[0], item[0]).casefold(),
     ):
         rows.append(
             {
                 "key": pid,
-                "name": (
-                    "Staff delivery"
-                    if pid == NO_PARTNER_KEY
-                    else snapshot.partner_names.get(pid) or "Unrecorded Partner"
-                ),
-                "is_staff": pid == NO_PARTNER_KEY,
-                "cells": row_cells(tally),
-                "returned": tally.returned,
-                "verified": tally.partner_verified,
-                "assigned_unscheduled": tally.assigned_unscheduled,
+                "name": snapshot.partner_names.get(pid) or "Unrecorded Partner",
+                "schools": _fmt(tally.pa_schools),
+                "assigned": _fmt(tally.pa_work),
+                "planned": _fmt(tally.pp_work),
+                "waiting": tally.partner_waiting,
+                "has_school_side": pid in owner.partners,
             }
         )
     return rows
@@ -1737,13 +1999,15 @@ GAP_FIGURES = {
     "unclustered": "Not in an active cluster",
     "clustered_no_meeting": "Clustered, on no planned meeting",
     "deficit": "Core staff slots beyond capacity",
+    "with_partner": "In a Partner's hands",
+    "duplicates": "Planned twice",
 }
 
 #: Which gap each KPI card opens on.
 KPI_GAPS = {
     "cpo_staff_visit_planning": "staff_gap",
-    "cpo_partner_planning": "partner_gap",
-    "cpo_total_visit_coverage": "unallocated",
+    "cpo_partner_planning": "with_partner",
+    "cpo_total_visit_coverage": "no_visit",
     "cpo_training_planning": "training_gap",
     "cpo_cluster_membership": "unclustered",
     "cpo_cluster_meeting_planning": "clustered_no_meeting",
@@ -1804,7 +2068,7 @@ def school_rows(
             for name in (
                 "region",
                 "district",
-                "family",
+                "school_type",
                 "cluster_status",
                 "cceo",
                 "program_lead",
@@ -1898,8 +2162,12 @@ def school_rows(
                 "id": school.id,
                 "code": school.code,
                 "name": school.name,
-                "family": policy.FAMILY_LABELS.get(school.family, ""),
-                "type": school.school_type.replace("_", " ").title(),
+                "type": rules.type_label(school.school_type),
+                "twice": [
+                    rules.DUPLICATE_LABELS[reason]
+                    for reason in duplicate_reasons(school)
+                ],
+                "with_partner": school.with_partner,
                 "owner": owner.name if owner else NO_OWNER_LABEL,
                 "owner_key": school.owner_key,
                 "lead": owner.lead_name if owner else NO_LEAD_LABEL,
@@ -1976,6 +2244,7 @@ class CountryPlanningOversightService:
     build_dataset = staticmethod(build_dataset)
     fold = staticmethod(fold)
     kpis = staticmethod(kpis)
+    type_rows = staticmethod(type_rows)
     charts = staticmethod(charts)
     lead_rows = staticmethod(lead_rows)
     owner_rows = staticmethod(owner_rows)

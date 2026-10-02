@@ -1,17 +1,17 @@
-{% comment %}A Programme Lead's people: their personal delivery first, then
-each CCEO, then anyone else holding schools. Rows of the Lead's <tbody>, shown
-while it is open; each officer opens into their delivery channels on a click
-on their name, like a cluster accordion (owner, 2026-09-30), or on the
-chevron (`toggleOwner` on the Lead's <tbody>).{% endcomment %}
+{% comment %}A Programme Lead's people: the Lead's own row first, then each
+CCEO, then anyone else holding schools or planning there. Rows of the Lead's
+<tbody>, shown while it is open; a person opens into the Partners they handed
+work to on a click on their name, like a cluster accordion (owner,
+2026-09-30), or on the chevron (`toggleOwner` on the Lead's <tbody>).{% endcomment %}
 {% for row in rows %}
 <tr data-level="2" data-kind="{{ row.kind }}" x-show="open">
   <th scope="row" class="cpo-namecell"{% if not row.has_children %} data-leaf{% endif %}>
     <span{% if row.has_children %} data-opens-rows @click.self="toggleOwner('{{ row.key }}', 'p{{ forloop.counter }}')"{% endif %}>{% if row.has_children %}<button type="button" class="cpo-toggle" :class="owners['{{ row.key }}'] ? 'is-open' : ''"
             @click="toggleOwner('{{ row.key }}', 'p{{ forloop.counter }}')"
-            :aria-expanded="owners['{{ row.key }}'] ? 'true' : 'false'" aria-label="Show {{ row.name }}'s delivery channels">
+            :aria-expanded="owners['{{ row.key }}'] ? 'true' : 'false'" aria-label="Show the Partners {{ row.name }} assigned work to">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>{% endif %}{{ row.name }}</span>{% if row.kind == "pl_personal" %}<span class="cpo-hint"><span>{{ row.person }} · personal, ceiling {{ row.ceiling }}</span></span>{% elif row.kind == "other" %}<span class="cpo-hint"><span>not a portfolio role</span></span>{% endif %}
-    {% if row.cells.deficit %}<span class="cpo-flagged" title="Core staff slots beyond the annual staff ceiling"><span>{{ row.cells.deficit }} over capacity</span></span>{% endif %}
+    </button>{% endif %}{{ row.name }}</span>{% if row.kind == "pl_personal" %}<span class="cpo-hint"><span>own plan</span></span>{% elif row.kind == "other" %}<span class="cpo-hint"><span>not a Programme Lead or CCEO</span></span>{% endif %}
+    {% if row.cells.shortfall %}<span class="cpo-flagged" title="The schools this person holds allow fewer visits than their target: 2 per Core school and 1 per Client, Core Trained and Core Graduate school"><span>schools short by {{ row.cells.shortfall }}</span></span>{% endif %}{% if row.cells.deficit %}<span class="cpo-flagged" title="Core staff slots beyond the annual staff ceiling"><span>{{ row.cells.deficit }} over capacity</span></span>{% endif %}
   </th>
   {% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups %}
   <td class="cpo-actcell">
@@ -28,5 +28,5 @@ chevron (`toggleOwner` on the Lead's <tbody>).{% endcomment %}
     hx-trigger="cpo-load" hx-swap="outerHTML"><td colspan="14"></td></tr>
 {% endif %}
 {% empty %}
-<tr data-level="2" x-show="open"><td colspan="14" class="cpo-empty">Nobody under {{ lead.name }} holds a school in this selection.</td></tr>
+<tr data-level="2" x-show="open"><td colspan="14" class="cpo-empty">Nobody under {{ lead.name }} holds a school or has a plan in this selection.</td></tr>
 {% endfor %}

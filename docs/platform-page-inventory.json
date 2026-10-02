@@ -230,25 +230,6 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1648,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "shared-component",
-      "name": "Data Table",
-      "purpose": "Reusable data table interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default"
-      ],
-      "tables": 1,
-      "template": "components/data_table.html",
-      "variants": []
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
@@ -285,7 +266,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2473,
+      "bytes": 2038,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -334,27 +315,6 @@
       ],
       "tables": 0,
       "template": "components/evidence_pages_state.html",
-      "variants": []
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 1016,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 1,
-      "htmx_controls": 0,
-      "kind": "shared-component",
-      "name": "Filter Bar",
-      "purpose": "Reusable filter bar interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "components/filter_bar.html",
       "variants": []
     },
     {
@@ -530,7 +490,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1913,
+      "bytes": 1612,
       "deprecated_alternatives": [],
       "example_pages": [
         "/actions/mine",
@@ -698,10 +658,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
+        "accessible name and label"
       ],
-      "bytes": 11600,
+      "bytes": 7070,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -926,7 +885,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 79048,
+      "bytes": 75977,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-map/",
@@ -1022,7 +981,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4710,
+      "bytes": 4714,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1043,7 +1002,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3959,
+      "bytes": 3963,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1065,7 +1024,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3260,
+      "bytes": 3264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1087,7 +1046,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3461,
+      "bytes": 3464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1111,7 +1070,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6480,
+      "bytes": 6483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -1158,7 +1117,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2387,
+      "bytes": 2390,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1179,7 +1138,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1763,
+      "bytes": 1793,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1200,7 +1159,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3047,
+      "bytes": 3050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1222,7 +1181,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2573,
+      "bytes": 2576,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1241,7 +1200,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3844,
+      "bytes": 3847,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1263,7 +1222,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2569,
+      "bytes": 2572,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1285,7 +1244,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1352,
+      "bytes": 1356,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1306,7 +1265,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2639,
+      "bytes": 2642,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1327,7 +1286,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2933,
+      "bytes": 2936,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1855,7 +1814,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 776,
+      "bytes": 774,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1963,7 +1922,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 751,
+      "bytes": 750,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2095,7 +2054,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 830,
+      "bytes": 833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2141,7 +2100,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3368,
+      "bytes": 3371,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2187,7 +2146,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3967,
+      "bytes": 3970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2253,7 +2212,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1866,
+      "bytes": 1869,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2274,7 +2233,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2888,
+      "bytes": 2891,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2323,7 +2282,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2294,
+      "bytes": 2297,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -4300,7 +4259,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5408,
+      "bytes": 5404,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/follow-up"
@@ -4616,7 +4575,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1028,
+      "bytes": 1696,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4636,7 +4595,9 @@
       "template": "partials/country_oversight/_cells.html",
       "variants": [
         "{{ cells.meeting_tone }}",
-        "{{ cells.training_tone }}"
+        "{{ cells.plan_tone }}",
+        "{{ cells.training_tone }}",
+        "{{ cells.visit_tone }}"
       ]
     },
     {
@@ -4687,7 +4648,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1875,
+      "bytes": 2702,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4798,7 +4759,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9423,
+      "bytes": 9821,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4818,6 +4779,34 @@
       "tables": 1,
       "template": "partials/country_oversight/_table.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5539,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Types",
+      "purpose": "Reusable  types interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/_types.html",
+      "variants": [
+        "{{ row.slot_tone }}",
+        "{{ row.training_tone }}",
+        "{{ row.visit_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -4846,7 +4835,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5380,
+      "bytes": 5376,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/follow-up"
@@ -4900,7 +4889,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2470,
+      "bytes": 2491,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4925,7 +4914,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4452,
+      "bytes": 4548,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4949,7 +4938,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4997,
+      "bytes": 5198,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -5073,7 +5062,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10310,
+      "bytes": 10129,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5097,7 +5086,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2526,
+      "bytes": 2806,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/rows"
@@ -5122,7 +5111,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1154,
+      "bytes": 1695,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/rows"
@@ -5146,7 +5135,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4750,
+      "bytes": 5056,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/schools"
@@ -5195,14 +5184,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3231,
+      "bytes": 3473,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Workspace",
       "purpose": "Reusable workspace interface primitive",
@@ -5332,7 +5321,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3952,
+      "bytes": 3176,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6506,7 +6495,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1920,
+      "bytes": 1916,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6554,7 +6543,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5282,
+      "bytes": 5278,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -6752,7 +6741,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2009,
+      "bytes": 2012,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6821,7 +6810,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36753,
+      "bytes": 36781,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -7329,7 +7318,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1414,
+      "bytes": 1187,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7709,7 +7698,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13064,
+      "bytes": 11951,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -7731,8 +7720,7 @@
         "default",
         "loading",
         "empty",
-        "error",
-        "disabled"
+        "error"
       ],
       "tables": 0,
       "template": "partials/finance/fund_workspace.html",
@@ -9472,7 +9460,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5189,
+      "bytes": 5177,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9519,7 +9507,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7351,
+      "bytes": 7339,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9594,7 +9582,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6115,
+      "bytes": 6103,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9615,7 +9603,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6046,
+      "bytes": 6034,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9712,7 +9700,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5385,
+      "bytes": 5373,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9832,7 +9820,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4352,
+      "bytes": 4340,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9923,7 +9911,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5057,
+      "bytes": 5045,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10101,7 +10089,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 3876,
+      "bytes": 3714,
       "deprecated_alternatives": [],
       "example_pages": [
         "/notifications/<str:notif_id>/read",
@@ -10120,10 +10108,7 @@
       ],
       "tables": 0,
       "template": "partials/notifications/notification_drawer_list.html",
-      "variants": [
-        "danger",
-        "sm"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -10307,6 +10292,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
+        "/country-planning-oversight/table/<str:key>",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -10328,7 +10314,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 889,
+      "bytes": 1125,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10380,7 +10366,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3610,
+      "bytes": 3580,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10410,7 +10396,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 33039,
+      "bytes": 33228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -10840,7 +10826,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8522,
+      "bytes": 8583,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -12049,7 +12035,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 523,
+      "bytes": 531,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -12108,7 +12094,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31794,
+      "bytes": 31963,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution"
@@ -13309,7 +13295,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10615,
+      "bytes": 10281,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -15673,7 +15659,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -21219,7 +21205,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -21645,7 +21631,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -21957,7 +21943,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -22038,7 +22024,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -22118,7 +22104,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -22201,7 +22187,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -22284,7 +22270,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -22839,7 +22825,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23049,7 +23035,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23154,7 +23140,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23257,7 +23243,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23363,7 +23349,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23466,7 +23452,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23572,7 +23558,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -23680,7 +23666,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partners/create",
         "GET /partners/{{ partner.id }}/user-setup"
@@ -23904,7 +23890,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -26324,7 +26310,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -32724,7 +32710,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -34354,7 +34340,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /cost-settings/add?fy={{ selected_fy }}"
       ],
@@ -34366,7 +34352,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-AD648BAC50",
-      "page_title": "Cost Intelligence Cost Catalogue",
+      "page_title": "Cost Catalogue",
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "cost_settings",
@@ -35516,7 +35502,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% carry_query ",
@@ -35703,10 +35689,10 @@
         "POST /country-planning-oversight/follow-up/{{ item.id }}/close",
         "POST /country-planning-oversight/follow-up/{{ item.id }}/cancel",
         "GET /country-planning-oversight/drawer?kind=owner&amp;key={{ row.key }}&amp;{{ query }}",
-        "GET /country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=unallocated&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?lead={{ lead.key }}&amp;gap=no_visit&amp;{{ query }}",
         "POST /country-planning-oversight/send",
         "GET /country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}",
-        "GET /country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;gap=unallocated&amp;{{ query }}",
+        "GET /country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;{{ query }}",
         "GET /country-planning-oversight/schools?gap={{ gap }}&amp;{{ query }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -37088,6 +37074,165 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.table_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-21F78251D8",
+      "page_title": "Cpo Table Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "A consolidated table as a workbook: every row, the groups as columns.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/table-export/<str:key>",
+      "route_name": "cpo_table_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_oversight_views",
+      "backend_view": "apps.frontend.views.country_oversight_views.table_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/oversight/country_table.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-5E9536B255",
+      "page_title": "\u00b7 Country Planning Oversight \u00b7 Edify",
+      "page_type": "planning-or-creation",
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Complete planning form",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "One consolidated table: every row a card counts, grouped by Programme Lead, a page at a time (owner, 2026-10-01).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/table/<str:key>",
+      "route_name": "cpo_table",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/country-planning-oversight/table/{{ spec.key }}"
+      ],
+      "services_and_models": [
+        "apps.core.scoping"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-scroll",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/oversight/country_table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]"
+      ]
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -37195,7 +37340,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -37320,7 +37465,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-6E4DAD286B",
-      "page_title": "Professional Development",
+      "page_title": "CPD & Learning",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cpd_learning",
@@ -39017,7 +39162,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -39229,7 +39374,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -40621,7 +40766,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -40732,7 +40877,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -41583,7 +41728,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -41936,7 +42081,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /extra-work/assign-drawer?fy={{ fy }}",
         "POST /extra-work/{{ a.id }}/start",
@@ -45324,7 +45469,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -47914,7 +48059,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -47993,7 +48138,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -48159,7 +48304,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -48499,7 +48644,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -48683,7 +48828,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -48856,7 +49001,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ action.drawer }}",
         "GET {{ autoload_drawer }}"
@@ -50145,7 +50290,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -50307,7 +50452,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /ia/impact-reports/new"
       ],
@@ -52310,7 +52455,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /ia/learning/findings/new?fy={{ fy }}",
         "GET {{ autoload_drawer }}"
@@ -52836,7 +52981,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ autoload_drawer }}"
       ],
@@ -53780,7 +53925,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -53869,7 +54014,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -54407,7 +54552,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -54495,7 +54640,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /planning/schedule-modal?school_id={{ visit_school|urlencode }}"
       ],
@@ -54925,7 +55070,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ action.drawer }}",
         "GET {{ autoload_drawer }}"
@@ -55717,7 +55862,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ autoload_drawer }}"
       ],
@@ -56419,7 +56564,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -56781,7 +56926,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {% url "
       ],
@@ -56867,7 +57012,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {% url "
       ],
@@ -57520,7 +57665,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -57611,7 +57756,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -57793,7 +57938,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -57886,7 +58031,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58235,7 +58380,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58319,7 +58464,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58403,7 +58548,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58490,7 +58635,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58577,7 +58722,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -58665,7 +58810,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -59911,7 +60056,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -60484,7 +60629,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /messages/new/records?type={{ key }}&variant=cards",
         "GET /messages/new/records"
@@ -60582,7 +60727,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /messages/new/records?type={{ key }}&variant=cards",
         "GET /messages/new/records"
@@ -61724,7 +61869,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}"
       ],
@@ -61816,7 +61961,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}"
       ],
@@ -61908,7 +62053,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}"
       ],
@@ -62000,7 +62145,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}"
       ],
@@ -62094,7 +62239,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partner/invoices/new",
         "GET /activities/{{ row.a.id }}/evidence",
@@ -64787,7 +64932,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -64884,7 +65029,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-E808A3A1BC",
-      "page_title": "Notifications",
+      "page_title": "Notifications Center",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "dashboard",
@@ -64989,7 +65134,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-D4CC699CE9",
-      "page_title": "Notifications",
+      "page_title": "Notifications Center",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "dashboard",
@@ -66262,7 +66407,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -67389,7 +67534,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A14F031C98",
-      "page_title": "Partner Monitoring",
+      "page_title": "Partner Oversight",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css"
@@ -68832,7 +68977,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partner/assignments/{{ assignment.id }}/return-drawer",
         "GET /partner/assignments/{{ assignment.id }}/schedule-drawer"
@@ -69199,7 +69344,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partner/assignments/{{ a.id }}/return-drawer",
         "GET /partner/assignments/{{ a.id }}/schedule-drawer"
@@ -69294,7 +69439,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partner/assignments/{{ a.id }}/return-drawer",
         "GET /partner/assignments/{{ a.id }}/schedule-drawer"
@@ -69389,7 +69534,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partner/assignments/{{ a.id }}/schedule-drawer"
       ],
@@ -69946,7 +70091,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -70038,7 +70183,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /activities/{{ a.id }}/evidence"
       ],
@@ -70402,7 +70547,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -70680,7 +70825,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /partners/{{ partner.id }}/user-setup",
         "GET /partners/{{ partner.id }}/edit-drawer",
@@ -71511,7 +71656,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -72681,7 +72826,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ queue_url }}/{{ row.id }}/drawer",
         "GET {{ queue_url }}/{{ row.id }}/return-drawer",
@@ -73913,7 +74058,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -74644,7 +74789,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -74900,7 +75045,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -74986,7 +75131,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -75068,7 +75213,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -76589,7 +76734,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /priorities/ssa-mapping/{{ row.item.id }}/history"
       ],
@@ -77421,7 +77566,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /planning/schedule-modal?school_id={{ row.school_id }}"
       ],
@@ -78497,7 +78642,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /projects/capacity/set{% if selected_project %}?project={{ selected_project }}{% endif %}",
         "GET /projects/capacity/set?project={{ project.id }}",
@@ -79285,7 +79430,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET {{ school.detail_url }}&amp;fy={{ fy }}",
         "GET {{ school.resolve_url }}",
@@ -80382,7 +80527,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -80481,7 +80626,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -80976,7 +81121,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -81062,7 +81207,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /quality-checks?resolve={{ f.id }}",
         "GET {{ autoload_drawer }}"
@@ -81075,7 +81220,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-734A2B48B5",
-      "page_title": "Quality Flags",
+      "page_title": "Quality Checks",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "quality_checks",
@@ -84418,7 +84563,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -85010,7 +85155,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -85191,7 +85336,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -85284,7 +85429,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -85495,7 +85640,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": true,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -86144,7 +86291,7 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "data_quality_center",
-      "primary_action": "Apply Filters",
+      "primary_action": "Link",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Manually link SSA records that were uploaded with unknown School IDs \u2014 matching this filter.",
       "remediation": "No automated remediation outstanding",
@@ -86236,7 +86383,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -86323,7 +86470,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -86498,7 +86645,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -86835,7 +86982,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
@@ -88041,7 +88188,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -89333,7 +89480,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-040D721C96",
-      "page_title": "Planning Oversight \u00b7 Edify",
+      "page_title": "Team Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
@@ -89433,7 +89580,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-87A552B53C",
-      "page_title": "Planning Oversight \u00b7 Edify",
+      "page_title": "Team Oversight \u00b7 Edify",
       "page_type": "interaction-fragment",
       "per_page_css": [
         "css/pages/oversight-workspace.css",
@@ -91708,7 +91855,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -91722,7 +91869,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Filter",
+      "primary_action": "Open next queue record",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "All group training sessions for the current user.",
       "remediation": "No automated remediation outstanding",
@@ -91978,7 +92125,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -91992,7 +92139,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Filter",
+      "primary_action": "Open next queue record",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "All school visits for the current user \u2014 filterable by status.",
       "remediation": "No automated remediation outstanding",
@@ -92161,7 +92308,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /work-plan/add"
       ],
@@ -92281,7 +92428,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "shared-page-header-component",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /work-plan/add"
       ],
@@ -104750,6 +104897,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.country_oversight_views.table_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/table-export/<str:key>",
+      "route_name": "cpo_table_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.country_oversight_views.table_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/table/<str:key>",
+      "route_name": "cpo_table",
+      "templates": [
+        "pages/oversight/country_table.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.country_planning_team_view",
       "kind": "partial",
       "methods": [
@@ -113494,13 +113667,13 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 570,
+    "accessibility_contract_pass": 571,
     "activity_states": 24,
-    "all_routes": 1347,
+    "all_routes": 1349,
     "api_routes": 360,
-    "component_templates": 593,
-    "full_pages": 261,
-    "mobile_contract_pass": 570,
+    "component_templates": 592,
+    "full_pages": 262,
+    "mobile_contract_pass": 571,
     "nonvisual_actions": 277,
     "page_types": {
       "administration-or-configuration": 25,
@@ -113509,15 +113682,15 @@
       "dashboard": 1,
       "interaction-fragment": 583,
       "operational-queue": 152,
-      "planning-or-creation": 12,
+      "planning-or-creation": 13,
       "record-detail": 25,
-      "report": 39
+      "report": 40
     },
     "partials_and_drawers": 306,
-    "permission_gated": 859,
+    "permission_gated": 861,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 875,
+    "routed_surfaces": 877,
     "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
@@ -113525,8 +113698,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 570,
-    "test_referenced": 768,
-    "theme_contract_pass": 570
+    "tablet_contract_pass": 571,
+    "test_referenced": 770,
+    "theme_contract_pass": 571
   }
 }

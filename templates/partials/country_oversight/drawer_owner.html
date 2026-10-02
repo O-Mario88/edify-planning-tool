@@ -1,20 +1,22 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% comment %}One officer's portfolio (or a Lead's personal delivery), or one
-Partner's share of it: capacity, figures, gaps with Follow Up with PL, the
-Partners working it, and the schools behind every figure down to their
-requirement slots and the activities filling them.{% endcomment %}
+{% comment %}One person (a CCEO, or a Lead's own row), or one Partner's share
+of the schools they hold: their plan against their target, how their capacity
+is spent, gaps with Follow Up with PL, the Partners they handed work to, and
+the schools behind every figure down to their requirement slots and the
+activities filling them.{% endcomment %}
 {% block drawer_title %}{% if partner %}{{ partner_name }}{% else %}{{ owner.label }}{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if partner %}Delivery channel in {{ owner.name }}'s portfolio{% elif owner.kind == "pl_personal" %}{{ owner.name }} · Programme Lead's own schools{% elif owner.kind == "unassigned" %}Schools no one holds{% else %}{{ owner.role|default:"Holder" }}{% if lead %} · reports to {{ lead.name }}{% endif %}{% endif %} · {{ header.fy_label }}{% if not filters.window.is_annual %} · {{ header.window_label }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if partner %}Partner working {{ owner.name }}'s schools{% elif owner.kind == "pl_personal" %}Programme Lead · own plan and schools{% elif owner.kind == "unassigned" %}Schools no one holds{% else %}{{ owner.role|default:"Holder" }}{% if lead %} · reports to {{ lead.name }}{% endif %}{% endif %} · {{ header.fy_label }}{% if not filters.window.is_annual %} · {{ header.window_label }}{% endif %}{% endblock %}
 {% block drawer_body %}
 <div class="cpo-sheet">
   {% if not partner and owner.kind != "unassigned" %}
   <section aria-labelledby="cpo-o-cap">
     <h3 class="cpo-sub" id="cpo-o-cap">Staff capacity</h3>
     <dl class="cpo-figs cpo-figs--tight">
-      <div><dt>Annual staff ceiling</dt><dd>{{ owner.ceiling }}<small>{% if owner.kind == "pl_personal" %}Programme Lead, personal delivery{% elif owner.kind == "cceo" %}CCEO{% else %}No ceiling for this role{% endif %}</small></dd></div>
-      <div><dt>Core staff slots</dt><dd>{{ tally.core_staff_slots }}<small>2 per Core-family school — always required</small></dd></div>
+      <div><dt>Visit target</dt><dd>{{ owner.ceiling }}<small>{% if owner.kind == "pl_personal" %}Programme Lead{% elif owner.kind == "cceo" %}CCEO{% else %}No target for this role{% endif %}</small></dd></div>
+      <div><dt>Visits the schools held allow</dt><dd{% if tally.shortfall %} class="is-late"{% endif %}>{{ tally.reach }}<small>2 per Core school, 1 per Client, Core Trained and Core Graduate school{% if tally.shortfall %} — {{ tally.shortfall }} short of the target{% endif %}</small></dd></div>
+      <div><dt>Core staff slots</dt><dd>{{ tally.core_staff_slots }}<small>2 per Core school — always required</small></dd></div>
       <div><dt>Client slots for staff</dt><dd>{{ tally.client_staff_expected }}<small>from the capacity left after Core</small></dd></div>
-      <div><dt>Client slots for Partners</dt><dd>{{ tally.client_partner_expected }}<small>the balance of the Client slots</small></dd></div>
+      <div><dt>Client slots for Partners</dt><dd>{{ tally.client_partner_expected }}<small>the balance of the Client, Core Trained and Core Graduate slots</small></dd></div>
       <div><dt>Internal capacity deficit</dt><dd{% if tally.deficit %} class="is-late"{% endif %}>{{ tally.deficit }}<small>{% if tally.deficit %}visible until reassigned or resolved{% else %}none{% endif %}</small></dd></div>
     </dl>
   </section>
@@ -39,30 +41,30 @@ requirement slots and the activities filling them.{% endcomment %}
 
   {% if partners.total %}
   <section aria-labelledby="cpo-o-partners">
-    <h3 class="cpo-sub" id="cpo-o-partners">Delivery channels</h3>
+    <h3 class="cpo-sub" id="cpo-o-partners">Partners this person assigned work to</h3>
     <div class="cpo-tscroll">
       <table class="cpo-mini">
-        <thead><tr><th scope="col">Channel</th><th scope="col">Schools</th><th scope="col">Partner assigned</th><th scope="col">Partner scheduled</th><th scope="col">Awaiting schedule</th><th scope="col">Returned</th><th scope="col">Verified</th><th scope="col">Remaining</th><th scope="col">Action</th></tr></thead>
+        <thead><tr><th scope="col">Partner</th><th scope="col">Schools assigned</th><th scope="col">Work assigned</th><th scope="col">Dated by the Partner</th><th scope="col">Awaiting the Partner's date</th><th scope="col">Action</th></tr></thead>
         <tbody>
           {% for row in partners.rows %}
           <tr>
             <th scope="row">{{ row.name }}</th>
-            <td>{{ row.cells.schools }}</td><td>{{ row.cells.partner_assigned }}</td><td>{{ row.cells.partner_scheduled }}</td><td>{{ row.assigned_unscheduled }}</td><td>{{ row.returned }}</td><td>{{ row.verified }}</td><td>{{ row.cells.unallocated }}</td>
-            <td><button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">View</button></td>
+            <td>{{ row.schools }}</td><td>{{ row.assigned }}</td><td>{{ row.planned }}</td><td>{{ row.waiting }}</td>
+            <td>{% if row.has_school_side %}<button type="button" class="cpo-view" hx-get="/country-planning-oversight/drawer?kind=partner&amp;key={{ owner.key }}&amp;partner_key={{ row.key }}&amp;{{ query }}" hx-target="#drawer-container" hx-swap="innerHTML">View</button>{% else %}—{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
       {% include "partials/country_oversight/_drawer_pager.html" with pager=partners %}
     </div>
-    <p class="cpo-muted">A school two Partners share appears under both; each counts only its own share of the school's Partner slots.</p>
+    <p class="cpo-muted">Partner planning counts only what a Partner has dated. A school assigned and not yet dated is in the Partner's hands, not planned.</p>
   </section>
   {% endif %}
 
   {% if may_see_schools %}
   <section aria-labelledby="cpo-o-schools">
     <h3 class="cpo-sub" id="cpo-o-schools">Schools</h3>
-    <div hx-get="/country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;gap=unallocated&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
+    <div hx-get="/country-planning-oversight/schools?owner={{ owner.key }}{% if partner %}&amp;partner_key={{ partner }}{% endif %}&amp;{{ query }}" hx-trigger="load" hx-swap="innerHTML"><p class="cpo-muted">Reading the schools…</p></div>
   </section>
   {% endif %}
 
