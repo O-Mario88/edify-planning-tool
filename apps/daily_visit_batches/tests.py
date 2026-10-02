@@ -436,11 +436,35 @@ class DailyVisitBatchTestCase(TestCase):
         act = Activity.objects.get(id=result["id"])
         self.assertIsNone(act.daily_visit_batch_id)
 
-    # ── 11. Unclassified district blocked with a clear message ──────────────
-    def test_unclassified_district_blocked(self):
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule(["BATCH-UNCL"], date(2026, 8, 14), reason="test")
-        self.assertIn("not been classified", str(ctx.exception))
+    # ── 11. An unclassified district is planned as a primary one ────────────
+    def test_an_unclassified_district_is_scheduled_as_primary(self):
+        """Owner, 2026-10-02: "lift that restrictions". A district nobody has
+        classified refused the day; it prices as a primary district, as a
+        single visit scheduled there always has."""
+        from .models import DailyVisitBatch
+
+        result = self._schedule(["BATCH-UNCL"], date(2026, 8, 14), reason="test")
+
+        batch = DailyVisitBatch.objects.get(id=result["batchId"])
+        self.assertEqual(batch.district_type, "primary")
+        self.assertEqual(batch.school_count, 1)
+
+    def test_a_visit_in_an_unclassified_district_can_be_rescheduled(self):
+        from apps.activities.services import reschedule
+
+        planned = self._schedule(["BATCH-UNCL"], date(2026, 8, 14), reason="test")
+        activity_id = planned["activities"][0]["id"]
+
+        reschedule(
+            activity_id,
+            {"scheduledDate": "2026-08-18T09:00:00+03:00", "reason": "School asked"},
+            self.principal,
+        )
+
+        moved = Activity.objects.get(id=activity_id)
+        self.assertEqual(moved.planned_date, date(2026, 8, 18))
+        self.assertEqual(moved.status, "rescheduled")
+        self.assertEqual(moved.daily_visit_batch.district_type, "primary")
 
 
 # Scheduling refuses a date that is not ahead of today (owner, 2026-09-16),

@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import (
     CalendarBlock,
@@ -74,6 +75,76 @@ class CalendarWorkspaceTest(TestCase):
         self.assertContains(response, "Government-declared holiday")
         self.assertEqual(response.context["event_counts"]["activity"], 1)
         self.assertEqual(response.context["event_counts"]["leave"], 1)
+
+    def test_a_day_chosen_in_a_drawer_lands_on_that_day(self):
+        """A drawer saves the chosen day as local midnight, which the database
+        returns as 21:00 UTC the day before. The calendar draws the day that
+        was chosen (owner, 2026-10-02: "the planned are falling on different
+        days")."""
+        chosen = date(2026, 7, 16)
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=get_operational_fy(chosen),
+            quarter=get_quarter_for_date(chosen),
+            planned_date=chosen,
+            scheduled_date=timezone.make_aware(
+                datetime(2026, 7, 16), timezone.get_current_timezone()
+            ),
+            responsible_staff_id=self.staff.id,
+            status="scheduled",
+        )
+
+        response = self.client.get("/calendar?year=2026&month=7")
+
+        drawn_on = [
+            day["date"]
+            for week in response.context["calendar_weeks"]
+            for day in week
+            if day["kind_counts"]["activity"]
+        ]
+        self.assertEqual(drawn_on, [chosen])
+        self.assertEqual(
+            [day["date"] for day in response.context["agenda_days"]], [chosen]
+        )
+
+    def test_a_first_of_month_plan_stays_in_its_own_month(self):
+        """1 August at local midnight is 31 July in UTC: it belongs to August
+        and must not appear in July."""
+        chosen = date(2026, 8, 1)
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=get_operational_fy(chosen),
+            quarter=get_quarter_for_date(chosen),
+            planned_date=chosen,
+            scheduled_date=timezone.make_aware(
+                datetime(2026, 8, 1), timezone.get_current_timezone()
+            ),
+            responsible_staff_id=self.staff.id,
+            status="scheduled",
+        )
+
+        july = self.client.get("/calendar?year=2026&month=7")
+        august = self.client.get("/calendar?year=2026&month=8")
+
+        self.assertEqual(july.context["event_counts"]["activity"], 0)
+        self.assertEqual(
+            [day["date"] for day in august.context["agenda_days"]], [chosen]
+        )
+
+    def test_days_of_neighbouring_months_are_blank_cells(self):
+        """February 2026 starts on a Sunday: its grid opens with six January
+        cells and closes with one March cell. They carry no day number, so
+        the month shows its own 28 days and no more (owner, 2026-10-02: "some
+        months have more days like feb")."""
+        response = self.client.get("/calendar?year=2026&month=2")
+        markup = response.content.decode()
+
+        self.assertEqual(markup.count('class="calendar-day__number"'), 28)
+        self.assertEqual(markup.count('class="calendar-mobile__day-number"'), 28)
+        self.assertEqual(markup.count('class="calendar-day calendar-day--outside"'), 7)
+        self.assertContains(response, "Saturday, January 31, 2026, outside this month")
 
     def test_reference_holidays_omit_presidential_inauguration(self):
         holiday_titles = {

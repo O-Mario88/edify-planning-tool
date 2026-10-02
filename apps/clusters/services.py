@@ -1188,6 +1188,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
         "studentImpact": student_impact,
         "assignedStaff": assigned_staff,
         "assignedStaffId": cluster.responsible_staff_id,
+        "facilitatorName": _facilitator_name(cluster),
         "averageSsa": avg_ssa,
         "lastMeeting": last_meeting_str,
         "lastTraining": last_training_str,
@@ -1611,6 +1612,14 @@ def cluster_planning(principal) -> list[dict]:
     return out
 
 
+def _facilitator_name(cluster) -> str:
+    """The partner this cluster is assigned to facilitate, or ""."""
+    from apps.clusters.facilitation import facilitator_of
+
+    partner = facilitator_of(cluster)
+    return partner.name if partner else ""
+
+
 class ClusterDashboardService:
     @classmethod
     def build_cluster_cards(cls, clusters, user, fy=None) -> list[dict]:
@@ -1622,6 +1631,21 @@ class ClusterDashboardService:
         planning_map = {p["id"]: p for p in planning_list}
 
         cluster_ids = [c.id for c in clusters]
+        # The partner each cluster is assigned to facilitate (owner,
+        # 2026-10-02), named on its card; one query for the page.
+        from apps.partners.models import Partner
+
+        facilitator_names = dict(
+            Partner.objects.filter(
+                id__in={
+                    c.facilitating_partner_id
+                    for c in clusters
+                    if c.facilitating_partner_id
+                },
+                deleted_at__isnull=True,
+                active_status=True,
+            ).values_list("id", "name")
+        )
         # The card counts the schools its list shows: Champion and Core
         # Graduate schools are not on it (owner, 2026-09-25).
         cluster_schools_qs = School.objects.filter(
@@ -1787,6 +1811,9 @@ class ClusterDashboardService:
                     "meeting_count_fy": meeting_count_fy,
                     "cluster_leader_name": c.cluster_leader_name or "Not Assigned",
                     "cluster_leader_phone": c.cluster_leader_phone or "Not Entered",
+                    "facilitator_name": facilitator_names.get(
+                        c.facilitating_partner_id or "", ""
+                    ),
                 }
             )
         return cards

@@ -1018,7 +1018,7 @@ def _build_fund_requests_context(request):
                 "id": act.id,
                 "type": act.activity_type,
                 "title": title,
-                "date_str": act.scheduled_date.strftime("%b %d, %Y")
+                "date_str": timezone.localtime(act.scheduled_date).strftime("%b %d, %Y")
                 if act.scheduled_date
                 else "Unscheduled",
                 "location": location,

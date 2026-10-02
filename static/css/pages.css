@@ -4608,6 +4608,15 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .ad-action strong { font-size: var(--edify-text-label-size); font-weight: 700; }
 .ad-action em { font-size: var(--edify-text-micro-size); font-style: normal; font-weight: 500; opacity: .78; }
 .ad-action:hover { background: var(--edify-accent-light); border-color: var(--edify-accent); }
+/* An action the activity can no longer take stays, greyed (Edit on work
+   already carried out; owner, 2026-10-02). */
+.ad-action:disabled,
+.ad-action[aria-disabled="true"] {
+  background: var(--edify-surface-muted);
+  border-color: var(--edify-border);
+  color: var(--edify-text-subtle);
+  cursor: not-allowed;
+}
 
 .ad-action--primary {
   background: var(--edify-accent);

@@ -41,7 +41,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
-from apps.core.clock import ClockService
+from apps.core.clock import ClockService, local_day
 from apps.core.enums import ActivityStatus, ActivityType, DeliveryType, SupportRationale
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
@@ -502,7 +502,7 @@ def build_work_plan_context(user, params) -> dict:
 
     for a in activities:
         anchor = a.planned_date or (
-            a.scheduled_date.date() if a.scheduled_date else None
+            local_day(a.scheduled_date) if a.scheduled_date else None
         )
         if anchor is not None:
             band_month = anchor.month

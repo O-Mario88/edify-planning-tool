@@ -417,9 +417,6 @@
   background: color-mix(in oklab, var(--edify-surface-muted) 70%, transparent);
 }
 
-.calendar-day--outside .calendar-day__number {
-  color: var(--edify-text-subtle);
-}
 
 .calendar-day--today {
   background: color-mix(in oklab, var(--brand-primary-soft) 38%, var(--edify-surface-raised));

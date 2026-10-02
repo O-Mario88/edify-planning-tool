@@ -10,11 +10,10 @@
 x-data="{
 selectedSchools: [],
 selectedSchoolId: null,
-activeView: 'list',
-showAssignPartnerForm: false
+activeView: 'list'
 }"
 @select-school.window="selectedSchoolId = $event.detail.id;"
-@planning-saved.window="selectedSchools = []; showAssignPartnerForm = false"
+@planning-saved.window="selectedSchools = []"
 class="px-4 sm:px-6 py-4 space-y-2.5 max-w-[1500px] mx-auto"
 id="planning-main-container"
 data-mobile-family="workday"
@@ -249,6 +248,26 @@ style="display: none;"
 
 <div class="h-5 w-px bg-slate-700"></div>
 
+{% if can_assign_partner %}
+{% comment %}The selection opens the one bulk hand-over drawer, the same one a
+cluster's school list opens: it asks for the partner, the reason and, for an
+In-school Training, the training (owner, 2026-10-02). The popover that stood
+here handed each school's top Catalogue recommendation over unasked.{% endcomment %}
+<form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="flex items-center gap-2">
+<template x-for="sid in selectedSchools" :key="sid">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<button
+type="submit"
+data-planning-assign-selected
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Assign to partner
+</button>
+</form>
+{% endif %}
+
 <form
 hx-post="/planning/bulk-action"
 hx-target="body"
@@ -258,17 +277,6 @@ class="flex items-center gap-2"
 <template x-for="sid in selectedSchools">
 <input type="hidden" name="school_ids" :value="sid">
 </template>
-
-{% if can_assign_partner %}
-<button
-type="button"
-@click="showAssignPartnerForm = true"
-class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
->
-<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-Assign
-</button>
-{% endif %}
 
 {% comment %}Bulk Schedule was here. It moved to the cluster (owner,
 2026-09-21: bulk scheduling "should only happen from cluster"), where a day
@@ -283,61 +291,6 @@ class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-control e
 >
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export Selected
-</button>
-</form>
-</div>
-
-<!-- Bulk Assign Partner popover: collects the partner (required) and an
-optional target date before POSTing — the button used to submit straight
-away with no partner_id at all, which get_object_or_404 turned into an
-unhandled 404 that blanked the whole page. Date is optional by design: a
-partner assignment only becomes a costed, budgeted Activity once a date is
-set, by you now or by the partner later (apps/activities/services.py
-partner_schedule()). -->
-<div
-x-show="showAssignPartnerForm"
-x-transition
-@click.outside="showAssignPartnerForm = false"
-class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
-style="display: none;"
->
-<div class="flex items-center justify-between">
-<h4 class="text-[13px] font-bold text-slate-800">Assign Partner</h4>
-<button type="button" @click="showAssignPartnerForm = false" class="text-slate-400 hover:text-slate-600">&times;</button>
-</div>
-<p class="edify-text-caption text-slate-400">
-Handoff each School’s top eligible Catalogue recommendation to a partner for <span x-text="selectedSchools.length"></span> selected school(s). No Activity, cost or budget line is created until Partner scheduling.
-</p>
-<form
-hx-post="/planning/bulk-action"
-hx-target="#bulk-assign-partner-feedback"
-hx-swap="innerHTML"
-hx-disabled-elt="find button[type=submit]"
-class="space-y-3"
->
-{% csrf_token %}
-<template x-for="sid in selectedSchools">
-<input type="hidden" name="school_ids" :value="sid">
-</template>
-<input type="hidden" name="action" value="partner">
-<div>
-<label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Partner</label>
-<span class="edify-filter-label">Partner ID</span>
-<select aria-label="Partner ID" name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
-<option value="">Select partner...</option>
-{% for p in partners %}
-<option value="{{ p.id }}">{{ p.name }}</option>
-{% endfor %}
-</select>
-</div>
-<div>
-<label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Target Date (Optional)</label>
-<input aria-label="Scheduled date" type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
-<p class="edify-text-caption font-semibold text-slate-400 mt-1">Leave blank if the partner will confirm their own schedule.</p>
-</div>
-<div id="bulk-assign-partner-feedback"></div>
-<button type="submit" class="w-full h-8 rounded-control btn-premium-primary text-white text-[12px] font-bold flex items-center justify-center gap-1.5">
-<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Confirm Handoff
 </button>
 </form>
 </div>

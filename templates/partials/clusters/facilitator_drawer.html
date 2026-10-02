@@ -1,0 +1,57 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Assign a cluster to a partner to facilitate (owner, 2026-10-02): "Assigning a
+cluster to the partner ONLY means they facilitate the cluster activity NOT
+assigned to them to do school visit … once the staff has assigned the cluster
+to the partner, the rest of the logistics will be calculated when a meeting or
+training is planned … staff handles meals, and everything. partner is only
+paid facilitation fee."
+
+A standing choice with no date and no cost (apps.clusters.facilitation). The
+drawer says, in the planner's terms, exactly what it does and does not hand
+over, because "Assign" on its own did not.
+{% endcomment %}
+
+{% block drawer_title %}Partner to facilitate {{ cluster.name }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+<form
+  hx-post="/clusters/{{ cluster.id }}/facilitator"
+  hx-target="#cluster-facilitator-errors"
+  hx-disabled-elt="find button[type=submit]"
+  class="space-y-4 text-[12px] font-medium text-slate-600"
+  data-cluster-facilitator
+>
+  {% csrf_token %}
+  <div id="cluster-facilitator-errors" aria-live="polite"></div>
+
+  <p class="edify-text-caption text-slate-500">Now facilitated by <strong>{% if current_facilitator %}{{ current_facilitator.name }}{% else %}Staff{% endif %}</strong>.</p>
+
+  <div class="space-y-1">
+    <label for="cluster_facilitating_partner" class="block edify-text-caption font-semibold text-slate-600">Facilitated by</label>
+    <select name="facilitating_partner_id" id="cluster_facilitating_partner"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="">Staff</option>
+      {% for p in partners %}
+      <option value="{{ p.id }}"{% if current_facilitator and p.id == current_facilitator.id %} selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="edify-note" data-tone="info" role="note" data-cluster-facilitator-terms>
+    <p class="edify-note__title">What this assigns</p>
+    <p class="edify-note__body">The partner facilitates this cluster's group trainings and cluster meetings. Each one you plan from now on names them as its facilitator, and its costs are worked out then: Edify staff carry the meals, venue, materials and transport; the partner is paid the facilitation fee only.</p>
+    <p class="edify-note__body">The cluster's schools are not assigned to the partner. Assign a school to a partner separately for visits and in-school support.</p>
+  </div>
+
+  {% if planned_sessions %}
+  <p class="edify-text-caption text-slate-500" data-cluster-facilitator-planned>{{ planned_sessions }} session{{ planned_sessions|pluralize }} already planned for this cluster keep{{ planned_sessions|pluralize:"s," }} the facilitator {{ planned_sessions|pluralize:"it has,they have" }}. Change one from its own Edit.</p>
+  {% endif %}
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Save</button>
+  </div>
+</form>
+{% endblock %}

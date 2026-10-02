@@ -38,6 +38,7 @@ from datetime import date
 
 from django.db.models import Q
 
+from apps.core.clock import local_day
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
     TRAINING_TYPES,
@@ -238,7 +239,7 @@ def _classify(activity_type: str, counts_as_training: bool) -> str | None:
 def _day(planned_date, scheduled_date) -> date | None:
     if planned_date:
         return planned_date
-    return scheduled_date.date() if scheduled_date else None
+    return local_day(scheduled_date) if scheduled_date else None
 
 
 def _period_q(prefix: str, period) -> Q:

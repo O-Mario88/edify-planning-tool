@@ -48,6 +48,18 @@ class Cluster(SoftDeleteModel):
     responsible_staff_id = models.CharField(max_length=30, null=True, blank=True)
     cluster_leader_name = models.CharField(max_length=255, null=True, blank=True)
     cluster_leader_phone = models.CharField(max_length=64, null=True, blank=True)
+    # The partner this cluster is assigned to FACILITATE (owner, 2026-10-02:
+    # "Assigning a cluster to the partner ONLY means they facilitate the
+    # cluster activity NOT assigned to them to do school visit"). A standing
+    # choice with no date and no cost: each training or meeting staff later
+    # plan for the cluster names this partner as its facilitator, and only
+    # then is anything priced. It hands over no school and creates no
+    # PartnerAssignment (apps.clusters.facilitation).
+    facilitating_partner_id = models.CharField(
+        max_length=30, null=True, blank=True, db_index=True
+    )
+    facilitator_assigned_by = models.CharField(max_length=30, null=True, blank=True)
+    facilitator_assigned_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "cluster"

@@ -7,7 +7,8 @@ stays the officer's either way and a partner facilitator is paid only the
 facilitation fee (apps.activities.facilitation).
 
 Include with `field_id` (unique on the page) and optionally `selected` (the
-current facilitating partner id).
+current facilitating partner id) and `session_noun` ("meeting" for a cluster
+meeting; a training otherwise).
 {% endcomment %}
 {% facilitator_partners as facilitators %}
 <div class="space-y-1" data-facilitated-by>
@@ -23,5 +24,5 @@ current facilitating partner id).
   {% comment %}Owner, 2026-09-29: "facilitated by partner does not mean
   assigning the school to the partner. Staff still have to assign the school
   to the partner for follow up and other activities."{% endcomment %}
-  <p class="edify-text-caption text-slate-500" data-facilitation-not-assignment>A partner facilitating this training is not assigned the school. Assign the school to a partner separately for follow-ups and other support.</p>
+  <p class="edify-text-caption text-slate-500" data-facilitation-not-assignment>A partner facilitating this {{ session_noun|default:"training" }} is not assigned the school. Assign the school to a partner separately for follow-ups and other support.</p>
 </div>
