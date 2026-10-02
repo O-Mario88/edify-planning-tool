@@ -56,33 +56,23 @@ IA_RESPONSIBILITY_ORDER = (
 
 IA_SIDEBAR = [
     (
-        "MY WORK",
+        "DAILY",
         [
             ("Dashboard", "/ia/dashboard/"),
-            ("Calendar", "/calendar"),
-            ("To-Do", "/todos"),
-            ("Weekly Advance Request", "/fund-requests/weekly"),
-            ("Field Debrief", "/debriefs"),
-            ("Ownership Transfers", "/ownership-transfers/"),
-        ],
-    ),
-    (
-        "PLANNING",
-        [
+            # No Planning Monitor: IA reads it as Planning Oversight tabs
+            # (owner, 2026-09-30).
             ("Planning", "/planning"),
-            ("Priorities", "/target-distribution"),
-        ],
-    ),
-    (
-        "SCHOOLS",
-        [
             ("School Directory", "/schools"),
+            ("Calendar", "/calendar"),
             ("Programme Schools", "/programme-schools"),
-            ("Staff Setup Queue", "/admin-panel/staff-setup-queue"),
-            ("Loans", "/loans"),
-            ("Closed Schools", "/schools/closed"),
+            ("Verification Queue", "/ia/verification/"),
+            ("SSA Verification", "/ssa/verification/"),
+            ("Partner Evidence", "/ia/partner-evidence/"),
+            ("To-Do", "/todos"),
         ],
     ),
+    # Since 2026-09-23 the oversight pages share one group after the day's
+    # work, in a fixed order rather than by visit rank.
     (
         "OVERSIGHT",
         [
@@ -91,51 +81,60 @@ IA_SIDEBAR = [
             ("Country Map", "/country-map/"),
             ("Cluster Oversight", "/cluster-oversight/"),
             ("Core School Oversight", "/core-schools-oversight/"),
-            ("Partner Monitoring", "/partner-oversight/"),
+            ("Partner Oversight", "/partner-oversight/"),
             ("Project Monitoring", "/projects/monitoring"),
         ],
     ),
     (
-        "EVIDENCE & QUALITY",
+        "WEEKLY",
         [
-            ("Verification Queue", "/ia/verification/"),
-            ("SSA Verification", "/ssa/verification/"),
-            ("Partner Evidence", "/ia/partner-evidence/"),
+            ("Weekly Advance Request", "/fund-requests/weekly"),
+            ("Field Debrief", "/debriefs"),
+            ("Unassigned Schools", "/admin-panel/staff-setup-queue"),
             ("Returned Activities", "/ia/returned/"),
             ("Data Quality", "/admin-panel/data-quality-center"),
             ("Upload Center", "/uploads"),
-            ("Measurement Framework", "/ia/framework/"),
         ],
     ),
     (
-        "REPORTS",
+        "MONTHLY",
         [
+            ("My Targets", "/my-targets"),
             ("Impact Reports", "/ia/impact-reports/"),
             ("Programme Learning", "/ia/learning/"),
             ("Most Significant Change", "/ia/stories/"),
             ("Lending Evidence", "/ia/lending-evidence/"),
+            ("Loans", "/loans"),
         ],
     ),
     (
-        "MY PERFORMANCE",
+        "PLANNING CYCLE",
         [
-            ("My Targets", "/my-targets"),
+            ("Priorities", "/target-distribution"),
+            ("Measurement Framework", "/ia/framework/"),
             ("My Performance Agreement", "/my-performance"),
             ("My Professional Development", "/my-professional-development"),
+        ],
+    ),
+    (
+        "REFERENCE",
+        [
             ("Leave & Personal Time Off", "/personal-time-off/"),
+            ("Closed Schools", "/schools/closed"),
+            ("Ownership Transfers", "/ownership-transfers/"),
         ],
     ),
 ]
 
 
 class IaSidebarTest(SimpleTestCase):
-    def test_groups_run_in_subject_order(self):
+    def test_groups_run_from_most_to_least_visited(self):
         self.assertEqual(
             [g["label"] for g in _groups(IA)], [label for label, _ in IA_SIDEBAR]
         )
         self.assertEqual(ROLE_SIDEBAR_GROUP_ORDER[IA], IA_RESPONSIBILITY_ORDER)
 
-    def test_each_page_sits_with_the_pages_about_the_same_thing(self):
+    def test_each_page_sits_in_the_rhythm_it_is_worked(self):
         self.assertEqual(
             [
                 (g["label"], [(i["label"], i["url"]) for i in g["items"]])
@@ -211,7 +210,7 @@ class IaSidebarTest(SimpleTestCase):
         """
         doors = {i["url"]: i["label"] for g in _groups(IA) for i in g["items"]}
         self.assertEqual(
-            doors.get("/admin-panel/staff-setup-queue"), "Staff Setup Queue"
+            doors.get("/admin-panel/staff-setup-queue"), "Unassigned Schools"
         )
         self.assertIn(IA, PAGE_PERMISSIONS["staff_setup_queue"])
         # The widening is the queue alone — not the pages `users` still gates.

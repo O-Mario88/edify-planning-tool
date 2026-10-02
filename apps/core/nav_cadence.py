@@ -1,8 +1,5 @@
 """Sidebar order by how often each page is opened (owner, 2026-09-14).
 
-Since 2026-10-02 the sidebar's GROUPS are what a page is about
-(apps.core.nav_groups); this ranking decides the order inside each group.
-
 "Reorganize the sidebar menu by regrouping the pages according to most likely
 visited to least likely visited." A role's pages are regrouped into how often
 the work behind them comes round — every day, each week, each month, once a
