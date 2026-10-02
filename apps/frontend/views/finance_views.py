@@ -33,6 +33,7 @@ from apps.core.fy import get_operational_fy
 from apps.fund_requests.weekly_service import disburse as disburse_weekly
 from apps.fund_requests.advance_service import reimburse as process_reimburse
 from apps.fund_requests.pl_approval_service import _ugx
+from apps.core.pagination import TABLE_PAGE_SIZE
 
 
 @require_page_permission("fund_requests")
@@ -795,9 +796,9 @@ def fund_allocation_view(request):
         page = 1
 
     try:
-        per_page = int(request.GET.get("per_page", 10))
+        per_page = int(request.GET.get("per_page", TABLE_PAGE_SIZE))
     except ValueError:
-        per_page = 10
+        per_page = TABLE_PAGE_SIZE
 
     MONTH_MAP = {
         "january": 1,

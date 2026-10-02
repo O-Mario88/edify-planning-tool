@@ -163,16 +163,34 @@ class TableBoundsTest(SimpleTestCase):
 
 
 class PageSizeTest(SimpleTestCase):
-    def test_the_platform_shows_ten_rows_a_table(self):
+    def test_the_platform_shows_fifty_rows_a_table(self):
+        """Owner, 2026-10-02: "All table in the platform should hold 50
+        records in each page the rest hidden in the paginations"."""
         from apps.core.pagination import TABLE_PAGE_SIZE
 
-        self.assertEqual(TABLE_PAGE_SIZE, 10)
+        self.assertEqual(TABLE_PAGE_SIZE, 50)
+
+    def test_no_table_names_a_page_size_of_its_own(self):
+        """A `{% paginate %}` that passes a number would drift from the
+        platform's page again. The one exception pages panels, not rows."""
+        import re
+        from pathlib import Path
+
+        from django.conf import settings
+
+        allowed = {"partials/oversight/flagged_schools.html"}
+        own = []
+        root = Path(settings.BASE_DIR) / "templates"
+        for path in root.rglob("*.html"):
+            if re.search(r'\{% paginate [^%]*"\s+\d+\s+as ', path.read_text()):
+                own.append(str(path.relative_to(root)))
+        self.assertEqual(set(own), allowed)
 
     def test_a_long_table_does_not_render_a_link_per_page(self):
         """40 pages must not mean 40 links."""
         from apps.core.pagination import paginate_rows
 
-        pages = paginate_rows(list(range(400)), page=20)["pages"]
+        pages = paginate_rows(list(range(2000)), page=20)["pages"]
         self.assertLessEqual(len(pages), 7)
         self.assertIn("...", pages)
         self.assertIn(20, pages)

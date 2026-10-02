@@ -51,7 +51,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
   </div>
 </section>
 
-{% paginate rollout.courses "course_page" 12 as course_pager %}
+{% paginate rollout.courses "course_page" as course_pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-courses-title" data-rollout-courses>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">
@@ -165,7 +165,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
 
 <div class="rpl-columns">
   <div class="rpl-columns__main">
-    {% paginate rollout.upcoming "upcoming_page" 10 as upcoming_pager %}
+    {% paginate rollout.upcoming "upcoming_page" as upcoming_pager %}
     <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-upcoming-title" data-rollout-upcoming>
       <header class="rpl-card__header">
         <div class="rpl-card__heading">
@@ -256,7 +256,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
   </div>
 </div>
 
-{% paginate rollout.recommendations "recommendation_page" 10 as recommendation_pager %}
+{% paginate rollout.recommendations "recommendation_page" as recommendation_pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-recommendations-title" data-rollout-recommendations>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">

@@ -1246,7 +1246,7 @@ def _unscheduled_by_partner(dataset, filters: ExecFilters) -> dict:
     )
 
 
-ACTIVITIES_PER_PAGE = 25
+ACTIVITIES_PER_PAGE = 50
 
 #: What each KPI's drill-down lists.
 STAGE_FILTERS = {
@@ -1344,7 +1344,7 @@ def _describe(dataset, records) -> list[dict]:
     return out
 
 
-SCHOOLS_PER_PAGE = 25
+SCHOOLS_PER_PAGE = 50
 
 
 def school_completion_rows(

@@ -141,7 +141,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: Log counts active time only while a page is visible, focused and in
     #: use, which needs a beat from the page itself (owner: replace Who's
     #: Online with an accurate activity log). Its comments were cut to fit.
-    JS_GZIP_KB = 138
+    #:
+    #: Raised to 138.5 on 2026-10-02 (137.98 to 138.27 KB, +0.2%) for the
+    #: table scroll hint leaving by itself (owner: "remove the sticky swipe to
+    #: view column black pill and make it appear temporarily"). The first wide
+    #: table is usually below the fold, so its seconds start when it is on
+    #: screen: one observer and a timer in micro-ux.js, 0.29 KB gzipped, with
+    #: the reasoning kept in responsive-system.css. Half a kilobyte, not a
+    #: whole one: the ceiling had 0.02 KB left and this is a ratchet.
+    JS_GZIP_KB = 138.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod
@@ -221,12 +229,21 @@ class PagePayloadBudgetTest(TestCase):
     #: page — where the Today view drew a loader and then fetched /today/panel
     #: (287 elements) — and the Salesforce ID, Evidence and Discuss cells on
     #: every past-due row. Empty week tables are not drawn.
+    #:
+    #: Raised on 2026-10-02 for the pages whose tables now hold fifty rows
+    #: where they held ten, fifteen, twenty or twenty-five (owner: "All table
+    #: in the platform should hold 50 records in each page"). This fixture's
+    #: officer has 60 visits, 30 schools and 60 notifications, so each of
+    #: these pages draws a fuller first page: /dashboard was 365 KB / 1750
+    #: (measured 485 / 2512), /my-plan 265 / 1760 (262 / 1787), /schools
+    #: 265 / 2270 (329 / 3088) and /notifications 265 / 1390 (331 / 1706).
+    #: The rows are the cost; nothing else on these pages grew.
     CCEO_PAGES = (
-        ("/dashboard", 365, 1750),
-        ("/my-plan", 265, 1760),
-        ("/schools", 265, 2270),
+        ("/dashboard", 535, 2765),
+        ("/my-plan", 290, 1970),
+        ("/schools", 362, 3400),
         ("/planning", 175, 950),
-        ("/notifications", 265, 1390),
+        ("/notifications", 365, 1880),
         ("/todos", 230, 1380),
         # Was 35 KB / 320: each Today row's decisions became one Actions
         # menu (owner, 2026-09-26), carrying its forms and snooze choices

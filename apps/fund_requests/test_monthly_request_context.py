@@ -113,6 +113,6 @@ class MonthlyRequestPageRendersTest(TestCase):
             "{% paginate rows 'page' as pager %}{{ pager.page }}"
         )
         rendered = template.render(
-            Context({"request": request, "rows": list(range(100))})
+            Context({"request": request, "rows": list(range(200))})
         )
         self.assertEqual(rendered.strip(), "3")

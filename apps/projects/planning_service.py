@@ -536,11 +536,11 @@ def get_planning(principal, filters=None) -> dict:
             tab_counts[row["bucket"]] += 1
 
     page_size = (
-        int(filters.get("per_page") or 10)
-        if str(filters.get("per_page") or "10").isdigit()
-        else 10
+        int(filters.get("per_page") or 50)
+        if str(filters.get("per_page") or "50").isdigit()
+        else 50
     )
-    page_size = page_size if page_size in {10, 25, 50} else 10
+    page_size = page_size if page_size in {10, 25, 50} else 50
     paginator = Paginator(rows, page_size)
     page_obj = paginator.get_page(filters.get("page") or 1)
     page_rows = list(page_obj.object_list)

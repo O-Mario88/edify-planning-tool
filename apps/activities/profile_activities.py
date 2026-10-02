@@ -57,9 +57,9 @@ from apps.planning.school_planning_badges import (
     VERIFIED_STATUSES,
 )
 
-#: Rows per page in each tab. Profiles stack several tables; ten keeps the
-#: activities section to one screen of rows.
-PAGE_SIZE = 10
+#: Rows per page in each tab: the platform's table page (owner, 2026-10-02:
+#: every table holds 50 records a page).
+PAGE_SIZE = 50
 
 #: Work still to be delivered — the Planned tab.
 OPEN_STATUSES = frozenset(

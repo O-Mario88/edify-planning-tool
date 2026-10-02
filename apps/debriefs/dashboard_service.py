@@ -29,7 +29,7 @@ from .models import (
     RiskLevel,
 )
 
-PER_PAGE = 10
+PER_PAGE = 50
 _UNSET = object()
 
 
