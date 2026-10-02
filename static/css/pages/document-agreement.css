@@ -73,7 +73,7 @@
   }
   .agreement-document ol p {
     font-family: var(--edify-font-sans);
-    font-size: .9rem;
+    font-size: var(--edify-text-body-size);
     line-height: 1.65;
   }
   .agreement-creed {
@@ -156,19 +156,19 @@
     border-radius: var(--edify-radius-pill);
     background: var(--agreement-paper);
     color: var(--agreement-blue);
-    font-size: .75rem;
+    font-size: var(--edify-text-micro-size);
     font-weight: 800;
   }
   .agreement-page .agreement-document .safeguarding-policy ol li p:first-child {
     margin-top: .1rem;
     color: var(--agreement-blue) !important;
-    font-size: .75rem;
+    font-size: var(--edify-text-micro-size);
     line-height: 1.4;
   }
   .agreement-page .agreement-document .safeguarding-policy ol li p:last-child {
     margin-top: .45rem;
     color: var(--agreement-supporting-ink);
-    font-size: .94rem;
+    font-size: var(--edify-text-body-size);
     line-height: 1.68;
   }
   .agreement-decision {
@@ -176,8 +176,8 @@
   }
   .agreement-action {
     min-height: 3.25rem;
-    border-radius: .7rem;
-    font-size: .875rem;
+    border-radius: var(--edify-radius-md);
+    font-size: var(--edify-text-label-size);
     font-weight: 800;
     transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
   }

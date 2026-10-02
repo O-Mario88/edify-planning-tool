@@ -54,12 +54,12 @@
   display: grid;
   min-inline-size: 0;
   gap: 0.1rem;
-  font-size: 0.8125rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.35;
 }
 
 .edify-connectivity-status__copy strong {
-  font-size: 0.875rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 700;
 }
 
@@ -113,7 +113,7 @@
 
 .edify-session-dialog h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--edify-text-heading-size);
   font-weight: 760;
   letter-spacing: -0.02em;
 }
@@ -121,7 +121,7 @@
 .edify-session-dialog p:not(.edify-session-dialog__eyebrow) {
   margin: 0.45rem 0 0;
   color: var(--edify-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--edify-text-label-size);
   line-height: 1.55;
 }
 
@@ -140,7 +140,7 @@
   justify-content: center;
   padding-inline: 1rem;
   border-radius: var(--edify-radius-sm);
-  font-size: 0.8125rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
 }
 
@@ -192,7 +192,7 @@
   border: 1px solid var(--edify-control-border); background: var(--edify-surface);
   color: var(--edify-text); box-shadow: var(--edify-shadow-lg);
 }
-.edify-request-error p { margin: 0; font-size: .875rem; line-height: 1.5; }
+.edify-request-error p { margin: 0; font-size: var(--edify-text-label-size); line-height: 1.5; }
 .edify-request-error button { flex-shrink: 0; min-height: 44px; }
 @media (max-width: 30rem) {
   .edify-request-error { align-items: flex-start; flex-direction: column; gap: .5rem; }

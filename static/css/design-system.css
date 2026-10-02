@@ -504,6 +504,9 @@
 
        Canonical scale (spec §11): surface 12px · control 8px · overlay 16px
        · small 6px · pill fully rounded. */
+  /* The smallest corner: a bar's end, a legend swatch, a mark of a few
+     pixels, where the 6px step would turn a square into a dot. */
+  --edify-radius-2xs: 3px;
   --edify-radius-xs: var(--radius-small);
   --edify-radius-sm: var(--radius-control);
   --edify-radius-md: var(--radius-surface);

@@ -21,7 +21,7 @@
   min-inline-size: 1.7rem;
   padding: 0 0.3rem;
   border: 1px solid var(--edify-border);
-  border-radius: 0.3rem;
+  border-radius: var(--edify-radius-xs);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.15rem;

@@ -66,7 +66,7 @@
   justify-content: center;
   gap: 0.55rem;
   border: 1px solid transparent;
-  border-radius: 0.58rem;
+  border-radius: var(--edify-radius-sm);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   transition: transform var(--edify-transition-fast), background-color var(--edify-transition-fast), border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
@@ -203,8 +203,8 @@
   text-align: start;
   text-transform: uppercase;
 }
-.admin-table th:first-child { padding-inline-start: 0.65rem; border-radius: 0.35rem 0 0 0.35rem; }
-.admin-table th:last-child { padding-inline-end: 0.65rem; border-radius: 0 0.35rem 0.35rem 0; }
+.admin-table th:first-child { padding-inline-start: 0.65rem; border-radius: var(--edify-radius-xs) 0 0 var(--edify-radius-xs); }
+.admin-table th:last-child { padding-inline-end: 0.65rem; border-radius: 0 var(--edify-radius-xs) var(--edify-radius-xs) 0; }
 .admin-table td { padding: 0.58rem 0.3rem; border-bottom: 1px solid var(--edify-border); line-height: 1.25; vertical-align: middle; }
 .admin-table tbody tr:last-child td { border-bottom: 0; }
 .admin-table td strong { display: block; color: var(--edify-text); font-weight: 590; }
@@ -389,18 +389,18 @@
 .admin-mini-grid,
 .admin-budget-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; padding: 0.72rem 0.85rem 0.85rem; }
 .admin-mini,
-.admin-budget-grid article { min-width: 0; padding: 0.72rem; border: 1px solid var(--edify-border); border-radius: 0.58rem; background: var(--edify-surface-muted); }
+.admin-budget-grid article { min-width: 0; padding: 0.72rem; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-sm); background: var(--edify-surface-muted); }
 .admin-mini > span:first-child,
 .admin-budget-grid article > span { display: block; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 580; letter-spacing: 0.025em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .admin-mini strong,
-.admin-budget-grid strong { display: block; margin-block-start: 0.42rem; overflow: hidden; color: var(--edify-text); font-size: 1.05rem; font-weight: 660; line-height: 1; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
+.admin-budget-grid strong { display: block; margin-block-start: 0.42rem; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-title-size); font-weight: 660; line-height: 1; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
 .admin-mini small,
 .admin-budget-grid small { display: block; margin-block-start: 0.3rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 520; text-transform: uppercase; }
 .admin-mini__bars { height: 1.4rem; display: flex; align-items: end; gap: 0.12rem; margin-block-start: 0.32rem; color: var(--edify-success); }
 .admin-mini[data-tone="info"] .admin-mini__bars { color: var(--edify-info); }
 .admin-mini[data-tone="warning"] .admin-mini__bars { color: var(--edify-warning); }
 .admin-mini[data-tone="purple"] .admin-mini__bars { color: var(--edify-purple); }
-.admin-mini__bars i { width: 0.14rem; height: 35%; display: block; border-radius: 0.1rem 0.1rem 0 0; background: currentColor; }
+.admin-mini__bars i { width: 0.14rem; height: 35%; display: block; border-radius: var(--edify-radius-2xs) var(--edify-radius-2xs) 0 0; background: currentColor; }
 .admin-mini__bars i:nth-child(3n + 1) { height: 82%; }
 .admin-mini__bars i:nth-child(4n + 2) { height: 55%; }
 .admin-mini__bars i:nth-child(5n) { height: 100%; }
@@ -416,7 +416,7 @@
   height: 2rem;
   display: grid;
   place-items: center;
-  border-radius: 0.52rem;
+  border-radius: var(--edify-radius-sm);
   color: var(--edify-info);
   background: var(--edify-info-light);
 }
@@ -437,24 +437,24 @@
 .admin-attention-list > a:hover { background: var(--edify-surface-muted); }
 .admin-attention-list strong { display: block; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .admin-attention-list small { display: block; margin-block-start: 0.14rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 430; text-overflow: ellipsis; white-space: nowrap; }
-.admin-attention-list > a > span:last-child { color: var(--edify-text-subtle); font-size: 1rem; }
+.admin-attention-list > a > span:last-child { color: var(--edify-text-subtle); font-size: var(--edify-text-title-size); }
 
 .admin-target-list--rail .admin-target-row { grid-template-columns: minmax(0, 1fr) auto auto; }
 .admin-target-list--rail .admin-target-row > .admin-status { grid-column: auto; }
 
 .admin-recommendation { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.72rem; padding: 0.82rem; border-color: var(--edify-success-border); background: linear-gradient(135deg, var(--edify-success-light), var(--edify-surface)); }
-.admin-recommendation__icon { width: 2.1rem; height: 2.1rem; display: grid; place-items: center; border-radius: 0.52rem; color: var(--edify-success); background: var(--edify-success-light); }
+.admin-recommendation__icon { width: 2.1rem; height: 2.1rem; display: grid; place-items: center; border-radius: var(--edify-radius-sm); color: var(--edify-success); background: var(--edify-success-light); }
 .admin-recommendation__icon svg { width: 1.18rem; height: 1.18rem; }
 .admin-recommendation h2 { color: var(--edify-success); }
 .admin-recommendation strong { display: block; margin-block-start: 0.22rem; color: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 600; }
 .admin-recommendation p { margin-block-start: 0.18rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 430; line-height: 1.4; }
-.admin-recommendation > a { grid-column: 1 / -1; min-height: 1.85rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 0.45rem; color: var(--edify-on-accent); background: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.admin-recommendation > a { grid-column: 1 / -1; min-height: 1.85rem; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--edify-radius-xs); color: var(--edify-on-accent); background: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 600; }
 .admin-recommendation > a:hover { background: var(--edify-accent-hover); }
 
 .admin-quick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0.5rem; list-style: none; }
 .admin-quick-grid li { min-width: 0; border-right: 1px solid var(--edify-border); }
 .admin-quick-grid li:last-child { border-right: 0; }
-.admin-quick-grid a { min-height: 3.85rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.38rem; padding: 0.35rem; border-radius: 0.45rem; color: var(--edify-text-muted); transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast); }
+.admin-quick-grid a { min-height: 3.85rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.38rem; padding: 0.35rem; border-radius: var(--edify-radius-xs); color: var(--edify-text-muted); transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast); }
 .admin-quick-grid a:hover { color: var(--edify-accent-text); background: var(--edify-accent-light); }
 .admin-quick-grid a > span { color: var(--edify-accent-text); }
 .admin-quick-grid svg { width: 1.2rem; height: 1.2rem; }
@@ -464,7 +464,7 @@
 .admin-execution > div { min-width: 0; padding: 0.48rem 0.55rem; border-right: 1px solid var(--edify-border); text-align: center; }
 .admin-execution > div:last-child { border-right: 0; }
 .admin-execution span { display: block; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
-.admin-execution strong { display: block; margin-block-start: 0.28rem; color: var(--edify-text); font-size: 1.05rem; font-weight: 600; line-height: 1; }
+.admin-execution strong { display: block; margin-block-start: 0.28rem; color: var(--edify-text); font-size: var(--edify-text-title-size); font-weight: 600; line-height: 1; }
 /* 0.47rem rendered at 7.5px — below any readable floor — and the success fill
    tone read 2.54:1. The text tone + the panel's 0.58rem metadata size fix both. */
 

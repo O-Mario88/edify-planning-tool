@@ -2205,7 +2205,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   block-size: 1rem;
   margin: 0;
   border: 1px solid var(--edify-border-strong);
-  border-radius: 0.25rem;
+  border-radius: var(--edify-radius-xs);
   accent-color: var(--edify-accent);
   cursor: pointer;
 }
@@ -2334,7 +2334,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-row__name {
   overflow: hidden;
   color: var(--edify-text);
-  font-size: 0.9375rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -2806,7 +2806,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .planning-school-row__name {
   overflow: hidden;
   color: var(--edify-text);
-  font-size: 0.9375rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -3359,7 +3359,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   z-index: 1;
   inset: -.35rem;
   border: 0;
-  border-radius: .9rem;
+  border-radius: var(--edify-radius-lg);
   background: transparent;
   cursor: pointer;
 }
@@ -3485,7 +3485,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row__title a:focus-visible {
   outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
   outline-offset: 3px;
-  border-radius: .2rem;
+  border-radius: var(--edify-radius-2xs);
 }
 
 .school-record-row__metadata {
@@ -4209,7 +4209,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 @media (max-width: 33rem) {
   .school-record-row__summary { gap: .75rem; padding: 1rem; }
   .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
-  .school-record-row__title { font-size: 1.13rem; }
+  .school-record-row__title { font-size: var(--edify-text-heading-size); }
   .school-record-row__metadata { gap: .38rem .75rem; }
   .school-record-action { padding-inline: .65rem; }
   .school-record-action span { font-size: var(--edify-text-micro-size); }
@@ -4230,7 +4230,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   @container school-record (max-width: 38rem) {
     .school-record-row__summary { gap: .75rem; padding: 1rem; }
     .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
-    .school-record-row__title { font-size: 1.13rem; }
+    .school-record-row__title { font-size: var(--edify-text-heading-size); }
     .school-record-row__metadata { gap: .38rem .75rem; }
     .school-record-action { padding-inline: .65rem; }
     .school-record-action span { font-size: var(--edify-text-micro-size); }

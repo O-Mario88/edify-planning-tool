@@ -954,7 +954,7 @@ main #filters-form .school-filter-grid > * {
 
 .edify-pagination__direction-symbol {
   display: none;
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
   line-height: 1;
 }
 

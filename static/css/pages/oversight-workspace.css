@@ -48,7 +48,7 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   min-block-size: 2.5rem;
   padding: .35rem .05rem .55rem;
   color: var(--edify-text-muted);
-  font-size: .75rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 720;
   text-decoration: none;
   white-space: nowrap;
@@ -103,7 +103,7 @@ main [data-oversight-workspace] .edify-training-group-toggle {
   padding: .6rem 1rem;
   color: var(--edify-text);
   text-align: start;
-  font-size: .8rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
 }
 main [data-oversight-workspace] .edify-training-group-toggle:hover {
@@ -130,7 +130,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
 }
 
 [data-oversight-workspace] .oversight-entity-tabs__link:focus-visible {
-  border-radius: .25rem;
+  border-radius: var(--edify-radius-xs);
   outline: 3px solid color-mix(in srgb, var(--color-edify-primary) 38%, white);
   outline-offset: 2px;
 }
@@ -387,7 +387,7 @@ main [data-oversight-workspace] .edify-training-group-toggle:hover {
   border-radius: var(--edify-radius-pill);
   background: color-mix(in srgb, var(--color-edify-primary, #1e40af) 12%, transparent);
   color: var(--color-edify-primary, #1e40af);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -668,7 +668,7 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
   border-radius: var(--edify-radius-pill);
   background-color: var(--edify-surface);
   color: var(--edify-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1rem;
   white-space: nowrap;
@@ -698,7 +698,7 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
   border-radius: var(--edify-radius-xs);
   background-color: var(--edify-surface-raised);
   color: var(--edify-text);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -774,7 +774,7 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
   padding: .4rem .65rem;
   border-radius: calc(var(--radius-control, 8px) - 2px);
   color: var(--edify-text);
-  font-size: .8rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   text-decoration: none;
 }

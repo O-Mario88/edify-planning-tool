@@ -326,7 +326,7 @@
 
 .calendar-month__date-card strong {
   margin-top: 0.1rem;
-  font-size: 1.3rem;
+  font-size: var(--edify-text-hero-size);
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
@@ -1087,7 +1087,7 @@ a.calendar-event:focus-visible {
     margin: 0;
     place-items: center;
     border: 1px solid currentColor;
-    border-radius: 0.7rem;
+    border-radius: var(--edify-radius-md);
     background: color-mix(in oklab, currentColor 9%, transparent);
   }
 

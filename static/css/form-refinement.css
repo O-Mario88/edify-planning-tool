@@ -13,11 +13,11 @@ html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #
   min-height: 44px !important;
   max-width: 100%;
   border: 1px solid var(--form-outline) !important;
-  border-radius: 9px !important;
+  border-radius: var(--edify-radius-sm) !important;
   background-color: var(--edify-surface) !important;
   color: var(--edify-text) !important;
   box-shadow: none !important;
-  font-size: 14px !important;
+  font-size: var(--edify-text-label-size) !important;
   line-height: 1.5;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
@@ -62,7 +62,7 @@ body { font-size-adjust: none; }
     min-height: 38px !important;
     padding-block: .45rem;
   }
-  body .drawer-header__title-row h3 { font-size: 1.125rem !important; }
+  body .drawer-header__title-row h3 { font-size: var(--edify-text-heading-size) !important; }
   body .drawer-body { padding: 1.5rem; }
 }
 

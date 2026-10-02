@@ -30,10 +30,14 @@ SKIPPED_NAMES = {"main.css", "tokens.css"}
 #: Values that are not a size of their own: they inherit, or fill, or reset.
 NEUTRAL = {"inherit", "initial", "unset", "1em", "100%", "0", "50%"}
 
-#: Literal declarations left after the 2026-10-01 clean-up. Lower these when a
-#: change removes some; never raise them.
-FONT_SIZE_CEILING = 213
-RADIUS_CEILING = 226
+#: Literal declarations left after the 2026-10-02 clean-up, which moved every
+#: plain size up to 28px and every plain radius onto a token. What remains is
+#: fluid display type (clamp(...) on heroes and the sign-in page), figures
+#: larger than the display step, form fields that stay 16px so a phone does not
+#: zoom on focus, the sign-in page's own composition (login.css, which is pinned
+#: by its own tests), and three radii that are shapes rather than steps. Lower these when a change removes some; never raise them.
+FONT_SIZE_CEILING = 69
+RADIUS_CEILING = 3
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
 

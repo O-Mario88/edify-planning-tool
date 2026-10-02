@@ -3798,7 +3798,7 @@ main .edify-stat-tile.edify-stat-tile {
   text-align: start !important;
   padding: 0.875rem 1rem !important;
   border: 1px solid color-mix(in srgb, var(--edify-border) 82%, transparent) !important;
-  border-radius: 0.875rem !important;
+  border-radius: var(--edify-radius-md) !important;
   background-color: color-mix(in srgb, var(--edify-surface) 96%, var(--edify-surface-muted)) !important;
   box-shadow: 0 2px 3px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.08) !important;
   color: var(--edify-text);
@@ -4589,7 +4589,7 @@ main :is(.spp-card__titlebar, .sp-card__header, .spa-card > header) {
   flex-wrap: wrap;
   gap: .375rem .75rem;
 }
-main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: .5rem; overflow: hidden; }
+main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-sm); overflow: hidden; }
 main .spp .spp-band {
   min-height: 0;
   padding: .625rem .875rem;
@@ -4602,7 +4602,7 @@ main .spp .spp-band {
 main .spp-band + .spp-band { border-inline-start: 1px solid var(--edify-border); }
 main .spp-band__icon { width: 1.75rem; height: 1.75rem; }
 main .spp-band > div { grid-template-columns: 1fr auto; column-gap: .75rem; align-items: baseline; width: 100%; }
-main .spp-band strong { font-size: 1.125rem; }
+main .spp-band strong { font-size: var(--edify-text-heading-size); }
 main .spp-band p { grid-column: 1 / -1; }
 main #spp-filters, main #sp-plan-filters { display: block !important; padding: 0; margin-bottom: .75rem; }
 main #spp-filters .spp-filter-grid--primary {
@@ -4667,7 +4667,7 @@ main .project-delivery-overview #budget-execution { padding: .75rem; }
 main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 650; color: var(--edify-accent-text); }
 main .project-detail details[aria-labelledby] { padding: .75rem; }
 main .project-detail details[aria-labelledby] > summary { cursor: pointer; color: var(--edify-accent-text); }
-main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: .875rem; }
+main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: var(--edify-text-label-size); }
 main .project-detail-context > .grid > div,
 main .project-detail-context > .border-t { padding: .75rem; }
 main #sp-plan-filters { display: flow-root !important; }
