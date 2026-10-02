@@ -139,8 +139,11 @@ def _dashboard_context(request, snapshot, filters) -> dict:
         "query": filters.query(),
         "header": header,
         "is_uganda": (header["country"] or "").strip().lower() == "uganda",
-        "kpis": svc.kpis(snapshot),
+        "kpis": _linked_cards(svc.kpis(snapshot)),
         "type_rows": svc.type_rows(snapshot),
+        # The page's filters without the school type, for the type table's
+        # links (each names its own).
+        "type_query": filters.query(school_type=""),
         "charts": svc.charts(snapshot),
         "country_cells": svc.row_cells(snapshot.tree.country),
         "country_followups": counts.get(("country", ""), 0),
@@ -166,6 +169,19 @@ def _dashboard_context(request, snapshot, filters) -> dict:
             or filters.cluster_status
         ),
     }
+
+
+def _linked_cards(cards: list[dict]) -> list[dict]:
+    """Each card with the consolidated table it opens (owner, 2026-10-01:
+    every KPI is a link to the table of what it counts)."""
+    from apps.planning.country_oversight import tables
+
+    for card in cards:
+        key = tables.METRIC_TABLES.get(card["metric_key"])
+        if key:
+            card["table_key"] = key
+            card["table_title"] = tables.SPECS[key].title
+    return cards
 
 
 def coverage_page(request):
@@ -537,6 +553,93 @@ def slots_view(request):
         request,
         "partials/country_oversight/slots.html",
         {"school": school, "slots": slots},
+    )
+
+
+# ── The consolidated tables behind the cards ─────────────────────────────────
+def _table_tabs(active: str, query: str) -> list[dict]:
+    from apps.planning.country_oversight import tables
+
+    return [
+        {
+            "key": key,
+            "label": tables.SPECS[key].title,
+            "short": tables.SPECS[key].short,
+            "href": tables.table_url(key, query),
+            "is_active": key == active,
+        }
+        for key in tables.TAB_ORDER
+    ]
+
+
+def _table_filter_options(request, filters) -> dict:
+    from apps.core.fy import fy_options
+    from apps.core.scoping import resolve_user_scope
+    from apps.planning.country_oversight.requirements import system_leads
+
+    country = getattr(resolve_user_scope(request.user), "country", "") or ""
+    return {
+        "fy_options": [{"value": fy, "label": fy_label(fy)} for fy in fy_options()],
+        "leads": [
+            {"key": lead.key, "name": lead.name} for lead in system_leads(country)
+        ],
+        "types": svc.TYPE_OPTIONS,
+    }
+
+
+@require_page_permission("country_planning_oversight")
+def table_view(request, key: str):
+    """One consolidated table: every row a card counts, grouped by Programme
+    Lead, a page at a time (owner, 2026-10-01)."""
+    from apps.planning.country_oversight import tables
+
+    if key not in tables.SPECS:
+        raise Http404
+    filters = svc.read_filters(request)
+    query = filters.query()
+    context = {
+        "spec": tables.SPECS[key],
+        "filters": filters,
+        "query": query,
+        "window": filters.window,
+        "fy_label": fy_label(filters.fy),
+        "lens_tabs": _table_tabs(key, query),
+        "options": _table_filter_options(request, filters),
+        "carried": [
+            (name, value)
+            for name, value in filters.params().items()
+            if name not in ("fy", "program_lead", "school_type")
+        ],
+        "may_export": RolePermissionService.can_export(
+            request.user, f"{PAGE_PATH}table-export/{key}"
+        ),
+        "export_path": f"{PAGE_PATH}table-export/{key}",
+        "withheld": not _may_see_schools(request.user),
+    }
+    if not context["withheld"]:
+        table = tables.build(request.user, filters, key)
+        try:
+            page = int(request.GET.get("page") or 1)
+        except ValueError:
+            page = 1
+        context.update({"table": table, **tables.page_of(table, page)})
+    return render(request, "pages/oversight/country_table.html", context)
+
+
+@require_page_permission("country_planning_oversight")
+@require_export_permission
+def table_export_view(request, key: str):
+    """A consolidated table as a workbook: every row, the groups as columns."""
+    from apps.core.excel import table_download
+    from apps.planning.country_oversight import tables
+
+    if key not in tables.SPECS or not _may_see_schools(request.user):
+        raise Http404
+    filters = svc.read_filters(request)
+    table = tables.build(request.user, filters, key)
+    stamp = timezone.localdate().isoformat()
+    return table_download(
+        request, f"country-{key}-{filters.fy}-{stamp}", [tables.sheet(table)]
     )
 
 

@@ -830,12 +830,12 @@ class Claims:
 
 
 def duplicate_reasons(school) -> tuple[str, ...]:
-    """Why a client-rule school's year is planned twice, if it is: the
-    rulebook's reasons (``rules.duplicate_reasons``), from the year's counts.
-    A Partner's side includes work it has not dated yet."""
+    """Why a school's year is planned more often than it should be, if it is:
+    the rulebook's reasons (``rules.duplicate_reasons``), from the year's
+    counts. A Partner's side includes work it has not dated yet."""
     from apps.planning.country_oversight import rules
 
-    if school.family != policy.CLIENT_FAMILY:
+    if school.family not in (policy.CLIENT_FAMILY, policy.CORE_FAMILY):
         return ()
     staff_all, staff_ssa = school.staff[2], school.staff_ssa
     partner_all = partner_ssa = 0

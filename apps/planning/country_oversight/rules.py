@@ -42,6 +42,10 @@ planned.
 by staff or by a Partner, never both. A support visit and an SSA Support in
 one year are two planned visits at one covered school; two of the same kind
 are a duplicate, and so is a school that staff planned and a Partner holds.
+A Core school takes two staff visits and two Partner visits; more than two on
+either side is more than it takes. Nothing here removes a plan: a duplicate
+is counted once as coverage and SHOWN, so the Country Director can have it
+looked at.
 """
 
 from __future__ import annotations
@@ -510,30 +514,41 @@ def date_author(principal, current: str = "", *, already_dated: bool = False) ->
 DUPLICATE_BOTH = "both"
 DUPLICATE_STAFF = "staff"
 DUPLICATE_PARTNER = "partner"
+DUPLICATE_STAFF_OVER = "staff_over"
+DUPLICATE_PARTNER_OVER = "partner_over"
 DUPLICATE_LABELS = {
     DUPLICATE_BOTH: "Planned by staff and held by a Partner",
     DUPLICATE_STAFF: "The same kind of staff visit planned twice",
     DUPLICATE_PARTNER: "The same kind of Partner visit assigned twice",
+    DUPLICATE_STAFF_OVER: "More staff visits than a Core school takes",
+    DUPLICATE_PARTNER_OVER: "More Partner visits than a Core school takes",
 }
 
 
 def duplicate_reasons(
     school_type: str | None, staff_by_pool: dict, partner_by_pool: dict
 ) -> tuple[str, ...]:
-    """Why a client-rule school's year is planned twice, if it is.
+    """Why a school's year is planned more often than it should be, if it is.
 
     ``staff_by_pool`` and ``partner_by_pool`` map POOL_SSA / POOL_SUPPORT to
     the year's count on that side (a Partner's includes work not yet dated).
     """
-    if str(school_type or "") not in CLIENT_RULE_TYPES:
-        return ()
+    school_type = str(school_type or "")
+    staff, partner = sum(staff_by_pool.values()), sum(partner_by_pool.values())
     reasons = []
-    if sum(staff_by_pool.values()) and sum(partner_by_pool.values()):
-        reasons.append(DUPLICATE_BOTH)
-    if any(count > 1 for count in staff_by_pool.values()):
-        reasons.append(DUPLICATE_STAFF)
-    if any(count > 1 for count in partner_by_pool.values()):
-        reasons.append(DUPLICATE_PARTNER)
+    if school_type in CLIENT_RULE_TYPES:
+        if staff and partner:
+            reasons.append(DUPLICATE_BOTH)
+        if any(count > 1 for count in staff_by_pool.values()):
+            reasons.append(DUPLICATE_STAFF)
+        if any(count > 1 for count in partner_by_pool.values()):
+            reasons.append(DUPLICATE_PARTNER)
+    else:
+        need = requirement_for(school_type)
+        if need.staff_visits and staff > need.staff_visits:
+            reasons.append(DUPLICATE_STAFF_OVER)
+        if need.partner_visits and partner > need.partner_visits:
+            reasons.append(DUPLICATE_PARTNER_OVER)
     return tuple(reasons)
 
 

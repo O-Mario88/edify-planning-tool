@@ -374,6 +374,122 @@ class _People:
         return None
 
 
+class Reads:
+    """The year's rows by the rulebook, narrowed as the page is.
+
+    One definition of each set — counted visits, outreach, trainings, cluster
+    sessions, Partner work, hand-overs — as a queryset. The cards count them
+    (``people_plan``) and the consolidated tables list them (``tables``), so a
+    card and the table it opens cannot disagree.
+    """
+
+    def __init__(
+        self,
+        user,
+        fy: str,
+        *,
+        window: Window | None = None,
+        today: date | None = None,
+        scope=None,
+        narrow: Narrow | None = None,
+    ):
+        self.fy = str(fy)
+        self.window = window or window_for(self.fy)
+        self.narrow = narrow or Narrow()
+        self.scope, self.as_of, schools = _scope_and_schools(
+            user, self.fy, today, scope
+        )
+        self.schools = None if schools is None else self.narrow.schools(schools)
+        self.country = getattr(self.scope, "country", "") or ""
+
+    @property
+    def school_ids(self):
+        return self.schools.values("id")
+
+    @property
+    def _staff(self):
+        return _activities(self.fy, self.school_ids).filter(
+            rules.planned_q() & rules.staff_delivery_q()
+        )
+
+    def counted_visits(self):
+        """Staff visits that count, with their ``kind``."""
+        return _in_window(
+            self._staff.filter(rules.counted_visit_q()), self.window
+        ).annotate(kind=rules.visit_kind_case())
+
+    def outreach(self):
+        """Donor, story, invitation and social visits: shown, never counted."""
+        return _in_window(self._staff.filter(rules.outreach_visit_q()), self.window)
+
+    def school_trainings(self):
+        """Staff trainings at a school."""
+        from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
+
+        return _in_window(
+            self._staff.filter(
+                activity_type__in=SCHOOL_TRAINING_TYPES, cluster_id__isnull=True
+            ),
+            self.window,
+        )
+
+    def sessions(self):
+        """Staff cluster trainings and cluster meetings."""
+        from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+
+        return _in_window(
+            self.narrow.sessions(
+                _activities(self.fy).filter(
+                    rules.planned_q() & rules.staff_delivery_q(),
+                    cluster_id__isnull=False,
+                    activity_type__in=(*TRAINING_TYPES, *CLUSTER_MEETING_TYPES),
+                )
+            ),
+            self.window,
+        )
+
+    def partner_work(self):
+        """Live Partner activities, each marked ``partner_planned`` (1/0)."""
+        held = _activities(self.fy, self.school_ids).filter(rules.partner_held_q())
+        if self.narrow.partner:
+            held = held.filter(assigned_partner_id=self.narrow.partner)
+        return _in_window(held, self.window).annotate(
+            partner_planned=Case(
+                When(rules.partner_planned_q(), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+
+    def handovers(self):
+        """Hand-overs that still put a school in a Partner's hands."""
+        from apps.partners.models import PartnerAssignment
+
+        rows = PartnerAssignment.objects.filter(school_id__in=self.school_ids).exclude(
+            status__in=rules.CLOSED_HANDOVER_STATUSES
+        )
+        if self.narrow.partner:
+            rows = rows.filter(partner_id=self.narrow.partner)
+        return rows
+
+    @property
+    def reads_handovers(self) -> bool:
+        """A hand-over has no date of its own: it is outstanding from the
+        year's first day, so it is read by a window that holds that day."""
+        return self.window.start <= self.window.fy_start < self.window.end
+
+    def waiting(self, status, created_at) -> bool:
+        """Is this hand-over still waiting for the Partner's date, this year?"""
+        from apps.core.fy import get_operational_fy
+        from apps.partners.models import PartnerAssignment
+
+        return (
+            status in PartnerAssignment.UNSCHEDULED_STATUSES
+            and created_at is not None
+            and int(get_operational_fy(created_at)) <= int(self.fy)
+        )
+
+
 def people_plan(
     user,
     fy: str,
@@ -390,76 +506,49 @@ def people_plan(
     ``narrow`` applies the page's filters; ``portfolio=False`` skips the
     schools each person holds, for a caller that already has them.
     """
-    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
-    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
-    from apps.partners.models import PartnerAssignment
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES
 
-    fy = str(fy)
-    window = window or window_for(fy)
-    narrow = narrow or Narrow()
-    scope, as_of, schools = _scope_and_schools(user, fy, today, scope)
-    people = _People(getattr(scope, "country", "") or "")
-    plan = PeoplePlan(fy=fy, window=window, as_of=as_of)
-    if schools is None:
+    reads = Reads(user, fy, window=window, today=today, scope=scope, narrow=narrow)
+    fy, window, narrow = reads.fy, reads.window, reads.narrow
+    people = _People(reads.country)
+    plan = PeoplePlan(fy=fy, window=window, as_of=reads.as_of)
+    if reads.schools is None:
         plan.teams = list(people.teams.values())
         return plan
-    schools = narrow.schools(schools)
-    school_ids = schools.values("id")
-    in_scope = _activities(fy, school_ids)
-    planned_staff = rules.planned_q() & rules.staff_delivery_q()
 
     held, visits, outreach, trainings, sessions = [], [], [], [], []
     handovers, partner_work = [], []
     # 1. The schools each person holds, by type.
     if portfolio:
         held = list(
-            schools.values_list("account_owner_id", "school_type")
+            reads.schools.values_list("account_owner_id", "school_type")
             .annotate(n=Count("id"))
             .order_by()
         )
     if narrow.staff_side:
         # 2. Counted visits, by who is responsible for them.
         visits = list(
-            _in_window(in_scope.filter(planned_staff & rules.counted_visit_q()), window)
-            .annotate(kind=rules.visit_kind_case())
+            reads.counted_visits()
             .values_list("responsible_staff_id", "school__school_type", "kind")
             .annotate(n=Count("id"))
             .order_by()
         )
         # 3. Outreach visits: shown, never counted.
         outreach = list(
-            _in_window(
-                in_scope.filter(planned_staff & rules.outreach_visit_q()), window
-            )
+            reads.outreach()
             .values_list("responsible_staff_id")
             .annotate(n=Count("id"))
             .order_by()
         )
         # 4. Trainings at a school, cluster trainings and cluster meetings.
         trainings = list(
-            _in_window(
-                in_scope.filter(
-                    planned_staff,
-                    activity_type__in=SCHOOL_TRAINING_TYPES,
-                    cluster_id__isnull=True,
-                ),
-                window,
-            )
+            reads.school_trainings()
             .values_list("responsible_staff_id")
             .annotate(n=Count("id"))
             .order_by()
         )
         sessions = list(
-            _in_window(
-                narrow.sessions(
-                    _activities(fy).filter(
-                        planned_staff,
-                        cluster_id__isnull=False,
-                        activity_type__in=(*TRAINING_TYPES, *CLUSTER_MEETING_TYPES),
-                    )
-                ),
-                window,
-            )
+            reads.sessions()
             .values_list("responsible_staff_id", "activity_type")
             .annotate(n=Count("id"))
             .order_by()
@@ -467,15 +556,8 @@ def people_plan(
     if narrow.partner_side:
         # 5. Partner work: hand-overs still waiting, and the Partner's
         # activities.
-        open_handovers = PartnerAssignment.objects.filter(
-            school_id__in=school_ids
-        ).exclude(status__in=rules.CLOSED_HANDOVER_STATUSES)
-        held_by_partner = in_scope.filter(rules.partner_held_q())
-        if narrow.partner:
-            open_handovers = open_handovers.filter(partner_id=narrow.partner)
-            held_by_partner = held_by_partner.filter(assigned_partner_id=narrow.partner)
         handovers = list(
-            open_handovers.values_list(
+            reads.handovers().values_list(
                 "school_id",
                 "partner_id",
                 "status",
@@ -488,15 +570,7 @@ def people_plan(
             )
         )
         partner_work = list(
-            _in_window(held_by_partner, window)
-            .annotate(
-                partner_planned=Case(
-                    When(rules.partner_planned_q(), then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                )
-            )
-            .values_list(
+            reads.partner_work().values_list(
                 "id",
                 "school_id",
                 "assigned_partner_id",
@@ -537,8 +611,6 @@ def people_plan(
         else:
             person.cluster_trainings += n
 
-    from apps.core.fy import get_operational_fy
-
     # A hand-over the Partner has dated is read as the activity it became;
     # one still waiting is assigned from the year it was made in onwards.
     handed_by: dict[str, tuple] = {}
@@ -557,16 +629,12 @@ def people_plan(
         if scheduled_activity_id:
             handed_by[scheduled_activity_id] = (monitor, assigner)
             continue
-        if status not in PartnerAssignment.UNSCHEDULED_STATUSES:
-            continue
-        if created_at is None or int(get_operational_fy(created_at)) > int(fy):
+        if not reads.waiting(status, created_at):
             continue
         if source_activity_id:
             carried.add(source_activity_id)
             handed_by[source_activity_id] = (monitor, assigner)
-        if not (window.start <= window.fy_start < window.end):
-            # A hand-over has no date of its own: it is outstanding from the
-            # year's first day, so it is read by a window that holds that day.
+        if not reads.reads_handovers:
             continue
         person = people.first(monitor, assigner, holder) or people.get(None)
         person.hand(partner_id, school_id)
@@ -960,8 +1028,10 @@ def duplicates(year: dict[str, SchoolYear]) -> list[SchoolYear]:
 
 
 __all__ = [
+    "Narrow",
     "PeoplePlan",
     "PersonPlan",
+    "Reads",
     "SchoolYear",
     "TeamPlan",
     "TypeSummary",

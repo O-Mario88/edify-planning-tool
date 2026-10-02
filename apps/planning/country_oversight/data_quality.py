@@ -270,14 +270,14 @@ def checks(dataset, tree) -> list[Check]:
             beyond += max(0, school.staff[2] - requirement.staff_visit_slots)
         elif school.family == policy.CLIENT_FAMILY:
             beyond = max(0, school.staff[2] + partner_totals[P_SCHED_T] - 1)
-            reasons = duplicate_reasons(school)
-            if reasons:
-                twice.append((reasons, school))
         else:
             # Outreach only: whatever counted visit was planned claims nothing.
             beyond = school.staff[2] + partner_totals[P_SCHED_T]
         if beyond:
             over.append((beyond, school))
+        reasons = duplicate_reasons(school)
+        if reasons:
+            twice.append((reasons, school))
     over.sort(key=lambda pair: -pair[0])
     duplicate_slot_links = _duplicate_slot_links(school_ids)
     results.append(
@@ -304,11 +304,12 @@ def checks(dataset, tree) -> list[Check]:
     results.append(
         Check(
             "planned_twice",
-            "Client-rule school planned twice",
+            "School planned twice",
             "A Client, Core Trained or Core Graduate school is visited by staff "
-            "or by a Partner, never both, and once for each kind of visit. "
-            "These are planned by staff and held by a Partner, or carry the "
-            "same kind of visit twice. The page lists every one of them.",
+            "or by a Partner, never both, and once for each kind of visit; a "
+            "Core school takes two staff and two Partner visits. These carry "
+            "more. Each is counted once as coverage, and the Schools Planned "
+            "Twice table lists every plan at every one of them.",
             len(twice),
             "warning" if twice else "info",
             [

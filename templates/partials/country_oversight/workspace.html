@@ -26,11 +26,12 @@ person who planned it; a school's coverage for whoever holds the school
 
   <section class="cpo-metrics" aria-label="Country planning summary">
     {% for card in kpis %}
-    <button type="button" class="cpo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.metric_key }}"
-            hx-get="/country-planning-oversight/drawer?kind=kpi&amp;metric={{ card.metric_key }}&amp;{{ query }}"
-            hx-target="#drawer-container" hx-swap="innerHTML"
-            aria-label="{{ card.accessible_description }} Open the schools behind it."
-            title="{{ card.definition }}">
+    {% comment %}Every card is a link to the consolidated table of what it
+    counts, grouped by Programme Lead (owner, 2026-10-01).{% endcomment %}
+    <a class="cpo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.metric_key }}"
+       href="/country-planning-oversight/table/{{ card.table_key }}?{{ query }}"
+       aria-label="{{ card.accessible_description }} Open {{ card.table_title }}."
+       title="{{ card.definition }}">
       <span class="cpo-metric-top">
         <span class="cpo-glyph">{% include "partials/country_oversight/_glyph.html" with name=card.icon %}</span>
         <span class="cpo-metric-name">{{ card.label }}</span>
@@ -44,7 +45,7 @@ person who planned it; a school's coverage for whoever holds the school
       <span class="cpo-metric-foot"><strong>{{ card.headline.0 }}</strong> {{ card.headline.1 }}</span>
       {% if card.extras %}<span class="cpo-metric-extra">{{ card.extras|join:" · " }}</span>{% endif %}
       {% if card.note %}<span class="cpo-metric-note">{{ card.note }}</span>{% endif %}
-    </button>
+    </a>
     {% endfor %}
   </section>
 
