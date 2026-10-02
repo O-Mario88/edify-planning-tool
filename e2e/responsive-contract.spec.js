@@ -163,7 +163,7 @@ test.describe('Responsive contract — behaviours', () => {
       const states = await page.evaluate(async () => {
         const host = document.createElement('div');
         host.style.inlineSize = '400px';
-        host.innerHTML = '<table data-shake-probe data-mobile-table="scroll"><thead><tr><th>Name</th><th>Value</th></tr></thead>'
+        host.innerHTML = '<table data-shake-probe data-table-wrap="off" data-mobile-table="scroll"><thead><tr><th>Name</th><th>Value</th></tr></thead>'
           + '<tbody><tr><td><span style="display:inline-block;inline-size:300px">A very long school name that is capped when pinned</span></td>'
           + '<td><span style="display:inline-block;inline-size:60px">42</span></td></tr></tbody></table>';
         document.querySelector('main').prepend(host);

@@ -1526,11 +1526,15 @@
   }
 
   /* ── LONG TEXT WRAPS BEFORE A TABLE SCROLLS (owner, 2026-10-02) ──
-     From 64rem up, a table that wrapping would make fit its card wraps: text
+     Above 64rem, a table that wrapping would make fit its card wraps: text
      columns over 13rem give up width (never below 10rem), and a heading wider
      than its cells takes two lines so its column closes up. A table that
-     would still scroll is left alone. The why is in interactions.css. */
+     would still scroll is left alone, and so is one marked
+     data-table-wrap="off" (the pinned-identity path keeps its own guard). The why is in interactions.css. */
   var WRAP_COLUMN_FROM = 13 * 16, WRAP_COLUMN_FLOOR = 10 * 16;
+  /* Above the tablet band: at 64rem itself a landscape tablet keeps its tables
+     on one line and scrolls them (e2e/responsive-contract.spec.js). */
+  var wrapShell = window.matchMedia('(min-width: 64.0625rem)');
 
   function unwrapLongText(table) {
     table.querySelectorAll('.edify-cell-wrap').forEach(function (cell) {
@@ -1545,9 +1549,9 @@
     var owner = root.closest && root.closest('table');
     if (owner) delete owner.dataset.edifyWrapAt;
     var tables = (owner ? [owner] : elementsWithin(root, 'main table')).filter(function (table) {
-      return table.closest('table') === table && !table.matches('.sr-only, .edify-visually-hidden') && !table.classList.contains('edify-table--truncate');
+      return table.closest('table') === table && !table.matches('.sr-only, .edify-visually-hidden') && !table.classList.contains('edify-table--truncate') && table.dataset.tableWrap !== 'off';
     });
-    if (!desktopShell.matches) { tables.forEach(unwrapLongText); return; }
+    if (!wrapShell.matches) { tables.forEach(unwrapLongText); return; }
     var plans = [];
     tables.forEach(function (table) {
       var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);

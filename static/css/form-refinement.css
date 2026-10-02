@@ -17,7 +17,9 @@ html.theme-dark, html.theme-blue, .dark, [data-theme="dark"] { --form-outline: #
   background-color: var(--edify-surface) !important;
   color: var(--edify-text) !important;
   box-shadow: none !important;
-  font-size: var(--edify-text-label-size) !important;
+  /* A fixed size, not the fluid label step: a field's text and its 38px box
+     hold at every desktop width and density (e2e/display-density.spec.js). */
+  font-size: 14px !important;
   line-height: 1.5;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
