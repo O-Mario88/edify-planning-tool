@@ -141,7 +141,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: Log counts active time only while a page is visible, focused and in
     #: use, which needs a beat from the page itself (owner: replace Who's
     #: Online with an accurate activity log). Its comments were cut to fit.
-    JS_GZIP_KB = 138
+    #:
+    #: Raised to 138.5 on 2026-10-02 (137.98 to 138.27 KB, +0.2%) for the
+    #: table scroll hint leaving by itself (owner: "remove the sticky swipe to
+    #: view column black pill and make it appear temporarily"). The first wide
+    #: table is usually below the fold, so its seconds start when it is on
+    #: screen: one observer and a timer in micro-ux.js, 0.29 KB gzipped, with
+    #: the reasoning kept in responsive-system.css. Half a kilobyte, not a
+    #: whole one: the ceiling had 0.02 KB left and this is a ratchet.
+    JS_GZIP_KB = 138.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod
