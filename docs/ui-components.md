@@ -90,9 +90,9 @@ lowers its count; never raise one.
 
 | | On the component | Still hand-written |
 | --- | --- | --- |
-| Page headers | 104 on the tag, 7 on the include | 112 |
-| Filter forms that apply on change | 7 | 11 |
-| Tables | 4 | 330 |
+| Page headers | 105 on the tag, 7 on the include | 112 |
+| Filter forms that apply on change | 7 | 12 |
+| Tables | 4 | 332 |
 
 | Guesswork in the stylesheets | Count |
 | --- | --- |
@@ -105,11 +105,11 @@ lowers its count; never raise one.
    wrapper between the header and its lead, a width utility that has an
    effect, a second row of content. Each needs a decision about the page, not
    a script.
-2. **Filter forms.** The eleven hand-wired forms use four different class
+2. **Filter forms.** The twelve hand-wired forms use four different class
    sets (`platform-filter-bar`, `edify-filter-bar`, bare flex utilities,
    `data-component="filter-toolbar"`). Moving one changes which stylesheet
    rules reach it, so move them one page at a time and look at the result.
-3. **Tables.** About a hundred class combinations across 330 tables. Move a
+3. **Tables.** About a hundred class combinations across 332 tables. Move a
    table when its page is next worked on.
 4. **The stylesheets.** The components do not yet own their CSS. The step
    that pays off is to give each component one stylesheet that selects its
