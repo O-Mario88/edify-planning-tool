@@ -331,14 +331,16 @@ test.describe('Responsive contract — behaviours', () => {
       return { rows: [...rows.values()], clipped };
     }, selector);
 
-    // Partner Monitoring's filters are three and More on one row, even on the
-    // smallest phone (owner, 2026-09-25).
+    // Partner Monitoring's filters sit on one row, even on the smallest phone
+    // (owner, 2026-09-25). They are three since 2026-10-02: the Activity
+    // drop-down became the work tabs under the Partner ("Activities ...
+    // should be grouped in tabs").
     {
       const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 320, height: 568 }, 'pl1@edify.org');
       try {
         await page.goto('/partner-oversight/');
         const { rows, clipped } = await rowsOf(page, 'form.oversight-period-filter');
-        expect(rows[0]).toBe(4);
+        expect(rows[0]).toBe(3);
         expect(clipped).toEqual([]);
       } finally {
         await context.close();

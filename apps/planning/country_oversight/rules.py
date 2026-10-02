@@ -264,8 +264,28 @@ _TYPE_KIND = {
 COUNTED_VISIT_TYPES: tuple[str, ...] = tuple(_TYPE_KIND)
 
 
+def not_outside_ssa_q(prefix: str = "") -> Q:
+    """Rows that are not the work of a project no SSA intervention measures.
+
+    Owner, 2026-10-02: "Alumni is not an intervention ... it is not measured
+    via ssa." A visit under such a project is not one of the school's support
+    visits: it is not among the 560 an officer plans, it does not put the
+    school in a Partner's hands, and it closes no gap on a monitor. The same
+    line `apps.planning.visit_gate` and the Core package already draw.
+    Activities and hand-overs both carry ``project_id``.
+    """
+    from apps.projects.models import projects_outside_ssa
+
+    outside = list(projects_outside_ssa())
+    if not outside:
+        return Q()
+    return ~Q(**{f"{prefix}project_id__in": outside})
+
+
 def visit_kind(
-    activity_type: str | None, purpose_type: str | None = None
+    activity_type: str | None,
+    purpose_type: str | None = None,
+    project_id: str | None = None,
 ) -> str | None:
     """The counted kind of an activity of this shape, or None when it is not
     a counted visit. ``counted_visit_q`` and ``visit_kind_case`` say the same
@@ -274,6 +294,11 @@ def visit_kind(
     purpose_type = str(purpose_type or "")
     if activity_type not in _TYPE_KIND:
         return None
+    if project_id:
+        from apps.projects.models import is_outside_ssa
+
+        if is_outside_ssa(project_id):
+            return None
     if purpose_type == COMPANION_PURPOSE or purpose_type in OUTREACH_PURPOSES:
         return None
     return _PURPOSE_KIND.get(purpose_type) or _TYPE_KIND[activity_type]
@@ -287,6 +312,7 @@ def counted_visit_q(prefix: str = "") -> Q:
         & Q(**{f"{prefix}cluster_id__isnull": True})
         & ~Q(**{f"{prefix}purpose_type": COMPANION_PURPOSE})
         & ~Q(**{f"{prefix}purpose_type__in": OUTREACH_PURPOSES})
+        & not_outside_ssa_q(prefix)
     )
 
 

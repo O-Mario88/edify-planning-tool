@@ -873,7 +873,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8487,
+      "bytes": 8731,
       "deprecated_alternatives": [],
       "example_pages": [
         "/actions/<str:action_id>/<str:transition>",
@@ -1373,7 +1373,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13848,
+      "bytes": 14079,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/closure-quality"
@@ -1732,7 +1732,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3413,
+      "bytes": 3625,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1753,7 +1753,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10586,
+      "bytes": 10577,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1817,7 +1817,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10553,
+      "bytes": 10533,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1857,7 +1857,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 776,
+      "bytes": 775,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1900,7 +1900,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2983,
+      "bytes": 3205,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2053,7 +2053,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1710,
+      "bytes": 1926,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown"
@@ -2075,7 +2075,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1700,
+      "bytes": 1707,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown"
@@ -2300,7 +2300,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3301,
+      "bytes": 3523,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2690,7 +2690,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4954,
+      "bytes": 5255,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/portfolio"
@@ -3070,7 +3070,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7223,
+      "bytes": 7250,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -3624,7 +3624,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10134,
+      "bytes": 10199,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3821,7 +3821,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13872,
+      "bytes": 14088,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4046,7 +4046,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12457,
+      "bytes": 12671,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -5490,7 +5490,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20655,
+      "bytes": 20662,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -5776,7 +5776,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 34306,
+      "bytes": 34570,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6105,24 +6105,22 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 5146,
+      "bytes": 3868,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": " Week Person",
       "purpose": "Reusable  week person interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "selected"
+        "default"
       ],
       "tables": 0,
       "template": "partials/dashboards/pl/_week_person.html",
@@ -6156,7 +6154,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 15672,
+      "bytes": 16088,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6293,7 +6291,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3840,
+      "bytes": 4050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/pl-drilldown"
@@ -7101,7 +7099,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2003,
+      "bytes": 2102,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/data-quality-center",
@@ -7123,7 +7121,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1218,
+      "bytes": 1328,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/data-quality-center"
@@ -7193,7 +7191,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8557,
+      "bytes": 8860,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -7822,7 +7820,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13064,
+      "bytes": 13306,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -8950,7 +8948,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28415,
+      "bytes": 28809,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9538,7 +9536,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8685,
+      "bytes": 9222,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9708,7 +9706,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6112,
+      "bytes": 6236,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9754,7 +9752,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8767,
+      "bytes": 12446,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -10390,7 +10388,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2730,
+      "bytes": 2876,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10497,7 +10495,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1125,
+      "bytes": 1543,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10524,7 +10522,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2704,
+      "bytes": 2850,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10549,7 +10547,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3580,
+      "bytes": 5305,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10572,6 +10570,9 @@
       "template": "partials/oversight/_monitor_row.html",
       "variants": [
         "{{ gap.tone }}",
+        "{{ row.core_partner_trainings_tone }}",
+        "{{ row.core_partner_visits_tone }}",
+        "{{ row.partner_tone }}",
         "{{ row.visit_tone }}"
       ]
     },
@@ -10852,7 +10853,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10761,
+      "bytes": 10756,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -10877,7 +10878,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11979,
+      "bytes": 11969,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -10902,7 +10903,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10811,
+      "bytes": 11200,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -10982,7 +10983,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5568,
+      "bytes": 5826,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11005,7 +11006,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7870,
+      "bytes": 9666,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11016,7 +11017,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Monitor Workspace",
       "purpose": "Reusable monitor workspace interface primitive",
@@ -11091,7 +11092,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 902,
+      "bytes": 692,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -11270,7 +11271,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11967,
+      "bytes": 11983,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11281,7 +11282,7 @@
       "kind": "application-partial",
       "name": "Partner Workspace",
       "purpose": "Reusable partner workspace interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -11355,7 +11356,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2175,
+      "bytes": 2239,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/"
@@ -11378,7 +11379,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9578,
+      "bytes": 9843,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-map/",
@@ -11542,6 +11543,30 @@
       "variants": [
         "info"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1431,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools/assign-partner",
+        "/planning/assign-partner-modal"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Project Handover Routes",
+      "purpose": "Reusable  project handover routes interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_project_handover_routes.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -11778,7 +11803,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9677,
+      "bytes": 9744,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -12579,7 +12604,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2505,
+      "bytes": 2711,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -12605,7 +12630,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 18083,
+      "bytes": 18216,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -12664,7 +12689,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19281,
+      "bytes": 19468,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -12739,7 +12764,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16037,
+      "bytes": 16224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -12917,7 +12942,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5510,
+      "bytes": 5707,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -12943,7 +12968,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5623,
+      "bytes": 5820,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"
@@ -13014,7 +13039,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2987,
+      "bytes": 3152,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -13111,7 +13136,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 18260,
+      "bytes": 19446,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -13140,7 +13165,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1208,
+      "bytes": 1691,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -13148,7 +13173,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Portfolio List",
       "purpose": "Reusable portfolio list interface primitive",
@@ -13165,7 +13190,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4869,
+      "bytes": 5240,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -13191,7 +13216,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8506,
+      "bytes": 8640,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/projects/<str:project_id>/schools"
@@ -13887,7 +13912,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21547,
+      "bytes": 21554,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -15878,6 +15903,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19022,6 +19048,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19129,6 +19156,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19229,6 +19257,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19588,6 +19617,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19688,6 +19718,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19790,6 +19821,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19890,6 +19922,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -19992,6 +20025,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20097,6 +20131,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20200,6 +20235,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20299,6 +20335,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20477,6 +20514,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20577,6 +20615,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20676,6 +20715,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20776,6 +20816,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20875,6 +20916,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -20975,6 +21017,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -21074,6 +21117,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -21172,6 +21216,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -21267,6 +21312,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -32940,6 +32986,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33241,6 +33288,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33332,6 +33380,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33426,6 +33475,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33525,6 +33575,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33625,6 +33676,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33720,6 +33772,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33814,6 +33867,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -33911,6 +33965,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34007,6 +34062,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34103,6 +34159,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34203,6 +34260,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34298,6 +34356,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34394,6 +34453,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34489,6 +34549,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -34581,6 +34642,7 @@
         "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
+        "apps.core_schools.services",
         "apps.geography.models",
         "apps.notifications.services",
         "apps.partners.models",
@@ -42477,6 +42539,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -42570,6 +42633,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -62828,6 +62892,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -62941,6 +63006,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63047,6 +63113,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63147,6 +63214,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63246,6 +63314,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63346,6 +63415,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63446,6 +63516,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63551,6 +63622,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63651,6 +63723,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -63750,6 +63823,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -64018,6 +64092,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -64112,6 +64187,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -64211,6 +64287,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -64309,6 +64386,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -73621,6 +73699,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -73711,6 +73790,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -73804,6 +73884,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -73894,6 +73975,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -73987,6 +74069,7 @@
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -74332,8 +74415,8 @@
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /planning-monitor/?view=planning",
-        "GET /planning-monitor/?view=execution"
+        "GET /planning-monitor/?view=planning&amp;fy={{ fy }}",
+        "GET /planning-monitor/?view=execution&amp;fy={{ fy }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -74403,6 +74486,93 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.planning_monitor_send_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:planning_monitor"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-18DDA4D5C6",
+      "page_title": "Planning Monitor Send",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning_monitor",
+      "primary_action": "Planning Monitor Send",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "\"Send to <CCEO>\" from the Planning Monitor's school list.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/planning-monitor/send",
+      "route_name": "planning_monitor_send",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -78416,6 +78586,7 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET ?{{ project_tab_query }}tab={{ row.id }}",
         "GET /projects/create",
         "GET /projects/filter"
       ],
@@ -79388,10 +79559,10 @@
         "test:referenced-by-automated-test",
         "permission:project_capacity"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "shared-page-header-component",
       "htmx_endpoints": [
         "GET /projects/capacity/set{% if selected_project %}?project={{ selected_project }}{% endif %}",
@@ -79422,9 +79593,7 @@
       "route": "/projects/capacity",
       "route_name": "project_capacity",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/projects/capacity"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.projects.models",
         "apps.projects.scoping",
@@ -79455,7 +79624,6 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
         "text-[15px]"
       ]
     },
@@ -79956,6 +80124,7 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET ?{{ project_tab_query }}tab={{ row.id }}",
         "GET /projects/create",
         "GET /projects/filter"
       ],
@@ -111391,6 +111560,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.planning_monitor_send_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning_monitor",
+      "required_permissions": [],
+      "route": "/planning-monitor/send",
+      "route_name": "planning_monitor_send",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.planning_views.assign_partner_action_view",
       "kind": "action",
       "methods": [
@@ -114493,28 +114674,28 @@
   "summary": {
     "accessibility_contract_pass": 574,
     "activity_states": 24,
-    "all_routes": 1355,
+    "all_routes": 1356,
     "api_routes": 360,
-    "component_templates": 599,
+    "component_templates": 600,
     "full_pages": 263,
     "mobile_contract_pass": 574,
-    "nonvisual_actions": 279,
+    "nonvisual_actions": 280,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 587,
+      "interaction-fragment": 588,
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
       "report": 41
     },
     "partials_and_drawers": 308,
-    "permission_gated": 867,
+    "permission_gated": 868,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 883,
+    "routed_surfaces": 884,
     "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
@@ -114523,7 +114704,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 574,
-    "test_referenced": 776,
+    "test_referenced": 777,
     "theme_contract_pass": 574
   }
 }

@@ -131,6 +131,7 @@ the menu with focus on the reference.{% endcomment %}
 <tr>
 <th class="px-6 py-3 text-left">Partner</th>
 <th class="px-6 py-3 text-left">Activity</th>
+<th class="px-6 py-3 text-left">School ID</th>
 <th class="px-6 py-3 text-left">School / Cluster</th>
 <th class="px-6 py-3 text-left">Activity Date</th>
 <th class="px-6 py-3 text-right">Planned (UGX)</th>
@@ -150,8 +151,9 @@ the menu with focus on the reference.{% endcomment %}
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
 </div>
 </td>
+<td class="px-6 py-3 whitespace-nowrap tabular-nums" data-label="School ID">{% if act.school.id %}{% school_code act.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-3" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <td class="px-6 py-3 text-slate-500 font-medium" data-label="Activity Date">
 {{ act.scheduled_date|date:"M d, Y" }}
@@ -194,6 +196,7 @@ Pay 50% Advance
 <tr>
 <th class="px-6 py-4 text-left">Partner</th>
 <th class="px-6 py-4 text-left">Activity</th>
+<th class="px-6 py-4 text-left">School ID</th>
 <th class="px-6 py-4 text-left">School / Cluster</th>
 <th class="px-6 py-4 text-left">Assigned Staff</th>
 <th class="px-6 py-4 text-left">Activity Date</th>
@@ -219,8 +222,9 @@ Pay 50% Advance
 </div>
 </td>
 <!-- School -->
+<td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if act.school.id %}{% school_code act.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Staff -->
 <td class="px-6 py-4" data-label="Assigned Staff">
@@ -257,7 +261,7 @@ Verified
 {% endfor %}
 {% else %}
 <tr class="">
-<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
+<td colspan="9" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 {% include "components/empty_state.html" with message="No partner activities verified and awaiting payment." %}
 </td>
 </tr>

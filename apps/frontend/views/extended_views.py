@@ -2247,6 +2247,24 @@ def _projects_context(request):
 
     context = get_dashboard(request.user, request.GET.get("project"), request.GET)
     context["can_create_projects"] = _can_configure_project_priorities(request.user)
+    # One project a tab (owner, 2026-10-02: "all projects should be organized
+    # in tabs not below each project table"). The cards used to sit one under
+    # another, each opening its schools beneath it; the open tab's card is the
+    # one drawn, already open, and the first project opens when none is asked
+    # for. Every other filter on the page rides along in the tab's link.
+    portfolio = context.get("portfolio") or []
+    project_ids = [str(row["id"]) for row in portfolio]
+    open_project = (request.GET.get("tab") or "").strip()
+    if open_project not in project_ids:
+        open_project = project_ids[0] if project_ids else ""
+    kept = request.GET.copy()
+    for key in ("tab", "portfolio_page"):
+        kept.pop(key, None)
+    context["open_project"] = open_project
+    context["open_portfolio"] = [
+        row for row in portfolio if str(row["id"]) == open_project
+    ]
+    context["project_tab_query"] = f"{kept.urlencode()}&" if kept else ""
     return context
 
 
@@ -3736,11 +3754,9 @@ def admin_staff_setup_queue_view(request):
             school.account_owner_name_raw = staff.user.name
             school.account_owner_status = "matched"
             school.save()
-            from apps.accounts.models import StaffSchoolAssignment
+            from apps.schools.ownership_transfer import hold_schools
 
-            StaffSchoolAssignment.objects.get_or_create(
-                school_id=school.id, staff=staff
-            )
+            hold_schools([school.id], staff.id)
             from django.contrib import messages
 
             messages.success(
@@ -4475,25 +4491,33 @@ def project_monitoring_view(request):
     requested_stage = (request.GET.get("stage") or "").strip()
     selected_stage = requested_stage if requested_stage in stages else ""
 
-    result = monitoring.project_monitoring(
-        request.user, fy=fy, project_id=selected_project, stage=selected_stage
-    )
-    # The picker offers exactly the projects this reader is already allowed to
-    # watch, so it can never name one the page would then refuse to show. The
-    # stage filter narrows school rows, never projects, so only a chosen
-    # project needs the unfiltered list rebuilt.
-    everything = (
-        result
-        if not selected_project
-        else monitoring.project_monitoring(request.user, fy=fy)
-    )
+    # One project a tab (owner, 2026-10-02: "the project assigned schools on
+    # the project monitoring should be organized in tabs with each project in
+    # its tab"). The projects used to sit one card under another, behind a
+    # Project drop-down. Every project the reader may watch is read once, for
+    # the strip and its counts; the open tab's card is the one drawn, and the
+    # first project opens when none is asked for. The stage filter narrows
+    # school rows, never projects, so every project keeps its tab.
+    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
+    project_ids = [row.id for row in result.rows]
+    if selected_project not in project_ids:
+        selected_project = project_ids[0] if project_ids else ""
+    project_tabs = [
+        {
+            "key": row.id,
+            "label": row.name,
+            "count": len(row.school_rows),
+            "is_active": row.id == selected_project,
+        }
+        for row in result.rows
+    ]
     return render(
         request,
         "pages/projects/monitoring.html",
         {
             "result": result,
-            "rows": result.rows,
-            "project_options": [(row.id, row.name) for row in everything.rows],
+            "rows": [row for row in result.rows if row.id == selected_project],
+            "project_tabs": project_tabs,
             "selected_project": selected_project,
             "stage_options": monitoring.STAGE_FILTERS,
             "selected_stage": selected_stage,

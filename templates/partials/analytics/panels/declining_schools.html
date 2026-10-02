@@ -101,7 +101,7 @@ of them is the part anyone reads.
 <table class="w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
-<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">ID</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School ID</th>
 <th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
 <th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
 <th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">FY {{ d.prevFy }}</th>
@@ -115,7 +115,7 @@ of them is the part anyone reads.
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 tabular-nums text-slate-500">{{ s.code|default:"—" }}</td>
 <td class="px-4 py-3">
-<a href="/schools/{{ s.schoolId }}" class="font-bold text-slate-900 block leading-tight">{% school_identity s.name s.schoolId %}</a>
+<a href="/schools/{{ s.schoolId }}" class="font-bold text-slate-900 block leading-tight">{{ s.name }}</a>
 </td>
 <td class="px-4 py-3 text-slate-600">{{ s.district }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ s.prevScore }}</td>

@@ -1203,13 +1203,17 @@ def _assert_partner_half_open(school, fields: dict) -> None:
 
     from .models import PartnerAssignment
 
+    project = fields.get("project")
     shape = PartnerAssignment(
+        project_id=fields.get("project_id") or getattr(project, "id", None),
         support_type=fields.get("support_type"),
         visit_number=fields.get("visit_number"),
         training_number=fields.get("training_number"),
         expected_activity_type=fields.get("expected_activity_type"),
         purpose_of_visit=fields.get("purpose_of_visit"),
     )
+    # None for the hand-over of a project outside the package (Alumni): it
+    # takes none of the partner's two and is not refused over them.
     assert_side_open(school, assignment_kind(shape), PARTNER)
 
 

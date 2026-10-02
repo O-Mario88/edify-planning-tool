@@ -290,7 +290,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 184,
+   "line": 186,
    "title": "Verified \u2014 Awaiting Clearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -746,7 +746,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 124,
+   "line": 125,
    "title": "Lending partner dashboard",
    "heading_level": 2,
    "has_card_key": false,
@@ -755,7 +755,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 163,
+   "line": 164,
    "title": "Create or update a loan",
    "heading_level": 2,
    "has_card_key": false,
@@ -769,7 +769,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 168,
+   "line": 169,
    "title": "Approved loan purposes",
    "heading_level": 3,
    "has_card_key": false,
@@ -783,7 +783,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 256,
+   "line": 257,
    "title": "Record repayment position",
    "heading_level": 2,
    "has_card_key": false,
@@ -797,7 +797,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 347,
+   "line": 348,
    "title": "Loan register",
    "heading_level": 2,
    "has_card_key": false,
@@ -820,7 +820,7 @@
   },
   {
    "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 23,
+   "line": 25,
    "title": "Monthly Portfolio Return",
    "heading_level": 2,
    "has_card_key": false,
@@ -834,7 +834,7 @@
   },
   {
    "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 25,
+   "line": 27,
    "title": "Data Issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -1446,14 +1446,14 @@
   },
   {
    "template": "templates/pages/finance/country_budget_submission.html",
-   "line": 137,
+   "line": 139,
    "title": "Admin plan (snapshot)",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     13,
+     14,
      0
     ]
    ]
@@ -2385,14 +2385,14 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 107,
+   "line": 109,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
    "branch_path": [
     [
-     13,
+     14,
      0
     ]
    ]
@@ -2458,7 +2458,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 117,
+   "line": 119,
    "title": "Activities",
    "heading_level": 3,
    "has_card_key": false,
@@ -2467,7 +2467,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 139,
+   "line": 141,
    "title": "Staff and volunteers",
    "heading_level": 3,
    "has_card_key": false,
@@ -2558,32 +2558,32 @@
   },
   {
    "template": "templates/pages/planning/visit_requests.html",
-   "line": 57,
+   "line": 59,
    "title": "Awaiting your decision",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)]",
    "branch_path": [
     [
-     10,
+     11,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/planning/visit_requests.html",
-   "line": 70,
+   "line": 72,
    "title": "asks to visit your school",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-5",
    "branch_path": [
     [
-     10,
+     11,
      0
     ],
     [
-     11,
+     12,
      0
     ]
    ]
@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 259,
+   "line": 260,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 278,
+   "line": 279,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -2925,7 +2925,7 @@
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
-   "line": 61,
+   "line": 62,
    "title": "Reassign District Portfolio Owner",
    "heading_level": 2,
    "has_card_key": false,
@@ -2939,7 +2939,7 @@
   },
   {
    "template": "templates/pages/schools/ownership_transfers.html",
-   "line": 117,
+   "line": 118,
    "title": "Transfer history",
    "heading_level": 2,
    "has_card_key": false,
@@ -4214,7 +4214,7 @@
   },
   {
    "template": "templates/partials/business_transformation/portfolio.html",
-   "line": 31,
+   "line": 33,
    "title": "MFI loan portfolio",
    "heading_level": 2,
    "has_card_key": false,
@@ -4592,7 +4592,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/operations.html",
-   "line": 480,
+   "line": 482,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -5917,7 +5917,7 @@
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 158,
+   "line": 160,
    "title": "By outcome area and SSA domain",
    "heading_level": 3,
    "has_card_key": false,
@@ -5928,14 +5928,14 @@
      1
     ],
     [
-     19,
+     20,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 195,
+   "line": 197,
    "title": "Student learning, discipleship and EdTech",
    "heading_level": 2,
    "has_card_key": false,
@@ -5946,14 +5946,14 @@
      1
     ],
     [
-     19,
+     20,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 263,
+   "line": 265,
    "title": "Draft impact report",
    "heading_level": 2,
    "has_card_key": false,
@@ -5964,14 +5964,14 @@
      1
     ],
     [
-     42,
+     43,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 278,
+   "line": 280,
    "title": "Project cohorts by SSA domain",
    "heading_level": 3,
    "has_card_key": false,
@@ -5982,14 +5982,14 @@
      1
     ],
     [
-     42,
+     43,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/ia/outcomes.html",
-   "line": 301,
+   "line": 303,
    "title": "Project enrolments and next actions",
    "heading_level": 3,
    "has_card_key": false,
@@ -6000,7 +6000,7 @@
      1
     ],
     [
-     42,
+     43,
      1
     ]
    ]
@@ -6230,28 +6230,28 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 69,
+   "line": 71,
    "title": "Waiting on Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     3,
+     4,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 128,
+   "line": 132,
    "title": "Finance / Accountability Pending",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     6,
+     8,
      0
     ]
    ]
@@ -6488,7 +6488,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 69,
+   "line": 70,
    "title": "Schools with Planned Cluster Training or Meeting",
    "heading_level": 2,
    "has_card_key": false,
@@ -6497,7 +6497,7 @@
   },
   {
    "template": "templates/partials/oversight/coverage_workspace.html",
-   "line": 101,
+   "line": 103,
    "title": "Schools with No Training Planned",
    "heading_level": 2,
    "has_card_key": false,
@@ -6515,14 +6515,14 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 109,
+   "line": 95,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     16,
+     12,
      0
     ]
    ]
@@ -6688,7 +6688,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 140,
+   "line": 142,
    "title": "Spiritual programmes",
    "heading_level": 2,
    "has_card_key": false,
@@ -6697,7 +6697,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 187,
+   "line": 189,
    "title": "Delivered by officers and partners",
    "heading_level": 2,
    "has_card_key": false,
@@ -6706,7 +6706,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",
-   "line": 230,
+   "line": 232,
    "title": "Biblical integration ratings",
    "heading_level": 2,
    "has_card_key": false,
@@ -6778,7 +6778,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/trainings.html",
-   "line": 216,
+   "line": 218,
    "title": "Regional Lead observations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6787,7 +6787,7 @@
   },
   {
    "template": "templates/partials/programme_rollout/trainings.html",
-   "line": 260,
+   "line": 262,
    "title": "Strengthen or replace recommendations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6904,7 +6904,7 @@
   },
   {
    "template": "templates/partials/projects/analytics_workspace.html",
-   "line": 50,
+   "line": 52,
    "title": "Budget per Improved School",
    "heading_level": 2,
    "has_card_key": false,
@@ -6922,7 +6922,7 @@
   },
   {
    "template": "templates/partials/projects/analytics_workspace.html",
-   "line": 53,
+   "line": 55,
    "title": "Verified Reach",
    "heading_level": 2,
    "has_card_key": false,
@@ -6940,7 +6940,7 @@
   },
   {
    "template": "templates/partials/projects/analytics_workspace.html",
-   "line": 53,
+   "line": 55,
    "title": "Recent Insights &amp; Recommended Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -6958,7 +6958,7 @@
   },
   {
    "template": "templates/partials/projects/my_plan_activity_table.html",
-   "line": 3,
+   "line": 2,
    "title": "Read only",
    "heading_level": 2,
    "has_card_key": false,
@@ -7017,7 +7017,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 54,
+   "line": 66,
    "title": "Project school planning queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -7031,7 +7031,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 142,
+   "line": 156,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7045,7 +7045,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 151,
+   "line": 165,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7059,7 +7059,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 167,
+   "line": 181,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,

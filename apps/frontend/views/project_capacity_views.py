@@ -55,8 +55,13 @@ def project_capacity_view(request):
     from apps.projects import capacity
 
     projects = _directed_projects(request.user)
+    # One project a tab (owner, 2026-10-02: "all projects should be organized
+    # in tabs not below each project table"): the open project's allocations,
+    # the first project when none is asked for.
     selected = (request.GET.get("project") or "").strip()
-    shown = [p for p in projects if p.id == selected] if selected else projects
+    if selected not in {p.id for p in projects}:
+        selected = projects[0].id if projects else ""
+    shown = [p for p in projects if p.id == selected]
     by_project = capacity.allocations_by_project([p.id for p in shown])
     sections = []
     for project in shown:

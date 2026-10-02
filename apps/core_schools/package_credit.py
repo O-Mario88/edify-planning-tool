@@ -36,6 +36,10 @@ Not credited here, each for its reason:
 * the companion visit an in-school training creates — it is the training;
 * donor, content/story, invitation and social visits — not package support
   (owner, 2026-09-30), and unlimited wherever they are planned;
+* the work of a project no SSA intervention measures (owner, 2026-10-02:
+  Alumni "is not an intervention ... it should not restrict another project
+  from being assigned to that school") — it takes no slot and no side of the
+  split (`apps.projects.models.measured_by_ssa`);
 * work at a school whose package is for an earlier year than the work's own —
   a past year's visit is not this year's V1.
 """
@@ -139,6 +143,27 @@ def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
     )
 
 
+def outside_package(project_id) -> bool:
+    """Whether work of this project is outside the package: a project no SSA
+    intervention measures (Alumni). False for work of no project."""
+    if not project_id:
+        return False
+    from apps.projects.models import is_outside_ssa
+
+    return is_outside_ssa(project_id)
+
+
+def not_outside_package_q(prefix: str = "") -> Q:
+    """Rows that are not the work of a project outside the package —
+    `outside_package` as a filter, for activities and hand-overs alike."""
+    from apps.projects.models import projects_outside_ssa
+
+    outside = list(projects_outside_ssa())
+    if not outside:
+        return Q()
+    return ~Q(**{f"{prefix}project_id__in": outside})
+
+
 def schedule_package_credit(activity) -> None:
     """Ask for this activity to be credited once its transaction commits.
 
@@ -149,6 +174,8 @@ def schedule_package_credit(activity) -> None:
     if not activity.school_id or activity.deleted_at is not None:
         return
     if activity.status in UNCREDITED_STATUSES or package_kind(activity) is None:
+        return
+    if outside_package(activity.project_id):
         return
     activity_id = activity.id
     transaction.on_commit(lambda: _credit_safely(activity_id))
@@ -260,7 +287,7 @@ def credit_school_activity(activity_id: str):
     if activity.status in UNCREDITED_STATUSES:
         return None
     kind = package_kind(activity)
-    if kind is None:
+    if kind is None or outside_package(activity.project_id):
         return None
 
     if CoreActivitySlot.objects.filter(activity_id=activity.id).exists():
@@ -324,6 +351,7 @@ def uncredited_package_work(*, fy: str | None = None, school_code: str | None = 
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, school__school_type="core")
         .filter(package_work_q())
+        .filter(not_outside_package_q())
         .exclude(status__in=UNCREDITED_STATUSES)
         .exclude(
             id__in=CoreActivitySlot.objects.filter(activity_id__isnull=False).values(
@@ -355,7 +383,10 @@ def uncredited_package_work(*, fy: str | None = None, school_code: str | None = 
 
 
 def assignment_kind(assignment) -> str | None:
-    """ "visit" or "training" for a handover at a Core School, else None."""
+    """ "visit" or "training" for a handover at a Core School, else None —
+    None too for the hand-over of a project outside the package."""
+    if outside_package(getattr(assignment, "project_id", None)):
+        return None
     support = (assignment.support_type or "").strip().lower()
     if support in ("visit", "training"):
         return support

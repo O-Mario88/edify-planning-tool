@@ -59,6 +59,7 @@ is the answer to half the questions this page gets asked.
           <caption class="sr-only">Flagged schools owned by {{ group.owner_name }}</caption>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+              <th scope="col" class="px-3 py-2 font-semibold">School ID</th>
               <th scope="col" class="px-3 py-2 font-semibold">School</th>
               <th scope="col" class="px-3 py-2 font-semibold">Issue</th>
               <th scope="col" class="px-3 py-2 font-semibold">Planned</th>
@@ -68,8 +69,9 @@ is the answer to half the questions this page gets asked.
           <tbody>
             {% for row in flagged_page.rows %}
             <tr class="border-t edify-border">
+              <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
               <td class="px-3 py-2.5">
-                <span class="font-semibold">{% school_identity row.name row.school_id %}</span>
+                <span class="font-semibold">{{ row.name }}</span>
                 {% if row.district %}<span class="block edify-text-caption edify-text-muted">{{ row.district }}</span>{% endif %}
               </td>
               <td class="px-3 py-2.5">

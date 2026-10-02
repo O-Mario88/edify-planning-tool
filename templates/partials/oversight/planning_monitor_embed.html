@@ -19,10 +19,10 @@ the row is whole; the section's placeholder carries it until this arrives.
   <div class="edify-view-toolbar" data-pl-section-head>
     <h2 id="pl-monitor-title" class="rpl-section-title">Planning Monitor</h2>
     <nav data-edify-tablist aria-label="Planning Monitor views">
-      <a href="/planning-monitor/?view=planning" data-edify-tab{% if active_oversight_view != "execution" %} aria-current="page"{% endif %}
-         hx-get="/planning-monitor/?view=planning" hx-target="#oversight-workspace" hx-swap="innerHTML">Planning</a>
-      <a href="/planning-monitor/?view=execution" data-edify-tab{% if active_oversight_view == "execution" %} aria-current="page"{% endif %}
-         hx-get="/planning-monitor/?view=execution" hx-target="#oversight-workspace" hx-swap="innerHTML">Execution &amp; Completion</a>
+      <a href="/planning-monitor/?view=planning&amp;fy={{ fy }}" data-edify-tab{% if active_oversight_view != "execution" %} aria-current="page"{% endif %}
+         hx-get="/planning-monitor/?view=planning&amp;fy={{ fy }}" hx-target="#oversight-workspace" hx-swap="innerHTML">Planning</a>
+      <a href="/planning-monitor/?view=execution&amp;fy={{ fy }}" data-edify-tab{% if active_oversight_view == "execution" %} aria-current="page"{% endif %}
+         hx-get="/planning-monitor/?view=execution&amp;fy={{ fy }}" hx-target="#oversight-workspace" hx-swap="innerHTML">Execution &amp; Completion</a>
     </nav>
     {% if active_oversight_view == "execution" %}
       {% include "partials/oversight/_execution_filters.html" %}

@@ -1,6 +1,7 @@
 {% load frontend_filters row_actions %}
 <div
 class="cluster-card edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
+data-edify-padding="flush"
 :class="{ 'is-expanded': cardExpanded }"
 x-data="{
 cardExpanded: false,

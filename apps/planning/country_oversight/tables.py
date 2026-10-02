@@ -980,8 +980,10 @@ def _training_rows(book: _Book, *, skip_counted_visits=False) -> list:
     found = [
         a
         for a in _read(book.reads.school_trainings())
+        # An Alumni training is on no visit list, so it stays on this one.
         if not (
-            skip_counted_visits and rules.visit_kind(a.activity_type, a.purpose_type)
+            skip_counted_visits
+            and rules.visit_kind(a.activity_type, a.purpose_type, a.project_id)
         )
     ]
     book.learn(found)
@@ -1071,22 +1073,25 @@ def _partner_session_rows(book: _Book, *, meetings: bool | None = None) -> list:
     return rows
 
 
-def _partner_rows(book: _Book) -> list:
-    """Every piece of work in a Partner's hands, under who assigned it."""
+def _partner_rows(book: _Book, *, every: bool = False) -> list:
+    """Every piece of work in a Partner's hands, under who assigned it.
+
+    ``every`` adds the work the rulebook does not count — Alumni, a project
+    no SSA intervention measures — for the list of every activity."""
     from apps.planning.partner_oversight_service import describe_work
 
     if not book.partner_side:
         return []
     reads = book.reads
     handovers = list(
-        reads.handovers().select_related(
+        reads.handovers(every=every).select_related(
             "school",
             "training_course",
             "catalogue_item",
             "source_activity__training_course",
         )
     )
-    work = _read(reads.partner_work())
+    work = _read(reads.partner_work(every=every))
     book.learn(
         work,
         staff_ids={
@@ -1548,7 +1553,8 @@ def build(user, filters, key: str, extra: Extra | None = None) -> Table:
             + _training_rows(book, skip_counted_visits=True)
             + _other_rows(book)
             + _session_rows(book)
-            + _partner_rows(book)
+            # Listed, counted nowhere: Alumni work in a Partner's hands too.
+            + _partner_rows(book, every=True)
             + _partner_session_rows(book),
             twice,
         )

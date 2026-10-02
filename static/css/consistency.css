@@ -1461,6 +1461,9 @@ main :is(
   aside.edify-surface[class*="rounded"]
 ):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface):not(.kpi-strip__item) {
   padding: var(--edify-surface-padding) !important;
+  /* The card has paid the inset: a table, a band or a pager inside it has
+     none of its own (ONE CONTENT LINE, at the end of this file). */
+  --edify-section-inset: 0px;
 }
 
 main :is(.edify-kpi-card, .card-kpi) {
@@ -2236,6 +2239,8 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
   border: 1px solid var(--edify-card-border) !important;
   border-radius: var(--edify-radius-sm) !important;
   box-shadow: var(--edify-card-shadow) !important;
+  /* The grid has paid the card's inset (ONE CONTENT LINE, at the end). */
+  --edify-section-inset: 0px;
 }
 
 main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi])
@@ -2258,6 +2263,16 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  /* No longer a card, so no card's inset of its own: its content starts on
+     the grid's line, not 16px further in. The gap keeps columns apart. The
+     card rule pads with this token (and !important), so the token is what
+     changes here; a padding utility is out-ranked by the selector. */
+  --edify-surface-padding: var(--edify-surface-padding-block) 0px;
+  padding-inline: 0;
+}
+/* Only that child: a card further down is a card again. */
+main .edify-tile-grid > * > * {
+  --edify-surface-padding: var(--edify-surface-padding-block) var(--edify-surface-padding-inline);
 }
 
 /* Drawers and modal forms are mounted beside <main>, so they need the same
@@ -3355,11 +3370,28 @@ main table tbody > tr:only-child > td[colspan] > :is(
   table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
   box-sizing: border-box !important;
   line-height: 1.125rem !important;
-  padding-inline: var(--edify-table-cell-padding-inline) !important;
+  /* Each cell names its own two sides, so the first and last cell of a row
+     can take the table's edge (below) without another override. */
+  --edify-cell-start: var(--edify-table-cell-padding-inline);
+  --edify-cell-end: var(--edify-table-cell-padding-inline);
+  padding-inline: var(--edify-cell-start) var(--edify-cell-end) !important;
+}
+/* The outer cells of a row sit on the card's content line (design-system.css,
+   ONE CONTENT LINE). The rule names the row and the cell's place in it, so
+   it out-ranks every density's own pair of sides, compact tables included. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden):not(.sr-distribution-table)
+  :is(thead, tbody) > tr > :is(td, th):first-child {
+  --edify-cell-start: var(--edify-section-inset, var(--edify-table-cell-padding-inline));
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden):not(.sr-distribution-table)
+  :is(thead, tbody) > tr > :is(td, th):last-child {
+  --edify-cell-end: var(--edify-section-inset, var(--edify-table-cell-padding-inline));
 }
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:is([data-record-action], .edify-cell--action) {
-  padding-inline: var(--edify-table-cell-padding-inline) !important;
+  padding-inline: var(--edify-cell-start) var(--edify-cell-end) !important;
 }
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table.edify-table--compact:not(.sr-only) :is(thead, tbody) > tr {
@@ -3368,7 +3400,9 @@ main table tbody > tr:only-child > td[colspan] > :is(
 :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table.edify-table--compact:not(.sr-only) :is(thead, tbody) :is(td, th) {
   padding-block: 0.3125rem !important;
-  padding-inline: 0.5rem !important;
+  --edify-cell-start: 0.5rem;
+  --edify-cell-end: 0.5rem;
+  padding-inline: var(--edify-cell-start) var(--edify-cell-end) !important;
   line-height: 1.125rem !important;
 }
 /* The country map's distribution table is a legend beside the map, sized to
@@ -3886,7 +3920,11 @@ main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
     min-inline-size: 0 !important;
   }
   :is(main, .drawer-body) table.edify-table--truncate:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody, tfoot) :is(th, td) {
-    padding-inline: 0.5rem !important;
+    /* The tighter pair of sides, by name: the row's outer cells still take
+       the table's edge (ONE CONTENT LINE). */
+    --edify-cell-start: 0.5rem;
+    --edify-cell-end: 0.5rem;
+    padding-inline: var(--edify-cell-start) var(--edify-cell-end) !important;
     min-inline-size: 0 !important;
     white-space: nowrap !important;
     text-wrap: nowrap !important;
@@ -4353,7 +4391,10 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
   background: var(--edify-band-surface) !important;
   color: var(--edify-band-ink) !important;
-  padding: .375rem .75rem !important;
+  /* Never closer to the band's own edge than a cell is to its neighbour: a
+     band that cannot bleed (a chart's, inside a padded column) keeps its
+     text off the fill's edge. */
+  padding: .375rem max(var(--edify-section-inset, var(--edify-card-inset)), var(--edify-table-cell-padding-inline)) !important;
 }
 /* A title band names the table under it; it does not compete with it (owner,
    2026-09-27: "reduce the size of the blue table header row not to dominate
@@ -4362,7 +4403,9 @@ main textarea,
    so a one-line band stays about 2rem tall. */
 :root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4):not(button *):not(a *),
 :root :is(main, .drawer-body, [role="dialog"]) :is(h2, h3, h4).edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
-  margin: 0 !important;
+  /* Block only: a heading that is itself the band bleeds through a padded
+     card's inset (ONE CONTENT LINE, below). */
+  margin-block: 0 !important;
   font-size: var(--edify-text-label-size) !important;
   font-weight: 600 !important;
   line-height: 1.3 !important;
@@ -4985,3 +5028,158 @@ main .edify-avatar-neutral {
   }
 }
 
+
+
+/* ═══ ONE CONTENT LINE (owner, 2026-10-02) ════════════════════════════════
+ * "Fix all the padding on every card so that everything is well aligned ...
+ * content inside cards, table padding, tabs, content inside kpi strips" and
+ * "tabs inside the cards should be aligned with the content inside the
+ * cards". Measured on 710 cards across 324 pages before this: table cards
+ * started their content at 12px, plain cards at 16px, a band inside a padded
+ * card at 32px, and a tab strip in an edge-to-edge card at 0.
+ *
+ * Every card now starts its content `--edify-card-inset` from its edge.
+ * `--edify-section-inset` is how much of that an element still has to pay:
+ *   - in a card built from sections that runs edge to edge (micro-ux.js marks
+ *     it `edify-structured-surface`), all of it: its sections, its band, its
+ *     tabs, its figures, its text and the outer cells of its table take it;
+ *   - in a padded card, none: the card has paid. Its band and its table bleed
+ *     through the padding to the card's edge and pay it themselves.
+ * A card inside a card starts again: it is a box of its own. The exceptions
+ * are named — the direct children of a padded card, and the children of a
+ * row of cards drawn as one — because there the inner card has no box.
+ * No rule here is !important: each one out-ranks the utility or the family
+ * rule it replaces by naming the card, or hands an existing rule a variable
+ * to read. */
+main,
+main .edify-structured-surface {
+  --edify-section-inset: var(--edify-card-inset);
+}
+/* A table in a box of its own (a bordered region inside a card) keeps that
+   box's inset, wherever the box sits: its text never meets its border. */
+main :is([data-table-scroll-region], .edify-table-scroll-region, .overflow-x-auto)[class~="border"] {
+  --edify-section-inset: var(--edify-card-inset);
+}
+/* A row of cards drawn as one card (the tile-grid rule above flattens its
+   children): the row has paid, so a sectioned child has nothing left to. */
+main .edify-tile-grid > .edify-structured-surface {
+  --edify-section-inset: 0px;
+}
+
+/* Padded cards built from sections: the padding utilities and the families
+   that pad themselves. One inset where there were four, and only what is
+   left to pay: such a card inside a padded one adds nothing. */
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) {
+  padding-inline: var(--edify-section-inset);
+}
+/* What sits in that padding has nothing left to pay ... */
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) > :not(.edify-table-titlebar, [data-table-scroll-region], .edify-record-table-wrap) {
+  --edify-section-inset: 0px;
+}
+/* ... except its title band and its table, which run to the card's edge
+   through the padding and pay it themselves. */
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue
+) > :is(.edify-table-titlebar, [data-table-scroll-region], .edify-record-table-wrap):not([class~="border"]) {
+  margin-inline: calc(-1 * var(--edify-section-inset));
+  inline-size: auto;
+  max-inline-size: none;
+}
+/* A band that opens the card sits on its top edge, as it does in a shell;
+   the table under it follows with no gap; a table that closes the card
+   reaches its bottom edge. micro-ux.js marks both on the card: this file
+   keeps relationships explicit and uses no relational pseudo-class. */
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue
+):not([data-edify-nested])[data-edify-band-first] {
+  padding-block-start: 0;
+}
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue
+):not([data-edify-nested])[data-edify-table-last] {
+  padding-block-end: 0;
+}
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue
+):not([data-edify-nested]) > .edify-table-titlebar:first-child {
+  border-start-start-radius: calc(var(--edify-radius-sm) - 1px);
+  border-start-end-radius: calc(var(--edify-radius-sm) - 1px);
+}
+main .edify-structured-surface:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue
+) > .edify-table-titlebar + :is([data-table-scroll-region], .edify-record-table-wrap) {
+  margin-block-start: calc(-1 * var(--edify-card-gap, 0px));
+}
+
+/* A section that an edge-to-edge card's template padded has paid too: what
+   sits inside it has nothing left to pay. Set on its children, because the
+   section's own padding reads the value it was given. A section only: a cell
+   or a pager written with the same utility is not a box its table sits in. */
+main .edify-structured-surface :is(div, section, article, aside, details, form, li):is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  [class~="px-3"], [class~="px-4"], [class~="px-5"], [class~="px-6"]
+):not(.edify-structured-surface, [data-table-scroll-region], .edify-table-titlebar, .edify-pagination-scope) > * {
+  --edify-section-inset: 0px;
+}
+
+/* Edge-to-edge cards: every section a template padded takes what is left to
+   pay, whatever utility it was written with ... */
+main .edify-structured-surface:not(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) > .edify-table-titlebar {
+  padding-inline: max(var(--edify-section-inset), var(--edify-table-cell-padding-inline));
+}
+main .edify-structured-surface:not(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) > :is(
+  header, footer, summary, .context-metrics,
+  [class~="px-2"], [class~="px-3"], [class~="px-4"], [class~="px-5"], [class~="px-6"],
+  [class~="p-2"], [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"]
+) {
+  padding-inline: var(--edify-section-inset);
+}
+/* ... and its tabs and its loose text, which sat on the card's edge, start
+   where its title does. (Its strip of figures is in the rule above: it is as
+   wide as the card by its own rule, so it is padded, not moved.) */
+main .edify-structured-surface:not(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) > :is(
+  nav, [role="tablist"], .edify-tab-container, p, h2, h3, h4
+):not(
+  .edify-table-titlebar,
+  [class~="px-2"], [class~="px-3"], [class~="px-4"], [class~="px-5"], [class~="px-6"],
+  [class~="p-2"], [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  [class~="mx-4"], [class~="mx-5"]
+) {
+  margin-inline: var(--edify-section-inset);
+}
+
+/* On a phone a tab strip fills its row (interactions.css: compact controls
+   fill rows), which put it back on the card's edge. The fill rule reads this:
+   the strip fills the row less the inset on each side. */
+main .edify-structured-surface:not(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  .rpl-card, .hrd-card, .pto-panel, .hr-today-queue, .edify-data-chart,
+  .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
+) > :is(nav, [role="tablist"], .edify-tab-container) {
+  --edify-fill-inset: var(--edify-section-inset);
+}

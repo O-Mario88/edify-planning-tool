@@ -179,6 +179,118 @@ class SchoolProfileEditTest(TestCase):
         ).latest("seq")
         self.assertIn("school_id", audit.payload["changed_fields"])
 
+    def _colleague(self):
+        user = get_user_model().objects.create_user(
+            id="school-profile-colleague",
+            email="school-profile-colleague@edify.test",
+            name="Colleague Officer",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="test-password",
+            is_active=True,
+        )
+        return StaffProfile.objects.create(
+            id="school-profile-colleague-staff", user=user, title="CCEO"
+        )
+
+    def test_giving_the_school_to_a_colleague_lands_on_the_directory(self):
+        """Owner, 2026-10-02: "when the staff changes ownership, it will work
+        but first return an error". The change saved, then the drawer
+        reloaded the school's profile — a school the actor had just handed
+        on and could no longer open — which answered "School not found"."""
+        colleague = self._colleague()
+
+        response = self.client.post(
+            self.edit_url,
+            self._valid_payload(account_owner_id=colleague.id),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.account_owner_id, colleague.id)
+        self.assertEqual(
+            list(
+                StaffSchoolAssignment.objects.filter(
+                    school_id=self.school.id
+                ).values_list("staff_id", flat=True)
+            ),
+            [colleague.id],
+        )
+        # The profile is no longer the actor's to open, so they are not sent
+        # back to it.
+        profile_url = reverse("frontend:school_detail", args=[self.school.school_id])
+        self.assertEqual(self.client.get(profile_url).status_code, 404)
+        self.assertEqual(response.headers["HX-Redirect"], "/schools")
+        body = response.content.decode()
+        self.assertIn('window.location.assign("/schools")', body)
+        self.assertNotIn("location.reload", body)
+        directory = self.client.get("/schools")
+        self.assertEqual(directory.status_code, 200)
+        self.assertContains(
+            directory,
+            "Profile School now belongs to Colleague Officer and has left your "
+            "School Directory.",
+        )
+
+    def _cluster_over_the_schools_sub_county(self, staff):
+        cluster = Cluster.objects.create(
+            name="Kira Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            responsible_staff_id=staff.id,
+            status="active",
+        )
+        ClusterSubCounty.objects.create(cluster=cluster, sub_county=self.sub_county)
+        return cluster
+
+    def test_handing_on_a_school_in_the_actor_s_cluster_area_is_saved(self):
+        """The sub-county's cluster belongs to the actor, so it is not the new
+        holder's to join. That refusal used to roll the whole edit back behind
+        "The request could not be completed": nothing saved, nothing said."""
+        colleague = self._colleague()
+        cluster = self._cluster_over_the_schools_sub_county(self.staff)
+        School.objects.filter(pk=self.school.pk).update(
+            sub_county=self.sub_county,
+            cluster_id=cluster.id,
+            cluster_status="clustered",
+        )
+
+        response = self.client.post(
+            self.edit_url,
+            self._valid_payload(account_owner_id=colleague.id),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.account_owner_id, colleague.id)
+        self.assertEqual(self.school.enrollment, 425)
+        # Its membership is left as it was, as the governed transfer leaves it.
+        self.assertEqual(self.school.cluster_id, cluster.id)
+        self.assertEqual(response.headers["HX-Redirect"], "/schools")
+
+    def test_an_edit_is_saved_where_the_area_s_cluster_is_somebody_else_s(self):
+        colleague = self._colleague()
+        self._cluster_over_the_schools_sub_county(colleague)
+
+        response = self.client.post(
+            self.edit_url, self._valid_payload(name="Profile School Renamed")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.name, "Profile School Renamed")
+        self.assertEqual(self.school.account_owner_id, self.staff.id)
+        # A school joins a cluster of the person who holds it: not this one.
+        self.assertIsNone(self.school.cluster_id)
+
+    def test_an_edit_that_keeps_the_owner_stays_on_the_profile(self):
+        response = self.client.post(self.edit_url, self._valid_payload())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("HX-Redirect", response.headers)
+        self.assertIn("location.reload", response.content.decode())
+
     def test_edit_drawer_rejects_a_duplicate_official_school_id(self):
         duplicate = School.objects.create(
             school_id="PROFILE-DUPLICATE",

@@ -274,14 +274,50 @@ class ThePlanningMonitorPage(PeopleFixture):
 
     def test_the_dashboard_section_gets_the_tabs_and_no_history_entry(self):
         self.client.force_login(self.lead_user)
-        response = self.client.get("/planning-monitor/?view=execution", **self.EMBED)
+        response = self.client.get(
+            f"/planning-monitor/?view=execution&fy={FY}", **self.EMBED
+        )
         self.assertEqual(response["HX-Push-Url"], "false")
         body = response.content.decode()
         self.assertNotIn("<html", body)
-        # The tabs travel with the workspace, the shown one marked.
-        self.assertIn('hx-get="/planning-monitor/?view=planning"', body)
+        # The tabs travel with the workspace, the shown one marked, and keep
+        # the dashboard's year.
+        self.assertIn(f'hx-get="/planning-monitor/?view=planning&amp;fy={FY}"', body)
         self.assertRegex(
-            body, r'aria-current="page"\s+hx-get="/planning-monitor/\?view=execution"'
+            body,
+            r'aria-current="page"\s+hx-get="/planning-monitor/\?view=execution&amp;fy=',
+        )
+
+    def test_the_dashboard_section_does_not_ask_the_year_again(self):
+        """Owner, 2026-10-02: "make sure the PLs dont have repeated filters. I
+        see FY filters ...". The dashboard has one year, on its title line;
+        the monitor it carries reads that year and offers no second one."""
+        self.client.force_login(self.lead_user)
+        for view in ("planning", "execution"):
+            with self.subTest(view=view):
+                body = self.client.get(
+                    f"/planning-monitor/?view={view}&fy={FY}", **self.EMBED
+                ).content.decode()
+                self.assertNotIn('<select name="fy"', body)
+                self.assertNotIn("Planning year", body)
+                self.assertNotIn("Delivery year", body)
+                # Its other filters still send the year they are read on.
+                self.assertIn(f'<input type="hidden" name="fy" value="{FY}">', body)
+        # On a page of its own the monitor keeps its year.
+        self.client.force_login(self.cd_user)
+        page = self.client.get("/planning-monitor/").content.decode()
+        self.assertIn('<select name="fy"', page)
+
+    def test_the_dashboard_s_year_is_the_monitor_s_year(self):
+        self.client.force_login(self.lead_user)
+        dashboard = self.client.get("/dashboard?fy=2026&view=week").content.decode()
+        self.assertIn('hx-get="/planning-monitor/?fy=2026"', dashboard)
+        self.assertEqual(dashboard.count('name="fy"'), 1)
+        # A link to the monitor that names a year opens the dashboard on it.
+        response = self.client.get("/planning-monitor/?view=execution&fy=2026")
+        self.assertEqual(
+            response["Location"],
+            "/dashboard?fy=2026&pm=view%3Dexecution%26fy%3D2026#planning-monitor",
         )
 
     def test_a_lead_reads_their_own_team(self):
@@ -301,7 +337,8 @@ class ThePlanningMonitorPage(PeopleFixture):
         )
         dashboard = self.client.get(response["Location"].split("#")[0])
         self.assertContains(
-            dashboard, 'hx-get="/planning-monitor/?view=execution&amp;list=overdue"'
+            dashboard,
+            'hx-get="/planning-monitor/?view=execution&amp;list=overdue&amp;fy=',
         )
         # An htmx request is moved, not swapped.
         moved = self.client.get("/planning-monitor/", HTTP_HX_REQUEST="true")

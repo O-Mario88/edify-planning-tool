@@ -367,7 +367,9 @@ class PLDashboardTest(TestCase):
         html = response.content.decode()
         self.assertNotIn("Leadership Attention", html)
         self.assertIn('id="planning-monitor"', html)
-        self.assertIn('hx-get="/planning-monitor/?"', html)
+        # It is fetched on the dashboard's year: the year is chosen once, on
+        # the title line (owner, 2026-10-02: no repeated year filter).
+        self.assertIn(f'hx-get="/planning-monitor/?fy={FY}"', html)
         self.assertLess(
             html.index('id="planning-monitor"'), html.index("data-pl-week-panel")
         )

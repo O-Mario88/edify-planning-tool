@@ -4,6 +4,7 @@
 <table class="edify-data-table w-full">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider text-left">
+<th class="px-3 py-3 font-semibold">School ID</th>
 <th class="px-3 py-3 font-semibold">School</th>
 <th class="px-3 py-3 font-semibold">Ownership</th>
 <th class="px-3 py-3 font-semibold">Weakest Intervention</th>
@@ -15,8 +16,9 @@
 {% for q in planning_queue %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <!-- School (region stacked as metadata to keep the table in frame) -->
+<td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if q.school_id %}{% school_code q.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-3 py-2.5">
-<p class="max-w-[130px] truncate font-semibold text-slate-800" title="{{ q.name }}"><a href="/schools/{{ q.school_id }}" class="hover:underline edify-primary-text-hover font-semibold text-slate-800">{% school_identity q.name q.school_id %}</a></p>
+<p class="max-w-[130px] truncate font-semibold text-slate-800" title="{{ q.name }}"><a href="/schools/{{ q.school_id }}" class="hover:underline edify-primary-text-hover font-semibold text-slate-800">{{ q.name }}</a></p>
 <p class="edify-text-caption font-semibold text-slate-400">{{ q.region }}</p>
 </td>
 

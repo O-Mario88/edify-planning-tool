@@ -45,8 +45,13 @@ class PageRendersTest(PageFixture):
         self.assertIn("Partner X", body)
         self.assertIn("Partner Y", body)
         self.assertIn("Schools assigned", body)
-        # One Partner's workspace: its three tables, never another Partner's.
-        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
+        # One Partner's workspace, one kind of work at a time (owner,
+        # 2026-10-02): the open tab's table, never another Partner's, with
+        # the other kinds a tab away.
+        self.assertEqual(body.count("data-partner-monitoring-table"), 1)
+        self.assertIn("data-partner-work-tabs", body)
+        for label in ("Visits", "Trainings", "Clusters to facilitate"):
+            self.assertIn(f"<span>{label}</span>", body)
 
     def test_a_cceo_sees_the_page_for_their_own_schools(self):
         """The CCEO helps the PL monitor. They were previously refused the
@@ -460,7 +465,7 @@ class PartnerFilterTest(PageFixture):
         ).content.decode()
 
         self.assertIn("Partner Y", body, "the other partner left the tabs")
-        self.assertIn(f'value="{self.other_partner.id}"', body)
+        self.assertIn(f"?partner={self.other_partner.id}", body)
 
     def test_choosing_a_partner_narrows_the_rows_to_that_partner(self):
         self.assign(partner=self.partner)

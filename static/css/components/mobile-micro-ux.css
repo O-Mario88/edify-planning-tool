@@ -498,19 +498,6 @@ main #filters-form .school-filter-grid > * {
   }
 }
 
-@media (max-width: 44rem) {
-  main .calendar-workspace__filters {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    overflow: visible !important;
-  }
-
-  main .calendar-workspace__filters > [role="tab"] {
-    min-inline-size: 0 !important;
-    flex: initial !important;
-  }
-}
-
 /* ── Responsive density ----------------------------------------------------
  * The first mobile pass used a 44–48px floor for every button and even every
  * text link. On data-heavy directories that made two small actions taller
@@ -619,7 +606,9 @@ main #filters-form .school-filter-grid > * {
      dropping it here would only reinstate the padding it is overriding. */
   .edify-shell [data-mobile-family="directory"] [data-row-disclosure-summary] {
     gap: 0.4rem 0.75rem !important;
-    padding: 0.3rem 0.875rem !important;
+    /* Inline: the card's one inset (design-system.css, ONE CONTENT LINE), so
+       a directory row starts where the tabs and the table over it do. */
+    padding: 0.3rem var(--edify-card-inset) !important;
   }
 
   .school-record-row__summary--selectable {
@@ -802,7 +791,7 @@ main #filters-form .school-filter-grid > * {
   }
 
   [data-mobile-family="directory"] [data-row-disclosure-summary] {
-    padding: 0.875rem !important;
+    padding: 0.875rem var(--edify-card-inset) !important;
   }
 
   .school-record-row__actions {
@@ -826,7 +815,7 @@ main #filters-form .school-filter-grid > * {
   [data-mobile-family="directory"] [data-row-disclosure-summary],
   .school-record-row__summary {
     gap: 0.625rem;
-    padding: 0.75rem !important;
+    padding: 0.75rem var(--edify-card-inset) !important;
   }
 
   .school-record-row__content {
@@ -887,13 +876,16 @@ main #filters-form .school-filter-grid > * {
   gap: 0.5rem !important;
 }
 
+/* A pager starts on its card's content line, with the table's first column
+   (design-system.css, ONE CONTENT LINE): the card's inset in an edge-to-edge
+   card, none inside a padded one. */
 .edify-workspace .edify-pagination {
-  padding: 0.5rem 0.75rem !important;
+  padding: 0.5rem var(--edify-section-inset, 0.75rem) !important;
 }
 
 .edify-workspace .edify-pagination-scope {
   min-block-size: 0 !important;
-  padding: 0.5rem 0.75rem !important;
+  padding: 0.5rem var(--edify-section-inset, 0.75rem) !important;
 }
 
 .edify-pagination__summary {

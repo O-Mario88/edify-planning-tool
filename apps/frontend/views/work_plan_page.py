@@ -47,6 +47,7 @@ from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.permissions import has_permission
 from apps.core.rbac import EdifyRole, Permission
+from apps.projects.models import is_outside_ssa
 from apps.my_plan.services import (
     compute_next_action,
     get_activity_status_label_and_class,
@@ -681,6 +682,8 @@ def build_work_plan_context(user, params) -> dict:
                 "rationale": rationale_labels.get(a.support_rationale, ""),
                 "focus_intervention": a.get_focus_intervention_display()
                 if a.focus_intervention
+                else "General"
+                if is_outside_ssa(a.project_id)
                 else "",
                 "programme_activity_type": (
                     a.get_programme_activity_type_display()

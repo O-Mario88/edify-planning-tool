@@ -1869,7 +1869,67 @@ def _edit_drawer_context(user, a) -> dict:
     if pair is not None:
         training, visit = pair
         context["other_half"] = visit if a.id == training.id else training
+    context.update(_edit_project_context(user, a))
     return context
+
+
+def _edit_project_context(user, a) -> dict:
+    """The Project field of the Edit drawer, and the interventions each
+    project is linked to (owner, 2026-10-02: "if a user wants to change a
+    project to another they should be able to select an intervention the new
+    project is linked to ... from Christlike behaviour to General which is
+    linked to Alumni").
+
+    Project work lists its focus from its project's own links instead of all
+    eight interventions. The focus the activity already carries stays on the
+    list when its project no longer names it, so opening the drawer and
+    saving a new date never rewrites it.
+    """
+    if not a.project_id:
+        return {}
+    import json
+
+    from apps.activities import editing
+    from apps.core.enums import SsaIntervention
+    from apps.projects.models import GENERAL_INTERVENTION, Project
+
+    current = Project.objects.filter(id=a.project_id).first()
+    if current is None:
+        return {}
+    projects = editing.changeable_projects(a, user) or [current]
+    in_project = (
+        set(a.school.project_assignments.values_list("project_id", flat=True))
+        if a.school_id
+        else set()
+    )
+    links = {}
+    for project in projects:
+        options = [
+            # General is "no SSA focus": the form posts it as a blank.
+            {"code": "" if code == GENERAL_INTERVENTION else code, "label": label}
+            for code, label in editing.project_interventions(project)
+        ]
+        if not any(option["code"] == "" for option in options):
+            options.insert(0, {"code": "", "label": "None"})
+        links[project.id] = options
+    saved = a.focus_intervention or ""
+    if saved and all(option["code"] != saved for option in links[current.id]):
+        links[current.id].append(
+            {"code": saved, "label": dict(SsaIntervention.choices).get(saved, saved)}
+        )
+    return {
+        "edit_project": current,
+        "edit_projects": [
+            {
+                "id": project.id,
+                "name": project.name,
+                "joins": project.id != current.id and project.id not in in_project,
+            }
+            for project in projects
+        ],
+        "may_change_project": len(projects) > 1,
+        "project_links_json": json.dumps(links),
+    }
 
 
 @require_page_permission("my_plan")
@@ -1943,6 +2003,7 @@ def edit_activity_action(request, activity_id):
         ("focusIntervention", "focus_intervention"),
         ("facilitatingPartnerId", "facilitating_partner_id"),
         ("schoolId", "school_id"),
+        ("projectId", "project_id"),
     ):
         if name in request.POST:
             data[key] = request.POST.get(name, "").strip()

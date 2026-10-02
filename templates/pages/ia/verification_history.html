@@ -20,6 +20,7 @@
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity</th>
+<th class="px-6 py-4 text-left">School ID</th>
 <th class="px-6 py-4 text-left">School / Cluster</th>
 <th class="px-6 py-4 text-left">Partner</th>
 <th class="px-6 py-4 text-left">Staff</th>
@@ -36,8 +37,9 @@
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.id|slice:":8" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ item.activity_type }}</div>
 </td>
+<td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if item.school_id %}{% school_code item.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.school item.school_id %}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ item.school }}</div>
 {% if item.cluster %}<div class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ item.cluster }}</div>{% endif %}
 </td>
 <td class="px-6 py-4" data-label="Partner">{% if item.partner %}<span class="text-slate-600 font-bold bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-pill">{{ item.partner }}</span>{% else %}<span class="text-slate-400">—</span>{% endif %}</td>

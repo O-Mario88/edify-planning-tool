@@ -80,11 +80,13 @@ was measured. Tables are plain text: a status is a word with a tone.
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Assessment collection worklist; scroll sideways for more columns">
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">Schools whose SSA evidence needs collecting, verifying or correcting</caption>
-        <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Account owner</th><th scope="col">Need</th><th scope="col">Detail</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
+        <thead><tr><th scope="col">School ID</th>
+<th scope="col">School</th><th scope="col">District</th><th scope="col">Account owner</th><th scope="col">Need</th><th scope="col">Detail</th><th scope="col" class="is-end"><span class="sr-only">Actions</span></th></tr></thead>
         <tbody>
           {% for row in wl.rows %}
           <tr>
-            <th scope="row" data-record-title><a href="{{ row.school_url }}">{% school_identity row.school row.school_id %}</a></th>
+            <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <th scope="row" data-record-title><a href="{{ row.school_url }}">{{ row.school }}</a></th>
             <td data-label="District">{{ row.district|default:"—" }}</td>
             <td data-label="Account owner">{{ row.owner }}</td>
             <td data-label="Need"><span data-tone="{{ row.state_tone }}">{{ row.state_label }}</span></td>
@@ -117,7 +119,7 @@ was measured. Tables are plain text: a status is a word with a tone.
             </td>
           </tr>
           {% empty %}
-          <tr><td class="rpl-table__empty" colspan="6">{% include "components/empty_state.html" with message="No school needs collection work here" hint="Every school in this selection has a confirmed SSA for this financial year, or choose another filter." compact="true" %}</td></tr>
+          <tr><td class="rpl-table__empty" colspan="7">{% include "components/empty_state.html" with message="No school needs collection work here" hint="Every school in this selection has a confirmed SSA for this financial year, or choose another filter." compact="true" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -313,9 +315,11 @@ was measured. Tables are plain text: a status is a word with a tone.
     {% paginate ia_evidence_page.paginator.object_list "page" as evidence_pager %}
       <table class="rpl-table" data-mobile-table="scroll">
         <caption class="sr-only">Project-school evidence and next actions</caption>
-        <thead><tr><th scope="col">School</th><th scope="col">Project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Next action</th></tr></thead>
+        <thead><tr><th scope="col">School ID</th>
+<th scope="col">School</th><th scope="col">Project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Next action</th></tr></thead>
         <tbody>{% for row in evidence_pager.rows %}<tr>
-          <th scope="row" data-record-title><a href="/schools/{{ row.school_id }}">{% school_identity row.school row.school_id %}</a></th>
+          <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <th scope="row" data-record-title><a href="/schools/{{ row.school_id }}">{{ row.school }}</a></th>
           <td data-label="Project"><a href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
           <td data-label="Domain">{{ row.intervention }}</td>
           <td data-label="SSA scores" title="Baseline → follow-up" class="tabular-nums">{{ row.baseline|default_if_none:"Missing" }} → {{ row.follow_up|default_if_none:"Missing" }}</td>
@@ -323,7 +327,7 @@ was measured. Tables are plain text: a status is a word with a tone.
           <td data-label="Follow-up due">{{ row.due|default:"Not scheduled" }}</td>
           <td data-label="Account owner">{{ row.owner }}</td>
           <td data-label="Next action">{{ row.action }}</td>
-        </tr>{% empty %}<tr><td class="rpl-table__empty" colspan="8">{% include "components/empty_state.html" with message="No project enrolments" hint="Choose another project cohort, or enrol schools in a special project to measure its cohort." compact="true" %}</td></tr>{% endfor %}</tbody>
+        </tr>{% empty %}<tr><td class="rpl-table__empty" colspan="9">{% include "components/empty_state.html" with message="No project enrolments" hint="Choose another project cohort, or enrol schools in a special project to measure its cohort." compact="true" %}</td></tr>{% endfor %}</tbody>
       </table>
     </div>
     {% include "components/table_pager.html" with pager=evidence_pager param="page" %}

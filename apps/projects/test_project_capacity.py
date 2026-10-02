@@ -401,7 +401,9 @@ class TheRaceForTheLastPlaceTest(_World, TransactionTestCase):
 
 
 class TheCapacityPagesTest(_Fixture):
-    def test_the_coordinator_sees_one_section_per_project_with_staff_names(self):
+    def test_the_coordinator_sees_one_tab_per_project_with_staff_names(self):
+        """Owner, 2026-10-02: "all projects should be organized in tabs not
+        below each project table"."""
         second = Project.objects.create(
             code="CAP-ET",
             name="Cap EdTech",
@@ -415,15 +417,28 @@ class TheCapacityPagesTest(_Fixture):
         self.add(self.schools[0])
         self.client.force_login(self.coordinator_user)
 
-        page = self.client.get("/projects/capacity")
+        page = self.client.get("/projects/capacity", {"project": self.project.id})
 
         self.assertEqual(page.status_code, 200)
         body = page.content.decode()
-        self.assertEqual(body.count("data-capacity-project="), 2)
+        # Both projects on the strip; the open one's allocations under it.
+        self.assertIn("data-project-tabs", body)
+        self.assertIn(f"/projects/capacity?project={second.id}", body)
+        self.assertEqual(body.count("data-capacity-project="), 1)
         self.assertIn("Cap Officer", body)
-        self.assertIn("Cap Other", body)
+        self.assertNotIn("Cap Other", body)
         self.assertIn("1 / 3 allocated", body)
         self.assertIn("33.3%", body)
+
+        other = self.client.get("/projects/capacity", {"project": second.id})
+        self.assertEqual(other.content.decode().count("data-capacity-project="), 1)
+        self.assertContains(other, "Cap Other")
+        self.assertNotContains(other, "Cap Officer")
+
+    def test_the_first_project_opens_when_none_is_asked_for(self):
+        self.client.force_login(self.coordinator_user)
+        page = self.client.get("/projects/capacity")
+        self.assertEqual(page.content.decode().count("data-capacity-project="), 1)
 
     def test_staff_cannot_open_it(self):
         self.client.force_login(self.cceo_user)

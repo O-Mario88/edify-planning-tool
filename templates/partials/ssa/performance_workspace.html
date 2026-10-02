@@ -119,7 +119,7 @@
         {% paginate dashboard.urgent_schools "dashboard_urgent_schools_page" as dashboard_urgent_schools_pager %}
         <table class="sp-table sp-urgent-table">
           <caption>Schools with an intervention score below {{ dashboard.engine.high_risk_score }}</caption>
-          <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
+          <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
           <tbody>{% for school in dashboard_urgent_schools_pager.rows %}<tr><td class="tabular-nums">{{ school.school_id }}</td><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="6" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
         </table>
         {% include "components/table_pager.html" with pager=dashboard_urgent_schools_pager param="dashboard_urgent_schools_page" %}

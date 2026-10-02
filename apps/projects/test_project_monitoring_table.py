@@ -27,9 +27,13 @@ from apps.projects import monitoring
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.projects.test_project_monitoring_schools import _Fixture
 
+# District joined them on 2026-10-02 (owner: "Add the district column on the
+# project tables so that the users can know which district the schools
+# assigned belongs").
 COLUMNS = [
     "School ID",
     "School Name",
+    "District",
     "Staff Name",
     "Training",
     "Purpose of Assignment",

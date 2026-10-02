@@ -413,6 +413,7 @@ Program Leads table, verification, risk, field intelligence and actions.
           <table class="w-full edify-text-caption">
             <thead>
               <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                <th class="text-left font-bold py-1.5 pl-1">School ID</th>
                 <th class="text-left font-bold py-1.5 pl-1">School</th>
                 <th class="text-left font-bold py-1.5">District</th>
                 <th class="text-left font-bold py-1.5">Key Issues</th>
@@ -423,7 +424,8 @@ Program Leads table, verification, risk, field intelligence and actions.
             <tbody class="divide-y divide-slate-50">
               {% for p in operations_priority_schools_pager.rows %}
               <tr>
-                <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{% school_identity p.school p.school_id %}</td>
+                <td class="text-left py-2 pl-1 whitespace-nowrap tabular-nums" data-label="School ID">{% if p.school_id %}{% school_code p.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+                <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{{ p.school }}</td>
                 <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ p.region }}</td>
                 <td class="text-left py-2">
                   {% for i in p.issues %}<span class="inline-block px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold mr-1">{{ i }}</span>{% endfor %}
@@ -436,7 +438,7 @@ Program Leads table, verification, risk, field intelligence and actions.
                 </td>
               </tr>
               {% empty %}
-              <tr><td colspan="5" class="text-center text-[12px] text-slate-400 font-medium py-4">No schools with compounded workflow gaps — country is covered.</td></tr>
+              <tr><td colspan="6" class="text-center text-[12px] text-slate-400 font-medium py-4">No schools with compounded workflow gaps — country is covered.</td></tr>
               {% endfor %}
             </tbody>
           </table>

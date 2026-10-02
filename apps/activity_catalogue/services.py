@@ -571,6 +571,36 @@ def recommend_activities(
         delivered_recently=Exists(recent_completed),
     )
 
+    if project is not None and not project.measured_by_ssa:
+        # A project no SSA intervention measures (owner, 2026-10-02: "Alumni
+        # is not an intervention so it can be assigned to any school ...
+        # because it is not measured via ssa"). Its activities answer no SSA
+        # need, so ranking them against the school's needs offered none of
+        # them at any assessed school. They are the project's own list, at
+        # whatever school it has enrolled.
+        recommendations = _project_items_without_ssa(
+            qs,
+            project=project,
+            school=school,
+            cluster=cluster,
+            executor_type=executor_type,
+            fy=fy,
+            on_date=on_date,
+            reason=f"{project.name} activity. No SSA intervention measures it.",
+            needs_target=False,
+        )
+        return {
+            "hasApplicableSsa": source_ssa is not None,
+            "sourceSsaId": getattr(source_ssa, "id", None),
+            "verificationState": getattr(source_ssa, "verification_status", "none"),
+            "priority": {
+                "label": project.name,
+                "classification": "Not measured by the SSA",
+            },
+            "primary": recommendations[:limit],
+            "otherEligible": recommendations[limit:],
+        }
+
     if source_ssa is None or not ranked_needs:
         candidates = qs.filter(
             intervention_mappings__mapping_mode=MappingMode.SSA_COMPLETION_PREREQUISITE,
@@ -839,7 +869,16 @@ def recommend_activities(
 
 
 def _project_items_without_ssa(
-    qs, *, project, school, cluster, executor_type, fy, on_date
+    qs,
+    *,
+    project,
+    school,
+    cluster,
+    executor_type,
+    fy,
+    on_date,
+    reason: str = "",
+    needs_target: bool = True,
 ) -> list[dict]:
     """A project's own activities for a school with no applicable SSA.
 
@@ -852,10 +891,14 @@ def _project_items_without_ssa(
     Each item must still be deliverable here (validate_context and
     validate_frequency). It carries the intervention it is mapped to, else the
     project's primary SSA intervention, else none. A follow-up that could name
-    neither is left out, because the create would refuse it.
+    neither is left out, because the create would refuse it — unless the
+    project is one no SSA intervention measures (``needs_target`` off), whose
+    work records none and is not refused for it.
     """
     project_primary, _supporting = project.intervention_plan()
-    reason = "No applicable verified SSA yet. Offered by this Project without one."
+    reason = reason or (
+        "No applicable verified SSA yet. Offered by this Project without one."
+    )
     rows = []
     for item in (
         qs.exclude(activity_type=CatalogueActivityType.ADMIN)
@@ -889,7 +932,11 @@ def _project_items_without_ssa(
         target = next(
             (m.intervention for m in mappings if m.intervention), project_primary
         )
-        if MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in modes and not target:
+        if (
+            needs_target
+            and MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in modes
+            and not target
+        ):
             continue
         rows.append(_suggestion(item, target, None, reason, rank=1))
     return rows

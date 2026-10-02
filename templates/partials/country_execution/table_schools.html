@@ -9,8 +9,8 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
   <table class="cpo-table cxo-table">
     <thead>
       <tr>
-        <th scope="col" class="cpo-namecol">School</th>
         <th scope="col">School ID</th>
+        <th scope="col" class="cpo-namecol">School</th>
         <th scope="col">CCEO</th>
         <th scope="col" title="Required visit slots">Visits Required</th>
         <th scope="col" title="Visit slots with planned work">Visits Planned</th>
@@ -25,8 +25,8 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
     <tbody>
       {% for row in schools.rows %}
       <tr data-level="1">
-        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}</span></span></th>
         <td>{{ row.code|default:"—" }}</td>
+        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}</span></span></th>
         <td>{{ row.owner }}</td>
         <td>{{ row.visit_slots }}</td>
         <td>{{ row.visits_planned }}</td>

@@ -325,10 +325,26 @@ def resolve_user_scope(user) -> UserScope:
     change mid-request; outside a request there is no cache."""
     from apps.core.request_cache import memoize
 
-    return memoize(
-        ("user_scope", getattr(user, "pk", None), user.active_role),
-        lambda: _resolve_user_scope_uncached(user),
-    )
+    return memoize(_scope_memo_key(user), lambda: _resolve_user_scope_uncached(user))
+
+
+def _scope_memo_key(user) -> tuple:
+    return ("user_scope", getattr(user, "pk", None), user.active_role)
+
+
+def forget_user_scope(user) -> None:
+    """Drop this request's memoized scope for the user.
+
+    For the rare request that changes one of the scope's own inputs and then
+    asks a scope question: a staff member who hands their school to a
+    colleague and is then asked whether they may still open it. Without this
+    the answer is the one from before the change.
+    """
+    from apps.core.request_cache import store
+
+    bucket = store()
+    if bucket is not None:
+        bucket.pop(_scope_memo_key(user), None)
 
 
 def _resolve_user_scope_uncached(user) -> UserScope:
@@ -470,10 +486,11 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         has_pl_coverage = False
         if covered_staff_ids:
             from apps.accounts.models import StaffProfile
+            from apps.core.role_holding import holds_role_q
 
             has_pl_coverage = StaffProfile.objects.filter(
+                holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD),
                 id__in=covered_staff_ids,
-                user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
             ).exists()
 
         if (
@@ -1441,6 +1458,7 @@ __all__ = [
     "UserScope",
     "OVERSIGHT_ONLY_MESSAGE",
     "resolve_user_scope",
+    "forget_user_scope",
     "cluster_in_scope",
     "cluster_owner_ids",
     "cluster_queryset",

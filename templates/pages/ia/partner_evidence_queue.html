@@ -1,6 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load components %}
-{% load frontend_filters table_pagination %}
+{% load frontend_filters table_pagination school_identity %}
 
 {% block title %}Partner Evidence · Edify{% endblock %}
 
@@ -16,6 +16,7 @@
       <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
         <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
           <tr>
+            <th class="px-5 py-3">School ID</th>
             <th class="px-5 py-3">School / Activity</th>
             <th class="px-5 py-3">Partner</th>
             <th class="px-5 py-3">Activity</th>
@@ -29,6 +30,7 @@
         <tbody class="divide-y divide-slate-100 max-xl:block">
           {% for row in partner_evidence_queue_rows_pager.rows %}
           <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
+            <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap tabular-nums max-xl:px-0" data-label="School ID">{% if row.a.school_id %}{% school_code row.a.school_id %}{% else %}—{% endif %}</td>
             <td class="px-5 py-3.5 max-xl:px-0" data-record-title>
               <a href="/ia/partner-evidence/{{ row.a.id }}/" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
             </td>
@@ -43,7 +45,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr class="max-xl:block"><td colspan="8" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing awaiting review — partner submissions land here the moment they are sent.</td></tr>
+          <tr class="max-xl:block"><td colspan="9" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing awaiting review — partner submissions land here the moment they are sent.</td></tr>
           {% endfor %}
         </tbody>
       </table>

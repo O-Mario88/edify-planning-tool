@@ -754,6 +754,7 @@ def import_school_batch(batch, user) -> dict:
     from apps.accounts.staff_matching import normalize_name
     from apps.accounts.models import StaffProfile, StaffSchoolAssignment
     from apps.clusters.models import SchoolClusterAssignment
+    from apps.schools.ownership_transfer import hold_schools
 
     if isinstance(batch, UploadBatch):
         real_batch = (
@@ -808,6 +809,7 @@ def import_school_batch(batch, user) -> dict:
         new_schools = []
         new_cluster_assignments = []
         new_staff_assignments = []
+        reheld: dict[str, list[str]] = {}
         candidate_groups: dict[str, tuple[str, list[str]]] = {}
         changed_by = user.user_id if hasattr(user, "user_id") else str(user or "system")
 
@@ -964,10 +966,10 @@ def import_school_batch(batch, user) -> dict:
                 created_count += 1
 
             if existing and owner_id and owner_status == "matched":
-                StaffSchoolAssignment.objects.get_or_create(
-                    staff_id=owner_id,
-                    school_id=saved_school.id,
-                )
+                # The upload names this school's holder: the previous
+                # holder's portfolio row goes with the change (written once
+                # per holder after the rows, not once per school).
+                reheld.setdefault(owner_id, []).append(saved_school.id)
 
             q_status = saved_school.data_quality_status
             if q_status == "Clean":
@@ -995,6 +997,8 @@ def import_school_batch(batch, user) -> dict:
                 batch_size=1000,
                 ignore_conflicts=True,
             )
+        for holder_id, held_school_ids in reheld.items():
+            hold_schools(held_school_ids, holder_id)
 
         matched_owner_ids = {
             owner_id

@@ -68,6 +68,7 @@ running three kinds of work was described here by one.{% endcomment %}
 <table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School ID</th>
 <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School</th>
 <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">District</th>
 <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Visits</th>
@@ -80,7 +81,8 @@ running three kinds of work was described here by one.{% endcomment %}
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for row in supported_pager.rows %}
 <tr>
-<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold text-slate-800 hover:underline">{% school_identity row.school.name row.school.id %}</a></td>
+<td class="px-5 py-3 whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school.id %}{% school_code row.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
 <td class="px-4 py-3 text-slate-600">{{ row.district|default:"—" }}</td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.visits_done }}<span class="text-slate-400"> / {{ row.visits }}</span></td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.trainings_done }}<span class="text-slate-400"> / {{ row.trainings }}</span></td>

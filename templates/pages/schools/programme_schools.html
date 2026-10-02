@@ -98,6 +98,7 @@ enforce. Nothing here can hold a different opinion of either.
         <caption class="sr-only">Core Trained, Core Graduate and Champion schools with their visit entitlement, planned visit and training attachment for FY{{ fy }}</caption>
         <thead>
           <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School ID</th>
             <th scope="col" class="px-4 py-2 font-semibold">School</th>
             <th scope="col" class="px-4 py-2 font-semibold">Type</th>
             <th scope="col" class="px-4 py-2 font-semibold">District</th>
@@ -112,8 +113,9 @@ enforce. Nothing here can hold a different opinion of either.
         <tbody>
           {% for row in pager.rows %}
           <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if row.id %}{% school_code row.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
             <td class="px-4 py-2.5" data-record-title>
-              <a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline edify-primary-text-hover">{% school_identity row.name row.id %}</a>
+              <a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline edify-primary-text-hover">{{ row.name }}</a>
               <span class="block edify-text-caption edify-text-muted">{{ row.school_id }}</span>
             </td>
             <td class="px-4 py-2.5"><span class="pill">{{ row.school_type_label }}</span></td>

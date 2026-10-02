@@ -220,7 +220,7 @@ class RolloutScope:
     support_view: bool
     officers: list[Member]
     lead: Member | None
-    #: School id → {"name", "district", "cluster_id"} for the whole portfolio.
+    #: School id → {"name", "code", "district", "cluster_id"} for the whole portfolio.
     schools: dict
     cluster_names: dict
     #: Admin's choice of Programme Lead: (staff profile id, name).
@@ -378,10 +378,15 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
         )
     )
     schools = {
-        school_id: {"name": name, "district": district or "", "cluster_id": cluster_id}
-        for school_id, name, district, cluster_id in School.objects.filter(
+        school_id: {
+            "name": name,
+            "code": code or "",
+            "district": district or "",
+            "cluster_id": cluster_id,
+        }
+        for school_id, name, code, district, cluster_id in School.objects.filter(
             id__in={school_id for _staff, school_id in assignments}
-        ).values_list("id", "name", "district__name", "cluster_id")
+        ).values_list("id", "name", "school_id", "district__name", "cluster_id")
     }
     for staff_id, school_id in assignments:
         if school_id in schools:
@@ -877,6 +882,8 @@ def trainings_rollout(principal, scope: RolloutScope, fy: str, today: date) -> d
                 "place": row["school__name"]
                 or row["cluster__name"]
                 or "No school or cluster",
+                # The school's own id, resolved to its School ID on the page.
+                "school_ref": row["school_id"] or "",
                 "delivered_by": delivered_by(
                     owner,
                     row["assigned_partner_id"],
@@ -1455,6 +1462,7 @@ def spiritual_rollout(principal, scope: RolloutScope, fy: str, today: date) -> d
         weak_rows.append(
             {
                 "school_id": school_id,
+                "code": school.get("code", ""),
                 "name": school["name"],
                 "district": school["district"],
                 "cluster": scope.cluster_names.get(school["cluster_id"] or "", ""),

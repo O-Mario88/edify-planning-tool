@@ -577,6 +577,8 @@ def _load_partner_activities(
             fy=str(window.fy), deleted_at__isnull=True, school_id__in=school_ids
         )
         .filter(rules.partner_held_q())
+        # Alumni work does not put a school in a Partner's hands.
+        .filter(rules.not_outside_ssa_q())
         .exclude(id__in=carried)
         .annotate(
             day=_day(),
@@ -707,25 +709,31 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
     """
     from apps.core.fy import get_operational_fy
     from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import rules
 
-    rows = PartnerAssignment.objects.filter(
-        school_id__in=school_ids,
-        status__in=(
-            *PartnerAssignment.UNSCHEDULED_STATUSES,
-            PartnerAssignment.STATUS_RETURNED_TO_STAFF,
-        ),
-    ).values_list(
-        "school_id",
-        "partner_id",
-        "status",
-        "created_at",
-        "returned_at",
-        "support_type",
-        "visit_number",
-        "training_number",
-        "project_id",
-        "expected_activity_type",
-        "purpose_of_visit",
+    rows = (
+        PartnerAssignment.objects.filter(
+            school_id__in=school_ids,
+            status__in=(
+                *PartnerAssignment.UNSCHEDULED_STATUSES,
+                PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+            ),
+        )
+        # Nor does a hand-over of Alumni work (rules.not_outside_ssa_q).
+        .filter(rules.not_outside_ssa_q())
+        .values_list(
+            "school_id",
+            "partner_id",
+            "status",
+            "created_at",
+            "returned_at",
+            "support_type",
+            "visit_number",
+            "training_number",
+            "project_id",
+            "expected_activity_type",
+            "purpose_of_visit",
+        )
     )
     for (
         school_id,

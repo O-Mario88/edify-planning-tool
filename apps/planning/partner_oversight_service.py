@@ -34,6 +34,7 @@ from django.urls import reverse
 
 from apps.core.activity_types import VISIT_TYPES, TRAINING_TYPES, CLUSTER_MEETING_TYPES
 from apps.planning.school_planning_badges import PLANNED_STATUSES
+from apps.projects.models import intervention_or_general
 
 # Where an assignment is in its life. The partner's scheduling decision is the
 # hinge: everything before it is a handover, everything after is delivery.
@@ -858,7 +859,9 @@ def _unassigned_partner_activities(
             supervising_pl_id=pl_id,
             supervising_pl_name=pl_name,
             activity_type=activity.activity_type or "",
-            target_intervention=activity.focus_intervention or "",
+            target_intervention=intervention_or_general(
+                activity.focus_intervention, activity.project_id
+            ),
             training_name=training,
             purpose_label=purpose,
             intervention_label=intervention,
@@ -1033,6 +1036,7 @@ def _staff_directory(assignments) -> dict:
         return {"names": {}, "supervisor": {}, "canonical": {}}
 
     from apps.core.rbac import EdifyRole
+    from apps.core.role_holding import holds_role, holds_role_q
 
     names, canonical = {}, {}
     profiles = StaffProfile.objects.filter(
@@ -1041,19 +1045,19 @@ def _staff_directory(assignments) -> dict:
     supervisor = {}
     for p in profiles:
         label = getattr(p.user, "name", "") or getattr(p.user, "email", "")
-        role = getattr(p.user, "active_role", "") or ""
         for key in (p.id, p.user_id):
             if key:
                 names[key] = label
                 canonical[key] = p.id
-        if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        # The role held, not the one in use (apps.core.role_holding).
+        if holds_role(p.user, EdifyRole.COUNTRY_PROGRAM_LEAD):
             supervisor[p.id] = (p.id, label)
             if p.user_id:
                 supervisor[p.user_id] = (p.id, label)
 
     links = StaffSupervisorAssignment.objects.filter(
+        holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD, "supervisor__user"),
         supervisee_id__in={p.id for p in profiles},
-        supervisor__user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
     ).select_related("supervisor__user")
     for link in links:
         user = getattr(link.supervisor, "user", None)
@@ -1135,7 +1139,9 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
             or ""
         ),
         support_slot=assignment.support_type or "",
-        target_intervention=assignment.focus_intervention or "",
+        target_intervention=intervention_or_general(
+            assignment.focus_intervention, assignment.project_id
+        ),
         source_ssa_id=assignment.source_ssa_id,
         training_name=training,
         purpose_label=purpose,
@@ -1725,7 +1731,7 @@ def workspace_tables(items):
     items = list(items)
     core = [i for i in items if i.is_core_school_work]
     # Drawn only for a Partner who holds Core Schools: every other Partner's
-    # workspace keeps its three tables rather than gaining an empty fourth.
+    # workspace keeps its tables rather than gaining an empty one.
     core_tables = (
         [
             {
@@ -1734,11 +1740,13 @@ def workspace_tables(items):
                 "items": core,
                 "kind": "core",
                 "columns": "core",
+                "tab": TAB_CORE,
             }
         ]
         if core
         else []
     )
+    activities = [i for i in items if i.partner_activity_id]
     return [
         *core_tables,
         {
@@ -1751,20 +1759,100 @@ def workspace_tables(items):
             ],
             "kind": "assignment",
             "columns": "school",
+            "tab": TAB_SCHOOLS,
+        },
+        {
+            "page_param": "partner_visits_page",
+            "title": "Visits",
+            "items": [i for i in activities if work_tab_of(i) == TAB_VISITS],
+            "kind": "activity",
+            "tab": TAB_VISITS,
+        },
+        {
+            "page_param": "partner_trainings_work_page",
+            "title": "Trainings",
+            "items": [i for i in activities if work_tab_of(i) == TAB_TRAININGS],
+            "kind": "activity",
+            "tab": TAB_TRAININGS,
         },
         {
             "page_param": "partner_clusters_page",
             "title": "Cluster work assigned",
             "items": [i for i in items if i.partner_assignment_id and i.cluster_id],
             "kind": "assignment",
+            "tab": TAB_CLUSTERS,
         },
         {
             "page_param": "partner_activities_page",
-            "title": "Partner activities",
-            "items": [i for i in items if i.partner_activity_id],
+            "title": "Cluster sessions",
+            "items": [i for i in activities if work_tab_of(i) == TAB_CLUSTERS],
             "kind": "activity",
+            "tab": TAB_CLUSTERS,
         },
     ]
+
+
+# ── The Partner's work, one kind a tab ───────────────────────────────────────
+# Owner, 2026-10-02: "The Partners Assigned schools should appear on partner
+# oversight as tabs not drop-down ... Activities (visits, trainings - list of
+# clusters the partners will facilitate) should be grouped in tabs ... It
+# should be easy for the users to toggle between tabs." One Partner's tables
+# used to sit one under another, narrowed by an Activity drop-down; each kind
+# of work is now a tab holding its own tables and its count.
+TAB_SCHOOLS = "schools"
+TAB_CORE = "core"
+TAB_VISITS = "visits"
+TAB_TRAININGS = "trainings"
+TAB_CLUSTERS = "clusters"
+WORK_TABS = (
+    (TAB_SCHOOLS, "Schools assigned"),
+    (TAB_CORE, "Core schools"),
+    (TAB_VISITS, "Visits"),
+    (TAB_TRAININGS, "Trainings"),
+    (TAB_CLUSTERS, "Clusters to facilitate"),
+)
+
+
+def work_tab_of(item) -> str:
+    """Which tab a Partner activity sits in: work for a cluster under
+    Clusters, a training delivered at a school under Trainings, every other
+    activity (the visits, SSA Support among them) under Visits."""
+    if item.cluster_id and not item.school_id:
+        return TAB_CLUSTERS
+    activity_type = str(item.activity_type or "")
+    if activity_type in CLUSTER_MEETING_TYPES:
+        return TAB_CLUSTERS
+    if activity_type in TRAINING_TYPES:
+        return TAB_TRAININGS
+    return TAB_VISITS
+
+
+def work_tabs(tables, trainings, requested: str = "") -> tuple[list[dict], str]:
+    """The tab strip for one Partner's work, and the tab that is open.
+
+    Each tab counts the rows of its tables; the group trainings the Partner
+    facilitates are cluster work and count there. Core schools is a tab only
+    for a Partner who holds one. The page opens on the first tab holding
+    anything, so a Partner with nothing but visits does not open on an empty
+    list of schools.
+    """
+    counts = {key: 0 for key, _label in WORK_TABS}
+    for table in tables:
+        counts[table["tab"]] += len(table["items"])
+    counts[TAB_CLUSTERS] += len(trainings)
+    has_core = any(table["tab"] == TAB_CORE for table in tables)
+    tabs = [
+        {"key": key, "label": label, "count": counts[key]}
+        for key, label in WORK_TABS
+        if key != TAB_CORE or has_core
+    ]
+    keys = {tab["key"] for tab in tabs}
+    active = requested if requested in keys else ""
+    if not active:
+        active = next((tab["key"] for tab in tabs if tab["count"]), tabs[0]["key"])
+    for tab in tabs:
+        tab["is_active"] = tab["key"] == active
+    return tabs, active
 
 
 def core_partner_visit_rate() -> int | None:

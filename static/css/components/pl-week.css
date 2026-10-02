@@ -88,8 +88,8 @@
   min-inline-size: 0;
 }
 
-/* Which list, Overdue or Due this week, and the week's figures share one
-   row (owner, 2026-09-30); they wrap under each other when it is short. */
+/* The week's figures, on one row (owner, 2026-09-30); they wrap under each
+   other when it is short. */
 .plwk-bar {
   display: flex;
   flex-wrap: wrap;
@@ -100,6 +100,37 @@
 }
 .plwk-bar > .plwk-rail {
   flex: 0 1 auto;
+}
+
+/* ── The two lists ───────────────────────────────────────────────────── */
+/* Overdue from last week first, Due this week under it (owner, 2026-10-02):
+   one heading each, its count beside it, then that list's tables. */
+.plwk-list + .plwk-list {
+  margin-block-start: 1.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+.plwk-listname {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--plw-ink, var(--edify-text));
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+.plwk-list__count {
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid var(--plw-line, var(--edify-border));
+  border-radius: var(--radius-pill);
+  background: var(--plw-fill, var(--edify-surface-muted));
+  color: var(--plw-ink, var(--edify-text-muted));
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+.plwk-list__none {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────── */

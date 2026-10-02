@@ -224,7 +224,7 @@ may withdraw it and its project work has not begun.{% endcomment %}
 {% endif %}
 <table class="edify-record-table w-full">
   <caption class="sr-only">Participating schools in {{ project.name }}</caption>
-  <thead><tr>{% if can_bulk_withdraw %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}<th scope="col">School</th><th scope="col">Geography</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
+  <thead><tr>{% if can_bulk_withdraw %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}<th scope="col">School ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
   <tbody>
     {% for row in portfolio_pager.rows %}
     <tr>
@@ -232,8 +232,9 @@ may withdraw it and its project work has not begun.{% endcomment %}
       still pins the tick beside the identity rather than an empty column; a
       locked one is greyed with its reason.{% endcomment %}
       {% if can_bulk_withdraw %}<td class="school-plan-table__select">{% if row.can_withdraw %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" value="{{ row.school_id }}" x-model="selected" data-project-leave-pick><span class="sr-only">Select {{ row.school_name }} to withdraw</span></label>{% else %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}" title="{{ row.withdraw_reason }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" disabled data-project-leave-locked><span class="sr-only">{{ row.school_name }} cannot be withdrawn: {{ row.withdraw_reason }}</span></label>{% endif %}</td>{% endif %}
-      <td data-record-title data-label="School">{% school_identity row.school_name row.school_id %}<span class="edify-text-caption block">{{ row.school_code }}</span></td>
-      <td data-label="Geography">{{ row.geography|default:"—" }}</td>
+      <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
+      <td data-record-title data-label="School">{{ row.school_name }}</td>
+      <td data-label="District"{% if row.region %} title="{{ row.region }}"{% endif %}>{{ row.district|default:"—" }}</td>
       <td data-label="School owner">{{ row.school_owner }}</td>
       <td data-label="Added by">{{ row.added_by }}</td>
       <td data-label="Date added">{{ row.date_added|date:"j M Y" }}</td>
@@ -245,7 +246,7 @@ may withdraw it and its project work has not begun.{% endcomment %}
       <td data-label="Partner">{{ row.partner_status }}</td>
       <td data-record-action data-label="Action"><a href="{{ row.school_url }}" class="btn btn-secondary">View Profile</a></td>
     </tr>
-    {% empty %}<tr><td colspan="{% if can_bulk_withdraw %}13{% else %}12{% endif %}">No schools assigned to this project yet.</td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="{% if can_bulk_withdraw %}14{% else %}13{% endif %}">No schools assigned to this project yet.</td></tr>{% endfor %}
   </tbody>
 </table>
 </div>

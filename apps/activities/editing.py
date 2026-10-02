@@ -112,6 +112,88 @@ def movable_schools(activity, principal):
     )
 
 
+def may_change_project(activity) -> bool:
+    """Whether Edit offers this activity another project: project work at one
+    school that holds no numbered place in the school's Core package."""
+    return (
+        bool(activity.project_id)
+        and bool(activity.school_id)
+        and (activity.activity_type or "") not in _PACKAGE_SLOT_TYPES
+    )
+
+
+def project_interventions(project) -> list[tuple[str, str]]:
+    """The interventions a project is linked to, as the Edit drawer offers
+    them (owner, 2026-10-02: "they should be able to select an intervention
+    the new project is linked to").
+
+    A project that states its targets offers exactly those: CC-SEL Secondary
+    offers Christlike Behaviour, Alumni offers General. One that states none
+    measures against any, so it offers every SSA intervention.
+    """
+    from apps.core.enums import SsaIntervention
+    from apps.projects.models import PROJECT_INTERVENTION_CHOICES
+
+    labels = dict(PROJECT_INTERVENTION_CHOICES)
+    targets = [code for code in project.target_intervention_list() if code in labels]
+    if not targets:
+        return list(SsaIntervention.choices)
+    return [(code, labels[code]) for code in targets]
+
+
+def changeable_projects(activity, principal) -> list:
+    """The projects this activity may be filed under: its own first, then
+    every open project the school is in, then the ones it may still join
+    (`projects_open_for_enrolment`, the list "Add to Project" offers)."""
+    from apps.projects.models import OPEN_PROJECT_STATUSES, Project
+    from apps.projects.services import projects_open_for_enrolment
+
+    if not may_change_project(activity):
+        return []
+    current = Project.objects.filter(id=activity.project_id).first()
+    enrolled = list(
+        Project.objects.filter(
+            deleted_at__isnull=True,
+            status__in=[status.value for status in OPEN_PROJECT_STATUSES],
+            school_assignments__school_id=activity.school_id,
+        )
+        .exclude(id=activity.project_id)
+        .distinct()
+        .order_by("name")
+    )
+    joinable = [
+        project
+        for project in projects_open_for_enrolment(principal, activity.school)
+        if project.id != activity.project_id
+    ]
+    return [*([current] if current else []), *enrolled, *joinable]
+
+
+def _clean_focus(raw, project) -> str | None:
+    """The focus a form posted, read against the project it is filed under.
+
+    General is a project's way of saying no SSA intervention measures its
+    work, so an activity under it carries no focus. Anything else must be an
+    intervention the project is linked to.
+    """
+    from apps.projects.models import GENERAL_INTERVENTION
+
+    focus = str(raw or "").strip()
+    if not focus or focus == GENERAL_INTERVENTION:
+        return None
+    if project is not None:
+        offered = dict(project_interventions(project))
+        if focus not in offered:
+            linked = ", ".join(
+                label for code, label in offered.items() if code != GENERAL_INTERVENTION
+            )
+            raise BadRequest(
+                f"'{project.name}' is not linked to that intervention. "
+                + (f"Choose {linked}." if linked else "It is a General project.")
+            )
+    return focus
+
+
 def edit(activity_id: str, data: dict, principal) -> dict:
     """Change a planned activity (owner, 2026-10-02).
 
@@ -135,6 +217,16 @@ def edit(activity_id: str, data: dict, principal) -> dict:
       again at the new school through the scheduling service, so the visit
       caps, the package rules and the costing of the new school all apply;
       both steps land or neither does.
+    * ``projectId`` — another project for project work at one school
+      (owner, 2026-10-02: "if a user wants to change a project to another
+      they should be able to select an intervention the new project is linked
+      to"). Needs ``reason``. Like a move to another school it is cancelled
+      and scheduled again, under the new project, so the allowance and
+      package rules read the project it now belongs to: Alumni work uses no
+      support visit and no package place, CC-SEL work does. A school that is
+      not in the new project yet joins it through ``projects.assign_school``.
+      ``focusIntervention`` is then one the new project is linked to; General
+      is no SSA focus.
     * ``facilitatingPartnerId`` — who facilitates a training or cluster
       meeting; blank is Staff (``services.set_facilitator``).
     * ``activityPurposeText``, ``expectedOutcome``, ``focusIntervention`` —
@@ -187,10 +279,29 @@ def edit(activity_id: str, data: dict, principal) -> dict:
                     "Choose a school in your own portfolio to move this activity to."
                 )
 
+    new_project = None
+    if "projectId" in data and activity.project_id:
+        wanted_project = str(data.get("projectId") or "").strip()
+        if wanted_project and wanted_project != activity.project_id:
+            new_project = next(
+                (
+                    project
+                    for project in changeable_projects(activity, principal)
+                    if project.id == wanted_project
+                ),
+                None,
+            )
+            if new_project is None:
+                raise BadRequest(
+                    "Choose a project this school is in, or one it can join."
+                )
+
     if (date_moves or end_moves) and not reason:
         raise BadRequest("Give the reason the date is changing.")
     if new_school is not None and not reason:
         raise BadRequest("Give the reason this activity is moving to another school.")
+    if new_project is not None and not reason:
+        raise BadRequest("Give the reason this activity is moving to another project.")
 
     patch = {
         key: data[key]
@@ -198,15 +309,29 @@ def edit(activity_id: str, data: dict, principal) -> dict:
         if key in data
     }
     if "focusIntervention" in patch:
-        patch["focusIntervention"] = patch["focusIntervention"] or None
-        if patch["focusIntervention"] == (activity.focus_intervention or None):
+        # Read against the project the activity ends up under, so a focus
+        # left over from the old project is refused rather than carried.
+        filed_under = new_project
+        if filed_under is None and activity.project_id:
+            from apps.projects.models import Project
+
+            filed_under = Project.objects.filter(id=activity.project_id).first()
+        focus = str(patch["focusIntervention"] or "").strip()
+        if focus == (activity.focus_intervention or "") and new_project is None:
             patch.pop("focusIntervention")
+        else:
+            patch["focusIntervention"] = _clean_focus(focus, filed_under)
+            if new_project is None and patch["focusIntervention"] == (
+                activity.focus_intervention or None
+            ):
+                patch.pop("focusIntervention")
 
     with transaction.atomic():
-        if new_school is not None:
-            return _move_to_school(
+        if new_school is not None or new_project is not None:
+            return _schedule_again(
                 activity,
-                new_school,
+                new_school or activity.school,
+                project=new_project,
                 day=new_day,
                 reason=reason,
                 data={**data, **patch},
@@ -306,12 +431,56 @@ def _reprice_quietly(activity) -> None:
         return
 
 
-def _move_to_school(activity, new_school, *, day, reason, data, principal) -> dict:
-    """Cancel the plan at its school and make it again at ``new_school``.
+def _project_activity(lead, item_id, old_project, new_project):
+    """The catalogue item the work carries under its new project.
 
-    Scheduled through the same service a drawer uses, so the new school's own
-    rules decide whether it can take the work; a refusal there rolls the
-    cancellation back with it.
+    General support (a follow-up, an SSA visit) belongs to no project and
+    keeps its item. An activity that is the old project's own — the CC-SEL
+    training — is replaced by the new project's activity of the same kind;
+    when the new project has none there is nothing to schedule it as.
+    """
+    from apps.activity_catalogue.models import (
+        ActivityCatalogueItem,
+        ActivityProjectMapping,
+    )
+
+    if not item_id:
+        return item_id
+    owners = set(
+        ActivityProjectMapping.objects.filter(
+            catalogue_item_id=item_id, active=True
+        ).values_list("project_id", flat=True)
+    )
+    if not owners or new_project.id in owners:
+        return item_id
+    item = ActivityCatalogueItem.objects.filter(id=item_id).first()
+    own = (
+        ActivityProjectMapping.objects.filter(
+            project=new_project,
+            active=True,
+            catalogue_item__workflow_kind=getattr(item, "workflow_kind", None),
+        )
+        .order_by("catalogue_item__display_name")
+        .values_list("catalogue_item_id", flat=True)
+        .first()
+    )
+    if own:
+        return own
+    raise BadRequest(
+        f"'{getattr(item, 'display_name', 'This activity')}' is "
+        f"{old_project.name if old_project else 'another project'}'s own "
+        f"activity, and '{new_project.name}' has none of the same kind. Cancel "
+        f"it and plan {new_project.name}'s activity from its school list."
+    )
+
+
+def _schedule_again(activity, school, *, project, day, reason, data, principal) -> dict:
+    """Cancel the plan and make it again at ``school``, under ``project``
+    when one is named.
+
+    Scheduled through the same service a drawer uses, so the school's and the
+    project's own rules decide whether the work can be taken; a refusal there
+    rolls the cancellation back with it.
     """
     from apps.activities import services
     from apps.planning.services import (
@@ -324,12 +493,13 @@ def _move_to_school(activity, new_school, *, day, reason, data, principal) -> di
     for member in members:
         assert_editable(member)
     lead = pair[0] if pair else activity
+    moved_school = school.id != lead.school_id
 
     def chosen(key, saved):
         return data[key] if key in data else saved
 
     payload = {
-        "schoolId": new_school.school_id,
+        "schoolId": school.school_id,
         "scheduledDate": day.isoformat(),
         "plannedMonth": day.month,
         "plannedWeek": min(5, (day.day - 1) // 7 + 1),
@@ -343,30 +513,66 @@ def _move_to_school(activity, new_school, *, day, reason, data, principal) -> di
         "ssaCollectionExpected": lead.ssa_collection_expected,
         "requireCatalogue": True,
     }
-    focus = chosen("focusIntervention", lead.focus_intervention)
+    item_id = lead.training_course_id if pair else lead.catalogue_item_id
+    if project is not None:
+        from apps.projects.models import Project, ProjectSchoolAssignment
+        from apps.projects.services import assign_school
+
+        old_project = Project.objects.filter(id=lead.project_id).first()
+        item_id = _project_activity(lead, item_id, old_project, project)
+        if not ProjectSchoolAssignment.objects.filter(
+            project=project, school=school
+        ).exists():
+            # The school joins the project it now has work under, by the
+            # rules of "Add to Project": the adder's allocation, the
+            # project's focus and its country.
+            assign_school(
+                project.id,
+                {"schoolId": school.school_id, "reason": reason},
+                principal,
+            )
+        payload["projectId"] = project.id
+        # The purpose a project activity is given when the planner types
+        # none is its project's name: it follows the project.
+        if (
+            old_project
+            and (payload["activityPurposeText"] or "").strip()
+            == (old_project.name or "").strip()
+        ):
+            payload["activityPurposeText"] = ""
+        # The focus the planner chose for the new project, or the one the
+        # project names; never the old project's, left on the activity.
+        focus = data.get("focusIntervention")
+    else:
+        if lead.project_id:
+            payload["projectId"] = lead.project_id
+        focus = chosen("focusIntervention", lead.focus_intervention)
     if focus:
         payload["focusIntervention"] = focus
         payload["purposeIntervention"] = focus
     if lead.expected_participants:
         payload["expectedParticipants"] = lead.expected_participants
-    if lead.project_id:
-        payload["projectId"] = lead.project_id
     facilitator = chosen("facilitatingPartnerId", lead.facilitating_partner_id)
     if facilitator:
         payload["facilitatingPartnerId"] = facilitator
 
-    moved_reason = f"Moved to {new_school.name}: {reason}"
+    moved = []
+    if moved_school:
+        moved.append(f"Moved to {school.name}")
+    if project is not None:
+        moved.append(f"Changed to {project.name}")
+    moved_reason = f"{', '.join(moved)}: {reason}"
     for member in members:
         services.cancel(member.id, {"reason": moved_reason}, principal)
     if pair:
         return schedule_in_school_training_pair(
-            {**payload, "catalogueItemId": lead.training_course_id}, principal
+            {**payload, "catalogueItemId": item_id}, principal
         )
     return schedule_school_visit(
         {
             **payload,
             "activityType": lead.activity_type,
-            "catalogueItemId": lead.catalogue_item_id,
+            "catalogueItemId": item_id,
         },
         principal,
     )

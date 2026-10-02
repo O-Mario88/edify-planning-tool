@@ -139,6 +139,28 @@ class Project(SoftDeleteModel):
         return primary, [target for target in targets if target != primary]
 
     @property
+    def measured_by_ssa(self) -> bool:
+        """Whether an SSA intervention measures this project's work.
+
+        Owner, 2026-10-02: "Alumni is not an intervention so it can be
+        assigned to any school but it should not restrict another project
+        from being assigned to that school ... because it is not measured via
+        ssa." A project that targets no SSA intervention — General alone, as
+        Alumni is — is support of another kind: its work is offered at any
+        school it has enrolled, and neither uses nor is refused by the
+        school's SSA-measured allowance (the client school's support visit,
+        the Core package's 2 + 2, one open hand-over per partner).
+
+        General has to be the project's stated target. A project that names
+        no target at all (an older row) is measured like any other: saying
+        nothing is not the same as saying General.
+        """
+        targets = self.target_intervention_list()
+        if any(target in SsaIntervention.values for target in targets):
+            return True
+        return GENERAL_INTERVENTION not in targets
+
+    @property
     def accepts_new_work(self) -> bool:
         """Whether new schools/activities may be attached. A paused or closed
         project must stop absorbing new commitments — that is what pausing
@@ -153,6 +175,46 @@ class Project(SoftDeleteModel):
     @property
     def status_label(self) -> str:
         return ProjectStatus(self.status).label if self.status else "Active"
+
+
+def projects_outside_ssa() -> frozenset[str]:
+    """Ids of the projects no SSA intervention measures (``measured_by_ssa``).
+
+    The counts that hold a school to its SSA-measured allowance leave these
+    projects' work out, and the doors that refuse by them let it through. A
+    handful of rows at most, read once a request.
+    """
+    from apps.core.request_cache import memoize
+
+    def read() -> frozenset[str]:
+        return frozenset(
+            project.id
+            for project in Project.objects.filter(deleted_at__isnull=True).only(
+                "id", "intervention", "target_interventions"
+            )
+            if not project.measured_by_ssa
+        )
+
+    return memoize("projects.outside_ssa", read)
+
+
+def is_outside_ssa(project_or_id) -> bool:
+    """Whether this project (or project id) is one no SSA intervention
+    measures. False for no project at all."""
+    if not project_or_id:
+        return False
+    project_id = getattr(project_or_id, "id", project_or_id)
+    return str(project_id) in projects_outside_ssa()
+
+
+def intervention_or_general(focus, project_or_id) -> str:
+    """The intervention a piece of work reads as on a list: the one it names,
+    else General when its project is one no SSA intervention measures (owner,
+    2026-10-02: Alumni's intervention is "General which is linked to Alumni"),
+    else nothing."""
+    if focus:
+        return str(focus)
+    return GENERAL_INTERVENTION if is_outside_ssa(project_or_id) else ""
 
 
 class ProjectSchoolAssignment(TimeStampedModel):

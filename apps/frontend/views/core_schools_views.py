@@ -49,6 +49,7 @@ from apps.core_schools.core_planning_services import (
     build_sparkline_path,
 )
 from apps.core.scoping import resolve_user_scope
+from apps.core_schools.services import get_live_core_plan
 
 logger = logging.getLogger(__name__)
 
@@ -577,6 +578,24 @@ def _core_ranked_focus(school) -> tuple[str, str]:
     return code, dict(SsaIntervention.choices).get(code, "")
 
 
+def _locked_core_plan(school_id):
+    """The package a Core Schools door books into, locked for the booking.
+
+    This year's package, else the school's live one. The package for a new
+    year is made when somebody opens Core Schools, fifty schools a load and
+    only for a school with a confirmed SSA, so on 1 October a school could
+    have its FY2026 package and nothing for FY2027 — and every door here
+    answered "This school does not have an active core package" where the
+    Planning drawer (`visit_routing.core_plan_for_visit`) and the 2 + 2 split
+    (`package_split`) already booked into the package it has (owner,
+    2026-10-02).
+    """
+    plan = get_live_core_plan(school_id)
+    if plan is None:
+        return None
+    return CorePlan.objects.select_for_update().get(pk=plan.pk)
+
+
 def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
     payload = {
         "schoolId": school_id,
@@ -824,11 +843,7 @@ def core_schedule_visit_action(request):
         payload["catalogueItemId"] = catalogue_item_id
 
         with transaction.atomic():
-            plan = (
-                CorePlan.objects.select_for_update()
-                .filter(school_id=school_id, fy=get_operational_fy())
-                .first()
-            )
+            plan = _locked_core_plan(school_id)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
             # SSA Support remains the DEFAULT when a caller names no purpose —
@@ -1066,11 +1081,7 @@ def _schedule_core_in_school_training(
         "responsibleStaffId": responsible_staff_id,
     }
     with transaction.atomic():
-        plan = (
-            CorePlan.objects.select_for_update()
-            .filter(school_id=school_id, fy=get_operational_fy())
-            .first()
-        )
+        plan = _locked_core_plan(school_id)
         if not plan:
             raise BadRequest("This school does not have an active core package.")
         # No first-visit gate here any more: a TRAINING slot is not a visit
@@ -1277,11 +1288,7 @@ def core_schedule_training_action(request):
 
     try:
         with transaction.atomic():
-            plan = (
-                CorePlan.objects.select_for_update()
-                .filter(school_id=school_id, fy=get_operational_fy())
-                .first()
-            )
+            plan = _locked_core_plan(school_id)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
             slot = CorePackageSchedulingService.assert_can_schedule(
@@ -1364,7 +1371,7 @@ def core_assign_partner_drawer(request):
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
     partners = partner_services.assignable_partners()
-    plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
+    plan = get_live_core_plan(school_id)
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
     )
@@ -1382,11 +1389,15 @@ def core_assign_partner_drawer(request):
     # as a no-op that could quietly come back to life.
     first_visit = False
     purposes = PARTNER_VISIT_PURPOSES
-    from apps.frontend.views.planning_views import _school_training_follow_up_options
+    from apps.frontend.views.planning_views import (
+        _school_training_follow_up_options,
+        project_handover_routes,
+    )
 
     context = {
         "school": school,
         "partners": partners,
+        "project_handovers": project_handover_routes(request.user, school),
         "available_visit_slots": available_visit_slots,
         "available_training_slots": available_training_slots,
         "first_visit": first_visit,
@@ -1429,7 +1440,7 @@ def core_schedule_activity_drawer(request):
     """Choose Core package support or an unrestricted general activity."""
     school_id = request.GET.get("school_id")
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
-    plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
+    plan = get_live_core_plan(school_id)
     summary = CorePackageSchedulingService.summary(plan) if plan else None
     from apps.planning.visit_gate import CORE_STAFF_TRAINING_CAP, visit_gate
 
@@ -1509,11 +1520,7 @@ def core_assign_partner_action(request):
             support_type = "Training" if is_training else "Visit"
             activity_type = "training" if is_training else "visit"
 
-            plan = (
-                CorePlan.objects.select_for_update()
-                .filter(school_id=school_id, fy=get_operational_fy())
-                .first()
-            )
+            plan = _locked_core_plan(school_id)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
             # A handoff may be any of the three partner purposes from the

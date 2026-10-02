@@ -9,18 +9,20 @@
     {% paginate referrals "referrals_page" as referrals_pager %}
     <div class="overflow-x-auto">
       <table class="edify-record-table w-full">
-        <thead><tr><th>School</th><th>MFI</th><th>Purpose</th><th>Requested</th><th>Status</th></tr></thead>
+        <thead><tr><th>School ID</th>
+<th>School</th><th>MFI</th><th>Purpose</th><th>Requested</th><th>Status</th></tr></thead>
         <tbody>
           {% for referral in referrals_pager.rows %}
           <tr>
-            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' referral.case.school.school_id %}">{% school_identity referral.case.school.name referral.case.school.id %}</a><small class="block text-slate-500">{{ referral.case.school.school_id }}</small></td>
+            <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if referral.case.school.id %}{% school_code referral.case.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' referral.case.school.school_id %}">{{ referral.case.school.name }}</a></td>
             <td data-label="MFI">{{ referral.mfi.name }}</td>
             <td data-label="Purpose">{{ referral.purpose.label }}{% if referral.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
             <td data-label="Requested">{% if referral.requested_amount is not None %}{{ referral.requested_amount|ugx }}{% else %}—{% endif %}</td>
             <td data-label="Status">{% include "components/badge.html" with tone="neutral" label=referral.get_status_display %}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="5">{% include "components/empty_state.html" with title="No referrals found" message="No MFI referrals are in this scoped pipeline." compact="true" %}</td></tr>
+          <tr><td colspan="6">{% include "components/empty_state.html" with title="No referrals found" message="No MFI referrals are in this scoped pipeline." compact="true" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -37,11 +39,13 @@
   {% paginate loans "loans_page" as loans_pager %}
   <div class="overflow-x-auto">
     <table class="edify-record-table w-full">
-      <thead><tr><th>School</th><th>MFI / reference</th><th>Purpose</th><th>Disbursed</th><th>Current enrolment</th><th>Status</th><th>Repayment data</th></tr></thead>
+      <thead><tr><th>School ID</th>
+<th>School</th><th>MFI / reference</th><th>Purpose</th><th>Disbursed</th><th>Current enrolment</th><th>Status</th><th>Repayment data</th></tr></thead>
       <tbody>
         {% for loan in loans_pager.rows %}
         <tr>
-          <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{% school_identity loan.school.name loan.school.id %}</a><small class="block text-slate-500">{{ loan.school.district.name|default:"District not set" }}</small></td>
+          <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if loan.school.id %}{% school_code loan.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-slate-500">{{ loan.school.district.name|default:"District not set" }}</small></td>
           <td data-label="MFI / reference"><strong>{{ loan.mfi.name }}</strong><small class="block text-slate-500">{{ loan.external_loan_reference }}</small></td>
           <td data-label="Purpose">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
           <td data-label="Disbursed">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}<small class="block text-slate-500">{{ loan.disbursement_date|date:"d M Y" }}</small>{% else %}<span class="text-slate-500">Not disbursed</span>{% endif %}</td>
@@ -50,7 +54,7 @@
           <td data-label="Repayment data">{% if loan.last_repayment_data_date %}{{ loan.last_repayment_data_date|date:"d M Y" }}{% else %}<span class="font-bold text-[var(--edify-warning)]">Not submitted</span>{% endif %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">{% include "components/empty_state.html" with title="No loans found" message="No MFI loans match the current filters." compact="true" %}</td></tr>
+        <tr><td colspan="8">{% include "components/empty_state.html" with title="No loans found" message="No MFI loans match the current filters." compact="true" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

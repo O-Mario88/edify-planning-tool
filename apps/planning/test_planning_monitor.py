@@ -350,3 +350,116 @@ class OneRulebookWithCountryOversight(MonitorFixture):
         lead = next(lead for lead in monitor["leads"] if lead.key == self.pl.id)
         self.assertEqual(lead.officer_count, 3)
         self.assertEqual(lead.visits_target, PL_VISITS_TARGET + 2 * CCEO_VISITS_TARGET)
+
+
+class AlumniIsNotACountedVisit(MonitorFixture):
+    """Owner, 2026-10-02: "Alumni is not an intervention ... it is not
+    measured via ssa." Its work is not one of the visits an officer plans
+    toward 560, closes no gap and does not put the school in a Partner's
+    hands; a measured project's work still does all three."""
+
+    def setUp(self):
+        self.alumni = Project.objects.create(
+            name="Alumni", status="active", target_interventions=["general"]
+        )
+        self.ccsel = Project.objects.create(
+            name="CC-SEL Secondary",
+            status="active",
+            target_interventions=["christlike_behaviour"],
+        )
+        self.partner = Partner.objects.create(name="Alumni Partner")
+
+    def _ben(self):
+        return self._officer(planning_monitor(self.cd_user, fy=FY), self.ben)
+
+    def _project_visit(self, project, **fields):
+        visit = self._visit(self.ben_school, "training_follow_up_visit", **fields)
+        Activity.objects.filter(id=visit.id).update(
+            project_id=project.id,
+            responsible_staff_id=self.ben.id,
+            monitored_by_staff_id=self.ben.id,
+        )
+        return visit
+
+    def test_the_rule_reads_the_project(self):
+        from apps.planning.country_oversight import rules
+
+        self.assertEqual(
+            rules.visit_kind("training_follow_up_visit", None, self.ccsel.id),
+            rules.KIND_FOLLOW_UP,
+        )
+        self.assertIsNone(
+            rules.visit_kind("training_follow_up_visit", None, self.alumni.id)
+        )
+        alumni = self._project_visit(self.alumni)
+        measured = self._project_visit(self.ccsel)
+        counted = set(
+            Activity.objects.filter(rules.counted_visit_q()).values_list(
+                "id", flat=True
+            )
+        )
+        self.assertIn(measured.id, counted)
+        self.assertNotIn(alumni.id, counted)
+
+    def test_with_no_such_project_the_rule_adds_no_condition(self):
+        from django.db.models import Q
+
+        from apps.planning.country_oversight import rules
+
+        Project.objects.filter(id=self.alumni.id).delete()
+        self.assertEqual(rules.not_outside_ssa_q(), Q())
+
+    def test_an_alumni_visit_is_not_among_the_officers_visits(self):
+        self._project_visit(self.alumni)
+        ben = self._ben()
+        self.assertEqual((ben.client_visits, ben.no_visit), (0, 1))
+
+    def test_a_measured_projects_visit_is(self):
+        self._project_visit(self.ccsel)
+        ben = self._ben()
+        self.assertEqual((ben.client_visits, ben.no_visit), (1, 0))
+
+    def test_alumni_partner_work_does_not_put_the_school_with_a_partner(self):
+        self._project_visit(self.alumni, delivery="partner")
+        PartnerAssignment.objects.create(
+            school=self.ben_school,
+            partner=self.partner,
+            project=self.alumni,
+            status=PartnerAssignment.UNSCHEDULED_STATUSES[0],
+        )
+        ben = self._ben()
+        self.assertEqual(ben.partner_assigned_schools, 0)
+        self.assertEqual((ben.partner_scheduled, ben.partner_awaiting), (0, 0))
+
+    def test_a_measured_projects_hand_over_does(self):
+        PartnerAssignment.objects.create(
+            school=self.ben_school,
+            partner=self.partner,
+            project=self.ccsel,
+            status=PartnerAssignment.UNSCHEDULED_STATUSES[0],
+        )
+        ben = self._ben()
+        self.assertEqual(ben.partner_assigned_schools, 1)
+        self.assertEqual(ben.partner_awaiting, 1)
+
+    def test_the_monitor_and_the_dashboard_still_agree(self):
+        from apps.planning.country_oversight import service as svc
+
+        self._project_visit(self.alumni)
+        self._project_visit(self.alumni, delivery="partner")
+        self._project_visit(self.ccsel)
+        PartnerAssignment.objects.create(
+            school=self.ben_school,
+            partner=self.partner,
+            project=self.alumni,
+            status=PartnerAssignment.UNSCHEDULED_STATUSES[0],
+        )
+        monitor = planning_monitor(self.cd_user, fy=FY)["totals"]
+        country = svc.snapshot_for(self.cd_user, svc.Filters(fy=FY)).tree.country
+        self.assertEqual(monitor.staff_visits, country.p_visits)
+        self.assertEqual(monitor.partner_scheduled, country.pp_work)
+        self.assertEqual(
+            monitor.partner_scheduled + monitor.partner_awaiting, country.pa_work
+        )
+        self.assertEqual(monitor.partner_assigned_schools, country.pa_schools)
+        self.assertEqual(monitor.no_visit, country.no_visit)

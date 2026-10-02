@@ -228,6 +228,11 @@ def _link_schools(
     ]
     if new_assignments:
         StaffSchoolAssignment.objects.bulk_create(new_assignments)
+    # One holder, one row: whoever held these schools on the portfolio before
+    # (a placeholder, a previous match) no longer does.
+    StaffSchoolAssignment.objects.filter(
+        school_id__in=[s.id for s in affected]
+    ).exclude(staff_id=staff_profile_id).delete()
 
     from apps.audit.services import log as audit_log
 

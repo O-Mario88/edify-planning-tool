@@ -82,11 +82,11 @@
             {% page_param "card_rows_page" forloop.counter as card_rows_param %}
             {% paginate card.rows card_rows_param as card_rows_pager %}
             <table class="edify-record-table partner-activity-table">
-              <thead><tr><th>ID</th><th>School</th><th>District / Cluster</th><th>Purpose of Visit</th><th>Intervention Focus</th><th>Scheduled Date / Status</th><th>Cost</th><th><span class="sr-only">Action</span></th></tr></thead>
+              <thead><tr><th>School ID</th><th>School</th><th>District / Cluster</th><th>Purpose of Visit</th><th>Intervention Focus</th><th>Scheduled Date / Status</th><th>Cost</th><th><span class="sr-only">Action</span></th></tr></thead>
               <tbody>
                 {% for row in card_rows_pager.rows %}
                 <tr>
-                  <td class="tabular-nums" data-label="ID">{{ row.school_code|default:"—" }}</td>
+                  <td class="tabular-nums" data-label="School ID">{{ row.school_code|default:"—" }}</td>
                   <td data-record-title><strong>{{ row.school_name }}</strong></td>
                   <td data-label="District / Cluster">{{ row.district_cluster }}</td>
                   <td data-label="Purpose of Visit">{{ row.purpose }}</td>

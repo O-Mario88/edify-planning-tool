@@ -24,6 +24,7 @@ Returned — Needs Correction
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
+<th>School ID</th>
 <th>School / Cluster</th>
 <th>Type</th>
 <th>Returned By</th>
@@ -34,6 +35,7 @@ Returned — Needs Correction
 <tbody>
 {% for row in returned_needs_correction_pager.rows %}
 <tr>
+<td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
@@ -87,6 +89,7 @@ Waiting on Approval
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
+<th>School ID</th>
 <th>School / Cluster</th>
 <th>Type</th>
 <th>Planned Date</th>
@@ -96,6 +99,7 @@ Waiting on Approval
 <tbody>
 {% for row in waiting_on_approval_pager.rows %}
 <tr>
+<td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}
@@ -146,6 +150,7 @@ Finance / Accountability Pending
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
+<th>School ID</th>
 <th>School / Cluster</th>
 <th>Type</th>
 <th>Payment Status</th>
@@ -155,6 +160,7 @@ Finance / Accountability Pending
 <tbody>
 {% for row in finance_pending_pager.rows %}
 <tr>
+<td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
   {% if row.school_id %}

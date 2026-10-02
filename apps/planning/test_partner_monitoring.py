@@ -79,9 +79,9 @@ class SeparatePartnerTablesTest(MonitoringFixture):
         for response in (first, second):
             body = response.content.decode()
             self.assertEqual(response.status_code, 200)
-            # One Partner's school, cluster and activity tables — never two
-            # Partners in one workspace.
-            self.assertEqual(body.count("data-partner-monitoring-table"), 3)
+            # One Partner's work, the open tab's table — never two Partners
+            # in one workspace.
+            self.assertEqual(body.count("data-partner-monitoring-table"), 1)
             self.assertIn("Partner X", body)
             self.assertIn("Partner Y", body)
         self.assertIn(f'data-assignment="{mine.id}"', first.content.decode())
@@ -93,11 +93,15 @@ class SeparatePartnerTablesTest(MonitoringFixture):
         self.assign()
 
         body = self.page(self.pl_user).content.decode()
+        clusters = self.page(self.pl_user, "?work=clusters").content.decode()
 
-        self.assertIn("Staff member", body)
+        self.assertIn("Staff Name", body)
         self.assertIn("James", body)
+        self.assertIn("Staff member", clusters)
 
-    def test_many_partners_get_a_picker_not_an_overflowing_row(self):
+    def test_many_partners_are_still_tabs(self):
+        """Owner, 2026-10-02: Partners "should appear on partner oversight as
+        tabs not drop-down"; a long strip scrolls sideways."""
         from apps.partners.models import Partner
 
         for index in range(7):
@@ -113,8 +117,9 @@ class SeparatePartnerTablesTest(MonitoringFixture):
 
         body = self.page(self.pl_user).content.decode()
 
-        self.assertIn('aria-label="Choose a Partner"', body)
-        self.assertNotIn('aria-label="Partners"', body)
+        self.assertNotIn('aria-label="Choose a Partner"', body)
+        self.assertIn('aria-label="Partners"', body)
+        self.assertEqual(body.count("<span>Org "), 7)
 
 
 class RoleScopeTest(MonitoringFixture):

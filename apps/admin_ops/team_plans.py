@@ -250,6 +250,7 @@ class AdminTeamPlansService:
                     "financeState": _finance_state(a),
                     "lastUpdated": a.updated_at,
                     "overdue": is_overdue,
+                    "schoolRef": a.school_id or "",
                     "detailUrl": f"/my-plan/{a.id}?support=1",
                     "auditUrl": f"/admin/audit?subject_id={a.id}",
                 }

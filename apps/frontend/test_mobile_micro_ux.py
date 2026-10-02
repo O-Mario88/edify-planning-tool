@@ -235,9 +235,22 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
         self.assertIn("messages-filter-bar", messages)
         self.assertIn("flex-direction: column", styles)
-        self.assertIn("main .calendar-workspace__filters", styles)
-        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr))", styles)
-        self.assertIn("min-inline-size: 0 !important", styles)
+        # The calendar's event tabs scroll sideways on a phone. They were a
+        # four-column grid, which put the fifth tab on a row of its own and
+        # cut the labels short (owner, 2026-10-02: "fix the tab design").
+        calendar = _read("templates/pages/calendar/index.html")
+        self.assertRegex(
+            calendar,
+            r'class="calendar-workspace__filters"[^>]*data-rail-overflow="scroll"',
+        )
+        for sheet in (
+            styles,
+            _read("static/css/components/mobile-micro-ux.css"),
+            _read("static/css/calendar-workspace.css"),
+        ):
+            self.assertNotRegex(
+                sheet, r"\.calendar-workspace__filters \{\s*display: grid"
+            )
 
     def test_feedback_and_accessible_name_auditing_are_centralized(self):
         base = _read("templates/base.html")

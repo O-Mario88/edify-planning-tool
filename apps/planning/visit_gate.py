@@ -408,6 +408,14 @@ def visit_gates(
     )
     if exclude_activity_id:
         live = live.exclude(id=exclude_activity_id)
+    # A project no SSA intervention measures (Alumni) is outside the year's
+    # support: its work neither uses a school's visit nor holds its partner
+    # hand-over (owner, 2026-10-02; apps.projects.models.measured_by_ssa).
+    from apps.projects.models import projects_outside_ssa
+
+    outside_ssa = list(projects_outside_ssa())
+    if outside_ssa:
+        live = live.exclude(project_id__in=outside_ssa)
 
     def _tally(qs, staff_attr, partner_attr):
         for row in qs.values("school_id", "delivery_type").annotate(n=Count("id")):
@@ -456,6 +464,7 @@ def visit_gates(
             school_id__in=client_ids + core_ids,
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         )
+        .exclude(project_id__in=outside_ssa)
         .select_related("partner")
         .order_by("created_at")
     )

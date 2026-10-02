@@ -43,6 +43,7 @@ the transition took.
       <caption class="sr-only">{{ page_title }} — school, issue, who owns it, due date and state</caption>
       <thead>
         <tr class="font-semibold uppercase tracking-[0.05em]">
+          <th scope="col" class="px-3 py-2">School ID</th>
           <th scope="col" class="px-3 py-2">School</th>
           <th scope="col" class="px-3 py-2">Requested action</th>
           <th scope="col" class="px-3 py-2">{% if perspective == "sender" %}Assigned to{% else %}Sent by{% endif %}</th>
@@ -54,8 +55,9 @@ the transition took.
       <tbody>
         {% for r in table_rows_pager.rows %}
         <tr>
+          <td class="px-3 py-2.5 align-top whitespace-nowrap tabular-nums" data-label="School ID">{% if r.school_pk %}{% school_code r.school_pk %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <th scope="row" class="px-3 py-2.5 align-top" data-record-title>
-            <a href="/schools/{{ r.school_pk }}" class="font-semibold no-underline edify-text">{% school_identity r.school r.school_pk %}</a>
+            <a href="/schools/{{ r.school_pk }}" class="font-semibold no-underline edify-text">{{ r.school }}</a>
             <span class="block edify-text-caption edify-text-subtle mt-0.5">{{ r.district }}</span>
           </th>
           {% comment %}

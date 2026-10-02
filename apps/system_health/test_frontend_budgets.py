@@ -114,7 +114,18 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: sidebar's group disclosures and Find a page, disabled primaries that
     #: look disabled, cluster facts in columns and HR Today's folded rows. Dead
     #: sidebar rules and comments were cut first; this is what was left.
-    CSS_GZIP_KB = 205
+    #:
+    #: Raised to 206 on 2026-10-02 (204.8 to 205.85 KB, +0.5%) for what the
+    #: owner asked for that day: "fix all the padding on every card so that
+    #: everything is well aligned ... tabs inside the cards should be aligned
+    #: with the content inside the cards". Measured on 324 pages, a card's
+    #: title sat on the 16px line in 160 of 532 cards and a table's first
+    #: column in none of 232; the rules that put them there (consistency.css,
+    #: ONE CONTENT LINE), the tab strips that scroll sideways, and KPI figures
+    #: on one row are 1.06 KB. They add one `!important` between them: the
+    #: rest hand existing rules a variable. The script that marks the cards
+    #: fitted inside the JavaScript ceiling with its comments cut.
+    CSS_GZIP_KB = 206
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

@@ -54,25 +54,13 @@ resolving a hand-back opens its own governed drawer.
   {% endif %}
 
   {% if partner_tabs %}
-  {% comment %}A native select is the Partner search: it types ahead, it is
-  the phone's own picker, and it is not a second search box on a page whose one
-  search is the top bar. Used whenever the tab row would run off the page —
-  many Partners, or a phone.{% endcomment %}
+  {% comment %}Every Partner is a tab (owner, 2026-10-02: "as tabs not
+  drop-down"). A row longer than the page folds its tail into the strip's
+  own More menu, as every tab strip here does; the picker that replaced the
+  strip past six Partners, and on a phone, is gone.{% endcomment %}
   <div>
     <p class="edify-page-eyebrow">Partners</p>
-    <div class="{% if not partner_search %}md:hidden{% endif %}">
-      <label class="sr-only" for="partner-picker">Choose a Partner</label>
-      <select id="partner-picker" aria-label="Choose a Partner"
-              @change="window.location.href = $event.target.selectedOptions[0].dataset.href"
-              class="h-9 w-full max-w-md px-3 rounded-control border edify-border text-sm">
-        {% for entry in partner_tabs %}
-        <option value="{{ entry.key }}" data-href="?partner={{ entry.key }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}" {% if entry.is_active %}selected{% endif %}>{{ entry.label }} ({{ entry.count }})</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% if not partner_search %}
-    <div class="hidden md:block">
-    <nav class="oversight-entity-tabs" aria-label="Partners">
+    <nav class="oversight-entity-tabs" aria-label="Partners" data-partner-tabs>
       {% for entry in partner_tabs %}
       <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
          href="?partner={{ entry.key }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
@@ -82,15 +70,13 @@ resolving a hand-back opens its own governed drawer.
       </a>
       {% endfor %}
     </nav>
-    </div>
-    {% endif %}
   </div>
   {% endif %}
 
   <nav class="oversight-entity-tabs" aria-label="Team members">
     {% for entry in member_tabs %}
     <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
-       href="?program_lead={{ program_lead }}&partner={{ partner }}&member={{ entry.key }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}"{% if entry.is_active %} aria-current="page"{% endif %}>
+       href="?program_lead={{ program_lead }}&partner={{ partner }}&member={{ entry.key }}&work={{ work }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}"{% if entry.is_active %} aria-current="page"{% endif %}>
       {{ entry.label }} <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
     </a>
     {% endfor %}
@@ -188,6 +174,18 @@ resolving a hand-back opens its own governed drawer.
         <li><span class="partner-status-chip" data-tone="info">{{ summary.completed }} completed</span></li>
       </ul>
     </header>
+    {% comment %}One kind of work a tab: the schools handed over, the Core
+    schools, the visits, the trainings and the clusters this Partner
+    facilitates (owner, 2026-10-02).{% endcomment %}
+    <nav class="oversight-entity-tabs" aria-label="{{ active_partner.name }}'s work" data-partner-work-tabs>
+      {% for entry in work_tabs %}
+      <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         href="?program_lead={{ program_lead }}&partner={{ partner }}&member={{ member }}&work={{ entry.key }}&status={{ status }}&period={{ period }}&fy={{ fy }}&month={{ selected_month }}&quarter={{ selected_quarter }}&week={{ week }}"{% if entry.is_active %} aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
     {% include "partials/oversight/partner_work_tables.html" %}
     {% if facilitated_trainings %}{% include "partials/oversight/partner_trainings_table.html" %}{% endif %}
   </section>

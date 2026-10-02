@@ -94,9 +94,11 @@ class _CoreTableFixture(PartnerOversightFixture):
         )
         return handover
 
-    def page(self, user=None):
+    def page(self, user=None, work=""):
         self.client.force_login(user or self.pl_user)
-        response = self.client.get(f"/partner-oversight/?partner={self.partner.id}")
+        response = self.client.get(
+            f"/partner-oversight/?partner={self.partner.id}&work={work}"
+        )
         self.assertEqual(response.status_code, 200)
         return response.content.decode()
 
@@ -121,20 +123,25 @@ class TheCoreTableTest(_CoreTableFixture):
     def test_core_schools_leave_the_schools_assigned_table(self):
         handover = self.core_handover()
         client_handover = self.assign()
-        body = self.page()
+        # Each on a tab of its own (owner, 2026-10-02).
+        core = self.page(work="core")
+        body = self.page(work="schools")
 
-        self.assertIn(f'data-assignment="{handover.id}"', self.core_table(body))
+        self.assertIn(f'data-assignment="{handover.id}"', self.core_table(core))
+        self.assertNotIn("data-partner-school-columns", core)
         start = body.index("data-partner-school-columns")
         schools = body[start : body.index("</table>", start)]
         self.assertNotIn(f'data-assignment="{handover.id}"', schools)
         self.assertIn(f'data-assignment="{client_handover.id}"', schools)
-        self.assertEqual(body.count("data-partner-monitoring-table"), 4)
+        self.assertNotIn("data-partner-core-columns", body)
+        self.assertIn("<span>Core schools</span>", body)
 
-    def test_a_partner_with_no_core_schools_keeps_its_three_tables(self):
+    def test_a_partner_with_no_core_schools_has_no_core_tab(self):
         self.assign()
         body = self.page()
         self.assertNotIn("data-partner-core-columns", body)
-        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
+        self.assertNotIn("<span>Core schools</span>", body)
+        self.assertEqual(body.count("data-partner-monitoring-table"), 1)
 
     def test_waiting_for_the_partner_it_reads_waiting_and_the_partner_rate(self):
         handover = self.core_handover()

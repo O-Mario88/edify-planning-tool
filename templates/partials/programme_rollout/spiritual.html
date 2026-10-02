@@ -91,6 +91,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
       <caption class="sr-only">Portfolio schools where Christlike Behaviour or Exposure to the Word of God is among the three weakest interventions on the latest confirmed SSA, with the officer, the scores and any activity planned this year that targets them.</caption>
       <thead>
         <tr>
+          <th scope="col">School ID</th>
           <th scope="col">School</th>
           <th scope="col">Officer</th>
           <th scope="col">Cluster</th>
@@ -103,6 +104,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
       <tbody>
         {% for row in weak_pager.rows %}
         <tr>
+          <td data-label="School ID" class="tabular-nums">{{ row.code|default:"—" }}</td>
           <th scope="row" data-record-title><span>{{ row.name }}</span></th>
           <td data-label="Officer">{{ row.officer|default:"—" }}</td>
           <td data-label="Cluster">{{ row.cluster|default:"Not in a cluster" }}</td>
@@ -123,7 +125,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
         </tr>
         {% empty %}
         <tr>
-          <td class="rpl-table__empty" colspan="7">
+          <td class="rpl-table__empty" colspan="8">
             {% include "components/empty_state.html" with message="No portfolio school has the spiritual pair among its three weakest interventions." hint="Schools appear here from their latest confirmed SSA." compact="true" %}
           </td>
         </tr>

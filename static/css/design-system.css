@@ -492,6 +492,22 @@
     clamp(0.8125rem, 0.75rem + 0.25vw, 1rem)
     clamp(0.8125rem, 0.74rem + 0.32vw, 1.0625rem);
 
+  /* ── ONE CONTENT LINE (owner, 2026-10-02) ────────────────────────────────
+       "Fix all the padding on every card so that everything is well aligned
+       ... content inside cards, table padding, tabs, content inside kpi
+       strips." A card's title, its tabs, its figures and the first column of
+       its table used to start at 12, 16, 20 or 32px depending on which
+       template drew them. They start on this one line, `--edify-card-inset`
+       from the card's edge.
+
+       `--edify-section-inset` (consistency.css) is how much of that is still
+       to pay where an element sits: the whole inset in a card that runs edge
+       to edge, nothing inside one that is already padded. A table's outer
+       cells, a title band, a pager and a tab strip all read it, so each
+       lands on the card's line wherever a template put it. It is not set
+       outside <main>: a drawer's table keeps the cell padding. */
+  --edify-card-inset: var(--edify-surface-padding-inline);
+
   /* ── BORDER RADIUS — CANONICAL PLATFORM GEOMETRY ────────────────────────
        Surfaces never change shape by page, role, theme or viewport.
 

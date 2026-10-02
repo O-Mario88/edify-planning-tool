@@ -307,6 +307,15 @@ class PartnerAssignment(TimeStampedModel):
         blank=True,
         related_name="activity_partner_assignments",
     )
+    #: The hand-over of a project no SSA intervention measures (owner,
+    #: 2026-10-02: Alumni "is not an intervention ... it should not restrict
+    #: another project from being assigned to that school"). Set when the
+    #: hand-over is made (`save`) and kept, so a project later given an SSA
+    #: target does not rewrite what its earlier hand-overs were. Such a
+    #: hand-over is outside the one-open-hand-over rule below: it waits beside
+    #: the school's SSA-measured support with the same partner, and is held to
+    #: once per project instead.
+    outside_ssa = models.BooleanField(default=False)
     recommendation_reason = models.TextField(blank=True)
     override_reason = models.TextField(blank=True)
     catalogue_snapshot = models.JSONField(default=dict, blank=True)
@@ -415,6 +424,10 @@ class PartnerAssignment(TimeStampedModel):
         entire distinction between holding a partner and withdrawing their
         work.
         """
+        if self._state.adding and self.project_id:
+            from apps.projects.models import is_outside_ssa
+
+            self.outside_ssa = is_outside_ssa(self.project_id)
         if self._state.adding and self.partner_id:
             from apps.partners.withdrawal_service import (
                 assert_partner_accepts_new_work,
@@ -451,12 +464,24 @@ class PartnerAssignment(TimeStampedModel):
 
         Mirrors uniq_open_partner_school_assignment: same school, same
         partner, same Core slot (NULL and "" alike), still waiting to be
-        scheduled.
+        scheduled. The hand-over of a project no SSA intervention measures
+        (``outside_ssa``) is compared with that project's own alone.
         """
         if not (self.school_id and self.partner_id):
             return None
+        outside = self.outside_ssa
+        if self._state.adding and self.project_id and not outside:
+            from apps.projects.models import is_outside_ssa
+
+            outside = is_outside_ssa(self.project_id)
+        same_kind = (
+            models.Q(outside_ssa=True, project_id=self.project_id)
+            if outside
+            else models.Q(outside_ssa=False)
+        )
         return (
             PartnerAssignment.objects.filter(
+                same_kind,
                 school_id=self.school_id,
                 partner_id=self.partner_id,
                 status__in=self.UNSCHEDULED_STATUSES,
@@ -480,9 +505,13 @@ class PartnerAssignment(TimeStampedModel):
     def has_open_assignment(cls, school, partner) -> bool:
         """Whether ``partner`` already has ``school`` waiting to be scheduled
         (any slot). Bulk paths use it to skip a school rather than fail the
-        whole selection over it."""
+        whole selection over it. A hand-over outside the SSA-measured support
+        (``outside_ssa``) is not one of them."""
         return cls.objects.filter(
-            school=school, partner=partner, status__in=cls.UNSCHEDULED_STATUSES
+            school=school,
+            partner=partner,
+            status__in=cls.UNSCHEDULED_STATUSES,
+            outside_ssa=False,
         ).exists()
 
     class Meta:
@@ -590,6 +619,11 @@ class PartnerAssignment(TimeStampedModel):
             # (Visit 1 and Visit 2 may wait side by side), so the slot columns
             # are part of the key, folded the same way as above.
             #
+            # The hand-over of a project no SSA intervention measures stays
+            # apart too (owner, 2026-10-02; ``outside_ssa``): its project is
+            # part of its key, so Alumni waits beside the school's other
+            # support with the same partner, and once per project.
+            #
             # Literals rather than UNSCHEDULED_STATUSES for the same reason as
             # the condition above.
             models.UniqueConstraint(
@@ -598,6 +632,18 @@ class PartnerAssignment(TimeStampedModel):
                 Coalesce("support_type", models.Value("")),
                 Coalesce("visit_number", models.Value("")),
                 Coalesce("training_number", models.Value("")),
+                models.Case(
+                    models.When(
+                        outside_ssa=True,
+                        then=Coalesce(
+                            models.F("project"),
+                            models.Value(""),
+                            output_field=models.CharField(),
+                        ),
+                    ),
+                    default=models.Value(""),
+                    output_field=models.CharField(),
+                ),
                 condition=(
                     models.Q(status__in=["assigned", "pending_scheduling"])
                     & models.Q(school__isnull=False)

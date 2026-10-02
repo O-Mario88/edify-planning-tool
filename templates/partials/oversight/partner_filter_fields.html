@@ -1,11 +1,7 @@
 {% load frontend_filters %}
-<label class="edify-page-header-control">
-  <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Activity</span>
-  <select name="activity_type" aria-label="Activity">
-    <option value="">All activities</option>
-    {% for value in activity_types %}<option value="{{ value }}"{% if activity_type == value %} selected{% endif %}>{{ value|replace_underscore|title }}</option>{% endfor %}
-  </select>
-</label>
+{% comment %}The kind of work is the tab strip under the Partner's name
+(owner, 2026-10-02), so it is carried here rather than chosen again.{% endcomment %}
+{% if work %}<input type="hidden" name="work" value="{{ work }}">{% endif %}
 <label class="edify-page-header-control">
   <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Status</span>
   <select name="status" aria-label="Status">

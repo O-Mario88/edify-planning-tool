@@ -119,6 +119,11 @@ def portfolio_rows(project, *, fy: str | None = None) -> list[dict]:
                 "school_code": school.school_id,
                 "school_name": school.name,
                 "school_url": f"/schools/{school.school_id}",
+                # A column of its own on every project table (owner,
+                # 2026-10-02: "so that the users can know which district the
+                # schools assigned belongs").
+                "district": school.district.name if school.district_id else "",
+                "region": school.region.name if school.region_id else "",
                 "geography": " · ".join(
                     part
                     for part in (

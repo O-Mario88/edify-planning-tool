@@ -14,6 +14,7 @@ from __future__ import annotations
 from django.db.models import Count, Q, Sum
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.schools.models import School
 
 # `Activity.assigned_partner_id` is a plain CharField, so "names no partner"
 # is NULL *or* empty string. A predicate that checks one of them reports half
@@ -30,6 +31,8 @@ def report() -> dict:
         _activities_without_an_operational_owner(),
         _work_owned_by_staff_who_never_onboarded(),
         _activities_without_a_supervising_program_lead(),
+        _cceo_plans_no_program_lead_can_see(),
+        _schools_held_by_one_person_and_assigned_to_another(),
         _scheduled_activities_without_a_cost(),
         # Partner oversight rests on the same records, so its invariants are
         # reported in the same place rather than in a second report somebody
@@ -364,6 +367,167 @@ def _activities_without_a_supervising_program_lead() -> dict:
             for p in unsupervised[:10]
         ],
         route="/admin-panel/users",
+    )
+
+
+def _cceo_plans_no_program_lead_can_see() -> dict:
+    """A CCEO's own plans that are on no Programme Lead's Team Plan.
+
+    Owner, 2026-10-02: "some activities are seen on the CCEO side but hidden
+    from the PL". A Lead's Team Plan, week and monitor read the people with a
+    reporting line to them, so the plan of a CCEO with no line — or a line to
+    somebody who does not hold the Programme Lead role, or whose account is
+    not active — is on the officer's My Plan and on nobody's oversight. This
+    counts those plans in the years being planned and names whose they are
+    and why, because the fix is a reporting line and not a change to a plan.
+    """
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+    from apps.activities.models import Activity
+    from apps.core.fy import get_operational_fy
+    from apps.core.rbac import EdifyRole
+    from apps.core.role_holding import holds_role
+    from apps.planning.fy_policy import planning_horizon
+    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
+
+    lead_role, cceo_role = EdifyRole.COUNTRY_PROGRAM_LEAD, EdifyRole.CCEO
+    planned = dict(
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            status__in=LIVE_ACTIVITY_STATUSES,
+            fy__in=planning_horizon(get_operational_fy()),
+        )
+        .exclude(delivery_type="partner")
+        .exclude(responsible_staff_id__isnull=True)
+        .exclude(responsible_staff_id="")
+        .values_list("responsible_staff_id")
+        .annotate(n=Count("id"))
+        .order_by()
+    )
+    profiles = list(
+        StaffProfile.objects.filter(Q(id__in=planned) | Q(user_id__in=planned))
+        .filter(deleted_at__isnull=True)
+        .select_related("user")
+    )
+    lines: dict[str, list] = {}
+    for link in StaffSupervisorAssignment.objects.filter(
+        supervisee_id__in=[p.id for p in profiles]
+    ).select_related("supervisor__user"):
+        lines.setdefault(link.supervisee_id, []).append(link.supervisor)
+
+    hidden = []
+    for profile in profiles:
+        user = profile.user
+        if not holds_role(user, cceo_role) or holds_role(user, lead_role):
+            continue
+        supervisors = [s for s in lines.get(profile.id, []) if s.id != profile.id]
+        leads = [s for s in supervisors if holds_role(s.user, lead_role)]
+        if any(
+            s.deleted_at is None and getattr(s.user, "is_active", True) for s in leads
+        ):
+            continue
+        if leads:
+            why = (
+                f"reports to {leads[0].user.name or leads[0].user.email}, whose "
+                "account is not active"
+            )
+        elif supervisors:
+            named = supervisors[0].user.name or supervisors[0].user.email
+            why = f"reports to {named}, who does not hold the Programme Lead role"
+        else:
+            why = "has no reporting line to a Programme Lead"
+        count = planned.get(profile.id, 0) + planned.get(profile.user_id, 0)
+        hidden.append((count, profile.id, user.name or user.email, why))
+
+    # A CCEO account with no staff profile cannot be given a reporting line
+    # at all, and plans under its User id.
+    profiled = {p.user_id for p in profiles} | {p.id for p in profiles}
+    for user in User.objects.filter(id__in=[i for i in planned if i not in profiled]):
+        if holds_role(user, cceo_role) and not holds_role(user, lead_role):
+            hidden.append(
+                (
+                    planned.get(user.id, 0),
+                    user.id,
+                    user.name or user.email,
+                    "has no staff profile, so no reporting line can be set",
+                )
+            )
+
+    hidden.sort(key=lambda row: (-row[0], row[2]))
+    return _finding(
+        key="cceo_plans_hidden_from_program_lead",
+        label="CCEO plans no Programme Lead can see",
+        severity="error",
+        expected=(
+            "Every CCEO reports to an active Programme Lead, so each plan on "
+            "their My Plan is on that Lead's Team Plan"
+        ),
+        count=sum(row[0] for row in hidden),
+        examples=[
+            {"id": staff_id, "staff": name, "actual": f"{count} plans; {why}"}
+            for count, staff_id, name, why in hidden[:10]
+        ],
+        route=f"/admin-panel/users ({len(hidden)} CCEOs need a Programme Lead)",
+    )
+
+
+def _schools_held_by_one_person_and_assigned_to_another() -> dict:
+    """Schools whose holder and portfolio assignment name different people.
+
+    ``School.account_owner_id`` is the holder; ``StaffSchoolAssignment`` is
+    the same fact as scoping reads it. Where they disagree the school is in
+    the old holder's scope — and their Programme Lead's — while the
+    directory and the monitors file it under the new one.
+    """
+    from apps.accounts.models import StaffProfile, StaffSchoolAssignment
+
+    owners = dict(
+        School.objects.filter(deleted_at__isnull=True)
+        .exclude(account_owner_id__isnull=True)
+        .exclude(account_owner_id="")
+        .values_list("id", "account_owner_id")
+    )
+    canonical = {}
+    for staff_id, user_id in StaffProfile.objects.filter(
+        Q(id__in=set(owners.values())) | Q(user_id__in=set(owners.values()))
+    ).values_list("id", "user_id"):
+        canonical[staff_id] = staff_id
+        if user_id:
+            canonical[user_id] = staff_id
+    stray: dict[str, list[str]] = {}
+    for school_id, staff_id in StaffSchoolAssignment.objects.filter(
+        school_id__in=list(owners)
+    ).values_list("school_id", "staff_id"):
+        holder = canonical.get(owners[school_id])
+        if holder and staff_id != holder:
+            stray.setdefault(school_id, []).append(staff_id)
+
+    sample = list(stray)[:10]
+    names = dict(School.objects.filter(id__in=sample).values_list("id", "name"))
+    people = dict(
+        StaffProfile.objects.filter(
+            id__in={i for ids in stray.values() for i in ids}
+            | {canonical.get(owners[s]) for s in sample}
+        ).values_list("id", "user__name")
+    )
+    return _finding(
+        key="school_holder_assignment_mismatch",
+        label="Schools held by one person and assigned to another",
+        severity="warning",
+        expected="A school's portfolio assignment names its holder and nobody else",
+        count=len(stray),
+        examples=[
+            {
+                "id": school_id,
+                "school": names.get(school_id, ""),
+                "actual": (
+                    f"held by {people.get(canonical.get(owners[school_id]), '?')}; "
+                    "also assigned to "
+                    + ", ".join(people.get(i, "?") for i in stray[school_id])
+                ),
+            }
+            for school_id in sample
+        ],
+        route="manage.py reconcile_school_holders",
     )
 
 

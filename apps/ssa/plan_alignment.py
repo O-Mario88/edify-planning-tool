@@ -112,7 +112,11 @@ _LABELS = dict(SsaIntervention.choices)
 
 # ── What the plan is ─────────────────────────────────────────────────────────
 def plan_nature(
-    activity_type: str | None, mapping_modes=(), *, collects_ssa: bool = False
+    activity_type: str | None,
+    mapping_modes=(),
+    *,
+    collects_ssa: bool = False,
+    outside_ssa: bool = False,
 ) -> str:
     """``collection``, ``not_applicable`` or ``support`` for one plan.
 
@@ -122,6 +126,11 @@ def plan_nature(
     (``ssa_collection_expected``) collects it whatever its kind. The workflow
     kind decides the rest, which also covers legacy rows planned before the
     catalogue.
+
+    ``outside_ssa`` is work under a project no SSA intervention measures
+    (owner, 2026-10-02: "Alumni is not an intervention ... it is not measured
+    via ssa"). It targets none, so it is not judged for lacking one and the
+    SSA never lends it a focus.
     """
     modes = set(mapping_modes or ())
     if (
@@ -130,8 +139,10 @@ def plan_nature(
         or "ssa_completion_prerequisite" in modes
     ):
         return "collection"
-    if activity_type in NOT_SCHOOL_IMPROVEMENT_KINDS or (
-        modes and modes <= {"administrative"}
+    if (
+        outside_ssa
+        or activity_type in NOT_SCHOOL_IMPROVEMENT_KINDS
+        or (modes and modes <= {"administrative"})
     ):
         return "not_applicable"
     return "support"
@@ -307,6 +318,15 @@ class PlanEvidence:
         return self.alignment in INFORMED
 
 
+def _outside_ssa(activity) -> bool:
+    """Whether this plan is filed under a project no SSA intervention measures."""
+    if not getattr(activity, "project_id", None):
+        return False
+    from apps.projects.models import is_outside_ssa
+
+    return is_outside_ssa(activity.project_id)
+
+
 def default_focus(
     *,
     activity_type: str | None,
@@ -317,6 +337,7 @@ def default_focus(
     school_need_=None,
     cluster_need_=None,
     collects_ssa: bool = False,
+    outside_ssa: bool = False,
 ) -> str | None:
     """The intervention a support plan should target when none was named.
 
@@ -326,7 +347,10 @@ def default_focus(
     intervention, and collection or relationship work names none.
     """
     modes = set(mapping_modes or ())
-    if plan_nature(activity_type, modes, collects_ssa=collects_ssa) != "support":
+    nature = plan_nature(
+        activity_type, modes, collects_ssa=collects_ssa, outside_ssa=outside_ssa
+    )
+    if nature != "support":
         return None
     if modes and "any_ssa_intervention" not in modes:
         return None
@@ -351,9 +375,15 @@ def assess(
     school_need_=None,
     cluster_need_=None,
     collects_ssa: bool = False,
+    outside_ssa: bool = False,
 ) -> PlanEvidence:
     """Judge one plan against the verified SSA and keep what it was judged on."""
-    nature = plan_nature(activity_type, mapping_modes, collects_ssa=collects_ssa)
+    nature = plan_nature(
+        activity_type,
+        mapping_modes,
+        collects_ssa=collects_ssa,
+        outside_ssa=outside_ssa,
+    )
     evidence: dict = {
         "engine": ENGINE_VERSION,
         "assessedOn": timezone.localdate().isoformat(),
@@ -751,6 +781,7 @@ def rejudge(activity, *, focus_source: str = "planner") -> PlanEvidence:
         cluster_id=None if activity.school_id else activity.cluster_id,
         focus_source=focus_source,
         collects_ssa=activity.ssa_collection_expected,
+        outside_ssa=_outside_ssa(activity),
     )
     stamp(activity, evidence)
     return evidence
@@ -808,6 +839,7 @@ def judge_unjudged_plans(fy: str, *, limit: int | None = None) -> tuple[int, int
             cluster_id=None if activity.school_id else activity.cluster_id,
             focus_source="planner",
             collects_ssa=activity.ssa_collection_expected,
+            outside_ssa=_outside_ssa(activity),
         )
         evidence.evidence["backfilled"] = True
         stamp(activity, evidence, link=False)
@@ -965,6 +997,7 @@ def judge_history(fy: str, *, limit: int | None = None) -> int:
                 cluster_need_as_of(cluster_id, day, activity.fy) if cluster_id else None
             ),
             collects_ssa=activity.ssa_collection_expected,
+            outside_ssa=_outside_ssa(activity),
         )
         evidence.evidence.update(
             {

@@ -1,7 +1,7 @@
 {% load frontend_filters table_pagination %}
 {% comment %}
-One person's list — Overdue from last week, or Due this week — as the three
-tables "What needs you now" draws (owner, 2026-09-26): School Visits, Group
+One of a person's two lists — Overdue from last week, then Due this week
+under it (`section`, from _week_person.html) — as the three tables "What needs you now" draws (owner, 2026-09-26): School Visits, Group
 Trainings and Cluster Meetings, with the same columns in the same order, and
 two more before Status: the Salesforce ID (SVE- for a visit, TS- for a
 training or meeting; "Not in SF" until entered) and the Evidence uploaded
@@ -25,12 +25,19 @@ the dark themes (static/css/components/pl-week.css).
 {% comment %}The officer's own week draws only the tables that hold work
 (owner, 2026-09-26: polish): an empty one is one line fewer to read past.
 {% endcomment %}
-{% if week.solo and not person.tables.0.count and not person.tables.1.count and not person.tables.2.count %}
+{% if week.solo and not section.count %}
 {% include "components/empty_state.html" with message="Nothing left to complete this week." hint="Past-due work, of any age, is listed above in What needs you now." compact="true" %}
 {% endif %}
-{% for table in person.tables %}
-{% if table.count or not week.solo %}
-<div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}">
+{% comment %}Overdue draws only the tables that hold work too (owner,
+2026-10-02: overdue first, the week below): three empty title bands above the
+week would push it down the page for nothing. With none, one line says so.
+{% endcomment %}
+{% if section.is_overdue and not section.count %}
+<p class="plwk-list__none" data-pl-week-none="{{ section.key }}">Nothing {{ week.overdue_label|lower }}.</p>
+{% endif %}
+{% for table in section.tables %}
+{% if table.count or not week.solo and not section.is_overdue %}
+<div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}" data-pl-week-table-list="{{ section.key }}">
   {# The title band is named here, not left to micro-ux.js, so an empty list keeps it too. #}
   <div class="edify-table-titlebar px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
     <div class="flex items-center gap-2">
@@ -43,14 +50,14 @@ the dark themes (static/css/components/pl-week.css).
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg>
         {% endif %}
       </span>
-      <h3 class="text-[14px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ table.title }}</h3>
-      <span class="px-2 py-0.5 rounded-pill text-xs font-bold tabular-nums {% if person.listing_is_overdue and table.count %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
+      <h4 class="text-[14px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">{{ table.title }}</h4>
+      <span class="px-2 py-0.5 rounded-pill text-xs font-bold tabular-nums {% if section.is_overdue and table.count %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
         {{ table.count }}
       </span>
     </div>
     {% comment %}An empty list is its title line alone (owner, 2026-09-30: no
     column headings over nothing): the count reads 0 and the note says so.{% endcomment %}
-    <span class="text-xs font-semibold text-slate-400">{% if table.count %}Ordered by date{% elif person.listing_is_overdue %}None overdue{% else %}None left this week{% endif %}</span>
+    <span class="text-xs font-semibold text-slate-400">{% if table.count %}Ordered by date{% elif section.is_overdue %}None overdue{% else %}None left this week{% endif %}</span>
   </div>
 
   {% if table.count %}
@@ -58,7 +65,7 @@ the dark themes (static/css/components/pl-week.css).
     {% paginate table.rows table.page_param week.rows_per_page as table_pager %}
     {% if table.key == "visits" %}
     <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if person.listing_is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
@@ -97,13 +104,13 @@ the dark themes (static/css/components/pl-week.css).
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if person.listing_is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No school visits {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
     {% elif table.key == "trainings" %}
     <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if person.listing_is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
@@ -144,13 +151,13 @@ the dark themes (static/css/components/pl-week.css).
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="13" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if person.listing_is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="13" class="ps-5 pe-5 py-4 text-center text-slate-400">No group trainings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
     <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if person.listing_is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
@@ -189,7 +196,7 @@ the dark themes (static/css/components/pl-week.css).
           <td class="ps-3 pe-5 py-2.5 text-right whitespace-nowrap">{% include "partials/dashboards/pl/_week_action.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if person.listing_is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
+        <tr><td colspan="12" class="ps-5 pe-5 py-4 text-center text-slate-400">No cluster meetings {% if section.is_overdue %}overdue{% else %}left to complete this week{% endif %}.</td></tr>
         {% endfor %}
       </tbody>
     </table>

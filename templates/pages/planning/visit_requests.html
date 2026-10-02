@@ -30,6 +30,7 @@
   <table class="w-full text-left text-[12px]">
     <thead>
       <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+        <th scope="col" class="px-4 py-2 font-semibold">School ID</th>
         <th scope="col" class="px-4 py-2 font-semibold">School</th>
         <th scope="col" class="px-4 py-2 font-semibold">Date</th>
         <th scope="col" class="px-4 py-2 font-semibold">Owner asked</th>
@@ -39,7 +40,8 @@
     <tbody>
     {% for a in visit_requests_mine_pager.rows %}
       <tr class="border-t edify-border" data-visit-request-row="{{ a.id }}">
-        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{% school_identity a.school.name a.school.id %}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
+        <td class="px-4 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if a.school.id %}{% school_code a.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{{ a.school.name }}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
         <td class="px-4 py-2.5 tabular-nums">{% if a.planned_date %}{{ a.planned_date|date:"j M Y" }}{% else %}&mdash;{% endif %}</td>
         <td class="px-4 py-2.5">{{ a.owner_name }}</td>
         <td class="px-4 py-2.5">

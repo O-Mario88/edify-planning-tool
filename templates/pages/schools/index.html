@@ -177,9 +177,13 @@ class="school-filters-form space-y-3"
 <!-- Roster Workspace -->
 <div class="space-y-6">
 <!-- List Headers, Tabs, and Table Container -->
-<div class="school-directory-shell edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+{% comment %}An edge-to-edge shell: the tabs and the directory under them start on
+the card's one content line (owner, 2026-10-02: "tabs inside the cards should
+be aligned with the content inside the cards"). It was padded by the card
+rule and again by its own header, so the tabs sat 40px in.{% endcomment %}
+<div class="school-directory-shell edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" data-edify-padding="flush">
 <!-- Horizontal Tabs Header -->
-<div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ">
+<div class="px-4 py-4 border-b border-[var(--edify-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ">
 <!-- Roster Select Tabs Container -->
 <div id="school-tabs-header">
 {% include "partials/schools/tabs.html" %}

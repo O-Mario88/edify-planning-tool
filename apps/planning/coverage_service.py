@@ -201,6 +201,7 @@ def _row_of(
     district_name,
     region_name,
     requested_ids=frozenset(),
+    school_code="",
 ):
     """One table row: a piece of planned work, seen at one school."""
     return {
@@ -210,6 +211,9 @@ def _row_of(
         or item.partner_assignment_id
         or f"{item.stage}:{school_id}:{item.planned_date}",
         "school_id": school_id,
+        # The School ID, a column on every table that lists schools (owner,
+        # 2026-10-02).
+        "school_code": school_code or "",
         "school_name": school_name,
         "owner_name": owner_name or "Unassigned",
         "region_name": region_name,
@@ -328,6 +332,7 @@ def _invited_school_rows(items, *, requested_ids) -> list[dict]:
             _row_of(
                 sessions[activity_id],
                 school_id=school.id,
+                school_code=school.school_id or "",
                 school_name=school.name,
                 # The CCEO who owns the school, not the person who planned the
                 # session: supervision is not ownership, and the school row is
@@ -355,6 +360,7 @@ def planned_schools(items, *, period: str) -> tuple[list[CoverageGroup], dict]:
         _row_of(
             item,
             school_id=item.school_id,
+            school_code=item.school_code if item.school_id else "",
             school_name=item.school_name,
             owner_name=item.operational_owner_name,
             district_name=item.district_name,

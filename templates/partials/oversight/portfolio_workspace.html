@@ -108,6 +108,7 @@ heading and its rows cannot disagree.
             <caption class="sr-only">Schools owned by {{ officer.name }}, under {{ lead.name }}</caption>
             <thead>
               <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+                <th scope="col" class="px-3 py-2 font-semibold">School ID</th>
                 <th scope="col" class="px-3 py-2 font-semibold">School</th>
                 <th scope="col" class="px-3 py-2 font-semibold">District</th>
                 <th scope="col" class="px-3 py-2 font-semibold">Cluster</th>
@@ -120,7 +121,7 @@ heading and its rows cannot disagree.
             </thead>
             <tbody>
               <tr class="edify-group-head">
-                <th colspan="8" scope="colgroup">
+                <th colspan="9" scope="colgroup">
                   <span class="edify-group-head__label">{{ officer.name }}</span>
                   {% comment %}Folded from the officer's whole portfolio, not
                   from the filtered list below it: a heading that reads "0
@@ -133,8 +134,9 @@ heading and its rows cannot disagree.
               </tr>
               {% for school in officer_page.rows %}
               <tr class="border-t edify-border{% if not school.is_planned %} portfolio-row--unplanned{% endif %}">
+                <td class="px-3 py-2 whitespace-nowrap tabular-nums" data-label="School ID">{% if school.school_code %}{% school_code school.school_code %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
                 <td class="px-3 py-2">
-                  <a href="{{ school.url }}" class="font-semibold hover:underline edify-primary-text">{% school_identity school.name school.school_code %}</a>
+                  <a href="{{ school.url }}" class="font-semibold hover:underline edify-primary-text">{{ school.name }}</a>
                 </td>
                 <td class="px-3 py-2 text-sm">{{ school.district|default:"—" }}</td>
                 <td class="px-3 py-2 text-sm">

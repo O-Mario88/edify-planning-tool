@@ -47,8 +47,10 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: name. A component with a class of its own needs neither. The counts on
 #: 2026-10-02 were 3,959 and 567; each ceiling sits ten above its count so that
 #: branches already in flight that day can land. Lower them to the real counts
-#: as those merge, and from then on only downwards.
-IMPORTANT_CEILING = 3969
+#: as those merge, and from then on only downwards. (`!important` fell to 3,953
+#: later that day, when the calendar's event tabs stopped being a grid forced
+#: over the rail; its ceiling keeps the same ten.)
+IMPORTANT_CEILING = 3963
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
