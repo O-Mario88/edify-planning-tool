@@ -44,7 +44,6 @@ from __future__ import annotations
 
 from django import template
 from django.template.loader import get_template
-from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -88,6 +87,11 @@ def _arguments(parser, token, allowed: tuple[str, ...]) -> dict:
     return arguments
 
 
+def _rendered(nodelist, context):
+    html = nodelist.render(context)
+    return html if html.strip() else ""
+
+
 class ComponentNode(template.Node):
     """A component: its arguments and slots resolved, its remaining body
     rendered as the main slot, and one template deciding the markup."""
@@ -111,15 +115,16 @@ class ComponentNode(template.Node):
     def render(self, context):
         # Rendered in the caller's own context, so the body keeps its
         # variables, its csrf token and its autoescaping. What comes back is
-        # markup the caller's template already escaped; str.strip() drops the
-        # safe mark, so it is put back for the component template to print.
+        # the template engine's own SafeString and is passed on as it is:
+        # str.strip() would return a plain str, which the component template
+        # would then escape a second time. A part of only whitespace is empty.
         values = {
             name: expression.resolve(context)
             for name, expression in self.arguments.items()
         }
         for name, node in self.slot_nodes.items():
-            values[name] = mark_safe(node.nodelist.render(context).strip())  # noqa: S308
-        values[self.body_name] = mark_safe(self.nodelist.render(context).strip())  # noqa: S308
+            values[name] = _rendered(node.nodelist, context)
+        values[self.body_name] = _rendered(self.nodelist, context)
         return get_template(self.template_name).render(values)
 
 
