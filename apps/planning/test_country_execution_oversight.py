@@ -458,7 +458,8 @@ class ExecutionFoldTest(ExecutionWorld):
         self.assertEqual(cards["due"]["value"], str(c.due))
         self.assertEqual(cards["overdue"]["value"], str(c.overdue))
         self.assertEqual(cards["verified"]["share"], round(100 * c.verified / c.due))
-        self.assertIn("stage=overdue", cards["overdue"]["href"])
+        # A card opens the table of the records it counts.
+        self.assertIn("/execution/records/overdue?", cards["overdue"]["href"])
 
     def test_top_issues_count_each_record_once(self):
         snapshot = self.snapshot()
@@ -1236,13 +1237,13 @@ class ExecutionPageTest(ExecutionWorld):
         # Two stages only: the portfolio moved to the Country Map.
         self.assertNotIn("view=portfolio", body)
 
-    def test_the_funnels_and_the_trends_figures_sit_open_under_them(self):
-        # As on the planning tab (owner, 2026-10-02): nobody expands anything
-        # to read a chart's numbers.
+    def test_every_charts_figures_sit_open_under_it(self):
+        # As on the planning tab (owner, 2026-10-02): four charts, two to a
+        # row, and nobody expands anything to read a chart's numbers.
         body = self.as_user(self.cd_user).get(self.URL).content.decode()
         charts = body[body.index('<section class="cxo-charts"') :]
         charts = charts[: charts.index("</section>")]
-        self.assertEqual(charts.count('<details class="cpo-chart-data" open>'), 2)
+        self.assertEqual(charts.count('<details class="cpo-chart-data" open>'), 4)
         self.assertNotIn("View chart data", charts)
 
     def test_a_rows_chevron_rides_on_its_name(self):

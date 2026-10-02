@@ -47,8 +47,10 @@ from typing import NamedTuple
 
 #: The definitions below, by date. Recorded on every locked period snapshot
 #: (apps.planning.execution_snapshot_models) so a closed period's figures are
-#: always read with the rules that produced them.
-STAGE_POLICY = "2026-09-29.1"
+#: always read with the rules that produced them. 2026-10-02: Partner work is
+#: credited as the planning tab credits it (who handed it over or monitors
+#: it, before who holds the school); no stage moved.
+STAGE_POLICY = "2026-10-02.1"
 
 #: Not a plan at all: nobody committed to this work.
 NOT_A_PLAN = frozenset({"not_planned", "awaiting_owner_approval", "rejected"})

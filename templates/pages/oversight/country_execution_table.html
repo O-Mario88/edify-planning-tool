@@ -1,30 +1,30 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block title %}{{ spec.title }} · Country Planning Oversight · Edify{% endblock %}
+{% block title %}{{ spec.title }} · Execution &amp; Completion · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
-A consolidated table behind a Country Planning Oversight card (owner,
-2026-10-01: every KPI is a link to the table of what it counts, grouped by
-Programme Lead). The rows are the ones the card counts, under the page's own
-filters; the group headings carry the Programme Lead (and, for clusters, the
-sub-region, district and cluster), and every table that lists schools carries
-the School ID. A real table on every screen: on a phone it scrolls sideways.
+A consolidated table behind a Country Execution & Completion card (owner,
+2026-10-02: what the planning cards open, for execution). The rows are the
+records the card counts, under the tab's own period and filters; the group
+headings carry the Programme Lead and the person responsible, each with what
+is delivered of what is due; every row carries the School ID. A real table on
+every screen: on a phone it scrolls sideways.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow"><a href="/country-planning-oversight/?{{ query }}" class="hover:underline">Country Planning Oversight</a></p>
+      <p class="edify-page-eyebrow"><a href="/country-planning-oversight/?{{ query }}" class="hover:underline">Country Execution &amp; Completion Oversight</a></p>
       <h1 class="edify-page-title edify-page-header__title">{{ spec.title }}</h1>
       <p class="edify-page-header__description">{{ spec.description }}</p>
     </div>
     {% if may_export and not withheld %}
     <div class="edify-page-header__controls">
       <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
-         href="/country-planning-oversight/table-export/{{ spec.key }}?{{ query }}"
+         href="{{ export_path }}?{{ query }}"
          aria-label="Export {{ spec.title }} to Excel" title="Export to Excel" download>
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         <span>Export</span>
@@ -37,35 +37,27 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
     {% include "partials/oversight/_lens_tabs.html" %}
   </div>
 
-  {% comment %}The three choices a reader changes here; everything else the
-  dashboard was filtered to rides along unchanged. Applies on change.{% endcomment %}
-  <form method="get" action="/country-planning-oversight/table/{{ spec.key }}"
+  {% comment %}The two choices a reader changes here; the period and everything
+  else the tab was filtered to ride along unchanged. Applies on change.{% endcomment %}
+  <form method="get" action="/country-planning-oversight/execution/records/{{ spec.key }}"
         class="edify-filter-bar oversight-portfolio-filters"
         x-data @change="$el.requestSubmit()" aria-label="Table filters">
     {% for name, value in carried %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
     <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
-      <select name="fy" aria-label="Financial year">
-        {% for option in options.fy_options %}
-        <option value="{{ option.value }}"{% if option.value == filters.fy %} selected{% endif %}>{{ option.label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="edify-page-header-control">
       <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
       <select name="program_lead" aria-label="Programme Lead">
         <option value="">All leads</option>
-        {% for lead in options.leads %}
+        {% for lead in leads %}
         <option value="{{ lead.key }}"{% if lead.key == filters.program_lead %} selected{% endif %}>{{ lead.name }}</option>
         {% endfor %}
       </select>
     </label>
     <label class="edify-page-header-control">
-      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">School Type</span>
-      <select name="school_type" aria-label="School type">
-        <option value="">All types</option>
-        {% for key, label in options.types %}
-        <option value="{{ key }}"{% if key == filters.school_type %} selected{% endif %}>{{ label }}</option>
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Delivered By</span>
+      <select name="channel" aria-label="Delivery channel">
+        <option value="">Staff and Partners</option>
+        {% for key, label in channels %}
+        <option value="{{ key }}"{% if key == filters.channel %} selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </label>

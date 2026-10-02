@@ -129,6 +129,11 @@ def _context(request, snapshot, filters) -> dict:
         "window": window,
         "kpis": esvc.kpis(snapshot),
         "charts": esvc.charts(snapshot),
+        # Delivery by Programme Lead and by school type, read against the
+        # same target and requirement the planning tab reads the plan against.
+        "lead_charts": esvc.lead_charts(snapshot),
+        "type_rows": esvc.type_rows(snapshot),
+        "visits_table_url": esvc.records_url("visits", filters.query()),
         "table": table,
         "table_label": TABLES[table],
         "lead_rows": esvc.lead_rows(snapshot, reminders),
@@ -323,6 +328,90 @@ def drawer_view(request):
             "follow_up_query": follow_up_query,
             "drawer_size": "xl",
         },
+    )
+
+
+# ── The consolidated tables behind the cards ─────────────────────────────────
+def _records_tabs(active: str, query: str) -> list[dict]:
+    from apps.planning.country_execution import tables
+
+    return [
+        {
+            "key": key,
+            "label": tables.SPECS[key].title,
+            "short": tables.SPECS[key].short,
+            "href": tables.table_url(key, query),
+            "is_active": key == active,
+        }
+        for key in tables.TAB_ORDER
+    ]
+
+
+@require_page_permission("country_planning_oversight")
+def records_view(request, key: str):
+    """One consolidated table: every record a card counts, grouped by
+    Programme Lead and the person responsible, a page at a time (owner,
+    2026-10-02, as the planning cards open theirs)."""
+    from apps.planning.country_execution import tables
+    from apps.planning.country_oversight import tables as planning_tables
+
+    if key not in tables.SPECS:
+        raise Http404
+    filters = esvc.read_filters(request)
+    query = filters.query()
+    snapshot = esvc.snapshot_for(request.user, filters)
+    window = snapshot.window
+    export_path = f"{BASE}/records-export/{key}"
+    context = {
+        "spec": tables.SPECS[key],
+        "filters": filters,
+        "query": query,
+        "window": window,
+        "fy_label": fy_label(filters.fy),
+        "lens_tabs": _records_tabs(key, query),
+        "leads": [
+            {"key": lead.key, "name": lead.name} for lead in snapshot.dataset.leads
+        ],
+        "channels": esvc.CHANNELS,
+        "carried": [
+            (name, value)
+            for name, value in filters.params().items()
+            if name not in ("program_lead", "channel")
+        ],
+        "may_export": RolePermissionService.can_export(request.user, export_path),
+        "export_path": export_path,
+        "withheld": not _may_see_schools(request.user),
+        "withheld_message": (
+            "Activity-level rows are not part of this role's reading of the "
+            "country. The figures on Execution & Completion are."
+        ),
+    }
+    if not context["withheld"]:
+        table = tables.build(snapshot, key)
+        context.update(
+            {"table": table, **planning_tables.page_of(table, _page(request))}
+        )
+    return render(request, "pages/oversight/country_execution_table.html", context)
+
+
+@require_page_permission("country_planning_oversight")
+@require_export_permission
+def records_export_view(request, key: str):
+    """A consolidated table as a workbook: every row, the groups as columns."""
+    from apps.core.excel import table_download
+    from apps.planning.country_execution import tables
+    from apps.planning.country_oversight import tables as planning_tables
+
+    if key not in tables.SPECS or not _may_see_schools(request.user):
+        raise Http404
+    filters = esvc.read_filters(request)
+    snapshot = esvc.snapshot_for(request.user, filters)
+    table = tables.build(snapshot, key)
+    stamp = timezone.localdate().isoformat()
+    return table_download(
+        request,
+        f"country-execution-{key}-{filters.fy}-{stamp}",
+        [planning_tables.sheet(table)],
     )
 
 
@@ -719,6 +808,7 @@ def export_view(request):
                 "title": "Activities (one row each)",
                 "headers": [
                     "Activity",
+                    "School ID",
                     "School / cluster",
                     "Owner",
                     "Programme Lead",
@@ -734,6 +824,7 @@ def export_view(request):
                 "rows": [
                     [
                         r["type"],
+                        r["code"],
                         r["where"],
                         r["owner"],
                         r["lead"],

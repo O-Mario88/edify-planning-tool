@@ -43,6 +43,9 @@ class Column:
     is_date: bool = False
     # The school's name: linked to the school on the page.
     is_school: bool = False
+    # A date that may honestly be absent (a delivery date before delivery):
+    # the page shows a dash, not "Not yet scheduled".
+    optional: bool = False
 
 
 @dataclass(frozen=True)
@@ -1169,7 +1172,10 @@ def build(user, filters, key: str) -> Table:
 
 
 def _count_line(count: int, unit: str) -> str:
-    return f"{count:,} {unit}{'' if count == 1 else 's'}"
+    if count == 1:
+        return f"1 {unit}"
+    plural = f"{unit[:-1]}ies" if unit.endswith("y") else f"{unit}s"
+    return f"{count:,} {plural}"
 
 
 def page_of(table: Table, page: int) -> dict:

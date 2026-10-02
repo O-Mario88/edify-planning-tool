@@ -700,6 +700,16 @@ urlpatterns = [
         name="cpx_export",
     ),
     path(
+        "country-planning-oversight/execution/records/<str:key>",
+        country_execution_views.records_view,
+        name="cpx_records",
+    ),
+    path(
+        "country-planning-oversight/execution/records-export/<str:key>",
+        country_execution_views.records_export_view,
+        name="cpx_records_export",
+    ),
+    path(
         "country-planning-oversight/execution/snapshots",
         country_execution_views.snapshots_view,
         name="cpx_snapshots",

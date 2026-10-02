@@ -203,7 +203,7 @@ def _timeout() -> int:
 
 def _key(universe: str, window: Window, today: date) -> str:
     # The day is in the key: overdue and ages are read against today.
-    return f"cpx:data:v1:{universe}:{window.cache_part}:{today.isoformat()}"
+    return f"cpx:data:v2:{universe}:{window.cache_part}:{today.isoformat()}"
 
 
 #: The dataset this worker last read (see country_oversight.service._HELD).
@@ -213,6 +213,7 @@ _HELD: dict = {}
 def dataset_for(user, window: Window, *, refresh: bool = False) -> ds.ExecutionDataset:
     from apps.core.cache_utils import forget_snapshot, stampede_safe_get_or_compute
     from apps.core.scoping import resolve_user_scope
+    from apps.planning.country_oversight import freshness
     from apps.planning.country_oversight.service import (
         _read_stamp,
         _stamp_key,
@@ -231,7 +232,11 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> ds.ExecutionD
     elif timeout > 0:
         _note_window(universe, window)
         held = _HELD.get(key)
-        if held is not None and held.stamp == _read_stamp(key):
+        if (
+            held is not None
+            and held.stamp == _read_stamp(key)
+            and not freshness.overtaken(held.built_at)
+        ):
             return held
     built: list = []
 
@@ -244,6 +249,16 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> ds.ExecutionD
         _write_stamp(key, dataset.stamp, timeout=timeout, replace=bool(built))
         _HELD.clear()
         _HELD[key] = dataset
+    if (
+        not refresh
+        and not built
+        and freshness.overtaken(dataset.built_at)
+        and freshness.claim(key)
+    ):
+        # An activity or a hand-over has changed since these records were
+        # read (apps.planning.country_oversight.freshness): the tab follows
+        # the work as the planning tab follows the plan.
+        return dataset_for(user, window, refresh=True)
     return dataset
 
 
@@ -631,6 +646,13 @@ class ExecSnapshot:
     remaining: dict  # ("country"|"lead"|"owner", key) → remaining slots
     unique_schools: int
     required_slots: int
+    # ("country"|"lead"|"owner", key) → the visits the plan is read against
+    # on the planning tab (280 a Lead, 560 a CCEO, phased for a quarter or a
+    # month). Empty for a week, which has no target of its own.
+    targets: dict = field(default_factory=dict)
+    # The planning tab's own fold for the same selection: the requirement by
+    # school type, and what of it is planned and verified.
+    plan: object = None
 
     @property
     def window(self) -> Window:
@@ -640,7 +662,7 @@ class ExecSnapshot:
 def snapshot_for(user, filters: ExecFilters, *, refresh: bool = False) -> ExecSnapshot:
     dataset = dataset_for(user, filters.window, refresh=refresh)
     tree = fold(dataset, filters)
-    remaining, required = remaining_slots(user, filters)
+    remaining, required, targets, plan = planning_position(user, filters)
     return ExecSnapshot(
         tree=tree,
         filters=filters,
@@ -654,6 +676,8 @@ def snapshot_for(user, filters: ExecFilters, *, refresh: bool = False) -> ExecSn
             }
         ),
         required_slots=required,
+        targets=targets,
+        plan=plan,
     )
 
 
@@ -675,6 +699,15 @@ def filtered_records(dataset: ds.ExecutionDataset, filters: ExecFilters):
 def remaining_slots(user, filters: ExecFilters) -> tuple[dict, int]:
     """Required visit and training slots not yet verified, per level, from the
     planning coverage service (the same requirement the Planning tab counts)."""
+    remaining, required, _targets, _plan = planning_position(user, filters)
+    return remaining, required
+
+
+def planning_position(user, filters: ExecFilters) -> tuple[dict, int, dict, object]:
+    """What the planning tab holds for the same selection: required slots not
+    yet verified and each level's visit target, per level, and the fold they
+    came from. One read, so the obligation and the target the two tabs
+    describe are the same ones."""
     from apps.planning.country_oversight.service import (
         snapshot_for as planning_snapshot,
     )
@@ -683,7 +716,7 @@ def remaining_slots(user, filters: ExecFilters) -> tuple[dict, int]:
         snap = planning_snapshot(user, filters.planning())
     except Exception:  # noqa: BLE001 - completion is a column, not the page
         logger.warning("Required-slot completion could not be read", exc_info=True)
-        return {}, 0
+        return {}, 0, {}, None
 
     def left(tally) -> int:
         visits = max(
@@ -693,12 +726,19 @@ def remaining_slots(user, filters: ExecFilters) -> tuple[dict, int]:
         return visits + training
 
     out = {("country", ""): left(snap.tree.country)}
+    # A week has no target of its own (the plan is phased by month).
+    phased = filters.period != "week"
+    targets = {("country", ""): snap.tree.country.target} if phased else {}
     for lead in snap.tree.leads:
         out[("lead", lead.key)] = left(lead.tally)
+        if phased:
+            targets[("lead", lead.key)] = lead.tally.target
         for owner in lead.owners:
             out[("owner", owner.key)] = left(owner.tally)
+            if phased:
+                targets[("owner", owner.key)] = owner.tally.target
     country = snap.tree.country
-    return out, country.visit_slots + country.training_slots
+    return out, country.visit_slots + country.training_slots, targets, snap
 
 
 # ── Figures ──────────────────────────────────────────────────────────────────
@@ -800,7 +840,9 @@ def _fmt(value) -> str:
 
 def kpis(snapshot: ExecSnapshot) -> list[dict]:
     """The six figures (spec §8), each bound to its registered metric, with
-    its denominator and its drill-down."""
+    its denominator and its drill-down: the consolidated table of the records
+    it counts, grouped by Programme Lead (owner, 2026-10-02, as the planning
+    cards open theirs)."""
     from apps.core.metrics import MetricValue, render_metric
 
     c = snapshot.tree.country
@@ -809,7 +851,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
     def card(
         metric_key, key, part, *, ratio=True, note="", tone="neutral", icon="", stage=""
     ):
-        href = f"{BASE_PATH}/drawer?kind=activities&stage={stage}&{query}"
+        href = records_url(stage, query)
         measured = (
             MetricValue.ratio(part, c.due) if ratio else MetricValue.measured(part)
         )
@@ -891,6 +933,235 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
 
 def _share_text(share) -> str:
     return "—" if share is None else f"{share}%"
+
+
+def records_url(key: str, query: str = "") -> str:
+    """The consolidated table of a figure's records (country_execution.tables)."""
+    return f"{BASE_PATH}/records/{key}" + (f"?{query}" if query else "")
+
+
+#: The by-Lead charts' colours, as tokens the page stylesheet defines for
+#: both themes: the stage colours of the cards above them.
+LEAD_CHART_COLOURS = {
+    "verified": "var(--cxo-verified)",
+    "review": "var(--cxo-exec)",
+    "field": "var(--cxo-staff)",
+    "late": "var(--cxo-overdue)",
+    "upcoming": "var(--cxo-planned)",
+    "planned": "var(--cxo-staff)",
+    "gap": "var(--cpo-series-gap)",
+}
+
+
+def lead_charts(snapshot: ExecSnapshot) -> list[dict]:
+    """Delivery by Programme Lead, as the planning tab charts the plan by
+    Programme Lead: one bar per Lead, and a Lead's bar is the Lead's own work
+    and their CCEOs' together (owner, 2026-10-01).
+
+    Each bar is a PARTITION — of the team's work dated in the period, and of
+    the team's visit target — so its length is the whole and nothing is
+    counted twice. The figures are the table's Lead rows.
+    """
+    leads = [
+        lead for lead in snapshot.tree.leads if lead.tally.due or not lead.is_no_lead
+    ]
+    names = [lead.name for lead in leads]
+    keys = [lead.key for lead in leads]
+    t = [lead.tally for lead in leads]
+    # A target is a person's, read for all the visits that count: it follows
+    # neither an activity type nor a delivery channel, and a week has none.
+    f = snapshot.filters
+    targeted = bool(snapshot.targets) and not (f.activity_type or f.channel)
+    targets = [
+        snapshot.targets.get(("lead", lead.key), 0) if targeted else None
+        for lead in leads
+    ]
+    delivery = {
+        "id": "cxo-delivery-chart",
+        "title": "Delivery by Program Lead",
+        "hint": "Work dated in the period",
+        "form": "stacked",
+        "unit": "activities",
+        "categories": names,
+        "keys": keys,
+        "series": [
+            {
+                "name": "IA Verified",
+                "color": LEAD_CHART_COLOURS["verified"],
+                "data": [x.verified for x in t],
+            },
+            {
+                "name": "Submitted, in review",
+                "color": LEAD_CHART_COLOURS["review"],
+                "data": [x.executed - x.verified for x in t],
+            },
+            {
+                "name": "Started, not submitted",
+                "color": LEAD_CHART_COLOURS["field"],
+                "data": [x.started - x.executed for x in t],
+            },
+            {
+                "name": "Past its date, not started",
+                "color": LEAD_CHART_COLOURS["late"],
+                "data": [x.not_started for x in t],
+            },
+            {
+                "name": "Not yet due",
+                "color": LEAD_CHART_COLOURS["upcoming"],
+                "data": [x.upcoming for x in t],
+            },
+        ],
+        "table": {
+            # A heading's line break is written in ("\n"), as the planning
+            # charts' are: the table sits open under a chart half the page wide.
+            "columns": [
+                "Due",
+                "IA\nverified",
+                "In\nreview",
+                "Started, not\nsubmitted",
+                "Past date,\nnot started",
+                "Not yet\ndue",
+            ],
+            "rows": [
+                [
+                    x.due,
+                    x.verified,
+                    x.executed - x.verified,
+                    x.started - x.executed,
+                    x.not_started,
+                    x.upcoming,
+                ]
+                for x in t
+            ],
+        },
+    }
+    visits = {
+        "id": "cxo-visits-chart",
+        "title": "Visits Delivered Against Target by Program Lead",
+        "hint": "Follow up, In-school Training and SSA Support",
+        "form": "stacked",
+        "unit": "visits",
+        "categories": names,
+        "keys": keys,
+        "series": [
+            {
+                "name": "Verified",
+                "color": LEAD_CHART_COLOURS["verified"],
+                "data": [x.v_verified for x in t],
+            },
+            {
+                "name": "Delivered, in review",
+                "color": LEAD_CHART_COLOURS["review"],
+                "data": [x.v_delivered - x.v_verified for x in t],
+            },
+            {
+                "name": "Planned, not yet delivered",
+                "color": LEAD_CHART_COLOURS["planned"],
+                "data": [x.v_planned - x.v_delivered for x in t],
+            },
+            *(
+                [
+                    {
+                        "name": "Still to plan",
+                        "color": LEAD_CHART_COLOURS["gap"],
+                        "data": [
+                            max(0, target - x.v_planned)
+                            for x, target in zip(t, targets)
+                        ],
+                    }
+                ]
+                if targeted
+                else []
+            ),
+        ],
+        "table": {
+            "columns": [
+                "Visit\ntarget",
+                "Visits\nplanned",
+                "Visits\ndelivered",
+                "Visits\nverified",
+                "Still to\ndeliver",
+                "Donor, story,\nsocial\n(not counted)",
+            ],
+            "rows": [
+                [
+                    "—" if target is None else target,
+                    x.v_planned,
+                    x.v_delivered,
+                    x.v_verified,
+                    "—" if target is None else max(0, target - x.v_delivered),
+                    x.v_outreach,
+                ]
+                for x, target in zip(t, targets)
+            ],
+        },
+    }
+    out = [delivery, visits]
+    for chart in out:
+        chart["data_id"] = f"{chart['id']}-data"
+        chart["empty"] = not any(any(s["data"]) for s in chart["series"])
+        chart["table"]["rows"] = [
+            {"label": name, "cells": cells}
+            for name, cells in zip(names, chart["table"]["rows"])
+        ]
+    return out
+
+
+def type_rows(snapshot: ExecSnapshot) -> list[dict]:
+    """The requirement by school type, and how much of it is verified (owner,
+    2026-10-01: "separate ... Core, Clients, Core Trained, Core Graduates",
+    for visits and for trainings). Read from the planning tab's own fold for
+    the same selection, so a type's requirement and its plan are the ones that
+    tab shows; "verified" is programme completion. A type the requirement
+    asks nothing of shows what it holds and no gap; the last row is every
+    type together."""
+    from apps.planning.country_oversight import rules
+    from apps.planning.country_oversight.hierarchy import Tally
+
+    plan = snapshot.plan
+    if plan is None:
+        return []
+    by_type = plan.tree.by_type
+
+    def row(key, label, tally, need) -> dict:
+        planned = tally.staff + tally.partner_scheduled
+        verified = tally.staff_verified + tally.partner_verified
+        return {
+            "key": key,
+            "label": label,
+            "needs_visits": bool(need is None or need.visits),
+            "needs_trainings": bool(need is None or need.trainings),
+            "schools": tally.schools,
+            "visit_slots": tally.visit_slots,
+            "visits_planned": planned,
+            "visits_verified": verified,
+            "visits_left": max(0, tally.visit_slots - verified),
+            "visit_share": Tally.share(verified, tally.visit_slots),
+            "training_slots": tally.training_slots,
+            "trainings_planned": tally.training,
+            "trainings_verified": tally.training_verified,
+            "trainings_left": max(0, tally.training_slots - tally.training_verified),
+            "training_share": Tally.share(
+                tally.training_verified, tally.training_slots
+            ),
+        }
+
+    order = [t for t in rules.TYPE_ORDER if t in by_type]
+    order += sorted(t for t in by_type if t not in rules.TYPE_ORDER)
+    rows = [
+        row(
+            school_type,
+            rules.type_label(school_type),
+            by_type[school_type],
+            rules.requirement_for(school_type),
+        )
+        for school_type in order
+    ]
+    if len(rows) > 1:
+        total = row("", "All school types", plan.tree.country, None)
+        total["is_total"] = True
+        rows.append(total)
+    return rows
 
 
 def charts(snapshot: ExecSnapshot) -> dict:
@@ -1193,6 +1464,13 @@ def partner_rows(snapshot: ExecSnapshot) -> list[dict]:
         if record.channel == "partner":
             records_by_partner.setdefault(record.partner_key, []).append(record)
     unscheduled = _unscheduled_by_partner(dataset, snapshot.filters)
+    # A Partner with hand-overs waiting and nothing dated in the period has
+    # no record to take its name from.
+    unnamed = {key for key in unscheduled if key and key not in names}
+    if unnamed:
+        from apps.planning.country_oversight.service import _names
+
+        names = {**names, **_names("partners.Partner", unnamed)}
     rows = []
     for key in sorted(
         set(records_by_partner) | set(unscheduled),
@@ -1224,25 +1502,86 @@ def partner_rows(snapshot: ExecSnapshot) -> list[dict]:
     return rows
 
 
-def _unscheduled_by_partner(dataset, filters: ExecFilters) -> dict:
-    """Handovers not yet dated by the Partner, made in the year (spec §15)."""
-    from django.db.models import Count
+def selected_ids(dataset, filters: ExecFilters) -> set | None:
+    """The raw ids (either id space) of the people the Programme Lead and
+    CCEO filters select, or None when neither is set."""
+    if not (filters.program_lead or filters.cceo):
+        return None
+    people = []
+    for lead in dataset.leads:
+        if filters.program_lead and lead.key != filters.program_lead:
+            continue
+        ids = {lead.key, *([str(lead.user_id)] if lead.user_id else [])}
+        people.append((lead.key, ids))
+        people.extend(
+            (person.key, {person.key, *(str(i) for i in person.ids)})
+            for person in dataset.rosters.get(lead.key, [])
+        )
+    people.extend(
+        (key, {key, *(str(i) for i in info.ids)})
+        for key, info in dataset.owners.items()
+        if not filters.program_lead or info.lead_key == filters.program_lead
+    )
+    return {
+        raw
+        for key, ids in people
+        if not filters.cceo or key == filters.cceo
+        for raw in ids
+    }
 
+
+def unscheduled_handovers(dataset, filters: ExecFilters):
+    """Hand-overs a Partner has not dated yet (spec §15): made in the year or
+    in an earlier one and still waiting — a hand-over does not stop waiting
+    when the year turns (people.Reads.waiting) — in the reader's country, and
+    under the people the filters select."""
     from apps.core.fy import get_fy_date_range
+    from apps.core.scoping import school_country_q
     from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight.service import system_scope
 
-    start, end = get_fy_date_range(dataset.window.fy)
+    _start, end = get_fy_date_range(dataset.window.fy)
     rows = PartnerAssignment.objects.filter(
         status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
-        created_at__gte=start,
         created_at__lt=end,
     )
+    if dataset.scope_label:
+        rows = rows.filter(
+            school_country_q(system_scope(dataset.scope_label), "school__")
+        )
     if filters.partner:
         rows = rows.filter(partner_id=filters.partner)
     if filters.region:
         rows = rows.filter(school__region_id=filters.region)
+    if filters.channel == "staff":
+        rows = rows.none()
+    ids = selected_ids(dataset, filters)
+    if ids is not None:
+        from django.db.models import Q
+
+        # Credited as the dated work is: who monitors or made the hand-over,
+        # else who holds the school.
+        rows = rows.filter(
+            Q(monitoring_staff_id__in=ids)
+            | Q(monitoring_staff_id__isnull=True, assigning_staff_id__in=ids)
+            | Q(
+                monitoring_staff_id__isnull=True,
+                assigning_staff_id__isnull=True,
+                school__account_owner_id__in=ids,
+            )
+        )
+    return rows
+
+
+def _unscheduled_by_partner(dataset, filters: ExecFilters) -> dict:
+    """Hand-overs not yet dated by the Partner, by Partner."""
+    from django.db.models import Count
+
     return dict(
-        rows.values("partner_id").annotate(n=Count("id")).values_list("partner_id", "n")
+        unscheduled_handovers(dataset, filters)
+        .values("partner_id")
+        .annotate(n=Count("id"))
+        .values_list("partner_id", "n")
     )
 
 
@@ -1314,6 +1653,7 @@ def _describe(dataset, records) -> list[dict]:
     from apps.planning.country_oversight.service import _names
 
     schools = _names("schools.School", {r.school_id for r in records})
+    codes = school_codes({r.school_id for r in records})
     clusters = _names("clusters.Cluster", {r.cluster_id for r in records})
     owners = dataset.owners
     out = []
@@ -1326,6 +1666,9 @@ def _describe(dataset, records) -> list[dict]:
                     r.activity_type, r.activity_type.replace("_", " ").title()
                 ),
                 "where": schools.get(r.school_id) or clusters.get(r.cluster_id) or "—",
+                # Every list of schools carries the School ID (owner,
+                # 2026-10-01).
+                "code": codes.get(r.school_id, ""),
                 "owner": info.name if info else NO_OWNER_LABEL,
                 "lead": info.lead_name if info else NO_LEAD_LABEL,
                 "channel": "Partner" if r.channel == "partner" else "Staff",
@@ -1342,6 +1685,17 @@ def _describe(dataset, records) -> list[dict]:
             }
         )
     return out
+
+
+def school_codes(school_ids) -> dict:
+    """School id → its School ID (the business code people know it by)."""
+    from apps.schools.models import School
+
+    ids = {i for i in school_ids if i}
+    if not ids:
+        return {}
+    manager = getattr(School, "all_objects", School.objects)
+    return dict(manager.filter(id__in=ids).values_list("id", "school_id"))
 
 
 SCHOOLS_PER_PAGE = 25
@@ -1594,6 +1948,8 @@ class CountryExecutionOversightService:
     lead_rows = staticmethod(lead_rows)
     owner_rows = staticmethod(owner_rows)
     partner_rows = staticmethod(partner_rows)
+    lead_charts = staticmethod(lead_charts)
+    type_rows = staticmethod(type_rows)
     activity_rows = staticmethod(activity_rows)
     issues = staticmethod(issues)
     forecast = staticmethod(forecast)

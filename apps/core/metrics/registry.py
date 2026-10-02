@@ -1401,7 +1401,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=due",
+        drilldown="/country-planning-oversight/execution/records/due",
         refresh_events=(
             "activity_scheduled",
             "activity_rescheduled",
@@ -1427,7 +1427,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=started",
+        drilldown="/country-planning-oversight/execution/records/started",
         refresh_events=("activity_started",),
     ),
     MetricSpec(
@@ -1450,7 +1450,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=executed",
+        drilldown="/country-planning-oversight/execution/records/executed",
         refresh_events=("activity_submitted",),
     ),
     MetricSpec(
@@ -1473,7 +1473,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=verified",
+        drilldown="/country-planning-oversight/execution/records/verified",
         refresh_events=("activity_verified", "activity_returned"),
     ),
     MetricSpec(
@@ -1496,7 +1496,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=closed",
+        drilldown="/country-planning-oversight/execution/records/closed",
         refresh_events=("activity_closed",),
     ),
     MetricSpec(
@@ -1519,7 +1519,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         scope="The reader's country",
         owner_page="country_planning_oversight",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/country-planning-oversight/execution/drawer?kind=activities&stage=overdue",
+        drilldown="/country-planning-oversight/execution/records/overdue",
         refresh_events=("activity_started", "activity_submitted", "activity_verified"),
     ),
     # The Regional Programme Lead's three headline tiles. The country family
@@ -1936,16 +1936,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="execution_visits_delivered_target",
         label="Visits Delivered Against Target",
         definition=(
-            "Staff visits each person delivered in the fiscal year — "
-            "submitted, awaiting verification or verified — against 280 for "
-            "a Programme Lead and 560 for a CCEO, summed."
+            "The visits that count toward a person's target — Follow up, "
+            "In-school Training and SSA Support, by the planning rulebook — "
+            "each person delivered in the fiscal year (submitted, awaiting "
+            "verification or verified), against 280 for a Programme Lead and "
+            "560 for a CCEO, summed. Donor, story, invitation and social "
+            "visits are named beside the figure and not counted."
         ),
         question="How far through the year's visits is the team?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
         service="apps.planning.execution_monitor.execution_monitor",
         source_models=("activities.Activity",),
-        numerator="Staff visits delivered in the fiscal year",
+        numerator="Counted staff visits delivered in the fiscal year",
         denominator="Each Programme Lead's 280 and each CCEO's 560, summed",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
@@ -2047,9 +2050,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="execution_partner_delivered",
         label="Partner Activities Delivered",
         definition=(
-            "Partner-delivered activities in the fiscal year that are "
-            "delivered, against all the partner activities scheduled that "
-            "each person monitors."
+            "Dated Partner activities in the fiscal year that are "
+            "delivered, against all the dated Partner activities each person "
+            "handed over or monitors, or that are at a school they hold — "
+            "credited as Country Planning Oversight credits Partner work."
         ),
         question="Is the partner work happening?",
         category=Category.PROGRESS,

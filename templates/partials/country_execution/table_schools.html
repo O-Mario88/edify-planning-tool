@@ -10,6 +10,7 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
     <thead>
       <tr>
         <th scope="col" class="cpo-namecol">School</th>
+        <th scope="col">School ID</th>
         <th scope="col">CCEO</th>
         <th scope="col" title="Required visit slots">Visits Required</th>
         <th scope="col" title="Visit slots with planned work">Visits Planned</th>
@@ -24,7 +25,8 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
     <tbody>
       {% for row in schools.rows %}
       <tr data-level="1">
-        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}{% if row.code %} · {{ row.code }}{% endif %}</span></span></th>
+        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}</span></span></th>
+        <td>{{ row.code|default:"—" }}</td>
         <td>{{ row.owner }}</td>
         <td>{{ row.visit_slots }}</td>
         <td>{{ row.visits_planned }}</td>
@@ -36,7 +38,7 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
         <td>{% if row.gap %}<span class="cpo-alert">{{ row.remaining }}</span>{% else %}{{ row.remaining }}{% endif %}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="10" class="cpo-empty">No school in this selection.</td></tr>
+      <tr><td colspan="11" class="cpo-empty">No school in this selection.</td></tr>
       {% endfor %}
     </tbody>
   </table>

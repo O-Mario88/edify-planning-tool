@@ -478,13 +478,13 @@
   font-weight: 600;
 }
 .cpo-mini { font-size: 0.78rem; }
-/* Open under a planning chart that is half the page wide, the figures keep to a
-   tighter column than a full-width table's, so more of them are on screen
-   before the table has to scroll in its box (the execution charts keep the
-   platform's). The platform pads every cell from this variable, so the
+/* Open under a chart that is half the page wide (the planning charts and the
+   execution charts alike), the figures keep to a tighter column than a
+   full-width table's, so more of them are on screen before the table has to
+   scroll in its box. The platform pads every cell from this variable, so the
    variable is what is set. Headings carry their own line break. */
-.cpo-charts .cpo-mini { --edify-table-cell-padding-inline: 0.4rem; }
-.cpo-charts .cpo-mini thead th { line-height: 1.25; vertical-align: bottom; }
+:is(.cpo-charts, .cxo-charts) .cpo-mini { --edify-table-cell-padding-inline: 0.4rem; }
+:is(.cpo-charts, .cxo-charts) .cpo-mini thead th { line-height: 1.25; vertical-align: bottom; }
 
 /* ── Drill-down table and follow-ups ───────────────────────────────────── */
 .cpo-lower {
