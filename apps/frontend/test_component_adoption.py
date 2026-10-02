@@ -12,6 +12,10 @@ The first half pins the three components' behaviour
 ratchets, the same idea as test_design_token_ratchet.py: each ceiling is
 today's count of the thing being replaced. A change may lower a count and its
 ceiling; none may raise one. docs/ui-components.md says what to write instead.
+
+Tables are counted in that document and not held here: {% data_table %} is one
+table anatomy of about a hundred on the platform, and a ceiling would fail a
+new table the component cannot yet express.
 """
 
 from __future__ import annotations
@@ -38,16 +42,14 @@ HAND_WRITTEN_HEADER_CEILING = 112
 #: button; seven that already had the component's class moved on 2026-10-02.
 HAND_WIRED_FILTER_FORM_CEILING = 12
 
-#: `<table>` elements written outside {% data_table %}. The four oversight
-#: tables that shared one anatomy moved on 2026-10-02; the rest carry about a
-#: hundred different class sets and move as their pages are next worked on.
-HAND_WRITTEN_TABLE_CEILING = 332
-
 #: The two tools of restyling by guesswork, counted across the source
 #: stylesheets: `!important`, and selectors that match a substring of a class
-#: name. A component with a class of its own needs neither.
-IMPORTANT_CEILING = 3959
-CLASS_SUBSTRING_SELECTOR_CEILING = 567
+#: name. A component with a class of its own needs neither. The counts on
+#: 2026-10-02 were 3,959 and 567; each ceiling sits ten above its count so that
+#: branches already in flight that day can land. Lower them to the real counts
+#: as those merge, and from then on only downwards.
+IMPORTANT_CEILING = 3969
+CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
 _HEADER = re.compile(
@@ -55,7 +57,6 @@ _HEADER = re.compile(
     r"(?<![\w-])edify-page-header(?![\w-])[^\"]*\""
 )
 _AUTO_FORM = re.compile(r"<form\b[^>]*requestSubmit\(\)")
-_TABLE = re.compile(r"<table\b")
 
 
 def _page_templates():
@@ -300,15 +301,6 @@ class ComponentAdoptionRatchetTests(TestCase):
             + "\n".join(worst),
         )
 
-    def test_hand_written_tables_do_not_grow(self):
-        total, worst = _count(_TABLE)
-        self.assertLessEqual(
-            total,
-            HAND_WRITTEN_TABLE_CEILING,
-            f"{total} hand-written tables, ceiling {HAND_WRITTEN_TABLE_CEILING}. "
-            "A record table in a card is {% data_table %}.\n" + "\n".join(worst),
-        )
-
     def test_important_does_not_grow(self):
         total = _css_count(r"!important")
         self.assertLessEqual(
@@ -333,7 +325,6 @@ class ComponentAdoptionRatchetTests(TestCase):
         slack = {
             "headers": HAND_WRITTEN_HEADER_CEILING - _count(_HEADER)[0],
             "filter forms": HAND_WIRED_FILTER_FORM_CEILING - _count(_AUTO_FORM)[0],
-            "tables": HAND_WRITTEN_TABLE_CEILING - _count(_TABLE)[0],
             "!important": IMPORTANT_CEILING - _css_count(r"!important"),
             "substring selectors": CLASS_SUBSTRING_SELECTOR_CEILING
             - _css_count(r"\[class[*^$]="),
