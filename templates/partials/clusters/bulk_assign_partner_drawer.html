@@ -1,9 +1,11 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% comment %}
-Assign the schools ticked on a cluster's school list to one partner (owner,
-2026-09-29). Posts to the Planning page's bulk partner action, which hands
-each school's top eligible Catalogue recommendation to the partner; no
-Activity, cost or budget line exists until the partner (or you) dates it.
+Assign the schools ticked on a cluster's school list, or on the Planning
+page, to one partner (owner, 2026-09-29). Posts to the Planning page's bulk
+partner action. The planner chooses what is handed over — the reason and, for
+an In-school Training, one of the governed trainings (owner, 2026-10-02: "it
+should bring a list of training"); no Activity, cost or budget line exists
+until the partner (or you) dates it.
 {% endcomment %}
 
 {% block drawer_title %}Assign to partner{% endblock %}
@@ -15,6 +17,21 @@ Activity, cost or budget line exists until the partner (or you) dates it.
       hx-swap="innerHTML"
       hx-disabled-elt="find button[type=submit]"
       class="space-y-4 text-[12px] font-semibold text-slate-600"
+      x-data="{
+        partnerId: '',
+        purposeOfVisit: '',
+        trainingCourseId: '',
+        trainingCourses: {{ training_courses_json|default:'[]' }},
+        partnerCourses: {{ partner_courses_json|default:'{}' }},
+        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get coursesForPartner() {
+          const codes = this.partnerCourses[this.partnerId];
+          return codes ? this.trainingCourses.filter(course => codes.includes(course.stableCode)) : this.trainingCourses;
+        },
+        get selectedCourse() { return this.coursesForPartner.find(course => course.id === this.trainingCourseId) || null; },
+        onPartnerChange() { if (!this.selectedCourse) { this.trainingCourseId = ''; } },
+        onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
+      }"
       data-cluster-bulk-assign>
   {% csrf_token %}
   <input type="hidden" name="action" value="partner">
@@ -28,14 +45,35 @@ Activity, cost or budget line exists until the partner (or you) dates it.
   {% if outside_scope %}<p class="edify-text-caption text-amber-700">{{ outside_scope }} selected school{{ outside_scope|pluralize }} {% if outside_scope == 1 %}is{% else %}are{% endif %} outside your planning portfolio and left out.</p>{% endif %}
 
   {% if assignable %}
-  <p class="edify-text-caption text-slate-500">Each school's top eligible Catalogue recommendation goes to the partner. No activity, cost or budget line is created until it is scheduled.</p>
   <div class="space-y-1">
     <label for="bulk-partner-id" class="block edify-text-caption font-semibold text-slate-600">Partner <span class="text-rose-500">*</span></label>
-    <select id="bulk-partner-id" name="partner_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+    <select id="bulk-partner-id" name="partner_id" required x-model="partnerId" @change="onPartnerChange()" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
       <option value="">Select a partner…</option>
       {% for p in partners %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
     </select>
   </div>
+  <div class="space-y-1">
+    <label for="bulk-partner-purpose" class="block edify-text-caption font-semibold text-slate-600">Reason for assigning <span class="text-rose-500">*</span></label>
+    <select id="bulk-partner-purpose" name="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+      <option value="">Select a reason…</option>
+      {% for value, label in partner_visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+    {% if follow_up_named_per_school %}<p class="edify-text-caption text-slate-500">A Training Follow Up names the training it follows, so it is assigned from each school's own Assign.</p>{% endif %}
+  </div>
+  <template x-if="isTraining">
+    <div class="space-y-1">
+      <label for="bulk-partner-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+      <select id="bulk-partner-training" name="training_course_id" required x-model="trainingCourseId" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+        <option value="">Select a training…</option>
+        <template x-for="course in coursesForPartner" :key="course.id">
+          <option :value="course.id" x-text="course.label"></option>
+        </template>
+      </select>
+      <p x-show="partnerCourses[partnerId]" style="display:none" class="edify-text-caption text-slate-500" data-partner-courses>Showing the trainings this partner is recorded as delivering.</p>
+      <p x-show="selectedCourse" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.category : ''"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.ssaIndicator : ''"></span></p>
+    </div>
+  </template>
+  <p class="edify-text-caption text-slate-500">Every selected school is handed over for this reason. No activity, cost or budget line is created until it is scheduled.</p>
   <div class="space-y-1">
     <label for="bulk-partner-date" class="block edify-text-caption font-semibold text-slate-600">Target date <span class="font-normal text-slate-500">(optional)</span></label>
     <input id="bulk-partner-date" type="date" name="scheduled_date" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50">

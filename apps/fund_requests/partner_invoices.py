@@ -61,10 +61,19 @@ def _paid_by_type(activity) -> dict[str, int]:
 
 
 def _category_of(activity) -> str:
+    from apps.activities.facilitation import is_facilitated, is_meeting
     from apps.core.activity_types import TRAINING_TYPES
 
     if activity.activity_type in TRAINING_TYPES or "training" in activity.activity_type:
         return "Training Facilitation Fee"
+    if (
+        is_meeting(activity.activity_type)
+        and is_facilitated(activity)
+        and activity.delivery_type != "partner"
+    ):
+        # A cluster meeting the partner organised and facilitated (owner,
+        # 2026-10-02): the fee is what it invoices.
+        return "Meeting Facilitation Fee"
     if activity.school_id:
         return "School Visits"
     return "Other Field Work"

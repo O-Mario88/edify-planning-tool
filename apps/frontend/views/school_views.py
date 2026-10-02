@@ -1,3 +1,4 @@
+from apps.core.clock import local_day
 from apps.core.metrics import render_precomputed_metric_item
 import json
 
@@ -1677,7 +1678,7 @@ def school_detail_view(request, school_id):
         feedback.activity_date = (
             activity.actual_delivery_date
             or activity.planned_date
-            or (activity.scheduled_date.date() if activity.scheduled_date else None)
+            or (local_day(activity.scheduled_date) if activity.scheduled_date else None)
         )
 
     # Current cluster and every membership before it (owner, 2026-09-15):

@@ -96,7 +96,7 @@ class FacilitatedTrainingsTest(PartnerOversightFixture):
         body = self.page(self.pl_user)
         # The Partner has a tab although nothing is assigned to it.
         self.assertIn("Partner X", body)
-        self.assertIn("Trainings facilitated (1)", body)
+        self.assertIn("Trainings and meetings facilitated (1)", body)
         table = body.split("data-partner-trainings-table", 1)[1].split("</table>", 1)[0]
         headers = re.findall(r"<th scope=\"col\"[^>]*>([^<]+)</th>", table)
         self.assertEqual(

@@ -218,11 +218,18 @@ def sync_expected_participants(activity) -> int:
     # has. Failing the invitation edit because pricing could not refresh would
     # be the worse outcome — the ticks are the user's actual intent, and the
     # activity carries `cost_missing` for finance to see.
+    #
+    # In a transaction of its own (`reprice_activity`): the cost writer locks
+    # the day's batch, and run bare after commit it raised "select_for_update
+    # cannot be used outside of a transaction", which the best-effort catch
+    # swallowed — so a session sharing its day never re-priced, and adding a
+    # school from Edit left it costed for the schools it had before
+    # (2026-10-02).
     def _reprice():
         try:
-            from apps.activities.services import _apply_schedule_cost_snapshot
+            from apps.activities.services import reprice_activity
 
-            _apply_schedule_cost_snapshot(activity, {})
+            reprice_activity(activity)
         except Exception:  # noqa: BLE001
             return
 

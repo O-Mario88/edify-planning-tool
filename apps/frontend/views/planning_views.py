@@ -1226,6 +1226,10 @@ def _schedule_modal(request):
             .select_related("user")
             .order_by("user__name"),
             "action": action,
+            "session_noun": "meeting" if action == "meeting" else "training",
+            # The partner this cluster is assigned to facilitate (owner,
+            # 2026-10-02), already chosen in "Facilitated by".
+            **_cluster_facilitator_context(cluster),
             "partners": partners,
             "interventions": SsaIntervention.choices,
             "drawer_size": "md",
@@ -2003,10 +2007,14 @@ def schedule_action_view(request):
         payload["executorType"] = executor_type
     if partner_id:
         payload["assignedPartnerId"] = partner_id
-    # "Facilitated by" (owner, 2026-09-29): blank is Staff.
-    facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
-    if facilitating_partner_id:
-        payload["facilitatingPartnerId"] = facilitating_partner_id
+    # "Facilitated by" (owner, 2026-09-29): blank is Staff. A form that
+    # showed the field always sends it, so a blank is the planner choosing
+    # Staff; a caller that never asked (no field) leaves a cluster session to
+    # the partner its cluster is assigned to (apps.clusters.facilitation).
+    if "facilitating_partner_id" in request.POST:
+        payload["facilitatingPartnerId"] = request.POST.get(
+            "facilitating_partner_id", ""
+        ).strip()
     if project_id:
         payload["projectId"] = project_id
     if priority_allocation_id:
@@ -2102,6 +2110,8 @@ def bulk_assign_partner_drawer_view(request):
                 "reason": "" if gate.can_assign_partner else gate.assign_reason,
             }
         )
+    partners = list(assignable_partners())
+    follow_up_named = _follow_up_requires_training()
     return render(
         request,
         "partials/clusters/bulk_assign_partner_drawer.html",
@@ -2109,7 +2119,18 @@ def bulk_assign_partner_drawer_view(request):
             "rows": rows,
             "assignable": [r for r in rows if r["ok"]],
             "outside_scope": len(set(codes)) - len(schools),
-            "partners": assignable_partners(),
+            "partners": partners,
+            # One reason for the whole selection. A Training Follow Up names
+            # the training it follows, school by school, so where the year
+            # requires one it is left to each school's own Assign.
+            "partner_visit_purposes": [
+                (value, label)
+                for value, label in PARTNER_VISIT_PURPOSES
+                if not (value == "training_follow_up" and follow_up_named)
+            ],
+            "follow_up_named_per_school": follow_up_named,
+            "training_courses_json": json.dumps(_partner_training_course_options()),
+            "partner_courses_json": _partner_courses_json(partners),
             "drawer_size": "sm",
         },
     )
@@ -2124,9 +2145,17 @@ def assign_partner_modal_view(request):
 
     school_id = request.GET.get("school_id")
     cluster_id = request.GET.get("cluster_id")
+    if cluster_id and not school_id:
+        # A cluster's schools are never handed to a partner this way; the
+        # partner facilitates the cluster's sessions (owner, 2026-10-02:
+        # "Assigning a cluster to the partner ONLY means they facilitate the
+        # cluster activity NOT assigned to them to do school visit"). An old
+        # link or a stale tab lands on the cluster's facilitator drawer.
+        from apps.frontend.views.cluster_views import cluster_facilitator_drawer_view
+
+        return cluster_facilitator_drawer_view(request, cluster_id)
 
     school = None
-    cluster = None
     locked_visit_purposes: list[str] = []
     locked_visit_reason = ""
     if school_id:
@@ -2147,38 +2176,13 @@ def assign_partner_modal_view(request):
         if _gate.rule == "client" and not _gate.can_assign_visit:
             locked_visit_purposes = list(FOLLOW_UP_PURPOSES)
             locked_visit_reason = _gate.assign_visit_reason
-    if cluster_id:
-        cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
 
-    partners = assignable_partners()
-    partner_catalogue_recommendations = None
-    if cluster:
-        from apps.activity_catalogue.services import recommend_cluster_activities
-
-        partner_catalogue_recommendations = recommend_cluster_activities(
-            cluster=cluster,
-            principal=request.user,
-            project=None,
-            executor_type="partner",
-            limit=3,
-        )
-
-    from apps.activity_catalogue.availability import SCHOOL, training_activity_options
-
-    partner_training_options = [
-        option
-        for option in training_activity_options(
-            planning_context=SCHOOL,
-            school=school,
-            executor_type="partner",
-        )
-        if option["partnerDeliveryAllowed"]
-    ]
+    partners = list(assignable_partners())
+    partner_training_options = _partner_training_course_options(school)
     follow_up_options = _school_training_follow_up_options(school) if school else []
 
     context = {
         "school": school,
-        "cluster": cluster,
         "partners": partners,
         "interventions": SsaIntervention.choices,
         "drawer_size": "md",
@@ -2187,22 +2191,12 @@ def assign_partner_modal_view(request):
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "locked_visit_purposes": locked_visit_purposes,
         "locked_visit_reason": locked_visit_reason,
-        "catalogue_recommendations": partner_catalogue_recommendations,
-        "primary_catalogue_items": (
-            partner_catalogue_recommendations["primary"]
-            if partner_catalogue_recommendations
-            else []
-        ),
-        "other_catalogue_items": (
-            partner_catalogue_recommendations["otherEligible"]
-            if partner_catalogue_recommendations
-            else []
-        ),
         # Who monitors the partner. Never a field to fill: the school already
         # belongs to somebody, so asking again invites a different answer from
         # the assignment record and two versions of who is accountable.
         "monitoring_staff_name": request.user.name or "You",
         "training_activity_options_json": json.dumps(partner_training_options),
+        "partner_courses_json": _partner_courses_json(partners),
         "follow_up_activity_options_json": json.dumps(follow_up_options),
         "follow_up_fy": get_operational_fy(),
         "follow_up_requires_training": _follow_up_requires_training(),
@@ -2214,6 +2208,197 @@ def assign_partner_modal_view(request):
         "prior_withdrawals": _prior_withdrawals(school),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def _partner_training_course_options(school=None) -> list[dict]:
+    """The trainings a school hand-over may name: the governed 21 courses.
+
+    Owner, 2026-10-02: "assigning activities to a partner are still bringing
+    the old projects … it should bring a list of training." The drawer asked
+    for courses flagged for individual-school delivery, and only the EdTech
+    and Early Childhood project courses carry that flag. A course and the
+    workflow that delivers it are separate decisions
+    (``in_school_training_course_options``): the staff drawer and the Core
+    Schools hand-over already offer every course, delivered through the
+    standard In-school Training workflow.
+    """
+    from apps.activity_catalogue.availability import (
+        in_school_training_course_options,
+    )
+
+    return [
+        option
+        for option in in_school_training_course_options(school=school)
+        if option["partnerDeliveryAllowed"]
+    ]
+
+
+def _partner_courses_json(partners) -> str:
+    """The courses each partner is recorded as delivering; a drawer offers
+    only those once a partner who records any is chosen
+    (``partners.capabilities.delivers``, which the save repeats)."""
+    return json.dumps(
+        {
+            partner.id: list(partner.activity_codes)
+            for partner in partners
+            if partner.activity_codes
+        }
+    )
+
+
+def _partner_training_handover(course_id: str, chosen_focus: str | None = None):
+    """The course a training hand-over names and the workflow delivering it.
+
+    Returns ``(workflow_item, course, focus_intervention, reason)``. The
+    course is the planner's choice among the governed 21; the standard
+    In-school Training workflow delivers and costs it, as it does for staff
+    and for a Core School hand-over.
+    """
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        resolve_item_for_workflow_kind,
+    )
+    from apps.core.enums import ActivityType
+
+    if not course_id:
+        raise BadRequest("Select the Training the partner delivers.")
+    selected = validate_in_school_training_course_selection(course_id)
+    course = get_selectable_item(course_id)
+    if not course.partner_delivery_allowed:
+        raise BadRequest("The selected Training is not approved for Partner delivery.")
+    workflow_item = resolve_item_for_workflow_kind(ActivityType.IN_SCHOOL_TRAINING)
+    if workflow_item is None:
+        raise BadRequest(
+            "The standard In-school Training profile must be active before a "
+            "training can be assigned. Ask the Country Director to restore it."
+        )
+    # Recommended, not imposed: the planner's focus, any of the eight; blank
+    # keeps the course's own.
+    focus = (
+        chosen_focus
+        if chosen_focus in SsaIntervention.values
+        else selected["ssaIntervention"] or None
+    )
+    linked = ", ".join(selected["priorityTitles"])
+    reason = (
+        f"Priority activity: {linked}"
+        if linked
+        else f"Governed {selected['category']} training."
+    )
+    return workflow_item, course, focus, reason
+
+
+def _bulk_partner_handover(request) -> dict:
+    """What a bulk hand-over delivers at every selected school.
+
+    One reason for the whole selection, and for an In-school Training one
+    course. A Training Follow Up names the training it follows, which differs
+    school by school, so where the year's policy requires one it is assigned
+    from the school's own row.
+    """
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        resolve_assignment_item,
+    )
+
+    raw = request.POST.get("purpose_of_visit", "").strip()
+    if not raw:
+        raise BadRequest("Select the reason for assigning before confirming.")
+    purpose_of_visit = normalise_visit_purpose(raw, for_partner=True)
+    chosen_focus = request.POST.get("focus_intervention", "").strip() or None
+    if purpose_of_visit == "in_school_training":
+        item, course, focus, reason = _partner_training_handover(
+            request.POST.get("training_course_id", "").strip(), chosen_focus
+        )
+        return {
+            "purpose_of_visit": purpose_of_visit,
+            "item": item,
+            "training_course": course,
+            "focus": focus,
+            "reason": reason,
+            "label": course.display_name,
+        }
+    if purpose_of_visit == "training_follow_up" and _follow_up_requires_training():
+        raise BadRequest(
+            "A Training Follow Up names the training it follows, which differs "
+            "from school to school. Assign it from each school's own Assign."
+        )
+    derived = resolve_assignment_item(
+        purpose_of_visit=purpose_of_visit,
+        expected_activity_type=purpose_activity_type(purpose_of_visit),
+    )
+    if derived is None:
+        raise BadRequest("No approved Partner Activity is configured for this reason.")
+    item = get_selectable_item(derived.id)
+    return {
+        "purpose_of_visit": purpose_of_visit,
+        "item": item,
+        "training_course": None,
+        "focus": chosen_focus if chosen_focus in SsaIntervention.values else None,
+        "reason": (
+            f"{visit_purpose_label(purpose_of_visit)} selected by the assigning "
+            "staff member."
+        ),
+        "label": item.display_name,
+    }
+
+
+def _bulk_handover_focus(handover: dict, school):
+    """The intervention one school's hand-over records.
+
+    A follow-up with no training named takes the school's own first-ranked
+    SSA need, as the single Assign does; SSA Support moves none.
+    """
+    from apps.activity_catalogue.services import resolve_activity_intervention
+
+    focus = handover["focus"]
+    if handover["purpose_of_visit"] == "training_follow_up" and not focus:
+        from apps.ssa.plan_alignment import school_need
+
+        need = school_need(school)
+        focus = need.priorities[0] if need.priorities else None
+    return resolve_activity_intervention(
+        handover["item"], requested_intervention=focus, source_activity=None
+    )
+
+
+def _assert_bulk_handover_allowed(handover: dict, school, partner, bulk_date) -> None:
+    """The single Assign's own school rules, so a school its drawer would
+    refuse is left out of a bulk hand-over too."""
+    from apps.activity_catalogue.services import validate_context
+    from apps.partners.services import assert_partner_activity_allowance
+    from apps.planning.visit_gate import (
+        assert_may_assign_partner_visit,
+        is_gated_visit,
+        rule_for,
+    )
+
+    item = handover["item"]
+    validate_context(
+        item, school=school, cluster=None, project=None, executor_type="partner"
+    )
+    assert_partner_activity_allowance(
+        partner.id,
+        school.id,
+        item.workflow_kind,
+        get_operational_fy(bulk_date) if bulk_date else get_operational_fy(),
+    )
+    if is_gated_visit(rule_for(school.school_type), item.workflow_kind, item):
+        assert_may_assign_partner_visit(school)
+
+
+def _cluster_facilitator_context(cluster) -> dict:
+    """The partner a cluster is assigned to facilitate, for a drawer."""
+    from apps.clusters.facilitation import facilitator_of
+
+    partner = facilitator_of(cluster)
+    return {
+        "cluster_facilitator_id": partner.id if partner else "",
+        "cluster_facilitator_name": partner.name if partner else "",
+    }
 
 
 def _prior_withdrawals(school):
@@ -2348,12 +2533,27 @@ def assign_partner_action_view(request):
     project_id = None
     expected_date = None
 
+    if cluster_id and not school_id:
+        # A cluster is never assigned to a partner (owner, 2026-10-02). This
+        # used to write a hand-over the partner then dated into work it ran
+        # and was paid for in full; a partner facilitates a cluster session,
+        # which staff schedule with "Facilitated by".
+        return error_fragment(
+            BadRequest(
+                "A cluster's schools are not handed to a partner. Use Partner "
+                "to Facilitate on the cluster: the partner facilitates its "
+                "trainings and meetings and is paid the facilitation fee."
+            ),
+            status=400,
+        )
+
     try:
         partner = get_object_or_404(Partner, id=partner_id)
         catalogue_item = None
+        training_course = None
         source_ssa = None
         source_activity = None
-        if school_id or cluster_id:
+        if school_id:
             from apps.activity_catalogue.services import (
                 get_selectable_item,
                 resolve_activity_intervention,
@@ -2369,11 +2569,6 @@ def assign_partner_action_view(request):
                 if school_id
                 else None
             )
-            cluster_for_validation = (
-                get_operational_cluster_or_404(request.user, id=cluster_id)
-                if cluster_id
-                else None
-            )
             if school_for_validation:
                 purpose_of_visit = normalise_visit_purpose(
                     purpose_of_visit,
@@ -2381,36 +2576,17 @@ def assign_partner_action_view(request):
                     fallback_activity_type=activity_type,
                 )
                 if purpose_of_visit == "in_school_training":
-                    if not catalogue_item_id:
-                        raise BadRequest("Select the Activity / Training to assign.")
-                    from apps.activity_catalogue.availability import (
-                        SCHOOL,
-                        validate_priority_training_selection,
+                    # Any of the governed 21 courses, delivered through the
+                    # standard In-school Training workflow (owner, 2026-10-02).
+                    (
+                        workflow_item,
+                        training_course,
+                        focus_intervention,
+                        recommendation_reason,
+                    ) = _partner_training_handover(
+                        catalogue_item_id, focus_intervention
                     )
-
-                    selected_training = validate_priority_training_selection(
-                        catalogue_item_id,
-                        planning_context=SCHOOL,
-                    )
-                    # Recommended, not imposed — see schedule_activity.
-                    focus_intervention = (
-                        focus_intervention
-                        or selected_training["ssaIntervention"]
-                        or None
-                    )
-                    # Planning restrictions removed: partner_delivery_allowed
-                    # is a Catalogue default for who usually delivers a
-                    # course, and validate_context already stopped enforcing
-                    # the delivery-approval flags. Enforcing it here as well
-                    # left the assignment drawer refusing trainings the rest
-                    # of planning offers, so the flag now informs the picker
-                    # and the planner decides.
-                    linked_priorities = ", ".join(selected_training["priorityTitles"])
-                    recommendation_reason = (
-                        f"Priority activity: {linked_priorities}"
-                        if linked_priorities
-                        else f"Governed {selected_training['category']} training."
-                    )
+                    catalogue_item_id = workflow_item.id
                 else:
                     derived = resolve_assignment_item(
                         purpose_of_visit=purpose_of_visit,
@@ -2435,7 +2611,7 @@ def assign_partner_action_view(request):
             validate_context(
                 catalogue_item,
                 school=school_for_validation,
-                cluster=cluster_for_validation,
+                cluster=None,
                 project=None,
                 executor_type="partner",
             )
@@ -2496,8 +2672,6 @@ def assign_partner_action_view(request):
                 requested_intervention=focus_intervention,
                 source_activity=source_activity,
             )
-            if cluster_for_validation and not recommendation_reason:
-                recommendation_reason = "Approved Cluster Activity assignment."
 
         # PartnerAssignment and Activity.monitor fields use the StaffProfile
         # CUID when one exists.  Falling back to the User id keeps Admins
@@ -2514,19 +2688,18 @@ def assign_partner_action_view(request):
         # same submission, not a new one.
         DEDUP_WINDOW = timezone.timedelta(seconds=15)
 
-        def _recent_duplicate(*, school=None, cluster=None, act_type):
-            qs = PartnerAssignment.objects.filter(
-                partner=partner,
-                assigning_staff_id=monitored_by_staff_id,
-                expected_activity_type=act_type,
-                created_at__gte=timezone.now() - DEDUP_WINDOW,
+        def _recent_duplicate(*, school, act_type):
+            return (
+                PartnerAssignment.objects.filter(
+                    partner=partner,
+                    school=school,
+                    assigning_staff_id=monitored_by_staff_id,
+                    expected_activity_type=act_type,
+                    created_at__gte=timezone.now() - DEDUP_WINDOW,
+                )
+                .order_by("-created_at")
+                .first()
             )
-            qs = (
-                qs.filter(school=school)
-                if school is not None
-                else qs.filter(cluster=cluster)
-            )
-            return qs.order_by("-created_at").first()
 
         # What this save hands over, for the confirmation's Undo.
         created_ids = []
@@ -2540,7 +2713,11 @@ def assign_partner_action_view(request):
                 for_partner=True,
                 fallback_activity_type=activity_type,
             )
-            assignment_purpose = purpose or catalogue_item.display_name
+            assignment_purpose = purpose or (
+                training_course.display_name
+                if training_course is not None
+                else catalogue_item.display_name
+            )
             normalized_type = catalogue_item.workflow_kind
             # The person making the handoff remains its monitor. This is the
             # same identity shown read-only in the drawer.
@@ -2592,6 +2769,7 @@ def assign_partner_action_view(request):
                     monitoring_staff_id=monitoring_staff_id,
                     assignment_mode="specific_activity",
                     catalogue_item=catalogue_item,
+                    training_course=training_course,
                     source_ssa=source_ssa,
                     source_activity=source_activity,
                     project_id=project_id,
@@ -2602,36 +2780,6 @@ def assign_partner_action_view(request):
                     purpose_of_visit=purpose_of_visit,
                     focus_intervention=focus_intervention,
                     expected_activity_type=normalized_type,
-                    scheduled_date=expected_date,
-                    notes=notes,
-                )
-                created_ids.append(handover.id)
-
-        if cluster_id:
-            cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
-            assignment_purpose = purpose or catalogue_item.display_name
-            act_type = catalogue_item.workflow_kind
-            dup = _recent_duplicate(cluster=cluster, act_type=act_type)
-            if dup:
-                response = HttpResponse("<script>window.location.reload();</script>")
-                response["HX-Trigger"] = "close-drawer"
-                return response
-            with transaction.atomic():
-                # Create PartnerAssignment for cluster
-                handover = partner_services.create_assignment(
-                    cluster=cluster,
-                    partner=partner,
-                    assigning_staff_id=monitored_by_staff_id,
-                    assignment_mode="specific_activity",
-                    catalogue_item=catalogue_item,
-                    source_activity=source_activity,
-                    project_id=project_id,
-                    recommendation_reason=recommendation_reason,
-                    override_reason=override_reason,
-                    catalogue_snapshot=catalogue_item.snapshot(),
-                    purpose=assignment_purpose,
-                    focus_intervention=focus_intervention,
-                    expected_activity_type=act_type,
                     scheduled_date=expected_date,
                     notes=notes,
                 )
@@ -2724,8 +2872,17 @@ def bulk_action_view(request):
         # Only a partner who may take new work: active, and not on hold.
         partner = get_object_or_404(assignable_partners(), id=partner_id)
         from datetime import date as _date
-        from apps.activity_catalogue.services import recommend_activities
         from apps.ssa.services import latest_applicable_record
+
+        # What the selection is handed over for: the planner's choice, the
+        # same one the single Assign asks for (owner, 2026-10-02). This used
+        # to take each school's top Catalogue recommendation, which handed
+        # partners old project activities nobody had chosen and filed every
+        # one of them as SSA Support.
+        try:
+            handover = _bulk_partner_handover(request)
+        except Exception as exc:
+            return error_fragment(exc, status=400)
 
         bulk_date_raw = request.POST.get("scheduled_date", "").strip()
         bulk_date = None
@@ -2756,42 +2913,31 @@ def bulk_action_view(request):
                     if not visit_gate(s).can_assign_partner:
                         gated.append(s.name)
                         continue
-                    result = recommend_activities(
-                        school=s,
-                        principal=request.user,
-                        executor_type="partner",
-                        limit=1,
-                    )
-                    if not result["primary"]:
-                        raise BadRequest(
-                            f"No Partner-deliverable Catalogue Activity is eligible for {s.name}."
-                        )
-                    recommendation = result["primary"][0]
-                    from apps.activity_catalogue.models import ActivityCatalogueItem
-
-                    item = ActivityCatalogueItem.objects.get(
-                        id=recommendation["catalogueItemId"]
-                    )
+                    item = handover["item"]
                     try:
                         # A savepoint per school: one the hand-over rules
                         # refuse (a Core package whose partner half is taken,
-                        # a third partner at one school) is left out and
-                        # named, and the rest of the selection still goes.
+                        # a third partner at one school, a visit already used
+                        # this year) is left out and named, and the rest of
+                        # the selection still goes.
                         with transaction.atomic():
-                            handover = partner_services.create_assignment(
+                            _assert_bulk_handover_allowed(
+                                handover, s, partner, bulk_date
+                            )
+                            created = partner_services.create_assignment(
                                 school=s,
                                 partner=partner,
                                 assigning_staff_id=monitored_by_staff_id,
+                                monitoring_staff_id=monitored_by_staff_id,
                                 assignment_mode="specific_activity",
                                 catalogue_item=item,
+                                training_course=handover["training_course"],
                                 source_ssa=latest_applicable_record(s),
-                                recommendation_reason=recommendation[
-                                    "recommendationReason"
-                                ],
+                                recommendation_reason=handover["reason"],
                                 catalogue_snapshot=item.snapshot(),
-                                purpose=item.display_name,
-                                purpose_of_visit="ssa_support",
-                                focus_intervention=recommendation["targetIntervention"],
+                                purpose=handover["label"],
+                                purpose_of_visit=handover["purpose_of_visit"],
+                                focus_intervention=_bulk_handover_focus(handover, s),
                                 expected_activity_type=item.workflow_kind,
                                 scheduled_date=bulk_date,
                                 notes=(
@@ -2802,7 +2948,7 @@ def bulk_action_view(request):
                     except (BadRequest, ConflictError):
                         gated.append(s.name)
                         continue
-                    created_ids.append(handover.id)
+                    created_ids.append(created.id)
         except Exception as exc:
             return error_fragment(exc, status=400)
         # A confirmation in place of the reload this used to answer with, so
