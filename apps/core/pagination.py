@@ -167,8 +167,10 @@ def elided_page_numbers(page_obj, *, on_each_side: int = 1, on_ends: int = 1):
 #
 # Started on My Plan and now shared. A table with no bound grows with the data
 # behind it, so two cards side by side end up different heights and the page
-# scrolls for reasons nobody chose. Every table shows ten rows and the rest sit
-# behind pages.
+# scrolls for reasons nobody chose. Every table shows fifty rows and the rest
+# sit behind pages (owner, 2026-10-02: "All table in the platform should hold
+# 50 records in each page the rest hidden in the paginations"). It was ten; a
+# table that named a size of its own now takes this one.
 #
 # The page count is not a fixed window -- it runs to the end of the data, so a
 # person who planned three weeks gets three weeks of pages and one who planned
@@ -181,7 +183,7 @@ def elided_page_numbers(page_obj, *, on_each_side: int = 1, on_ends: int = 1):
 # should be paged in the view too, and
 # `apps/system_health/table_inventory.py` is what tells you which those are.
 
-TABLE_PAGE_SIZE = 10
+TABLE_PAGE_SIZE = 50
 
 
 def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -> dict:

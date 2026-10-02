@@ -105,7 +105,7 @@ class="school-filters-form space-y-3"
 <!-- Hidden input to preserve tab filter state -->
 <input type="hidden" name="tab" id="filters-tab-input" value="{{ active_tab|default:'all' }}">
 <input type="hidden" name="page" id="filters-page-input" value="{{ page_obj.number|default:1 }}">
-<input type="hidden" name="per_page" id="filters-per-page-input" value="{{ per_page|default:15 }}">
+<input type="hidden" name="per_page" id="filters-per-page-input" value="{{ per_page|default:50 }}">
 
 <!-- Row 1 Filters -->
 <div class="school-filter-grid grid gap-3">

@@ -391,4 +391,57 @@ test.describe('Responsive contract — behaviours', () => {
       await context.close();
     }
   });
+
+  test('the scroll hint is a slim orange note that leaves by itself', async ({ browser, baseURL, browserName, isMobile }) => {
+    // Owner, 2026-10-02: "remove the sticky swipe to view column black pill
+    // and make it appear temporarily ... maybe orange ... reduce the pill size
+    // by 40% keep the length because i dont want wrapping".
+    onlyChromiumDesktop({ browserName, isMobile });
+    const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'pl1@edify.org');
+    try {
+      await page.evaluate(() => sessionStorage.removeItem('edify-table-swipe-learned'));
+      await page.goto('/partner-oversight/');
+      const hint = page.locator('.edify-table-scroll-hint');
+      await expect(hint).toHaveText('Swipe to view more columns');
+      // Its few seconds start when it is on screen, not at page load.
+      await hint.evaluate(element => element.parentElement.scrollIntoView({ block: 'center' }));
+      await expect(hint).toHaveAttribute('data-hint-state', 'seen');
+      const look = await hint.evaluate(element => {
+        const style = getComputedStyle(element);
+        const box = element.getBoundingClientRect();
+        const row = element.parentElement.querySelector('thead tr').getBoundingClientRect();
+        return {
+          height: box.height,
+          lines: box.height / parseFloat(style.fontSize),
+          fill: style.backgroundColor,
+          badge: getComputedStyle(document.documentElement).getPropertyValue('--edify-notification').trim(),
+          offCentre: Math.abs(box.top + box.height / 2 - (row.top + row.height / 2)),
+        };
+      });
+      // The pill was 23.6px tall; three-fifths of that, still one line.
+      expect(look.height).toBeLessThanOrEqual(15);
+      expect(look.lines).toBeLessThan(1.5);
+      expect(look.offCentre).toBeLessThanOrEqual(1.5);
+      const fill = await page.evaluate(colour => {
+        const probe = document.createElement('span');
+        probe.style.backgroundColor = colour;
+        document.body.appendChild(probe);
+        const resolved = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return resolved;
+      }, look.badge);
+      expect(look.fill).toBe(fill);
+
+      await expect(hint).toHaveCount(0, { timeout: 7_000 });
+      // Gone for the page: measuring the table again does not bring it back.
+      await page.setViewportSize({ width: 412, height: 844 });
+      await settle(page);
+      await expect(hint).toHaveCount(0);
+      // Nobody scrolled, so the next page says it once more.
+      await page.reload();
+      await expect(hint).toHaveCount(1);
+    } finally {
+      await context.close();
+    }
+  });
 });

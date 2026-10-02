@@ -253,6 +253,30 @@ class ResponsiveLayerTest(SimpleTestCase):
         self.assertIn(".edify-table-scroll-hint", block)
         self.assertIn("animation: none;", block)
 
+    def test_the_hint_is_a_slim_orange_note_that_passes(self):
+        """Owner, 2026-10-02: the hint was a near-black pill that stayed on the
+        heading row until the table was scrolled. It is the platform's orange,
+        three-fifths as tall on one unwrapped line, and it leaves by itself."""
+        start = self.css.index("\n.edify-table-scroll-hint {")
+        rule = self.css[start : self.css.index("}", start)]
+        self.assertIn("background: var(--edify-notification);", rule)
+        self.assertIn("color: var(--edify-on-warm-fill);", rule)
+        self.assertNotIn("var(--edify-text)", rule)
+        self.assertIn("padding: 0.0625rem 0.625rem;", rule)
+        self.assertIn("line-height: 1;", rule)
+        self.assertIn("white-space: nowrap;", rule)
+        self.assertIn(
+            '.edify-table-scroll-hint[data-hint-state="leaving"] {\n  opacity: 0;',
+            self.css,
+        )
+        js = MICRO_UX_JS.read_text()
+        self.assertIn("function passHint", js)
+        self.assertIn("hint.dataset.hintState = 'leaving';", js)
+        # Its seconds start when it is on screen: the table is often below the fold.
+        self.assertIn("new IntersectionObserver", js)
+        # Gone for the page: a later measurement must not put it back.
+        self.assertIn("hintScreen.matches && !hintGone && !swipeLearned()", js)
+
     def test_the_workspace_never_scrolls_sideways(self):
         self.assertIn(".edify-workspace {\n  overflow-x: hidden;", self.css)
 

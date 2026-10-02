@@ -6,35 +6,35 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 616 |
-| Control declarations | 3719 |
+| Templates with controls | 615 |
+| Control declarations | 3725 |
 | State-changing | 442 |
 | High-consequence (state-changing) | 199 |
-| No automated evidence | 288 |
+| No automated evidence | 286 |
 | State-changing with no automated evidence | 23 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1285 |
-| disclosure | 72 |
-| field | 1285 |
-| link | 1009 |
+| button | 1288 |
+| disclosure | 71 |
+| field | 1290 |
+| link | 1008 |
 | tab | 68 |
 
 | Evidence | Count |
 |---|---:|
-| browser-rendered | 795 |
-| none | 288 |
-| page-tested | 1430 |
-| request-tested | 1206 |
+| browser-rendered | 794 |
+| none | 286 |
+| page-tested | 1434 |
+| request-tested | 1211 |
 
 ## State-changing controls with no automated evidence
 
 | ID | Template | Line | Control | Request |
 |---|---|---:|---|---|
-| INT-65B7A9DC92BF | pages/schools/upload_preview.html | 17 | Cancel Import | `POST ` |
-| INT-A6D162328722 | pages/schools/upload_preview.html | 25 | Confirm & Import | `POST ` |
+| INT-65B7A9DC92BF | pages/schools/upload_preview.html | 23 | Cancel Import | `POST ` |
+| INT-A6D162328722 | pages/schools/upload_preview.html | 31 | Confirm & Import | `POST ` |
 | INT-4B01FF14EDDC | partials/analytics/panels/decision_intelligence.html | 27 | Rescan FY {{ fy }} | `POST ` |
 | INT-50C5EA35C587 | partials/business_transformation/loan_drawer.html | 35 | Confirm & complete | `POST /loans/{{ loan.id }}/salesforce-confirmation` |
 | INT-18330D9DA127 | partials/business_transformation/loan_drawer.html | 54 | Submit IA decision | `POST /loans/{{ loan.id }}/ia-validation` |

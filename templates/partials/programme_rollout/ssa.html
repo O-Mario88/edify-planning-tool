@@ -76,7 +76,7 @@ apps.analytics.programme_rollout_service.ssa_rollout.
   <div class="rpl-card__footnote">A school takes the first state it qualifies for. A school two officers share counts in both rows and once in the team total. Awaiting IA verification includes a collection held whose confirmed record has not arrived.</div>
 </section>
 
-{% paginate rollout.clusters "cluster_page" 12 as cluster_pager %}
+{% paginate rollout.clusters "cluster_page" as cluster_pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-ssa-clusters-title" data-rollout-ssa-clusters>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">

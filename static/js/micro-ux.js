@@ -653,11 +653,14 @@
      `data-scroll-state` — none (the table fits), start, middle or end — and
      responsive-system.css turns that into a sticky identity column and a
      trailing fade. The first overflowing table on a narrow or touch screen
-     also carries a one-time hint until any table has been scrolled in this
-     session. Layout geometry only: nothing here is a quantity the server
-     owns. */
+     also carries a hint, on each page until any table has been scrolled in
+     this session. The hint passes (owner, 2026-10-02): a few seconds from
+     when it is on screen, centred on the heading row so the slim pill covers
+     the words, then gone for the page however often the table is measured.
+     Layout geometry only: nothing here is a quantity the server owns. */
   var SWIPE_LEARNED_KEY = 'edify-table-swipe-learned';
   var hintScreen = window.matchMedia('(max-width: 63.99rem), (pointer: coarse)');
+  var hintGone = false;
 
   function swipeLearned() {
     try { return window.sessionStorage.getItem(SWIPE_LEARNED_KEY) === '1'; } catch (error) { return false; }
@@ -666,6 +669,22 @@
   function learnSwipe() {
     try { window.sessionStorage.setItem(SWIPE_LEARNED_KEY, '1'); } catch (error) { /* storage blocked: the hint simply returns next page */ }
     document.querySelectorAll('.edify-table-scroll-hint').forEach(function (hint) { hint.remove(); });
+  }
+
+  function passHint(hint) {
+    var watch = new IntersectionObserver(function (entries) {
+      if (!entries[entries.length - 1].isIntersecting) return;
+      watch.disconnect();
+      var row = hint.parentElement.querySelector(':scope > table > thead > tr');
+      if (row) hint.style.setProperty('--edify-hint-top', row.offsetTop + (row.offsetHeight - hint.offsetHeight) / 2 + 'px');
+      hint.dataset.hintState = 'seen';
+      window.setTimeout(function () {
+        hintGone = true;
+        hint.dataset.hintState = 'leaving';
+        window.setTimeout(function () { hint.remove(); }, 300);
+      }, 4000);
+    });
+    watch.observe(hint);
   }
 
   function scrollStateOf(region) {
@@ -708,7 +727,7 @@
       /* Pinning the identity starts or stops capping its name. */
       if (pinned) titleTruncatedLabels(region);
     }
-    if (state === 'start' && hintScreen.matches && !swipeLearned() &&
+    if (state === 'start' && hintScreen.matches && !hintGone && !swipeLearned() &&
         !document.querySelector('.edify-table-scroll-hint')) {
       var hint = document.createElement('span');
       hint.className = 'edify-table-scroll-hint';
@@ -717,6 +736,7 @@
         ? 'Swipe to view more columns'
         : 'Scroll sideways to view more columns';
       region.appendChild(hint);
+      passHint(hint);
     }
   }
 

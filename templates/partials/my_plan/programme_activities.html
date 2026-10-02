@@ -22,7 +22,7 @@ Programme Activities Planned for {% if period == 'week' %}This Week{% elif perio
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate programme_activities "programme_activities_page" 20 as programme_activities_pager %}
+{% paginate programme_activities "programme_activities_page" as programme_activities_pager %}
 {% if programme_activities %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>

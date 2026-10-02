@@ -134,7 +134,7 @@ styled only the view you happened to enter from.{% endcomment %}
       {% endfor %}
     </ul>
 
-    {% paginate milestone_rows "milestones_page" 10 as milestones_pager %}
+    {% paginate milestone_rows "milestones_page" as milestones_pager %}
     <div class="priority-record-shell edify-surface" role="region" aria-label="Priority groups and milestones table" tabindex="0" data-table-scroll-region>
       <div class="priority-record-grid" role="table" aria-rowcount="{{ milestone_count }}">
         <div class="priority-record-header priority-record-columns" role="row">

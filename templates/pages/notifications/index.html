@@ -130,7 +130,7 @@
 
   <!-- Notification Feed list -->
   <div class="edify-surface border border-slate-200 rounded-surface overflow-hidden shadow-xs">
-    {% paginate notifications "page" 25 as notifications_pager %}
+    {% paginate notifications "page" as notifications_pager %}
     {% if notifications_pager.rows %}
       <div class="divide-y divide-slate-100">
         {% for n in notifications_pager.rows %}

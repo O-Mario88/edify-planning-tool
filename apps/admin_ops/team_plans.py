@@ -36,7 +36,7 @@ from apps.my_plan.services import (
 # Terminal statuses the canonical feed excludes from an active plan.
 _TERMINAL = ["closed", "cancelled", "rejected"]
 
-PAGE_SIZE = 100
+PAGE_SIZE = 50
 
 GROUP_BY_CHOICES = [
     ("user", "User"),

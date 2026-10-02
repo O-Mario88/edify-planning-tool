@@ -327,7 +327,7 @@ def drawer_view(request):
 
 
 # ── Locked period snapshots (spec §22) ───────────────────────────────────────
-SNAPSHOT_PAGE_SIZE = 15
+SNAPSHOT_PAGE_SIZE = 50
 
 
 def _paged(items, page: int, size: int = SNAPSHOT_PAGE_SIZE) -> dict:
