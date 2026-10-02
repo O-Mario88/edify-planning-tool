@@ -435,10 +435,9 @@ class RolePermissionService:
         # redirected to their own, where it can never appear. That reads as
         # "it did not save".
         #
-        # This does not constrain the admin *person*: roles are per user and
-        # switched through active_role, so an admin who is also a CCEO plans
-        # their own portfolio as the CCEO — the same escape hatch every other
-        # reserved authority in this boundary uses.
+        # An Admin account is never also a CCEO (apps.core.rbac
+        # .admin_is_also_cceo), so there is no second hat to plan under:
+        # whoever plans a portfolio does it from a CCEO account of their own.
         if role in [EdifyRole.ADMIN.value, "PartnerAdmin", "PartnerFieldOfficer"]:
             return False
         if school_or_cluster is None:

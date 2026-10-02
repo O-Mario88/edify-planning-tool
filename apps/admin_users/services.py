@@ -89,6 +89,19 @@ def assert_may_administer(target, principal, *, requested_roles=None):
         raise BadRequest("Only an Admin can grant the Admin role.")
 
 
+def assert_admin_is_not_cceo(roles) -> None:
+    """Admin and CCEO are never held by one account, whoever is asking
+    (apps.core.rbac.admin_is_also_cceo). Refused here in words before the
+    database refuses it with a constraint name."""
+    from apps.core.rbac import admin_is_also_cceo
+
+    if admin_is_also_cceo(roles):
+        raise BadRequest(
+            "An Admin account cannot also be a CCEO. Give the field work to a "
+            "separate CCEO account."
+        )
+
+
 def create(data: dict, principal) -> dict:
     email = (data.get("email") or "").lower()
     if User.objects.filter(email=email, deleted_at__isnull=True).exists():
@@ -100,6 +113,7 @@ def create(data: dict, principal) -> dict:
     roles = list(dict.fromkeys([role, *additional]))
     # No target yet, but the requested roles still need the Admin-grant guard.
     assert_may_administer(None, principal, requested_roles=roles)
+    assert_admin_is_not_cceo(roles)
 
     password = data.get("password")
     if password:
@@ -451,6 +465,7 @@ def update_user(user_id: str, data: dict, principal) -> dict:
                 "granted roles from the role switcher, or ask another Admin."
             )
         assert_may_administer(user, principal, requested_roles=requested_roles)
+        assert_admin_is_not_cceo(requested_roles)
 
     email = (data.get("email") or "").lower().strip()
     if email and email != user.email:

@@ -198,6 +198,19 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     class Meta:
         db_table = "user"
         ordering = ["-created_at"]
+        constraints = [
+            # apps.core.rbac.admin_is_also_cceo, held by the database.
+            models.CheckConstraint(
+                condition=~(
+                    models.Q(roles__contains=[EdifyRole.ADMIN.value])
+                    & (
+                        models.Q(roles__contains=[EdifyRole.CCEO.value])
+                        | models.Q(active_role=EdifyRole.CCEO.value)
+                    )
+                ),
+                name="user_admin_is_never_cceo",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} <{self.email}>"

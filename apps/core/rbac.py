@@ -314,10 +314,10 @@ P = Permission
 # that matters most in a system that moves money and keeps a tamper-evident
 # chain of who did what.
 #
-# This does NOT stop the admin *person* doing field work. Roles are held per
-# user and switched via active_role, so an admin who is also a CCEO does field
-# work as the CCEO. What it stops is the Admin role itself being a way around
-# the separation — which is exactly what a super-role must not be.
+# Nor is the way around it a second hat on the same account: an Admin account
+# never holds CCEO (admin_is_also_cceo, below). Field work belongs to a
+# separate CCEO account, so the Admin role is never a way around the
+# separation — which is exactly what a super-role must not be.
 #
 # Admin keeps broad platform-support visibility, but explicitly governed
 # financial domains are excluded as a whole. A technical super-role is not an
@@ -972,6 +972,22 @@ for _role, _grants in _PARTNER_SUPPORT_GRANTS.items():
         *ROLE_PERMISSIONS[_role],
         *(p for p in _grants if p not in ROLE_PERMISSIONS[_role]),
     ]
+
+
+def admin_is_also_cceo(roles, active_role: str | None = None) -> bool:
+    """An Admin account is never a CCEO (owner, 2026-10-02: "remove admin from
+    being a cceo. Admin should never be a CCEO").
+
+    The super-admin used to carry both hats (accounts 0021) and so stood in
+    every list of CCEOs: team rosters, targets, the monitors. True when an
+    account holding Admin also holds CCEO or is acting as one. The user
+    service refuses it, `user_admin_is_never_cceo` is the same rule in the
+    database, and accounts 0036 took the hat off the accounts that had it.
+    """
+    held = set(roles or [])
+    if EdifyRole.ADMIN.value not in held:
+        return False
+    return EdifyRole.CCEO.value in held or active_role == EdifyRole.CCEO.value
 
 
 def permissions_for_role(role: EdifyRole | str) -> list[str]:
