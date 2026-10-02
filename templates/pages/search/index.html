@@ -1,17 +1,13 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Search — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Search</p>
-<h1 class="edify-page-title edify-page-header__title">Search</h1>
-<p class="edify-page-header__description">Edify Operations · Search</p>
-</div>
-</div>
+{% page_header eyebrow="Search" title="Search" description="Edify Operations · Search" element="div" %}
+{% endpage_header %}
 
 {% comment %}
 The page-body search box is gone. It posted to /search with name="q" — the

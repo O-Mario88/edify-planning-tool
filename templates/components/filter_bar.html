@@ -1,0 +1,16 @@
+{% comment %}
+A page's filter row: components.py, {% filter_bar %}.
+
+One filter model for the platform (2026-10-01): the row applies itself when a
+field changes, so there is no Apply button to find. The button stays, inside
+<noscript>, for a browser that cannot run the change handler. A Clear link is
+drawn when the page passes `reset_url`; micro-ux.js turns it into the row's ×.
+
+Markup contract: `form.edify-filter-bar` is one of the containers
+micro-ux.js arranges into the one-row filter layout (FILTER_CONTAINERS).
+{% endcomment %}
+<form method="get"{% if action %} action="{{ action }}"{% endif %}{% if form_id %} id="{{ form_id }}"{% endif %} class="edify-filter-bar{% if extra_class %} {{ extra_class }}{% endif %}"{% if label %} aria-label="{{ label }}"{% endif %} x-data @change="$el.requestSubmit()">
+{{ fields }}
+<noscript><button type="submit" class="btn btn-primary h-9">Apply</button></noscript>
+{% if reset_url %}<a href="{{ reset_url }}" class="btn btn-secondary h-9">Clear</a>{% endif %}
+</form>

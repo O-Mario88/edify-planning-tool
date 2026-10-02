@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity row_actions %}
 
 {% block title %}Sample Checks · Edify{% endblock %}
@@ -20,20 +21,14 @@ written, and is the row's only action, so its form stays in the cell.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-ia-samples>
 
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Verification</p>
-      <h1 class="edify-page-title edify-page-header__title">Sample Checks</h1>
-      <p class="edify-page-header__description">A second look at {{ share_pct }}% of last week's verified activities and confirmed SSA records in your country, drawn every Monday. A verifier other than the original one confirms or disputes each; a disputed SSA returns to its collector and a disputed activity leaves analytics until the dispute is resolved.</p>
-    </div>
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Verification" title="Sample Checks" element="div" %}
+    {% slot description %}A second look at {{ share_pct }}% of last week's verified activities and confirmed SSA records in your country, drawn every Monday. A verifier other than the original one confirms or disputes each; a disputed SSA returns to its collector and a disputed activity leaves analytics until the dispute is resolved.{% endslot %}
       {% if can_draw %}
       <form method="post" action="/ia/samples/draw">{% csrf_token %}
         <button type="submit" class="btn btn-primary h-8">Draw this week now</button>
       </form>
       {% endif %}
-    </div>
-  </div>
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

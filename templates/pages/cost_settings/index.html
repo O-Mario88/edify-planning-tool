@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 {% load frontend_filters table_pagination %}
 
@@ -7,15 +8,12 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Finance</p>
 {% comment %}One register, two doors: the Country Director edits it as the Cost
 Catalogue; the RVP and the Accountant read it as Cost Intelligence. Each door
 says the name its sidebar entry carries.{% endcomment %}
-<h1 class="edify-page-title edify-page-header__title">{% if request.resolver_match.url_name == 'cost_intelligence' %}Cost Intelligence{% else %}Cost Catalogue{% endif %}</h1>
-<p class="edify-page-header__description">FY{{ fy }} approved cost items for activity budgeting</p>
-</div>
+{% page_header eyebrow="Finance" element="div" %}
+  {% slot title %}{% if request.resolver_match.url_name == 'cost_intelligence' %}Cost Intelligence{% else %}Cost Catalogue{% endif %}{% endslot %}
+  {% slot description %}FY{{ fy }} approved cost items for activity budgeting{% endslot %}
 {% comment %}
 Adding a cost is a button, in the header where every page keeps its action
 (owner, 2026-09-07). It was a `<summary>` that unfolded a four-column form
@@ -25,7 +23,6 @@ is the platform's compact short filter field, changing on select; it was a
 320px box with a "Show year" button beside it (owner, 2026-09-14).
 {% endcomment %}
 {% if can_manage_rates %}
-<div class="edify-page-header__controls">
 <button
 type="button"
 hx-get="/cost-settings/add?fy={{ selected_fy }}"
@@ -33,9 +30,8 @@ hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="btn btn-primary h-8"
 >Add new cost</button>
-</div>
 {% endif %}
-</div>
+{% endpage_header %}
 
 <form method="get" action="/cost-settings" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Fiscal year" x-data>
   <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="cost-settings-fy" class="edify-filter-label">Fiscal year</label>

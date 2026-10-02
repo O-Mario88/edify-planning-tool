@@ -1,4 +1,4 @@
-{% load frontend_filters school_identity table_pagination %}
+{% load components frontend_filters school_identity table_pagination %}
 {% comment %}
 The Execution & Completion Monitor (owner, 2026-09-29): the Planning
 Monitor's people — each Programme Lead (280 visits a year) and CCEO (560)
@@ -17,15 +17,13 @@ the activities behind it.
 
   {% if not monitor_embedded %}{% include "partials/oversight/_execution_filters.html" %}{% endif %}
 
-  <section class="card p-0 overflow-hidden" aria-labelledby="execution-title">
-    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="execution-title">Execution &amp; completion · FY {{ fy }}</h3>
-      <span class="tabular-nums">{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete</span>
-    </header>
+  {% data_table name="execution" %}
+    {% slot title %}Execution &amp; completion · FY {{ fy }}{% endslot %}
+    {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete{% endslot %}
+    {% slot caption %}Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
+    {% slot footer %}{% include "partials/oversight/_execution_about.html" %}{% endslot %}
     {% if execution.teams %}
-    <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-execution-table>
-        <caption class="sr-only">Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.</caption>
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">Staff</th>
@@ -62,24 +60,16 @@ the activities behind it.
           {% include "partials/oversight/_execution_row.html" with row=execution_totals is_subtotal=True label=monitor_is_country|yesno:"Country total,Team total" %}
         </tfoot>
         {% endif %}
-      </table>
-    </div>
-    {% include "partials/oversight/_execution_about.html" %}
-    {% else %}
-    {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
     {% endif %}
-  </section>
+  {% enddata_table %}
 
   {% if execution_list %}
   {% paginate execution.rows "work_page" as work_pager %}
-  <section class="card p-0 overflow-hidden" aria-labelledby="execution-list-title" data-execution-list="{{ execution_list }}">
-    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="execution-list-title">{{ execution_list_label }}</h3>
-      <span class="tabular-nums">{{ work_pager.total|intcomma }} activit{{ work_pager.total|pluralize:"y,ies" }}</span>
-    </header>
-    <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
-        <caption class="sr-only">Activities: {{ execution_list_label|lower }}, with the school, the person responsible and what is missing.</caption>
+  {% data_table name="execution-list" %}
+    {% slot title %}{{ execution_list_label }}{% endslot %}
+    {% slot summary %}{{ work_pager.total|intcomma }} activit{{ work_pager.total|pluralize:"y,ies" }}{% endslot %}
+    {% slot caption %}Activities: {{ execution_list_label|lower }}, with the school, the person responsible and what is missing.{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=work_pager param="work_page" pagination_label=execution_list_label %}{% endslot %}
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">School ID</th>
@@ -108,9 +98,6 @@ the activities behind it.
           <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">Nothing in scope matches: {{ execution_list_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
-      </table>
-    </div>
-    {% include "components/table_pager.html" with pager=work_pager param="work_page" pagination_label=execution_list_label %}
-  </section>
+  {% enddata_table %}
   {% endif %}
 </section>

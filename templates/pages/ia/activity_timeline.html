@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Activity Timeline · Edify{% endblock %}
 
@@ -6,12 +7,9 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Header -->
 {% include "partials/_back_link.html" with back_href="/ia/verification/" back_label="Verification Queue" %}
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<h1 class="edify-page-title edify-page-header__title">Activity Execution Timeline</h1>
-<p class="edify-page-header__description">Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).</p>
-</div>
-</div>
+{% page_header title="Activity Execution Timeline" element="div" %}
+  {% slot description %}Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).{% endslot %}
+{% endpage_header %}
 
 <!-- Stepper Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-8 relative">

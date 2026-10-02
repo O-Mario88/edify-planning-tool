@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Measurement Rules · Edify{% endblock %}
@@ -12,17 +13,8 @@ Programme Lead, Project Coordinator). Rows come from
 apps.impact.framework.rules_register; History opens every version.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ssa-mapping-register>
-<div class="edify-page-header">
-  <div class="edify-page-header__lead">
-    <p class="edify-page-header__eyebrow">Measurement framework</p>
-    <h1 class="edify-page-title">Measurement Rules</h1>
-    <p class="edify-page-header__description">
-      Which SSA domain each school-facing, cluster or training activity is meant to
-      move, and how that is judged. Impact Assessment writes each rule and a second
-      reviewer publishes it; only a published rule measures anything.
-    </p>
-  </div>
-</div>
+{% page_header eyebrow="Measurement framework" title="Measurement Rules" description="Which SSA domain each school-facing, cluster or training activity is meant to move, and how that is judged. Impact Assessment writes each rule and a second reviewer publishes it; only a published rule measures anything." element="div" %}
+{% endpage_header %}
 
 {% paginate rows "rules_page" as pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rules-register-title">

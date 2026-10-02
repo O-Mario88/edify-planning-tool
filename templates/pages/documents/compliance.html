@@ -1,17 +1,13 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Policy Compliance — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1500px] mx-auto space-y-6">
-  <header class="edify-page-header">
-    <div class="min-w-0 edify-page-header__lead">
-      <p class="edify-page-eyebrow">People</p>
-      <h1 class="edify-page-title edify-page-header__title">Policy and Manual Compliance</h1>
-      <p class="edify-page-header__description">{{ scope_note }}</p>
-    </div>
-  </header>
+  {% page_header eyebrow="People" title="Policy and Manual Compliance" description=scope_note %}
+  {% endpage_header %}
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Policy compliance" %}
 
@@ -22,7 +18,7 @@
     <span>Declined <strong class="tabular-nums {% if counts.declined %}text-rose-600{% else %}text-slate-700{% endif %}">{{ counts.declined }}</strong></span>
   </div>
 
-  <form method="get" class="edify-filter-bar" aria-label="Policy compliance filters" x-data @change="$el.requestSubmit()">
+  {% filter_bar label="Policy compliance filters" %}
     <label class="flex flex-col gap-1">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Policy</span>
       <select name="document" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
@@ -39,8 +35,7 @@
         <option value="disagreed" {% if filters.state == "disagreed" %}selected{% endif %}>Disagreed</option>
       </select>
     </label>
-    <noscript><button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button></noscript>
-  </form>
+  {% endfilter_bar %}
 
   {% include "partials/_section_nav.html" %}
 

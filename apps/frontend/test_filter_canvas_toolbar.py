@@ -130,12 +130,16 @@ class FilterCanvasToolbarContractTests(TestCase):
             ("templates/pages/partner/activities.html", "Activity filters"),
         ):
             markup = (ROOT / relative_path).read_text(encoding="utf-8")
-            header_start = markup.index("edify-page-header")
-            header_end = (
-                markup.index("</header>", header_start)
-                if "</header>" in markup[header_start:]
-                else markup.index("</div>", header_start)
-            )
+            # The header is the component tag, or the markup it replaced.
+            if "{% page_header " in markup:
+                header_end = markup.index("{% endpage_header %}")
+            else:
+                header_start = markup.index("edify-page-header")
+                header_end = (
+                    markup.index("</header>", header_start)
+                    if "</header>" in markup[header_start:]
+                    else markup.index("</div>", header_start)
+                )
             filter_start = markup.index(filter_id)
             with self.subTest(template=relative_path):
                 self.assertLess(header_end, filter_start)

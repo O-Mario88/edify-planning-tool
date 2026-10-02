@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static table_pagination row_actions %}
 
 {% block title %}User Management — Edify{% endblock %}
@@ -18,14 +19,7 @@ x-data="{
 >
 
 <!-- Header -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Administration</p>
-<h1 class="edify-page-title edify-page-header__title">User Management</h1>
-<p class="edify-page-header__description">Create and configure system users, reporting lines, and partner organisations</p>
-</div>
-
-<div class="edify-page-header__controls">
+{% page_header eyebrow="Administration" title="User Management" description="Create and configure system users, reporting lines, and partner organisations" element="div" %}
 {% if can_manage_partners %}
 {% comment %}The platform's partner onboarding drawer at
 partials/partners/create_partner_drawer.html — this page carried a second,
@@ -53,8 +47,7 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 </svg>
 <span>Add User</span>
 </button>
-</div>
-</div>
+{% endpage_header %}
 
 <!-- Messages / Django Alerts -->
 {% if messages %}

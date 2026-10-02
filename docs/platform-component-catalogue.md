@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **591**
+Components and application partials: **593**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -14,9 +14,11 @@ Components and application partials: **591**
 | `components/card.html` | shared-component | Reusable card interface primitive | info; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/completion_cells.html` | shared-component | Reusable completion cells interface primitive | success, warning; default | inherits containing page contract | inherits semantic parent contract | /cluster-oversight/<br>/core-schools-oversight/<br>/country-planning-oversight/team/<str:staff_id><br>/dashboard<br>/my-plan<br>/partner-oversight/<br>/team-planning-oversight/<br>/team-targets | 0 |
 | `components/context_metrics.html` | shared-component | Reusable context metrics interface primitive | {{ item.tone }}, {{ trend_tone }}; default | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /accounts<br>/accounts/<br>/admin-ops/incidents/<str:incident_id><br>/admin-ops/planning<br>/admin-ops/support<br>/admin-ops/team-plans<br>/admin-panel/data-quality-center<br>/analytics/country-director | 0 |
+| `components/data_table.html` | shared-component | Reusable data table interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/drawers/base_drawer.html` | shared-component | Reusable base drawer interface primitive | canonical; default, error, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id><br>/activities/<str:activity_id>/attendance<br>/activities/<str:activity_id>/complete<br>/activities/<str:activity_id>/evidence<br>/activities/<str:activity_id>/facilitator<br>/activities/<str:activity_id>/partner-ssa-complete<br>/activities/<str:activity_id>/salesforce-id<br>/activities/<str:activity_id>/ssa-upload | 0 |
 | `components/empty_state.html` | shared-component | Reusable empty state interface primitive | {{ tone }}; default, empty | inherits containing page contract | inherits semantic parent contract | /accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/advances<br>/accounts/advances/<br>/accounts/approval-history<br>/accounts/approval-history/ | 0 |
 | `components/evidence_pages_state.html` | shared-component | Reusable evidence pages state interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id>/evidence<br>/offline/evidence-drawer | 0 |
+| `components/filter_bar.html` | shared-component | Reusable filter bar interface primitive | canonical; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `components/form_field.html` | shared-component | Reusable form field interface primitive | canonical; default | inherits containing page contract | accessible name and label | /loan-applications/apply | 0 |
 | `components/kpi_strip.html` | shared-component | Reusable kpi strip interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `components/meter.html` | shared-component | Reusable meter interface primitive | {{ progress.classification.tone|default:; default | inherits containing page contract | accessible name and label | /my-performance<br>/my-performance/development<br>/my-performance/documents<br>/my-performance/values<br>/priorities/master<br>/strategic-priorities<br>/target-distribution | 0 |

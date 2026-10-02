@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination row_actions %}
 
 {% block title %}Completion Reviews · Edify{% endblock %}
@@ -18,13 +19,8 @@ Open, Verified and Return are one Actions menu rather than three buttons
 (owner, 2026-09-26).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-completion-reviews>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Programme implementation</p>
-      <h1 class="edify-page-title edify-page-header__title">Completion Reviews</h1>
-      <p class="edify-page-header__description">Your officers' completed work waiting on your decision: Verified, or Return with the reason — for example, participants not entered in Salesforce. The longest waiting comes first.</p>
-    </div>
-  </div>
+  {% page_header eyebrow="Programme implementation" title="Completion Reviews" description="Your officers' completed work waiting on your decision: Verified, or Return with the reason — for example, participants not entered in Salesforce. The longest waiting comes first." element="div" %}
+  {% endpage_header %}
 
   {% paginate rows "review_page" as pager %}
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>

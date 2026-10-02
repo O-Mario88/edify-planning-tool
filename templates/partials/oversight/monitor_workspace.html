@@ -1,4 +1,4 @@
-{% load frontend_filters school_identity table_pagination %}
+{% load components frontend_filters school_identity table_pagination %}
 {% comment %}
 The Planning Monitor (owner, 2026-09-28, 2026-09-29): each person's year
 against the visits it should hold — 280 for a Programme Lead, 560 for a CCEO,
@@ -21,15 +21,13 @@ and every gap count opens the list of the schools behind it.
 
   {% if not monitor_embedded %}{% include "partials/oversight/_monitor_filters.html" %}{% endif %}
 
-  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-cceo-title">
-    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="monitor-cceo-title">Planning against target · FY {{ fy }}</h3>
-      <span class="tabular-nums">{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_totals.staff_visits|intcomma }} of {{ monitor_totals.visits_target|intcomma }} visits planned</span>
-    </header>
+  {% data_table name="monitor-cceo" %}
+    {% slot title %}Planning against target · FY {{ fy }}{% endslot %}
+    {% slot summary %}{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_totals.staff_visits|intcomma }} of {{ monitor_totals.visits_target|intcomma }} visits planned{% endslot %}
+    {% slot caption %}Each Programme Lead's and CCEO's schools, visits planned against their target, partner work, training coverage and planning gaps, grouped by Programme Lead.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
+    {% slot footer %}{% include "partials/oversight/_monitor_about.html" %}{% endslot %}
     {% if monitor.leads %}
-    <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-monitor-table>
-        <caption class="sr-only">Each Programme Lead's and CCEO's schools, visits planned against their target, partner work, training coverage and planning gaps, grouped by Programme Lead.</caption>
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">Staff</th>
@@ -69,24 +67,16 @@ and every gap count opens the list of the schools behind it.
           {% include "partials/oversight/_monitor_row.html" with row=monitor_totals is_subtotal=True label=monitor_is_country|yesno:"Country total,Team total" %}
         </tfoot>
         {% endif %}
-      </table>
-    </div>
-    {% include "partials/oversight/_monitor_about.html" %}
-    {% else %}
-    {% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}
     {% endif %}
-  </section>
+  {% enddata_table %}
 
   {% if monitor_gap %}
   {% paginate monitor.gap_schools "gap_page" as gap_pager %}
-  <section class="card p-0 overflow-hidden" aria-labelledby="monitor-list-title" data-monitor-gap="{{ monitor_gap }}">
-    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
-      <h3 id="monitor-list-title">{{ monitor_gap_label }}</h3>
-      <span class="tabular-nums">{{ gap_pager.total|intcomma }} school{{ gap_pager.total|pluralize }}</span>
-    </header>
-    <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
-        <caption class="sr-only">Schools: {{ monitor_gap_label|lower }}, with the staff who hold them, cluster and planning state.</caption>
+  {% data_table name="monitor-list" %}
+    {% slot title %}{{ monitor_gap_label }}{% endslot %}
+    {% slot summary %}{{ gap_pager.total|intcomma }} school{{ gap_pager.total|pluralize }}{% endslot %}
+    {% slot caption %}Schools: {{ monitor_gap_label|lower }}, with the staff who hold them, cluster and planning state.{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=gap_pager param="gap_page" pagination_label=monitor_gap_label %}{% endslot %}
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">School</th>
@@ -115,9 +105,6 @@ and every gap count opens the list of the schools behind it.
           <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
-      </table>
-    </div>
-    {% include "components/table_pager.html" with pager=gap_pager param="gap_page" pagination_label=monitor_gap_label %}
-  </section>
+  {% enddata_table %}
   {% endif %}
 </section>

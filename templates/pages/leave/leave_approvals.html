@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -8,14 +9,8 @@
 <div class="px-4 sm:px-6 py-5 space-y-6 max-w-[1600px] mx-auto edify-text">
 
   <!-- Header -->
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Time & Availability</p>
-      <h1 class="edify-page-title edify-page-header__title">Leave Approvals</h1>
-      <p class="edify-page-header__description">Review leave requests, approve coverage, manage conflicts, and keep team operations running.</p>
-    </div>
-
-  </div>
+  {% page_header eyebrow="Time & Availability" title="Leave Approvals" description="Review leave requests, approve coverage, manage conflicts, and keep team operations running." element="div" %}
+  {% endpage_header %}
 
     <!-- Search & Filters -->
     <form id="leave-approvals-filters" method="GET" class="edify-filter-bar" aria-label="Leave approval filters">

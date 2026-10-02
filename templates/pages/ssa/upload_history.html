@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}SSA Upload History — Edify{% endblock %}
 
@@ -11,16 +12,9 @@ where the refused rows are listed with their reasons.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-mobile-family="upload" data-ssa-upload-history>
 
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Baseline & Field Data</p>
-      <h1 class="edify-page-title edify-page-header__title">SSA Upload History</h1>
-      <p class="edify-page-header__description">Every SSA import in your country and what it did. Imported records wait for a verifier other than the uploader; refused rows are listed on each batch's result page.</p>
-    </div>
-    <div class="edify-page-header__controls">
+  {% page_header eyebrow="Baseline & Field Data" title="SSA Upload History" description="Every SSA import in your country and what it did. Imported records wait for a verifier other than the uploader; refused rows are listed on each batch's result page." element="div" %}
       <a href="/ssa/upload/" class="btn btn-primary h-8">Upload SSA file</a>
-    </div>
-  </div>
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

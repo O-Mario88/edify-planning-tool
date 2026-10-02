@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% load table_pagination row_actions %}
 {% block title %}Quality Flags — Edify{% endblock %}
@@ -6,13 +7,8 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Quality Flags</h1>
-<p class="edify-page-header__description">Edify Operations · CD-raised, PL-actioned quality flags</p>
-</div>
-</div>
+{% page_header eyebrow="Quality & Insights" title="Quality Flags" description="Edify Operations · CD-raised, PL-actioned quality flags" element="div" %}
+{% endpage_header %}
 
 {% if can_raise %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5">

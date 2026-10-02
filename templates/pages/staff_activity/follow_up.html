@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% comment %}
   One follow-up as a page — where a notification or the To-Do list opens it.
@@ -9,13 +10,9 @@
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20261002tokens2">{% endblock %}
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 sal-narrow">
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Staff Activity · Follow-up</p>
-      <h1 class="edify-page-header__title edify-page-title">{{ follow_up.get_trigger_display }}</h1>
-      <p class="edify-page-header__description">{% if is_subject %}Your manager followed up with you. Acknowledge it, or ask for clarification.{% else %}About {% firstof follow_up.subject.name follow_up.subject.email %}{% endif %}</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Staff Activity · Follow-up" title=follow_up.get_trigger_display %}
+    {% slot description %}{% if is_subject %}Your manager followed up with you. Acknowledge it, or ask for clarification.{% else %}About {% firstof follow_up.subject.name follow_up.subject.email %}{% endif %}{% endslot %}
+  {% endpage_header %}
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm sal-page-body">
     {% include "partials/staff_activity/_follow_up_body.html" %}
   </section>

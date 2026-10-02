@@ -1,16 +1,13 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Upload Center — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6" data-mobile-family="upload">
 
-  <div class="edify-page-header">
-    <div class="min-w-0 edify-page-header__lead">
-      <p class="edify-page-eyebrow">Files</p>
-      <h1 class="edify-page-title edify-page-header__title">Upload Center</h1>
-      <p class="max-w-3xl edify-page-header__description">Upload and manage school data, SSA files, policies, training resources and other organisational documents.</p>
-    </div>
+  {% page_header eyebrow="Files" title="Upload Center" description="Upload and manage school data, SSA files, policies, training resources and other organisational documents." element="div" %}
+  {% slot aside %}
     {% if show_admin_upload_menu %}
     <button
       type="button"
@@ -23,7 +20,8 @@
       Upload
     </button>
     {% endif %}
-  </div>
+  {% endslot %}
+  {% endpage_header %}
 
   <section aria-labelledby="start-upload-title" class="space-y-3">
     <div>

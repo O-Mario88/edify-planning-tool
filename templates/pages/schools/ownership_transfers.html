@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Ownership Transfers — Edify{% endblock %}
@@ -13,13 +14,8 @@ reconciled through the amendment workflow.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-ownership-transfers>
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Portfolio administration</p>
-<h1 class="edify-page-title edify-page-header__title">Ownership Transfers</h1>
-<p class="edify-page-header__description">Move a district portfolio between staff, and reconcile the targets a transfer affects. A school's own owner is reassigned from its profile.</p>
-</div>
-</div>
+{% page_header eyebrow="Portfolio administration" title="Ownership Transfers" description="Move a district portfolio between staff, and reconcile the targets a transfer affects. A school's own owner is reassigned from its profile." element="div" %}
+{% endpage_header %}
 
 {% if messages %}
 <div class="space-y-2">{% for msg in messages %}<p class="edify-note" data-tone="{% if msg.tags == 'success' %}success{% else %}danger{% endif %}">{{ msg }}</p>{% endfor %}</div>

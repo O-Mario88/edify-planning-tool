@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity table_pagination %}
 {% load frontend_filters %}
 
@@ -6,13 +7,9 @@
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
-<header class="edify-page-header">
-  <div class="edify-page-header__lead">
-  <p class="edify-page-eyebrow">My Work</p>
-  <h1 class="edify-page-title edify-page-header__title">Visit Requests</h1>
-  <p class="edify-page-header__description">{% if is_requester %}Visits you scheduled into another person&rsquo;s schools, and what their owners decided. A visit takes effect on your plan and budget once approved.{% else %}Visits other staff have asked to make to your schools. Approve them onto their plan, or decline with a reason.{% endif %}</p>
-  </div>
-</header>
+{% page_header eyebrow="My Work" title="Visit Requests" %}
+  {% slot description %}{% if is_requester %}Visits you scheduled into another person&rsquo;s schools, and what their owners decided. A visit takes effect on your plan and budget once approved.{% else %}Visits other staff have asked to make to your schools. Approve them onto their plan, or decline with a reason.{% endif %}{% endslot %}
+{% endpage_header %}
 
 {% if messages %}
 <div class="space-y-2">

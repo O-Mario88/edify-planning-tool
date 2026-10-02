@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity %}
 {% load table_pagination %}
 
@@ -8,13 +9,8 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Header -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Administration</p>
-<h1 class="edify-page-title edify-page-header__title">Staff Setup Queue</h1>
-<p class="edify-page-header__description">Resolve raw staff name mappings from onboarding data to match registered CCEOs</p>
-</div>
-</div>
+{% page_header eyebrow="Administration" title="Staff Setup Queue" description="Resolve raw staff name mappings from onboarding data to match registered CCEOs" element="div" %}
+{% endpage_header %}
 
 <!-- Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">

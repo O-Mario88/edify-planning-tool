@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% comment %}
 Closure Quality became a tab of the one Analytics page on 2026-09-05: the view
@@ -16,13 +17,8 @@ same panel, so the two can never drift apart.
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Impact Assessment</p>
-      <h1 class="edify-page-title edify-page-header__title">Closure Quality</h1>
-      <p class="edify-page-header__description">Closure records that are wrong, unconfirmed or recorded late — and the schools behind them.</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Impact Assessment" title="Closure Quality" description="Closure records that are wrong, unconfirmed or recorded late — and the schools behind them." %}
+  {% endpage_header %}
 
   {% include "partials/analytics/section_nav.html" %}
   {% include "components/analytics_decision_frame.html" with question="Which closure records should not yet be trusted, and who needs to correct them?" evidence="Closure reasons, dates, enrolment and reopen history" freshness="Live closure ledger" confidence="Exceptions are explicitly flagged" %}

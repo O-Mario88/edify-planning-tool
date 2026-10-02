@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Impact brief · {{ release.school.name }} · Edify{% endblock %}
 
@@ -12,13 +13,9 @@ TeamAction that delivered it, shares it on a visit and records here what the
 school said, which closes the action. It prints from the browser as it stands.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ia-impact-brief>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-header__eyebrow">Impact findings for the school</p>
-      <h1 class="edify-page-title edify-page-header__title">{{ payload.school.name }}</h1>
-      <p class="edify-page-header__description">{{ payload.report.title }} · {{ payload.report.period_start }} to {{ payload.report.period_end }}</p>
-    </div>
-  </div>
+  {% page_header eyebrow="Impact findings for the school" title=payload.school.name element="div" %}
+    {% slot description %}{{ payload.report.title }} · {{ payload.report.period_start }} to {{ payload.report.period_end }}{% endslot %}
+  {% endpage_header %}
 
   {% if action %}
   {% if action.state == "resolved" %}

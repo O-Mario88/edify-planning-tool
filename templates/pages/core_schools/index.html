@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load components %}
 {% load static %}
 
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
@@ -10,13 +11,10 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 animate-fade-in max-w-[1500px] mx-auto" id="core-schools-main-container">
 
 <!-- TOP HEADER SECTION -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Schools &amp; Field</p>
-<h1 class="edify-page-title edify-page-header__title">{% if is_oversight_lens %}Team Core Oversight{% else %}Core Schools Planning{% endif %}</h1>
-<p class="edify-page-header__description">{% if is_oversight_lens %}Read-only view of the core packages your CCEOs are responsible for. Ask the owner to act — you cannot plan their work here.{% else %}Plan core packages and ongoing support for Core Trained, Core Graduate and Champion schools. Only Core Schools receive the 4 Visits + 4 Trainings package.{% endif %}</p>
-</div>
-</div>
+{% page_header eyebrow="Schools &amp; Field" element="div" %}
+  {% slot title %}{% if is_oversight_lens %}Team Core Oversight{% else %}Core Schools Planning{% endif %}{% endslot %}
+  {% slot description %}{% if is_oversight_lens %}Read-only view of the core packages your CCEOs are responsible for. Ask the owner to act — you cannot plan their work here.{% else %}Plan core packages and ongoing support for Core Trained, Core Graduate and Champion schools. Only Core Schools receive the 4 Visits + 4 Trainings package.{% endif %}{% endslot %}
+{% endpage_header %}
 
 {% comment %}
 Portfolio scope. Two lenses, never one blended list: the left is the core

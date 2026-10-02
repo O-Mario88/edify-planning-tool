@@ -1,17 +1,13 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Report a Problem — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
 
-  <header class="edify-page-header">
-    <div class="min-w-0 edify-page-header__lead">
-      <p class="edify-page-eyebrow">Help</p>
-      <h1 class="edify-page-title edify-page-header__title">Report a Problem</h1>
-      <p class="edify-page-header__description">Tell the platform team what went wrong. We capture the page you were on and your browser automatically — never your password, tokens or message contents.</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Help" title="Report a Problem" description="Tell the platform team what went wrong. We capture the page you were on and your browser automatically — never your password, tokens or message contents." %}
+  {% endpage_header %}
 
   <form method="post" action="/support" class="card p-4 space-y-3.5">
     {% csrf_token %}

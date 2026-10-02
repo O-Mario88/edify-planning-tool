@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static table_pagination %}
 
 {% block title %}Decision Log — Edify{% endblock %}
@@ -7,13 +8,9 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="history" data-analytics-enterprise>
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Decision Log</h1>
-<p class="edify-page-header__description">{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days</p>
-</div>
-</div>
+{% page_header eyebrow="Quality & Insights" title="Decision Log" element="div" %}
+  {% slot description %}{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days{% endslot %}
+{% endpage_header %}
 
 <form method="GET" class="edify-filter-bar" aria-label="Decision log filters">
 {% if log.activeGroup %}<input type="hidden" name="group" value="{{ log.activeGroup }}">{% endif %}

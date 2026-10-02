@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 
 {% block title %}Planning Monitor · Edify{% endblock %}
@@ -14,12 +15,9 @@ and verified. The country for the CD and IA, a Lead's own team for the PL.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <h1 class="edify-page-title edify-page-header__title">Planning Monitor</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is overdue.{% else %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% endif %}</p>
-    </div>
-  </header>
+  {% page_header title="Planning Monitor" %}
+    {% slot description %}{% if active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is overdue.{% else %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% endif %}{% endslot %}
+  {% endpage_header %}
 
   <div class="edify-view-toolbar">
     {% include "partials/oversight/_lens_tabs.html" %}

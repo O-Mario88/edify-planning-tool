@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 
 {% block title %}Partner Monitoring · Edify{% endblock %}
@@ -7,14 +8,8 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Supervision</p>
-      <h1 class="edify-page-title edify-page-header__title">Partner Monitoring</h1>
-      <p class="edify-page-header__description">One Partner at a time: the schools, clusters and activities handed to it, by team member, and where each stands.</p>
-    </div>
+  {% page_header eyebrow="Supervision" title="Partner Monitoring" description="One Partner at a time: the schools, clusters and activities handed to it, by team member, and where each stands." %}
     {% if can_create_partner %}
-    <div class="edify-page-header__controls">
       {% if can_create_partner %}
       <button type="button"
               hx-get="/partners/create" hx-target="#drawer-container" hx-swap="innerHTML"
@@ -22,9 +17,9 @@
         Add Partner Organisation
       </button>
       {% endif %}
-    </div>
-    {% endif %}
-  </header>
+    
+{% endif %}
+  {% endpage_header %}
 
   <div id="partner-workspace">
     {% include "partials/oversight/partner_workspace.html" %}

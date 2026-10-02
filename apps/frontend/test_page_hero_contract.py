@@ -176,6 +176,10 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
                 return False
             seen.add(path)
             source = templates[path]
+            # The class, or the component tag that writes it
+            # (apps/frontend/templatetags/components.py).
+            if "{% page_header " in source:
+                return True
             if any(family in source for family in families):
                 return True
             for match in re.finditer(r'{%\s*(?:extends|include)\s+"([^"]+)"', source):
