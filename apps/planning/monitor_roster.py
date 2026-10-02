@@ -25,11 +25,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from django.db.models import Q
-
-#: The visits a Programme Lead plans in a year (owner, 2026-09-29).
+#: The visits a Programme Lead plans in a year (owner, 2026-09-29) and a CCEO
+#: (owner, 2026-09-28): the planning rulebook's figures, under the names the
+#: monitors have always used.
 PL_VISITS_TARGET = 280
-#: The visits a CCEO plans in a year (owner, 2026-09-28).
 CCEO_VISITS_TARGET = 560
 
 ROLE_PL = "PL"
@@ -60,126 +59,80 @@ class Team:
     people: list = field(default_factory=list)
 
 
-def _person(profile, role: str) -> Person:
-    user = profile.user
-    return Person(
-        key=str(profile.id),
-        name=(getattr(user, "name", "") or getattr(user, "email", "") or profile.id),
-        role=role,
-        ids=frozenset(str(i) for i in (profile.id, profile.user_id) if i),
-    )
+def _role_code(role: str) -> str:
+    from apps.planning.country_oversight import rules
 
-
-def _live_profiles():
-    from apps.accounts.models import StaffProfile
-
-    return StaffProfile.objects.filter(
-        deleted_at__isnull=True, user__is_active=True
-    ).select_related("user")
+    return {rules.PROGRAM_LEAD_ROLE: ROLE_PL, rules.CCEO_ROLE: ROLE_CCEO}.get(role, "")
 
 
 def monitor_roster(principal, *, lead_ids_hint=()) -> list[Team]:
     """The teams this reader follows, each Lead first and then their CCEOs.
 
+    The people are the planning rulebook's (apps.planning.country_oversight.
+    rules.roster): a Lead or a CCEO by the role they HOLD, whichever role the
+    account is switched to today, so the monitor and Country Planning
+    Oversight follow the same people under the same Leads.
+
     ``lead_ids_hint`` — the Programme Leads a school-scoped reader (the
     Regional Programme Lead) reaches through the schools in their scope.
     """
-    from apps.accounts.models import StaffSupervisorAssignment
-    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import resolve_user_scope
+    from apps.planning.country_oversight import rules
     from apps.planning.oversight_service import resolve_oversight_scope
 
-    pl_role = EdifyRole.COUNTRY_PROGRAM_LEAD.value
-    cceo_role = EdifyRole.CCEO.value
     scope = resolve_oversight_scope(principal)
-
+    country = getattr(resolve_user_scope(principal), "country", "") or ""
     if scope.is_country:
-        leads = list(_live_profiles().filter(user__active_role=pl_role))
+        wanted = None
     elif scope.kind == "pl":
-        own = {str(i) for i in scope.own_ids}
-        leads = list(
-            _live_profiles().filter(
-                Q(id__in=own) | Q(user_id__in=own), user__active_role=pl_role
-            )
-        )
+        wanted = {str(i) for i in scope.own_ids}
     else:
-        hint = {str(i) for i in lead_ids_hint if i}
-        leads = list(
-            _live_profiles().filter(
-                Q(id__in=hint) | Q(user_id__in=hint), user__active_role=pl_role
+        wanted = {str(i) for i in lead_ids_hint if i}
+
+    teams = []
+    for team in rules.roster(country if scope.is_country else ""):
+        if team.is_no_lead:
+            # Every CCEO reports somewhere: one with no Programme Lead is
+            # still planning against 560 and is still followed — by the
+            # country, which is the only reader they sit under.
+            if wanted is not None:
+                continue
+        elif wanted is not None and not (set(team.people[0].ids) & wanted):
+            continue
+        teams.append(
+            Team(
+                key=NO_LEAD_KEY if team.is_no_lead else team.key,
+                name=NO_LEAD_LABEL if team.is_no_lead else team.name,
+                people=[
+                    Person(
+                        key=person.key,
+                        name=person.name,
+                        role=_role_code(person.role),
+                        ids=frozenset(person.ids),
+                    )
+                    for person in team.people
+                ],
             )
         )
-    leads.sort(key=lambda p: ((p.user.name or p.user.email or "").casefold(), p.id))
-
-    members: dict[str, list] = {}
-    placed: set[str] = set()
-    for link in (
-        StaffSupervisorAssignment.objects.filter(
-            supervisor_id__in=[lead.id for lead in leads],
-            supervisee__deleted_at__isnull=True,
-            supervisee__user__is_active=True,
-            supervisee__user__active_role=cceo_role,
-        )
-        .select_related("supervisee__user")
-        .order_by("supervisee__user__name", "supervisee_id")
-    ):
-        # One team per person: a CCEO linked to two Leads is followed under
-        # the first, so the country total counts them once.
-        if link.supervisee_id in placed:
-            continue
-        placed.add(link.supervisee_id)
-        members.setdefault(link.supervisor_id, []).append(link.supervisee)
-
-    teams = [
-        Team(
-            key=str(lead.id),
-            name=_person(lead, ROLE_PL).name,
-            people=[
-                _person(lead, ROLE_PL),
-                *(_person(p, ROLE_CCEO) for p in members.get(lead.id, [])),
-            ],
-        )
-        for lead in leads
-    ]
-
-    if scope.is_country:
-        # Every CCEO reports somewhere: one with no Programme Lead link is
-        # still planning against 560 and is still followed.
-        lead_linked = set(
-            StaffSupervisorAssignment.objects.filter(
-                supervisor__user__active_role=pl_role
-            ).values_list("supervisee_id", flat=True)
-        )
-        loose = [
-            _person(p, ROLE_CCEO)
-            for p in _live_profiles()
-            .filter(user__active_role=cceo_role)
-            .exclude(id__in=placed | lead_linked)
-            .order_by("user__name", "id")
-        ]
-        if loose:
-            teams.append(Team(key=NO_LEAD_KEY, name=NO_LEAD_LABEL, people=loose))
     return teams
 
 
 def roles_of(staff_ids) -> dict[str, str]:
-    """ROLE_PL or ROLE_CCEO for each StaffProfile id that is one of them."""
+    """ROLE_PL or ROLE_CCEO for each StaffProfile id that holds one of them."""
     from apps.accounts.models import StaffProfile
-    from apps.core.rbac import EdifyRole
+    from apps.planning.country_oversight import rules
 
-    roles = {
-        EdifyRole.COUNTRY_PROGRAM_LEAD.value: ROLE_PL,
-        EdifyRole.CCEO.value: ROLE_CCEO,
-    }
     ids = {str(i) for i in staff_ids if i}
     if not ids:
         return {}
-    return {
-        str(staff_id): roles[role]
-        for staff_id, role in StaffProfile.objects.filter(id__in=ids).values_list(
-            "id", "user__active_role"
-        )
-        if role in roles
-    }
+    found = {}
+    for staff_id, roles, in_use in StaffProfile.objects.filter(id__in=ids).values_list(
+        "id", "user__roles", "user__active_role"
+    ):
+        code = _role_code(rules.planning_role(roles, in_use) or "")
+        if code:
+            found[str(staff_id)] = code
+    return found
 
 
 __all__ = [

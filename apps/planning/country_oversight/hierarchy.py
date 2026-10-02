@@ -1,16 +1,27 @@
-"""PlanningHierarchyService — the same school claims, folded up the organisation.
+"""PlanningHierarchyService — the same figures, folded up the organisation.
 
-Country → Programme Lead → CCEO (or the Lead's personal delivery) → delivery
-channel and Partner → school. Every level is a sum of the level below it, and
-every sum starts from per-school figures that are already capped at the
-school's slots, so a heading and the rows under it cannot disagree and nothing
-is counted twice: a school belongs to exactly one owner, an owner to exactly
-one Lead (or to "No Programme Lead"), and Partner rows share a school's
-Partner claims between the Partners holding it.
+Country → Programme Lead → the Lead and each CCEO → delivery channel and
+Partner → school. Every level is a sum of the level below it.
+
+A row carries two readings of one person's year, and they are different
+questions (owner, 2026-10-01):
+
+* **Their plan** — the counted visits, trainings and cluster meetings the
+  person planned, wherever the school is, against the visits their role
+  plans (a CCEO 560, a Programme Lead 280), and the Partner work they handed
+  over. These are the ``PEOPLE_FIELDS``; they are read per person
+  (``people``) and added to the row.
+
+* **Their schools** — what the schools they hold need and what is planned
+  for them, by anybody. These start from per-school figures that are already
+  capped at the school's slots, so a heading and the rows under it cannot
+  disagree and nothing is counted twice: a school belongs to exactly one
+  holder, a holder to exactly one Lead (or to "No Programme Lead"), and
+  Partner rows share a school's Partner claims between the Partners holding it.
 
 For a quarter or a month the requirement is the approved phasing of each
-owner's annual figure (the performance engine's own split), applied at the
-owner and summed upward — so the country's phased figure is the sum of its
+person's annual figure (the performance engine's own split), applied at the
+person and summed upward — so the country's phased figure is the sum of its
 people's, as a personal target is.
 """
 
@@ -19,14 +30,54 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from apps.planning.country_oversight import policy
-from apps.planning.country_oversight.coverage import Claims, SchoolFacts, Window
+from apps.planning.country_oversight.coverage import (
+    Claims,
+    SchoolFacts,
+    Window,
+    duplicate_reasons,
+)
+
+#: School types that have a column of their own, and the field it fills.
+TYPE_FIELDS: dict[str, str] = {
+    "core": "core_schools",
+    "client": "client_schools",
+    "core_trained": "core_trained_schools",
+    "core_graduate": "core_graduate_schools",
+    "champion": "champion_schools",
+}
+
+#: A person's own plan (see the module doc): read per person, not per school.
+PEOPLE_FIELDS: tuple[str, ...] = (
+    # The visits the role plans in the year (phased for a quarter or month).
+    "target",
+    # Counted visits the person planned, and by kind.
+    "p_visits",
+    "p_follow_up",
+    "p_in_school",
+    "p_ssa",
+    # Donor, story, invitation and social visits: planned, not counted.
+    "p_outreach",
+    "p_trainings",
+    "p_cluster_trainings",
+    "p_meetings",
+    # Partner work the person handed over, and what the Partner has dated.
+    "pa_work",
+    "pp_work",
+    "pa_schools",
+)
 
 FIELDS: tuple[str, ...] = (
-    # The portfolio.
+    # The portfolio, and by school type.
     "schools",
     "core_schools",
     "client_schools",
+    "core_trained_schools",
+    "core_graduate_schools",
+    "champion_schools",
     "unmapped_schools",
+    # Schools the requirement asks a visit of, and a training of.
+    "visit_schools",
+    "training_schools",
     # Requirement (annual, or phased for a quarter/month at owner level).
     "visit_slots",
     "staff_expected",
@@ -40,7 +91,6 @@ FIELDS: tuple[str, ...] = (
     # Claims in the window.
     "staff",
     "staff_core",
-    "staff_cover",
     "staff_client",
     "partner_assigned",
     "partner_scheduled",
@@ -83,22 +133,26 @@ FIELDS: tuple[str, ...] = (
     "meeting_covered",
     "meeting_covered_clustered",
     "clustered_no_meeting",
-    # Slots the scheduling rules refuse (see policy.UNDELIVERABLE_SLOTS).
-    "undeliverable_partner",
-    "undeliverable_training",
     # Planning status, school by school.
     "fully_planned",
     "partially_planned",
     "not_planned",
     "awaiting_partner",
+    # In a Partner's hands (any live Partner work), and client-rule schools
+    # whose one visit is planned twice (coverage.duplicate_reasons).
+    "with_partner",
+    "duplicates",
+    *PEOPLE_FIELDS,
 )
 IDX = {name: index for index, name in enumerate(FIELDS)}
 WIDTH = len(FIELDS)
 I_FULLY = IDX["fully_planned"]
 I_PARTIAL = IDX["partially_planned"]
+I_NOT_PLANNED = IDX["not_planned"]
 I_AWAITING = IDX["awaiting_partner"]
 I_UNALLOCATED = IDX["unallocated"]
 I_UNMAPPED = IDX["unmapped_schools"]
+I_PEOPLE = tuple(IDX[name] for name in PEOPLE_FIELDS)
 
 #: Requirement fields a quarter or a month phases.
 PHASED_FIELDS = (
@@ -111,6 +165,7 @@ PHASED_FIELDS = (
     "client_staff_expected",
     "client_partner_expected",
     "training_slots",
+    "target",
 )
 
 
@@ -119,7 +174,10 @@ def blank() -> list:
 
 
 def planning_state(claims: Claims) -> str:
-    """ "full" | "partial" | "none" — the school's visit slots, year to date."""
+    """ "full" | "partial" | "none" — the school's visit slots, year to date —
+    or "outside" for a school the requirement asks nothing of."""
+    if claims.outside:
+        return "outside"
     planned = claims.cum_staff + claims.cum_partner_scheduled
     if claims.visit_slots <= 0:
         return "none" if not planned else "full"
@@ -137,7 +195,38 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
     is_core = school.family == policy.CORE_FAMILY
     v = values
     v[IDX["schools"]] = 1
-    v[IDX["core_schools" if is_core else "client_schools"]] = 1
+    type_field = TYPE_FIELDS.get(school.school_type)
+    if type_field:
+        v[IDX[type_field]] = 1
+    if school.clustered:
+        v[IDX["clustered"]] = 1
+        if claims.meeting_covered:
+            v[IDX["meeting_covered_clustered"]] = 1
+        else:
+            v[IDX["clustered_no_meeting"]] = 1
+    else:
+        v[IDX["unclustered"]] = 1
+    v[IDX["meeting_covered"]] = 1 if claims.meeting_covered else 0
+    v[IDX["cum_meeting_covered"]] = 1 if claims.cum_meeting_covered else 0
+    if school.with_partner:
+        v[IDX["with_partner"]] = 1
+
+    # Training: only the schools the requirement asks a training of.
+    if claims.training_slots:
+        v[IDX["training_schools"]] = 1
+        v[IDX["training_slots"]] = claims.training_slots
+        v[IDX["training"]] = claims.training
+        v[IDX["training_verified"]] = claims.training_verified
+        v[IDX["cum_training"]] = claims.cum_training
+        v[IDX["any_training"]] = 1 if claims.any_training else 0
+        v[IDX["no_training"]] = 0 if claims.any_training else 1
+        v[IDX["training_gap"]] = max(0, claims.training_slots - claims.cum_training)
+
+    if claims.outside:
+        # A Champion school: in the portfolio, outside the visit requirement.
+        return values
+
+    v[IDX["visit_schools"]] = 1
     v[IDX["visit_slots"]] = claims.visit_slots
     v[IDX["staff_expected"]] = claims.staff_expected
     v[IDX["partner_expected"]] = claims.partner_expected
@@ -155,7 +244,6 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
     v[IDX["deficit"]] = claims.deficit
     v[IDX["staff"]] = claims.staff
     v[IDX["staff_core"]] = claims.staff_core
-    v[IDX["staff_cover"]] = claims.staff_cover
     v[IDX["staff_client"]] = claims.staff_client
     v[IDX["partner_assigned"]] = claims.partner_assigned
     v[IDX["partner_scheduled"]] = claims.partner_scheduled
@@ -165,8 +253,6 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
     v[IDX["cum_staff"]] = claims.cum_staff
     v[IDX["cum_partner_assigned"]] = claims.cum_partner_assigned
     v[IDX["cum_partner_scheduled"]] = claims.cum_partner_scheduled
-    v[IDX["cum_training"]] = claims.cum_training
-    v[IDX["cum_meeting_covered"]] = 1 if claims.cum_meeting_covered else 0
     v[IDX["unallocated"]] = max(
         0, claims.visit_slots - claims.cum_staff - claims.cum_partner_assigned
     )
@@ -186,26 +272,6 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
         v[IDX["partner_only"]] = 1
     else:
         v[IDX["no_visit"]] = 1
-    v[IDX["training_slots"]] = claims.training_slots
-    v[IDX["training"]] = claims.training
-    v[IDX["training_verified"]] = claims.training_verified
-    v[IDX["any_training"]] = 1 if claims.any_training else 0
-    v[IDX["no_training"]] = 0 if claims.any_training else 1
-    v[IDX["training_gap"]] = max(0, claims.training_slots - claims.cum_training)
-    if school.clustered:
-        v[IDX["clustered"]] = 1
-        if claims.meeting_covered:
-            v[IDX["meeting_covered_clustered"]] = 1
-        else:
-            v[IDX["clustered_no_meeting"]] = 1
-    else:
-        v[IDX["unclustered"]] = 1
-    v[IDX["meeting_covered"]] = 1 if claims.meeting_covered else 0
-    refused = policy.UNDELIVERABLE_SLOTS.get(school.school_type, ())
-    if "partner_visit" in refused:
-        v[IDX["undeliverable_partner"]] = claims.partner_expected
-    if "training" in refused:
-        v[IDX["undeliverable_training"]] = claims.training_slots
     state = planning_state(claims)
     v[
         IDX[
@@ -218,6 +284,8 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
     ] = 1
     if claims.cum_partner_assigned > claims.cum_partner_scheduled:
         v[IDX["awaiting_partner"]] = 1
+    if duplicate_reasons(school):
+        v[IDX["duplicates"]] = 1
     return values
 
 
@@ -227,7 +295,9 @@ def state_of(vector) -> str:
         return "full"
     if vector[I_PARTIAL]:
         return "partial"
-    return "none"
+    if vector[I_NOT_PLANNED]:
+        return "none"
+    return "outside"
 
 
 def add_into(total: list, values: list) -> None:
@@ -267,8 +337,7 @@ def phase(values: list, window: Window) -> list:
     )
     g[IDX["staff_gap"]] = max(0, g[IDX["staff_expected"]] - g[IDX["staff"]])
     g[IDX["partner_gap"]] = max(
-        0,
-        g[IDX["partner_expected"]] - g[IDX["partner_assigned"]] - g[IDX["staff_cover"]],
+        0, g[IDX["partner_expected"]] - g[IDX["partner_assigned"]]
     )
     g[IDX["training_gap"]] = max(0, g[IDX["training_slots"]] - g[IDX["training"]])
     return phased
@@ -346,12 +415,42 @@ class Tally:
         return max(0, self.partner_assigned - self.partner_scheduled)
 
     @property
-    def unique_visit_share(self):
-        return self.share(self.any_visit, self.schools)
-
-    @property
     def cum_planned(self) -> int:
         return self.cum_staff + self.cum_partner_scheduled
+
+    # A person's own plan against the visits their role plans.
+    @property
+    def plan_share(self):
+        return self.share(self.p_visits, self.target)
+
+    @property
+    def plan_remaining(self) -> int:
+        return max(0, self.target - self.p_visits)
+
+    @property
+    def partner_plan_share(self):
+        return self.share(self.pp_work, self.pa_work)
+
+    @property
+    def partner_waiting(self) -> int:
+        return max(0, self.pa_work - self.pp_work)
+
+    @property
+    def unique_visit_share(self):
+        return self.share(self.any_visit, self.visit_schools)
+
+    @property
+    def reach(self) -> int:
+        """The visits staff could plan at the schools held: 2 per Core
+        school, 1 per Client, Core Trained and Core Graduate school."""
+        return 2 * self.core_schools + (
+            self.client_schools + self.core_trained_schools + self.core_graduate_schools
+        )
+
+    @property
+    def shortfall(self) -> int:
+        """How far the schools held fall short of the person's target."""
+        return max(0, self.target - self.reach) if self.target else 0
 
 
 @dataclass
@@ -363,14 +462,17 @@ class OwnerRow:
     lead_key: str
     tally: Tally
     ceiling: int = 0
-    partners: dict = field(default_factory=dict)  # partner id → Tally
+    # The schools this person holds, by the Partner working them (school
+    # side): partner id → Tally.
+    partners: dict = field(default_factory=dict)
+    # The work this person handed to each Partner (their own plan): partner
+    # id → Tally carrying pa_work, pp_work and pa_schools.
+    assigned: dict = field(default_factory=dict)
     staff_only_tally: Tally | None = None
     open_followups: int = 0
 
     @property
     def label(self) -> str:
-        if self.kind == "pl_personal":
-            return "PL Personal Delivery"
         return self.name
 
 
@@ -391,6 +493,8 @@ class Tree:
     window: Window
     # school id → (owner key, lead key) for everything the filters kept.
     placement: dict = field(default_factory=dict)
+    # school type → Tally of the kept schools of that type.
+    by_type: dict = field(default_factory=dict)
 
 
 class PlanningHierarchyService:

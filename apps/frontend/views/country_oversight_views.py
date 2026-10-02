@@ -118,7 +118,7 @@ def _filter_options(snapshot, filters) -> dict:
         "leads": snapshot.lead_options,
         "owners": owners,
         "partners": sorted(snapshot.partner_names.items(), key=lambda pair: pair[1]),
-        "families": svc.FAMILY_OPTIONS,
+        "types": svc.TYPE_OPTIONS,
         "channels": svc.CHANNEL_OPTIONS,
         "clusters": svc.CLUSTER_OPTIONS,
         "statuses": svc.STATUS_OPTIONS,
@@ -139,7 +139,11 @@ def _dashboard_context(request, snapshot, filters) -> dict:
         "query": filters.query(),
         "header": header,
         "is_uganda": (header["country"] or "").strip().lower() == "uganda",
-        "kpis": svc.kpis(snapshot),
+        "kpis": _linked_cards(svc.kpis(snapshot)),
+        "type_rows": svc.type_rows(snapshot),
+        # The page's filters without the school type, for the type table's
+        # links (each names its own).
+        "type_query": filters.query(school_type=""),
         "charts": svc.charts(snapshot),
         "country_cells": svc.row_cells(snapshot.tree.country),
         "country_followups": counts.get(("country", ""), 0),
@@ -160,11 +164,24 @@ def _dashboard_context(request, snapshot, filters) -> dict:
         "no_lead_key": NO_LEAD_KEY,
         "more_open": bool(
             filters.district
-            or filters.family
+            or filters.school_type
             or filters.channel
             or filters.cluster_status
         ),
     }
+
+
+def _linked_cards(cards: list[dict]) -> list[dict]:
+    """Each card with the consolidated table it opens (owner, 2026-10-01:
+    every KPI is a link to the table of what it counts)."""
+    from apps.planning.country_oversight import tables
+
+    for card in cards:
+        key = tables.METRIC_TABLES.get(card["metric_key"])
+        if key:
+            card["table_key"] = key
+            card["table_title"] = tables.SPECS[key].title
+    return cards
 
 
 def coverage_page(request):
@@ -503,7 +520,7 @@ def _list_query(request) -> str:
             "district",
             "program_lead",
             "cceo",
-            "family",
+            "school_type",
             "channel",
             "partner",
             "cluster_status",
@@ -536,6 +553,93 @@ def slots_view(request):
         request,
         "partials/country_oversight/slots.html",
         {"school": school, "slots": slots},
+    )
+
+
+# ── The consolidated tables behind the cards ─────────────────────────────────
+def _table_tabs(active: str, query: str) -> list[dict]:
+    from apps.planning.country_oversight import tables
+
+    return [
+        {
+            "key": key,
+            "label": tables.SPECS[key].title,
+            "short": tables.SPECS[key].short,
+            "href": tables.table_url(key, query),
+            "is_active": key == active,
+        }
+        for key in tables.TAB_ORDER
+    ]
+
+
+def _table_filter_options(request, filters) -> dict:
+    from apps.core.fy import fy_options
+    from apps.core.scoping import resolve_user_scope
+    from apps.planning.country_oversight.requirements import system_leads
+
+    country = getattr(resolve_user_scope(request.user), "country", "") or ""
+    return {
+        "fy_options": [{"value": fy, "label": fy_label(fy)} for fy in fy_options()],
+        "leads": [
+            {"key": lead.key, "name": lead.name} for lead in system_leads(country)
+        ],
+        "types": svc.TYPE_OPTIONS,
+    }
+
+
+@require_page_permission("country_planning_oversight")
+def table_view(request, key: str):
+    """One consolidated table: every row a card counts, grouped by Programme
+    Lead, a page at a time (owner, 2026-10-01)."""
+    from apps.planning.country_oversight import tables
+
+    if key not in tables.SPECS:
+        raise Http404
+    filters = svc.read_filters(request)
+    query = filters.query()
+    context = {
+        "spec": tables.SPECS[key],
+        "filters": filters,
+        "query": query,
+        "window": filters.window,
+        "fy_label": fy_label(filters.fy),
+        "lens_tabs": _table_tabs(key, query),
+        "options": _table_filter_options(request, filters),
+        "carried": [
+            (name, value)
+            for name, value in filters.params().items()
+            if name not in ("fy", "program_lead", "school_type")
+        ],
+        "may_export": RolePermissionService.can_export(
+            request.user, f"{PAGE_PATH}table-export/{key}"
+        ),
+        "export_path": f"{PAGE_PATH}table-export/{key}",
+        "withheld": not _may_see_schools(request.user),
+    }
+    if not context["withheld"]:
+        table = tables.build(request.user, filters, key)
+        try:
+            page = int(request.GET.get("page") or 1)
+        except ValueError:
+            page = 1
+        context.update({"table": table, **tables.page_of(table, page)})
+    return render(request, "pages/oversight/country_table.html", context)
+
+
+@require_page_permission("country_planning_oversight")
+@require_export_permission
+def table_export_view(request, key: str):
+    """A consolidated table as a workbook: every row, the groups as columns."""
+    from apps.core.excel import table_download
+    from apps.planning.country_oversight import tables
+
+    if key not in tables.SPECS or not _may_see_schools(request.user):
+        raise Http404
+    filters = svc.read_filters(request)
+    table = tables.build(request.user, filters, key)
+    stamp = timezone.localdate().isoformat()
+    return table_download(
+        request, f"country-{key}-{filters.fy}-{stamp}", [tables.sheet(table)]
     )
 
 
@@ -864,47 +968,48 @@ def coverage_export_view(request):
     sheets = [_school_sheet(request, filters)] if _may_see_schools(request.user) else []
     sheets.append(_hierarchy_sheet(snapshot, counts))
     sheets.append(_followup_sheet(filters.fy))
-    sheets.extend(_check_sheets(request, filters))
     stamp = timezone.localdate().isoformat()
     return table_download(
         request, f"country-planning-oversight-{filters.fy}-{stamp}", sheets
     )
 
 
-def _check_sheets(request, filters) -> list[dict]:
-    """The figures check (owner, 2026-10-01): today's dashboard beside the
-    same year by the planning rulebook, for the Country Director and the
-    Admin, until the page itself reads the rulebook. The year as a whole,
-    whatever the page is filtered to; a CSV asks for the school sheet only."""
-    from apps.planning.country_oversight import figures_check
-
-    if not figures_check.may_check(request.user):
-        return []
-    if (request.GET.get("format") or "").strip().lower() == "csv":
-        return []
-    year = svc.snapshot_for(request.user, svc.Filters(fy=filters.fy))
-    return figures_check.sheets(request.user, year)
-
-
 HIERARCHY_HEADERS = [
     "Level",
     "Country",
     "Programme Lead",
-    "CCEO / holder",
+    "Person",
     "Partner",
-    "Portfolio schools",
-    "Core-family schools",
-    "Client-family schools",
-    "Required visit slots",
-    "Required staff slots",
-    "Staff planned slots",
-    "Required Partner slots",
-    "Partner assigned slots",
-    "Partner scheduled slots",
-    "Remaining visit slots (unallocated)",
-    "Internal capacity deficit",
-    "Required training slots",
-    "Planned training slots",
+    "Visit target",
+    "Visits planned",
+    "Follow up",
+    "In-school Training",
+    "SSA Support",
+    "Donor, story and social visits (not counted)",
+    "Trainings planned",
+    "Cluster trainings planned",
+    "Cluster meetings planned",
+    "Schools assigned to Partners",
+    "Partner work assigned",
+    "Partner planned (dated by the Partner)",
+    "Schools held",
+    "Core",
+    "Client",
+    "Core Trained",
+    "Core Graduate",
+    "Champion",
+    "Visits the schools held allow",
+    "Short of target by",
+    "Visit slots needed",
+    "Visit slots planned by staff",
+    "Visit slots planned by Partners",
+    "Schools with a visit planned",
+    "Schools not yet planned",
+    "Schools in a Partner's hands",
+    "Schools planned twice",
+    "Training slots needed",
+    "Training slots planned",
+    "Schools with no training planned",
     "Clustered schools",
     "Unclustered schools",
     "Schools covered by a planned meeting",
@@ -916,19 +1021,36 @@ HIERARCHY_HEADERS = [
 
 def _figures(tally) -> list:
     return [
+        tally.target,
+        tally.p_visits,
+        tally.p_follow_up,
+        tally.p_in_school,
+        tally.p_ssa,
+        tally.p_outreach,
+        tally.p_trainings,
+        tally.p_cluster_trainings,
+        tally.p_meetings,
+        tally.pa_schools,
+        tally.pa_work,
+        tally.pp_work,
         tally.schools,
         tally.core_schools,
         tally.client_schools,
+        tally.core_trained_schools,
+        tally.core_graduate_schools,
+        tally.champion_schools,
+        tally.reach,
+        tally.shortfall,
         tally.visit_slots,
-        tally.staff_expected,
         tally.staff,
-        tally.partner_expected,
-        tally.partner_assigned,
         tally.partner_scheduled,
-        tally.unallocated,
-        tally.deficit,
+        tally.any_visit,
+        tally.no_visit,
+        tally.with_partner,
+        tally.duplicates,
         tally.training_slots,
         tally.training,
+        tally.no_training,
         tally.clustered,
         tally.unclustered,
         tally.meeting_covered,
@@ -965,7 +1087,11 @@ def _hierarchy_sheet(snapshot, counts) -> dict:
         for owner in lead.owners:
             rows.append(
                 [
-                    "CCEO" if owner.kind == "cceo" else owner.label,
+                    {
+                        "cceo": "CCEO",
+                        "pl_personal": "Programme Lead (own plan)",
+                        "unassigned": "Nobody",
+                    }.get(owner.kind, "Other staff"),
                     country,
                     lead.name,
                     owner.name,
@@ -974,25 +1100,20 @@ def _hierarchy_sheet(snapshot, counts) -> dict:
                     counts.get(("owner", owner.key), 0),
                 ]
             )
-            for pid, tally in owner.partners.items():
-                name = (
-                    "Staff delivery (no Partner)"
-                    if pid == svc.NO_PARTNER_KEY
-                    else snapshot.partner_names.get(pid, "Unrecorded Partner")
-                )
+            for pid, tally in owner.assigned.items():
                 rows.append(
                     [
-                        "Delivery channel",
+                        "Partner",
                         country,
                         lead.name,
                         owner.name,
-                        name,
+                        snapshot.partner_names.get(pid, "Unrecorded Partner"),
                         *_figures(tally),
                         "",
                     ]
                 )
     return {
-        "title": "Hierarchy (one row per level)",
+        "title": "People (one row per level)",
         "headers": HIERARCHY_HEADERS,
         "rows": rows,
     }
@@ -1005,7 +1126,6 @@ SCHOOL_HEADERS = [
     "Partner(s)",
     "School ID",
     "School",
-    "School family",
     "School type",
     "Required visit slots",
     "Staff slots expected",
@@ -1019,12 +1139,14 @@ SCHOOL_HEADERS = [
     "Cluster status",
     "Cluster-meeting planning",
     "Planning status",
+    "In a Partner's hands",
+    "Planned twice",
     "Open follow-up",
 ]
 
 
 def _school_sheet(request, filters) -> dict:
-    from apps.planning.country_oversight.coverage import claims_for
+    from apps.planning.country_oversight.coverage import claims_for, duplicate_reasons
     from apps.planning.country_oversight.hierarchy import (
         IDX,
         planning_state,
@@ -1075,8 +1197,7 @@ def _school_sheet(request, filters) -> dict:
                 partners,
                 school.code,
                 school.name,
-                svc.policy.FAMILY_LABELS.get(school.family, ""),
-                school.school_type,
+                svc.rules.type_label(school.school_type),
                 claims.visit_slots,
                 claims.staff_expected,
                 claims.cum_staff,
@@ -1094,7 +1215,13 @@ def _school_sheet(request, filters) -> dict:
                     "full": "Fully planned",
                     "partial": "Partially planned",
                     "none": "Not planned",
+                    "outside": "Outreach only",
                 }[planning_state(claims)],
+                "Yes" if school.with_partner else "",
+                "; ".join(
+                    svc.rules.DUPLICATE_LABELS[reason]
+                    for reason in duplicate_reasons(school)
+                ),
                 "Yes" if school.id in followed else "",
             ]
         )

@@ -223,40 +223,50 @@ class World(TestCase):
 
 # ── §26.1 School families and the denominator ────────────────────────────────
 class FamilyAndDenominatorTest(World):
-    def test_the_platform_families_come_from_the_target_engine(self):
-        from apps.hr.target_distribution import CLIENT_FAMILY, CORE_FAMILY
-
-        for school_type in CORE_FAMILY:
-            self.assertEqual(policy.family_of(school_type), policy.CORE_FAMILY)
-        for school_type in CLIENT_FAMILY:
-            self.assertEqual(policy.family_of(school_type), policy.CLIENT_FAMILY)
+    def test_school_types_fall_into_the_rulebooks_groups(self):
+        """Owner, 2026-10-01: a school is read by its own type. Core needs two
+        staff and two Partner visits; Client, Core Trained and Core Graduate
+        one visit from either; Champion schools are outside the requirement."""
         self.assertEqual(policy.family_of("core"), policy.CORE_FAMILY)
-        self.assertEqual(policy.family_of("champion"), policy.CORE_FAMILY)
-        self.assertEqual(policy.family_of("client"), policy.CLIENT_FAMILY)
-        self.assertEqual(policy.family_of("core_trained"), policy.CLIENT_FAMILY)
+        for school_type in ("client", "core_trained", "core_graduate"):
+            self.assertEqual(policy.family_of(school_type), policy.CLIENT_FAMILY)
+        self.assertEqual(policy.family_of("champion"), policy.OUTREACH_FAMILY)
+        self.assertEqual(policy.requirement_for(policy.OUTREACH_FAMILY).visit_slots, 0)
 
-    def test_core_graduate_follows_the_owners_client_decision(self):
+    def test_core_graduate_follows_the_client_rule_and_takes_no_training(self):
         """Owner, 2026-09-28 (PR #163): Core Graduate follows the client rule
-        for its visits and Partner work — Client-family by that recorded
-        decision, not by guesswork — and, still untrained, its training slot
-        is listed as undeliverable rather than read as a gap."""
+        for its visits and Partner work. Still untrained (owner, 2026-09-25),
+        so the requirement asks no training of it — it is not a gap."""
         self.assertEqual(policy.family_of("core_graduate"), policy.CLIENT_FAMILY)
-        self.assertIn("core_graduate", policy.GOVERNED_FAMILY_DECISIONS)
         self.assertNotIn("core_graduate", policy.PENDING_FAMILY_DECISIONS)
         self.school("core_graduate", self.cceo)
         self.school("client", self.cceo)
         tree = self.tree()
         self.assertEqual(tree.country.schools, 2)
-        self.assertEqual(tree.country.client_schools, 2)
+        self.assertEqual(tree.country.client_schools, 1)
+        self.assertEqual(tree.country.core_graduate_schools, 1)
         self.assertEqual(tree.country.visit_slots, 2)
-        self.assertEqual(tree.country.undeliverable_training, 1)
+        self.assertEqual(tree.country.training_slots, 1)
+        self.assertEqual(tree.country.training_schools, 1)
+        self.assertEqual(tree.country.no_training, 1)
         self.assertEqual(tree.country.unmapped_schools, 0)
+
+    def test_a_champion_school_is_in_the_portfolio_and_outside_the_requirement(self):
+        """Owner, 2026-10-01: Champion schools take donor and story visits
+        only. They are schools the country holds, with no visit or training
+        slot, no planning state and no "not yet planned"."""
+        champion = self.school("champion", self.cceo, cluster=self.cluster)
+        self.activity(champion, "donor_visit", owner=self.cceo)
+        t = self.tree().country
+        self.assertEqual((t.schools, t.champion_schools), (1, 1))
+        self.assertEqual((t.visit_slots, t.training_slots), (0, 0))
+        self.assertEqual((t.visit_schools, t.training_schools), (0, 0))
+        self.assertEqual((t.no_visit, t.no_training, t.not_planned), (0, 0, 0))
+        self.assertEqual(t.clustered, 1)
 
     def test_a_core_graduate_support_visit_fills_its_visit_slot(self):
         """Following the client rule for its visits means its support visit
-        fills the slot, as a client school's does; a donor visit does not.
-        Before, Core Graduate had no visit rule at all, so its slot read open
-        whatever was planned there."""
+        fills the slot, as a client school's does; a donor visit does not."""
         planned = self.school("core_graduate", self.cceo)
         donor_only = self.school("core_graduate", self.cceo)
         self.activity(planned, "follow_up_visit", owner=self.cceo)
@@ -267,10 +277,6 @@ class FamilyAndDenominatorTest(World):
         self.assertEqual(t.any_staff, 1)
         self.assertEqual(t.unallocated, 1)
         self.assertEqual(t.fully_planned, 1)
-        from apps.planning.country_oversight.coverage import VISIT_RULE_BY_TYPE
-
-        governed = set(policy.SCHOOL_TYPE_FAMILY)
-        self.assertEqual(governed - set(VISIT_RULE_BY_TYPE), set())
 
     def test_a_type_with_no_family_is_governed_rather_than_folded_in(self):
         """A blank or unknown type: outside every denominator, counted on its
@@ -337,20 +343,29 @@ class FamilyAndDenominatorTest(World):
 
 # ── §26.2 Visit requirements and §26.3 staff ceilings ────────────────────────
 class RequirementTest(World):
-    def test_core_family_needs_four_slots_two_each_side_and_client_one(self):
+    def test_core_needs_four_slots_two_each_side_and_client_rule_schools_one(self):
         self.school("core", self.cceo)
         self.school("champion", self.cceo)
         self.school("client", self.cceo)
         self.school("core_trained", self.cceo)
         t = self.tree().country
-        self.assertEqual((t.core_schools, t.client_schools, t.schools), (2, 2, 4))
-        self.assertEqual(t.visit_slots, 4 * 2 + 2)
-        self.assertEqual(t.core_staff_slots, 2 * 2)
-        self.assertEqual(t.core_partner_slots, 2 * 2)
+        self.assertEqual(
+            (
+                t.core_schools,
+                t.champion_schools,
+                t.client_schools,
+                t.core_trained_schools,
+                t.schools,
+            ),
+            (1, 1, 1, 1, 4),
+        )
+        self.assertEqual(t.visit_slots, 4 + 2)
+        self.assertEqual(t.core_staff_slots, 2)
+        self.assertEqual(t.core_partner_slots, 2)
         self.assertEqual(t.client_slots, 2)
-        self.assertEqual(t.client_schools, t.schools - t.core_schools)
+        self.assertEqual(t.visit_schools, 3)
         self.assertEqual(t.staff_expected + t.partner_expected, t.visit_slots)
-        self.assertEqual(t.training_slots, 4 * 2 + 2)
+        self.assertEqual(t.training_slots, 4 + 2)
 
     def test_journey_two_cceo_capacity(self):
         """80 Core-family + 400 Client-family under one CCEO."""
@@ -388,7 +403,7 @@ class RequirementTest(World):
         tree = self.tree()
         personal = self.owner_row(tree, self.pl)
         self.assertEqual(personal.kind, "pl_personal")
-        self.assertEqual(personal.label, "PL Personal Delivery")
+        self.assertEqual(personal.label, "Lead A")
         self.assertEqual(personal.tally.schools, 200)
         self.assertEqual(personal.tally.staff_expected, 280)
         self.assertEqual(personal.ceiling, 280)
@@ -553,16 +568,17 @@ class PartnerAndPlannedTest(World):
         visit.save()
         self.assertEqual(self.tree().country.staff, 1)
 
-    def test_staff_cover_a_partner_slot_nobody_holds_but_never_one_a_partner_holds(
-        self,
-    ):
+    def test_a_core_schools_staff_and_partner_slots_are_each_their_own(self):
+        """Owner, 2026-09-30: two staff and two Partner, at every door. A
+        third staff visit fills no Partner slot and claims nothing — it used
+        to cover one a Partner did not hold."""
         core = self.school("core", self.cceo)
         for offset in (10, 20, 30):
             self.activity(core, "core_visit", owner=self.cceo, on=offset)
         t = self.tree().country
-        self.assertEqual(t.staff, 3)
-        self.assertEqual(t.staff_cover, 1)
-        self.assertEqual(t.unallocated, 1)
+        self.assertEqual(t.staff, 2)
+        self.assertEqual(t.unallocated, 2)
+        self.assertEqual(t.partner_gap, 2)
         other = self.school("core", self.cceo2)
         self.handover(other, self.partner)
         self.handover(other, self.partner2)
@@ -710,16 +726,19 @@ class HierarchyTest(World):
         snapshot = svc.snapshot_for(self.cd_user, svc.Filters(fy=FY))
         charts = {chart["id"]: chart for chart in svc.charts(snapshot)}
         visit = charts["cpo-visit-chart"]
+        self.assertEqual(visit["categories"], ["Lead A", "Lead B"])
         for index, lead in enumerate(snapshot.tree.leads):
+            # A bar is the team's target: what is planned and what is left.
             parts = sum(series["data"][index] for series in visit["series"])
-            self.assertEqual(parts, lead.tally.visit_slots, lead.name)
+            self.assertEqual(parts, lead.tally.target, lead.name)
+        self.assertEqual(snapshot.tree.leads[0].tally.target, 280 + 560 + 560)
         unique = charts["cpo-unique-chart"]
         for index, lead in enumerate(snapshot.tree.leads):
             if lead.tally.schools:
                 self.assertEqual(sum(s["data"][index] for s in unique["series"]), 100)
                 self.assertEqual(
                     sum(s["counts"][index] for s in unique["series"]),
-                    lead.tally.schools,
+                    lead.tally.visit_schools,
                 )
 
     def test_filters_narrow_every_figure_together(self):
@@ -728,7 +747,9 @@ class HierarchyTest(World):
         tree = self.tree(program_lead=self.pl.id)
         self.assertEqual(tree.country.schools, 1)
         self.assertEqual([lead.key for lead in tree.leads], [self.pl.id])
-        self.assertEqual(self.tree(family=policy.CLIENT_FAMILY).country.schools, 1)
+        self.assertEqual(self.tree(school_type="client").country.schools, 1)
+        # A link made when the page read families still narrows to Core.
+        self.assertEqual(self.tree(family="core_family").country.schools, 1)
         self.assertEqual(self.tree(cceo=self.cceo3.id).country.schools, 1)
 
 
@@ -826,8 +847,9 @@ class RollupTest(World):
             {"program_lead": NO_LEAD_KEY},
             {"cceo": self.cceo.id},
             {"cceo": NO_OWNER_KEY},
-            {"family": policy.CORE_FAMILY},
-            {"family": policy.CLIENT_FAMILY},
+            {"school_type": "core"},
+            {"school_type": "client"},
+            {"school_type": "champion"},
             {"cluster_status": "clustered"},
             {"cluster_status": "unclustered"},
             {"planning_status": "full"},
@@ -836,13 +858,13 @@ class RollupTest(World):
             {"planning_status": "awaiting"},
             {"channel": "staff"},
             {"channel": "partner"},
-            {"program_lead": self.pl.id, "family": policy.CLIENT_FAMILY},
+            {"program_lead": self.pl.id, "school_type": "client"},
             {"region": self.region2.id, "planning_status": "none"},
             {"cceo": self.cceo.id, "cluster_status": "clustered", "channel": "partner"},
             {
                 "channel": "staff",
                 "planning_status": "partial",
-                "family": policy.CORE_FAMILY,
+                "school_type": "core",
             },
         ]
         for period in (
@@ -986,8 +1008,11 @@ class RollupTest(World):
                     self.cd_user, svc.Filters(fy=FY, program_lead=self.pl.id)
                 )
                 svc.dataset_for(self.cd_user, window_for(FY))
+            scope = svc.system_scope("Uganda")
             self.assertSameTree(
-                snapshot.tree, svc.fold(self.dataset(), svc.Filters(fy=FY)), "warmed"
+                snapshot.tree,
+                svc._snapshot(self.dataset(), svc.Filters(fy=FY), scope).tree,
+                "warmed",
             )
             # A window a country reader opens is kept warm for the next hour.
             svc.snapshot_for(
@@ -1386,9 +1411,11 @@ class JourneyTest(World):
         for school_type in ("core", "champion", "client", "core_trained", "client"):
             self.school(school_type, self.cceo)
         t = self.tree().country
-        self.assertEqual((t.core_schools, t.client_schools), (2, 3))
-        self.assertEqual(t.visit_slots, 4 * 2 + 3)
-        self.assertEqual((t.core_staff_slots, t.core_partner_slots), (4, 4))
+        self.assertEqual(
+            (t.core_schools, t.client_schools, t.core_trained_schools), (1, 2, 1)
+        )
+        self.assertEqual(t.visit_slots, 4 + 3)
+        self.assertEqual((t.core_staff_slots, t.core_partner_slots), (2, 2))
 
     def test_journey_four_partner_assignment_then_schedule(self):
         core = self.school("core", self.cceo)
@@ -1508,8 +1535,9 @@ class PageTest(World):
             "Training Planning",
             "Cluster Membership",
             "Cluster Meeting Planning",
-            "Visit Requirement &amp; Planning by Program Lead",
-            "Unique School Visit Coverage by Program Lead",
+            "Planned and Not Yet Planned by School Type",
+            "Visits Planned Against Target by Program Lead",
+            "Schools With a Visit Planned by Program Lead",
             "Training Planning by Program Lead",
             "Cluster &amp; Cluster-Meeting Coverage",
             "Partner Drill-down",
@@ -1565,18 +1593,21 @@ class PageTest(World):
             .content.decode()
         )
         for heading in (
-            "Core<br>Schools",
-            "Client<br>Schools",
-            "Required<br>Visits",
-            "Staff<br>Planned",
-            "Partner<br>Assigned",
-            "Partner<br>Scheduled",
+            "Visits<br>Planned",
+            "Core<br>Trained",
+            "Core<br>Graduate",
+            "Schools<br>Planned",
+            "Partner<br>Planned",
             "Training<br>Coverage",
             "Cluster Meeting<br>Coverage",
             "Open<br>Follow-ups",
+            # The school-type table's.
+            "Visits<br>Needed",
+            "Not Yet<br>Planned",
+            "Trainings<br>Planned",
         ):
             with self.subTest(heading=heading):
-                self.assertIn(f'<th scope="col">{heading}</th>', body)
+                self.assertIn(f">{heading}</th>", body)
 
     def test_a_phone_reads_short_stage_names_and_the_first_three_filters(self):
         # Both stage names side by side on a 390px phone (the second went

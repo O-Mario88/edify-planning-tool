@@ -1,9 +1,11 @@
 {% load table_pagination %}{% comment %}
 Country → Programme Lead → CCEO → Partner drill-down (owner design,
-2026-09-28). The first response holds the country and its Programme Leads; a
-Lead's people and an officer's delivery channels arrive when their row is
-opened (/country-planning-oversight/rows), and the schools, slots and
-activities behind any row open in its drawer. Each Lead is its own <tbody> so
+2026-09-28; people-first figures, owner 2026-10-01). A Lead's row is the
+Lead's own plan and their CCEOs' together. The first response holds the
+country and its Programme Leads; a Lead's people and the Partners a person
+handed work to arrive when their row is opened
+(/country-planning-oversight/rows), and the schools, slots and activities
+behind any row open in its drawer. Each Lead is its own <tbody> so
 its rows open and close together. A real table on every screen: on a phone it
 scrolls sideways with the names pinned, never turned into cards.
 {% endcomment %}
@@ -31,14 +33,14 @@ scrolls sideways with the names pinned, never turned into cards.
       <thead>
         <tr>
           <th scope="col" class="cpo-namecol">Name</th>
-          <th scope="col">Portfolio</th>
-          <th scope="col">Core<br>Schools</th>
-          <th scope="col">Client<br>Schools</th>
-          <th scope="col">Required<br>Visits</th>
-          <th scope="col">Staff<br>Planned</th>
-          <th scope="col">Partner<br>Assigned</th>
-          <th scope="col">Partner<br>Scheduled</th>
-          <th scope="col" title="Required visits less staff-planned and Partner-assigned slots: the slots nobody holds yet">Remaining</th>
+          <th scope="col" title="Follow up, In-school Training and SSA Support visits the person planned, wherever the school is, out of the visits the role plans in a year: 560 for a CCEO, 280 for a Programme Lead">Visits<br>Planned</th>
+          <th scope="col" title="Schools the person holds">Portfolio</th>
+          <th scope="col">Core</th>
+          <th scope="col">Client</th>
+          <th scope="col">Core<br>Trained</th>
+          <th scope="col">Core<br>Graduate</th>
+          <th scope="col" title="Schools held with a visit planned, by staff or by a Partner, of the schools that need one">Schools<br>Planned</th>
+          <th scope="col" title="Work a Partner has dated, out of the work the person assigned to Partners">Partner<br>Planned</th>
           <th scope="col">Training<br>Coverage</th>
           <th scope="col">Unclustered</th>
           <th scope="col">Cluster Meeting<br>Coverage</th>
@@ -76,7 +78,7 @@ scrolls sideways with the names pinned, never turned into cards.
             {% if row.has_children %}
             <button type="button" class="cpo-toggle" :class="open ? 'is-open' : ''"
                     @click="toggle()"
-                    :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ row.name }}'s CCEOs">
+                    :aria-expanded="open ? 'true' : 'false'" aria-label="Show {{ row.name }} and their CCEOs">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <span data-opens-rows @click="toggle()">{{ row.name }}</span>

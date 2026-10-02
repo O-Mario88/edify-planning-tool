@@ -759,6 +759,18 @@ urlpatterns = [
         country_oversight_views.coverage_export_view,
         name="cpo_coverage_export",
     ),
+    # The consolidated table behind each card (owner, 2026-10-01): every row
+    # the card counts, grouped by Programme Lead, and the same as a workbook.
+    path(
+        "country-planning-oversight/table/<str:key>",
+        country_oversight_views.table_view,
+        name="cpo_table",
+    ),
+    path(
+        "country-planning-oversight/table-export/<str:key>",
+        country_oversight_views.table_export_view,
+        name="cpo_table_export",
+    ),
     # The Programme Lead's side of a planning follow-up, shown on Team
     # Oversight where the Lead acts on it.
     path(

@@ -17,14 +17,16 @@ Each opens into its requirement slots and the activity filling each.{% endcommen
   <div class="cpo-tscroll">
     <table class="cpo-mini cpo-school-list">
       <thead>
-        <tr><th scope="col">School</th><th scope="col">Staff</th><th scope="col">Partner</th><th scope="col">Training</th><th scope="col">Meeting</th><th scope="col">Remaining</th><th scope="col">Action</th></tr>
+        <tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">Type</th><th scope="col">Staff</th><th scope="col">Partner</th><th scope="col">Training</th><th scope="col">Meeting</th><th scope="col">Remaining</th><th scope="col">Action</th></tr>
       </thead>
       {% for row in rows %}
       <tbody x-data="{ slots: false }">
         <tr>
-          <th scope="row"><a href="/schools/{{ row.code }}" title="{{ row.family }} · {{ row.type }} · held by {{ row.owner }}{% if row.clustered %} · {{ row.cluster }}{% else %} · unclustered{% endif %}">{{ row.name }}</a><span class="cpo-hint">{{ row.code }} · {{ row.type }}{% if not row.clustered %} · <span class="cpo-alert">unclustered</span>{% endif %}</span></th>
+          <td>{{ row.code }}</td>
+          <th scope="row"><a href="/schools/{{ row.code }}" title="{{ row.type }} · held by {{ row.owner }}{% if row.clustered %} · {{ row.cluster }}{% else %} · unclustered{% endif %}">{{ row.name }}</a><span class="cpo-hint">held by {{ row.owner }}{% if not row.clustered %} · <span class="cpo-alert">unclustered</span>{% endif %}</span>{% for reason in row.twice %}<span class="cpo-flagged">{{ reason }}</span>{% endfor %}</th>
+          <td>{{ row.type }}</td>
           <td>{{ row.staff_planned }} / {{ row.staff_slots }}{% if row.deficit %} <span class="cpo-flagged">{{ row.deficit }} over capacity</span>{% endif %}</td>
-          <td>{{ row.partner_assigned }} / {{ row.partner_slots }}{% if row.partner_assigned %} <span class="cpo-hint">{{ row.partner_scheduled }} scheduled</span>{% endif %}</td>
+          <td>{{ row.partner_scheduled }} / {{ row.partner_slots }}{% if row.partner_assigned > row.partner_scheduled %} <span class="cpo-hint">assigned, awaiting the Partner's date</span>{% elif row.with_partner and not row.partner_assigned %} <span class="cpo-hint">with a Partner</span>{% endif %}</td>
           <td>{{ row.training_planned }} / {{ row.training_slots }}</td>
           <td>{% if row.meeting_planned %}Planned{% elif row.clustered %}<span class="cpo-alert">None</span>{% else %}—{% endif %}</td>
           <td>{% if row.remaining %}<span class="cpo-alert">{{ row.remaining }}</span>{% else %}0{% endif %}</td>
@@ -40,7 +42,7 @@ Each opens into its requirement slots and the activity filling each.{% endcommen
           </td>
         </tr>
         <tr x-show="slots" x-cloak>
-          <td colspan="7" class="cpo-slotcell">
+          <td colspan="9" class="cpo-slotcell">
             <div x-ref="slots" hx-get="/country-planning-oversight/slots?school={{ row.id }}&amp;{{ query }}" hx-trigger="cpo-load" hx-swap="innerHTML"><p class="cpo-muted">Reading the slots…</p></div>
           </td>
         </tr>

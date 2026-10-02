@@ -1,0 +1,70 @@
+{% comment %}
+The same schools by their own type (owner, 2026-10-01: "separate all the plans
+for Core, Clients, Core Trained, Core Graduates ... how many schools have been
+planned for and how many are not yet. Do the same for trainings"). One row per
+type, from the fold the cards read: what the type needs, what is planned, what
+remains and how much of it is covered — for visits and for trainings. A type's
+row is the sum of its people's, and the last row is every type together: the
+cards' own figures. A type the requirement asks nothing of shows what it holds
+and no gap. Each gap opens the table of the schools behind it. A real table on
+every screen.
+{% endcomment %}
+<section class="cpo-drill" aria-labelledby="cpo-types-name">
+  <header class="cpo-drill-head" data-no-titlebar data-card-header>
+    <h2 class="cpo-drill-name" id="cpo-types-name">Planned and Not Yet Planned by School Type</h2>
+  </header>
+  <div class="cpo-tscroll" data-mobile-table="scroll">
+    <table class="cpo-table">
+      <thead>
+        <tr>
+          <th scope="col" class="cpo-namecol">School Type</th>
+          <th scope="col">Schools</th>
+          <th scope="col" title="Visit slots the schools of this type need in the year">Visits<br>Needed</th>
+          <th scope="col">Planned<br>by Staff</th>
+          <th scope="col" title="Visits a Partner has dated">Planned<br>by Partners</th>
+          <th scope="col" title="Visit slots with nothing planned yet">Visits<br>Remaining</th>
+          <th scope="col" title="Visit slots planned, of those needed">Visit<br>Coverage</th>
+          <th scope="col" title="Unique schools with a visit planned, by staff or by a Partner">Schools<br>Planned</th>
+          <th scope="col" title="Unique schools with no visit planned">Not Yet<br>Planned</th>
+          <th scope="col" title="Schools with any live Partner work, dated by the Partner or not">With a<br>Partner</th>
+          <th scope="col">Trainings<br>Needed</th>
+          <th scope="col">Trainings<br>Planned</th>
+          <th scope="col">Trainings<br>Remaining</th>
+          <th scope="col">No Training<br>Planned</th>
+          <th scope="col" title="Schools planned more often than they should be: by staff and a Partner, the same kind of visit twice, or more than a Core school takes">Planned<br>Twice</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in type_rows %}
+        <tr data-level="{% if row.is_total %}0{% else %}1{% endif %}">
+          <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.label }}</span>{% if not row.needs_visits %}<span class="cpo-hint"><span>outreach only</span></span>{% endif %}</th>
+          <td>{{ row.schools }}</td>
+          {% if row.needs_visits %}
+          <td>{{ row.visit_slots }}</td>
+          <td>{{ row.staff }}</td>
+          <td>{{ row.partner_scheduled }}</td>
+          <td>{{ row.visit_remaining }}</td>
+          <td><span class="cpo-pct" data-tone="{{ row.slot_tone }}">{% if row.slot_share is None %}—{% else %}{{ row.slot_share }}%{% endif %}</span></td>
+          <td class="cpo-cover"><span>{{ row.any_visit }}</span> <span class="cpo-pct" data-tone="{{ row.visit_tone }}">{% if row.visit_share is None %}(—){% else %}({{ row.visit_share }}%){% endif %}</span></td>
+          <td>{% if row.no_visit != "0" %}<a class="cpo-alert" href="/country-planning-oversight/table/not-planned?school_type={{ row.key }}&amp;{{ type_query }}" title="List the schools not yet planned">{{ row.no_visit }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          {% else %}
+          <td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td>
+          {% endif %}
+          <td>{% if row.with_partner != "0" %}<a class="cpo-link" href="/country-planning-oversight/table/partners?school_type={{ row.key }}&amp;{{ type_query }}" title="List the schools assigned to Partners">{{ row.with_partner }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          {% if row.needs_trainings %}
+          <td>{{ row.training_slots }}</td>
+          <td class="cpo-cover"><span>{{ row.training }}</span> <span class="cpo-pct" data-tone="{{ row.training_tone }}">{% if row.training_share is None %}(—){% else %}({{ row.training_share }}%){% endif %}</span></td>
+          <td>{{ row.training_remaining }}</td>
+          <td>{% if row.no_training != "0" %}<a class="cpo-alert" href="/country-planning-oversight/table/no-training?school_type={{ row.key }}&amp;{{ type_query }}" title="List the schools with no training planned">{{ row.no_training }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          {% else %}
+          <td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td>
+          {% endif %}
+          <td>{% if row.duplicates %}<a class="cpo-alert" href="/country-planning-oversight/table/duplicates?school_type={{ row.key }}&amp;{{ type_query }}" title="List every plan at the schools planned twice">{{ row.duplicates }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="15" class="cpo-empty">No school in this selection.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

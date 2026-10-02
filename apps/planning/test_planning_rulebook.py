@@ -1,21 +1,20 @@
 """The planning rulebook (owner, 2026-10-01) as tests.
 
 Who plans (a role held, not the role in use), which visits count and for
-whom, what each school type needs, when Partner work is planned, what a
-duplicate is — and the figures check the Country Director reads them in.
+whom, what each school type needs, when Partner work is planned, and what
+a duplicate is.
 """
 
 from __future__ import annotations
 
-import io
-
-from django.test import Client
-
 from apps.activities.models import Activity
 from apps.core.enums import ActivityType, ExecutorType
 from apps.core.rbac import EdifyRole
-from apps.planning.country_oversight import figures_check, people, rules
+from apps.geography.models import Region
+from apps.planning.country_oversight import people, rules
+from apps.planning.country_oversight import service as svc
 from apps.planning.test_country_planning_oversight import FY, World, day
+from apps.schools.models import School
 
 PURPOSES = (
     None,
@@ -469,64 +468,272 @@ class SchoolYearTest(World):
         self.assertEqual(self.reasons(core), ())
 
 
-class FiguresCheckTest(World):
-    def workbook(self, user, query=""):
-        import openpyxl
+class PeopleFirstPageTest(World):
+    """The dashboard's own fold: a row is a person, and it carries their own
+    plan beside the schools they hold."""
 
-        client = Client()
-        client.force_login(user)
-        response = client.get(
-            f"/country-planning-oversight/coverage-export?fy={FY}{query}"
-        )
-        self.assertEqual(response.status_code, 200)
-        return openpyxl.load_workbook(io.BytesIO(response.content))
+    def snapshot(self, **filters):
+        return svc.snapshot_for(self.cd_user, svc.Filters(fy=FY, **filters))
 
-    def test_the_country_director_reads_today_beside_the_new_rules(self):
+    def cards(self, snapshot):
+        return {card["metric_key"]: card for card in svc.kpis(snapshot)}
+
+    def test_staff_visit_planning_is_plans_over_headcount_targets(self):
         school = self.school("client", self.cceo)
         self.activity(school, "training_follow_up_visit", owner=self.cceo2)
+        self.activity(school, "donor_visit", owner=self.cceo2)
+        snapshot = self.snapshot()
+        card = self.cards(snapshot)["cpo_staff_visit_planning"]
+        self.assertEqual(card["part"], "1")
+        self.assertEqual(card["whole"], f"{3 * 560 + 2 * 280:,}")
+        self.assertEqual(svc.headcount(snapshot), (2, 3))
+        # The visit is the planner's; the school is its holder's.
+        tree = snapshot.tree
+        planner = self.owner_row(tree, self.cceo2).tally
+        holder = self.owner_row(tree, self.cceo).tally
+        self.assertEqual((planner.p_visits, planner.schools), (1, 0))
+        self.assertEqual((holder.p_visits, holder.schools, holder.any_visit), (0, 1, 1))
+        self.assertEqual(planner.p_outreach, 1)
+
+    def test_a_leads_row_is_their_own_plan_and_their_cceos(self):
+        school = self.school("client", self.cceo)
+        other = self.school("client", self.cceo3)
+        self.activity(school, "school_visit_ssa_collection", owner=self.pl)
+        self.activity(school, "training_follow_up_visit", owner=self.cceo)
+        self.activity(other, "training_follow_up_visit", owner=self.cceo3)
+        tree = self.snapshot().tree
+        lead = self.lead_row(tree, self.pl)
+        self.assertEqual(lead.tally.target, 280 + 560 + 560)
+        self.assertEqual(lead.tally.p_visits, 2)
+        own = self.owner_row(tree, self.pl)
+        self.assertEqual(
+            (own.kind, own.tally.target, own.tally.p_visits), ("pl_personal", 280, 1)
+        )
+        self.assertEqual(self.lead_row(tree, self.pl2).tally.p_visits, 1)
+        chart = svc.charts(self.snapshot())[0]
+        self.assertEqual(chart["categories"], ["Lead A", "Lead B"])
+        ssa = next(s for s in chart["series"] if s["name"] == "SSA Support")
+        self.assertEqual(ssa["data"], [1, 0])
+
+    def test_a_lead_holding_no_school_still_has_a_row_and_a_target(self):
+        tree = self.snapshot().tree
+        own = self.owner_row(tree, self.pl2)
+        self.assertEqual((own.tally.target, own.tally.schools), (280, 0))
+        self.assertEqual(own.tally.shortfall, 280)
+
+    def test_a_lead_using_another_role_keeps_their_team_on_the_page(self):
+        self.school("client", self.cceo)
+        self.pl_user.roles = [
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.ADMIN.value,
+        ]
+        self.pl_user.active_role = EdifyRole.ADMIN.value
+        self.pl_user.save()
+        tree = self.snapshot().tree
+        lead = self.lead_row(tree, self.pl)
+        self.assertEqual(lead.tally.schools, 1)
+        self.assertEqual(lead.tally.target, 280 + 560 + 560)
+        self.assertFalse([row for row in tree.leads if row.is_no_lead])
+
+    def test_partner_planning_is_the_partners_dates_over_what_staff_assigned(self):
+        waiting = self.school("client", self.cceo)
+        booked = self.school("client", self.cceo)
+        dated = self.school("client", self.cceo)
         self.handover(
-            school,
+            waiting,
             self.partner,
             status="pending_scheduling",
             assigning_staff_id=self.cceo.id,
         )
-        workbook = self.workbook(self.cd_user)
-        titles = [name for name in workbook.sheetnames if name.startswith("Check")]
-        self.assertEqual(len(titles), 4)
-        cards = {row[0]: row for row in workbook[titles[0]].iter_rows(values_only=True)}
-        staff = cards["Staff Visit Planning"]
-        # Today: the holder's slot against the holder's capacity. New rules:
-        # the planner's visit against every Lead's and CCEO's target.
-        self.assertEqual((staff[1], staff[2]), (1, 1))
-        self.assertEqual((staff[4], staff[5]), (1, 3 * 560 + 2 * 280))
-        partner = cards["Partner Planning"]
-        self.assertEqual((partner[4], partner[5]), (0, 1))
-        self.assertEqual(cards["Schools planned twice"][4], 1)
+        self.activity(
+            booked,
+            "school_visit",
+            partner=self.partner,
+            status="partner_scheduled",
+            monitored_by_staff_id=self.cceo.id,
+            executor_type=ExecutorType.CERTIFIED_PARTNER_AGENCY.value,
+            partner_date_set_by="staff",
+        )
+        snapshot = self.snapshot()
+        card = self.cards(snapshot)["cpo_partner_planning"]
+        self.assertEqual((card["part"], card["whole"]), ("0", "2"))
+        t = snapshot.tree.country
+        # Assigned, never planned: nothing a Partner dated fills a slot yet.
+        self.assertEqual((t.partner_assigned, t.partner_scheduled), (2, 0))
+        self.assertEqual(t.with_partner, 2)
 
-        people_rows = list(workbook[titles[1]].iter_rows(values_only=True))
-        header = people_rows[0]
-        by_name = {row[2]: dict(zip(header, row)) for row in people_rows[1:]}
-        self.assertEqual(by_name["Officer Two"]["New rules: visits planned"], 1)
-        self.assertEqual(by_name["Officer One"]["New rules: visits planned"], 0)
-        self.assertEqual(by_name["Officer One"]["Today: staff planned"], 1)
-        self.assertEqual(by_name["Officer One"]["Schools assigned to Partners"], 1)
-        self.assertEqual(by_name["All teams"]["Visit target"], 3 * 560 + 2 * 280)
-
-        twice = list(workbook[titles[3]].iter_rows(values_only=True))
-        self.assertEqual(twice[1][0], school.school_id)
-
-    def test_only_the_country_director_and_the_admin_get_the_check(self):
-        self.assertTrue(figures_check.may_check(self.admin_user))
-        workbook = self.workbook(self.ia_user)
-        self.assertFalse(
-            [name for name in workbook.sheetnames if name.startswith("Check")]
+        self.activity(
+            dated,
+            "school_visit",
+            partner=self.partner2,
+            status="partner_scheduled",
+            monitored_by_staff_id=self.cceo.id,
+            partner_date_set_by="partner",
+        )
+        svc.snapshot_for(self.cd_user, svc.Filters(fy=FY), refresh=True)
+        snapshot = self.snapshot()
+        card = self.cards(snapshot)["cpo_partner_planning"]
+        self.assertEqual((card["part"], card["whole"]), ("1", "3"))
+        self.assertEqual(snapshot.tree.country.partner_scheduled, 1)
+        rows = {row["name"]: row for row in svc.partner_rows(snapshot, self.cceo.id)}
+        self.assertEqual(
+            (rows["Partner Alpha"]["assigned"], rows["Partner Alpha"]["planned"]),
+            ("2", "0"),
+        )
+        self.assertEqual(
+            (rows["Partner Beta"]["assigned"], rows["Partner Beta"]["planned"]),
+            ("1", "1"),
         )
 
-    def test_the_csv_is_still_the_school_sheet(self):
-        client = Client()
-        client.force_login(self.cd_user)
-        response = client.get(
-            f"/country-planning-oversight/coverage-export?fy={FY}&format=csv"
+    def test_the_types_table_is_the_cards_split_by_school_type(self):
+        core = self.school("core", self.cceo)
+        client = self.school("client", self.cceo)
+        self.school("core_trained", self.cceo3)
+        self.school("core_graduate", self.cceo3)
+        self.school("champion", self.cceo3)
+        self.activity(core, "core_visit", owner=self.cceo)
+        self.activity(client, "training_follow_up_visit", owner=self.cceo)
+        self.handover(client, self.partner, status="pending_scheduling")
+        snapshot = self.snapshot()
+        rows = {row["key"]: row for row in svc.type_rows(snapshot)}
+        self.assertEqual(
+            [row["key"] for row in svc.type_rows(snapshot) if not row.get("is_total")],
+            list(rules.TYPE_ORDER),
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/csv", response["Content-Type"])
+        self.assertEqual(
+            (
+                rows["core"]["visit_slots"],
+                rows["core"]["staff"],
+                rows["core"]["no_visit"],
+            ),
+            ("4", "1", "0"),
+        )
+        self.assertEqual(
+            (rows["client"]["any_visit"], rows["client"]["with_partner"]), ("1", "1")
+        )
+        self.assertEqual(rows["client"]["duplicates"], 1)
+        self.assertEqual(rows["core_trained"]["no_visit"], "1")
+        self.assertFalse(rows["core_graduate"]["needs_trainings"])
+        self.assertFalse(rows["champion"]["needs_visits"])
+        t = snapshot.tree.country
+        self.assertEqual(
+            sum(tally.visit_slots for tally in snapshot.tree.by_type.values()),
+            t.visit_slots,
+        )
+        self.assertEqual(t.duplicates, 1)
+        self.assertEqual(self.cards(snapshot)["cpo_total_visit_coverage"]["whole"], "7")
+
+    def test_filters_narrow_a_persons_plan_with_the_schools(self):
+        east = Region.objects.create(name="Rule East", country="Uganda")
+        here = self.school("client", self.cceo)
+        there = self.school("core", self.cceo)
+        School.objects.filter(pk=there.pk).update(region=east)
+        self.activity(here, "training_follow_up_visit", owner=self.cceo)
+        self.activity(there, "core_visit", owner=self.cceo, on=20)
+        self.activity(there, "core_visit", owner=self.cceo2, on=40)
+        self.assertEqual(self.snapshot().tree.country.p_visits, 3)
+        self.assertEqual(self.snapshot(region=east.id).tree.country.p_visits, 2)
+        self.assertEqual(self.snapshot(school_type="client").tree.country.p_visits, 1)
+        self.assertEqual(self.snapshot(cceo=self.cceo2.id).tree.country.p_visits, 1)
+        self.assertEqual(
+            self.snapshot(program_lead=self.pl2.id).tree.country.p_visits, 0
+        )
+        full = self.snapshot(planning_status="full").tree.country
+        self.assertEqual((full.schools, full.p_visits), (1, 1))
+        self.assertEqual(self.snapshot(channel="partner").tree.country.p_visits, 0)
+
+    def test_the_engine_agrees_with_the_school_by_school_read(self):
+        """Two readings of the rulebook, written apart, give one answer."""
+        core = self.school("core", self.cceo, cluster=self.cluster)
+        client = self.school("client", self.cceo)
+        trained = self.school("core_trained", self.cceo3)
+        graduate = self.school("core_graduate", self.cceo3)
+        self.school("champion", self.cceo3)
+        for offset in (10, 20, 30):
+            self.activity(core, "core_visit", owner=self.cceo, on=offset)
+        self.activity(
+            core, "core_visit", partner=self.partner, status="partner_scheduled", on=50
+        )
+        self.activity(core, "core_training", owner=self.cceo, on=60)
+        self.activity(
+            core,
+            "core_training",
+            partner=self.partner,
+            status="partner_scheduled",
+            partner_date_set_by="partner",
+            on=70,
+        )
+        self.activity(client, "training_follow_up_visit", owner=self.cceo)
+        self.activity(client, "school_visit_ssa_collection", owner=self.cceo2)
+        self.activity(
+            trained,
+            "in_school_training",
+            owner=self.cceo3,
+            purpose_type="in_school_training",
+        )
+        self.handover(trained, self.partner, status="pending_scheduling")
+        self.activity(
+            graduate,
+            "school_visit",
+            partner=self.partner2,
+            on=None,
+            status="assigned_to_partner",
+        )
+        self.session("cluster_training", [core])
+        self.session("cluster_meeting", [core])
+        tree = self.snapshot().tree
+        year = people.school_year(self.cd_user, FY)
+        for row in people.summarise_by_type(year):
+            got = tree.by_type.get(row.school_type)
+            if got is None:
+                self.assertEqual(row.schools, 0)
+                continue
+            needs = rules.requirement_for(row.school_type)
+            with self.subTest(school_type=row.school_type):
+                self.assertEqual(
+                    (
+                        got.schools,
+                        got.visit_slots,
+                        got.staff,
+                        got.partner_scheduled,
+                        got.any_visit,
+                        got.training_slots,
+                        got.training,
+                        got.with_partner,
+                        got.clustered,
+                        got.meeting_covered,
+                        got.duplicates,
+                    ),
+                    (
+                        row.schools,
+                        row.visit_slots,
+                        row.staff_slots,
+                        row.partner_slots,
+                        row.schools_with_visit if needs.visits else 0,
+                        row.training_slots,
+                        row.trainings,
+                        row.with_partner,
+                        row.clustered,
+                        row.in_meeting,
+                        row.duplicates,
+                    ),
+                )
+        plan = people.people_plan(self.cd_user, FY)
+        self.assertEqual(tree.country.p_visits, plan.total("visits_planned"))
+        self.assertEqual(tree.country.target, plan.total("target"))
+        self.assertEqual(tree.country.pa_work, plan.total("partner_assigned"))
+        self.assertEqual(tree.country.pp_work, plan.total("partner_planned"))
+
+    def test_the_page_shows_the_types_and_people_first_columns(self):
+        self.school("client", self.cceo)
+        client = self.as_user(self.cd_user)
+        page = client.get(f"/country-planning-oversight/?fy={FY}").content.decode()
+        self.assertIn("Planned and Not Yet Planned by School Type", page)
+        self.assertIn("Visits Planned Against Target by Program Lead", page)
+        self.assertIn("Core<br>Graduate", page)
+        rows = client.get(
+            f"/country-planning-oversight/rows?level=lead&key={self.pl.id}&fy={FY}",
+            HTTP_HX_REQUEST="true",
+        ).content.decode()
+        self.assertIn("own plan", rows)
+        self.assertIn("/ 560", rows)

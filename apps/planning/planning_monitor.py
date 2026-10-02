@@ -22,20 +22,26 @@ right data based on what people have planned." The rows are the people
 (apps.planning.monitor_roster): every Programme Lead and every CCEO in the
 reader's scope, whether or not the directory lists a school under them.
 
+Owner, 2026-10-01: the monitor and Country Planning Oversight count by one
+rulebook (apps.planning.country_oversight.rules), so the two pages cannot
+give the Country Director two figures for one plan. The people are the
+rulebook's (a Lead or a CCEO by the role they hold); a visit that counts is a
+Follow up, an In-school Training or an SSA Support, planned and dated;
+Partner work is planned once the Partner has dated it.
+
 So, per person, for one fiscal year:
 
 * **The visit target** — 280 for a Programme Lead, 560 for a CCEO.
-* **Visits planned** — the staff visits the person planned, wherever they
-  are: every visit type and SSA Support, as Team Plan lists them, in any live
-  state (a plan returned for correction is still their plan).
+* **Visits planned** — the counted staff visits the person planned, wherever
+  they are. Donor, story, social and invitation visits are not counted.
 * **Core visits** — two staff visits a year at each Core school
   (``CORE_STAFF_VISITS_PER_SCHOOL``): the target is 2 × Core schools.
-* **Client visits** — the rest of the target, at client and Core Trained
-  schools (planned alike since 2026-09-28).
+* **Client visits** — the rest of the target, at Client, Core Trained and
+  Core Graduate schools (planned alike since 2026-09-28).
 * **Partner share** — client-rule schools beyond what the officer's client
   visits can reach are the partner's: needed = schools − client target;
-  assigned = schools with partner work (a dated partner visit, or a handover
-  the partner has not dated yet).
+  assigned = schools with partner work (a visit the partner has dated, or
+  work the partner has not dated yet).
 * **Unique schools** with a visit planned, **schools planned for training**
   (invited to a live group training or cluster meeting, or given an in-school
   training), schools **not clustered**, **not planned** for a visit, for
@@ -43,8 +49,8 @@ So, per person, for one fiscal year:
 * **Execution** beside each plan: visits delivered and schools whose
   training has been delivered, counted from the same rows as it happens.
 
-Only schools that take planned support are counted: Core, Client and Core
-Trained. Champion and Core Graduate schools take donor and story visits only
+Only schools the requirement asks a visit of are counted: Core, Client, Core
+Trained and Core Graduate. Champion schools take donor and story visits only
 (owner, 2026-09-25) and are followed on Programme Schools.
 
 Scope is ``scoped_school_queryset``, the rule every other lens reads: the
@@ -73,8 +79,8 @@ from apps.planning.monitor_roster import (
 #: The visits a CCEO plans in a year.
 DEFAULT_VISITS_TARGET = CCEO_VISITS_TARGET
 
-#: What counts as a planned visit: every visit type, and SSA Support — the
-#: rows Team Plan files under Client and Core School Visits.
+#: Every visit type and SSA Support: the types a visit row can carry. The
+#: visits that COUNT are the rulebook's (``_counted_visits``).
 PLANNED_VISIT_TYPES = tuple(str(t) for t in (*VISIT_TYPES, *SSA_TYPES))
 #: Staff visits a year at each Core school (two of the package's four; the
 #: partner delivers the other two).
@@ -82,7 +88,7 @@ CORE_STAFF_VISITS_PER_SCHOOL = 2
 
 #: School types the monitor counts.
 CORE_TYPES = ("core",)
-CLIENT_TYPES = ("client", "core_trained")
+CLIENT_TYPES = ("client", "core_trained", "core_graduate")
 MONITORED_TYPES = CORE_TYPES + CLIENT_TYPES
 
 #: The drill-down filters, in the order the page offers them.
@@ -434,6 +440,7 @@ def planning_monitor(
     )
     directory = _staff_directory({r["account_owner_id"] for r in rows})
     clusters = _cluster_names({r["cluster_id"] for r in rows})
+    active_clusters = _active_clusters(set(clusters))
     schools: dict[str, SchoolState] = {}
     for r in rows:
         owner = directory.get(str(r["account_owner_id"] or ""))
@@ -445,7 +452,8 @@ def planning_monitor(
             district=r["district__name"] or "",
             cluster_id=r["cluster_id"] or "",
             cluster_name=clusters.get(r["cluster_id"], ""),
-            clustered=bool(r["cluster_id"]) and r["cluster_status"] == "clustered",
+            # In an ACTIVE cluster, as Country Planning Oversight reads it.
+            clustered=r["cluster_id"] in active_clusters,
             officer_id=owner["officer_id"] if owner else UNASSIGNED_KEY,
             officer_name=owner["officer_name"] if owner else UNASSIGNED_LABEL,
             lead_id=owner["lead_id"] if owner else NO_LEAD_KEY,
@@ -605,6 +613,18 @@ def _people(principal, schools: dict) -> tuple[dict, dict]:
     return officers, leads
 
 
+def _active_clusters(cluster_ids) -> set:
+    from apps.clusters.models import Cluster
+
+    if not cluster_ids:
+        return set()
+    return set(
+        Cluster.objects.filter(id__in=cluster_ids, status="active").values_list(
+            "id", flat=True
+        )
+    )
+
+
 def _cluster_names(cluster_ids) -> dict[str, str]:
     from apps.clusters.models import Cluster
 
@@ -614,13 +634,20 @@ def _cluster_names(cluster_ids) -> dict[str, str]:
     return dict(Cluster.objects.filter(id__in=ids).values_list("id", "name"))
 
 
-def _live(qs):
-    """Activities that are a plan: the statuses Team Plan and My Plan list —
-    planned, being delivered, delivered, and returned for correction (still
-    the person's plan). Cancelled, rejected and abandoned work is not."""
-    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
+def _planned(qs):
+    """Activities that are a plan, by the rulebook: a scheduled-or-later
+    state with a date on it, and not deleted."""
+    from apps.planning.country_oversight import rules
 
-    return qs.filter(deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES)
+    return qs.filter(rules.planned_q(), deleted_at__isnull=True)
+
+
+def _counted_visits(qs):
+    """Of those, the visits that count: Follow up, In-school Training and
+    SSA Support at a school (apps.planning.country_oversight.rules)."""
+    from apps.planning.country_oversight import rules
+
+    return _planned(qs).filter(rules.counted_visit_q())
 
 
 def _delivered_statuses():
@@ -633,69 +660,81 @@ def _delivered_statuses():
 
 
 def _count_activities(schools: dict, school_ids, fy: str) -> None:
-    """Visits and in-school trainings at each school, planned and delivered."""
+    """Counted visits and in-school trainings at each school, planned and
+    delivered. A Partner's visit counts once the Partner has dated it."""
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity
-    from apps.planning.visit_gate import COMPANION_VISIT_PURPOSE
+    from apps.planning.country_oversight import rules
 
     delivered = _delivered_statuses()
-    rows = (
-        _live(Activity.objects.filter(school_id__in=school_ids, fy=fy))
-        .filter(
-            Q(activity_type__in=PLANNED_VISIT_TYPES)
-            | Q(activity_type__in=TRAINING_TYPES)
-        )
-        .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
-        .values("school_id", "activity_type", "delivery_type", "status")
+    at_schools = Activity.objects.filter(school_id__in=school_ids, fy=fy)
+    for school_id, delivery_type, status, n in (
+        _counted_visits(at_schools)
+        .filter(rules.staff_delivery_q() | rules.partner_planned_q())
+        .values_list("school_id", "delivery_type", "status")
         .annotate(n=Count("id"))
-    )
-    visit_types = set(PLANNED_VISIT_TYPES)
-    for row in rows:
-        school = schools.get(row["school_id"])
+        .order_by()
+    ):
+        school = schools.get(school_id)
         if school is None:
             continue
-        done = row["status"] in delivered
-        if row["activity_type"] in visit_types:
-            if row["delivery_type"] == "partner":
-                school.partner_visits += row["n"]
-            else:
-                school.staff_visits += row["n"]
-                if done:
-                    school.staff_visits_done += row["n"]
+        if delivery_type == "partner":
+            school.partner_visits += n
         else:
-            school.in_school_training = True
-            if done:
-                school.training_done = True
+            school.staff_visits += n
+            if status in delivered:
+                school.staff_visits_done += n
+    for school_id, status in (
+        _planned(at_schools)
+        .filter(activity_type__in=SCHOOL_TRAINING_TYPES, cluster_id__isnull=True)
+        .filter(rules.staff_delivery_q() | rules.partner_planned_q())
+        .values_list("school_id", "status")
+        .order_by()
+    ):
+        school = schools.get(school_id)
+        if school is None:
+            continue
+        school.in_school_training = True
+        if status in delivered:
+            school.training_done = True
+    # Partner work a Partner has not dated: the school is in its hands.
+    for school_id, n in (
+        at_schools.filter(deleted_at__isnull=True)
+        .filter(rules.partner_held_q())
+        .exclude(rules.partner_planned_q())
+        .values_list("school_id")
+        .annotate(n=Count("id"))
+        .order_by()
+    ):
+        if school_id in schools:
+            schools[school_id].partner_pending += n
 
 
 def _count_planned_visits(officers, fy: str) -> None:
-    """Each person's own staff visits in the year, wherever they are.
+    """Each person's own counted visits in the year, wherever they are.
 
     Counted by the person who planned them — the responsible officer, in
     either id space — as My Plan and Team Plan count them, not by who owns the
     school: a CCEO's visit at a colleague's school is still one of the CCEO's
     560 (owner, 2026-09-28: "the PL are seeing exactly the number ... planned
-    by the CCEO"). Core or client by the school's type. SSA Support and a
-    Lead's visit accompanying a CCEO count, as Team Plan lists them among the
-    school visits; a partner's delivery does not.
+    by the CCEO"). Core or client by the school's type. A Lead's visit counts
+    for the Lead; a partner's delivery does not.
     """
     from apps.activities.models import Activity
+    from apps.planning.country_oversight import rules
 
     by_id = {i: officer for officer in officers for i in officer.ids}
     if not by_id:
         return
     delivered = _delivered_statuses()
     rows = (
-        _live(
-            Activity.objects.filter(
-                responsible_staff_id__in=list(by_id),
-                fy=fy,
-                activity_type__in=PLANNED_VISIT_TYPES,
-                school_id__isnull=False,
-            )
+        _counted_visits(
+            Activity.objects.filter(responsible_staff_id__in=list(by_id), fy=fy)
         )
-        .exclude(delivery_type="partner")
+        .filter(rules.staff_delivery_q())
         .values("responsible_staff_id", "school__school_type", "status")
         .annotate(n=Count("id"))
+        .order_by()
     )
     for row in rows:
         officer = by_id.get(str(row["responsible_staff_id"]))
@@ -710,19 +749,21 @@ def _count_planned_visits(officers, fy: str) -> None:
 
 
 def _count_partner_work(officers, fy: str) -> None:
-    """Each person's partner work in the year, as Team Plan and Partner
-    Oversight list it.
+    """Each person's partner work in the year, as Country Planning Oversight
+    counts it.
 
     * **Schools with a partner** — distinct schools the person has handed to
-      a partner: a handover they assigned or monitor that is not withdrawn or
-      returned, or a partner-delivered activity they monitor this year.
-    * **Scheduled by partners** — partner-delivered activities in the year
-      the person monitors (the responsible officer where no monitor is
-      stamped), and of those, the delivered ones.
-    * **Awaiting the partner's date** — handovers still undated.
+      a partner: a handover they assigned or monitor that is still waiting,
+      or a partner activity they monitor this year.
+    * **Scheduled by partners** — of that work, what the PARTNER has dated
+      (staff assign a school; the partner sets the date), and of those, the
+      delivered ones.
+    * **Awaiting the partner's date** — work in the partner's hands with no
+      date of the partner's on it yet.
     """
     from apps.activities.models import Activity
     from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import rules
 
     by_id = {i: officer for officer in officers for i in officer.ids}
     if not by_id:
@@ -732,62 +773,80 @@ def _count_partner_work(officers, fy: str) -> None:
     schools: dict[int, set] = {}
 
     def owner_of(*candidates):
+        """Whoever the record names first: its monitor, then who assigned or
+        is responsible for it, then whoever holds the school — the order
+        Country Planning Oversight credits Partner work in."""
         for candidate in candidates:
-            officer = by_id.get(str(candidate or ""))
-            if officer is not None:
-                return officer
+            if candidate:
+                return by_id.get(str(candidate))
         return None
 
-    for monitor, responsible, school_id, status in _live(
-        Activity.objects.filter(fy=fy, delivery_type="partner").filter(
+    carried = set(
+        PartnerAssignment.objects.filter(
+            status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+            source_activity_id__isnull=False,
+        ).values_list("source_activity_id", flat=True)
+    )
+    from django.db.models import Case, IntegerField, Value, When
+
+    for activity_id, monitor, responsible, holder, school_id, status, dated in (
+        Activity.objects.filter(fy=fy, deleted_at__isnull=True)
+        .filter(rules.partner_held_q())
+        .filter(
             Q(monitored_by_staff_id__in=ids)
-            | Q(monitored_by_staff_id__isnull=True, responsible_staff_id__in=ids)
+            | Q(responsible_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
         )
-    ).values_list(
-        "monitored_by_staff_id", "responsible_staff_id", "school_id", "status"
+        .annotate(
+            dated=Case(
+                When(rules.partner_planned_q(), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .values_list(
+            "id",
+            "monitored_by_staff_id",
+            "responsible_staff_id",
+            "school__account_owner_id",
+            "school_id",
+            "status",
+            "dated",
+        )
     ):
-        officer = owner_of(monitor, responsible)
-        if officer is None:
+        officer = owner_of(monitor, responsible, holder)
+        if officer is None or activity_id in carried:
             continue
-        officer.partner_scheduled += 1
-        if status in delivered:
-            officer.partner_delivered += 1
+        if dated:
+            officer.partner_scheduled += 1
+            if status in delivered:
+                officer.partner_delivered += 1
+        else:
+            officer.partner_awaiting += 1
         if school_id:
             schools.setdefault(id(officer), set()).add(school_id)
 
-    handovers = (
-        PartnerAssignment.objects.filter(
-            Q(monitoring_staff_id__in=ids)
-            | Q(monitoring_staff_id__isnull=True, assigning_staff_id__in=ids)
-        )
-        .exclude(status__in=_CLOSED_HANDOVER_STATUSES)
-        .filter(
-            Q(status__in=PartnerAssignment.UNSCHEDULED_STATUSES)
-            | Q(scheduled_activity__fy=fy)
-        )
+    handovers = PartnerAssignment.objects.filter(
+        Q(monitoring_staff_id__in=ids)
+        | Q(assigning_staff_id__in=ids)
+        | Q(school__account_owner_id__in=ids),
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
     )
-    for monitor, assigner, school_id, status in handovers.values_list(
-        "monitoring_staff_id", "assigning_staff_id", "school_id", "status"
+    for monitor, assigner, holder, school_id in handovers.values_list(
+        "monitoring_staff_id",
+        "assigning_staff_id",
+        "school__account_owner_id",
+        "school_id",
     ):
-        officer = owner_of(monitor, assigner)
+        officer = owner_of(monitor, assigner, holder)
         if officer is None:
             continue
-        if status in PartnerAssignment.UNSCHEDULED_STATUSES:
-            officer.partner_awaiting += 1
+        officer.partner_awaiting += 1
         if school_id:
             schools.setdefault(id(officer), set()).add(school_id)
 
     for officer in officers:
         officer.partner_assigned_schools = len(schools.get(id(officer), ()))
-
-
-#: Handovers that no longer put a school in a partner's hands.
-_CLOSED_HANDOVER_STATUSES = (
-    "returned_to_staff",
-    "withdrawn",
-    "cancelled",
-    "rejected",
-)
 
 
 def _count_partner_handovers(schools: dict, school_ids) -> None:
@@ -820,7 +879,7 @@ def _count_cluster_sessions(schools: dict, school_ids, fy: str) -> None:
     from apps.core.activity_types import CLUSTER_MEETING_TYPES
 
     delivered = _delivered_statuses()
-    sessions = _live(Activity.objects.filter(fy=fy, cluster_id__isnull=False))
+    sessions = _planned(Activity.objects.filter(fy=fy, cluster_id__isnull=False))
     meeting_types = {str(t) for t in CLUSTER_MEETING_TYPES}
     training_types = {str(t) for t in TRAINING_TYPES}
     for school_id, activity_type, status, attended in (
