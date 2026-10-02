@@ -57,6 +57,7 @@ from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.activities.cluster_attendance import trained_school_ids
+from apps.planning.country_oversight.rules import TRAINED_TYPES
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
 # Target achievement is completed-vs-StaffTargetProfile (the spec's definition),
 # computed inline; the stricter apps.targets.performance engine is intentionally
@@ -602,8 +603,12 @@ class PLAnalyticsService:
         )
         # Both routes, one answer. A cluster session has no school FK, so
         # filtering on school_id alone missed every school it trained.
-        trained_ids = trained_school_ids(pls.school_ref, fy=fy)
-        schools_not_trained = max(0, schools_total - len(trained_ids))
+        # Against the schools that take a training (Core, Client, Core
+        # Trained and Core Graduate; the planning rulebook's TRAINED_TYPES):
+        # a Champion school takes none, so it is never "not trained".
+        training_schools = schools.filter(school_type__in=TRAINED_TYPES)
+        trained_ids = trained_school_ids(training_schools.values("id"), fy=fy)
+        schools_not_trained = max(0, training_schools.count() - len(trained_ids))
 
         def _rate(types):
             planned = acts.filter(activity_type__in=types).count()
@@ -1684,8 +1689,9 @@ class PLAnalyticsService:
         not_visited = max(0, schools.count() - len(visited & set(pls.school_ids)))
         # Both routes, one answer. A cluster session has no school FK, so
         # filtering on school_id alone missed every school it trained.
-        trained = trained_school_ids(schools.values("id"), fy=fy)
-        not_trained = max(0, schools.count() - len(trained))
+        training_schools = schools.filter(school_type__in=TRAINED_TYPES)
+        trained = trained_school_ids(training_schools.values("id"), fy=fy)
+        not_trained = max(0, training_schools.count() - len(trained))
         cluster_data = (
             cluster_rows
             if cluster_rows is not None
@@ -1981,6 +1987,8 @@ class PLAnalyticsService:
                 "district_id",
                 "district__name",
                 "current_fy_ssa_status",
+                # Whether the school takes a training at all.
+                "school_type",
                 # Read per row by the urgent table; deferring it would restore
                 # the per-row query this .only() list exists to prevent.
                 "shipping_address",
@@ -2000,7 +2008,7 @@ class PLAnalyticsService:
             weakest_label = ""
             no_ssa = s.current_fy_ssa_status != "done"
             not_visited = s.id not in visited
-            not_trained = s.id not in trained_ids
+            not_trained = s.school_type in TRAINED_TYPES and s.id not in trained_ids
             low_ssa = s.id in low_ssa_ids
             severity = 0
             if no_ssa:
@@ -2466,7 +2474,9 @@ class PLAnalyticsService:
             title = "Schools Not Visited"
         elif metric == "not_trained":
             # The tile's own set: no training this FY by either route.
-            matching = schools.exclude(id__in=trained_school_ids(pls.school_ref, fy=fy))
+            matching = schools.filter(school_type__in=TRAINED_TYPES).exclude(
+                id__in=trained_school_ids(pls.school_ref, fy=fy)
+            )
             title = "Schools Not Trained"
         elif metric in ("cceos_on_track", "target"):
             # Team progress is the sum of each officer's, so both tiles open

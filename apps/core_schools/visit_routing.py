@@ -52,28 +52,28 @@ def resolve_school(school_ref):
 
 
 def core_plan_for_visit(school, *, scheduled_date=None):
-    """The live Core package a visit at this school would belong to.
+    """The Core package a visit at this school belongs to: the package of the
+    fiscal year the visit is planned for.
 
-    None when the school is not on the core rule, or carries no package for
-    the fiscal year the visit falls in. Both are ordinary cases: the visit is
-    then scheduled exactly as it was before, so a school without a package
-    never becomes unschedulable because of this routing.
+    None when the school is not on the core rule or has never had a package.
+    Both are ordinary cases: the visit is then scheduled exactly as it was
+    before, so a school without a package never becomes unschedulable because
+    of this routing.
+
+    A year with no package yet used to fall back to the school's newest one,
+    so a visit planned in September for October was booked into the FY2026
+    package and the FY2027 Core Schools page showed it nowhere (owner,
+    2026-10-02). The year's package is now made the first time work is
+    planned into it (``services.ensure_core_plan``).
     """
     if school is None or school.school_type not in CORE_RULE_SCHOOL_TYPES:
         return None
 
     from apps.core.fy import get_operational_fy
-    from apps.core_schools.services import get_live_core_plan
+    from apps.core_schools.services import ensure_core_plan
 
     fy = get_operational_fy(scheduled_date) if scheduled_date else get_operational_fy()
-    plan = get_live_core_plan(school.school_id, fy)
-    if plan is None and scheduled_date is not None:
-        # Planned into a year the school has no package for yet. The package
-        # it does have is the one this work belongs to -- the FY restriction
-        # on core scheduling was lifted on 2026-09-17, so a package's work is
-        # allowed to land outside its own year.
-        plan = get_live_core_plan(school.school_id, get_operational_fy())
-    return plan
+    return ensure_core_plan(school, fy)
 
 
 def _parse_date(value):

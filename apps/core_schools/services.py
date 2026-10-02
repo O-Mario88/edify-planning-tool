@@ -133,6 +133,49 @@ def get_live_core_plan(school_id: str, fy: str | None = None) -> CorePlan | None
     )
 
 
+def ensure_core_plan(school, fy: str | None = None, *, lock: bool = False):
+    """The Core school's package for ``fy`` (the operational year by default),
+    made the first time work is planned into that year.
+
+    A package's work is the work dated in its year (owner, 2026-10-02). Every
+    door used to take the package of the day the planner was sitting in, so
+    October's visits, planned in September, were booked into the FY2026
+    package and the FY2027 page showed V1..V4 empty; and a school whose new
+    year's package had not been made yet answered "no active core package".
+
+    The year's package is copied from the school's newest one
+    (``package_year.ensure_plan``). A school that has never had a package
+    still gets its first through onboarding or the Core Schools page, which
+    need its confirmed baseline assessment. ``lock`` returns the row locked
+    for the booking that is about to count against it.
+    """
+    from apps.core_schools import package_year
+
+    if school is None or getattr(school, "school_type", None) != "core":
+        return None
+    operational = str(get_operational_fy())
+    fy = str(fy or operational)
+    plan, created = package_year.ensure_plan(
+        CorePlan, CoreActivitySlot, school.school_id, fy
+    )
+    if plan is None:
+        return None
+    if created and fy == operational:
+        # The profile points at the running year's package, as the page's
+        # own self-heal leaves it.
+        CoreSchoolProfile.objects.update_or_create(
+            id=cprof_id(school.school_id),
+            defaults={
+                "school_id": school.school_id,
+                "core_plan": plan,
+                "core_start_fy": fy,
+            },
+        )
+    if lock:
+        return CorePlan.objects.select_for_update().get(pk=plan.pk)
+    return plan
+
+
 def list_candidates(principal) -> list[dict]:
     """Best-SSA Client and Core Trained schools → Core onboarding candidates."""
     qs = School.objects.filter(

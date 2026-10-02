@@ -440,8 +440,18 @@ def training_coverage(
     ``fys`` is the planning horizon a whole operational year reads (owner,
     2026-09-28: "nothing hidden"): a session planned in September for October
     is a plan, and the school is not reported as missing training.
+
+    Read against the schools that take a training — Core, Client, Core
+    Trained and Core Graduate (the planning rulebook; owner, 2026-10-02: the
+    last three "should be treated the same"). A Champion school takes none
+    and is kept off cluster invitations, so it is not listed. A school given
+    an in-school training has a training planned too, and is not listed as
+    having none (owner, 2026-10-02: "Core graduate planned are still showing
+    as not trained on the PL summaries").
     """
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity, ClusterActivityAttendance
+    from apps.planning.country_oversight import rules
 
     schools = _schools_in_oversight_scope(principal)
     if schools is None:
@@ -479,14 +489,33 @@ def training_coverage(
     attached = ClusterActivityAttendance.objects.filter(
         activity_id__in=sessions.values("id"), school_id=OuterRef("id")
     ).filter(Q(invited=True) | Q(attended=True))
+    in_school = (
+        Activity.objects.filter(
+            activity_type__in=SCHOOL_TRAINING_TYPES,
+            cluster_id__isnull=True,
+            school_id=OuterRef("id"),
+            deleted_at__isnull=True,
+            fy__in=years,
+        )
+        .exclude(status__in=DEAD_STATUSES)
+        .filter(
+            Q(planned_date__range=(start, end))
+            | Q(planned_date__isnull=True, scheduled_date__date__range=(start, end))
+        )
+    )
 
     # School.cluster_id is a plain column, not a relation: the cluster's name
     # is resolved in one lookup below rather than joined.
     schools = schools.select_related("district", "region").annotate(
-        has_session=Exists(attached)
+        has_session=Exists(attached), has_in_school=Exists(in_school)
     )
     planned_qs = schools.filter(has_session=True)
-    missing_qs = schools.filter(has_session=False)
+    missing_qs = schools.filter(
+        has_session=False,
+        has_in_school=False,
+        school_type__in=rules.TRAINED_TYPES,
+    )
+    in_school_only = schools.filter(has_session=False, has_in_school=True).count()
     planned_count = planned_qs.count()
     missing_count = missing_qs.count()
 
@@ -544,7 +573,9 @@ def training_coverage(
         "missing_rows": [row(school) for school in missing_page],
         "planned_count": planned_count,
         "missing_count": missing_count,
-        "total": planned_count + missing_count,
+        # Trained at the school rather than through a cluster session.
+        "in_school_count": in_school_only,
+        "total": planned_count + missing_count + in_school_only,
         "period_start": start,
         "period_end": end,
         # The counts above are the truth; the rows are the first `limit` of

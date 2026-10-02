@@ -93,6 +93,10 @@ from apps.core_schools.package_split import SIDE_CAP
 # one SSA Support a year counted apart from it, and no limit on social visits
 # and invitations either.
 CLIENT_STAFF_VISIT_CAP = 1
+#: SSA Support was one a year at a client-rule school from 2026-09-28 to
+#: 2026-10-02, when the owner took data collection out of every count and
+#: every limit ("those visits don't count"). Kept for the callers that name
+#: it; nothing refuses by it.
 CLIENT_STAFF_SSA_VISIT_CAP = 1
 #: The figure a client school's visits were once counted against. Kept for
 #: the pages and reports that still name it; nothing refuses by it.
@@ -127,11 +131,17 @@ CORE_RULE_SCHOOL_TYPES = ("core",)
 #
 # Owner, 2026-09-28: Core Graduate now follows the client rule for its visits
 # — the one support visit, SSA Support, and donor, story, invitation and
-# social visits without limit. Champion keeps the donor/story-only rule. Both
-# keep their own tables on Core Schools, off the Planning page and the
-# cluster lists (OWN_TABLE_SCHOOL_TYPES); only where they are listed was not
-# part of the change.
-OWN_TABLE_SCHOOL_TYPES = ("champion", "core_graduate")
+# social visits without limit. Champion keeps the donor/story-only rule.
+#
+# Owner, 2026-10-02: "core graduate should also be planned for so any
+# training they are in should be counted for and trained when the training
+# is completed. basically core trained, core graduate and client schools
+# should be treated the same." So Core Graduate is planned where a client
+# school is — the Planning page, the cluster lists, a cluster session's
+# invitations — and takes the same one training a year
+# (``country_oversight.rules.REQUIREMENTS``). Only Champion keeps its own
+# table, off those lists (OWN_TABLE_SCHOOL_TYPES).
+OWN_TABLE_SCHOOL_TYPES = ("champion",)
 OUTREACH_ONLY_SCHOOL_TYPES = ("champion",)
 OUTREACH_ACTIVITY_TYPES = ("donor_visit", "story_gathering_visit")
 OUTREACH_VISIT_PURPOSES = ("donor_visit", "story_gathering")
@@ -478,6 +488,9 @@ def visit_gates(
             ):
                 gate.partner_name = assignment.partner.name
             continue
+        if _is_data_collection_assignment(assignment):
+            # Assigned on any school; it is not the school's partner visit.
+            continue
         gate.partner_pending += 1
         if not gate.partner_name and assignment.partner_id:
             gate.partner_name = assignment.partner.name
@@ -485,6 +498,14 @@ def visit_gates(
     for gate in gates.values():
         _decide(gate)
     return gates
+
+
+def _is_data_collection_assignment(assignment) -> bool:
+    from apps.planning.country_oversight import rules
+
+    return rules.is_data_collection(
+        assignment.expected_activity_type, assignment.purpose_of_visit
+    )
 
 
 def _is_core_visit_assignment(assignment) -> bool:
@@ -559,7 +580,7 @@ def _decide_by_rule(gate: VisitGate) -> None:
         # invitation and social visits have no limit, so only a used pool's
         # purposes grey (POOL_PURPOSES).
         gate.staff_cap = CLIENT_STAFF_VISIT_CAP
-        gate.ssa_cap = CLIENT_STAFF_SSA_VISIT_CAP
+        gate.ssa_cap = 0  # counted, never capped
         gate.partner_cap = 0  # counted, never capped
         if gate.staff_visits >= CLIENT_STAFF_VISIT_CAP:
             gate.staff_can_schedule = False
@@ -568,12 +589,11 @@ def _decide_by_rule(gate: VisitGate) -> None:
                 f"Follow Up or an In-school Training) for FY{gate.fy} "
                 f"({gate.staff_visits}/{CLIENT_STAFF_VISIT_CAP})."
             )
-        if gate.staff_ssa_visits >= CLIENT_STAFF_SSA_VISIT_CAP:
-            gate.ssa_can_schedule = False
-            gate.ssa_reason = (
-                f"{gate.school_name} has had its SSA Support visit for "
-                f"FY{gate.fy} ({gate.staff_ssa_visits}/{CLIENT_STAFF_SSA_VISIT_CAP})."
-            )
+        # Data collection (SSA Support) is counted for the row and never
+        # refused: `ssa_can_schedule` stays open however many the school has
+        # had (owner, 2026-10-02: "allow data collection assignment on every
+        # school irrespective of whether they have the 1 visit by staff or
+        # partner because those visits don't count").
         return
 
     if gate.rule == "core":
@@ -627,10 +647,11 @@ def assert_staff_may_schedule_visit(
     from apps.core.exceptions import BadRequest
 
     gate = visit_gate(school, fy, **kwargs)
-    if gate.rule == "client" and pool == SSA_POOL:
-        if not gate.ssa_can_schedule:
-            raise BadRequest(gate.ssa_reason)
-    elif not gate.staff_can_schedule:
+    if pool == SSA_POOL:
+        # Data collection is not the school's visit, at a client-rule school
+        # or a Core one: no count closes it (owner, 2026-10-02).
+        return gate
+    if not gate.staff_can_schedule:
         raise BadRequest(gate.staff_reason)
     return gate
 

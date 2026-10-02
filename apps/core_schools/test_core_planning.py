@@ -252,6 +252,10 @@ class CoreSchoolsPlanningTest(TestCase):
             "visit_number": seq,
             "scheduled_date": when,
             "focus_intervention": "teaching_environment",
+            # A package visit is a Training Follow Up: data collection (SSA
+            # Support), the old default, is outside the package since
+            # 2026-10-02.
+            "purpose_of_visit": "training_follow_up",
             "visit_purpose": "Core package recovery visit",
             "expected_outcome": "Slot fulfilled",
             # "" asks the view to resolve it, which is what the drawer does
@@ -600,6 +604,13 @@ class CoreSchoolsPlanningTest(TestCase):
         """The fiscal-year refusal is gone. It was the report that started
         this: "it is returning 'Core support must be scheduled within this
         package's fiscal year'"."""
+        # A follow-up needs no earlier training in a year whose policy says
+        # so, as Uganda's do (apps.planning.reference).
+        from apps.core.tests.fy_windows import open_fy_for_planning
+
+        policy = open_fy_for_planning("2028")
+        policy.follow_up_visit_requires_prior_training = False
+        policy.save(update_fields=["follow_up_visit_requires_prior_training"])
         response = self._schedule_visit(seq="1", when="2028-03-15")
 
         self.assertIn(response.status_code, (200, 302), response.content[:300])
@@ -1055,6 +1066,19 @@ class CoreSchoolsPlanningTest(TestCase):
             activity=act, kind="photo", uri="core/evidence.jpg", uploaded_by="test"
         )
         payload = {"salesforceId": sf_id, **(extra or {})}
+        if act.purpose_type == "training_follow_up":
+            # A follow-up is completed against the training it answers.
+            source = Activity.objects.create(
+                activity_type="in_school_training",
+                school=act.school,
+                fy=act.fy,
+                quarter=act.quarter,
+                planned_date=act.planned_date,
+                status="completed",
+                delivery_type="staff",
+                responsible_staff_id=act.responsible_staff_id,
+            )
+            payload.setdefault("followUpOfActivityId", source.id)
         if act.ssa_collection_expected:
             # The first Core visit of the FY is SSA Support (owner,
             # 2026-09-15): completion answers the SSA question, and the

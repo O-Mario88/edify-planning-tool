@@ -143,7 +143,7 @@ SPECS: dict[str, Spec] = {
             "visits",
             "Visits Against Target",
             "visit",
-            "Every Follow up, In-school Training and SSA Support visit staff "
+            "Every Follow up and In-school Training visit staff "
             "have on the plan for the period, and how far each has got. These "
             "are the visits counted against each CCEO's 560 and each Programme "
             "Lead's 280.",

@@ -21,7 +21,8 @@ quarter inside a year.
 
   <p class="edify-note" data-tone="{% if coverage.missing_count %}warning{% else %}success{% endif %}" data-coverage-attention>
     <strong>{{ planned_totals.schools }}</strong> school{{ planned_totals.schools|pluralize }} with planned work in {{ period_label }} ·
-    <strong>{{ coverage.planned_count }}</strong> with a cluster training or meeting ·
+    <strong>{{ coverage.planned_count }}</strong> with a cluster training or meeting ·{% if coverage.in_school_count %}
+    <strong>{{ coverage.in_school_count }}</strong> with an in-school training ·{% endif %}
     <strong data-missing-count>{{ coverage.missing_count }}</strong> with none.
   </p>
 
@@ -103,7 +104,7 @@ quarter inside a year.
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="no-training-title" data-no-training-table>
     <div class="border-b border-[var(--edify-border)] px-4 py-3">
       <h2 id="no-training-title" class="text-[15px] font-semibold">Schools with No Training Planned</h2>
-      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training or meeting in this period. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
+      <p class="edify-text-caption text-[var(--edify-text-muted)]">{{ coverage.missing_count }} active school{{ coverage.missing_count|pluralize }} in your {{ lens_label|lower }} scope with no live cluster training, cluster meeting or in-school training in this period. Core, Client, Core Trained and Core Graduate schools are listed: a Champion school takes no training. Closed schools are not counted.{% if coverage.missing_rows_truncated %} The table below holds the first {{ coverage.row_limit }} by name; narrow the period or the filters to see the rest.{% endif %}</p>
     </div>
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}
@@ -122,7 +123,7 @@ quarter inside a year.
           <td data-label="Action" data-record-action>{% if row.cluster_url %}<a href="{{ row.cluster_url }}" class="rpl-card__link">Plan a cluster session</a>{% else %}<a href="{{ row.school_url }}" class="rpl-card__link">Open school</a>{% endif %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="8">{% include "components/empty_state.html" with message="Every active school in your scope has a cluster training or meeting planned in this period." %}</td></tr>
+        <tr><td colspan="8">{% include "components/empty_state.html" with message="Every active school in your scope that takes a training has one planned in this period." %}</td></tr>
         {% endfor %}
         </tbody>
       </table>

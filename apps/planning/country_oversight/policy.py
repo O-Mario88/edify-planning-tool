@@ -16,9 +16,10 @@ every requirement). A type the rulebook does not know sits outside every
 figure until the product owner decides where it belongs.
 
 **Annual obligation.** A Core school needs four visits — two from staff and
-two from a Partner — and four trainings, split the same way. A Client or Core
-Trained school needs one visit and one training; a Core Graduate school one
-visit and no training; a Champion school neither.
+two from a Partner — and four trainings, split the same way. A Client, Core
+Trained or Core Graduate school needs one visit and one training (owner,
+2026-10-02: the three "should be treated the same"); a Champion school
+neither.
 
 **Staff capacity.** A CCEO plans 560 visits a year and a Programme Lead 280.
 Core staff slots are required whatever the ceiling says: a ceiling below them
@@ -40,7 +41,7 @@ from apps.core.enums import ActivityStatus, SchoolType
 
 #: Bumped whenever a rule below changes, and stored on every follow-up and in
 #: every cache key, so a snapshot always names the policy it was taken under.
-POLICY_VERSION = "2026-10-01.1"
+POLICY_VERSION = "2026-10-02.1"
 
 # ── School groups ────────────────────────────────────────────────────────────
 CORE_FAMILY = "core_family"
@@ -85,8 +86,7 @@ class FamilyRequirement:
     ``flexible_visit_slots`` are the client-rule visit: one slot a member of
     staff or a Partner may deliver, decided by the holder's capacity
     allocation rather than by the school. Trainings are read from the
-    school's own type (``training_slots_for``): Core Graduate schools follow
-    the client rule for visits and take no training.
+    school's own type (``training_slots_for``).
     """
 
     staff_visit_slots: int

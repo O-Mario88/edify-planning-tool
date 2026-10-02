@@ -32,10 +32,15 @@ its visit or training fills.
 
 Not credited here, each for its reason:
 
-* cluster sessions — `cluster_credit` owns them (one session, many schools);
 * the companion visit an in-school training creates — it is the training;
 * donor, content/story, invitation and social visits — not package support
   (owner, 2026-09-30), and unlimited wherever they are planned;
+* data collection (SSA Support) visits — "those visits don't count" (owner,
+  2026-10-02), and unlimited too;
+* a group training planned through the school's cluster — it does count
+  (owner, 2026-10-02), and is credited apart, by `cluster_credit`, on the half
+  of whoever delivers it; a cluster meeting is not a training and takes no
+  slot;
 * the work of a project no SSA intervention measures (owner, 2026-10-02:
   Alumni "is not an intervention ... it should not restrict another project
   from being assigned to that school") — it takes no slot and no side of the
@@ -68,11 +73,27 @@ logger = logging.getLogger(__name__)
 #: and never take one of the package's four visits. Both spellings, because a
 #: Core Schools visit booked before the rule carries the purpose on a
 #: ``core_visit`` row rather than the visit's own type.
-NON_PACKAGE_VISIT_TYPES = frozenset(
-    {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
+#:
+#: Data collection (SSA Support) joined them on 2026-10-02: "the only visits
+#: that count are in-school visits and Training Follow Up visits ... allow
+#: data collection assignment on every school irrespective of whether they
+#: have the 1 visit by staff or partner because those visits don't count". A
+#: Core package's four visits are follow-up visits, two by staff and two
+#: assigned to a Partner; a data collection visit takes no V1..V4 and is on
+#: neither side of the split.
+DATA_COLLECTION_VISIT_TYPES = frozenset(
+    {"school_visit_ssa_collection", "baseline_ssa_visit", "partner_ssa_collection"}
 )
-NON_PACKAGE_VISIT_PURPOSES = frozenset(
-    {"donor_visit", "story_gathering", "school_invitation", "social_visit"}
+DATA_COLLECTION_VISIT_PURPOSES = frozenset({"ssa_support"})
+NON_PACKAGE_VISIT_TYPES = (
+    frozenset(
+        {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
+    )
+    | DATA_COLLECTION_VISIT_TYPES
+)
+NON_PACKAGE_VISIT_PURPOSES = (
+    frozenset({"donor_visit", "story_gathering", "school_invitation", "social_visit"})
+    | DATA_COLLECTION_VISIT_PURPOSES
 )
 
 #: The visit family — the same set the Core Schools drawer turns into a core
@@ -106,6 +127,8 @@ def package_kind_for(
     if purpose == COMPANION_VISIT_PURPOSE or purpose in NON_PACKAGE_VISIT_PURPOSES:
         return None
     activity_type = str(activity_type or "")
+    if activity_type in NON_PACKAGE_VISIT_TYPES:
+        return None
     if activity_type in PACKAGE_VISIT_TYPES:
         return "visit"
     if activity_type in PACKAGE_TRAINING_TYPES:
@@ -195,32 +218,27 @@ def _credit_safely(activity_id: str) -> None:
 def plan_for_activity(activity):
     """The Core package this work belongs to, or None.
 
-    The package of the work's own fiscal year. With none, a later year's work
-    goes to the school's live package — the FY restriction on core scheduling
-    was lifted on 2026-09-17, so a package's work may land in the next year —
-    but an earlier year's work is never credited to a later package.
+    The package of the work's own fiscal year, made if this is the first work
+    planned into that year (``services.ensure_core_plan``; owner, 2026-10-02).
+    It used to fall back to the school's newest package, which filed October's
+    work in last year's. An earlier year's work is never credited to a later
+    package, and a year that has passed is not given a package after the fact.
     """
     from apps.core.fy import get_operational_fy
     from apps.core_schools.models import CorePlan
-    from apps.core_schools.services import (
-        CORE_PLAN_CLOSED_STATUSES,
-        get_live_core_plan,
-    )
+    from apps.core_schools.services import CORE_PLAN_CLOSED_STATUSES, ensure_core_plan
 
     school = activity.school
     fy = str(activity.fy or "")
-    plan = (
-        CorePlan.objects.filter(school_id=school.school_id, fy=fy)
-        .exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
-        .first()
-        if fy
-        else None
-    )
-    if plan is not None:
-        return plan
-    if fy and fy < get_operational_fy():
+    if not fy:
         return None
-    return get_live_core_plan(school.school_id)
+    if fy < get_operational_fy():
+        return (
+            CorePlan.objects.filter(school_id=school.school_id, fy=fy)
+            .exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
+            .first()
+        )
+    return ensure_core_plan(school, fy)
 
 
 def _open_slot(plan, slots, kind: str, activity):
@@ -476,7 +494,7 @@ def reserve_for_assignment(assignment):
     from apps.core_schools.core_planning_services import (
         CorePackageSchedulingService,
     )
-    from apps.core_schools.services import get_live_core_plan, resync_plan_completion
+    from apps.core_schools.services import ensure_core_plan, resync_plan_completion
 
     school = assignment.school
     if school is None or school.school_type != "core" or _names_its_slot(assignment):
@@ -485,7 +503,9 @@ def reserve_for_assignment(assignment):
     if kind is None:
         return None
     with transaction.atomic():
-        plan = get_live_core_plan(school.school_id)
+        # A hand-over has no date yet: it holds a slot of the running year's
+        # package.
+        plan = ensure_core_plan(school)
         if plan is None:
             return None
         slots = list(

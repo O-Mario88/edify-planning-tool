@@ -233,23 +233,33 @@ class FamilyAndDenominatorTest(World):
         self.assertEqual(policy.family_of("champion"), policy.OUTREACH_FAMILY)
         self.assertEqual(policy.requirement_for(policy.OUTREACH_FAMILY).visit_slots, 0)
 
-    def test_core_graduate_follows_the_client_rule_and_takes_no_training(self):
+    def test_core_graduate_follows_the_client_rule_trainings_included(self):
         """Owner, 2026-09-28 (PR #163): Core Graduate follows the client rule
-        for its visits and Partner work. Still untrained (owner, 2026-09-25),
-        so the requirement asks no training of it — it is not a gap."""
+        for its visits and Partner work. And, 2026-10-02, for its training
+        too: "core trained, core graduate and client schools should be
+        treated the same" — a training planned for one is counted, and the
+        school with none is a gap like any other."""
         self.assertEqual(policy.family_of("core_graduate"), policy.CLIENT_FAMILY)
         self.assertNotIn("core_graduate", policy.PENDING_FAMILY_DECISIONS)
-        self.school("core_graduate", self.cceo)
+        graduate = self.school("core_graduate", self.cceo, cluster=self.cluster)
         self.school("client", self.cceo)
         tree = self.tree()
         self.assertEqual(tree.country.schools, 2)
         self.assertEqual(tree.country.client_schools, 1)
         self.assertEqual(tree.country.core_graduate_schools, 1)
         self.assertEqual(tree.country.visit_slots, 2)
-        self.assertEqual(tree.country.training_slots, 1)
-        self.assertEqual(tree.country.training_schools, 1)
-        self.assertEqual(tree.country.no_training, 1)
+        self.assertEqual(tree.country.training_slots, 2)
+        self.assertEqual(tree.country.training_schools, 2)
+        self.assertEqual(tree.country.no_training, 2)
         self.assertEqual(tree.country.unmapped_schools, 0)
+        # In a group training, the Core Graduate school has its training
+        # planned (owner: "Core graduate planned are still showing as not
+        # trained on the PL summaries").
+        self.session("cluster_training", [graduate])
+        tree = self.tree()
+        self.assertEqual(tree.country.training, 1)
+        self.assertEqual(tree.country.any_training, 1)
+        self.assertEqual(tree.country.no_training, 1)
 
     def test_a_champion_school_is_in_the_portfolio_and_outside_the_requirement(self):
         """Owner, 2026-10-01: Champion schools take donor and story visits
@@ -619,6 +629,9 @@ class TrainingAndClusterTest(World):
         self.session("cluster_training", [client, core])
         t = self.tree().country
         self.assertEqual(t.training_slots, 1 + 4)
+        # The client school's one slot, and one of the Core school's four: a
+        # group training planned through its cluster counts in its package
+        # (owner, 2026-10-02).
         self.assertEqual(t.training, 1 + 1)
         self.assertEqual(t.any_training, 2)
 

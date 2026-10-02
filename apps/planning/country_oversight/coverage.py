@@ -12,7 +12,7 @@ slot counts once, a rescheduled visit is still one visit, and two Partners
 sharing a school cannot conjure extra slots.
 
 What fills a visit slot is the planning rulebook's counted visit (``rules``):
-SSA Support, In-school Training or Follow up at the school — never a donor,
+In-school Training or Follow up at the school — never a donor,
 story, social or invitation visit, and never the companion visit an in-school
 training writes beside itself. A staff plan fills a staff slot; Partner work
 fills a Partner slot once the PARTNER has dated it, and is *assigned* until
@@ -675,6 +675,12 @@ def handover_kind(school_type: str, handover) -> str | None:
     """ "visit" or "training" for a Partner handover at a school of this type."""
     from apps.core_schools.package_credit import PACKAGE_TRAINING_TYPES, assignment_kind
 
+    from apps.planning.country_oversight import rules
+
+    if rules.is_data_collection(
+        handover.expected_activity_type, handover.purpose_of_visit
+    ):
+        return None
     if school_type == "core":
         return assignment_kind(handover)
     expected = str(handover.expected_activity_type or "")
@@ -747,6 +753,8 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
         if school is None or not school.is_governed:
             continue
         handover = _Handover(*kind_fields)
+        # A data collection (SSA Support) hand-over is a school in a Partner's
+        # hands like any other; it is no visit of the school's (``handover_kind``).
         is_visit = handover_kind(school.school_type, handover) == "visit"
         if status == PartnerAssignment.STATUS_RETURNED_TO_STAFF:
             moment = returned_at or created_at

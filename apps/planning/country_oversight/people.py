@@ -493,7 +493,10 @@ class Reads:
 
         Alumni work (a project no SSA intervention measures) is not counted
         by this rulebook, so it is left out; ``every`` keeps it, for the one
-        list that holds every activity whether it counts or not."""
+        list that holds every activity whether it counts or not. A Partner's
+        data collection (SSA Support) is Partner work like any other: the
+        school is assigned to the Partner, and the work is no visit of the
+        school's (owner, 2026-10-02: "it should show SSA support")."""
         held = _activities(self.fy, self.school_ids).filter(rules.partner_held_q())
         if not every:
             held = held.filter(rules.not_outside_ssa_q())
@@ -795,6 +798,9 @@ class SchoolYear:
     @property
     def training_slots(self) -> int:
         requirement = self.requirement
+        # A group training planned through the school's cluster is a training
+        # of the school's, in a Core package too (owner, 2026-10-02): it is
+        # one of the staff half's two.
         staff = self.staff_trainings + self.cluster_trainings
         if requirement.either_trainings:
             return min(staff + self.partner_trainings, requirement.either_trainings)

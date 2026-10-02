@@ -49,7 +49,7 @@ from apps.core_schools.core_planning_services import (
     build_sparkline_path,
 )
 from apps.core.scoping import resolve_user_scope
-from apps.core_schools.services import get_live_core_plan
+from apps.core_schools.services import ensure_core_plan
 
 logger = logging.getLogger(__name__)
 
@@ -578,22 +578,25 @@ def _core_ranked_focus(school) -> tuple[str, str]:
     return code, dict(SsaIntervention.choices).get(code, "")
 
 
-def _locked_core_plan(school_id):
+def _locked_core_plan(school, scheduled_for=None):
     """The package a Core Schools door books into, locked for the booking.
 
-    This year's package, else the school's live one. The package for a new
-    year is made when somebody opens Core Schools, fifty schools a load and
-    only for a school with a confirmed SSA, so on 1 October a school could
-    have its FY2026 package and nothing for FY2027 — and every door here
-    answered "This school does not have an active core package" where the
-    Planning drawer (`visit_routing.core_plan_for_visit`) and the 2 + 2 split
-    (`package_split`) already booked into the package it has (owner,
-    2026-10-02).
+    The package of the year the work is PLANNED FOR — the running year for a
+    hand-over, which has no date yet — made if this is the first work planned
+    into that year (``services.ensure_core_plan``). Every door here used to
+    take the package of the day the planner was sitting in, so through
+    September the first and second visits staff planned for October went into
+    the FY2026 package and, from 1 October, the FY2027 page showed V1..V4
+    empty (owner, 2026-10-02: "People have planned first visit and second
+    visits but they are not showing").
+
+    A school whose package for the new year nobody has made yet is given it
+    here, from the package it has, rather than answered "This school does not
+    have an active core package" (owner, 2026-10-02): a year's package used
+    to be made only when somebody opened Core Schools, fifty schools a load.
     """
-    plan = get_live_core_plan(school_id)
-    if plan is None:
-        return None
-    return CorePlan.objects.select_for_update().get(pk=plan.pk)
+    fy = get_operational_fy(scheduled_for) if scheduled_for else get_operational_fy()
+    return ensure_core_plan(school, fy, lock=True)
 
 
 def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
@@ -680,7 +683,7 @@ def core_schedule_visit_drawer(request):
     partners = partner_services.assignable_partners()
 
     fy = get_operational_fy()
-    plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
+    plan = ensure_core_plan(school)
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
     )
@@ -798,6 +801,11 @@ def core_schedule_visit_action(request):
                 responsible_staff_id=responsible_staff_id,
                 partner_id=partner_id,
             )
+        if not purpose_of_visit:
+            # An unnamed visit is read as SSA Support, as it always was. It
+            # is data collection, which is no longer package work (owner,
+            # 2026-10-02), so it is booked as itself below.
+            purpose_of_visit = "ssa_support"
         if purpose_of_visit in NON_PACKAGE_VISIT_PURPOSES:
             return _schedule_core_outreach_visit(
                 request,
@@ -843,25 +851,14 @@ def core_schedule_visit_action(request):
         payload["catalogueItemId"] = catalogue_item_id
 
         with transaction.atomic():
-            plan = _locked_core_plan(school_id)
+            plan = _locked_core_plan(school, scheduled_for)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
-            # SSA Support remains the DEFAULT when a caller names no purpose —
-            # a core package opens by collecting the year's SSA data, and that
-            # is still the sensible reading of an unspecified visit. What is
-            # gone (2026-09-17) is the refusal that used to follow: the first
-            # visit of a package no longer HAS to be SSA Support, and the
-            # drawer offers every purpose from the start.
-            if not purpose_of_visit:
-                purpose_of_visit = "ssa_support"
-            if purpose_of_visit:
-                payload["purposeType"] = purpose_of_visit
-            if purpose_of_visit == "ssa_support":
-                # Linked to data collection: completion asks for the scores (or
-                # why none were collected), and IA reads it as an SSA visit.
-                payload["ssaCollectionExpected"] = True
-                focus_intervention = None
-            elif purpose_of_visit == "training_follow_up":
+            # What reaches here is package work: a Training Follow Up (or a
+            # retired support purpose). SSA Support, donor, story, invitation
+            # and social visits were booked as themselves above.
+            payload["purposeType"] = purpose_of_visit
+            if purpose_of_visit == "training_follow_up":
                 from apps.frontend.views.planning_views import (
                     _school_training_follow_up_options,
                 )
@@ -984,13 +981,15 @@ def _schedule_core_outreach_visit(
     visit_request,
     visit_justification,
 ):
-    """A donor, content/story, invitation or social visit at a Core School.
+    """A donor, content/story, invitation or social visit, or a data
+    collection (SSA Support) visit, at a Core School.
 
-    Not package work (owner, 2026-09-30): it takes none of the package's four
-    visits, is costed as its own kind of visit rather than as a Core Visit,
-    and has no limit — the same visit a client school gets from the Planning
-    drawer. It used to be booked as a ``core_visit`` that took a V1..V4 slot,
-    so two donor visits could read as half the package delivered.
+    Not package work (owner, 2026-09-30; data collection since 2026-10-02):
+    it takes none of the package's four visits, is costed as its own kind of
+    visit rather than as a Core Visit, and has no limit — the same visit a
+    client school gets from the Planning drawer. It used to be booked as a
+    ``core_visit`` that took a V1..V4 slot, so two donor visits could read as
+    half the package delivered.
     """
     from apps.activities.services import create as create_activity
     from apps.activity_catalogue.services import resolve_item_for_workflow_kind
@@ -1015,6 +1014,11 @@ def _schedule_core_outreach_visit(
         "purposeType": purpose_of_visit,
         "responsibleStaffId": responsible_staff_id,
         **({"visitJustification": visit_justification} if owner_id else {}),
+        # Linked to data collection: completion asks for the scores (or why
+        # none were collected), and IA reads it as an SSA visit.
+        **(
+            {"ssaCollectionExpected": True} if purpose_of_visit == "ssa_support" else {}
+        ),
     }
     with transaction.atomic():
         created = create_activity(payload, request.user)
@@ -1081,7 +1085,7 @@ def _schedule_core_in_school_training(
         "responsibleStaffId": responsible_staff_id,
     }
     with transaction.atomic():
-        plan = _locked_core_plan(school_id)
+        plan = _locked_core_plan(school, scheduled_for)
         if not plan:
             raise BadRequest("This school does not have an active core package.")
         # No first-visit gate here any more: a TRAINING slot is not a visit
@@ -1154,8 +1158,7 @@ def core_schedule_training_drawer(request):
     # Planning picker offers (`partners.services.assignable_partners`).
     partners = partner_services.assignable_partners()
 
-    fy = get_operational_fy()
-    plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
+    plan = ensure_core_plan(school)
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
@@ -1288,7 +1291,7 @@ def core_schedule_training_action(request):
 
     try:
         with transaction.atomic():
-            plan = _locked_core_plan(school_id)
+            plan = _locked_core_plan(school, scheduled_for)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
             slot = CorePackageSchedulingService.assert_can_schedule(
@@ -1371,7 +1374,7 @@ def core_assign_partner_drawer(request):
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
     partners = partner_services.assignable_partners()
-    plan = get_live_core_plan(school_id)
+    plan = ensure_core_plan(school)
     available_visit_slots = (
         CorePackageSchedulingService.available_options(plan, "visit") if plan else []
     )
@@ -1440,7 +1443,7 @@ def core_schedule_activity_drawer(request):
     """Choose Core package support or an unrestricted general activity."""
     school_id = request.GET.get("school_id")
     school = get_visit_target_school_or_404(request.user, school_id=school_id)
-    plan = get_live_core_plan(school_id)
+    plan = ensure_core_plan(school)
     summary = CorePackageSchedulingService.summary(plan) if plan else None
     from apps.planning.visit_gate import CORE_STAFF_TRAINING_CAP, visit_gate
 
@@ -1517,10 +1520,16 @@ def core_assign_partner_action(request):
                 purpose_of_visit, for_partner=True
             )
             is_training = purpose_of_visit == "in_school_training"
+            # Data collection is assigned on any school and is no part of the
+            # package: no slot, and neither half of the split (owner,
+            # 2026-10-02).
+            outside_package = purpose_of_visit in NON_PACKAGE_VISIT_PURPOSES
             support_type = "Training" if is_training else "Visit"
             activity_type = "training" if is_training else "visit"
 
-            plan = _locked_core_plan(school_id)
+            # A hand-over has no date until the Partner sets one: it holds
+            # a slot of the running year's package.
+            plan = _locked_core_plan(school)
             if not plan:
                 raise BadRequest("This school does not have an active core package.")
             # A handoff may be any of the three partner purposes from the
@@ -1554,7 +1563,14 @@ def core_assign_partner_action(request):
                     else f"Governed {selected['category']} training."
                 )
             else:
-                catalogue_item = resolve_item_for_workflow_kind("core_visit")
+                if outside_package:
+                    from apps.partners.purposes import purpose_activity_type
+
+                    catalogue_item = resolve_item_for_workflow_kind(
+                        purpose_activity_type(purpose_of_visit)
+                    )
+                else:
+                    catalogue_item = resolve_item_for_workflow_kind("core_visit")
                 recommendation_reason = (
                     f"{visit_purpose_label(purpose_of_visit)} selected by the "
                     "assigning staff member."
@@ -1612,13 +1628,15 @@ def core_assign_partner_action(request):
                 raise BadRequest("Choose an available support slot.") from error
             # The partner's half of the package (two visits, two trainings;
             # owner, 2026-09-30) and the slot this hand-over holds.
-            slot = CorePackageSchedulingService.assert_can_assign(
-                plan=plan,
-                school=school,
-                activity_type=activity_type,
-                sequence_number=sequence_number,
-            )
-            sequence_number = slot.sequence_number
+            slot = None
+            if not outside_package:
+                slot = CorePackageSchedulingService.assert_can_assign(
+                    plan=plan,
+                    school=school,
+                    activity_type=activity_type,
+                    sequence_number=sequence_number,
+                )
+                sequence_number = slot.sequence_number
 
             # 1. Create PartnerAssignment in DB
             pa = partner_services.create_assignment(
@@ -1636,15 +1654,18 @@ def core_assign_partner_action(request):
                 purpose_of_visit=purpose_of_visit,
                 expected_activity_type=catalogue_item.workflow_kind,
                 notes=notes,
-                visit_number="" if is_training else str(sequence_number),
+                visit_number=""
+                if is_training or outside_package
+                else str(sequence_number),
                 training_number=str(sequence_number) if is_training else "",
-                support_type=support_type,
+                support_type="" if outside_package else support_type,
             )
 
             # 2. Reserve the slot through the service that locked it.
-            CorePackageSchedulingService.commit_assign(
-                slot, partner_id=partner_id, partner_name=partner.name
-            )
+            if slot is not None:
+                CorePackageSchedulingService.commit_assign(
+                    slot, partner_id=partner_id, partner_name=partner.name
+                )
 
             # Audit log
             audit_log(

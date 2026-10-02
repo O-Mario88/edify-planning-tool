@@ -1,79 +1,52 @@
-"""Cluster sessions a Core School took part in count as its trainings.
+"""Group trainings planned through a cluster count in the Core package.
 
-Owner rule (2026-09-15): a cluster training or cluster meeting counts toward a
-Core School's trainings when the school was ticked on the session's invitation
-list at scheduling AND is on the register of who attended at completion.
+Owner, 2026-10-02: the package's trainings "should include both in-school
+training and group trainings planned through clusters. So if a core school is
+part of a group training, it should be counted in the core package."
 
-Owner, 2026-09-21: "the core schools trained through cluster group training or
-cluster meeting should contribute to the core school training packages and
-should be counted as part of the 4 trainings. It should move to core school
-training planned table." So the slot is taken at SCHEDULING, on the invitation
-alone — the package shows 1/4 planned the moment the session is booked, and
-the school appears on the Core School Trainings Planned table beside a
-training booked from the Core Schools page. The register then narrows it: a
-school that does not turn up has its slot released back to the package by the
-same pass, and the four trainings a Core School completes are still the four
-it attended.
+A cluster TRAINING therefore fills a training slot at every Core school it
+counts for (``credited_school_ids``): the invited schools from the day it is
+booked (owner, 2026-09-21: "It should move to core school training planned
+table"), narrowed to the invited schools that came once its register is
+confirmed. The slot is in the package of the year the session is dated in,
+made if this is the first work planned into that year
+(``services.ensure_core_plan``).
 
-The Core package is counted from its slots (`CorePackageSchedulingService` and
-`resync_plan_completion`), so the credit is a slot: the session is linked to
-the school's next open training slot, and the Activity → slot mirror carries
-the session's status across from then on, exactly as it does for a training
-scheduled from the Core Schools page. Every count that reads slots — the
-package progress, the 4-training cap, the planning queue — agrees without a
-second definition of "trained".
+It is on the half of whoever delivers it — staff's two, or the Partner's two
+when a Partner delivers the session (a Partner who only facilitates a staff
+session does not make it the Partner's) — and takes a slot only while that
+half has room (``package_split``). Until 2026-10-02 a session took the next
+open slot whatever the split, and a cluster MEETING took one too, so two
+group trainings and two meetings read "4/4 trainings" with the Partner's half
+never assigned: what the owner called inflated. Past its half's two, a group
+training is still the school's training, on its history, and fills no slot;
+a group session is never refused over one school.
 
-One cluster session may fill a slot at many schools; each school's slot links
-the same activity id.
+A cluster meeting is not a training. It takes no slot, and
+``credit_cluster_session`` gives back any slot one holds from before.
+
+The package is counted from its slots (``CorePackageSchedulingService`` and
+``resync_plan_completion``), so the credit is a slot: the Activity → slot
+mirror carries the session's status across from then on, exactly as it does
+for a training scheduled from the Core Schools page. One session may fill a
+slot at many schools; each school's slot links the same activity id.
 """
 
 from __future__ import annotations
 
 from django.db import transaction
 
-from apps.core.clock import local_day
 from apps.activities.training_history import CLUSTER_SESSION_TYPES
+from apps.core.clock import local_day
+from apps.core_schools import package_year
 
-#: The register has been confirmed and the session has not been abandoned.
-#: `completion_started` is deliberately absent: attendance recorded while the
-#: session is still being completed is a draft, and a slot left in a status
-#: the scheduler reads as open could be scheduled over.
-CREDITED_STATUSES = frozenset(
-    {
-        "submitted_to_pl",
-        "awaiting_ia_verification",
-        "returned",
-        "returned_by_pl",
-        "completed",
-        "ia_verified",
-        "accountant_confirmed",
-        "closed",
-    }
-)
+#: The cluster sessions that are trainings: the ones a package counts.
+PACKAGE_SESSION_TYPES = package_year.CLUSTER_TRAINING_TYPES
 
-#: A session that is booked but whose register has not been confirmed. The
-#: invitation alone takes the slot here, so the package reads "planned" from
-#: the day the session is scheduled (owner, 2026-09-21) — the same reading a
-#: training booked from the Core Schools page gives.
-PLANNED_STATUSES = frozenset(
-    {
-        "planned",
-        "scheduled",
-        "rescheduled",
-        "assigned_to_partner",
-        "partner_scheduled",
-        "in_progress",
-        "completion_started",
-        "evidence_uploaded",
-        "evidence_accepted",
-        "salesforce_id_required",
-        "returned_by_ia",
-    }
-)
-
-#: Every status in which this session holds a slot at all. Outside it — a
-#: cancelled, rejected, deferred or unplanned session — the slots go back.
-LIVE_STATUSES = CREDITED_STATUSES | PLANNED_STATUSES
+# One definition with the deploy repair (``package_year.refile``).
+CREDITED_STATUSES = package_year.SESSION_CREDITED_STATUSES
+PLANNED_STATUSES = package_year.SESSION_PLANNED_STATUSES
+LIVE_STATUSES = package_year.SESSION_LIVE_STATUSES
 
 
 def credited_school_ids(activity) -> set[str]:
@@ -100,26 +73,58 @@ def credited_school_ids(activity) -> set[str]:
             "school_id", "invited", "attended", "is_guest"
         )
     )
-    invited = {school_id for school_id, i, _a, guest in rows if i and not guest}
-    if activity.status in PLANNED_STATUSES:
-        return invited
-    attended = {school_id for school_id, _i, a, _g in rows if a}
-    attended |= set(activity.attended_school_ids or [])
-    if not invited:
-        guests = {school_id for school_id, _i, _a, guest in rows if guest}
-        return attended - guests
-    return attended & invited
+    return package_year.session_school_ids(rows, activity)
+
+
+def counts_in_package(activity) -> bool:
+    """Whether this session is one a Core package counts: a live group
+    training, not a meeting, and not the work of a project no SSA
+    intervention measures."""
+    from apps.core_schools.package_credit import outside_package
+
+    return (
+        bool(activity.cluster_id)
+        and activity.activity_type in PACKAGE_SESSION_TYPES
+        and activity.deleted_at is None
+        and activity.status in LIVE_STATUSES
+        and bool(activity.fy)
+        and not outside_package(activity.project_id)
+    )
+
+
+def _release(slot) -> None:
+    slot.status = "Planned"
+    slot.activity_id = None
+    slot.owner = "unassigned"
+    slot.assigned_staff_id = None
+    slot.assigned_partner_id = None
+    slot.scheduled_for = None
+    slot.scheduled_month = None
+    slot.scheduled_week = None
+    slot.salesforce_id = None
+    slot.evidence_uri = None
+    slot.save()
 
 
 @transaction.atomic
 def credit_cluster_session(activity) -> None:
-    """Link or release Core training slots to match this session's register."""
+    """Link or release Core training slots to match this session.
+
+    Runs on every save of a cluster session (``Activity.save``) and when its
+    list or register changes (``cluster_attendance``).
+    """
+    from apps.core.fy import get_operational_fy
     from apps.core_schools.core_planning_services import (
         CorePackageSchedulingService,
         core_slot_status,
     )
     from apps.core_schools.models import CoreActivitySlot, CorePlan
-    from apps.core_schools.services import resync_plan_completion
+    from apps.core_schools.package_split import TRAINING, package_splits
+    from apps.core_schools.services import (
+        CORE_PLAN_CLOSED_STATUSES,
+        ensure_core_plan,
+        resync_plan_completion,
+    )
     from apps.schools.models import School
 
     if not activity.cluster_id or activity.activity_type not in CLUSTER_SESSION_TYPES:
@@ -130,51 +135,88 @@ def credit_cluster_session(activity) -> None:
             activity_id=activity.id, activity_type="training"
         ).select_related("core_plan")
     )
-    live = activity.deleted_at is None and activity.status in LIVE_STATUSES
-    credited_codes = (
-        set(
-            School.objects.filter(
+    fy = str(activity.fy or "")
+    side = package_year.side_of(activity)
+    schools = (
+        {
+            school.school_id: school
+            for school in School.objects.filter(
                 id__in=credited_school_ids(activity),
                 school_type="core",
                 deleted_at__isnull=True,
-            ).values_list("school_id", flat=True)
-        )
-        if live
-        else set()
+            )
+        }
+        if counts_in_package(activity)
+        else {}
     )
 
     touched_plans = {}
+    holding: set[str] = set()
     for slot in linked:
-        if slot.school_id in credited_codes and str(slot.core_plan.fy) == str(
-            activity.fy
+        if (
+            slot.school_id in schools
+            and str(slot.core_plan.fy) == fy
+            and slot.school_id not in holding
         ):
+            holding.add(slot.school_id)
+            if slot.owner != side:
+                # The half follows whoever delivers the session now.
+                slot.owner = side
+                slot.assigned_staff_id = activity.responsible_staff_id
+                slot.assigned_partner_id = activity.assigned_partner_id
+                slot.save()
             continue
-        # No longer on the register (or the session was cancelled): the slot
-        # goes back to the package, open to be scheduled.
-        slot.status = "Planned"
-        slot.activity_id = None
-        slot.owner = "unassigned"
-        slot.assigned_staff_id = None
-        slot.assigned_partner_id = None
-        slot.scheduled_for = None
-        slot.scheduled_month = None
-        slot.scheduled_week = None
-        slot.salesforce_id = None
-        slot.evidence_uri = None
-        slot.save()
+        # Off the list, cancelled, a meeting, or another year's package: the
+        # slot goes back to its package, open to be scheduled.
+        _release(slot)
         touched_plans[slot.core_plan_id] = slot.core_plan
 
-    already = {slot.school_id for slot in linked if slot.activity_id}
-    wanted = credited_codes - already
+    wanted = [school for code, school in schools.items() if code not in holding]
     if wanted:
-        plans = CorePlan.objects.filter(school_id__in=wanted, fy=str(activity.fy))
-        for plan in plans:
+        # The package of the year the session is dated in. A past year's is
+        # only ever the one it had.
+        plans = {}
+        if fy >= str(get_operational_fy()):
+            for school in wanted:
+                plan = ensure_core_plan(school, fy)
+                if plan is not None:
+                    plans[school.id] = plan
+        else:
+            by_code = {
+                plan.school_id: plan
+                for plan in CorePlan.objects.filter(
+                    school_id__in=[school.school_id for school in wanted], fy=fy
+                ).exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
+            }
+            plans = {
+                school.id: by_code[school.school_id]
+                for school in wanted
+                if school.school_id in by_code
+            }
+        # Locked before the halves are read, as every door that books package
+        # work locks the package it counts against (`_locked_core_plan`).
+        list(
+            CorePlan.objects.select_for_update().filter(
+                pk__in=[plan.pk for plan in plans.values()]
+            )
+        )
+        splits = package_splits(
+            [school for school in wanted if school.id in plans],
+            fy,
+            exclude_activity_id=activity.id,
+        )
+        for school in wanted:
+            plan = plans.get(school.id)
+            if plan is None or not splits[school.id].is_open(TRAINING, side):
+                # No package, or this half already has its two: the session
+                # is still on the school's history, in no slot.
+                continue
             slots = list(
                 plan.slots.select_for_update()
                 .filter(activity_type="training")
                 .order_by("sequence_number")
             )
-            # `already` was read before this lock. Every save of the session
+            # `holding` was read before this lock. Every save of the session
             # runs this pass, so two saves at once both found the school
             # unlinked; the second waited here for the first to link a slot,
             # then took the next open one too: one session, two trainings.
@@ -190,15 +232,10 @@ def credit_cluster_session(activity) -> None:
                 None,
             )
             if open_slot is None:
-                # All four trainings are already scheduled or done; the
-                # session is still on the school's history, it just has no
-                # package slot left to fill.
                 continue
             open_slot.activity_id = activity.id
             open_slot.status = core_slot_status(activity.status)
-            open_slot.owner = (
-                "partner" if activity.delivery_type == "partner" else "staff"
-            )
+            open_slot.owner = side
             open_slot.assigned_staff_id = activity.responsible_staff_id
             open_slot.assigned_partner_id = activity.assigned_partner_id
             # The day the package shows for this training. `scheduled_date`
@@ -228,7 +265,9 @@ def credit_cluster_session(activity) -> None:
 __all__ = [
     "CREDITED_STATUSES",
     "LIVE_STATUSES",
+    "PACKAGE_SESSION_TYPES",
     "PLANNED_STATUSES",
+    "counts_in_package",
     "credit_cluster_session",
     "credited_school_ids",
 ]

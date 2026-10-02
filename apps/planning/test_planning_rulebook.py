@@ -68,11 +68,11 @@ class RulebookDefinitionsTest(World):
                 # A visit is counted or it is outreach, never both.
                 self.assertFalse(pk in counted and pk in outreach)
 
-    def test_the_three_kinds_and_nothing_else(self):
-        self.assertEqual(
-            rules.visit_kind("school_visit_ssa_collection", "ssa_support"),
-            rules.KIND_SSA,
-        )
+    def test_the_two_kinds_and_nothing_else(self):
+        # Owner, 2026-10-02: "the only visits that count are in-school visits
+        # and Training Follow Up visits". Data collection was a third kind
+        # for a day.
+        self.assertEqual(rules.KIND_ORDER, (rules.KIND_FOLLOW_UP, rules.KIND_IN_SCHOOL))
         self.assertEqual(
             rules.visit_kind("in_school_training", "in_school_training"),
             rules.KIND_IN_SCHOOL,
@@ -82,8 +82,17 @@ class RulebookDefinitionsTest(World):
             rules.KIND_FOLLOW_UP,
         )
         # A Core visit is what its purpose says it is.
-        self.assertEqual(rules.visit_kind("core_visit", "ssa_support"), rules.KIND_SSA)
+        self.assertEqual(
+            rules.visit_kind("core_visit", "training_follow_up"), rules.KIND_FOLLOW_UP
+        )
         for activity_type, purpose in (
+            # Data collection, by its type or by the purpose chosen.
+            ("school_visit_ssa_collection", "ssa_support"),
+            ("baseline_ssa_visit", None),
+            ("partner_ssa_collection", None),
+            ("ssa_activity", None),
+            ("core_assessment_visit", None),
+            ("core_visit", "ssa_support"),
             ("donor_visit", "donor_visit"),
             ("story_gathering_visit", "story_gathering"),
             ("school_invitation", "school_invitation"),
@@ -100,11 +109,11 @@ class RulebookDefinitionsTest(World):
         core = rules.requirement_for("core")
         self.assertEqual((core.staff_visits, core.partner_visits), (2, 2))
         self.assertEqual((core.staff_trainings, core.partner_trainings), (2, 2))
-        for school_type in ("client", "core_trained"):
+        # "core trained, core graduate and client schools should be treated
+        # the same" (owner, 2026-10-02).
+        for school_type in ("client", "core_trained", "core_graduate"):
             need = rules.requirement_for(school_type)
             self.assertEqual((need.visits, need.trainings), (1, 1))
-        graduate = rules.requirement_for("core_graduate")
-        self.assertEqual((graduate.visits, graduate.trainings), (1, 0))
         champion = rules.requirement_for("champion")
         self.assertEqual((champion.visits, champion.trainings), (0, 0))
         # 2 visits per Core school and 1 per client-rule school.
@@ -196,8 +205,11 @@ class PeoplePlanTest(World):
         self.assertEqual(holder.visits_planned, 0)
         self.assertEqual(holder.schools, {"client": 2})
         self.assertEqual(self.row(plan, self.cceo2).visits_planned, 1)
+        # The Lead's data collection visit is the Lead's work and none of the
+        # Lead's 280 (owner, 2026-10-02).
         lead = self.row(plan, self.pl)
-        self.assertEqual(lead.visits[rules.KIND_SSA], 1)
+        self.assertEqual(lead.visits_planned, 0)
+        self.assertEqual(lead.outreach, 1)
         self.assertEqual(lead.target, 280)
 
     def test_an_id_from_either_id_space_is_the_same_person(self):
@@ -369,7 +381,7 @@ class SchoolYearTest(World):
                 "core": (1, 4, 4),
                 "client": (1, 1, 1),
                 "core_trained": (1, 1, 1),
-                "core_graduate": (1, 1, 0),
+                "core_graduate": (1, 1, 1),
                 "champion": (1, 0, 0),
             },
         )
@@ -442,10 +454,20 @@ class SchoolYearTest(World):
     def reasons(self, school):
         return self.year()[school.id].duplicate_reasons
 
-    def test_support_and_ssa_support_together_are_not_a_duplicate(self):
+    def test_data_collection_is_never_a_duplicate(self):
+        # Beside the school's visit, twice over, by staff and by a Partner:
+        # it counts nowhere (owner, 2026-10-02).
         school = self.school("client", self.cceo)
         self.activity(school, "training_follow_up_visit", owner=self.cceo, on=10)
         self.activity(school, "school_visit_ssa_collection", owner=self.cceo, on=20)
+        self.activity(school, "school_visit_ssa_collection", owner=self.cceo2, on=30)
+        self.handover(
+            school,
+            self.partner,
+            status="pending_scheduling",
+            purpose_of_visit="ssa_support",
+            expected_activity_type="school_visit_ssa_collection",
+        )
         self.assertEqual(self.reasons(school), ())
 
     def test_the_same_kind_twice_is_a_duplicate(self):
@@ -456,7 +478,7 @@ class SchoolYearTest(World):
 
     def test_staff_and_a_partner_at_one_client_school_is_a_duplicate(self):
         school = self.school("core_graduate", self.cceo)
-        self.activity(school, "school_visit_ssa_collection", owner=self.cceo)
+        self.activity(school, "training_follow_up_visit", owner=self.cceo)
         self.handover(school, self.partner, status="pending_scheduling")
         self.assertEqual(self.reasons(school), (rules.DUPLICATE_BOTH,))
         self.assertEqual([s.id for s in people.duplicates(self.year())], [school.id])
@@ -498,22 +520,26 @@ class PeopleFirstPageTest(World):
     def test_a_leads_row_is_their_own_plan_and_their_cceos(self):
         school = self.school("client", self.cceo)
         other = self.school("client", self.cceo3)
+        # The Lead's own data collection visit counts nowhere (owner,
+        # 2026-10-02); the follow ups are their CCEO's and the other Lead's.
         self.activity(school, "school_visit_ssa_collection", owner=self.pl)
         self.activity(school, "training_follow_up_visit", owner=self.cceo)
         self.activity(other, "training_follow_up_visit", owner=self.cceo3)
         tree = self.snapshot().tree
         lead = self.lead_row(tree, self.pl)
         self.assertEqual(lead.tally.target, 280 + 560 + 560)
-        self.assertEqual(lead.tally.p_visits, 2)
+        self.assertEqual(lead.tally.p_visits, 1)
         own = self.owner_row(tree, self.pl)
         self.assertEqual(
-            (own.kind, own.tally.target, own.tally.p_visits), ("pl_personal", 280, 1)
+            (own.kind, own.tally.target, own.tally.p_visits, own.tally.p_outreach),
+            ("pl_personal", 280, 0, 1),
         )
         self.assertEqual(self.lead_row(tree, self.pl2).tally.p_visits, 1)
         chart = svc.charts(self.snapshot())[0]
         self.assertEqual(chart["categories"], ["Lead A", "Lead B"])
-        ssa = next(s for s in chart["series"] if s["name"] == "SSA Support")
-        self.assertEqual(ssa["data"], [1, 0])
+        series = {s["name"]: s["data"] for s in chart["series"]}
+        self.assertEqual(series["Follow up"], [1, 1])
+        self.assertNotIn("SSA Support", series)
 
     def test_a_lead_holding_no_school_still_has_a_row_and_a_target(self):
         tree = self.snapshot().tree
@@ -613,8 +639,9 @@ class PeopleFirstPageTest(World):
         )
         self.assertEqual(rows["client"]["duplicates"], 1)
         self.assertEqual(rows["core_trained"]["no_visit"], "1")
-        self.assertFalse(rows["core_graduate"]["needs_trainings"])
+        self.assertTrue(rows["core_graduate"]["needs_trainings"])
         self.assertFalse(rows["champion"]["needs_visits"])
+        self.assertFalse(rows["champion"]["needs_trainings"])
         t = snapshot.tree.country
         self.assertEqual(
             sum(tally.visit_slots for tally in snapshot.tree.by_type.values()),

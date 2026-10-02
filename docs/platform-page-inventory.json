@@ -3997,7 +3997,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11078,
+      "bytes": 11664,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4772,7 +4772,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2801,
+      "bytes": 2781,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4883,7 +4883,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9825,
+      "bytes": 9812,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5308,7 +5308,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3473,
+      "bytes": 4237,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -9898,7 +9898,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 148,
+      "bytes": 945,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9916,7 +9916,8 @@
       "tables": 0,
       "template": "partials/my_plan/kpi_cards.html",
       "variants": [
-        "executive"
+        "executive",
+        "warning"
       ]
     },
     {
@@ -10362,7 +10363,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1189,
+      "bytes": 1207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10495,7 +10496,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1543,
+      "bytes": 1626,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10547,7 +10548,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5305,
+      "bytes": 5407,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10903,7 +10904,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11200,
+      "bytes": 11452,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11006,7 +11007,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9666,
+      "bytes": 9752,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -13497,7 +13498,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10615,
+      "bytes": 10648,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"

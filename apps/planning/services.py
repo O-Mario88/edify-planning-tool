@@ -89,7 +89,8 @@ def setup(query: dict, principal) -> list[dict]:
         schools.filter(cluster_id__isnull=False)
         .exclude(cluster_id="")
         .filter(
-            current_fy_ssa_status="done", school_type__in=["client", "core_trained"]
+            current_fy_ssa_status="done",
+            school_type__in=["client", "core_trained", "core_graduate"],
         )
         .select_related("sub_county")
     )

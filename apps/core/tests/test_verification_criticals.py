@@ -260,8 +260,12 @@ class StaffCoreAnnualCapTests(TestCase):
         source = inspect.getsource(CorePackageSchedulingService.assert_can_schedule)
         self.assertIn("assert_side_open", source)
         counted = inspect.getsource(package_split.package_splits)
-        # Counted on the package's own slots. No quarter window narrows it.
-        self.assertIn("core_plan_id__in", counted)
+        # Since 2026-10-02 a package's work is the work dated in its fiscal
+        # year (owner: October's visits, planned in September, were missing
+        # from the FY2027 page), so the count reads the year's own work at
+        # the school. No quarter window narrows it.
+        self.assertIn("fy=fy", counted)
+        self.assertIn("package_work_q()", counted)
         self.assertNotIn("quarter", counted)
 
 

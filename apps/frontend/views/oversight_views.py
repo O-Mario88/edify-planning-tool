@@ -863,7 +863,7 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_visits_delivered_target",
             totals.visits_delivered,
             totals.visits_target,
-            # Follow up, In-school Training and SSA Support only (the
+            # Follow up and In-school Training only (the
             # planning rulebook); outreach visits are named, not counted.
             helper=f"{totals.visits_delivered:,} of {totals.visits_target:,} visits"
             + (
@@ -955,10 +955,12 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
             icon="school",
             drill=f"{monitor_url}&gap=no_visit",
         ),
+        # Against the schools that take a training (Core, Client, Core
+        # Trained and Core Graduate).
         share(
             "monitor_schools_with_training",
             totals.schools_with_training,
-            schools,
+            totals.training_schools,
             helper=f"{totals.schools_group_training:,} group training · "
             f"{totals.schools_meeting:,} cluster meeting",
             icon="users",

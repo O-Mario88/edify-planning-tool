@@ -8,6 +8,11 @@ the Lead asks them to.
 Two things stood in an officer's way. The Core Schools doors asked for this
 year's package exactly, and a school whose new-year package had not been made
 yet was refused; and the hand-over drawers offered no way through a project.
+
+The doors now make the year's package from the one the school has
+(``services.ensure_core_plan``): work is filed in the package of the year it
+is planned for, so last year's package is never the one a new year's
+hand-over fills.
 """
 
 from __future__ import annotations
@@ -72,11 +77,18 @@ class _Fixture(TestCase):
 
 
 class LivePackageTest(_Fixture):
-    def test_the_doors_book_into_the_package_the_school_has(self):
+    def test_the_doors_make_this_years_package_from_the_one_the_school_has(self):
         self.assertFalse(
             CorePlan.objects.filter(school_id="ROUTE-1", fy=self.fy).exists()
         )
-        self.assertEqual(_locked_core_plan("ROUTE-1").id, self.plan.id)
+        plan = _locked_core_plan(self.school)
+        self.assertEqual((plan.school_id, str(plan.fy)), ("ROUTE-1", self.fy))
+        self.assertNotEqual(plan.id, self.plan.id)
+        # The same package the next door takes, not a second one.
+        self.assertEqual(_locked_core_plan(self.school).id, plan.id)
+        self.assertEqual(
+            CorePlan.objects.filter(school_id="ROUTE-1", fy=self.fy).count(), 1
+        )
 
     def test_this_years_package_wins_once_it_exists(self):
         this_year = CorePlan.objects.create(
@@ -85,12 +97,38 @@ class LivePackageTest(_Fixture):
             fy=self.fy,
             status="Active",
         )
-        self.assertEqual(_locked_core_plan("ROUTE-1").id, this_year.id)
+        self.assertEqual(_locked_core_plan(self.school).id, this_year.id)
 
     def test_a_school_with_no_package_has_none(self):
-        self.assertIsNone(_locked_core_plan("NO-SUCH-SCHOOL"))
+        bare = School.objects.create(
+            school_id="ROUTE-2",
+            name="Route Bare Primary",
+            region=self.school.region,
+            district=self.school.district,
+            school_type="core",
+        )
+        self.assertIsNone(_locked_core_plan(bare))
+        self.assertIsNone(_locked_core_plan(None))
 
     def test_an_officer_hands_a_visit_over_without_this_years_package(self):
+        self.client.force_login(self.cceo_user)
+        response = self.client.post(
+            "/core-schools/assign-partner/action",
+            {
+                "school_id": "ROUTE-1",
+                "partner_id": self.partner.id,
+                "purpose_of_visit": "training_follow_up",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        handover = PartnerAssignment.objects.get(school=self.school)
+        self.assertEqual(handover.partner_id, self.partner.id)
+        self.assertEqual(package_split(self.school).used(VISIT, PARTNER), 1)
+
+    def test_a_data_collection_hand_over_takes_none_of_the_partner_half(self):
+        """Owner, 2026-10-02: data collection is assigned on any school and
+        counts nowhere."""
         self.client.force_login(self.cceo_user)
         response = self.client.post(
             "/core-schools/assign-partner/action",
@@ -102,9 +140,10 @@ class LivePackageTest(_Fixture):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200, response.content)
-        handover = PartnerAssignment.objects.get(school=self.school)
-        self.assertEqual(handover.partner_id, self.partner.id)
-        self.assertEqual(package_split(self.school).used(VISIT, PARTNER), 1)
+        self.assertTrue(
+            PartnerAssignment.objects.get(school=self.school).is_data_collection
+        )
+        self.assertEqual(package_split(self.school).used(VISIT, PARTNER), 0)
 
 
 class ProjectRouteTest(_Fixture):

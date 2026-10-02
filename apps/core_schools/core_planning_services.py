@@ -601,6 +601,7 @@ class CoreSchoolsService:
         # instead of making one load pay for all of it.
         fy = filters.get("fy") or get_operational_fy()
         CoreSchoolsService.self_heal_plans(core_schools_qs, fy, user)
+        CoreSchoolsService.carry_packages_forward(core_schools_qs, fy)
 
         # 2. Apply filters
         #
@@ -662,6 +663,41 @@ class CoreSchoolsService:
         # timestamp): without it the rows on a page changed between loads
         # (owner-approved, 2026-09-24 A+ audit F-G).
         return core_schools_qs.order_by("-created_at", "id")
+
+    @staticmethod
+    def carry_packages_forward(core_schools_qs, fy: str) -> int:
+        """Give a Core school that already has a package its package for
+        ``fy``, when that is the running year or a later one.
+
+        ``self_heal_plans`` makes a school's FIRST package and needs its
+        confirmed baseline assessment for that. A school that had a package
+        last year is already onboarded: without this its new year's row read
+        "Package unavailable" and every door answered "no active core
+        package" until an assessment was confirmed again (owner, 2026-10-02).
+        The same bound a load as the self-heal, and nothing to do once every
+        school has its year.
+        """
+        from apps.core_schools.services import (
+            CORE_PLAN_CLOSED_STATUSES,
+            ensure_core_plan,
+        )
+
+        if str(fy) < str(get_operational_fy()):
+            return 0
+        have = CorePlan.objects.filter(fy=fy).values_list("school_id", flat=True)
+        onboarded = CorePlan.objects.exclude(
+            status__in=CORE_PLAN_CLOSED_STATUSES
+        ).values_list("school_id", flat=True)
+        waiting = list(
+            core_schools_qs.filter(school_id__in=onboarded)
+            .exclude(school_id__in=have)
+            .order_by("-created_at", "pk")[:SELF_HEAL_BATCH]
+        )
+        made = 0
+        for school in waiting:
+            if ensure_core_plan(school, fy) is not None:
+                made += 1
+        return made
 
     @staticmethod
     def self_heal_plans(core_schools_qs, fy: str, user) -> int:
@@ -976,6 +1012,39 @@ class CorePackageProgressService:
 
         gate_map = visit_gates(iterator, fy)
 
+        # Group trainings a school is on the list of this year that fill no
+        # slot of its package: its half already had its two (owner,
+        # 2026-10-02 — a group training counts in the package, on the half of
+        # whoever delivers it). Said on the row, so a training the school
+        # takes is never simply missing from it.
+        from apps.activities.models import ClusterActivityAttendance
+        from apps.core_schools import package_year
+
+        in_a_slot = {
+            (plan.school_id, slot.activity_id)
+            for plan in plans
+            for slot in plan.slots.all()
+            if slot.activity_id
+        }
+        code_of_school = {school.id: school.school_id for school in iterator}
+        extra_group_trainings: dict[str, int] = {}
+        for school_pk, activity_id in (
+            ClusterActivityAttendance.objects.filter(
+                school_id__in=db_ids,
+                invited=True,
+                activity__fy=fy,
+                activity__deleted_at__isnull=True,
+                activity__activity_type__in=package_year.CLUSTER_TRAINING_TYPES,
+                activity__status__in=package_year.SESSION_LIVE_STATUSES,
+            )
+            .values_list("school_id", "activity_id")
+            .distinct()
+        ):
+            if (code_of_school[school_pk], activity_id) not in in_a_slot:
+                extra_group_trainings[school_pk] = (
+                    extra_group_trainings.get(school_pk, 0) + 1
+                )
+
         # Prefetch school geo details and latest SSA
         schools_data = []
         for s in iterator:
@@ -1146,6 +1215,7 @@ class CorePackageProgressService:
                     "cluster_name": cluster_name,
                     "project_assignment_count": project_count,
                     "partner_support_count": partner_counts_map.get(s.id, 0),
+                    "extra_group_training_count": extra_group_trainings.get(s.id, 0),
                     "score_pct": score_pct,
                     "score_label": score_label,
                     "score_badge_class": badge_class,

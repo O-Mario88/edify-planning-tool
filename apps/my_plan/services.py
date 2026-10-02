@@ -750,8 +750,6 @@ def get_frontend_context(principal, query: dict) -> dict:
     # the active feed and live in Completed Activities — unless the caller
     # explicitly filters for one of those statuses.
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
-        qs = qs.exclude(status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES)
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
@@ -761,6 +759,18 @@ def get_frontend_context(principal, query: dict) -> dict:
         # (Programme Lead walk, 2026-09-14). Team work lives on Team Oversight.
         staff_ids = [s for s in owner_ids(principal) if s]
         qs = qs.filter(staff_my_plan_q(staff_ids, principal))
+    # The plan the tiles count: every live activity of the year, the closed
+    # ones included. The list below leaves closed work to Completed
+    # Activities, but it was planned and it was delivered, and a Programme
+    # Lead's Team Plan counts it (apps.planning.staff_plan; owner,
+    # 2026-10-02: "CCEO sees less and PL sees more").
+    plan_qs = qs.exclude(
+        status__in=[s for s in ACTIVE_MY_PLAN_EXCLUDED_STATUSES if s != "closed"]
+    )
+    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+        qs = qs.exclude(status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES)
+    else:
+        plan_qs = qs
 
     # 4. Filter options collections for UI
     districts = [
@@ -798,67 +808,82 @@ def get_frontend_context(principal, query: dict) -> dict:
     # shows a user; matching only structural fields would leave them searching
     # for words they can see on screen and getting nothing back.
     search_q = str(query.get("q") or "").strip()
-    if search_q:
-        qs = qs.filter(
-            Q(school__name__icontains=search_q)
-            | Q(school__school_id__icontains=search_q)
-            | Q(cluster__name__icontains=search_q)
-            | Q(school__district__name__icontains=search_q)
-            | Q(activity_purpose_text__icontains=search_q)
-        )
 
-    if district_id and district_id != "All" and district_id != "all":
-        qs = qs.filter(
-            Q(school__district_id=district_id) | Q(cluster__district_id=district_id)
-        )
-    if staff_id and staff_id != "All" and staff_id != "all":
-        qs = qs.filter(responsible_staff_id=staff_id)
-    if activity_type and activity_type != "All" and activity_type != "all":
-        qs = qs.filter(activity_type=activity_type)
-    if status and status != "All" and status != "all":
-        # The status filter dropdown offers two friendly umbrella values that
-        # are not themselves real ActivityStatus members: "submitted" (sent
-        # onward for review, anywhere in the PL/IA/accounts pipeline) and
-        # "returned_for_correction" (kicked back at any stage). Translate
-        # them to the real workflow states here rather than filtering on a
-        # status value that no Activity ever actually has.
-        if status == "submitted":
-            qs = qs.filter(
-                status__in=[
-                    "submitted_to_pl",
-                    "awaiting_ia_verification",
-                    "ia_verified",
-                    "accountant_confirmed",
-                ]
+    def _narrow(rows):
+        """The page's own filters, for the list and for the plan its tiles
+        count alike: a tile that ignored a filter the list obeyed would not
+        be counting the rows under it."""
+        if search_q:
+            rows = rows.filter(
+                Q(school__name__icontains=search_q)
+                | Q(school__school_id__icontains=search_q)
+                | Q(cluster__name__icontains=search_q)
+                | Q(school__district__name__icontains=search_q)
+                | Q(activity_purpose_text__icontains=search_q)
             )
-        elif status == "returned_for_correction":
-            qs = qs.filter(status__in=["returned", "returned_by_pl", "returned_by_ia"])
-        else:
-            qs = qs.filter(status=status)
+        if district_id and district_id != "All" and district_id != "all":
+            rows = rows.filter(
+                Q(school__district_id=district_id) | Q(cluster__district_id=district_id)
+            )
+        if staff_id and staff_id != "All" and staff_id != "all":
+            rows = rows.filter(responsible_staff_id=staff_id)
+        if activity_type and activity_type != "All" and activity_type != "all":
+            rows = rows.filter(activity_type=activity_type)
+        if status and status != "All" and status != "all":
+            # The status filter dropdown offers two friendly umbrella values
+            # that are not themselves real ActivityStatus members: "submitted"
+            # (sent onward for review, anywhere in the PL/IA/accounts
+            # pipeline) and "returned_for_correction" (kicked back at any
+            # stage). Translate them to the real workflow states here rather
+            # than filtering on a status value that no Activity ever actually
+            # has.
+            if status == "submitted":
+                rows = rows.filter(
+                    status__in=[
+                        "submitted_to_pl",
+                        "awaiting_ia_verification",
+                        "ia_verified",
+                        "accountant_confirmed",
+                    ]
+                )
+            elif status == "returned_for_correction":
+                rows = rows.filter(
+                    status__in=["returned", "returned_by_pl", "returned_by_ia"]
+                )
+            else:
+                rows = rows.filter(status=status)
+        return rows
+
+    qs = _narrow(qs)
+    plan_qs = _narrow(plan_qs)
 
     # 6. Compute period-specific ranges and filter qs_period
     w_start, w_end = get_week_date_range(year_int, month_int, week_int)
 
     if period == "week":
         period_label = f"{w_start.strftime('%B %-d')} – {w_end.strftime('%B %-d, %Y')}"
-        qs_period = qs.filter(_scheduled_in_range(w_start, w_end))
+        period_q = _scheduled_in_range(w_start, w_end)
     elif period == "month":
         month_name = date(year_int, month_int, 1).strftime("%B")
         period_label = f"{month_name} {year_int}"
         month_end = date(
             year_int, month_int, calendar.monthrange(year_int, month_int)[1]
         )
-        qs_period = qs.filter(
-            _scheduled_in_range(date(year_int, month_int, 1), month_end)
-        )
+        period_q = _scheduled_in_range(date(year_int, month_int, 1), month_end)
     elif period == "quarter":
         period_label = f"{quarter} FY{fy}"
-        qs_period = qs.filter(quarter=quarter)
+        period_q = Q(quarter=quarter)
     else:  # period == "fy"
         period_label = f"FY{fy}"
-        qs_period = qs
-    # My Plan shows strictly upcoming plans for weekly, monthly, quarterly, and Annual (FY) feeds.
-    # Past-due uncompleted plans appear exclusively in "What needs you now" on the Dashboard.
+        period_q = Q()
+    qs_period = qs.filter(period_q)
+    # The selected period of the plan itself, whatever its dates: what the
+    # period's tiles count.
+    plan_period = plan_qs.filter(period_q)
+    # The LIST is what is still ahead, plus delivered and returned work:
+    # past-due plans not yet delivered are worked from "What needs you now"
+    # on the Dashboard. They stay on the PLAN — the tiles below count them,
+    # and the page says how many there are (`past_due_count`).
     upcoming_filter = (
         Q(planned_date__gte=today)
         | Q(planned_date__isnull=True, scheduled_date__date__gte=today)
@@ -878,11 +903,19 @@ def get_frontend_context(principal, query: dict) -> dict:
             | Q(status__in=RETURNED_STATUSES)
         )
 
-    # 7. Compute KPI values for upcoming plans
+    # 7. The tiles count the plan, not what is left of it.
+    #
+    # They used to count only activities dated today or later
+    # (``qs.filter(upcoming_filter)``), so "planned this financial year" lost
+    # every activity the day after it was due — the delivered ones too — and
+    # a CCEO read a smaller year than the Programme Lead following it on Team
+    # Plan and the Planning Monitor (owner, 2026-10-02: "CCEO sees less and
+    # PL sees more"). The registry has always defined these four as "every
+    # activity owned by the user" in the period; now they are.
     current_week_start, current_week_end = get_week_date_range(
         today.year, today.month, min(5, (today.day - 1) // 7 + 1)
     )
-    period_totals = qs.filter(upcoming_filter).aggregate(
+    period_totals = plan_qs.aggregate(
         week=Count(
             "pk", filter=_scheduled_in_range(current_week_start, current_week_end)
         ),
@@ -905,9 +938,11 @@ def get_frontend_context(principal, query: dict) -> dict:
     planned_this_quarter = period_totals["quarter"]
     planned_this_fy = period_totals["fy"]
 
-    # One scoped scan answers all five period metrics instead of five
-    # separate database round trips for every person opening My Plan.
-    activity_totals = qs_period.aggregate(
+    # One scoped scan answers the period's metrics instead of a database
+    # round trip each for every person opening My Plan.
+    from apps.planning import staff_plan
+
+    activity_totals = plan_period.aggregate(
         visits=Count(
             "pk",
             filter=Q(
@@ -951,7 +986,48 @@ def get_frontend_context(principal, query: dict) -> dict:
         ),
         total=Count("pk"),
         completed=Count("pk", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
+        past_due=Count("pk", filter=staff_plan.past_due_q(today)),
     )
+    past_due_count = activity_totals["past_due"]
+    # A member of staff's visits are the ones that count toward the 560 a
+    # CCEO and the 280 a Programme Lead plan in a year — the same count, from
+    # the same function, the Planning Monitor shows their Lead
+    # (apps.planning.staff_plan). The tile used to count by a list of
+    # activity types of its own, which read an in-school training with no
+    # companion visit as no visit and a donor visit as one. A Partner's plan
+    # keeps the count by type: the target is staff's.
+    visit_helper = visit_helper_exact = ""
+    if not scope.partner_ids:
+        from apps.planning.country_oversight import rules as planning_rules
+
+        counted = {"core": 0, "client": 0}
+        for school_type, n in (
+            staff_plan.counted_visits(plan_period)
+            .values_list("school__school_type")
+            .annotate(n=Count("id"))
+            .order_by()
+        ):
+            counted["core" if school_type in staff_plan.CORE_TYPES else "client"] += n
+        outreach = plan_period.filter(planning_rules.outreach_visit_q()).count()
+        activity_totals["visits"] = counted["core"] + counted["client"]
+        target = staff_plan.visits_target(principal)
+        visit_helper = f"{counted['core']:,} Core, {counted['client']:,} Client"
+        if target:
+            visit_helper = f"of {target:,} a year · {visit_helper}"
+        # The tile is narrow; the rule it counts by is its tooltip.
+        visit_helper_exact = (
+            "Follow up and In-school Training visits you planned"
+            + (f", toward the {target:,} your role plans in a year" if target else "")
+            + f": {counted['core']:,} at Core schools, {counted['client']:,} at "
+            "Client, Core Trained and Core Graduate schools."
+            + (
+                f" {outreach:,} SSA Support, donor, story, social or "
+                f"invitation visit{'' if outreach == 1 else 's'} planned as "
+                "well, not counted toward the target."
+                if outreach
+                else ""
+            )
+        )
     visits_scheduled = activity_totals["visits"]
     trainings_scheduled = activity_totals["trainings"]
     meetings_scheduled = activity_totals["meetings"]
@@ -1045,9 +1121,12 @@ def get_frontend_context(principal, query: dict) -> dict:
             for key, value, _icon, _variant in my_plan_tiles
         ]
     )
-    for item, (_key, _value, icon, variant) in zip(kpi_strip_items, my_plan_tiles):
+    for item, (key, _value, icon, variant) in zip(kpi_strip_items, my_plan_tiles):
         item["icon"] = icon
         item["variant"] = variant
+        if key == "my_plan_visits_scheduled_period" and visit_helper:
+            item["helper"] = visit_helper
+            item["helper_exact"] = visit_helper_exact
 
     # 8. Main Lists for the three categories and 7 sections by urgency
     partners_map = {p.id: p.name for p in Partner.objects.all()}
@@ -2098,6 +2177,9 @@ def get_frontend_context(principal, query: dict) -> dict:
         "fy_options": fy_options(),
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
+        # Planned for a day that has passed and not delivered: counted by the
+        # tiles, worked from the Dashboard, and not in the tables below.
+        "past_due_count": past_due_count,
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.

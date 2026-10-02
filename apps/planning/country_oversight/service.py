@@ -1441,8 +1441,9 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             ],
             more=[
                 f"Follow up {_fmt(t.p_follow_up)} · In-school Training "
-                f"{_fmt(t.p_in_school)} · SSA Support {_fmt(t.p_ssa)}",
-                f"{_fmt(t.p_outreach)} donor, story and social visits not counted"
+                f"{_fmt(t.p_in_school)}",
+                f"{_fmt(t.p_outreach)} SSA Support, donor, story and social "
+                "visits not counted"
                 if t.p_outreach
                 else "",
             ],
@@ -1647,11 +1648,6 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "data": [x.p_in_school for x in t],
             },
             {
-                "name": "SSA Support",
-                "color": CHART_COLOURS["partner_scheduled"],
-                "data": [x.p_ssa for x in t],
-            },
-            {
                 "name": "Still to plan",
                 "color": CHART_COLOURS["gap"],
                 "data": [x.plan_remaining for x in t],
@@ -1666,11 +1662,10 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Visits\nplanned",
                 "Follow\nup",
                 "In-school\nTraining",
-                "SSA\nSupport",
                 "Still to\nplan",
                 "Assigned to\nPartners",
                 "Partner\nplanned",
-                "Donor, story, social\n(not counted)",
+                "SSA Support, donor,\nstory, social (not counted)",
             ],
             "rows": [
                 [
@@ -1678,7 +1673,6 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.p_visits,
                     x.p_follow_up,
                     x.p_in_school,
-                    x.p_ssa,
                     x.plan_remaining,
                     x.pa_work,
                     x.pp_work,
