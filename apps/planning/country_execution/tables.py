@@ -81,12 +81,12 @@ SPECS: dict[str, Spec] = {
     for spec in (
         _records(
             "due",
-            "Activities Due",
+            "Activities Planned",
             "Every activity whose approved date falls in the period, under the "
             "person responsible for it: staff work under whoever delivers it, "
             "Partner work under whoever handed it over or monitors it.",
             metric="cxo_activities_due",
-            short="Due",
+            short="Planned",
         ),
         _records(
             "started",
@@ -269,7 +269,7 @@ def _notes(snapshot, key: str) -> dict:
                 )
             return text
         return (
-            f"{tally.executed:,} of {tally.due:,} delivered · "
+            f"{tally.executed:,} of {tally.due:,} planned delivered · "
             f"{tally.verified:,} verified · {tally.overdue:,} overdue"
         )
 

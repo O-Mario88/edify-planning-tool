@@ -29,8 +29,10 @@ the Planning tab beside this one counts the plan (owner audit, 2026-10-02):
 * **Due** — work whose planned date has arrived. Future work is not late.
 * **Delivered** — the status says the work happened: submitted, awaiting
   verification, or verified.
-* **Overdue** — past its planned day, not delivered, not returned. The day
-  itself is not late.
+* **Past date, not delivered** — past its planned day, not delivered, not
+  returned. The day itself is not late. Named for what it counts (owner,
+  2026-10-02): the Director's Execution tab's "Overdue" is wider, and also
+  counts delivered work still waiting on a review.
 * **Complete** — delivered with the Salesforce ID and the form both in.
 * **Verified** — confirmed by Impact Assessment.
 
@@ -57,7 +59,7 @@ RETURNED_STATUSES = frozenset(("returned", "returned_by_pl", "returned_by_ia"))
 
 #: The drill-down lists, in the order the page offers them.
 LISTS = (
-    ("overdue", "Overdue — due, not delivered"),
+    ("overdue", "Past date, not delivered"),
     ("missing_salesforce", "Delivered, missing the Salesforce ID"),
     ("missing_evidence", "Delivered, missing the form"),
     ("awaiting_ia", "Awaiting IA verification"),
@@ -67,7 +69,7 @@ LIST_LABELS = dict(LISTS)
 
 #: The table's follow-up columns: each count opens its list.
 LIST_COLUMNS = (
-    ("overdue", "Overdue", "danger"),
+    ("overdue", "Past date", "danger"),
     ("missing_salesforce", "No SF ID", "warning"),
     ("missing_evidence", "No form", "warning"),
     ("awaiting_ia", "Awaiting IA", "info"),

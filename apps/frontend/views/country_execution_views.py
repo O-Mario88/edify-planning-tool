@@ -220,7 +220,7 @@ def rows_view(request):
 
 #: What each drill-down is called.
 _STAGE_TITLES = {
-    "due": "Activities due",
+    "due": "Activities planned",
     "started": "Activities started",
     "not_started": "Activities not started",
     "executed": "Execution completed",

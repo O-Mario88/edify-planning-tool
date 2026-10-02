@@ -722,7 +722,7 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
         render_kpi_item(
             "execution_overdue",
             MetricValue.measured(totals.overdue),
-            helper="Due, not delivered",
+            helper="Planned day passed, not delivered",
             tone="danger" if totals.overdue else "neutral",
             icon="warning",
             drilldown_url=f"{execution_url}&list=overdue",

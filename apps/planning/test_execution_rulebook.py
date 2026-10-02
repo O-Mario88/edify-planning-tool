@@ -127,6 +127,21 @@ class CountedVisitsTest(RulebookWorld):
         self.assertEqual(officer.trainings_planned, 1)
         self.assertEqual(officer.visits_target, 560)
 
+    def test_the_monitors_overdue_is_named_for_what_it_counts(self):
+        from apps.planning.execution_monitor import LIST_COLUMNS, LIST_LABELS
+
+        self.assertEqual(LIST_LABELS["overdue"], "Past date, not delivered")
+        self.assertEqual(
+            dict((k, label) for k, label, _ in LIST_COLUMNS)["overdue"], "Past date"
+        )
+        body = (
+            self.as_user(self.cd_user)
+            .get(f"/planning-monitor/?view=execution&fy={FY}")
+            .content.decode()
+        )
+        self.assertIn("Past Date, Not Delivered", body)
+        self.assertNotIn("Overdue Work", body)
+
     def test_a_visit_sent_back_to_planning_is_not_a_visit_planned(self):
         self.activity(
             self.school_b, "school_visit", status="returned", owner=self.cceo, on=50
@@ -167,6 +182,79 @@ class CountedVisitsTest(RulebookWorld):
         self.assertEqual(rows["client"]["visits_left"], 2)
         self.assertEqual(rows[""]["visit_slots"], plan.country.visit_slots)
         self.assertTrue(rows[""]["is_total"])
+
+
+# ── On time, by the day the work was delivered ───────────────────────────────
+class OnTimeTest(World):
+    """Owner, 2026-10-02: "on time" is read from the recorded delivery date,
+    not from the day the officer pressed Complete."""
+
+    def timing(self, **fields) -> str:
+        from apps.planning.test_country_planning_oversight import day
+
+        school = self.school("client", self.cceo)
+        activity = self.activity(school, owner=self.cceo, on=30, **fields)
+        snapshot = esvc.snapshot_for(self.cd_user, annual(), refresh=True)
+        self.assertEqual(day(30), activity.planned_date)
+        return next(r for r in snapshot.dataset.records if r.id == activity.id).timing
+
+    def keyed(self, offset: int):
+        from datetime import datetime, time
+
+        from apps.planning.test_country_planning_oversight import day
+
+        return timezone.make_aware(datetime.combine(day(offset), time(9)))
+
+    def test_delivered_on_its_day_and_keyed_later_is_on_time(self):
+        from apps.planning.test_country_planning_oversight import day
+
+        self.assertEqual(
+            self.timing(
+                status="submitted_to_pl",
+                actual_delivery_date=day(30),
+                execution_started_at=self.keyed(33),
+            ),
+            "on_time",
+        )
+
+    def test_delivered_after_its_day_is_late_whenever_it_was_keyed(self):
+        from apps.planning.test_country_planning_oversight import day
+
+        self.assertEqual(
+            self.timing(
+                status="submitted_to_pl",
+                actual_delivery_date=day(32),
+                execution_started_at=self.keyed(29),
+            ),
+            "late",
+        )
+
+    def test_until_a_delivery_date_is_recorded_the_start_is_read(self):
+        self.assertEqual(
+            self.timing(
+                status="completion_started", execution_started_at=self.keyed(31)
+            ),
+            "late",
+        )
+        self.assertEqual(
+            self.timing(
+                status="completion_started", execution_started_at=self.keyed(30)
+            ),
+            "on_time",
+        )
+
+    def test_the_ring_and_the_cards_say_what_they_count(self):
+        school = self.school("client", self.cceo)
+        self.activity(school, owner=self.cceo)
+        snapshot = esvc.snapshot_for(self.cd_user, annual(), refresh=True)
+        labels = [part["label"] for part in esvc.charts(snapshot)["on_time"]["parts"]]
+        self.assertNotIn("Started late", labels)
+        cards = {card["key"]: card for card in esvc.kpis(snapshot)}
+        # Everything dated in the period, the days to come included: planned.
+        self.assertEqual(cards["due"]["label"], "Activities Planned")
+        self.assertIn("of planned", cards["started"]["note"])
+        funnel = esvc.charts(snapshot)["funnel"]
+        self.assertEqual(funnel["categories"][0], "Planned")
 
 
 # ── Who a Partner's visit belongs to ─────────────────────────────────────────

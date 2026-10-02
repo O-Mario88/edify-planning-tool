@@ -887,7 +887,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
             "cxo_started",
             "started",
             c.started,
-            note=f"{_share_text(c.started_share)} of due",
+            note=f"{_share_text(c.started_share)} of planned",
             tone="good",
             icon="play",
             stage="started",
@@ -896,7 +896,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
             "cxo_execution_completed",
             "executed",
             c.executed,
-            note=f"{_share_text(c.executed_share)} of due",
+            note=f"{_share_text(c.executed_share)} of planned",
             tone="info",
             icon="doc",
             stage="executed",
@@ -905,7 +905,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
             "cxo_ia_verified",
             "verified",
             c.verified,
-            note=f"{_share_text(c.verified_share)} of due",
+            note=f"{_share_text(c.verified_share)} of planned",
             tone="violet",
             icon="check",
             stage="verified",
@@ -914,7 +914,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
             "cxo_fully_closed",
             "closed",
             c.closed,
-            note=f"{_share_text(c.closed_share)} of due",
+            note=f"{_share_text(c.closed_share)} of planned",
             tone="deep",
             icon="flag",
             stage="closed",
@@ -923,7 +923,7 @@ def kpis(snapshot: ExecSnapshot) -> list[dict]:
             "cxo_overdue",
             "overdue",
             c.overdue,
-            note=f"{_share_text(c.overdue_share)} of due · {c.carried_forward:,} carried forward",
+            note=f"{_share_text(c.overdue_share)} of planned · {c.carried_forward:,} carried forward",
             tone="alert",
             icon="alert",
             stage="overdue",
@@ -1015,7 +1015,7 @@ def lead_charts(snapshot: ExecSnapshot) -> list[dict]:
             # A heading's line break is written in ("\n"), as the planning
             # charts' are: the table sits open under a chart half the page wide.
             "columns": [
-                "Due",
+                "Planned",
                 "IA\nverified",
                 "In\nreview",
                 "Started, not\nsubmitted",
@@ -1188,7 +1188,10 @@ def charts(snapshot: ExecSnapshot) -> dict:
         count - 1 if today >= buckets[-1].end else -1,
     )
     funnel_stages = (
-        ("Due", "due"),
+        # Everything dated in the period, the days still to come included:
+        # "planned", as the trend beside it says, not "due" (owner,
+        # 2026-10-02).
+        ("Planned", "due"),
         ("Started", "started"),
         ("Evidence Submitted", "executed"),
         ("PL Reviewed (Staff only)", "pl_reviewed"),
@@ -1245,9 +1248,10 @@ def charts(snapshot: ExecSnapshot) -> dict:
         ],
     }
     on_time_parts = [
+        # By the recorded delivery date (owner, 2026-10-02).
         ("On time", c.on_time),
-        ("Started late", c.late),
-        ("Start not recorded", c.start_unknown),
+        ("Late", c.late),
+        ("Date not recorded", c.start_unknown),
         ("Not started", c.not_started),
         ("Not yet due", c.upcoming),
         ("Canceled", c.cancelled),
@@ -1291,17 +1295,17 @@ def charts(snapshot: ExecSnapshot) -> dict:
 
 def _forecast_text(outlook: dict, window: Window) -> str:
     if outlook["status"] == "insufficient":
-        return "Too little due work has reached its date to project this period."
+        return "Too little planned work has reached its date to project this period."
     if outlook["status"] == "closed":
-        return f"{window.label} has ended: {_share_text(outlook['share'])} of its due work was verified."
+        return f"{window.label} has ended: {_share_text(outlook['share'])} of its planned work was verified."
     return (
-        f"At the current conversion, {_share_text(outlook['share'])} of the work due in "
+        f"At the current conversion, {_share_text(outlook['share'])} of the work planned in "
         f"{window.label} is expected to be verified by its end."
     )
 
 
 TABLE_COLUMNS = (
-    ("due", "Due"),
+    ("due", "Planned"),
     ("started", "Started"),
     ("executed", "Execution Completed"),
     ("verified", "IA Verified"),

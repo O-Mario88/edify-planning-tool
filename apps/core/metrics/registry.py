@@ -1385,7 +1385,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
     # six figures are the table's country total.
     MetricSpec(
         key="cxo_activities_due",
-        label="Activities Due",
+        label="Activities Planned",
         definition=(
             "Valid activities whose approved scheduled date falls in the "
             "selected period; cancelled and deferred work is counted apart."
@@ -1412,16 +1412,16 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cxo_started",
         label="Started",
         definition=(
-            "Due activities that have entered the canonical execution-started "
+            "Planned activities that have entered the canonical execution-started "
             "state, of the activities due."
         ),
         question="Has the committed work begun?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Activities due in the period",
+        denominator="Activities planned in the period",
         service="apps.planning.country_execution.service.kpis",
         source_models=("activities.Activity",),
-        numerator="Due activities started, in the field or beyond",
+        numerator="Planned activities started, in the field or beyond",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="The reader's country",
@@ -1434,17 +1434,17 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cxo_execution_completed",
         label="Execution Completed",
         definition=(
-            "Due activities whose implementer recorded the actuals, met the "
+            "Planned activities whose implementer recorded the actuals, met the "
             "evidence requirement and submitted them, of the activities due; "
             "not necessarily reviewed or verified."
         ),
         question="Did the field work happen and reach review?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Activities due in the period",
+        denominator="Activities planned in the period",
         service="apps.planning.country_execution.service.kpis",
         source_models=("activities.Activity",),
-        numerator="Due activities submitted to the Programme Lead or IA, or beyond",
+        numerator="Planned activities submitted to the Programme Lead or IA, or beyond",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="The reader's country",
@@ -1457,17 +1457,17 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cxo_ia_verified",
         label="IA Verified",
         definition=(
-            "Due activities verified — by the Programme Lead for a CCEO's staff "
+            "Planned activities verified — by the Programme Lead for a CCEO's staff "
             "work, by Impact Assessment for Partner work and a Lead's own — of "
             "the activities due. The level at which verified delivery counts."
         ),
         question="How much of the committed work is verified programme delivery?",
         category=Category.OUTCOME,
         unit=Unit.PERCENT,
-        denominator="Activities due in the period",
+        denominator="Activities planned in the period",
         service="apps.planning.country_execution.service.kpis",
         source_models=("activities.Activity",),
-        numerator="Due activities in a verified state (verified, accountant-confirmed or closed)",
+        numerator="Planned activities in a verified state (verified, accountant-confirmed or closed)",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="The reader's country",
@@ -1480,17 +1480,17 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cxo_fully_closed",
         label="Fully Closed",
         definition=(
-            "Due activities closed through the governed closure — evidence, "
+            "Planned activities closed through the governed closure — evidence, "
             "Salesforce, verification and, where money moved, accounts and "
             "payment — of the activities due."
         ),
         question="How much verified work is also closed in programme and finance?",
         category=Category.FINANCE,
         unit=Unit.PERCENT,
-        denominator="Activities due in the period",
+        denominator="Activities planned in the period",
         service="apps.planning.country_execution.service.kpis",
         source_models=("activities.Activity", "activities.ActivityClosure"),
-        numerator="Due activities in the closed state",
+        numerator="Planned activities in the closed state",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="The reader's country",
@@ -1503,17 +1503,17 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cxo_overdue",
         label="Overdue Activities",
         definition=(
-            "Due activities past their approved scheduled date that have not "
+            "Planned activities past their approved scheduled date that have not "
             "reached their expected stage, each named by its stage and by who "
             "holds the next action; verified work awaiting closure is not overdue."
         ),
         question="Which committed work is late, and who holds it?",
         category=Category.RISK,
         unit=Unit.PERCENT,
-        denominator="Activities due in the period",
+        denominator="Activities planned in the period",
         service="apps.planning.country_execution.service.kpis",
         source_models=("activities.Activity",),
-        numerator="Due activities past their date at an unfinished stage",
+        numerator="Planned activities past their date at an unfinished stage",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
         scope="The reader's country",
@@ -1982,7 +1982,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
     ),
     MetricSpec(
         key="execution_overdue",
-        label="Overdue Work",
+        label="Past Date, Not Delivered",
         definition=(
             "Staff work whose planned day has passed and that is not "
             "delivered, not counting work returned for correction. The "

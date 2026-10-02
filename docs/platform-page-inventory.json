@@ -4194,7 +4194,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1733,
+      "bytes": 1826,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4340,7 +4340,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8595,
+      "bytes": 8603,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
@@ -4364,7 +4364,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3026,
+      "bytes": 3030,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots"
@@ -4607,7 +4607,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16876,
+      "bytes": 16880,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -10318,7 +10318,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1046,
+      "bytes": 1189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10909,7 +10909,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7322,
+      "bytes": 7339,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",

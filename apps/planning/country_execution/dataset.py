@@ -502,7 +502,11 @@ def build(
         kind = info.kind if info is not None else "unassigned"
         status = row["status"]
         due = row["due_day"]
-        start = _local_day(row["execution_started_at"]) or row["actual_delivery_date"]
+        # On time is read from the day the work was delivered, once the
+        # officer has recorded it (owner, 2026-10-02): a visit delivered on
+        # its day and keyed the next day is not late. Until then the day
+        # execution was started in the app is the only date there is.
+        start = row["actual_delivery_date"] or _local_day(row["execution_started_at"])
         verified_at = row["ia_confirmed_at"] or (
             row["pl_reviewed_at"] if status in st.VERIFIED else None
         )
