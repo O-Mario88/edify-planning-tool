@@ -349,8 +349,8 @@ def _records_tabs(active: str, query: str) -> list[dict]:
 
 @require_page_permission("country_planning_oversight")
 def records_view(request, key: str):
-    """One consolidated table: every record a card counts, grouped by
-    Programme Lead and the person responsible, a page at a time (owner,
+    """One consolidated table: every record a card counts, a page at a time,
+    as an ordinary table that opens with where the school sits (owner,
     2026-10-02, as the planning cards open theirs)."""
     from apps.planning.country_execution import tables
     from apps.planning.country_oversight import tables as planning_tables
@@ -387,7 +387,7 @@ def records_view(request, key: str):
         ),
     }
     if not context["withheld"]:
-        table = tables.build(snapshot, key)
+        table = tables.build(request.user, snapshot, key)
         context.update(
             {"table": table, **planning_tables.page_of(table, _page(request))}
         )
@@ -397,7 +397,7 @@ def records_view(request, key: str):
 @require_page_permission("country_planning_oversight")
 @require_export_permission
 def records_export_view(request, key: str):
-    """A consolidated table as a workbook: every row, the groups as columns."""
+    """A consolidated table as a workbook: every row, every column."""
     from apps.core.excel import table_download
     from apps.planning.country_execution import tables
     from apps.planning.country_oversight import tables as planning_tables
@@ -406,7 +406,7 @@ def records_export_view(request, key: str):
         raise Http404
     filters = esvc.read_filters(request)
     snapshot = esvc.snapshot_for(request.user, filters)
-    table = tables.build(snapshot, key)
+    table = tables.build(request.user, snapshot, key)
     stamp = timezone.localdate().isoformat()
     return table_download(
         request,
@@ -416,7 +416,7 @@ def records_export_view(request, key: str):
 
 
 # ── Locked period snapshots (spec §22) ───────────────────────────────────────
-SNAPSHOT_PAGE_SIZE = 15
+SNAPSHOT_PAGE_SIZE = 50
 
 
 def _paged(items, page: int, size: int = SNAPSHOT_PAGE_SIZE) -> dict:

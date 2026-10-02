@@ -409,7 +409,7 @@ def _names(model_label: str, ids) -> dict[str, str]:
 
 def _key(kind: str, universe: str, window: Window) -> str:
     return (
-        f"cpo:{kind}:v4:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
+        f"cpo:{kind}:v5:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
         f"{reporting_date(window.fy).isoformat()}"
     )
 
@@ -1467,7 +1467,12 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             headline=(_fmt(t.any_visit), "Schools with a visit planned"),
             note=period_note,
             extras=[
-                f"{_fmt(t.no_visit)} schools not yet planned",
+                f"{_fmt(t.unplanned)} schools not yet planned",
+                # In a Partner's hands and not yet dated: the Partner's to
+                # plan, so not "not yet planned" (owner, 2026-10-02).
+                f"{_fmt(t.partner_to_plan)} awaiting a Partner's date"
+                if t.partner_to_plan
+                else "",
                 f"{_fmt(max(0, t.visit_slots - visit_part))} visits remaining",
                 f"{_fmt(t.duplicates)} planned twice" if t.duplicates else "",
             ],
@@ -1530,6 +1535,7 @@ def _type_row(key: str, label: str, tally: Tally, need) -> dict:
         "visit_tone": _tone(tally.unique_visit_share),
         "any_visit": _fmt(tally.any_visit),
         "no_visit": _fmt(tally.no_visit),
+        "unplanned": _fmt(tally.unplanned),
         "with_partner": _fmt(tally.with_partner),
         "training_slots": _fmt(tally.training_slots),
         "training": _fmt(tally.training),
@@ -2016,7 +2022,7 @@ KPI_GAPS = {
     "cpo_cluster_meeting_planning": "clustered_no_meeting",
 }
 
-SCHOOLS_PER_PAGE = 25
+SCHOOLS_PER_PAGE = 50
 
 
 def school_rows(

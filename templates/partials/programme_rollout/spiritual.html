@@ -78,7 +78,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
   </div>
 </section>
 
-{% paginate rollout.weak_schools "weak_page" 10 as weak_pager %}
+{% paginate rollout.weak_schools "weak_page" as weak_pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-weak-title" data-rollout-weak-schools>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">
@@ -226,7 +226,7 @@ apps.analytics.programme_rollout_service.spiritual_rollout.
   </div>
 </div>
 
-{% paginate rollout.observations "biblical_page" 10 as biblical_pager %}
+{% paginate rollout.observations "biblical_page" as biblical_pager %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-biblical-title" data-rollout-biblical>
   <header class="rpl-card__header">
     <div class="rpl-card__heading">

@@ -26,7 +26,7 @@ do (owner, 2026-10-02); they can still be folded away.
   <section class="cpo-metrics cxo-metrics" aria-label="Execution summary">
     {% for card in kpis %}
     {% comment %}Every card is a link to the consolidated table of the records
-    it counts, grouped by Programme Lead (owner, 2026-10-02).{% endcomment %}
+    it counts (owner, 2026-10-02).{% endcomment %}
     <a class="cpo-metric cxo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.key }}"
        href="{{ card.href }}"
        aria-label="{{ card.label }}: {{ card.value }}{% if card.note %}, {{ card.note }}{% endif %}. Open the table of the activities behind it.">

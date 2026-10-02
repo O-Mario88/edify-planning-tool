@@ -448,6 +448,46 @@ class Reads:
             self.window,
         )
 
+    def other_work(self):
+        """Staff work at a school that is none of the above — not a counted
+        visit, an outreach visit or a training: listed with every activity
+        (owner, 2026-10-02), counted nowhere. The visit an in-school training
+        writes beside itself is that training, not a second activity."""
+        from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
+
+        return _in_window(
+            self._staff.filter(cluster_id__isnull=True)
+            .exclude(rules.counted_visit_q())
+            .exclude(rules.outreach_visit_q())
+            .exclude(activity_type__in=SCHOOL_TRAINING_TYPES)
+            .exclude(purpose_type=rules.COMPANION_PURPOSE),
+            self.window,
+        )
+
+    def partner_sessions(self):
+        """Cluster trainings and meetings a Partner delivers. They have no
+        school of their own, so no read of a school's Partner work finds
+        them."""
+        from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+
+        held = self.narrow.sessions(
+            _activities(self.fy).filter(
+                rules.partner_held_q(),
+                cluster_id__isnull=False,
+                school_id__isnull=True,
+                activity_type__in=(*TRAINING_TYPES, *CLUSTER_MEETING_TYPES),
+            )
+        )
+        if self.narrow.partner:
+            held = held.filter(assigned_partner_id=self.narrow.partner)
+        return _in_window(held, self.window).annotate(
+            partner_planned=Case(
+                When(rules.partner_planned_q(), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+
     def partner_work(self):
         """Live Partner activities, each marked ``partner_planned`` (1/0)."""
         held = _activities(self.fy, self.school_ids).filter(rules.partner_held_q())

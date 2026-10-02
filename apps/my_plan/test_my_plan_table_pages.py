@@ -1,9 +1,10 @@
-"""My Plan's tables show twenty rows and page the rest.
+"""My Plan's tables show fifty rows and page the rest.
 
 The owner's decision (2026-09-26) replaces the 2026-09-16 one that left the
 School Visits, Trainings, Cluster Meetings and Programme Activities cards
-unpaged: every table on My Plan now shows twenty rows with the rest behind the
-shared table pager. The CSV export is unaffected and still carries the whole
+unpaged: every table on My Plan pages its rows behind the shared table pager —
+fifty to a page, as every table in the platform (owner, 2026-10-02; it was
+twenty). The CSV export is unaffected and still carries the whole
 period.
 """
 
@@ -23,11 +24,11 @@ from apps.schools.models import School
 User = get_user_model()
 
 FY = "2027"
-VISITS = 25
-PAGE_SIZE = 20
+VISITS = 55
+PAGE_SIZE = 50
 
 
-class MyPlanPagesItsTablesAtTwentyTest(TestCase):
+class MyPlanPagesItsTablesAtFiftyTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         region = Region.objects.create(name="MPP Region")
@@ -52,7 +53,7 @@ class MyPlanPagesItsTablesAtTwentyTest(TestCase):
         )
         first = date(2026, 10, 5)
         for n in range(VISITS):
-            planned = first + timedelta(days=7 * n)
+            planned = first + timedelta(days=6 * n)
             Activity.objects.create(
                 activity_type="school_visit",
                 activity_purpose_text=f"Paged visit {n + 1:02d}",
@@ -71,7 +72,7 @@ class MyPlanPagesItsTablesAtTwentyTest(TestCase):
     def _drawn(self, body):
         return [n for n in range(1, VISITS + 1) if f"Paged visit {n:02d}" in body]
 
-    def test_the_first_page_draws_twenty_visits_and_a_pager(self):
+    def test_the_first_page_draws_fifty_visits_and_a_pager(self):
         response = self.client.get(f"/my-plan?fy={FY}")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()

@@ -841,7 +841,7 @@ def _fmt(value) -> str:
 def kpis(snapshot: ExecSnapshot) -> list[dict]:
     """The six figures (spec §8), each bound to its registered metric, with
     its denominator and its drill-down: the consolidated table of the records
-    it counts, grouped by Programme Lead (owner, 2026-10-02, as the planning
+    it counts, under its Programme Lead (owner, 2026-10-02, as the planning
     cards open theirs)."""
     from apps.core.metrics import MetricValue, render_metric
 
@@ -1589,7 +1589,7 @@ def _unscheduled_by_partner(dataset, filters: ExecFilters) -> dict:
     )
 
 
-ACTIVITIES_PER_PAGE = 25
+ACTIVITIES_PER_PAGE = 50
 
 #: What each KPI's drill-down lists.
 STAGE_FILTERS = {
@@ -1702,7 +1702,7 @@ def school_codes(school_ids) -> dict:
     return dict(manager.filter(id__in=ids).values_list("id", "school_id"))
 
 
-SCHOOLS_PER_PAGE = 25
+SCHOOLS_PER_PAGE = 50
 
 
 def school_completion_rows(

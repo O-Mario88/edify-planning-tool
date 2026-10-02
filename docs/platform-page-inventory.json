@@ -4607,7 +4607,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16880,
+      "bytes": 16853,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4682,7 +4682,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3392,
+      "bytes": 2886,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/records/<str:key>",
@@ -4730,7 +4730,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2702,
+      "bytes": 2801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -4866,7 +4866,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5539,
+      "bytes": 5571,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8907,7 +8907,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28418,
+      "bytes": 28415,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9418,7 +9418,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11154,
+      "bytes": 11151,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9495,7 +9495,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8694,
+      "bytes": 8685,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9543,7 +9543,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5177,
+      "bytes": 5174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9566,7 +9566,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3918,
+      "bytes": 3915,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9590,7 +9590,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7339,
+      "bytes": 7336,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9665,7 +9665,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6103,
+      "bytes": 6100,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9686,7 +9686,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6034,
+      "bytes": 6031,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9770,7 +9770,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3062,
+      "bytes": 3059,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9836,7 +9836,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5373,
+      "bytes": 5370,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9956,7 +9956,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4340,
+      "bytes": 4337,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10047,7 +10047,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5045,
+      "bytes": 5042,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10160,7 +10160,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4588,
+      "bytes": 4585,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -12346,7 +12346,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 17719,
+      "bytes": 17716,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
@@ -12563,7 +12563,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 18089,
+      "bytes": 18083,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -12594,7 +12594,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12409,
+      "bytes": 12406,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -12622,7 +12622,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19290,
+      "bytes": 19281,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -36454,7 +36454,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "A consolidated table as a workbook: every row, the groups as columns.",
+      "purpose": "A consolidated table as a workbook: every row, every column.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -36533,7 +36533,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Complete planning form",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
-      "purpose": "One consolidated table: every record a card counts, grouped by Programme Lead and the person responsible, a page at a time (owner, 2026-10-02, as the planning cards open theirs).",
+      "purpose": "One consolidated table: every record a card counts, a page at a time, as an ordinary table that opens with where the school sits (owner, 2026-10-02, as the planning cards open theirs).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -37604,7 +37604,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "A consolidated table as a workbook: every row, the groups as columns.",
+      "purpose": "A consolidated table as a workbook: every row, the groups as columns and every planning detail. ``all`` is the tables Impact Assessment asked for in one workbook, a sheet each (owner, 2026-10-02).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -37682,7 +37682,7 @@
       "permission_key": "country_planning_oversight",
       "primary_action": "Complete planning form",
       "primary_user_decision": "What should be created, scheduled, or allocated?",
-      "purpose": "One consolidated table: every row a card counts, grouped by Programme Lead, a page at a time (owner, 2026-10-01).",
+      "purpose": "One consolidated table: every row a card counts, grouped by Programme Lead, a page at a time (owner, 2026-10-01) \u2014 and, for the tables Impact Assessment reads the country from, by the sub-region, district, CCEO or Programme Lead and cluster of the school (owner, 2026-10-02).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [

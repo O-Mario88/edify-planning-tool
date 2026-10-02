@@ -1,5 +1,5 @@
 {% load table_pagination %}
-{% paginate section.rows section.param section.page.paginator.per_page|default:15 as lifecycle_pager %}
+{% paginate section.rows section.param section.page.paginator.per_page|default:50 as lifecycle_pager %}
 <section class="card overflow-hidden my-4">
   <h2 class="edify-section-heading px-4 py-3">{{ section.label }} Schools <span class="edify-text-caption">({% if section.page %}{{ section.page.paginator.count }}{% else %}{{ section.rows|length }}{% endif %})</span></h2>
   <p class="edify-text-caption edify-text-muted px-4 pb-3">{% if section.outreach_only %}Donor Visits and Content/Story Collection visits only. No training or assessment.{% else %}Visits and trainings planned as needed. No 4-visit / 4-training package.{% endif %}</p>

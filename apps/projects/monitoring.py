@@ -78,12 +78,14 @@ __all__ = [
     "WHOLE_PROJECT_ROLES",
     "ProjectMonitoringRow",
     "ProjectMonitoring",
+    "enrolled_schools",
     "ProjectSchoolRow",
     "ProjectWorkLine",
     "controls_project_work",
     "find_school_row",
     "project_monitoring",
     "sees_whole_project",
+    "watched_projects",
 ]
 
 #: Roles that read a project whole rather than their own contribution. IA
@@ -740,6 +742,43 @@ def project_monitoring(
         )
         result.rows.append(row)
     return result
+
+
+def watched_projects(principal) -> list:
+    """The live projects this reader may watch, by name."""
+    return list(_projects_for(principal))
+
+
+def enrolled_schools(principal, *, fy: str | None = None) -> list[tuple]:
+    """Every enrolment this reader may see, as ``(project, coordinator, row)``.
+
+    The consolidated Project Schools table (owner, 2026-10-02: "all the
+    project assigned schools fetched direct from the project coordinators")
+    lists the page's own school rows — the same lens, the same reading of who
+    holds the work and where it stands — without the project figures the page
+    draws above them.
+    """
+    from apps.core.enums import SsaIntervention
+    from apps.core.fy import get_operational_fy
+    from apps.planning.fy_policy import planning_horizon
+
+    projects = list(_projects_for(principal))
+    if not projects:
+        return []
+    assignments = list(_visible_assignments(principal, [p.id for p in projects]))
+    rows = _school_rows(
+        projects,
+        assignments,
+        fys=planning_horizon(str(fy or get_operational_fy())),
+        controls=False,
+        intervention_labels=dict(SsaIntervention.choices),
+    )
+    coordinators = _coordinator_names(projects)
+    return [
+        (project, coordinators.get(project.id, "Not assigned"), row)
+        for project in projects
+        for row in rows.get(project.id, [])
+    ]
 
 
 def find_school_row(principal, enrolment_id: str, *, fy: str | None = None):

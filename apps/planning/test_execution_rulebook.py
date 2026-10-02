@@ -14,7 +14,9 @@ Completion tab (apps.planning.execution_monitor):
   or monitors it, before who holds the school;
 * a hand-over a Partner has not dated keeps waiting when the year turns;
 * every card is a doorway to the table of the records it counts — its number
-  IS the table's row count — grouped by Programme Lead, with the School ID;
+  IS the table's row count — an ordinary table that opens with where the
+  school sits (Programme Lead, sub-region, district, CCEO / PL, cluster) and
+  its School ID;
 * the two execution pages agree, person by person;
 * the tab follows the work as it changes.
 """
@@ -418,44 +420,67 @@ class ExecutionTablesTest(ExecutionWorld):
                 key = card["key"]
                 with self.subTest(filters=filters, card=key):
                     self.assertEqual(
-                        len(etables.build(snapshot, key).rows),
+                        len(etables.build(self.cd_user, snapshot, key).rows),
                         int(card["value"].replace(",", "")),
                     )
                     self.assertIn(f"/execution/records/{key}?", card["href"])
 
     def test_the_visits_table_is_the_visits_planned(self):
         snapshot = self.live()
-        table = etables.build(snapshot, "visits")
+        table = etables.build(self.cd_user, snapshot, "visits")
         self.assertEqual(len(table.rows), snapshot.tree.country.v_planned)
         self.assertTrue(all(row["staff"] != etables.NOBODY for row in table.rows))
 
-    def test_rows_sit_under_their_lead_and_person_with_the_school_id(self):
-        table = etables.build(self.live(), "due")
-        self.assertEqual(table.spec.groups, ("lead", "staff"))
+    def test_a_table_opens_with_where_the_school_sits_and_its_school_id(self):
+        # An ordinary table (owner, 2026-10-02): Programme Lead, sub-region,
+        # district, CCEO / PL and cluster as columns, then the School ID.
+        table = etables.build(self.cd_user, self.live(), "due")
         self.assertEqual(
-            [column.label for column in table.shown_columns][:6],
+            [column.label for column in table.shown_columns][:8],
             [
-                "Delivered By",
-                "Activity",
-                "Counts Toward Target",
+                "Programme Lead",
+                "Sub-region",
+                "District",
+                "CCEO / PL",
+                "Cluster",
                 "School ID",
-                "School / Cluster",
+                "School Name",
                 "School Type",
             ],
         )
+        labels = [column.label for column in table.shown_columns]
+        for label in ("Counts Toward Target", "Delivered By", "Responsible", "Stage"):
+            self.assertIn(label, labels)
         leads = [row["lead"] for row in table.rows]
         self.assertEqual(leads, sorted(leads, key=["Lead A", "Lead B"].index))
         for row in table.rows:
             with self.subTest(row=row["school"]):
                 self.assertTrue(row["school_id"].startswith("CPO-"))
         partner = next(row for row in table.rows if row["by"].startswith("Partner"))
+        self.assertEqual(partner["holder"], "Officer One")
         self.assertEqual(partner["staff"], "Officer One")  # the school's holder
         self.assertEqual(partner["counted"], "")
-        # A heading states the balance at its level.
-        self.assertIn("delivered", table.notes[("Lead A",)])
-        self.assertIn("overdue", table.notes[("Lead A", "Officer One")])
+        # The selection's balance is the title band's line.
+        self.assertIn("planned delivered", table.summary)
+        self.assertIn("overdue", table.summary)
 
-    def test_a_table_opens_with_its_groups_and_exports_every_column(self):
+    def test_the_holder_and_the_person_responsible_are_separate_columns(self):
+        # Lead B's officer holds the school; Lead A plans a visit there. The
+        # place columns are the holder's; the work is Lead A's.
+        visit = self.plan(self.client_b, "school_visit", "scheduled", 9, owner=self.pl)
+        table = etables.build(self.cd_user, self.live(), "due")
+        row = next(
+            r
+            for r in table.rows
+            if r["staff"] == "Lead A" and r["school_id"] == self.client_b.school_id
+        )
+        self.assertEqual((row["lead"], row["holder"]), ("Lead B", "Officer Three"))
+        self.assertEqual((row["staff"], row["staff_lead"]), ("Lead A", "Lead A"))
+        # The Programme Lead choice keeps a person's work, as the card counts.
+        mine = etables.build(self.cd_user, self.live(program_lead=self.pl.id), "due")
+        self.assertIn(visit.school.school_id, [r["school_id"] for r in mine.rows])
+
+    def test_every_table_opens_and_exports_every_column(self):
         import openpyxl
 
         client = self.as_user(self.cd_user)
@@ -465,7 +490,7 @@ class ExecutionTablesTest(ExecutionWorld):
                 self.assertEqual(page.status_code, 200)
                 body = page.content.decode()
                 self.assertIn(etables.SPECS[key].title, body)
-                if etables.build(self.live(), key).rows:
+                if etables.build(self.cd_user, self.live(), key).rows:
                     self.assertIn(f'data-consolidated-table="{key}"', body)
                     self.assertIn(">School ID</th>", body)
                 else:
@@ -474,12 +499,22 @@ class ExecutionTablesTest(ExecutionWorld):
                 self.assertEqual(export.status_code, 200)
                 sheet = openpyxl.load_workbook(io.BytesIO(export.content)).active
                 headers = [cell.value for cell in sheet[1]]
-                self.assertEqual(headers[0], "Programme Lead")
-                self.assertIn("School ID", headers)
+                self.assertEqual(
+                    headers[:6],
+                    [
+                        "Programme Lead",
+                        "Sub-region",
+                        "District",
+                        "CCEO / PL",
+                        "Cluster",
+                        "School ID",
+                    ],
+                )
         body = client.get(f"{RECORDS}/due?{QUERY}").content.decode()
         self.assertIn("Lead A", body)
         self.assertIn("CPO-", body)
-        self.assertIn('class="edify-group-head"', body)
+        # An ordinary table: no heading rows (owner, 2026-10-02).
+        self.assertNotIn('class="edify-group-head"', body)
 
     def test_an_unknown_table_is_not_found_and_schools_stay_withheld(self):
         client = self.as_user(self.cd_user)

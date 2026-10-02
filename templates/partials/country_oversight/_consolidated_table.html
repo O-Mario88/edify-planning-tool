@@ -1,8 +1,8 @@
 {% comment %}
 A consolidated table's body: its title bar with what the rows add up to, the
-rows under their group headings (each with its own count and balance), and the
-pager. Shared by the planning tables (pages/oversight/country_table.html) and
-the execution tables (pages/oversight/country_execution_table.html), so a
+rows — an ordinary table, the place columns first (owner, 2026-10-02) — and
+the pager. Shared by the planning tables (pages/oversight/country_table.html)
+and the execution tables (pages/oversight/country_execution_table.html), so a
 table of records reads the same wherever a card opens it.
 {% endcomment %}
   <section class="card p-0 overflow-hidden" aria-labelledby="cpo-table-title">
@@ -14,7 +14,7 @@ table of records reads the same wherever a card opens it.
     {% include "components/empty_state.html" with message=withheld_message|default:"School-level rows are not part of this role's reading of the country. The figures on Country Planning Oversight are." %}
     {% elif lines %}
     <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-consolidated-table="{{ spec.key }}">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-columns="unfrozen" data-consolidated-table="{{ spec.key }}">
         <caption class="sr-only">{{ spec.description }}</caption>
         <thead>
           <tr>
@@ -25,21 +25,11 @@ table of records reads the same wherever a card opens it.
         </thead>
         <tbody>
           {% for line in lines %}
-          {% if line.heading %}
-          <tr class="edify-group-head">
-            <th colspan="{{ columns|length }}" scope="colgroup"{% if line.depth %} data-group-depth="{{ line.depth }}"{% endif %}>
-              <span class="edify-group-head__label">{% if line.depth %}<span aria-hidden="true">↳ </span>{% endif %}{{ line.heading }}</span>
-              <span class="edify-group-head__count">{{ line.count }}</span>
-              {% if line.note %}<span class="edify-text-caption edify-text-muted" data-group-balance>{{ line.note }}</span>{% endif %}
-            </th>
-          </tr>
-          {% else %}
           <tr>
-            {% for column, value in line.cells %}
-            <td class="px-3 py-2{% if column.numeric %} text-right tabular-nums{% endif %}" data-label="{{ column.label }}">{% if column.is_school and value and line.school_id %}<a href="/schools/{{ line.school_id }}" class="font-semibold hover:underline">{{ value }}</a>{% elif column.is_date %}{% if value %}{{ value|date:"j M Y" }}{% elif column.optional %}<span class="edify-text-muted">—</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not yet scheduled</span>{% endif %}{% elif value == "" or value is None %}<span class="edify-text-muted">—</span>{% elif column.key == "flag" %}<span class="edify-status-text" data-edify-tone="danger">{{ value }}</span>{% else %}{{ value }}{% endif %}</td>
+            {% for column, value, blank in line.cells %}
+            <td class="px-3 py-2{% if column.numeric %} text-right tabular-nums{% elif column.is_date %} tabular-nums{% elif column.key == "school_id" %} font-mono{% endif %}" data-label="{{ column.label }}"{% if column.is_school %} data-record-title{% endif %}>{% if column.is_school and value and line.school_id %}<a href="/schools/{{ line.school_id }}" class="font-semibold hover:underline">{{ value }}</a>{% elif column.is_date %}{% if value %}{{ value|date:"j M Y" }}{% else %}<span class="edify-status-text" data-edify-tone="warning">{{ blank|default:"Not yet scheduled" }}</span>{% endif %}{% elif value == "" or value is None %}<span class="edify-text-muted">—</span>{% elif column.key == "flag" %}<span class="edify-status-text" data-edify-tone="danger">{{ value }}</span>{% else %}{{ value }}{% endif %}</td>
             {% endfor %}
           </tr>
-          {% endif %}
           {% endfor %}
         </tbody>
       </table>

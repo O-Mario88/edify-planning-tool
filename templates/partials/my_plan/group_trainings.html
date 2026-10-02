@@ -24,7 +24,7 @@ Group Trainings Planned for {% if period == 'week' %}This Week{% elif period == 
 
 <!-- Table Section -->
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate group_trainings "group_trainings_page" 20 as group_trainings_pager %}
+{% paginate group_trainings "group_trainings_page" as group_trainings_pager %}
 {% if group_trainings %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>

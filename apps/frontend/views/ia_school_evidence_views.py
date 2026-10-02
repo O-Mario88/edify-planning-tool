@@ -32,7 +32,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from apps.core.exceptions import Forbidden, NotFoundError
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.metrics import render_precomputed_metric_for_source
-from apps.core.pagination import paginate_rows
+from apps.core.pagination import TABLE_PAGE_SIZE, paginate_rows
 from apps.core.permissions import require_page_permission
 from apps.frontend.views.hr_programme_views import SERVICE_ERRORS, _drawer, _field
 from apps.impact import evidence_services as ev
@@ -303,7 +303,7 @@ def _learning_tab(request, *, fy: str, status: str) -> dict:
 
     comparisons = ev.learning_summary(request.user, fy, subject=subject)
     summary_page = paginate_rows(
-        comparisons, page=_page(request, "summary_page"), page_size=25
+        comparisons, page=_page(request, "summary_page"), page_size=TABLE_PAGE_SIZE
     )
     summary_rows = []
     for c in summary_page.pop("rows"):
@@ -441,7 +441,7 @@ def _discipleship_tab(request, *, fy: str, status: str) -> dict:
         )
     summary = ev.discipleship_summary(request.user, fy)
     summary_page = paginate_rows(
-        summary, page=_page(request, "summary_page"), page_size=25
+        summary, page=_page(request, "summary_page"), page_size=TABLE_PAGE_SIZE
     )
     summary_rows = []
     for s in summary_page.pop("rows"):
@@ -577,7 +577,7 @@ def _edtech_tab(request, *, fy: str, status: str) -> dict:
 
     summary = ev.edtech_summary(request.user, asset_type=asset_type)
     summary_page = paginate_rows(
-        summary, page=_page(request, "summary_page"), page_size=25
+        summary, page=_page(request, "summary_page"), page_size=TABLE_PAGE_SIZE
     )
     summary_rows = []
     may_record = ev.may_record(request.user)
