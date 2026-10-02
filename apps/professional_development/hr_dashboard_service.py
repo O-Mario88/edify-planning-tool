@@ -403,7 +403,7 @@ class HRPDDashboardService:
             )
 
         total_entries = len(tracker_rows)
-        per_page = 10
+        per_page = 50
         pages = max(1, (total_entries + per_page - 1) // per_page)
         page = min(page, pages)
         page_rows = tracker_rows[(page - 1) * per_page : page * per_page]

@@ -179,7 +179,8 @@ class WorklistStatesTest(CollectionFixture):
             self._school(f"CW-Q{index}", owner=self.cceo)
         with CaptureQueriesContext(connection) as small:
             C.collection_worklist(self.ia, {})
-        for index in range(3, 40):
+        total = C.PAGE_SIZE + 15
+        for index in range(3, total):
             school = self._school(
                 f"CW-Q{index}", owner=self.cceo if index % 2 else self.cceo2
             )
@@ -189,7 +190,7 @@ class WorklistStatesTest(CollectionFixture):
             data = C.collection_worklist(self.ia, {})
         self.assertEqual(len(large), len(small))
         self.assertEqual(len(data["rows"]), C.PAGE_SIZE)
-        self.assertEqual(data["page"]["total"], 40)
+        self.assertEqual(data["page"]["total"], total)
         second = C.collection_worklist(self.ia, {C.PAGE_PARAM: "2"})
         self.assertEqual(len(second["rows"]), 15)
 

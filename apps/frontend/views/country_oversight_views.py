@@ -378,7 +378,7 @@ def drawer_view(request):
 
 
 #: Rows in one page of a drawer's list.
-DRAWER_PAGE_SIZE = 15
+DRAWER_PAGE_SIZE = 50
 
 
 def _drawer_page(rows, request) -> dict:
@@ -575,6 +575,7 @@ def _table_tabs(active: str, query: str) -> list[dict]:
 def _table_filter_options(request, filters) -> dict:
     from apps.core.fy import fy_options
     from apps.core.scoping import resolve_user_scope
+    from apps.planning.country_oversight import tables
     from apps.planning.country_oversight.requirements import system_leads
 
     country = getattr(resolve_user_scope(request.user), "country", "") or ""
@@ -584,40 +585,72 @@ def _table_filter_options(request, filters) -> dict:
             {"key": lead.key, "name": lead.name} for lead in system_leads(country)
         ],
         "types": svc.TYPE_OPTIONS,
+        **tables.filter_options(request.user, filters),
     }
+
+
+#: The choices the table page offers as fields; everything else the dashboard
+#: was filtered to rides along with them unchanged.
+TABLE_FILTER_FIELDS = (
+    "fy",
+    "program_lead",
+    "district",
+    "cceo",
+    "school_type",
+    "partner",
+    "sub_region",
+    "cluster",
+    "project",
+)
+
+
+def _table_query(filters, extra) -> str:
+    from urllib.parse import urlencode
+
+    return urlencode({**filters.params(), **extra.params()})
 
 
 @require_page_permission("country_planning_oversight")
 def table_view(request, key: str):
     """One consolidated table: every row a card counts, grouped by Programme
-    Lead, a page at a time (owner, 2026-10-01)."""
+    Lead, a page at a time (owner, 2026-10-01) — and, for the tables Impact
+    Assessment reads the country from, by the sub-region, district, CCEO or
+    Programme Lead and cluster of the school (owner, 2026-10-02)."""
     from apps.planning.country_oversight import tables
 
     if key not in tables.SPECS:
         raise Http404
     filters = svc.read_filters(request)
-    query = filters.query()
+    extra = tables.read_extra(request)
+    query = _table_query(filters, extra)
+    withheld = not _may_see_schools(request.user)
     context = {
         "spec": tables.SPECS[key],
         "filters": filters,
+        "extra": extra,
         "query": query,
         "window": filters.window,
         "fy_label": fy_label(filters.fy),
         "lens_tabs": _table_tabs(key, query),
-        "options": _table_filter_options(request, filters),
+        "options": {} if withheld else _table_filter_options(request, filters),
         "carried": [
             (name, value)
             for name, value in filters.params().items()
-            if name not in ("fy", "program_lead", "school_type")
+            if name not in TABLE_FILTER_FIELDS
         ],
+        "active_filters": sum(
+            1
+            for name in TABLE_FILTER_FIELDS[1:]
+            if getattr(filters, name, "") or getattr(extra, name, "")
+        ),
         "may_export": RolePermissionService.can_export(
             request.user, f"{PAGE_PATH}table-export/{key}"
         ),
         "export_path": f"{PAGE_PATH}table-export/{key}",
-        "withheld": not _may_see_schools(request.user),
+        "withheld": withheld,
     }
-    if not context["withheld"]:
-        table = tables.build(request.user, filters, key)
+    if not withheld:
+        table = tables.build(request.user, filters, key, extra)
         try:
             page = int(request.GET.get("page") or 1)
         except ValueError:
@@ -629,17 +662,22 @@ def table_view(request, key: str):
 @require_page_permission("country_planning_oversight")
 @require_export_permission
 def table_export_view(request, key: str):
-    """A consolidated table as a workbook: every row, the groups as columns."""
+    """A consolidated table as a workbook: every row, the groups as columns
+    and every planning detail. ``all`` is the tables Impact Assessment asked
+    for in one workbook, a sheet each (owner, 2026-10-02)."""
     from apps.core.excel import table_download
     from apps.planning.country_oversight import tables
 
-    if key not in tables.SPECS or not _may_see_schools(request.user):
+    keys = tables.WORKBOOK if key == "all" else (key,)
+    if any(k not in tables.SPECS for k in keys) or not _may_see_schools(request.user):
         raise Http404
     filters = svc.read_filters(request)
-    table = tables.build(request.user, filters, key)
+    extra = tables.read_extra(request)
     stamp = timezone.localdate().isoformat()
     return table_download(
-        request, f"country-{key}-{filters.fy}-{stamp}", [tables.sheet(table)]
+        request,
+        f"country-{key}-{filters.fy}-{stamp}",
+        [tables.sheet(tables.build(request.user, filters, k, extra)) for k in keys],
     )
 
 
@@ -1005,6 +1043,7 @@ HIERARCHY_HEADERS = [
     "Visit slots planned by Partners",
     "Schools with a visit planned",
     "Schools not yet planned",
+    "Schools awaiting a Partner's date",
     "Schools in a Partner's hands",
     "Schools planned twice",
     "Training slots needed",
@@ -1045,7 +1084,8 @@ def _figures(tally) -> list:
         tally.staff,
         tally.partner_scheduled,
         tally.any_visit,
-        tally.no_visit,
+        tally.unplanned,
+        tally.partner_to_plan,
         tally.with_partner,
         tally.duplicates,
         tally.training_slots,

@@ -33,7 +33,7 @@ Core School Visits Planned for {% if period == 'week' %}This Week{% elif period 
 </div>
 
 <div class="overflow-x-auto edify-record-table-wrap">
-{% paginate core_school_visits "core_visits_page" 20 as core_school_visits_pager %}
+{% paginate core_school_visits "core_visits_page" as core_school_visits_pager %}
 {% if core_school_visits %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>

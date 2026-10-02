@@ -7,11 +7,19 @@
 {% block shell_content %}
 {% comment %}
 A consolidated table behind a Country Planning Oversight card (owner,
-2026-10-01: every KPI is a link to the table of what it counts, grouped by
-Programme Lead). The rows are the ones the card counts, under the page's own
-filters; the group headings carry the Programme Lead (and, for clusters, the
-sub-region, district and cluster), and every table that lists schools carries
-the School ID. A real table on every screen: on a phone it scrolls sideways.
+2026-10-01: every KPI is a link to the table of what it counts), and the
+tables Impact Assessment reads the country from (owner, 2026-10-02). The rows
+are the ones the card counts, under the page's own filters.
+
+An ordinary table, as My Plan and Planning Oversight draw theirs (owner,
+2026-10-02: "a normal table with sub region, cceo, PL, cluster all in
+columns"): Programme Lead, Sub-region, District, CCEO / PL and Cluster, then
+the School ID, the school, the activity planned, its SSA intervention and the
+rest. No heading rows and no frozen column (owner, 2026-10-02): the table
+scrolls sideways as one piece at every width, fifty rows to a page.
+
+One Export downloads this table with every planning detail; All Tables is the
+five tables Impact Assessment asked for in one workbook, a sheet each.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
@@ -29,6 +37,11 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         <span>Export</span>
       </a>
+      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
+         href="/country-planning-oversight/table-export/all?{{ query }}"
+         aria-label="Export all the consolidated tables to one Excel workbook" title="All Visit Plans, Schools Assigned to Partners, Project Schools, Unplanned Schools and All Activities in one workbook" download>
+        <span>All Tables</span>
+      </a>
     </div>
     {% endif %}
   </header>
@@ -37,8 +50,11 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
     {% include "partials/oversight/_lens_tabs.html" %}
   </div>
 
-  {% comment %}The three choices a reader changes here; everything else the
-  dashboard was filtered to rides along unchanged. Applies on change.{% endcomment %}
+  {% comment %}The choices a reader changes here; everything else the
+  dashboard was filtered to rides along unchanged. Applies on change. The
+  Programme Lead and CCEO choices keep that person's plan, as the cards count
+  it; the place choices keep the schools there.{% endcomment %}
+  {% if not withheld %}
   <form method="get" action="/country-planning-oversight/table/{{ spec.key }}"
         class="edify-filter-bar oversight-portfolio-filters"
         x-data @change="$el.requestSubmit()" aria-label="Table filters">
@@ -61,6 +77,42 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
       </select>
     </label>
     <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Sub-region</span>
+      <select name="sub_region" aria-label="Sub-region">
+        <option value="">All sub-regions</option>
+        {% for option in options.sub_regions %}
+        <option value="{{ option.key }}"{% if option.key == extra.sub_region %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">District</span>
+      <select name="district" aria-label="District">
+        <option value="">All districts</option>
+        {% for option in options.districts %}
+        <option value="{{ option.key }}"{% if option.key == filters.district %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">CCEO / PL</span>
+      <select name="cceo" aria-label="CCEO or Programme Lead">
+        <option value="">Everyone</option>
+        {% for option in options.holders %}
+        <option value="{{ option.key }}"{% if option.key == filters.cceo %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Cluster</span>
+      <select name="cluster" aria-label="Cluster">
+        <option value="">All clusters</option>
+        {% for option in options.clusters %}
+        <option value="{{ option.key }}"{% if option.key == extra.cluster %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
       <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">School Type</span>
       <select name="school_type" aria-label="School type">
         <option value="">All types</option>
@@ -69,8 +121,28 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
         {% endfor %}
       </select>
     </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Partner</span>
+      <select name="partner" aria-label="Partner">
+        <option value="">All Partners</option>
+        {% for option in options.partners %}
+        <option value="{{ option.key }}"{% if option.key == filters.partner %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Project</span>
+      <select name="project" aria-label="Project">
+        <option value="">All projects</option>
+        {% for option in options.projects %}
+        <option value="{{ option.key }}"{% if option.key == extra.project %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if active_filters %}<a href="/country-planning-oversight/table/{{ spec.key }}?fy={{ filters.fy }}">Clear filters</a>{% endif %}
     <noscript><button type="submit" class="edify-action-button secondary h-9">Apply</button></noscript>
   </form>
+  {% endif %}
 
   <section class="card p-0 overflow-hidden" aria-labelledby="cpo-table-title">
     <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
@@ -81,7 +153,7 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
     {% include "components/empty_state.html" with message="School-level rows are not part of this role's reading of the country. The figures on Country Planning Oversight are." %}
     {% elif lines %}
     <div class="overflow-x-auto">
-      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-consolidated-table="{{ spec.key }}">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-columns="unfrozen" data-consolidated-table="{{ spec.key }}">
         <caption class="sr-only">{{ spec.description }}</caption>
         <thead>
           <tr>
@@ -92,21 +164,11 @@ the School ID. A real table on every screen: on a phone it scrolls sideways.
         </thead>
         <tbody>
           {% for line in lines %}
-          {% if line.heading %}
-          <tr class="edify-group-head">
-            <th colspan="{{ columns|length }}" scope="colgroup"{% if line.depth %} data-group-depth="{{ line.depth }}"{% endif %}>
-              <span class="edify-group-head__label">{% if line.depth %}<span aria-hidden="true">↳ </span>{% endif %}{{ line.heading }}</span>
-              <span class="edify-group-head__count">{{ line.count }}</span>
-              {% if line.note %}<span class="edify-text-caption edify-text-muted" data-group-balance>{{ line.note }}</span>{% endif %}
-            </th>
-          </tr>
-          {% else %}
           <tr>
-            {% for column, value in line.cells %}
-            <td class="px-3 py-2{% if column.numeric %} text-right tabular-nums{% endif %}" data-label="{{ column.label }}">{% if column.is_school and value and line.school_id %}<a href="/schools/{{ line.school_id }}" class="font-semibold hover:underline">{{ value }}</a>{% elif column.is_date %}{% if value %}{{ value|date:"j M Y" }}{% else %}<span class="edify-status-text" data-edify-tone="warning">Not yet scheduled</span>{% endif %}{% elif value == "" or value is None %}<span class="edify-text-muted">—</span>{% elif column.key == "flag" %}<span class="edify-status-text" data-edify-tone="danger">{{ value }}</span>{% else %}{{ value }}{% endif %}</td>
+            {% for column, value, blank in line.cells %}
+            <td class="px-3 py-2{% if column.numeric %} text-right tabular-nums{% elif column.is_date %} tabular-nums{% elif column.key == "school_id" %} font-mono{% endif %}" data-label="{{ column.label }}"{% if column.is_school %} data-record-title{% endif %}>{% if column.is_school and value and line.school_id %}<a href="/schools/{{ line.school_id }}" class="font-semibold hover:underline">{{ value }}</a>{% elif column.is_date %}{% if value %}{{ value|date:"j M Y" }}{% else %}<span class="edify-status-text" data-edify-tone="warning">{{ blank|default:"Not yet scheduled" }}</span>{% endif %}{% elif value == "" or value is None %}<span class="edify-text-muted">—</span>{% elif column.key == "flag" %}<span class="edify-status-text" data-edify-tone="danger">{{ value }}</span>{% else %}{{ value }}{% endif %}</td>
             {% endfor %}
           </tr>
-          {% endif %}
           {% endfor %}
         </tbody>
       </table>

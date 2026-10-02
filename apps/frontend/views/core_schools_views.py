@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 # links remain valid. Both the default and the option set are server-side: an
 # unrecognised `per_page` falls back rather than becoming an unbounded query.
 CORE_PAGE_SIZES = (10, 15, 20, 50)
-CORE_PAGE_SIZE_DEFAULT = 15
+CORE_PAGE_SIZE_DEFAULT = 50
 
 
 _CORE_CHART_KEYS = (

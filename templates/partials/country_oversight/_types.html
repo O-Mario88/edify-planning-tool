@@ -25,7 +25,7 @@ every screen.
           <th scope="col" title="Visit slots with nothing planned yet">Visits<br>Remaining</th>
           <th scope="col" title="Visit slots planned, of those needed">Visit<br>Coverage</th>
           <th scope="col" title="Unique schools with a visit planned, by staff or by a Partner">Schools<br>Planned</th>
-          <th scope="col" title="Unique schools with no visit planned">Not Yet<br>Planned</th>
+          <th scope="col" title="Unique schools with no visit planned and none in a Partner's hands">Not Yet<br>Planned</th>
           <th scope="col" title="Schools with any live Partner work, dated by the Partner or not">With a<br>Partner</th>
           <th scope="col">Trainings<br>Needed</th>
           <th scope="col">Trainings<br>Planned</th>
@@ -46,7 +46,7 @@ every screen.
           <td>{{ row.visit_remaining }}</td>
           <td><span class="cpo-pct" data-tone="{{ row.slot_tone }}">{% if row.slot_share is None %}—{% else %}{{ row.slot_share }}%{% endif %}</span></td>
           <td class="cpo-cover"><span>{{ row.any_visit }}</span> <span class="cpo-pct" data-tone="{{ row.visit_tone }}">{% if row.visit_share is None %}(—){% else %}({{ row.visit_share }}%){% endif %}</span></td>
-          <td>{% if row.no_visit != "0" %}<a class="cpo-alert" href="/country-planning-oversight/table/not-planned?school_type={{ row.key }}&amp;{{ type_query }}" title="List the schools not yet planned">{{ row.no_visit }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          <td>{% if row.unplanned != "0" %}<a class="cpo-alert" href="/country-planning-oversight/table/not-planned?school_type={{ row.key }}&amp;{{ type_query }}" title="List the schools not yet planned">{{ row.unplanned }}</a>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
           {% else %}
           <td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td>
           {% endif %}

@@ -97,7 +97,7 @@ def programme_rows(schools, fy, *, user=None, readonly=True):
     ]
 
 
-def programme_sections(user, filters, *, lens="direct", params=None, per_page=15):
+def programme_sections(user, filters, *, lens="direct", params=None, per_page=50):
     """Independently paginated category tables; no package initialization."""
     from django.core.paginator import Paginator
     from apps.core.scoping import (

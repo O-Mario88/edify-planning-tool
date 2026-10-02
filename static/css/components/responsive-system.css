@@ -344,6 +344,31 @@
   }
 }
 
+/* A table that asks for no frozen column at any width (owner, 2026-10-02, of
+   the consolidated tables: "make sure that the tables columns are not
+   frozen"). Its first column is a Programme Lead's name, the same on row
+   after row: pinned, it only covers the columns a reader scrolled to see. So
+   the table scrolls as one piece on a laptop too, and the pin's own surface,
+   hairline and name cap go with the pin. The never-matching id outranks the
+   pin's selectors. */
+table[data-columns="unfrozen"]:not(#edify-unfrozen-none) :is(th, td) {
+  left: auto !important;
+  right: auto !important;
+}
+
+table[data-columns="unfrozen"]:not(#edify-unfrozen-none) > :is(thead, tbody, tfoot) > tr > :first-child {
+  box-shadow: none !important;
+}
+
+table[data-columns="unfrozen"]:not(#edify-unfrozen-none) > tbody > tr > :first-child {
+  background-color: transparent !important;
+}
+
+table[data-columns="unfrozen"]:not(#edify-unfrozen-none) > tbody > tr > :first-child > :first-child {
+  max-inline-size: none !important;
+  overflow: visible !important;
+}
+
 /* More columns to the right: the trailing edge fades out. A mask, not an
    overlay, so it works over any row colour in every theme and never sits on
    top of a control. */

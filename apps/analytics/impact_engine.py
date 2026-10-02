@@ -1339,7 +1339,7 @@ def grouped_driver_associations(
     group_by: str,
     *,
     page: int | None = None,
-    page_size: int = 20,
+    page_size: int = 50,
 ) -> list[dict] | dict:
     if imp.empty:
         empty = []
@@ -1493,7 +1493,7 @@ def build_dashboard(principal, query: dict) -> dict:
         group_metadata,
         group_by,
         page=group_page,
-        page_size=20,
+        page_size=50,
     )
     all_training_rows = _driver_activity_rows(acts, "training")
     all_trainings = acts[acts["kind"] == "training"] if not acts.empty else acts
