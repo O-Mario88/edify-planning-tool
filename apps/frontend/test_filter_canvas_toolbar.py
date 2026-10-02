@@ -120,8 +120,11 @@ class FilterCanvasToolbarContractTests(TestCase):
         for relative_path in templates:
             markup = (ROOT / relative_path).read_text(encoding="utf-8")
             with self.subTest(template=relative_path):
+                # The class, or the component tag that writes it.
                 self.assertTrue(
-                    "edify-filter-bar" in markup or "platform-filter-bar" in markup
+                    "{% filter_bar " in markup
+                    or "edify-filter-bar" in markup
+                    or "platform-filter-bar" in markup
                 )
 
     def test_partner_activity_filters_follow_the_header(self):

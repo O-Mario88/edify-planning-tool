@@ -11,7 +11,7 @@ decides the markup, so a change to the anatomy is one edit.
     {% load components %}
 
     {% page_header eyebrow="Finance" title="Cost Catalogue" description=intro %}
-      <a href="/cost-settings/new" class="edify-action-button primary h-9">Add cost</a>
+      <a href="{{ add_url }}" class="edify-action-button primary h-9">Add cost</a>
     {% endpage_header %}
 
     {% filter_bar action="/programme-schools" label="Programme school filters" %}

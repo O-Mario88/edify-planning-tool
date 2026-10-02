@@ -22,7 +22,7 @@ them with `{% load components %}`.
 
 ```django
 {% page_header eyebrow="Finance" title="Cost Catalogue" description=intro %}
-  <a href="/cost-settings/new" class="edify-action-button primary h-9">Add cost</a>
+  <a href="{{ add_url }}" class="edify-action-button primary h-9">Add cost</a>
 {% endpage_header %}
 ```
 
