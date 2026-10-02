@@ -16174,7 +16174,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Monitoring",
+   "page_title": "Partner Oversight",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -16292,7 +16292,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/partner-oversight/",
-   "page_title": "Partner Monitoring",
+   "page_title": "Partner Oversight",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",

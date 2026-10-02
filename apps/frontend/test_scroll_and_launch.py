@@ -120,25 +120,26 @@ class LaunchScreenTest(SimpleTestCase):
 
 
 class CollapsedRailBrandTest(SimpleTestCase):
-    """The sidebar's mark when it is collapsed to its rail.
+    """The sidebar's mark on a 10 or 11 inch tablet.
 
     The landscape tablet band is the one width where the sidebar collapses on
     its own — layouts/shell.html opens it as a rail between 64rem and 80rem —
     so this mark is what a tablet user sees on every screen rather than
-    something they chose. Cropped to a 36px square the wordmark reads as "ec":
-    a partial word, and taller than the icons beneath it. The owner asked for
-    it smaller and fitted on a tablet (2026-09-07); since 2026-10-01 a desktop
-    user who collapses the sidebar gets the whole wordmark too.
+    something they chose. At the desktop size it is the wordmark cropped to a
+    36px square, which on a 72px rail reads as "ec": a partial word, and taller
+    than the icons beneath it. The owner asked for it smaller and fitted
+    (2026-09-07).
     """
 
     def setUp(self):
         self.css = _read("static/css/components/sidebar.css")
-        self.band = self.css[self.css.index("── The collapsed brand ──") :]
+        self.band = self.css[
+            self.css.index("The collapsed brand on a 10 or 11 inch tablet") :
+        ]
 
-    def test_the_rule_covers_every_width_the_rail_exists_at(self):
-        """The rail exists from 64rem up, on a tablet and on a desktop."""
-        self.assertIn("@media (min-width: 64rem) {", self.band)
-        self.assertNotIn("max-width: 79.99rem", self.band)
+    def test_the_rule_is_scoped_to_the_landscape_tablet_band(self):
+        """That band, and only it: the desktop rail keeps the mark it has."""
+        self.assertIn("@media (min-width: 64rem) and (max-width: 79.99rem)", self.band)
         self.assertIn(
             ".app-sidebar--collapsed .app-sidebar__brand-logo-compact", self.band
         )

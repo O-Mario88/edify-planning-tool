@@ -5,7 +5,6 @@ from django.core.cache import cache
 
 from apps.notifications.models import Notification
 from apps.core.navigation import (
-    SIDEBAR_DISCLOSURE_FROM,
     build_analytics_sections,
     build_mobile_nav_for_user,
     build_sidebar_for_user,
@@ -14,18 +13,12 @@ from apps.core.navigation import (
 
 
 def sidebar_counts(request):
-    # `shell_today` is the top bar's date and belongs to the shell alone. It
-    # used to read `today`, a name pages also use for their own purposes: the
-    # Target Distribution view passes `today` as an ISO string, the date filter
-    # printed nothing for it, and the top bar there read "- Week 40"
-    # (2026-10-01). `today` stays for the templates that already use it.
     if not request.user or not request.user.is_authenticated:
         return {
             "unread_notifications_count": 0,
             "unread_messages_count": 0,
             "pd_action_required_count": 0,
             "today": date.today(),
-            "shell_today": date.today(),
             "current_week_number": date.today().isocalendar()[1],
         }
 
@@ -40,7 +33,6 @@ def sidebar_counts(request):
             return {
                 **cached,
                 "today": today,
-                "shell_today": today,
                 "current_week_number": today.isocalendar()[1],
             }
     try:
@@ -83,7 +75,6 @@ def sidebar_counts(request):
     return {
         **counts,
         "today": today,
-        "shell_today": today,
         "current_week_number": today.isocalendar()[1],
     }
 
@@ -102,10 +93,6 @@ def sidebar_context(request):
     sidebar_sections = build_sidebar_for_user(request.user, request.path)
     return {
         "sidebar_sections": sidebar_sections,
-        # A long menu gets a "Find a page" field (components/sidebar.html);
-        # the same threshold decides whether its groups start closed.
-        "sidebar_is_long": sum(len(sec["items"]) for sec in sidebar_sections)
-        > SIDEBAR_DISCLOSURE_FROM,
         # Phone navigation, resolved from the sections just built rather than
         # from a second pass over the registry.
         "mobile_nav": build_mobile_nav_for_user(
