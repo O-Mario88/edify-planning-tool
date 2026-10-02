@@ -4343,11 +4343,16 @@ main textarea,
   color: var(--edify-text) !important;
 }
 
-/* Light-mode table hierarchy: blue title band, blue column ink on the
-   existing column surface. Other themes retain their own header treatment. */
+/* Light-mode table hierarchy: a quiet title band in the table-header tone
+   with ink text, and blue column ink on the column surface. The band was
+   solid navy with white text from 2026-09-27 to 2026-10-02; with one over
+   every table and group row a page read as a stack of navy bars (the budget
+   drew five in one screen), so the owner had it revisited after the UI audit.
+   Its colours are the --edify-band-* tokens (design-system.css), so the band
+   is restyled in one place. Other themes retain their own header treatment. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
-  background: #285b96 !important;
-  color: #fff !important;
+  background: var(--edify-band-surface) !important;
+  color: var(--edify-band-ink) !important;
   padding: .375rem .75rem !important;
 }
 /* A title band names the table under it; it does not compete with it (owner,
@@ -4370,7 +4375,7 @@ main textarea,
   line-height: 1.35 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td),
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td) :is(span, a, button) {
@@ -4388,7 +4393,7 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
   .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(span, a:not(.btn):not([class*="btn-"]):not(.rounded-control)):not(button *):not(a.btn *) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -4683,8 +4688,8 @@ main #sp-plan-filters { display: flow-root !important; }
    preserve both halves of their inverse color pair. */
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-band > :is(th, td),
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-band .edify-table-plain-content {
-  background: #285b96 !important;
-  color: #fff !important;
+  background: var(--edify-band-surface) !important;
+  color: var(--edify-band-ink) !important;
 }
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal > :is(th, td),
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal .edify-table-plain-content {
@@ -4888,15 +4893,13 @@ main .edify-avatar-neutral {
 
 /* ── A title band's own count and buttons (owner, 2026-09-27) ───────────────
    The dashboards' and My Plan's tables carry their count and a button in the
-   title bar, and now take the blue band like every other table ("the blue
-   table header in the light mode also disappeared ... all blue backgrounds
-   have white font"). On the band the count is a white figure on a light
-   pill, the buttons are white outlines, and a button keeps the band short. */
+   title bar. On the band the count is a figure on a light chip, the buttons
+   are outlines in the band's ink, and a button keeps the band short. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   span:is([class*="badge"], [class*="pill"], .rounded-pill):not(button *):not(a.btn *) {
-  background: rgb(255 255 255 / 0.16) !important;
-  border-color: rgb(255 255 255 / 0.32) !important;
-  color: #fff !important;
+  background: var(--edify-band-chip) !important;
+  border-color: var(--edify-band-line) !important;
+  color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
@@ -4904,36 +4907,35 @@ main .edify-avatar-neutral {
   min-block-size: 0 !important;
   block-size: 1.75rem !important;
   padding-inline: 0.625rem !important;
-  border: 1px solid rgb(255 255 255 / 0.6) !important;
+  border: 1px solid var(--edify-band-control-line) !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
   font-size: var(--edify-text-label-size) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(a.btn, button.btn, a[class*="btn-"], button[class*="btn-"], a.rounded-control, button.rounded-control, .row-menu__trigger):is(:hover, :focus-visible) {
-  background: rgb(255 255 255 / 0.12) !important;
-  border-color: #fff !important;
+  background: var(--edify-band-chip) !important;
+  border-color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar svg {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
-/* Everything written on a blue band reads white (owner, 2026-09-27: "make
-   sure all blue backgrounds have white font"): a band's links, terms and
+/* Everything written on a band takes the band's ink: its links, terms and
    labels as well as its title, apart from a control that brings its own
-   light surface. The budget ledger's blue header row keeps its white
-   headings over the light theme's blue column ink. */
+   surface. The budget ledger's band row keeps that ink over the light
+   theme's blue column ink. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(a, button, dt, dd, strong, small, em, b, label, li, div, span, p, h2, h3, h4, h5):not(.btn):not([class*="btn-"]):not(.rounded-control):not(.rpl-row-link):not(.row-menu__trigger):not(button *):not(.btn *):not(.rpl-row-link *):not([class*="badge"]):not([class*="pill"]) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td),
 :root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td) * {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
 /* ── Drawer size by screen (owner, 2026-09-27) ──────────────────────────────

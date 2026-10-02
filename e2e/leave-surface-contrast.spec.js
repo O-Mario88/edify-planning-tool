@@ -32,8 +32,9 @@ test('leave cards and budget bands retain readable surface pairs in every theme'
     await page.goto('/budget');
     const band = page.locator('.budget-ledger-band > th, .budget-ledger-band > td').first();
     await expect(band).toBeVisible();
-    await expect(band).toHaveCSS('background-color', 'rgb(40, 91, 150)');
-    await expect(band).toHaveCSS('color', 'rgb(255, 255, 255)');
+    // The ledger's group band is the table-header tone with ink text since 2026-10-02.
+    await expect(band).toHaveCSS('background-color', 'rgb(220, 230, 236)');
+    await expect(band).toHaveCSS('color', 'rgb(23, 35, 43)');
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }
 });

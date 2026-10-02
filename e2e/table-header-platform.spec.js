@@ -22,9 +22,10 @@ test('light table headers across platform pages',async({page},info)=>{
      for(const e of document.querySelectorAll('table thead th, .edify-table-titlebar')){
       const r=e.getBoundingClientRect();if(!r.width||!r.height)continue;
       const s=getComputedStyle(e);
-      // A header row painted blue (the budget ledger's band) writes white on it.
+      // A band row (the budget ledger's group heading) writes the band's ink, not the column blue.
       if(e.matches('th')&&!e.closest('.budget-ledger-band')&&s.color!=='rgb(40, 91, 150)')errors.push(e.className+' color='+s.color);
-      if(e.matches('.edify-table-titlebar')&&s.backgroundColor!=='rgb(40, 91, 150)')errors.push(e.className+' background='+s.backgroundColor);
+      // The title band is the table-header tone since 2026-10-02 (it was solid navy).
+      if(e.matches('.edify-table-titlebar')&&s.backgroundColor!=='rgb(220, 230, 236)')errors.push(e.className+' background='+s.backgroundColor);
      }
      return [...new Set(errors)].slice(0,8);
     });checked++;if(errors.length)issues.push({file,width,theme,errors});

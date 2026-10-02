@@ -274,6 +274,14 @@
   --edify-text-secondary: var(--edify-text-muted);
   --edify-table-canvas: var(--edify-surface);
   --edify-table-header: #dce6ec;
+  /* A table's title band and a ledger's group row (consistency.css): the
+     table-header tone with ink text, a light chip for a count, and outline
+     controls. */
+  --edify-band-surface: var(--edify-table-header);
+  --edify-band-ink: var(--edify-text);
+  --edify-band-chip: var(--edify-surface);
+  --edify-band-line: var(--edify-border);
+  --edify-band-control-line: var(--edify-border-strong);
   --edify-table-row-alt: transparent;
   --edify-table-row-hover: #edf4f8;
   --edify-table-row-selected: #e2eef6;
