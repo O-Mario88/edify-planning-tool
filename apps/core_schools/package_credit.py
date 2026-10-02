@@ -49,6 +49,7 @@ from django.db.models import Q
 
 from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
 from apps.partners.purposes import PURPOSE_ACTIVITY_TYPES
+from apps.core.clock import local_day
 from apps.planning.visit_gate import (
     COMPANION_VISIT_PURPOSE,
     DEAD_STATUSES,
@@ -283,7 +284,7 @@ def credit_school_activity(activity_id: str):
         from apps.evidence.models import EvidenceRecord
 
         when = (
-            activity.scheduled_date.date()
+            local_day(activity.scheduled_date)
             if activity.scheduled_date
             else activity.planned_date
         )

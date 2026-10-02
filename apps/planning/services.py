@@ -942,7 +942,8 @@ def schedule_cluster_activity(data: dict, principal) -> dict:
 
     Both kinds include their venue and share the staff member's daily travel
     and personal expenses with other planned activities. Training adds its
-    facilitation fee; meetings do not. Per-head meals/snacks use the stated
+    facilitation fee; a meeting does only when a partner facilitates it
+    (owner, 2026-10-02). Per-head meals/snacks use the stated
     planned participant count, which is required for funded scheduling."""
     from apps.activities.services import create as create_activity
     from apps.core.exceptions import BadRequest

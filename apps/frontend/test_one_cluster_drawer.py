@@ -70,7 +70,9 @@ class TheSurvivingDrawerCarriesBothFieldSetsTest(SimpleTestCase):
 
     def test_it_keeps_what_only_the_planning_drawer_had(self):
         for field in (
-            'name="assigned_partner_id"',  # certified agency delivery
+            # Who facilitates: it replaced the certified-agency delivery
+            # choice on a meeting, as it had on a training (2026-10-02).
+            "facilitated_by_field.html",
             'name="executor_type"',
             'name="ssa_deviation_reason"',
             'name="expected_outcome"',

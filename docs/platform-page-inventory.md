@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **879**
-- All registered routes: **1351**
+- Routed product surfaces: **883**
+- All registered routes: **1355**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **594**
+- Shared component templates: **597**
 - Full pages: **263**
-- Partials and drawers: **306**
-- Permission-gated surfaces: **863**
-- Referenced by automated tests: **772**
+- Partials and drawers: **308**
+- Permission-gated surfaces: **867**
+- Referenced by automated tests: **776**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -197,6 +197,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-C171311DFC | /clusters/<str:cluster_id>/delete | Delete Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-67CB08D75B | /clusters/<str:cluster_id>/edit | Edit Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2F0996F451 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-FDE4F3F7C6 | /clusters/<str:cluster_id>/facilitator | Cluster Facilitator | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-87A93CBB5B | /clusters/<str:cluster_id>/facilitator-drawer | Cluster Facilitator Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3429DE9B4C | /clusters/<str:cluster_id>/schools/<str:school_id>/remove | Remove School From Cluster | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D1234D25E2 | /clusters/create | Create Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -575,6 +577,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D80C668599 | /my-plan/<str:activity_id>/complete | Complete Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2C668C3B27 | /my-plan/<str:activity_id>/complete-drawer | Complete Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EC0BDB34F5 | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | Confirm Reimbursement Receipt Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CE1AEC7009 | /my-plan/<str:activity_id>/edit | Edit Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-8C2F91AF4E | /my-plan/<str:activity_id>/edit-drawer | Edit Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C0BD71EBE9 | /my-plan/<str:activity_id>/learning-results | Onetest Results Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DEC93D9806 | /my-plan/<str:activity_id>/learning-results/save | Onetest Results Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-82480F4141 | /my-plan/<str:activity_id>/request-amendment | Request Budget Amendment | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

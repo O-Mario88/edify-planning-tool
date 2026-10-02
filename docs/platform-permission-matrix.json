@@ -7655,6 +7655,40 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/clusters/<str:cluster_id>/facilitator",
+   "route_name": "cluster_facilitator",
+   "view": "apps.frontend.views.cluster_views.cluster_facilitator_action"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/clusters/<str:cluster_id>/facilitator-drawer",
+   "route_name": "cluster_facilitator_drawer",
+   "view": "apps.frontend.views.cluster_views.cluster_facilitator_drawer_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/clusters/<str:cluster_id>/schools/<str:school_id>/remove",
    "route_name": "remove_school_from_cluster",
    "view": "apps.frontend.views.cluster_views.remove_school_from_cluster_view"
@@ -13644,6 +13678,44 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
+   "route": "/my-plan/<str:activity_id>/edit",
+   "route_name": "edit_activity",
+   "view": "apps.frontend.views.my_plan_views.edit_activity_action"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/<str:activity_id>/edit-drawer",
+   "route_name": "edit_activity_drawer",
+   "view": "apps.frontend.views.my_plan_views.edit_activity_drawer_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
    "route": "/my-plan/<str:activity_id>/learning-results",
    "route_name": "onetest_results_drawer",
    "view": "apps.frontend.views.ia_school_evidence_views.onetest_results_drawer"
@@ -18860,27 +18932,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 424,
-  "Admin": 1060,
+  "Accountant": 428,
+  "Admin": 1064,
   "BusinessTransformationOfficer": 238,
-  "CCEO": 553,
-  "CountryDirector": 813,
+  "CCEO": 557,
+  "CountryDirector": 817,
   "HumanResources": 336,
-  "ImpactAssessment": 671,
+  "ImpactAssessment": 675,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
-  "PartnerAdmin": 226,
-  "PartnerFieldOfficer": 226,
-  "Program Lead": 647,
-  "ProjectCoordinator": 466,
+  "PartnerAdmin": 228,
+  "PartnerFieldOfficer": 228,
+  "Program Lead": 651,
+  "ProjectCoordinator": 470,
   "RegionalProgramLead": 331,
   "RegionalVicePresident": 404
  },
  "summary": {
   "page_keys_declared": 183,
   "page_keys_in_navigation": 200,
-  "routes_guarded": 1157,
-  "routes_total": 1351,
+  "routes_guarded": 1161,
+  "routes_total": 1355,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

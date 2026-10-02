@@ -1,0 +1,54 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+Clusters this partner facilitates (owner, 2026-10-02): "once the staff has
+assigned the cluster to the partner … it should go to the partner as clusters
+they will facilitate."
+
+One row per cluster Edify staff assigned to the partner to facilitate
+(apps.clusters.facilitation). The assignment carries no date and no money:
+each training or meeting staff plan for the cluster then appears in the
+facilitation table below with its facilitation fee, which is all the partner
+is paid. The cluster's schools are not the partner's.
+{% endcomment %}
+<div class="card overflow-hidden" data-facilitated-clusters>
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3">
+<div class="min-w-0">
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Clusters You Facilitate</h2>
+<p class="mt-0.5 edify-text-caption font-semibold text-slate-500">Edify staff plan each training and meeting and carry its logistics. You facilitate, and are paid the facilitation fee for each.</p>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] border border-[var(--edify-primary)]/20">{{ facilitated_clusters|length }}</span>
+</div>
+</div>
+
+<div class="overflow-x-auto edify-record-table-wrap">
+{% paginate facilitated_clusters "facilitated_clusters_page" 20 as facilitated_clusters_pager %}
+<table class="edify-data-table mp-table edify-record-table whitespace-nowrap" aria-label="Clusters you facilitate">
+<thead>
+<tr>
+<th class="min-w-[180px]">Cluster</th>
+<th class="min-w-[120px]">District</th>
+<th class="text-right min-w-[80px]">Schools</th>
+<th class="min-w-[140px]">Edify Officer</th>
+<th class="min-w-[110px]">Assigned</th>
+<th class="text-right min-w-[110px]">Sessions Planned</th>
+<th class="min-w-[110px]">Next Session</th>
+</tr>
+</thead>
+<tbody>
+{% for row in facilitated_clusters_pager.rows %}
+<tr data-facilitated-cluster="{{ row.cluster_id }}">
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{{ row.name }}</td>
+<td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
+<td class="text-right tabular-nums text-slate-700" data-label="Schools">{{ row.schools }}</td>
+<td class="text-slate-700" data-label="Edify Officer">{{ row.edify_officer|default:"—" }}</td>
+<td class="tabular-nums text-slate-700" data-label="Assigned">{{ row.assigned_on|date:"j M Y"|default:"—" }}</td>
+<td class="text-right tabular-nums text-slate-700" data-label="Sessions Planned">{{ row.sessions_planned }}</td>
+<td class="font-bold tabular-nums text-slate-700" data-label="Next Session">{{ row.next_session|date:"j M Y"|default:"Not planned yet" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=facilitated_clusters_pager param="facilitated_clusters_page" pagination_label="Clusters you facilitate pages" %}
+</div>
+</div>

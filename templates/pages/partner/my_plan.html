@@ -99,6 +99,11 @@
   {% endif %}
   {% endfor %}
 
+  {% comment %}The clusters it is assigned to facilitate (owner, 2026-10-02),
+  then the dated sessions and their fees.{% endcomment %}
+  {% if facilitated_clusters %}
+  {% include "partials/my_plan/facilitated_clusters.html" %}
+  {% endif %}
   {% if training_facilitations %}
   {% include "partials/my_plan/training_facilitations.html" %}
   {% endif %}

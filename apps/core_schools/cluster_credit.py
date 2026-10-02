@@ -31,6 +31,7 @@ from __future__ import annotations
 
 from django.db import transaction
 
+from apps.core.clock import local_day
 from apps.activities.training_history import CLUSTER_SESSION_TYPES
 
 #: The register has been confirmed and the session has not been abandoned.
@@ -207,7 +208,7 @@ def credit_cluster_session(activity) -> None:
             # otherwise the Core School Trainings Planned table lists it with
             # no day at all.
             when = (
-                activity.scheduled_date.date()
+                local_day(activity.scheduled_date)
                 if activity.scheduled_date
                 else activity.planned_date
             )

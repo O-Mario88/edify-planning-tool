@@ -165,20 +165,17 @@ def schedule_visits(
     if len(schools) != len(set(school_ids)):
         raise NotFoundError("One or more schools not found.")
 
+    # A district nobody has classified prices as a primary one, as it does
+    # when a single visit is scheduled (`attach_activity_to_batch`). This
+    # refused the whole day instead (owner, 2026-10-02: "lift that
+    # restrictions"): planning waited on a master-data field.
     new_types: dict[str, str] = {}
     for s in schools:
-        dt = (
+        new_types[s.school_id] = (
             district_type_for_staff(responsible_user_id, s.district)
             if s.district_id
             else None
-        )
-        if not dt:
-            dname = s.district.name if s.district_id else "Unknown"
-            raise BadRequest(
-                f"District '{dname}' has not been classified as primary/secondary — "
-                f"ask the CD/Admin to classify it first."
-            )
-        new_types[s.school_id] = dt
+        ) or "primary"
 
     incoming_district_type = (
         "secondary" if "secondary" in new_types.values() else "primary"
@@ -480,12 +477,11 @@ def reschedule_within_batch(
     from apps.activities.services import _funding_owner_id
 
     responsible_user_id = _funding_owner_id(activity, principal)
-    incoming_type = district_type_for_staff(responsible_user_id, school.district)
-    if not incoming_type:
-        raise BadRequest(
-            f"District '{school.district.name}' has not been classified as primary/secondary "
-            f"— ask the CD/Admin to classify it first."
-        )
+    # A district nobody has classified is not a reason to refuse the move
+    # (owner, 2026-10-02: "lift that restrictions"). The visit was scheduled
+    # there as a primary-district day (`attach_activity_to_batch`), and it
+    # moves as one: the day's type is worked out below from the districts
+    # that are classified secondary.
 
     with transaction.atomic():
         batch = (

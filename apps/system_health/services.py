@@ -524,8 +524,11 @@ def cluster_meeting_lines_off_recipe():
     * a rate an earlier recipe charged it, on a line saved at the time;
     * a cost the Country Director linked to the meeting's catalogue item.
 
+    * the facilitation fee, on a meeting a partner facilitates (owner,
+      2026-10-02).
+
     Everything else is reported: a legacy venue, mobilisation or lump-sum
-    key, a facilitation fee (nobody facilitates a meeting), a training's
+    key, a facilitation fee on a meeting staff run themselves, a training's
     meals rate.
     """
     from apps.activities.models import ActivityScheduleCostLine
@@ -548,6 +551,11 @@ def cluster_meeting_lines_off_recipe():
             | set(day_pool_keys)
         )
         .exclude(Exists(linked_to_its_catalogue_item))
+        .exclude(
+            Q(cost_setting_key="group_training_facilitation_fee")
+            & Q(activity__facilitating_partner_id__isnull=False)
+            & ~Q(activity__facilitating_partner_id="")
+        )
     )
 
 

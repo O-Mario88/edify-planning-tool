@@ -380,13 +380,17 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # photocopied materials, and the staff member's day — transport and
         # lunch, and in a secondary district breakfast, dinner and a night —
         # shared across every activity that officer runs that day (the Daily
-        # Visit Batch). No per-meeting rate on top, and nobody facilitates a
-        # meeting.
+        # Visit Batch). No per-meeting rate on top, and a meeting staff run
+        # themselves has no facilitator.
         days = _days_of(a)
         add_meals(CLUSTER_MEALS_RATE_KEY, days)
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials()
         add_staff_day(days)
+        if a.get("facilitated"):
+            # A partner who organises and facilitates the meeting is paid the
+            # facilitation fee, as for a training (owner, 2026-10-02).
+            add_facilitation_fee(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
         # A group training is what it spends (owner, 2026-09-26): the

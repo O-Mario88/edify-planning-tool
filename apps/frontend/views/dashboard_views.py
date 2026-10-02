@@ -16,6 +16,7 @@ from apps.command_center.planning_progress import (
     normalise_period as normalise_progress_period,
 )
 from apps.core.cards import render_card
+from apps.core.clock import local_clock, local_day
 from apps.core.navigation import get_user_role_slug
 from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
@@ -1137,7 +1138,14 @@ def dashboard_view(request):
                     "focus": _interv.get(a.focus_intervention, "—")
                     if a.focus_intervention
                     else "—",
-                    "date": a.scheduled_date.strftime("%b %-d (%a) %-I:%M %p")
+                    "date": " ".join(
+                        part
+                        for part in (
+                            f"{local_day(a.scheduled_date):%b %-d (%a)}",
+                            local_clock(a.scheduled_date),
+                        )
+                        if part
+                    )
                     if a.scheduled_date
                     else a.planned_date.strftime("%b %-d (%a)"),
                     "action_label": "Start" if is_today else "View Details",
@@ -2093,7 +2101,7 @@ def _send_lead_reminder(activity, *, due: bool):
         activity.planned_date.strftime("%b %-d, %Y")
         if activity.planned_date
         else (
-            activity.scheduled_date.strftime("%b %-d, %Y")
+            timezone.localtime(activity.scheduled_date).strftime("%b %-d, %Y")
             if activity.scheduled_date
             else "the scheduled date"
         )
