@@ -99,11 +99,16 @@ const measure = () => {
   const td = card.querySelector('tbody td'); if (td) put('row', glyph(td));
   const summary = card.querySelector('.edify-pagination__summary'); if (summary) put('pager', glyph(summary));
   // The far side: the last column's padding, where the table fits its card
-  // (a phone scrolls it, and its far side is off the screen).
+  // (a phone scrolls it, and its far side is off the screen). Measured to
+  // the edge of the table's own area: where scrollbars take room (Windows,
+  // Linux) the scroll region keeps a gutter for one beyond that edge
+  // (scrollbar-gutter: stable, which is what stops a table shaking), and
+  // where they overlay (macOS, phones) the gutter is nothing.
   const lastTh = card.querySelector('thead th:last-child');
   const region = card.querySelector('[data-table-scroll-region]');
   const right = card.getBoundingClientRect().right - parseFloat(getComputedStyle(card).borderRightWidth || 0);
-  if (lastTh && region && region.scrollWidth <= region.clientWidth + 1) out.lastColumnEnd = Math.round((right - lastTh.getBoundingClientRect().right + parseFloat(getComputedStyle(lastTh).paddingRight)) * 10) / 10;
+  const gutter = region ? region.offsetWidth - region.clientWidth : 0;
+  if (lastTh && region && region.scrollWidth <= region.clientWidth + 1) out.lastColumnEnd = Math.round((right - gutter - lastTh.getBoundingClientRect().right + parseFloat(getComputedStyle(lastTh).paddingRight)) * 10) / 10;
   out.pageOverflow = document.documentElement.scrollWidth > innerWidth;
   out.pokes = [...card.children].filter((child) => {
     const r = child.getBoundingClientRect(); const c = card.getBoundingClientRect();

@@ -339,19 +339,25 @@ test.describe('Partner-supported schools — journeys', () => {
   test('J7 · each Partner is its own table for the Programme Lead', async ({ page }, testInfo) => {
     await signIn(page, data.pl_email, PASSWORD);
     for (const handover of data.handovers.slice(0, 3)) {
-      await page.goto(`/partner-oversight/?partner=${handover.partner_id}`);
-      // One Partner's workspace: its school, cluster and activity tables, and
-      // its Core Schools table when it holds any (owner, 2026-09-27).
+      await page.goto(`/partner-oversight/?partner=${handover.partner_id}&work=schools`);
+      // One Partner's workspace. Its work is tabs since 2026-10-02 (owner:
+      // "Activities (visits, trainings - list of clusters the partners will
+      // facilitate) should be grouped in tabs"): schools assigned, visits,
+      // trainings, clusters to facilitate, and Core schools when it holds
+      // any. One tab's table is drawn at a time, where the three tables used
+      // to be stacked down the page.
       await expect(page.locator('[data-partner-table]')).toHaveAttribute('data-partner-table', handover.partner_id);
-      const tables = await page.locator('[data-partner-monitoring-table]').count();
-      expect(tables - (await page.locator('[data-partner-monitoring-table="core"]').count())).toBe(3);
+      const work = page.locator('[data-partner-work-tabs] .oversight-entity-tabs__link');
+      expect(await work.count()).toBeGreaterThanOrEqual(4);
+      await expect(page.locator('[data-partner-work-tabs] .is-active')).toContainText('Schools assigned');
+      await expect(page.locator('[data-partner-monitoring-table]')).toHaveCount(1);
       const schools = page.locator('[data-partner-monitoring-table="assignment"]').first();
       // Open work reads oldest date first (owner, 2026-09-26), so a Partner
       // with older assignments lists the handover past the first page: find
       // its own row, page by page, and read the school and officer there.
       const row = schools.locator(`tr[data-assignment="${handover.assignment_id}"]`);
       for (let n = 2; n <= 20 && !(await row.count()); n += 1) {
-        await page.goto(`/partner-oversight/?partner=${handover.partner_id}&partner_schools_page=${n}`);
+        await page.goto(`/partner-oversight/?partner=${handover.partner_id}&work=schools&partner_schools_page=${n}`);
       }
       await expect(row).toContainText(handover.name);
       await expect(row).toContainText(data.cceo_name);
