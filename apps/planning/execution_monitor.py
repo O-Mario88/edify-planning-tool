@@ -11,13 +11,28 @@ The same people as the Planning Monitor (apps.planning.monitor_roster): every
 Programme Lead (280 visits a year) and every CCEO (560) in the reader's
 scope, under their Lead. Their own staff-delivered work in the fiscal year is
 counted by the person responsible for it, in either id space, as My Plan
-counts it; the partner work they monitor is counted apart.
+counts it; the partner work they handed over or monitor is counted apart.
+
+Counted by the planning rulebook (apps.planning.country_oversight.rules), as
+the Planning tab beside this one counts the plan (owner audit, 2026-10-02):
+
+* **Visits** against 280 or 560 are Follow up, In-school Training and SSA
+  Support at a school. An in-school training is one visit and one training.
+  Donor, story, invitation and social visits are delivered work like any
+  other — due, delivered, overdue — and are shown apart, never among the
+  visits.
+* **Partner work** is credited to whoever handed it over or monitors it,
+  then to whoever holds the school: the order Country Planning Oversight and
+  its Execution tab credit it in, so one Partner visit sits under one person
+  on every page.
 
 * **Due** — work whose planned date has arrived. Future work is not late.
 * **Delivered** — the status says the work happened: submitted, awaiting
   verification, or verified.
-* **Overdue** — past its planned day, not delivered, not returned. The day
-  itself is not late.
+* **Past date, not delivered** — past its planned day, not delivered, not
+  returned. The day itself is not late. Named for what it counts (owner,
+  2026-10-02): the Director's Execution tab's "Overdue" is wider, and also
+  counts delivered work still waiting on a review.
 * **Complete** — delivered with the Salesforce ID and the form both in.
 * **Verified** — confirmed by Impact Assessment.
 
@@ -33,16 +48,10 @@ from datetime import date
 
 from django.db.models import Q
 
-from apps.core.activity_types import (
-    CLUSTER_MEETING_TYPES,
-    SSA_TYPES,
-    TRAINING_TYPES,
-    VISIT_TYPES,
-)
+from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
 from apps.core.metrics import percentage
 from apps.planning.monitor_roster import ROLE_CCEO, ROLE_PL
 
-VISIT_KINDS = frozenset(str(t) for t in (*VISIT_TYPES, *SSA_TYPES))
 TRAINING_KINDS = frozenset(str(t) for t in TRAINING_TYPES)
 MEETING_KINDS = frozenset(str(t) for t in CLUSTER_MEETING_TYPES)
 
@@ -50,7 +59,7 @@ RETURNED_STATUSES = frozenset(("returned", "returned_by_pl", "returned_by_ia"))
 
 #: The drill-down lists, in the order the page offers them.
 LISTS = (
-    ("overdue", "Overdue — due, not delivered"),
+    ("overdue", "Past date, not delivered"),
     ("missing_salesforce", "Delivered, missing the Salesforce ID"),
     ("missing_evidence", "Delivered, missing the form"),
     ("awaiting_ia", "Awaiting IA verification"),
@@ -60,7 +69,7 @@ LIST_LABELS = dict(LISTS)
 
 #: The table's follow-up columns: each count opens its list.
 LIST_COLUMNS = (
-    ("overdue", "Overdue", "danger"),
+    ("overdue", "Past date", "danger"),
     ("missing_salesforce", "No SF ID", "warning"),
     ("missing_evidence", "No form", "warning"),
     ("awaiting_ia", "Awaiting IA", "info"),
@@ -106,6 +115,9 @@ class PersonExecution:
 
     visits_planned: int = 0
     visits_delivered: int = 0
+    # Donor, story, invitation and social visits: delivered, not counted.
+    outreach_planned: int = 0
+    outreach_delivered: int = 0
     trainings_planned: int = 0
     trainings_delivered: int = 0
     meetings_planned: int = 0
@@ -223,6 +235,8 @@ def execution_monitor(
         expected_evidence,
     )
     from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import rules
     from apps.planning.monitor_roster import monitor_roster
     from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
     from apps.planning.planning_monitor import _delivered_statuses
@@ -265,6 +279,28 @@ def execution_monitor(
     delivered_statuses = _delivered_statuses()
     awaiting_ia = {"awaiting_ia_verification"}
 
+    # The hand-overs these people made or monitor, by the activity each
+    # became or carries: its Partner work is theirs first.
+    handed: dict[str, tuple] = {}
+    for scheduled, source, monitor, assigner in (
+        PartnerAssignment.objects.filter(
+            Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids)
+        )
+        .filter(
+            Q(scheduled_activity_id__isnull=False) | Q(source_activity_id__isnull=False)
+        )
+        .values_list(
+            "scheduled_activity_id",
+            "source_activity_id",
+            "monitoring_staff_id",
+            "assigning_staff_id",
+        )
+        .order_by("created_at")
+    ):
+        for activity_id in (scheduled, source):
+            if activity_id:
+                handed[activity_id] = (monitor, assigner)
+
     records = list(
         Activity.objects.filter(
             deleted_at__isnull=True,
@@ -274,11 +310,9 @@ def execution_monitor(
         .filter(
             (Q(responsible_staff_id__in=ids) & ~Q(delivery_type="partner"))
             | Q(delivery_type="partner", monitored_by_staff_id__in=ids)
-            | Q(
-                delivery_type="partner",
-                monitored_by_staff_id__isnull=True,
-                responsible_staff_id__in=ids,
-            )
+            | Q(delivery_type="partner", responsible_staff_id__in=ids)
+            | Q(delivery_type="partner", school__account_owner_id__in=ids)
+            | Q(delivery_type="partner", id__in=list(handed))
         )
         .values_list(
             "id",
@@ -292,6 +326,10 @@ def execution_monitor(
             "school__school_id",
             "school__name",
             "cluster__name",
+            "purpose_type",
+            "cluster_id",
+            "school__account_owner_id",
+            "scheduled_date",
         )
     )
     delivered_ids = [
@@ -315,10 +353,30 @@ def execution_monitor(
         school_code,
         school_name,
         cluster_name,
+        purpose_type,
+        cluster_pk,
+        holder,
+        scheduled_date,
     ) in records:
         activity_type = str(activity_type or "")
         if delivery_type == "partner":
-            person = by_id.get(str(monitor or "")) or by_id.get(str(responsible or ""))
+            # Dated Partner work only: a hand-over the Partner has not dated
+            # is planning still to do, and the Planning tab follows it.
+            if planned_date is None and scheduled_date is None:
+                continue
+            person = next(
+                (
+                    by_id[str(raw)]
+                    for raw in (
+                        *handed.get(activity_id, ()),
+                        monitor,
+                        responsible,
+                        holder,
+                    )
+                    if raw and str(raw) in by_id
+                ),
+                None,
+            )
             if person is None:
                 continue
             person.partner_scheduled += 1
@@ -331,10 +389,17 @@ def execution_monitor(
         is_delivered = status in delivered_statuses
         is_due = planned_date is not None and planned_date <= today
         person.planned += 1
-        if activity_type in VISIT_KINDS and school_pk:
-            person.visits_planned += 1
+        at_school = bool(school_pk) and not cluster_pk
+        if at_school and rules.visit_kind(activity_type, purpose_type):
+            # On the plan as the Planning tab reads it: a visit sent back to
+            # planning is not one of the visits planned.
+            if status in _planned_states():
+                person.visits_planned += 1
             person.visits_delivered += is_delivered
-        elif activity_type in TRAINING_KINDS:
+        elif at_school and _is_outreach(activity_type, purpose_type):
+            person.outreach_planned += 1
+            person.outreach_delivered += is_delivered
+        if activity_type in TRAINING_KINDS:
             person.trainings_planned += 1
             person.trainings_delivered += is_delivered
         elif activity_type in MEETING_KINDS:
@@ -417,6 +482,23 @@ def execution_monitor(
         "person_options": person_options,
         "rows": listed,
     }
+
+
+def _planned_states() -> frozenset:
+    from apps.planning.country_oversight import policy
+
+    return policy.PLANNED_STATES
+
+
+def _is_outreach(activity_type: str, purpose_type) -> bool:
+    """A donor, story, invitation or social visit (rules.outreach_visit_q,
+    for a row already read at a school)."""
+    from apps.planning.country_oversight import rules
+
+    return activity_type in rules.OUTREACH_TYPES or (
+        activity_type in rules.COUNTED_VISIT_TYPES
+        and str(purpose_type or "") in rules.OUTREACH_PURPOSES
+    )
 
 
 __all__ = [

@@ -61,7 +61,7 @@ listed. The page never changes a locked row; a revision is a new one.{% endcomme
   <h3 class="cpo-sub">Staff and Partner contribution</h3>
   <div class="cpo-tscroll">
     <table class="cpo-table cxo-table" data-table-fit="scroll">
-      <thead><tr><th scope="col" class="cpo-namecol">Delivery</th><th scope="col">Due</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
+      <thead><tr><th scope="col" class="cpo-namecol">Delivery</th><th scope="col">Planned</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
       <tbody>
         {% with c=snapshot.channels.staff %}<tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>Staff</span></th><td>{{ c.due }}</td><td>{{ c.executed }}</td><td>{{ c.verified }}</td><td>{{ c.closed }}</td><td>{{ c.overdue }}</td></tr>{% endwith %}
         {% with c=snapshot.channels.partner %}<tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>Partner</span></th><td>{{ c.due }}</td><td>{{ c.executed }}</td><td>{{ c.verified }}</td><td>{{ c.closed }}</td><td>{{ c.overdue }}</td></tr>{% endwith %}
@@ -72,7 +72,7 @@ listed. The page never changes a locked row; a revision is a new one.{% endcomme
   <h3 class="cpo-sub">Programme Leads, CCEOs and Partners</h3>
   <div class="cpo-tscroll">
     <table class="cpo-table cxo-table" data-table-fit="scroll">
-      <thead><tr><th scope="col" class="cpo-namecol">Lead / Owner</th><th scope="col">Due</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
+      <thead><tr><th scope="col" class="cpo-namecol">Lead / Owner</th><th scope="col">Planned</th><th scope="col" title="Execution completed">Executed</th><th scope="col" title="IA verified">Verified</th><th scope="col" title="Fully closed">Closed</th><th scope="col">Overdue</th></tr></thead>
       <tbody>
         {% for lead in hierarchy.rows %}
         <tr data-level="1"><th scope="row" class="cpo-namecell" data-leaf><span>{{ lead.name }}</span></th><td>{{ lead.figures.due }}</td><td>{{ lead.figures.executed }}</td><td>{{ lead.figures.verified }}</td><td>{{ lead.figures.closed }}</td><td>{{ lead.figures.overdue }}</td></tr>

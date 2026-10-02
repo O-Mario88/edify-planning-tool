@@ -8655,6 +8655,34 @@
     "ImpactAssessment",
     "Admin"
    ],
+   "route": "/country-planning-oversight/execution/records-export/<str:key>",
+   "route_name": "cpx_records_export",
+   "view": "apps.frontend.views.country_execution_views.records_export_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-planning-oversight/execution/records/<str:key>",
+   "route_name": "cpx_records",
+   "view": "apps.frontend.views.country_execution_views.records_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
    "route": "/country-planning-oversight/execution/rows",
    "route_name": "cpx_rows",
    "view": "apps.frontend.views.country_execution_views.rows_view"
@@ -18921,12 +18949,12 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 428,
-  "Admin": 1063,
+  "Admin": 1065,
   "BusinessTransformationOfficer": 238,
   "CCEO": 557,
-  "CountryDirector": 816,
+  "CountryDirector": 818,
   "HumanResources": 336,
-  "ImpactAssessment": 674,
+  "ImpactAssessment": 676,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
   "PartnerAdmin": 228,
@@ -18934,13 +18962,13 @@
   "Program Lead": 652,
   "ProjectCoordinator": 470,
   "RegionalProgramLead": 332,
-  "RegionalVicePresident": 403
+  "RegionalVicePresident": 405
  },
  "summary": {
   "page_keys_declared": 183,
   "page_keys_in_navigation": 200,
-  "routes_guarded": 1160,
-  "routes_total": 1354,
+  "routes_guarded": 1162,
+  "routes_total": 1356,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

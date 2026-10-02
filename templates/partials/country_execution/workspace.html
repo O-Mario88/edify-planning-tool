@@ -1,9 +1,12 @@
 {% load table_pagination %}{% comment %}
 The Execution & Completion body: six figures, the funnel and the trend, the
-on-time, backlog, age and forecast readings with the Director's shortcuts, the
-hierarchy table, and the issues, recent movements and follow-ups under it.
+delivery by Programme Lead, the on-time, backlog, age and forecast readings
+with the Director's shortcuts, the requirement by school type, the hierarchy
+table, and the issues, recent movements and follow-ups under it.
 Every figure comes from one fold (apps.planning.country_execution.service), so
-a card is the table's total and a chart's bar is a table's row.
+a card is the table's total and a chart's bar is a table's row. The funnel's
+and the trend's figures sit open under their charts, as the planning charts'
+do (owner, 2026-10-02); they can still be folded away.
 {% endcomment %}
 <div id="cxo-workspace" class="cpo-workspace cxo-workspace">
 
@@ -22,9 +25,11 @@ a card is the table's total and a chart's bar is a table's row.
 
   <section class="cpo-metrics cxo-metrics" aria-label="Execution summary">
     {% for card in kpis %}
-    <button type="button" class="cpo-metric cxo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.key }}"
-            hx-get="{{ card.href }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            aria-label="{{ card.label }}: {{ card.value }}{% if card.note %}, {{ card.note }}{% endif %}. Open the activities behind it.">
+    {% comment %}Every card is a link to the consolidated table of the records
+    it counts (owner, 2026-10-02).{% endcomment %}
+    <a class="cpo-metric cxo-metric" data-tone="{{ card.tone }}" data-metric-key="{{ card.key }}"
+       href="{{ card.href }}"
+       aria-label="{{ card.label }}: {{ card.value }}{% if card.note %}, {{ card.note }}{% endif %}. Open the table of the activities behind it.">
       <span class="cpo-glyph cxo-glyph" data-tone="{{ card.tone }}">{% include "partials/country_execution/_glyph.html" with name=card.icon %}</span>
       <span class="cxo-label">{{ card.label }}</span>
       <span class="cxo-figure">{{ card.value }}</span>
@@ -32,7 +37,7 @@ a card is the table's total and a chart's bar is a table's row.
       {% if card.share is not None %}
       <span class="cpo-meter cxo-meter" aria-hidden="true"><span class="cpo-meter-fill" style="inline-size: {{ card.meter }}%"></span></span>
       {% endif %}
-    </button>
+    </a>
     {% endfor %}
   </section>
 
@@ -54,12 +59,12 @@ a card is the table's total and a chart's bar is a table's row.
       <h2 class="cpo-chart-name" id="cxo-funnel-name" data-no-titlebar>Execution Funnel
         <span class="cxo-hint" title="Partner work goes straight to IA: it has no PL review stage.">Staff and Partner</span></h2>
       {{ charts.funnel|json_script:"cxo-funnel-data" }}
-      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: due, started, evidence submitted, PL reviewed (staff only), IA verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
-      <details class="cpo-chart-data">
-        <summary>View chart data</summary>
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: planned, started, evidence submitted, PL reviewed (staff only), IA verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
+      <details class="cpo-chart-data" open>
+        <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.funnel.table "funnel_page" as funnel_pager %}
-          <table class="cpo-mini">
+          <table class="cpo-mini" data-table-wrap="off">
             <thead><tr><th scope="col">Stage</th><th scope="col">Total</th><th scope="col">Staff</th><th scope="col">Partner</th></tr></thead>
             <tbody>{% for row in funnel_pager.rows %}<tr><th scope="row">{{ row.0 }}</th><td>{{ row.1 }}</td><td>{{ row.2 }}</td><td>{{ row.3 }}</td></tr>{% endfor %}</tbody>
           </table>
@@ -72,11 +77,11 @@ a card is the table's total and a chart's bar is a table's row.
         <span class="cxo-hint">{% if window.period == "week" %}Daily{% elif window.period == "month" %}Weekly{% elif window.period == "quarter" %}Monthly{% else %}Quarterly{% endif %}, cumulative</span></h2>
       {{ charts.trend|json_script:"cxo-trend-data" }}
       <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Planned, execution completed, IA verified and fully closed work, cumulative through {{ header.window_label }}. The figures are in the table under the chart."></div>
-      <details class="cpo-chart-data">
-        <summary>View chart data</summary>
+      <details class="cpo-chart-data" open>
+        <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.trend.table "trend_page" as trend_pager %}
-          <table class="cpo-mini">
+          <table class="cpo-mini" data-table-wrap="off">
             <thead><tr><th scope="col">Period</th>{% for s in charts.trend.series %}<th scope="col">{{ s.name }}</th>{% endfor %}</tr></thead>
             <tbody>
               {% for row in trend_pager.rows %}
@@ -88,6 +93,34 @@ a card is the table's total and a chart's bar is a table's row.
         </div>
       </details>
     </figure>
+    {% comment %}Delivery by Programme Lead (owner, 2026-10-02): a Lead's bar
+    is the Lead's own work and their CCEOs' together, as on the planning tab.
+    The second reads the visits that count toward 280 and 560 against that
+    target; its name opens the table of those visits.{% endcomment %}
+    {% for chart in lead_charts %}
+    <figure class="cpo-chart cxo-chart" x-data="cpoChart('{{ chart.data_id }}')" data-no-titlebar aria-labelledby="{{ chart.id }}-name">
+      <h2 class="cpo-chart-name" id="{{ chart.id }}-name" data-no-titlebar>{{ chart.title }}
+        <span class="cxo-hint">{{ chart.hint }}</span></h2>
+      {{ chart|json_script:chart.data_id }}
+      <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table under the chart."></div>
+      <details class="cpo-chart-data" open>
+        <summary>Chart data</summary>
+        <div class="cpo-tscroll">
+          {% paginate chart.table.rows "lead_chart_page" as lead_chart_pager %}
+          <table class="cpo-mini" data-table-wrap="off">
+            <thead><tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for row in lead_chart_pager.rows %}
+              <tr><th scope="row">{{ row.label }}</th>{% for value in row.cells %}<td>{{ value }}</td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% include "components/table_pager.html" with pager=lead_chart_pager param="lead_chart_page" %}
+        </div>
+        {% if chart.id == "cxo-visits-chart" %}<p class="cxo-foot"><a class="cpo-link" href="{{ visits_table_url }}">Open the table of these visits</a></p>{% endif %}
+      </details>
+    </figure>
+    {% endfor %}
   </section>
 
   <section class="cxo-readings" aria-label="On-time, backlog, age and forecast">
@@ -142,6 +175,8 @@ a card is the table's total and a chart's bar is a table's row.
       {% endif %}
     </section>
   </section>
+
+  {% include "partials/country_execution/_types.html" %}
 
   {% include "partials/country_execution/_table.html" %}
 

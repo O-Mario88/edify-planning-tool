@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **882**
-- All registered routes: **1354**
+- Routed product surfaces: **884**
+- All registered routes: **1356**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **34**
 - Activity states: **24**
-- Shared component templates: **598**
-- Full pages: **262**
+- Shared component templates: **600**
+- Full pages: **263**
 - Partials and drawers: **308**
-- Permission-gated surfaces: **866**
-- Referenced by automated tests: **775**
+- Permission-gated surfaces: **868**
+- Referenced by automated tests: **777**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -264,6 +264,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-58BF5DA655 | /country-planning-oversight/execution/export | Cpx Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-83E3384A4B | /country-planning-oversight/execution/follow-up | Cpx Follow Up | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CFF130F018 | /country-planning-oversight/execution/follow-ups-panel | Cpx Followups Panel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-1516D1E2A6 | /country-planning-oversight/execution/records-export/<str:key> | Cpx Records Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-74FA6A7E67 | /country-planning-oversight/execution/records/<str:key> | · Execution &amp; Completion · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C3457E0D16 | /country-planning-oversight/execution/rows | Cpx Rows | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8664A5A06F | /country-planning-oversight/execution/snapshots | Cpx Snapshots | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-27C7447FF6 | /country-planning-oversight/execution/snapshots/<str:snapshot_id> | Cpx Snapshot | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

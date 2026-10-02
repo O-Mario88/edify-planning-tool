@@ -1,11 +1,15 @@
 {% load table_pagination %}{% comment %}
-The four planning charts (owner design, 2026-09-28). One category per
-Programme Lead row of the table below, from that row's own figures — a chart
-and the table cannot disagree. Drawn by the page's script
-(static/js/country-oversight.js) on the platform chart system's shared forms;
-the data table under each chart carries
-every figure for anyone the chart does not serve, and clicking a Lead's bar
-opens that Lead in the table.
+The four planning charts (owner design, 2026-09-28), two to a row (owner,
+2026-10-02). One category per Programme Lead row of the table below, from that
+row's own figures — a chart and the table cannot disagree. Drawn by the page's
+script (static/js/country-oversight.js) on the platform chart system's shared
+forms. The data table under each chart carries every figure and sits open, so
+nobody has to expand it to read the chart's numbers (owner, 2026-10-02); it
+can still be folded away. Clicking a Lead's bar opens that Lead in the table.
+The data tables' headings carry their own line break, so they are kept out of
+the platform's long-text wrapping (data-table-wrap="off"): a table too wide
+for its half of the page scrolls in its box rather than breaking a heading a
+third time.
 {% endcomment %}
 <section class="cpo-charts" aria-label="Planning charts by Programme Lead">
   {% for chart in charts %}
@@ -13,12 +17,12 @@ opens that Lead in the table.
     <h2 class="cpo-chart-name" id="{{ chart.id }}-name" data-no-titlebar>{{ chart.title }}</h2>
     {{ chart|json_script:chart.data_id }}
     <div class="cpo-plot" x-ref="plot" role="img" aria-label="{{ chart.title }}: {% for s in chart.series %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, by Programme Lead. The figures are in the table below."></div>
-    <details class="cpo-chart-data">
-      <summary>View chart data</summary>
+    <details class="cpo-chart-data" open>
+      <summary>Chart data</summary>
       <div class="cpo-tscroll">
-        <table class="cpo-mini">
+        <table class="cpo-mini" data-table-wrap="off">
           <thead>
-            <tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr>
+            <tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr>
           </thead>
           {% paginate chart.table.rows "chart_rows_page" as chart_pager %}
           <tbody>
