@@ -4,7 +4,7 @@
 {% block title %}Settings · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 max-w-[900px] mx-auto space-y-5" data-mobile-family="settings">
+<div class="px-4 sm:px-6 py-5 max-w-[900px] mx-auto space-y-5" data-mobile-family="settings" data-page-measure="reading">
 
   <div class="edify-page-header">
     <div class="edify-page-header__lead">
@@ -154,19 +154,23 @@
   </section>
 
   {# ── Notifications & session ───────────────────────────────────────────── #}
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Notifications</h2>
-      <p class="edify-text-caption text-slate-500">In-app notifications are generated automatically by workflow events — approvals, returns, escalations and To-Dos.</p>
-      <a href="/notifications" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover inline-block pt-1">Open notification center →</a>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Session</h2>
-      <p class="edify-text-caption text-slate-500">Signed in as {{ user.email }}.</p>
-      <p class="edify-text-caption text-slate-500">You stay signed in while you are working. After {{ session_idle_minutes }} minutes without activity you will be signed out.</p>
-      <p class="edify-text-caption text-slate-500">Use the avatar in the upper-right corner to log out.</p>
-    </div>
-  </div>
+  {% comment %}The same card and heading as the sections above (2026-10-01). These
+  two were a hand-built surface with a smaller heading and caption-class
+  paragraphs, which the platform sizes as body text on a 16px line: the two
+  cards sat further in than the rest and their sentences ran together. They
+  stack like the other sections; side by side in a grid, the platform draws a
+  grid of cards as one surface of tiles.{% endcomment %}
+    <section class="card p-5 space-y-2" aria-labelledby="settings-notifications-title">
+      <h2 id="settings-notifications-title" class="text-sm font-semibold">Notifications</h2>
+      <p class="text-slate-500">In-app notifications are generated automatically by workflow events — approvals, returns, escalations and To-Dos.</p>
+      <a href="/notifications" class="font-bold edify-primary-text edify-primary-text-hover inline-block pt-1">Open notifications →</a>
+    </section>
+    <section class="card p-5 space-y-2" aria-labelledby="settings-session-title">
+      <h2 id="settings-session-title" class="text-sm font-semibold">Session</h2>
+      <p class="text-slate-500">Signed in as {{ user.email }}.</p>
+      <p class="text-slate-500">You stay signed in while you are working. After {{ session_idle_minutes }} minutes without activity you will be signed out.</p>
+      <p class="text-slate-500">Use the avatar in the upper-right corner to log out.</p>
+    </section>
 
 </div>
 {% endblock %}

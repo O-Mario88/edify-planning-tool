@@ -124,7 +124,7 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertGreaterEqual(shell.count("edify-topbar__icon-control"), 6)
         self.assertIn("edify-topbar__icon-control--avatar", shell)
         self.assertIn(".edify-topbar__icon-control {", components)
-        self.assertIn("border-radius: 999px", components)
+        self.assertIn("border-radius: var(--edify-radius-pill)", components)
         self.assertIn(".edify-topbar__icon-control:focus-visible", components)
         self.assertIn(".edify-topbar__icon-control:active", components)
         tablet = mobile.split("@media (max-width: 64rem)", 1)[1]

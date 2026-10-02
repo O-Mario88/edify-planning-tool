@@ -69,6 +69,15 @@ _DESCRIPTION_RE = re.compile(
     r"<p\b[^>]*class=[\"'][^\"']*edify-page-header__description[^\"']*[\"'][^>]*>(.*?)</p>",
     re.IGNORECASE | re.DOTALL,
 )
+# The same two parts where a page uses the {% page_header %} component
+# (apps/frontend/templatetags/components.py): an argument, or a slot.
+_COMPONENT_PART_RES = {
+    part: (
+        re.compile(r"{%\s*page_header\b[^%]*?\b" + part + r'="([^"]*)"'),
+        re.compile(r"{%\s*slot\s+" + part + r"\s*%}(.*?){%\s*endslot\s*%}", re.DOTALL),
+    )
+    for part in ("title", "description")
+}
 _TAG_RE = re.compile(r"<[^>]+>|{%.*?%}|{{.*?}}", re.DOTALL)
 _HTMX_RE = re.compile(r"\bhx-(get|post|put|patch|delete)=[\"']([^\"']+)[\"']")
 _FORM_RE = re.compile(
@@ -280,7 +289,17 @@ def _title_from_template(source: str, fallback: str) -> str:
         title = _clean_text(heading.group(1))
         if title:
             return title
-    return fallback
+    return _component_part(source, "title") or fallback
+
+
+def _component_part(source: str, part: str) -> str:
+    for pattern in _COMPONENT_PART_RES[part]:
+        found = pattern.search(source)
+        if found:
+            value = _clean_text(found.group(1))
+            if value:
+                return value
+    return ""
 
 
 def _purpose_from_template(source: str, fallback_title: str, module_name: str) -> str:
@@ -289,6 +308,9 @@ def _purpose_from_template(source: str, fallback_title: str, module_name: str) -
         value = _clean_text(description.group(1))
         if value:
             return value
+    described = _component_part(source, "description")
+    if described:
+        return described
     module = (
         module_name.split(".")[1].replace("_", " ")
         if module_name.startswith("apps.")
@@ -966,7 +988,7 @@ def _header_variant(source: str, kind: str) -> str:
         return "not-applicable-nonvisual-action"
     if kind in {"partial", "drawer"}:
         return "fragment-owned-by-parent"
-    if "components/page_header.html" in source:
+    if "components/page_header.html" in source or "{% page_header " in source:
         return "shared-page-header-component"
     if "edify-page-header" in source:
         return "canonical-page-header-anatomy"

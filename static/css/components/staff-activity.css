@@ -19,7 +19,7 @@
   min-inline-size: 1.25rem;
   block-size: 1.25rem;
   padding-inline: 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-danger, #dc2626);
   color: #fff;
   font-size: var(--edify-text-micro-size);
@@ -38,7 +38,7 @@
   block-size: 2.25rem;
   border-radius: var(--edify-radius-sm, 8px);
   color: var(--edify-text-subtle);
-  font-size: 18px;
+  font-size: var(--edify-text-heading-size);
   text-decoration: none;
 }
 .sal-clear:hover { background: var(--sal-soft); color: var(--edify-text); }
@@ -62,15 +62,15 @@
   gap: 0.25rem 1rem;
   padding: 0.75rem 1rem;
 }
-.sal-tablehead h2 { margin: 0; font-size: 14px; font-weight: 750; white-space: nowrap; }
-.sal-caption { font-size: 12px; color: var(--edify-text-subtle); }
+.sal-tablehead h2 { margin: 0; font-size: var(--edify-text-label-size); font-weight: 750; white-space: nowrap; }
+.sal-caption { font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 /* The scroll region is a size container, so an opened row's detail can be
    exactly as wide as the part of the table on screen (100cqi), pinned to
    its start while the columns scroll behind it. Nothing inside it is
    position: fixed (floating menus go through the top layer). */
 .sal-scroll { overflow-x: auto; container-type: inline-size; }
 
-.sal-table { inline-size: 100%; border-collapse: collapse; font-size: 12px; }
+.sal-table { inline-size: 100%; border-collapse: collapse; font-size: var(--edify-text-micro-size); }
 .sal-table thead th {
   text-align: start;
   font-weight: 700;
@@ -127,19 +127,19 @@
   flex: 0 0 auto;
   inline-size: 1.75rem;
   block-size: 1.75rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: color-mix(in srgb, var(--edify-accent, #285b96) 14%, transparent);
   color: var(--edify-accent, #285b96);
   font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
-.sal-avatar--lg { inline-size: 2.5rem; block-size: 2.5rem; font-size: 14px; }
+.sal-avatar--lg { inline-size: 2.5rem; block-size: 2.5rem; font-size: var(--edify-text-label-size); }
 .sal-name {
   border: 0;
   padding: 0;
   background: none;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   color: var(--edify-accent, #285b96);
   cursor: pointer;
@@ -211,15 +211,15 @@
   padding-block-end: 0.75rem;
 }
 .sal-ident { min-inline-size: 12rem; flex: 1 1 14rem; }
-.sal-ident h3 { margin: 0; font-size: 16px; font-weight: 750; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.sal-ident p { margin: 0.15rem 0 0; font-size: 12px; color: var(--edify-text-subtle); }
+.sal-ident h3 { margin: 0; font-size: var(--edify-text-title-size); font-weight: 750; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.sal-ident p { margin: 0.15rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 .sal-figures { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; }
 .sal-figures dt { font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
-.sal-figures dd { margin: 0; font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.sal-figures dd { margin: 0; font-size: var(--edify-text-body-size); font-weight: 750; font-variant-numeric: tabular-nums; }
 .sal-close {
   border: 0;
   background: none;
-  font-size: 20px;
+  font-size: var(--edify-text-heading-size);
   line-height: 1;
   color: var(--edify-text-subtle);
   cursor: pointer;
@@ -230,7 +230,7 @@
   padding: 0.5rem 0.75rem;
   border-radius: var(--edify-radius-sm, 8px);
   background: color-mix(in srgb, var(--sal-idle) 12%, transparent);
-  font-size: 12px;
+  font-size: var(--edify-text-micro-size);
 }
 
 .sal-quads {
@@ -247,19 +247,19 @@
   border-radius: var(--edify-radius-md, 12px);
   background: var(--edify-surface, #fff);
 }
-.sal-box h4, .sal-subhead { margin: 0; font-size: 13px; font-weight: 750; color: var(--edify-text); }
+.sal-box h4, .sal-subhead { margin: 0; font-size: var(--edify-text-micro-size); font-weight: 750; color: var(--edify-text); }
 .sal-subhead { margin-block-start: 0.75rem; }
 .sal-sub { margin: 0.15rem 0 0.6rem; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
-.sal-none { margin: 0; font-size: 12px; color: var(--edify-text-subtle); }
+.sal-none { margin: 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
 
-.sal-sessions, .sal-timeline, .sal-follows { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.sal-sessions, .sal-timeline, .sal-follows { list-style: none; margin: 0; padding: 0; font-size: var(--edify-text-micro-size); }
 .sal-sessions li { display: grid; gap: 0.1rem; padding: 0.35rem 0; border-block-end: 1px solid var(--sal-line); }
 .sal-sessions li:last-child { border-block-end: 0; }
 .sal-sessions__when { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 650; }
 .sal-sessions__nums, .sal-sessions__end { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); padding-inline-start: 1rem; }
 .sal-sessions__current .sal-sessions__end { color: var(--sal-online); font-weight: 650; }
 
-.sal-mini { inline-size: 100%; border-collapse: collapse; font-size: 12px; }
+.sal-mini { inline-size: 100%; border-collapse: collapse; font-size: var(--edify-text-micro-size); }
 .sal-mini th { text-align: start; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); font-weight: 650; padding: 0 0.3rem 0.3rem; }
 .sal-mini td { padding: 0.3rem; border-block-start: 1px solid var(--sal-line); }
 .sal-mini .sal-num { text-align: end; font-variant-numeric: tabular-nums; }
@@ -268,7 +268,7 @@
   inline-size: 100%;
   min-inline-size: 3rem;
   block-size: 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent);
   overflow: hidden;
 }
@@ -312,7 +312,7 @@
 }
 .sal-bars li { flex: 1 0 1.4rem; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; block-size: 100%; }
 .sal-bars__col { display: flex; align-items: flex-end; inline-size: 70%; block-size: 100%; }
-.sal-bars__col > span { display: block; inline-size: 100%; min-block-size: 2px; border-radius: 3px 3px 0 0; background: var(--edify-accent, #285b96); }
+.sal-bars__col > span { display: block; inline-size: 100%; min-block-size: 2px; border-radius: var(--edify-radius-2xs) var(--edify-radius-2xs) 0 0; background: var(--edify-accent, #285b96); }
 .sal-bars__day, .sal-bars__n { font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); white-space: nowrap; }
 .sal-bars__n { color: var(--edify-text); font-weight: 650; }
 
@@ -324,23 +324,26 @@
 
 /* ── Team Insights ─────────────────────────────────────────────────────── */
 .sal-aside { padding: 0.8rem 0.85rem; display: grid; gap: 1rem; min-inline-size: 0; }
-.sal-aside__head h2 { margin: 0; font-size: 15px; font-weight: 750; }
-.sal-aside__head p { margin: 0.1rem 0 0; font-size: 12px; color: var(--edify-text-subtle); }
-.sal-aside__part h3 { margin: 0 0 0.5rem; font-size: 13px; font-weight: 700; }
+.sal-aside__head h2 { margin: 0; font-size: var(--edify-text-body-size); font-weight: 750; }
+.sal-aside__head p { margin: 0.1rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.sal-aside__part h3 { margin: 0 0 0.5rem; font-size: var(--edify-text-micro-size); font-weight: 700; }
 .sal-live { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
-.sal-live__big { margin: 0; font-size: 12px; color: var(--edify-text-subtle); }
-.sal-live__big strong { display: block; font-size: 26px; line-height: 1.1; color: var(--edify-text); }
-.sal-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; font-size: 12px; }
+.sal-live__big { margin: 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.sal-live__big strong { display: block; font-size: var(--edify-text-display-size); line-height: 1.1; color: var(--edify-text); }
+.sal-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; font-size: var(--edify-text-micro-size); }
 .sal-legend li { display: flex; align-items: center; gap: 0.4rem; }
 .sal-legend span { color: var(--edify-text-subtle); margin-inline-start: auto; padding-inline-start: 0.75rem; font-variant-numeric: tabular-nums; }
 .sal-note { margin: 0.4rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
-.sal-modlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; font-size: 12px; }
-.sal-modlist li { display: grid; grid-template-columns: 6rem minmax(0, 1fr) 2.5rem; align-items: center; gap: 0.5rem; }
+.sal-modlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; font-size: var(--edify-text-micro-size); }
+/* The name column takes what its longest name needs, up to 10.5rem: at a
+   fixed 6rem "Leave & Personal Time Off" and "My Performance Agreement" were
+   both cut to "Leave & Pers…" beside a bar with room to spare. */
+.sal-modlist li { display: grid; grid-template-columns: minmax(6rem, 10.5rem) minmax(2rem, 1fr) 2.5rem; align-items: center; gap: 0.5rem; }
 .sal-modlist__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sal-modlist__pct { text-align: end; color: var(--edify-text-subtle); font-variant-numeric: tabular-nums; }
 .sal-bars--team { block-size: 6.5rem; }
-.sal-devices { list-style: none; margin: 0 0 0.4rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 12px; }
-.sal-split { display: flex; block-size: 0.45rem; border-radius: 999px; overflow: hidden; margin: 0; background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent); }
+.sal-devices { list-style: none; margin: 0 0 0.4rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: var(--edify-text-micro-size); }
+.sal-split { display: flex; block-size: 0.45rem; border-radius: var(--edify-radius-pill); overflow: hidden; margin: 0; background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent); }
 .sal-split > span { display: block; block-size: 100%; }
 .sal-split__desktop { background: var(--edify-accent, #285b96); }
 .sal-split__mobile { background: var(--sal-online, #16a34a); }
@@ -355,7 +358,7 @@
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--edify-border, #e2e8f0);
   border-radius: var(--edify-radius-sm, 8px);
-  font-size: 12px;
+  font-size: var(--edify-text-micro-size);
 }
 .sal-snapshot dt { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 600; }
 .sal-snapshot dd { margin: 0; font-weight: 700; color: var(--edify-text); }
@@ -365,11 +368,11 @@
   padding: 0.5rem 0.75rem;
   border-inline-start: 3px solid var(--edify-accent, #285b96);
   background: color-mix(in srgb, var(--edify-accent, #285b96) 5%, transparent);
-  font-size: 13px;
+  font-size: var(--edify-text-micro-size);
   color: var(--edify-text);
 }
 .sal-steps { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.staff-activity-error { margin: 0; padding: 0.5rem 0.75rem; border-radius: 8px; background: color-mix(in srgb, #dc2626 10%, transparent); color: #b91c1c; font-size: 12px; font-weight: 650; }
+.staff-activity-error { margin: 0; padding: 0.5rem 0.75rem; border-radius: var(--edify-radius-sm); background: color-mix(in srgb, #dc2626 10%, transparent); color: #b91c1c; font-size: var(--edify-text-micro-size); font-weight: 650; }
 .sal-page-body { padding: 1rem 1.25rem; }
 
 .sal-narrow { max-inline-size: 54rem; margin-inline: auto; }
@@ -430,8 +433,12 @@
   line-height: 1.3 !important;
   position: relative;
 }
+/* With a mouse too the name answers a little beyond its 18px of type — 24px,
+   the smallest target a pointer should be asked to hit — without the row
+   growing (2026-10-01). */
+.sal-table .sal-name::after { content: ""; position: absolute; inset: -0.2rem -0.25rem; }
 @media (pointer: coarse) {
-  .sal-table .sal-name::after { content: ""; position: absolute; inset: -0.6rem -0.25rem; }
+  .sal-table .sal-name::after { inset: -0.6rem -0.25rem; }
 }
 .sal-table .sal-avatar { inline-size: 1.4rem; block-size: 1.4rem; font-size: var(--edify-text-micro-size); }
 /* The Actions trigger keeps the platform's 24px; its cell gives up its

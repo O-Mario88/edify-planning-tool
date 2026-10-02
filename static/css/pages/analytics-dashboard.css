@@ -1033,7 +1033,7 @@
   border-radius: var(--edify-radius-control);
   background: var(--edify-surface);
   color: var(--edify-text);
-  font-size: .75rem;
+  font-size: var(--edify-text-micro-size);
   box-shadow: 0 1px 2px rgb(15 39 51 / .025);
 }
 
@@ -1121,7 +1121,7 @@
   flex: 0 0 auto;
   inline-size: .4rem;
   block-size: .4rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-success, #059669);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-success, #059669) 12%, transparent);
 }
@@ -1185,7 +1185,7 @@
   max-inline-size: 60ch;
   margin: 0;
   color: var(--edify-text-muted);
-  font-size: .75rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.45;
 }
 
@@ -1210,7 +1210,7 @@
 
 .analytics-evidence-disclosure[data-analytics-disclosure] > summary strong {
   color: var(--edify-text);
-  font-size: .8125rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
 
@@ -1564,7 +1564,7 @@ main #impact-workspace .impact-group-pagination a {
 .sr-distribution-key {
   inline-size: .1875rem;
   block-size: .8125rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background-color: var(--sr-key, var(--edify-border));
   align-self: center;
 }
@@ -1638,7 +1638,7 @@ main #impact-workspace .impact-group-pagination a {
   .analytics-geo-card .sr-distribution-panel { flex: 0 0 auto; width: 100%; }
   .analytics-geo-card .sr-distribution-scroll { max-height: 26rem; }
   .analytics-geo-card .sr-distribution-table {
-    font-size: .75rem;
+    font-size: var(--edify-text-micro-size);
   }
   .analytics-geo-card .sr-distribution-scroll :is(th, td) {
     min-block-size: 32px;

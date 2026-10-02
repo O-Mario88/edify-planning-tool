@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Upload History — Edify{% endblock %}
@@ -7,13 +8,9 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Header -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Administration</p>
-<h1 class="edify-page-title edify-page-header__title">School Upload History</h1>
-<p class="edify-page-header__description">Audit uploaded school files, successful records, and row breakdowns. "Mark Failed" flags a batch record only — it does not revert school data.</p>
-</div>
-</div>
+{% page_header eyebrow="Administration" title="School Upload History" element="div" %}
+  {% slot description %}Audit uploaded school files, successful records, and row breakdowns. "Mark Failed" flags a batch record only — it does not revert school data.{% endslot %}
+{% endpage_header %}
 
 <!-- Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">

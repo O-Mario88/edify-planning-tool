@@ -754,6 +754,11 @@ def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
             }
         )
     panels = _workspace_panels(principal, cceos, fy, month, week_base, plans)
+    # What "Approve All Valid" would act on: the plans approve_all_valid takes,
+    # submitted, awaiting this approver and passing validation. With none, the
+    # button stays in its place, greyed, and says why (2026-10-01) — it used to
+    # offer a confirmation to approve nothing.
+    approvable = sum(1 for plan in plans if plan.get("can_approve"))
     return {
         "title": "Fund Approvals",
         "tooltip": "Every figure is derived from the CCEO's scheduled, costed activities.",
@@ -767,6 +772,8 @@ def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
             "hx_vals": json.dumps(
                 {"action": "approve_all", "fy": fy, "month": month, "week": week}
             ),
+            "disabled": not approvable,
+            "disabled_reason": "No valid plan is awaiting your approval this week.",
         },
         "filters_template": "partials/fund_approvals/_filters.html",
         "filters_id": "fa-filters",

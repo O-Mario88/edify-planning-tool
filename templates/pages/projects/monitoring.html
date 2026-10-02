@@ -1,10 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% load kpi_metrics %}
 {% load frontend_filters table_pagination row_actions %}
 
 {% block title %}Project Monitoring · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260924project1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tokens2">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -34,14 +35,10 @@ as "no change".
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-oversight-workspace>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Special Projects</p>
-      <h1 class="edify-page-title edify-page-header__title">Project Monitoring</h1>
-      <p class="edify-page-header__description">{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners; you can withdraw a school you added until its project work begins.{% endif %}{% if result.plan_period_label %} Activities read for {{ result.plan_period_label }}.{% endif %}</p>
-      {# The lens note under this header said the description again (owner, 2026-09-30: show each thing once); its period is the sentence above. #}
-    </div>
-  </header>
+  {# The lens note under this header said the description again (owner, 2026-09-30: show each thing once); its period is the sentence above. #}
+  {% page_header eyebrow="Special Projects" title="Project Monitoring" %}
+    {% slot description %}{% if result.controls %}Every school in your projects: whether it is planned by you or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved. You schedule the work, assign it to a partner, and withdraw it from a partner or reassign it.{% else %}The schools you added to each project: whether the coordinator or a partner has planned them, whether the work happened, and whether their focus SSA interventions moved. The Project Coordinator schedules the work and assigns it to partners; you can withdraw a school you added until its project work begins.{% endif %}{% if result.plan_period_label %} Activities read for {{ result.plan_period_label }}.{% endif %}{% endslot %}
+  {% endpage_header %}
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}
 
@@ -112,7 +109,7 @@ as "no change".
   {% endif %}
 
   {# Filters apply as they change, as on every other page (owner, 2026-09-30). #}
-  <form method="get" action="/projects/monitoring" class="edify-filter-bar flex flex-wrap items-end gap-3" x-data @change="$el.requestSubmit()">
+  {% filter_bar action="/projects/monitoring" extra_class="flex flex-wrap items-end gap-3" %}
     <label class="block">
       <span class="edify-filter-label">Project</span>
       <select name="project" aria-label="Project" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
@@ -138,8 +135,7 @@ as "no change".
         {% endfor %}
       </select>
     </label>
-    <noscript><button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button></noscript>
-  </form>
+  {% endfilter_bar %}
 
   {% if rows %}
   {% paginate rows "monitoring_page" as pager %}

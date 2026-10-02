@@ -285,9 +285,9 @@ class MobileNavLabelTests(SimpleTestCase):
             for section in sections
             for item in section["items"]
         }
-        self.assertEqual(
-            sidebar_labels["weekly_fund_request"], "Weekly Advance Request"
-        )
+        # The Accountant's entry opens the disbursement workspace and says so
+        # (2026-10-01); the phone's tab stays "Funds".
+        self.assertEqual(sidebar_labels["weekly_fund_request"], "Disbursements")
 
     def test_short_labels_stay_short_enough_for_a_tab(self):
         # ~10 characters is what fits a fifth of a 360px screen at 11px before

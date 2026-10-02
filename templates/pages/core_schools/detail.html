@@ -1,18 +1,15 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Core School Plan — Edify{% endblock %}
-{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20260927coreprogress3">{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20261002tokens2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/core-schools" back_label="Core Schools" %}
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<h1 class="edify-page-title edify-page-header__title">Core School Plan</h1>
-<p class="edify-page-header__description">Edify Operations · Core School Plan</p>
-</div>
-</div>
+{% page_header title="Core School Plan" description="Edify Operations · Core School Plan" element="div" %}
+{% endpage_header %}
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[22px] font-extrabold tracking-tight">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
 {% comment %}Each slot as V1..V4 / T1..T4 (A1, the assessment), completed green and planned blue (owner, 2026-09-27; core-progress.css).{% endcomment %}

@@ -898,6 +898,78 @@ ICONS.update(
     }
 )
 
+# One drawing per destination a role sees together (2026-10-01). The aliases
+# above put the same clipboard on sixteen pages — Planning, To-Do, My Actions,
+# Planning Oversight, Verification Queue, HR Today, Quality Flags, Extra Work,
+# Work Plan … — so in a Country Director's sidebar the icon column said nothing
+# and the collapsed rail, which is icons only, was unreadable. These stay in
+# the same outline vocabulary (24px grid, round caps and joins, currentColor);
+# pages that never share a sidebar keep sharing a drawing.
+ICONS.update(
+    {
+        # A map pin: where the visits go.
+        "planning": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
+        # A bolt.
+        "my_actions": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>',
+        # An eye.
+        "team_planning_oversight": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>',
+        # A flag.
+        "country_planning_oversight": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>',
+        # A folded map.
+        "country_map": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>',
+        # Pieces that fit together.
+        "cluster_oversight": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>',
+        # A shield with a mark.
+        "core_schools_oversight": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" /></svg>',
+        # A spark.
+        "programme_schools": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>',
+        # A signal.
+        "staff_activity": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" /></svg>',
+        # Bars in a frame.
+        "planning_monitor": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>',
+        # A folder.
+        "projects": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>',
+        # A chart on a stand.
+        "project_monitoring": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>',
+        # Sliders.
+        "project_capacity": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>',
+        # Stacked sheets.
+        "finance_batch_payments": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>',
+        # A seal.
+        "ia_verification_queue": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>',
+        # An in-tray.
+        "pl_review_queue": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" /></svg>',
+        # A staff card.
+        "hr_today": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>',
+        # An alert.
+        "quality_checks": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+        # A plus.
+        "extra_work": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+        # A person added.
+        "team_assignments": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>',
+        # A table.
+        "work_plan": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>',
+        # A paper plane.
+        "actions_sent": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>',
+        # A pen on a page.
+        "cce_engagements": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>',
+        # A note in a bubble.
+        "cce_training_feedback": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>',
+        # A funnel.
+        "candidate_pipeline": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>',
+        # A rising line.
+        "performance_reviews": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>',
+        # Scales.
+        "policy_compliance": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>',
+        # A sun.
+        "personal_time_off": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
+        # A checklist, beside the partner's own To-Do.
+        "partner_assignments": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>',
+        # A bank.
+        "loans": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>',
+    }
+)
+
 DEFAULT_SIDEBAR_ICON = ICONS["dashboard"]
 
 # ── The Analytics workspace ───────────────────────────────────────────────────
@@ -1261,7 +1333,7 @@ IA_SECTIONS = [
     },
     {
         "key": "core_schools_oversight",
-        "label": "Core Schools Oversight",
+        "label": "Core School Oversight",
         "url": "/core-schools-oversight/",
         "page_key": "core_schools_oversight",
         "cluster": "data_quality",
@@ -2007,7 +2079,7 @@ SIDEBAR_ITEMS = [
                 "visible_to": {CCEO, PL, CD},
             },
             {
-                "label": "Partner Oversight",
+                "label": "Partner Monitoring",
                 "url": "/partner-oversight/",
                 "page_key": "partner_oversight",
                 "extra_active_paths": ("/partners",),
@@ -2143,7 +2215,6 @@ SIDEBAR_ITEMS = [
                 "label": "Quality Flags",
                 "url": "/quality-checks",
                 "page_key": "quality_checks",
-                "icon_key": "todos",
                 # Admin is listed now that the Programme Lead's copy lives in
                 # COLLABORATION: an override only yields to a duplicate.
                 # Impact Assessment can neither raise a flag nor act on one,
@@ -2547,7 +2618,7 @@ SIDEBAR_ITEMS = [
                 "visible_to": PAGE_PERMISSIONS["recovery_plans"] - {PL},
             },
             {
-                "label": "CPD & Learning",
+                "label": "Professional Development",
                 "url": "/cpd-learning",
                 "page_key": "cpd_learning",
                 "visible_to": PAGE_PERMISSIONS["cpd_learning"] - {PL},
@@ -2645,6 +2716,7 @@ SIDEBAR_ITEMS = [
                 # The Accountant's advance requests live on the disbursement
                 # workspace (owner, 2026-09-04): one page for the money desk.
                 "role_urls": {ACCOUNTANT: "/disbursements"},
+                "role_labels": {ACCOUNTANT: "Disbursements"},
             },
             {
                 "label": "Fund Approvals",
@@ -2666,7 +2738,7 @@ SIDEBAR_ITEMS = [
                 "visible_to": PAGE_PERMISSIONS["monthly_budget"] - {IA},
             },
             {
-                "label": "Cost Settings",
+                "label": "Cost Catalogue",
                 "url": "/cost-settings",
                 "page_key": "cost_settings",
             },
@@ -2861,7 +2933,7 @@ SIDEBAR_ITEMS = [
                 # the person who needs to see it (owner, 2026-09-18: a school
                 # "attached to the staff" is one they can then edit and give a
                 # district to, which is what returns it to every country lens).
-                "label": "Unassigned Schools",
+                "label": "Staff Setup Queue",
                 "url": "/admin-panel/staff-setup-queue",
                 "page_key": "staff_setup_queue",
                 "visible_to": {IA},
@@ -3055,7 +3127,7 @@ SIDEBAR_ITEMS = [
                 "label": "Team Assignments",
                 "url": "/actions/sent",
                 "page_key": "actions_sent",
-                "icon_key": "extra_work",
+                "icon_key": "team_assignments",
                 "visible_to": {PL},
                 "extra_active_paths": ("/extra-work",),
             },
@@ -3121,7 +3193,6 @@ SIDEBAR_ITEMS = [
                 "label": "Quality Flags",
                 "url": "/quality-checks",
                 "page_key": "quality_checks",
-                "icon_key": "todos",
                 "visible_to": {PL},
             },
             {
@@ -3343,6 +3414,12 @@ ADMIN_NAV_PAGE_KEYS: set[str] = {
 }
 
 
+#: Past this many links a sidebar's less-visited groups start closed and it
+#: gets a "Find a page" field (components/sidebar.html). At or under it the
+#: menu fits a laptop screen and is drawn whole.
+SIDEBAR_DISCLOSURE_FROM = 16
+
+
 def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     """Generates the grouped list of visible sidebar links for the given user."""
     role = get_user_role_slug(user)
@@ -3542,22 +3619,38 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             deep is not shallow and deep["url"].startswith(shallow_url) for deep in lit
         ):
             shallow["active"] = False
+    # A short menu is shown whole: folding five of a Project Coordinator's
+    # thirteen entries behind a heading would add a press and save nothing.
+    short_menu = sum(len(sec["items"]) for sec in sections) <= SIDEBAR_DISCLOSURE_FROM
     for index, sec in enumerate(sections):
         sec["active"] = any(item["active"] for item in sec["items"])
-        # The most visited group stays open on first load; every other group
-        # opens when it holds the page being viewed.
-        sec["expanded"] = sec["active"] or sec["standalone"] or index == 0
+        # The person's own work stays open on first load; every other group
+        # opens when it holds the page being viewed. The sidebar draws each
+        # group as a disclosure from this, and a person's own choice in the
+        # browser outranks it (components/sidebar.html).
+        sec["expanded"] = short_menu or sec["active"] or sec["standalone"] or index == 0
 
     return sections
 
 
 def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
-    """The role's sidebar regrouped by how often each page is visited (owner,
-    2026-09-14): daily work first, then weekly, monthly, the planning cycle and
-    reference pages, most visited first inside each group
-    (apps.core.nav_cadence). Items keep their order from the registry where
-    two rank the same."""
-    from apps.core.nav_cadence import TIERS, visit_rank
+    """The role's sidebar grouped by what each page is about, most visited
+    first inside each group.
+
+    From 2026-09-14 the groups themselves were visit frequency (Daily, Weekly,
+    Monthly, Planning Cycle, Reference). The owner had them revisited on
+    2026-10-02 after the UI audit: a reader looking for a page knows what it
+    is about, not how often they open it. The groups are apps.core.nav_groups;
+    the order inside one is still apps.core.nav_cadence, so the frequency
+    ranking decides which page leads each group. Items keep their order from
+    the registry where two rank the same."""
+    from apps.core.nav_cadence import visit_rank
+    from apps.core.nav_groups import (
+        LONE_PAGE_JOINS,
+        MY_WORK,
+        group_order,
+        object_group,
+    )
 
     # Two registrations of one destination are one link: the specific page
     # (a partner's Assigned Schools, an MFI's portal Dashboard) is kept rather
@@ -3584,56 +3677,59 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
     ranked = [
         (rank[0], rank[1], position, item) for rank, position, item in by_url.values()
     ]
-    grouped: dict[int, list[dict]] = {}
-    for tier, _weight, _order, item in sorted(ranked, key=lambda r: r[:3]):
-        grouped.setdefault(tier, []).append(item)
-    result = [
-        {
-            "label": TIERS[tier],
-            "items": items,
-            "active": any(item["active"] for item in items),
-            "standalone": len(items) == 1,
-            "expanded": False,
-        }
-        for tier, items in sorted(grouped.items())
-    ]
-
+    # The oversight pages keep the order the owner gave them: the plan, the
+    # country, its map (which carries the country portfolio, 2026-09-28), then
+    # clusters, core schools, partners and projects. The rest of the group
+    # follows by visit rank.
     oversight_keys = (
         "team_planning_oversight",
         "country_planning_oversight",
-        # The country map carries the country portfolio that was Country
-        # Oversight's third tab (owner, 2026-09-28), so it sits beside it.
         "country_map",
         "cluster_oversight",
         "core_schools_oversight",
         "partner_oversight",
         "project_monitoring",
     )
-    oversight_items = [
-        item
-        for group in result
-        for item in group["items"]
-        if item["page_key"] in oversight_keys
-    ]
-    for group in result:
-        group["items"] = [
-            i for i in group["items"] if i["page_key"] not in oversight_keys
-        ]
-        group["standalone"] = len(group["items"]) == 1
-    result = [group for group in result if group["items"]]
-    if oversight_items:
-        oversight_items.sort(key=lambda i: oversight_keys.index(i["page_key"]))
-        result.insert(
-            1 if result and result[0]["label"] == "DAILY" else 0,
-            {
-                "label": "OVERSIGHT",
-                "items": oversight_items,
-                "active": any(i["active"] for i in oversight_items),
-                "standalone": False,
-                "expanded": False,
-            },
+    grouped: dict[str, list[tuple]] = {}
+    for entry in sorted(ranked, key=lambda r: r[:3]):
+        item = entry[3]
+        # The role's home is its work whatever page stands behind it.
+        label = (
+            MY_WORK
+            if "dashboard" in item.get("alias_keys", ())
+            or item.get("page_key") == "dashboard"
+            else object_group(role, item.get("page_key"))
         )
-    return result
+        grouped.setdefault(label, []).append(entry)
+    # A heading over one line says nothing the line does not: a lone page
+    # joins a neighbouring group the role already has (nav_groups).
+    for label in list(grouped):
+        if label == MY_WORK or len(grouped.get(label, ())) != 1:
+            continue
+        home = next((g for g in LONE_PAGE_JOINS.get(label, ()) if g in grouped), None)
+        if home:
+            grouped[home] = sorted(
+                grouped[home] + grouped.pop(label), key=lambda r: r[:3]
+            )
+    grouped = {
+        label: [entry[3] for entry in entries] for label, entries in grouped.items()
+    }
+    if "OVERSIGHT" in grouped:
+        grouped["OVERSIGHT"].sort(
+            key=lambda i: oversight_keys.index(i["page_key"])
+            if i["page_key"] in oversight_keys
+            else len(oversight_keys)
+        )
+    return [
+        {
+            "label": label,
+            "items": items,
+            "active": any(item["active"] for item in items),
+            "standalone": len(items) == 1,
+            "expanded": False,
+        }
+        for label, items in sorted(grouped.items(), key=lambda g: group_order(g[0]))
+    ]
 
 
 # ── Mobile bottom navigation ─────────────────────────────────────────────────

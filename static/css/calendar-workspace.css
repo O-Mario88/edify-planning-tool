@@ -326,7 +326,7 @@
 
 .calendar-month__date-card strong {
   margin-top: 0.1rem;
-  font-size: 1.3rem;
+  font-size: var(--edify-text-hero-size);
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
@@ -394,7 +394,10 @@
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.035em;
-  text-align: right;
+  /* Over the date it heads: the day numbers sit at the start of their cells,
+     so the weekday does too. Right-aligned, "MON" read as the heading of the
+     column to its right (2026-10-01). */
+  text-align: start;
   text-transform: uppercase;
 }
 
@@ -934,7 +937,7 @@ a.calendar-event:focus-visible {
     gap: 0.16rem;
     padding: 0;
     border: 0;
-    border-radius: 0.75rem;
+    border-radius: var(--edify-radius-md);
     background: transparent;
     color: var(--edify-text);
     font: inherit;
@@ -1081,7 +1084,7 @@ a.calendar-event:focus-visible {
     margin: 0;
     place-items: center;
     border: 1px solid currentColor;
-    border-radius: 0.7rem;
+    border-radius: var(--edify-radius-md);
     background: color-mix(in oklab, currentColor 9%, transparent);
   }
 

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity %}
 {% load frontend_filters table_pagination %}
 {% block title %}{{ partner.name }} — Edify{% endblock %}
@@ -14,13 +15,8 @@ contract every profile page shares.
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/partners" back_label="Partners" %}
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Partner organisation</p>
-<h1 class="edify-page-title edify-page-header__title">{{ partner.name }}</h1>
-<p class="edify-page-header__description">{{ partner.ssa_intervention_label }}{% if partner.region_label %} · {{ partner.region_label }}{% endif %}</p>
-</div>
-<div class="edify-page-header__controls">
+{% page_header eyebrow="Partner organisation" title=partner.name element="div" %}
+  {% slot description %}{{ partner.ssa_intervention_label }}{% if partner.region_label %} · {{ partner.region_label }}{% endif %}{% endslot %}
 <span class="edify-badge" data-tone="{% if partner.active_status %}success{% else %}warning{% endif %}">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
 <span class="edify-badge" data-tone="{% if partner.user_setup_status == 'configured' %}success{% elif partner.user_setup_status == 'not_required' %}neutral{% else %}warning{% endif %}" data-partner-user-setup>{{ partner.get_user_setup_status_display }}</span>
 {% if can_manage_partner_users %}
@@ -36,8 +32,7 @@ contract every profile page shares.
 <button type="submit" class="btn btn-secondary min-h-9">{% if partner.active_status %}Deactivate{% else %}Activate{% endif %}</button>
 </form>
 {% endif %}
-</div>
-</div>
+{% endpage_header %}
 
 <div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
 <!-- Left Column: Organisation & Activity history -->

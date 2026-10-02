@@ -21,7 +21,7 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
+  border-radius: var(--edify-radius-pill);
   border: 1px solid var(--edify-border);
   background-color: var(--edify-surface-muted, var(--edify-surface));
   color: var(--edify-text);
@@ -77,7 +77,7 @@
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--edify-border);
-  border-radius: 9999px;
+  border-radius: var(--edify-radius-pill);
   padding: 0 .35rem;
   background-color: var(--edify-surface-muted, var(--edify-surface));
   color: var(--edify-text-muted, var(--edify-text));
@@ -309,6 +309,69 @@
   container-name: workspace;
   container-type: inline-size;
   scrollbar-gutter: stable;
+}
+
+/* ── Wide-screen frame (owner, 2026-10-01) ────────────────────────────────
+   A page stops at --edify-page-max-size and centres itself in <main>, but the
+   sidebar stayed pinned to the viewport's left edge. On a wide monitor the two
+   drifted apart: a 2560px screen left 375px of empty canvas between the
+   navigation and the page it navigates.
+
+   The shell is one frame instead. Its ::before and ::after are the two outer
+   margins, each half of whatever the viewport has beyond "sidebar + page", so
+   sidebar, top bar and page travel together in the middle and the stage (top
+   bar + main) is left exactly the page width. They take a deeper tone than the
+   page, so the frame reads as the application and the rest as the desk it sits
+   on; the shell's own background stays the page canvas.
+
+   The page is 144rem wide (platform.css), so up to a 2560px monitor there is
+   nothing to centre: the shell is edge to edge and the page fills it. The
+   margins are for what lies beyond — an ultra-wide or a zoomed-out screen —
+   and one only appears once it would be at least --edify-shell-margin-min.
+   Centring from the first spare pixel would put a sliver of canvas to the left
+   of the sidebar on a monitor barely wider than the frame, which reads as a
+   rendering fault;
+   below the threshold both margins are zero and the shell is edge to edge
+   exactly as before. clamp() makes the switch without a media query, so it
+   follows the real sidebar width: the middle term is hugely negative while the
+   margin is too small (clamped to 0) and hugely positive once it is large
+   enough (clamped to the margin). --edify-shell-rail must match the sidebar
+   widths in components/sidebar.css. */
+.edify-shell {
+  --edify-shell-rail: 260px;
+  --edify-shell-margin-min: 4.5rem;
+  --edify-shell-margin: calc((100vw - var(--edify-shell-rail) - var(--edify-page-max-size, var(--edify-content-max-standard))) / 2);
+  --edify-shell-desk: color-mix(in srgb, var(--edify-bg) 88%, var(--edify-navy-950));
+}
+
+:is(.theme-dark, .theme-blue) .edify-shell {
+  --edify-shell-desk: color-mix(in srgb, var(--edify-bg) 62%, #000);
+}
+
+.theme-dark .edify-shell {
+  --edify-shell-rail: 272px;
+}
+
+.edify-shell:has(> .app-sidebar--collapsed) {
+  --edify-shell-rail: 72px;
+}
+
+.edify-shell::before,
+.edify-shell::after {
+  content: "";
+  flex: 0 0 auto;
+  inline-size: clamp(
+    0px,
+    (var(--edify-shell-margin) - var(--edify-shell-margin-min)) * 9999,
+    var(--edify-shell-margin)
+  );
+  background-color: var(--edify-shell-desk);
+}
+
+/* The sidebar's own colour is the frame's left edge; the right edge is a
+   hairline, drawn inside the margin so it costs no width and vanishes with it. */
+.edify-shell::after {
+  box-shadow: inset 1px 0 0 var(--edify-border);
 }
 
 /* ═══ GLOBAL PAGE CONTENT WRAPPER ═════════════════════════════════════════
@@ -770,7 +833,7 @@ main .budget-grand-total .budget-grand-total__label {
 
 main .budget-grand-total .budget-grand-total__value {
   color: var(--edify-accent-text, var(--edify-accent)) !important;
-  font-size: 20px !important;
+  font-size: var(--edify-text-heading-size) !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   font-variant-numeric: tabular-nums;
@@ -1253,7 +1316,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 /* Budget sub-totals: larger and bolder than body rows. */
 .budget-subtotal-row {
-  font-size: 15px !important;
+  font-size: var(--edify-text-body-size) !important;
   font-weight: 800 !important;
 }
 
@@ -1844,7 +1907,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip--compact .kpi-strip__value {
-  font-size: 1.125rem;
+  font-size: var(--edify-text-heading-size);
 }
 
 @container kpi-strip (min-width: 30rem) and (max-width: 42rem) {
@@ -2542,7 +2605,7 @@ select:not([multiple]):not(.select-native) {
   border: 1px solid rgba(255, 255, 255, 0.10);
   /* Documented radius exception (spec §11): a scaled-down illustration of
      the app shell inside a ~56px preview thumbnail, not a real UI control. */
-  border-radius: 5px;
+  border-radius: var(--edify-radius-xs);
   background: #0d0d0f;
 }
 
@@ -3337,7 +3400,7 @@ svg[data-edify-svg-typography] text {
 .drawer-discard__title {
   margin: 0;
   color: var(--edify-text);
-  font-size: 15px;
+  font-size: var(--edify-text-body-size);
   font-weight: 700;
   letter-spacing: -.005em;
 }
@@ -3441,7 +3504,7 @@ svg[data-edify-svg-typography] text {
 .confirm-action__title {
   margin: 0;
   color: var(--edify-text);
-  font-size: 16px;
+  font-size: var(--edify-text-title-size);
   font-weight: 700;
   letter-spacing: -.01em;
 }
@@ -3555,7 +3618,7 @@ search:has(.edify-search-submit) input[type="search"] {
   color: #fff;
   background: var(--brand-primary);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   cursor: pointer;
   transition:
     background-color var(--edify-transition-fast),
@@ -3585,7 +3648,7 @@ search:has(.edify-search-submit) input[type="search"] {
   inline-size: 2.25rem;
   block-size: 2.25rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: transparent;
   color: var(--edify-text-muted);
   cursor: pointer;
@@ -3593,6 +3656,13 @@ search:has(.edify-search-submit) input[type="search"] {
     background-color var(--edify-transition-fast),
     color var(--edify-transition-fast),
     box-shadow var(--edify-transition-fast);
+}
+/* A count on a top-bar control starts at the icon's shoulder and grows away
+   from it, so "99+" sits beside the bell rather than over it. */
+.edify-topbar__icon-control > .notification-badge,
+.edify-topbar__icon-control > div > .notification-badge {
+  inset-inline: 52% auto;
+  inset-block-start: 0;
 }
 .edify-topbar__icon-control:hover {
   background: var(--edify-surface-muted, var(--edify-surface));
@@ -3614,6 +3684,19 @@ search:has(.edify-search-submit) input[type="search"] {
   gap: 0.125rem;
   margin-inline-end: 0.25rem;
 }
+/* Back · Forward · Refresh are for the installed app, which has no browser
+   chrome (owner, 2026-09-12). In a browser tab the browser draws the same
+   three an inch above these, so there they were three controls doing nothing
+   new at the head of every page; they are drawn only where they are the only
+   way back (2026-10-01). `browser` is the display mode of an ordinary tab —
+   an installed app runs as standalone, minimal-ui, fullscreen or
+   window-controls-overlay. */
+@media (display-mode: browser) {
+  .edify-topbar__history {
+    display: none;
+  }
+}
+
 .edify-topbar__history-control:disabled {
   opacity: 0.38;
   cursor: default;
@@ -3652,7 +3735,7 @@ search:has(.edify-search-submit) input[type="search"] {
   background: var(--brand-primary);
   color: #fff;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   font-weight: 600;
   line-height: 1;
 }
@@ -3747,7 +3830,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
   color: #fff;
   background: var(--edify-chart-tooltip);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--edify-radius-xs);
   box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
 }
 
@@ -3760,7 +3843,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
   color: #fff;
   background: var(--edify-chart-tooltip);
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--edify-radius-xs);
   box-shadow: 0 6px 18px rgb(15 23 42 / 0.16);
 }
 
@@ -3782,14 +3865,14 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 .auth-dot--primary { background: var(--edify-sky-400); }
 .auth-dot--muted { background: var(--edify-sky-100); }
 .auth-inverse-logo { filter: brightness(0) invert(1); }
-.auth-title { color: var(--edify-surface-raised); font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.auth-title { color: var(--edify-surface-raised); font-size: var(--edify-text-display-size); font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
 .auth-subtitle { color: var(--edify-sky-100); font-size: var(--edify-text-label-size); font-weight: 500; line-height: 1.5; margin-top: 10px; }
 .auth-feature-icon { background: color-mix(in srgb, var(--edify-on-accent) 12%, transparent); }
 .auth-feature-icon--primary { color: var(--edify-sky-400); }
 .auth-feature-icon--muted { color: var(--edify-sky-100); }
 .auth-feature-label { color: var(--edify-surface-raised); font-size: var(--edify-text-label-size); font-weight: 600; }
 .auth-stat-label { color: var(--edify-sky-400); font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.auth-stat-value { color: var(--edify-surface-raised); font-size: 20px; font-weight: 800; margin-top: 2px; }
+.auth-stat-value { color: var(--edify-surface-raised); font-size: var(--edify-text-heading-size); font-weight: 800; margin-top: 2px; }
 .auth-stat-divider { background: color-mix(in srgb, var(--edify-on-accent) 15%, transparent); height: 32px; width: 1px; }
 .auth-form-logo { background: linear-gradient(135deg, var(--edify-navy-800), var(--edify-steel-600)); box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--edify-primary) 35%, transparent); }
 .auth-security { border: 1px solid var(--edify-info-light); }
@@ -4382,9 +4465,9 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 /* The plan and advance ledger share the reference's six-column format. */
 .budget-ledger { color: var(--edify-text, #1e293b); }
 .budget-ledger-summary { display: flex; justify-content: flex-end; padding: 0 6px 16px; }
-.budget-ledger-total { border: 1px solid #d9e3e9; border-radius: 4px; padding: 8px 12px; text-align: right; white-space: nowrap; }
+.budget-ledger-total { border: 1px solid #d9e3e9; border-radius: var(--edify-radius-xs); padding: 8px 12px; text-align: right; white-space: nowrap; }
 .budget-ledger-total span { display: block; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); font-weight: 600; }
-.budget-ledger-total strong { display: block; font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.budget-ledger-total strong { display: block; font-size: var(--edify-text-heading-size); line-height: 1.2; font-variant-numeric: tabular-nums; }
 .budget-ledger-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: var(--edify-text-body-size); line-height: 1.5; }
 .budget-ledger-table th, .budget-ledger-table td { padding: 5px 9px; border: 0; font-variant-numeric: tabular-nums; }
 .budget-ledger-table th { font-weight: 600; text-align: left; }
@@ -4629,7 +4712,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 
 .kpi-strip.kpi-strip--executive:not(.kpi-strip--supporting) .kpi-strip__value {
   margin-block-end: 0;
-  font-size: 1.42rem;
+  font-size: var(--edify-text-hero-size);
   font-weight: 500 !important;
   line-height: 1.22;
 }
@@ -4833,7 +4916,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 .edify-metric__value {
   margin-block-start: 0.1rem;
   color: var(--edify-text);
-  font-size: 1.05rem;
+  font-size: var(--edify-text-title-size);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -4921,7 +5004,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
    at the panel's default step the caps read heavier than the figure. */
 .edify-metric--marked .edify-metric__value,
 .edify-metric--lead .edify-metric__value {
-  font-size: 1.25rem;
+  font-size: var(--edify-text-heading-size);
 }
 
 /* A metric that carries a share of its own target draws it under the caption.
@@ -4933,14 +5016,14 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   inline-size: 100%;
   block-size: 0.3rem;
   margin-block-start: 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-chart-bar-track);
 }
 
 .edify-metric__bar > span {
   display: block;
   block-size: 100%;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-chart-series-primary);
 }
 
@@ -4969,7 +5052,7 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
    tabular figures. */
 .edify-metric__value--text {
   overflow: hidden;
-  font-size: 0.95rem;
+  font-size: var(--edify-text-body-size);
   font-variant-numeric: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5204,7 +5287,7 @@ main .edify-empty-state--line.edify-empty-state--line {
   position: relative;
   block-size: 0.5rem;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background-color: color-mix(in srgb, var(--edify-text-muted) 14%, var(--edify-surface));
 }
 
@@ -5347,7 +5430,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-standard-charts { width: 100%; min-width: 0; color: var(--edify-text); }
 .edify-chart-family + .edify-chart-family { margin-top: .5rem; padding-top: .5rem; border-top: 1px solid var(--edify-chart-grid); }
 .edify-chart-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-.edify-chart-scroll:focus-visible { outline: 2px solid var(--edify-series-1); outline-offset: 2px; border-radius: 4px; }
+.edify-chart-scroll:focus-visible { outline: 2px solid var(--edify-series-1); outline-offset: 2px; border-radius: var(--edify-radius-xs); }
 .edify-chart-panel-title { font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--edify-text-muted); margin: .25rem 0 0; }
 .edify-chart-empty { margin: 0; padding: 2.5rem 0; font-size: var(--edify-text-micro-size); text-align: center; }
 .edify-chart-data { margin: 0; font-size: var(--edify-text-micro-size); overflow-x: auto; }
@@ -5362,9 +5445,9 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .edify-chart-data tbody th { font-weight: 500; }
 .edify-data-chart .apexcharts-legend { padding-inline: 0 !important; }
 .edify-data-chart .apexcharts-legend-text { color: var(--edify-text-muted) !important; }
-.edify-data-chart .apexcharts-tooltip { box-shadow: var(--edify-shadow-sm); border-radius: 6px; }
+.edify-data-chart .apexcharts-tooltip { box-shadow: var(--edify-shadow-sm); border-radius: var(--edify-radius-xs); }
 .edify-stat-bars { min-width: 100px; width: 100%; color: var(--edify-text); }
-.edify-stat-bars__headline { font-weight: 600; font-size: 14px; margin: 0 0 .75rem; }
+.edify-stat-bars__headline { font-weight: 600; font-size: var(--edify-text-label-size); margin: 0 0 .75rem; }
 .edify-stat-bars__row { display: grid; grid-template-columns: 1fr auto; gap: .4rem .75rem; font-size: var(--edify-text-micro-size); margin: .75rem 0; }
 .edify-stat-bars__track { grid-column: 1 / -1; height: 18px; border-bottom: 1px solid var(--edify-border); }
 .edify-stat-bars__track > span { display: block; height: 100%; background: var(--edify-series-1); }
@@ -5381,7 +5464,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .rpl-mix__fill, .hrd-bars__fill { background: var(--edify-series-1) !important; border-radius: 0 !important; }
 .rpl-mix__track, .hrd-bars__track { border-radius: 0 !important; }
 .edify-chart-page-select { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .25rem 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-muted); }
-.edify-chart-page-select select { width: auto; max-width: 100%; padding: .25rem 1.6rem .25rem .5rem; font-size: var(--edify-text-micro-size); background: var(--edify-surface); color: var(--edify-text); border: 1px solid var(--edify-border); border-radius: 6px; }
+.edify-chart-page-select select { width: auto; max-width: 100%; padding: .25rem 1.6rem .25rem .5rem; font-size: var(--edify-text-micro-size); background: var(--edify-surface); color: var(--edify-text); border: 1px solid var(--edify-border); border-radius: var(--edify-radius-xs); }
 .admin-progress, .admin-progress > span { border-radius: 0 !important; }
 .admin-progress > span { background: var(--edify-series-1) !important; }
 .edify-column-chart__track > span { position: relative; }
@@ -5483,7 +5566,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .context-metrics__title {
   margin: 0;
   color: var(--edify-text);
-  font-size: 17px;
+  font-size: var(--edify-text-title-size);
   font-weight: 650;
   line-height: 1.3;
   letter-spacing: -0.025em;
@@ -5510,7 +5593,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   scrollbar-width: thin;
   scrollbar-color: var(--kpi-divider) transparent;
   border: 1px solid var(--kpi-divider);
-  border-radius: 10px;
+  border-radius: var(--edify-radius-sm);
   background: var(--kpi-surface);
   color: var(--kpi-text);
   box-shadow: 0 3px 12px rgb(15 23 42 / 6%);
@@ -5520,7 +5603,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 }
 .context-metrics__sentence::-webkit-scrollbar-thumb {
   background: var(--kpi-divider);
-  border-radius: 4px;
+  border-radius: var(--edify-radius-xs);
 }
 .context-metrics[data-kpi-ready] .context-metrics__sentence { scrollbar-width: thin; }
 .context-metrics__fact {
@@ -5562,7 +5645,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .context-metrics__link:focus-visible, .context-metrics__sentence:focus-visible {
   outline: 2px solid var(--kpi-muted);
   outline-offset: -3px;
-  border-radius: 7px;
+  border-radius: var(--edify-radius-xs);
 }
 .context-metrics__label {
   color: var(--kpi-muted);
@@ -5603,11 +5686,11 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .context-metrics__helper:is([data-tone="danger"], [data-tone="red"], [data-tone="alert"]) { color: var(--kpi-negative); }
 .context-metrics__fact--pending .context-metrics__value { color: var(--kpi-muted); }
 .context-metrics__navigation[hidden] { display: none; }
-.context-metrics__track { height: 4px; margin-top: 8px; overflow: hidden; border-radius: 4px; background: var(--edify-border, #dce3ec); }
+.context-metrics__track { height: 4px; margin-top: 8px; overflow: hidden; border-radius: var(--edify-radius-xs); background: var(--edify-border, #dce3ec); }
 .context-metrics__thumb { display: block; height: 100%; border-radius: inherit; background: var(--edify-text-subtle, #8191a8); }
 .context-metrics__navigation-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--kpi-muted); font-size: var(--edify-text-micro-size); }
 .context-metrics__next { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 2px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
-.context-metrics__next:focus-visible { outline: 2px solid var(--edify-accent); outline-offset: 2px; border-radius: 3px; }
+.context-metrics__next:focus-visible { outline: 2px solid var(--edify-accent); outline-offset: 2px; border-radius: var(--edify-radius-2xs); }
 /* Universal Rule: No card or KPI nested inside another card */
 :is(.card, .edify-card) :is(.card, .edify-card) {
   background: transparent !important;
@@ -5974,7 +6057,7 @@ table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([
   flex: none;
   min-inline-size: 1.5rem;
   padding: 0.125rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--edify-radius-pill);
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);

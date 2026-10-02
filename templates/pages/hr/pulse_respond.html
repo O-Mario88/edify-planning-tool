@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}{{ survey.title }} · Edify{% endblock %}
 
@@ -9,13 +10,8 @@ optional comment. The answer stores no user: a keyed hash stops a second
 answer without recording whose this is (apps/hr/rewards_wellbeing_service.py).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 max-w-[52rem]">
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Staff pulse</p>
-      <h1 class="edify-page-title edify-page-header__title">{{ survey.title }}</h1>
-      <p class="edify-page-header__description">Your answers are anonymous. Results are only shown for groups of five or more, so no one's answer can be singled out.</p>
-    </div>
-  </div>
+  {% page_header eyebrow="Staff pulse" title=survey.title description="Your answers are anonymous. Results are only shown for groups of five or more, so no one's answer can be singled out." element="div" %}
+  {% endpage_header %}
 
   {% if answered %}
   <div class="edify-note" data-tone="success" role="status">You have answered this survey. Thank you.</div>

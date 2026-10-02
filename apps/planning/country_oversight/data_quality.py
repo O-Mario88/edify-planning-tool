@@ -253,7 +253,7 @@ def checks(dataset, tree) -> list[Check]:
                 }
                 for h in handovers[:SAMPLE]
             ],
-            "Partner Oversight",
+            "Partner Monitoring",
         )
     )
 
@@ -355,7 +355,7 @@ def checks(dataset, tree) -> list[Check]:
                 }
                 for a in orphan_partner[:SAMPLE]
             ],
-            "Partner Oversight",
+            "Partner Monitoring",
         )
     )
 

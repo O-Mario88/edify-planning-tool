@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load frontend_filters %}
 
 {% block title %}Assigned Activities · Edify{% endblock %}
@@ -6,14 +7,11 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Field Work</p>
-      <h1 class="edify-page-title edify-page-header__title">Assigned Activities</h1>
-      <p class="edify-page-header__description">Work assigned to your organisation. Schedule it — the budget is created from the CD Cost Catalogue automatically and the activity moves to My Plan.</p>
-    </div>
+  {% page_header eyebrow="Field Work" title="Assigned Activities" description="Work assigned to your organisation. Schedule it — the budget is created from the CD Cost Catalogue automatically and the activity moves to My Plan." element="div" %}
+  {% slot aside %}
     {# No "Open My Plan" shortcut in the header (owner, 2026-09-27: "Open My plan buttons are not really neccesary"); My Plan is in the sidebar. #}
-  </div>
+  {% endslot %}
+  {% endpage_header %}
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Awaiting Scheduling <span class="ml-1 rounded-pill bg-slate-100 px-1.5 edify-text-caption font-bold text-slate-500 tabular-nums">{{ pending|length }}</span></h2>

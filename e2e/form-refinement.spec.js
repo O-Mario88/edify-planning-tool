@@ -9,7 +9,9 @@ test('outlined drawer fields and reference trend render on desktop and mobile',a
  await page.evaluate(html=>{const host=document.getElementById('drawer-container');const parsed=new DOMParser().parseFromString(html,'text/html');const root=parsed.body.firstElementChild;root.querySelector('.drawer-body').innerHTML='<form class="space-y-5"><div><label for="ref-name">Full name <span class="text-red-600">*</span></label><input id="ref-name" type="text" class="w-full px-3 mt-2" placeholder="Enter full name"></div><div><label for="ref-address">Address</label><textarea id="ref-address" class="w-full mt-2" placeholder="Enter address"></textarea></div></form>';host.replaceChildren(root);window.htmx.process(host);},await response.text());
  const field=page.locator('#drawer-container input:not([type=hidden]):not([type=checkbox]):not([type=radio]), #drawer-container select').first();
  await expect(field).toBeVisible();
- expect(await field.evaluate(el=>getComputedStyle(el).borderRadius)).toBe('9px');
+ // The field's corner is the small step of the radius scale (it was a 9px one-off).
+ const corner=await page.evaluate(()=>{const probe=document.createElement('span');probe.style.borderRadius='var(--edify-radius-sm)';document.body.append(probe);const radius=getComputedStyle(probe).borderRadius;probe.remove();return radius;});
+ expect(await field.evaluate(el=>getComputedStyle(el).borderRadius)).toBe(corner);
  await field.focus();
  expect(await field.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
  await page.screenshot({path:'test-results/refined-drawer-desktop.png'});

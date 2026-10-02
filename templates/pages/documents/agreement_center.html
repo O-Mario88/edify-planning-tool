@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load components %}
 {% load static %}
 
 {% block title %}Policy Agreement — Edify{% endblock %}
@@ -16,13 +17,8 @@
 </nav>
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
 
-  <header class="edify-page-header">
-    <div class="min-w-0 edify-page-header__lead">
-      <p class="edify-page-eyebrow">Required</p>
-      <h1 class="edify-page-title edify-page-header__title">Policy Agreement Center</h1>
-      <p class="edify-page-header__description">Please read each document and record your response.</p>
-    </div>
-  </header>
+  {% page_header eyebrow="Required" title="Policy Agreement Center" description="Please read each document and record your response." %}
+  {% endpage_header %}
 
   {% for ack in pending %}
   <section class="card p-4 space-y-3" aria-labelledby="policy-{{ ack.id }}-title">

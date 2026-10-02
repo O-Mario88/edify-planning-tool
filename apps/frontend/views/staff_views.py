@@ -327,7 +327,7 @@ PROFILE_BACK_LINKS = {
     "/my-team": "My Team",
     "/staff": "People Directory",
     "/leave/tracker": "Leave Tracker",
-    "/team-planning-oversight/": "Team Oversight",
+    "/team-planning-oversight/": "Planning Oversight",
     "/team-targets": "Team Targets",
     "/performance-reviews": "Performance Reviews",
     "/team/coaching": "Coaching",

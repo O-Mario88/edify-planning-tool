@@ -950,7 +950,7 @@ def _attention(
                 "tone": "warning",
                 "title": f"{count} completed activit{'ies' if count != 1 else 'y'} awaiting verification",
                 "body": "Delivered work earns no credit until Impact Assessment verifies it.",
-                "action": "Open Team Oversight",
+                "action": "Open Planning Oversight",
                 "url": f"/team-planning-oversight/?fy={fy}",
             }
         )
@@ -964,7 +964,7 @@ def _attention(
                     f"{summary['completed']} of {summary['due_count']} activities "
                     "due so far are complete."
                 ),
-                "action": "Open Team Oversight",
+                "action": "Open Planning Oversight",
                 "url": f"/team-planning-oversight/?fy={fy}",
             }
         )

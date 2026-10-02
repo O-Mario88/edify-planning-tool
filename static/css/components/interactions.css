@@ -1112,7 +1112,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   min-block-size: 2.5rem;
   padding: .5rem .75rem;
   color: var(--edify-text);
-  font-size: .75rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1326,7 +1326,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
     min-block-size: 2rem !important;
     padding-inline: 0.5rem 1.5rem !important;
     background-position: right 0.35rem center !important;
-    font-size: 0.75rem !important;
+    font-size: var(--edify-text-micro-size) !important;
     text-overflow: ellipsis;
   }
 
@@ -1345,7 +1345,7 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
     block-size: 2rem !important;
     min-block-size: 2rem !important;
     padding-inline: 0.625rem !important;
-    font-size: 0.75rem !important;
+    font-size: var(--edify-text-micro-size) !important;
   }
 
   main .edify-filter-row .edify-filter-more__long,
@@ -1466,12 +1466,12 @@ main .edify-filter-row > label.edify-filter-row__field {
      step, a page title at 18px — so a title fits its line beside its count
      and action instead of taking three. */
   main :is(.edify-head-row__title:is(h2, h3, h4), .edify-head-row__title :is(h2, h3, h4)) {
-    font-size: 0.875rem !important;
+    font-size: var(--edify-text-label-size) !important;
     line-height: 1.3 !important;
   }
 
   main .edify-page-header h1 {
-    font-size: 1.125rem !important;
+    font-size: var(--edify-text-heading-size) !important;
     line-height: 1.25 !important;
   }
 
@@ -1640,7 +1640,7 @@ main .edify-filter-row > label.edify-filter-row__field {
     padding-block: 0 !important;
     padding-inline: 0.75rem !important;
     gap: 0.375rem !important;
-    font-size: 0.75rem !important;
+    font-size: var(--edify-text-micro-size) !important;
     white-space: nowrap !important;
   }
 
@@ -1947,6 +1947,86 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
   grid-column: 1 / -1 !important;
 }
 
+/* A School Directory row on a wide screen (owner, 2026-10-02). The row is one
+   line a school — ID, name, Actions — which on a desktop left most of it
+   empty and made every question ("which district? in a cluster? assessed?")
+   a row to open. From 80rem up the closed row shows five of its own facts in
+   columns beside the name: district, cluster and visit status, and from
+   100rem the school type and SSA score too.
+   They are the opened row's elements (the `data-fact` pairs and the two
+   already marked), put on the name's line and aligned across rows; the
+   labels are kept for a screen reader and for SSA, whose value means nothing
+   alone. Below 80rem, and once a row is opened, nothing changes. */
+@media (min-width: 80rem) {
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__content {
+    grid-template-columns: auto minmax(14rem, 24rem) minmax(0, 1fr) !important;
+    column-gap: 0.75rem !important;
+    align-items: center !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.5fr) !important;
+    align-items: center !important;
+    column-gap: 1.25rem !important;
+    margin: 0 !important;
+    padding-inline-start: 0.75rem !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata > div {
+    display: none !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata > :is([data-fact], .school-record-row__ssa, [data-visit-status]) {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 0.3rem !important;
+    min-inline-size: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  /* A laptop has room for three of them: district, cluster and visit
+     status. The school type and the SSA score join from 100rem. */
+  @media (max-width: 99.999rem) {
+    :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__content {
+      grid-template-columns: auto minmax(12rem, 22rem) minmax(0, 1fr) !important;
+    }
+    :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) !important;
+    }
+    :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata > :is([data-fact="wide"], .school-record-row__ssa) {
+      display: none !important;
+    }
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata > :is([data-fact], [data-visit-status]) > dt {
+    position: absolute !important;
+    inline-size: 1px !important;
+    block-size: 1px !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata :is(dt, dd, dd a) {
+    min-inline-size: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    color: var(--edify-text-muted) !important;
+    font-size: var(--edify-text-table-size) !important;
+    font-weight: 450 !important;
+    line-height: 1.3 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  :root main .school-directory-row.school-directory-row.school-record-row:not(.is-expanded) .school-record-row__metadata dd a:hover {
+    color: var(--edify-accent-text) !important;
+  }
+}
+
 /* An opened record's details read as rows that wrap, each label and its
    value together on one line, at one type size (owner, 2026-09-27: "the
    school metadata in the expanded detail should not be in 1 colum. it
@@ -2237,4 +2317,37 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   :root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata :is(dt, dd) {
     font-size: var(--edify-text-micro-size) !important;
   }
+}
+
+/* ── Long text wraps before a table scrolls (owner, 2026-10-02) ─────────────
+   A record table keeps every cell on one line and scrolls sideways when it
+   is wider than its card. That left Work Plan and My Plan scrolling on a
+   2560px monitor for two reasons: a free-text column set on one line however
+   long the sentence ("SSA Intervention" at 749px, "Visit Purpose" at 550px),
+   and columns held open by their own headings ("CLUSTER PLANNED FROM" over
+   "School Visit").
+
+   On a laptop or desktop, a table that wrapping WOULD make fit now wraps:
+   micro-ux.js (wrapLongText) marks the cells of its text columns wider than
+   13rem and the headings wider than their cells, and gives each the width it
+   may keep, in proportion to what it has to spare. A table that would still
+   scroll is left exactly as it was — wrapped and scrolling is worse than
+   either — and so is every table below 64rem, where a phone's table scrolls
+   as one piece. Figures, dates, pills and controls stay on one line. A table
+   measured at a width is remembered at that width, so the wrap cannot feed
+   back into the layout it measured.
+
+   The selector repeats the class to outweigh the single-line rules, which
+   are written the same way. */
+:root :is(main, .drawer-body) table :is(td, th).edify-cell-wrap.edify-cell-wrap.edify-cell-wrap.edify-cell-wrap,
+:root :is(main, .drawer-body) table :is(td, th).edify-cell-wrap.edify-cell-wrap.edify-cell-wrap.edify-cell-wrap * {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+}
+:root :is(main, .drawer-body) table :is(td, th).edify-cell-wrap.edify-cell-wrap.edify-cell-wrap.edify-cell-wrap {
+  inline-size: var(--edify-cell-wrap, 18rem) !important;
+  min-inline-size: var(--edify-cell-wrap, 18rem) !important;
+  max-inline-size: var(--edify-cell-wrap, 18rem) !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }

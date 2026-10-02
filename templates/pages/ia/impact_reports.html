@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 
 {% block title %}Impact Reports · Edify{% endblock %}
 
@@ -11,18 +12,13 @@ Tiles come from the reconciled registry; the table is plain text; every
 filter drawn reaches the view and a filter with nothing to choose is not drawn.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ia-impact-reports>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-header__eyebrow">Reporting &amp; accountability</p>
-      <h1 class="edify-page-title edify-page-header__title">Impact Reports</h1>
-      <p class="edify-page-header__description">{% if summary_only %}Reviewed impact reports of your region, as aggregates, and the donor versions waiting for your approval.{% else %}Evidence-based reports for country leadership, partner schools and donors: written by Impact Assessment, reviewed by a second reader, released per audience.{% endif %}</p>
-    </div>
+  {% page_header eyebrow="Reporting &amp; accountability" title="Impact Reports" element="div" %}
+    {% slot description %}{% if summary_only %}Reviewed impact reports of your region, as aggregates, and the donor versions waiting for your approval.{% else %}Evidence-based reports for country leadership, partner schools and donors: written by Impact Assessment, reviewed by a second reader, released per audience.{% endif %}{% endslot %}
     {% if may_author %}
-    <div class="edify-page-header__controls">
       <button type="button" class="btn btn-primary h-8" hx-get="/ia/impact-reports/new" hx-target="#drawer-container" hx-swap="innerHTML" data-ia-start-report>Start report</button>
-    </div>
-    {% endif %}
-  </div>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

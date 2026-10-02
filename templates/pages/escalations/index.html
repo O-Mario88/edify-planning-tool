@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load kpi_metrics %}
 
 
@@ -7,14 +8,9 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<header class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Leadership</p>
-<h1 class="edify-page-title edify-page-header__title">Escalations</h1>
-<p class="edify-page-header__description">
-{% if can_decide and can_raise %}Decisions your team has put in front of you, and the ones you have sent up to the {{ board.raise_to_label }}{% elif can_decide %}Decisions {% if decider_level == 'RVP' %}the Country Director has{% else %}your team has{% endif %} put in front of you{% else %}Decisions above your authority, routed to your {{ board.raise_to_label }}{% endif %}
-</p>
-</div>
+{% page_header eyebrow="Leadership" title="Escalations" %}
+  {% slot description %}{% if can_decide and can_raise %}Decisions your team has put in front of you, and the ones you have sent up to the {{ board.raise_to_label }}{% elif can_decide %}Decisions {% if decider_level == 'RVP' %}the Country Director has{% else %}your team has{% endif %} put in front of you{% else %}Decisions above your authority, routed to your {{ board.raise_to_label }}{% endif %}{% endslot %}
+{% slot aside %}
 {% kpi_strip %}
 {% kpi_metric %}
 {{ board.open_count }}
@@ -31,7 +27,8 @@
 {% kpi_label %}Overdue{% endkpi_label %}
 {% endkpi_metric %}
 {% endkpi_strip %}
-</header>
+{% endslot %}
+{% endpage_header %}
 
 {% if messages %}
 {% for message in messages %}

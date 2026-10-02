@@ -18,10 +18,6 @@ drops this markup into whichever host page the reader is on, and the
 stylesheet is scoped to this class. Left on the page around the rail it
 styled only the view you happened to enter from.{% endcomment %}
 <div class="ia-master space-y-5" aria-labelledby="ia-master-title">
-  <nav class="ia-master__breadcrumb" aria-label="Breadcrumb">
-    <span>Home</span><span aria-hidden="true">/</span><span>Priorities</span><span aria-hidden="true">/</span><strong>Uganda Master Priority Plan</strong>
-  </nav>
-
   {% comment %}The canonical page header: title over description, the view's
   state chips in its controls slot (owner, 2026-09-14). A bespoke column
   layout below 62rem gave the lead a 320px flex basis along the block axis —
@@ -175,12 +171,12 @@ styled only the view you happened to enter from.{% endcomment %}
         <details class="ia-filter-menu">
           <summary class="ia-button ia-button--secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>Filters{% if active_filter_count %}<span class="ia-filter-count">{{ active_filter_count }}</span>{% endif %}</summary>
           <div class="ia-filter-panel">
-            <form method="get" action="/target-distribution" class="ia-master-filters" aria-label="Filter Uganda master milestones">
+            <form method="get" action="/target-distribution" class="ia-master-filters" aria-label="Filter Uganda master milestones" x-data @change="$el.requestSubmit()">
               <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="tab" value="{{ selected.tab }}"><input type="hidden" name="carry_q" value="{{ selected.q }}">
               <label for="ia-filter-priority">Priority group<select id="ia-filter-priority" name="priority"><option value="">All groups</option>{% for group in groups %}<option value="{{ group.priority.code }}" {% if selected.priority == group.priority.code %}selected{% endif %}>{{ group.priority.title }}</option>{% endfor %}</select></label>
               <label for="ia-filter-portfolio">Portfolio<select id="ia-filter-portfolio" name="portfolio"><option value="">All portfolios</option><option value="core" {% if selected.portfolio == "core" %}selected{% endif %}>Core targets</option><option value="client" {% if selected.portfolio == "client" %}selected{% endif %}>Client targets</option></select></label>
               <label for="ia-filter-status">Status<select id="ia-filter-status" name="status"><option value="">All statuses</option><option value="published" {% if selected.status == "published" %}selected{% endif %}>Published</option><option value="balance_open" {% if selected.status == "balance_open" %}selected{% endif %}>Balance open</option><option value="ready_to_approve" {% if selected.status == "ready_to_approve" %}selected{% endif %}>Ready to approve</option><option value="distributed" {% if selected.status == "distributed" %}selected{% endif %}>Distributed</option><option value="needs_confirmation" {% if selected.status == "needs_confirmation" %}selected{% endif %}>Needs confirmation</option></select></label>
-              <div class="ia-master-filters__actions"><a href="?fy={{ fy }}&tab={{ selected.tab }}" class="ia-button ia-button--ghost">Clear</a><button type="submit" class="ia-button ia-button--primary">Apply filters</button></div>
+              <div class="ia-master-filters__actions"><a href="?fy={{ fy }}&tab={{ selected.tab }}" class="ia-button ia-button--ghost">Clear</a><noscript><button type="submit" class="ia-button ia-button--primary">Apply filters</button></noscript></div>
             </form>
           </div>
         </details>

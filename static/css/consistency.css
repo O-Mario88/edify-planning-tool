@@ -601,6 +601,26 @@ main table tbody tr:hover,
   box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
 }
 
+/* A disabled primary button looks disabled (2026-10-01). platform.css mutes
+   every disabled button, but the rule above repaints a primary with the brand
+   fill at a weight that mute cannot reach, so a primary that could not be
+   pressed stayed solid blue — Fund Approvals' "Approve All Valid" with nothing
+   to approve was the one that showed it. Same selector, plus the state, placed
+   after it. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
+  .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+  .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary
+):is(:disabled, [aria-disabled="true"]) {
+  color: var(--edify-text-disabled) !important;
+  background-color: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
 :root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
@@ -3778,7 +3798,7 @@ main .edify-stat-tile.edify-stat-tile {
   text-align: start !important;
   padding: 0.875rem 1rem !important;
   border: 1px solid color-mix(in srgb, var(--edify-border) 82%, transparent) !important;
-  border-radius: 0.875rem !important;
+  border-radius: var(--edify-radius-md) !important;
   background-color: color-mix(in srgb, var(--edify-surface) 96%, var(--edify-surface-muted)) !important;
   box-shadow: 0 2px 3px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.08) !important;
   color: var(--edify-text);
@@ -4233,7 +4253,7 @@ main textarea,
   max-block-size: 1.75rem !important;
   min-inline-size: max-content !important;
   padding: 0 .625rem !important;
-  border-radius: 6px !important;
+  border-radius: var(--edify-radius-xs) !important;
   gap: .375rem !important;
   font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
@@ -4323,11 +4343,16 @@ main textarea,
   color: var(--edify-text) !important;
 }
 
-/* Light-mode table hierarchy: blue title band, blue column ink on the
-   existing column surface. Other themes retain their own header treatment. */
+/* Light-mode table hierarchy: a quiet title band in the table-header tone
+   with ink text, and blue column ink on the column surface. The band was
+   solid navy with white text from 2026-09-27 to 2026-10-02; with one over
+   every table and group row a page read as a stack of navy bars (the budget
+   drew five in one screen), so the owner had it revisited after the UI audit.
+   Its colours are the --edify-band-* tokens (design-system.css), so the band
+   is restyled in one place. Other themes retain their own header treatment. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
-  background: #285b96 !important;
-  color: #fff !important;
+  background: var(--edify-band-surface) !important;
+  color: var(--edify-band-ink) !important;
   padding: .375rem .75rem !important;
 }
 /* A title band names the table under it; it does not compete with it (owner,
@@ -4350,7 +4375,7 @@ main textarea,
   line-height: 1.35 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td),
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td) :is(span, a, button) {
@@ -4368,7 +4393,7 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
   .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(span, a:not(.btn):not([class*="btn-"]):not(.rounded-control)):not(button *):not(a.btn *) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -4503,6 +4528,39 @@ main .tt-panel__header .tt-segmented {
 }
 
 /* Empty queues retain their heading and status without displacing active work. */
+/* HR Today folds an exception that several people share into one row; this is
+   the count that opens the list of them (hr_today_views._fold_identical). */
+main .hr-today-people > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--edify-accent-text, var(--edify-accent));
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+main .hr-today-people > summary::-webkit-details-marker { display: none; }
+main .hr-today-people > summary::after {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  rotate: 45deg;
+  translate: 0 -0.1rem;
+  transition: rotate var(--edify-transition-fast);
+}
+main .hr-today-people[open] > summary::after { rotate: -135deg; translate: 0 0.1rem; }
+main .hr-today-people > summary:focus-visible { outline: var(--edify-focus-outline); outline-offset: 2px; }
+main .hr-today-people > ul {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 500;
+}
+main .hr-today-people a { text-decoration: underline; text-underline-offset: 2px; }
 main .hr-today-queue--empty { padding-block: .75rem; }
 main .hr-today-queue--empty .edify-section {
   display: flex;
@@ -4531,7 +4589,7 @@ main :is(.spp-card__titlebar, .sp-card__header, .spa-card > header) {
   flex-wrap: wrap;
   gap: .375rem .75rem;
 }
-main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: .5rem; overflow: hidden; }
+main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: var(--edify-radius-sm); overflow: hidden; }
 main .spp .spp-band {
   min-height: 0;
   padding: .625rem .875rem;
@@ -4544,7 +4602,7 @@ main .spp .spp-band {
 main .spp-band + .spp-band { border-inline-start: 1px solid var(--edify-border); }
 main .spp-band__icon { width: 1.75rem; height: 1.75rem; }
 main .spp-band > div { grid-template-columns: 1fr auto; column-gap: .75rem; align-items: baseline; width: 100%; }
-main .spp-band strong { font-size: 1.125rem; }
+main .spp-band strong { font-size: var(--edify-text-heading-size); }
 main .spp-band p { grid-column: 1 / -1; }
 main #spp-filters, main #sp-plan-filters { display: block !important; padding: 0; margin-bottom: .75rem; }
 main #spp-filters .spp-filter-grid--primary {
@@ -4609,7 +4667,7 @@ main .project-delivery-overview #budget-execution { padding: .75rem; }
 main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 650; color: var(--edify-accent-text); }
 main .project-detail details[aria-labelledby] { padding: .75rem; }
 main .project-detail details[aria-labelledby] > summary { cursor: pointer; color: var(--edify-accent-text); }
-main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: .875rem; }
+main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: var(--edify-text-label-size); }
 main .project-detail-context > .grid > div,
 main .project-detail-context > .border-t { padding: .75rem; }
 main #sp-plan-filters { display: flow-root !important; }
@@ -4630,8 +4688,8 @@ main #sp-plan-filters { display: flow-root !important; }
    preserve both halves of their inverse color pair. */
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-band > :is(th, td),
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-band .edify-table-plain-content {
-  background: #285b96 !important;
-  color: #fff !important;
+  background: var(--edify-band-surface) !important;
+  color: var(--edify-band-ink) !important;
 }
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal > :is(th, td),
 :root main table.edify-plain-table.budget-ledger-table .budget-ledger-subtotal .edify-table-plain-content {
@@ -4826,21 +4884,22 @@ main .edify-avatar-neutral {
 
 .cluster-card__summary { cursor: pointer; }
 .cluster-card .cluster-card__name-toggle {
+  position: relative;
   padding: 0; border: 0; background: transparent; color: inherit;
   font: inherit; text-align: start; cursor: pointer;
 }
+/* The name is 21px of type; its target is 24px, without moving the card. */
+.cluster-card .cluster-card__name-toggle::after { content: ""; position: absolute; inset: -0.15rem -0.25rem; }
 
 /* ── A title band's own count and buttons (owner, 2026-09-27) ───────────────
    The dashboards' and My Plan's tables carry their count and a button in the
-   title bar, and now take the blue band like every other table ("the blue
-   table header in the light mode also disappeared ... all blue backgrounds
-   have white font"). On the band the count is a white figure on a light
-   pill, the buttons are white outlines, and a button keeps the band short. */
+   title bar. On the band the count is a figure on a light chip, the buttons
+   are outlines in the band's ink, and a button keeps the band short. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   span:is([class*="badge"], [class*="pill"], .rounded-pill):not(button *):not(a.btn *) {
-  background: rgb(255 255 255 / 0.16) !important;
-  border-color: rgb(255 255 255 / 0.32) !important;
-  color: #fff !important;
+  background: var(--edify-band-chip) !important;
+  border-color: var(--edify-band-line) !important;
+  color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
@@ -4848,36 +4907,35 @@ main .edify-avatar-neutral {
   min-block-size: 0 !important;
   block-size: 1.75rem !important;
   padding-inline: 0.625rem !important;
-  border: 1px solid rgb(255 255 255 / 0.6) !important;
+  border: 1px solid var(--edify-band-control-line) !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
   font-size: var(--edify-text-label-size) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(a.btn, button.btn, a[class*="btn-"], button[class*="btn-"], a.rounded-control, button.rounded-control, .row-menu__trigger):is(:hover, :focus-visible) {
-  background: rgb(255 255 255 / 0.12) !important;
-  border-color: #fff !important;
+  background: var(--edify-band-chip) !important;
+  border-color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar svg {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
-/* Everything written on a blue band reads white (owner, 2026-09-27: "make
-   sure all blue backgrounds have white font"): a band's links, terms and
+/* Everything written on a band takes the band's ink: its links, terms and
    labels as well as its title, apart from a control that brings its own
-   light surface. The budget ledger's blue header row keeps its white
-   headings over the light theme's blue column ink. */
+   surface. The budget ledger's band row keeps that ink over the light
+   theme's blue column ink. */
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
   :is(a, button, dt, dd, strong, small, em, b, label, li, div, span, p, h2, h3, h4, h5):not(.btn):not([class*="btn-"]):not(.rounded-control):not(.rpl-row-link):not(.row-menu__trigger):not(button *):not(.btn *):not(.rpl-row-link *):not([class*="badge"]):not([class*="pill"]) {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
 :root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td),
 :root:is(.light, .theme-light) main table.budget-ledger-table.budget-ledger-table.budget-ledger-table thead tr.budget-ledger-band.budget-ledger-band > :is(th, td) * {
-  color: #fff !important;
+  color: var(--edify-band-ink) !important;
 }
 
 /* ── Drawer size by screen (owner, 2026-09-27) ──────────────────────────────

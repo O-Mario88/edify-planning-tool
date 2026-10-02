@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% comment %}
 Declining Schools became a tab of the one Analytics page on 2026-09-05: the
@@ -11,20 +12,14 @@ same panel, so the two can never drift apart.
 {% endcomment %}
 
 {% block title %}Declining Schools — Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20261002tokens2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Quality &amp; Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Declining Schools</h1>
-<p class="edify-page-header__description">
-SSA performance FY{{ d.prevFy|slice:"2:" }} vs FY{{ d.fy|slice:"2:" }} · ranked by drop, not by absolute score
-</p>
-</div>
-</div>
+{% page_header eyebrow="Quality &amp; Insights" title="Declining Schools" element="div" %}
+  {% slot description %}SSA performance FY{{ d.prevFy|slice:"2:" }} vs FY{{ d.fy|slice:"2:" }} · ranked by drop, not by absolute score{% endslot %}
+{% endpage_header %}
 
 {% include "partials/analytics/section_nav.html" %}
 

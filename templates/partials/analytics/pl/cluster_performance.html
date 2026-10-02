@@ -1,6 +1,6 @@
 {% load frontend_filters table_pagination %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
-  <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">D. Cluster Performance</h3>
+  <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Cluster Performance</h3>
   <div class="overflow-x-auto -mx-1">
     {% paginate cluster_performance.rows "cluster_performance_cluster_performance_rows_page" as cluster_performance_cluster_performance_rows_pager %}
     <table class="w-full text-left border-collapse min-w-[560px]">

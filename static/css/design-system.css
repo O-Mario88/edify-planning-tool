@@ -274,6 +274,14 @@
   --edify-text-secondary: var(--edify-text-muted);
   --edify-table-canvas: var(--edify-surface);
   --edify-table-header: #dce6ec;
+  /* A table's title band and a ledger's group row (consistency.css): the
+     table-header tone with ink text, a light chip for a count, and outline
+     controls. */
+  --edify-band-surface: var(--edify-table-header);
+  --edify-band-ink: var(--edify-text);
+  --edify-band-chip: var(--edify-surface);
+  --edify-band-line: var(--edify-border);
+  --edify-band-control-line: var(--edify-border-strong);
   --edify-table-row-alt: transparent;
   --edify-table-row-hover: #edf4f8;
   --edify-table-row-selected: #e2eef6;
@@ -496,6 +504,9 @@
 
        Canonical scale (spec §11): surface 12px · control 8px · overlay 16px
        · small 6px · pill fully rounded. */
+  /* The smallest corner: a bar's end, a legend swatch, a mark of a few
+     pixels, where the 6px step would turn a square into a dot. */
+  --edify-radius-2xs: 3px;
   --edify-radius-xs: var(--radius-small);
   --edify-radius-sm: var(--radius-control);
   --edify-radius-md: var(--radius-surface);
@@ -570,10 +581,14 @@
   --edify-section-gap: clamp(1rem, 0.75rem + 0.8vw, 1.75rem);
   --edify-card-padding: clamp(0.875rem, 0.7rem + 0.5vw, 1.5rem);
   --edify-content-gap: clamp(0.75rem, 0.65rem + 0.35vw, 1.25rem);
-  /* Operational pages stop at 1600px; analytics and wide tables may use the
-     dense canvas; a record form keeps a readable measure. */
+  /* Four measures. Since 2026-10-01 every page takes the wide canvas
+     (--edify-page-max-size in platform.css), so a 2560px monitor is filled
+     beside the sidebar and wide tables stop scrolling there; the standard and
+     dense ones remain for a surface that wants them, and a record form keeps a
+     readable measure. */
   --edify-content-max-standard: 100rem;
   --edify-content-max-dense: 120rem;
+  --edify-content-max-wide: 144rem;
   --edify-content-max-form: 48rem;
   --edify-touch-target: 2.75rem;
   --edify-app-bar-height: 3.5rem;

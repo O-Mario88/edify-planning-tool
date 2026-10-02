@@ -380,6 +380,7 @@ def records_view(request, key: str):
         ],
         "may_export": RolePermissionService.can_export(request.user, export_path),
         "export_path": export_path,
+        "records_path": f"{BASE}/records/{key}",
         "withheld": not _may_see_schools(request.user),
         "withheld_message": (
             "Activity-level rows are not part of this role's reading of the "

@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load kpi_metrics table_pagination %}
 
-{% block title %}Notifications Center — Edify{% endblock %}
+{% block title %}Notifications — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 select-none max-w-[1500px] mx-auto">
@@ -9,7 +9,7 @@
   <div class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Communication</p>
-      <h1 class="edify-page-title edify-page-header__title">Notifications Center</h1>
+      <h1 class="edify-page-title edify-page-header__title">Notifications</h1>
       <p class="edify-page-header__description">Edify Alert Operations · Keep Track of Actionable Tasks</p>
     </div>
 
@@ -45,7 +45,7 @@
   {% include "components/context_metrics.html" with items=notification_kpis variant="executive" density="compact" title="Notification attention" %}
 
   <!-- Filters & Search Toolbar — on the page background, per the platform filter-bar contract (consistency.css). -->
-    <form id="notifications-filters" method="get" action="/notifications" class="platform-filter-bar space-y-4">
+    <form id="notifications-filters" method="get" action="/notifications" class="platform-filter-bar space-y-4" x-data @change="$el.requestSubmit()">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
 
@@ -117,12 +117,13 @@
           >
             Reset Filters
           </a>
-          <button
+          {% comment %}Filters apply as they are chosen (2026-10-01).{% endcomment %}
+          <noscript><button
             type="submit"
             class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
           >
             Apply Filters
-          </button>
+          </button></noscript>
         </div>
       </div>
     </form>

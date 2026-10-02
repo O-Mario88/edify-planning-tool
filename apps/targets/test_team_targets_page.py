@@ -372,7 +372,7 @@ class TeamTargetsPageTest(TestCase):
 
         html = client.get("/team-planning-oversight/?view=targets").content.decode()
 
-        self.assertIn("<title>Team Oversight · Edify</title>", html)
+        self.assertIn("<title>Planning Oversight · Edify</title>", html)
         self.assertIn('id="team-targets-workspace"', html)
         self.assertIn(
             'href="/team-planning-oversight/?view=targets" data-edify-tab aria-current="page"',

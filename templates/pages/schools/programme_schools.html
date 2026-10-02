@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load school_identity %}
 {% load kpi_metrics %}
 {% load frontend_filters table_pagination %}
@@ -21,20 +22,14 @@ enforce. Nothing here can hold a different opinion of either.
 {% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">School lifecycle</p>
-      <h1 class="edify-page-title edify-page-header__title">Programme Schools</h1>
-      <p class="edify-page-header__description">Core Trained, Core Graduate and Champion schools. Core Trained schools are planned exactly like client schools, partner support included; Core Graduate and Champion schools take Donor and Content/Story visits from Edify staff.</p>
-    </div>
+  {% page_header eyebrow="School lifecycle" title="Programme Schools" description="Core Trained, Core Graduate and Champion schools. Core Trained schools are planned exactly like client schools, partner support included; Core Graduate and Champion schools take Donor and Content/Story visits from Edify staff." %}
     {% if q %}
-    <div class="edify-page-header__controls">
       <a href="/programme-schools" class="btn h-8 inline-flex items-center gap-1.5">
         Clear search<span class="edify-text-muted">&ldquo;{{ q|truncatechars:24 }}&rdquo;</span>
       </a>
-    </div>
-    {% endif %}
-  </header>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% kpi_strip %}
     {% kpi_metric %}
@@ -60,7 +55,7 @@ enforce. Nothing here can hold a different opinion of either.
   {% endkpi_strip %}
 
   {% comment %}Filters on the canvas, not in a drawer — the page contract.{% endcomment %}
-  <form method="get" action="/programme-schools" class="edify-filter-bar flex flex-wrap items-end gap-3">
+  {% filter_bar action="/programme-schools" extra_class="flex flex-wrap items-end gap-3" %}
     <label class="block">
       <span class="edify-filter-label">School type</span>
       <select name="school_type" aria-label="School type" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
@@ -91,8 +86,9 @@ enforce. Nothing here can hold a different opinion of either.
     page (§17), and a body input named `q` is a second one however it is
     styled — so applying a filter starts from the whole list, as it does on
     every other filtered page.{% endcomment %}
-    <button type="submit" class="h-9 px-4 rounded-control btn-premium-primary text-white edify-text-caption font-bold shadow-sm">Apply</button>
-  </form>
+    {% comment %}Filters apply as they are chosen, like every other filter row
+    (2026-10-01). The button remains for a browser without JavaScript.{% endcomment %}
+  {% endfilter_bar %}
 
   {% if rows %}
   {% paginate rows "programme_page" as pager %}

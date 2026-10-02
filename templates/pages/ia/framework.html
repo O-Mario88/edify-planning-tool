@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load table_pagination %}
 
 {% block title %}Measurement Framework · Edify{% endblock %}
@@ -18,20 +19,14 @@ land on the same register. `autoload_drawer` opens the drawer a To-Do or
 notification asked for (?open=…).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4" data-ia-framework>
-  <div class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <p class="edify-page-header__eyebrow">Framework &amp; strategy</p>
-      <h1 class="edify-page-title edify-page-header__title">Measurement Framework</h1>
-      <p class="edify-page-header__description">What success means in partner schools, and how each programme step is judged: from counting activities to measuring lasting change.</p>
-    </div>
+  {% page_header eyebrow="Framework &amp; strategy" title="Measurement Framework" description="What success means in partner schools, and how each programme step is judged: from counting activities to measuring lasting change." element="div" %}
     {% if header_actions %}
-    <div class="edify-page-header__controls">
       {% for action in header_actions %}
       <button type="button" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
       {% endfor %}
-    </div>
-    {% endif %}
-  </div>
+    
+{% endif %}
+  {% endpage_header %}
 
   {% include "partials/_section_nav.html" %}
 

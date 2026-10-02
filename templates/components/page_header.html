@@ -15,18 +15,24 @@ Slots, for anything richer than a title and description:
     {% block page_header_controls %}   filters, context pills, actions
     {% block page_header_eyebrow %}    breadcrumb or section label
 
-Because a block cannot be passed through {% include %}, pages needing controls
-use {% with %} plus the `page_header_*` context variables, or extend this
-template. The common case — a title and a description — needs neither.
+A page with controls, or with logic in its description, uses the tag, whose
+body is the controls slot (apps/frontend/templatetags/components.py):
+
+    {% load components %}
+    {% page_header eyebrow="Finance" title="Cost Catalogue" description=intro %}
+      <a href="…" class="edify-action-button primary h-9">Add cost</a>
+    {% endpage_header %}
+
+The common case — a title and a description — can stay an include.
 
 Deliberately NOT here: KPI values, charts, tables, operational queues, a
 second search field. The top bar owns search. The header states where you are
 and offers the few controls that change what the page is about.
 {% endcomment %}
-<header class="edify-page-header{% if page_header_class %} {{ page_header_class }}{% endif %}">
+{% firstof element "header" as page_header_element %}<{{ page_header_element }} class="edify-page-header{% if page_header_class %} {{ page_header_class }}{% endif %}">
   <div class="edify-page-header__lead">
     {% if eyebrow %}<p class="edify-page-eyebrow">{{ eyebrow }}</p>{% endif %}
-    <h1 class="edify-page-header__title edify-page-title">{{ title }}</h1>
+    <h1 class="edify-page-title edify-page-header__title">{{ title }}</h1>
     {% if description %}
     <p class="edify-page-header__description">{{ description }}</p>
     {% endif %}
@@ -34,4 +40,5 @@ and offers the few controls that change what the page is about.
   {% if page_header_controls %}
   <div class="edify-page-header__controls">{{ page_header_controls }}</div>
   {% endif %}
-</header>
+  {{ aside }}
+</{{ page_header_element }}>

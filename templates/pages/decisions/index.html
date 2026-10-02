@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 {% comment %}
 Decision Intelligence became a tab of the one Analytics page on 2026-09-05:
@@ -13,18 +14,13 @@ the very same panel, so the two cannot drift apart and the markup exists once.
 {% endcomment %}
 
 {% block title %}Decision Intelligence — Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260927mapkey2">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20261002tokens2">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Quality &amp; Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Decision Intelligence</h1>
-<p class="edify-page-header__description">Signals the platform detected on its own — each one recommends, you decide</p>
-</div>
-</div>
+{% page_header eyebrow="Quality &amp; Insights" title="Decision Intelligence" description="Signals the platform detected on its own — each one recommends, you decide" element="div" %}
+{% endpage_header %}
 
 {% include "components/analytics_decision_frame.html" with question="Which signals has the platform raised on its own, and which of them need a decision now?" evidence="Detected leadership and budget signals for the selected financial year" freshness="Rescanned on demand" confidence="Recommendation, never an automatic decision" %}
 

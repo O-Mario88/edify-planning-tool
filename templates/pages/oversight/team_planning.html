@@ -1,19 +1,18 @@
 {% extends "layouts/shell.html" %}
+{% load components %}
 {% load static %}
 
-{% block title %}Team Oversight · Edify{% endblock %}
+{% block title %}Planning Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% if request.GET.followup %}
-<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20261002execlead1">{% endif %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tokens2">{% if request.GET.followup %}
+<link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20261002execlead2">{% endif %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
-  <header class="edify-page-header">
-    <div class="edify-page-header__lead">
-      <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
-    </div>
+  {% page_header title="Planning Oversight" %}
+    {% slot description %}{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}{% endslot %}
+  {% slot aside %}
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
     2026-09-25). The workspace re-sends it into this slot when a period change
@@ -30,7 +29,8 @@
       <span>Updated {{ last_refreshed|date:"H:i" }}</span>
     </div>
     {% endif %}
-  </header>
+  {% endslot %}
+  {% endpage_header %}
 
   {% if request.GET.followup %}
   {% comment %}A Country Director's planning follow-up this Lead was sent here
@@ -83,7 +83,7 @@
 
   {% comment %}
   School Oversight — the third lens on the same team, and the reason this page
-  is called Team Oversight rather than Team Planning. Plans say what the team
+  is an oversight page rather than a planning one. Plans say what the team
   intends; clusters say what ground they hold; this says which of their schools
   is in trouble. Three pages would have made a supervisor visit three places to
   answer one question.

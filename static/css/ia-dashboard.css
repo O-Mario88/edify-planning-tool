@@ -108,7 +108,7 @@
   max-width: 39rem;
   margin: 0.75rem 0 0;
   color: #c6d4da;
-  font-size: 0.875rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
   line-height: 1.6;
 }
@@ -316,7 +316,7 @@
 
 .ia-metric__arrow {
   color: var(--edify-text-subtle);
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
   transition: transform var(--edify-transition-fast);
 }
 
@@ -413,7 +413,7 @@
 
 .ia-panel__header h2,
 .ia-section__header h2 {
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
 }
 
 .ia-panel__header p:not(.ia-section-kicker),
@@ -847,7 +847,7 @@
 .ia-coverage__legend dd {
   margin: 0.3rem 0 0;
   color: var(--edify-text);
-  font-size: 0.875rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 800;
 }
 
@@ -945,7 +945,7 @@
 .ia-evidence__summary dd {
   margin: 0.3rem 0 0;
   color: var(--edify-text);
-  font-size: 1rem;
+  font-size: var(--edify-text-title-size);
   font-weight: 800;
 }
 
@@ -1475,7 +1475,7 @@
 .ia-field-signals dd {
   margin: 0.25rem 0 0;
   color: var(--edify-text);
-  font-size: 0.95rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 800;
 }
 
@@ -1489,7 +1489,7 @@
 
 .ia-field-signals__arrow {
   color: var(--edify-text-subtle);
-  font-size: 1.25rem;
+  font-size: var(--edify-text-heading-size);
 }
 
 @media (max-width: 68rem) {

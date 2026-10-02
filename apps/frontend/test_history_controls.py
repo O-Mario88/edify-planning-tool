@@ -36,6 +36,15 @@ class HistoryControlsTest(SimpleTestCase):
                 self.assertIn(label, shell)
         self.assertIn('aria-label="Page history"', shell)
 
+    def test_the_group_is_drawn_only_where_the_browser_draws_none(self):
+        """In a browser tab the browser has its own three; the group is for
+        the installed app (2026-10-01)."""
+        css = _read("static/css/components.css")
+        rule = css[css.index("@media (display-mode: browser) {") :]
+        rule = rule[: rule.index("}\n}") + 3]
+        self.assertIn(".edify-topbar__history {", rule)
+        self.assertIn("display: none;", rule)
+
     def test_the_script_is_loaded_and_does_what_the_browser_would(self):
         base = _read("templates/base.html")
         self.assertIn("js/history-controls.js", base)
