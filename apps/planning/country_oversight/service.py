@@ -27,8 +27,8 @@ from functools import cached_property
 
 from django.utils import timezone
 
+from apps.planning.country_oversight import freshness, policy, rules
 from apps.planning.country_oversight import people as people_read
-from apps.planning.country_oversight import policy, rules
 from apps.planning.country_oversight.coverage import (
     P_RETURNED,
     FactsTable,
@@ -438,7 +438,11 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> Dataset:
         _HELD.pop(key, None)
     elif timeout > 0:
         held = _HELD.get(key)
-        if held is not None and held.stamp == _read_stamp(key):
+        if (
+            held is not None
+            and held.stamp == _read_stamp(key)
+            and not freshness.overtaken(held.built_at)
+        ):
             return held
 
     built: list[Dataset] = []
@@ -455,6 +459,14 @@ def dataset_for(user, window: Window, *, refresh: bool = False) -> Dataset:
         _write_stamp(key, dataset.stamp, timeout=timeout, replace=bool(built))
         _HELD.clear()
         _HELD[key] = dataset
+    if (
+        not refresh
+        and not built
+        and freshness.overtaken(dataset.built_at)
+        and freshness.claim(key)
+    ):
+        # The plan has changed since these facts were read (see freshness).
+        return dataset_for(user, window, refresh=True)
     return dataset
 
 
@@ -620,11 +632,17 @@ def rollup_for(
     key = f"{_key('rollup', universe, window)}:{channel or 'all'}"
     if refresh:
         forget_snapshot(key)
-    return stampede_safe_get_or_compute(
-        key,
-        lambda: rollup_of(dataset_for(user, window, refresh=refresh), channel),
-        timeout=_timeout(),
-    )
+
+    def build():
+        return rollup_of(dataset_for(user, window, refresh=refresh), channel)
+
+    rollup = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    if not refresh and freshness.overtaken(rollup.built_at):
+        # Summed from facts the plan has since moved on from: read them again
+        # (dataset_for rebuilds them, one reader at a time) and sum afresh.
+        forget_snapshot(key)
+        rollup = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    return rollup
 
 
 # ── The tree ─────────────────────────────────────────────────────────────────
@@ -1147,7 +1165,12 @@ def snapshot_for(user, filters: Filters, *, refresh: bool = False) -> Snapshot:
             source = rollup_for(user, window, filters.channel, refresh=refresh)
         return _snapshot(source, filters, scope)
 
-    return stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    snapshot = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    if not refresh and freshness.overtaken(snapshot.built_at):
+        # Folded before the plan last changed: fold again from current facts.
+        forget_snapshot(key)
+        snapshot = stampede_safe_get_or_compute(key, build, timeout=_timeout())
+    return snapshot
 
 
 # ── Keeping the country's figures warm ───────────────────────────────────────

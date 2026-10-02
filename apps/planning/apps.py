@@ -20,3 +20,7 @@ class PlanningConfig(AppConfig):
             ensure_planning_reference,
             planning_reference_is_complete,
         )
+        # Country Planning Oversight follows the plan as it is written.
+        from apps.planning.country_oversight import freshness
+
+        freshness.connect()
