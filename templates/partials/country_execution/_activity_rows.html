@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% comment %}A page of activity records (the table's Activities view and every
 drill-down drawer): what, where, whose, due when, at which stage, and who holds
 the next action.{% endcomment %}
@@ -6,6 +7,7 @@ the next action.{% endcomment %}
     <thead>
       <tr>
         <th scope="col" class="cpo-namecol">Activity</th>
+        <th scope="col">School ID</th>
         <th scope="col">School / Cluster</th>
         <th scope="col">Owner</th>
         <th scope="col">Channel</th>
@@ -20,6 +22,7 @@ the next action.{% endcomment %}
       {% for row in listing.rows %}
       <tr data-level="1">
         <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.type }}</span></th>
+        <td>{% if row.school_ref %}{% school_code row.school_ref %}{% else %}<span class="cpo-none">—</span>{% endif %}</td>
         <td>{{ row.where }}</td>
         <td>{{ row.owner }}</td>
         <td>{{ row.channel }}{% if row.partner %} · {{ row.partner }}{% endif %}</td>
@@ -30,7 +33,7 @@ the next action.{% endcomment %}
         <td>{{ row.last_action|date:"j M Y"|default:"—" }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="9" class="cpo-empty">No activity matches.</td></tr>
+      <tr><td colspan="10" class="cpo-empty">No activity matches.</td></tr>
       {% endfor %}
     </tbody>
   </table>

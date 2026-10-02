@@ -20,6 +20,7 @@
       <thead>
         <tr>
           <th scope="col">Activity or SSA record</th>
+          <th scope="col">School ID</th>
           <th scope="col">School or cluster</th>
           <th scope="col">Record type</th>
           <th scope="col">Submitted by</th>
@@ -38,8 +39,9 @@
             <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">FY {{ act.fy }} · {{ act.quarter }}</span>
           </td>
+          <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if act.schoolId %}{{ act.schoolId }}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <td>
-            <strong class="block">{% school_identity act.schoolName|default:"Cluster-wide" code=act.schoolId %}</strong>
+            <strong class="block">{{ act.schoolName|default:"Cluster-wide" }}</strong>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
           </td>
           <td>{{ act.activityType|title|replace_underscore }}</td>
@@ -72,7 +74,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="10">
+          <td colspan="11">
             {% if drilldowns %}{% include "components/empty_state.html" with title="Nothing matches this view" message="No records in your country match the filter applied from the dashboard." tone="success" %}{% else %}{% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}{% endif %}
           </td>
         </tr>

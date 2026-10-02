@@ -548,6 +548,8 @@ class FieldDebriefDashboardService:
             if link and link.activity
             else d.get_kind_display(),
             "target_label": target if target is not None else _target_label(d),
+            # The first school the debrief is about; the page shows its ID.
+            "school_ref": (d.linked_school_ids or [""])[0] or "",
             "status": d.get_status_display(),
             "status_key": d.status,
             "title": d.title or "(untitled)",

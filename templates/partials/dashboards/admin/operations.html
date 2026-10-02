@@ -69,7 +69,7 @@
                   {% paginate priority_schools "operations_priority_schools_page" as operations_priority_schools_pager %}
                   <table class="admin-table admin-table--schools">
                     <caption class="sr-only">Schools requiring priority action</caption>
-                    <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
+                    <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
                     <tbody>{% for school in operations_priority_schools_pager.rows %}<tr><td class="tabular-nums">{{ school.school_id }}</td><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="6"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
                   </table>
                   {% include "components/table_pager.html" with pager=operations_priority_schools_pager param="operations_priority_schools_page" %}

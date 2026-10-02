@@ -102,6 +102,9 @@
 
 .hcos-register {
   overflow: hidden;
+  /* A box of its own inside the workspace panel: its table's outer cells and
+     its heading take the card inset (design-system.css, ONE CONTENT LINE). */
+  --edify-section-inset: var(--edify-card-inset);
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-md);
   background: var(--edify-surface-treatment, var(--edify-surface));
@@ -117,7 +120,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 1rem 1.1rem;
+  padding: 1rem var(--edify-card-inset, 1.1rem);
   border-bottom: 1px solid var(--edify-border);
 }
 .hcos-register__overline { margin-block-end: 0.22rem; font-size: var(--edify-text-micro-size); }

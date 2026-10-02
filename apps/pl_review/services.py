@@ -295,6 +295,7 @@ def review_register(principal, *, cceo: str = "", today=None) -> dict:
                 "activity": a.activity_name_snapshot or a.get_activity_type_display(),
                 "where": where,
                 "where_kind": where_kind,
+                "school_code": a.school.school_id if a.school_id else "",
                 "district": (
                     getattr(a.school.district, "name", "")
                     if a.school_id and a.school.district_id

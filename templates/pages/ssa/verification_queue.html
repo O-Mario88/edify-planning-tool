@@ -63,6 +63,7 @@ three buttons (owner, 2026-09-26); a row with only its visit keeps the link.
       {% if rows %}
       <thead>
         <tr>
+          <th scope="col">School ID</th>
           <th scope="col">School</th>
           <th scope="col">District</th>
           <th scope="col">Collected by</th>
@@ -77,7 +78,8 @@ three buttons (owner, 2026-09-26); a row with only its visit keeps the link.
       <tbody>
         {% for r in rows %}
         <tr>
-          <th scope="row" data-record-title><span><a href="{{ r.school_url }}" class="edify-primary-text">{% school_identity r.school r.school_id %}</a> · {{ r.school_id }}</span></th>
+          <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if r.school_id %}{% school_code r.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <th scope="row" data-record-title><span><a href="{{ r.school_url }}" class="edify-primary-text">{{ r.school }}</a></span></th>
           <td data-label="District">{{ r.district }}</td>
           <td data-label="Collected by">{{ r.collector }}</td>
           <td data-label="How it arrived">{{ r.source }}</td>

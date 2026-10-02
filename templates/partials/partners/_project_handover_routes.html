@@ -1,0 +1,23 @@
+{% comment %}
+The third way a school's support goes to a partner (owner, 2026-10-02:
+"assign the remaining packages to the partner through either in-school
+training, follow up, or project"): through a project the school is enrolled
+in. Each button opens that project's own hand-over drawer for this school,
+with the project's activities and partners; at a Core school the work it
+hands over is the partner's half of the package like any other, unless the
+project is one no SSA intervention measures.
+{% endcomment %}
+{% if project_handovers %}
+<div class="space-y-1" data-project-handover>
+  <p class="block edify-text-caption font-semibold text-slate-600">Or assign through a project</p>
+  <div class="flex flex-wrap gap-2">
+    {% for row in project_handovers %}
+    <button type="button" class="btn btn-secondary h-8"
+            hx-get="/projects/planning/bulk-partner?assignments={{ row.assignment_id }}"
+            hx-target="#drawer-container" hx-swap="innerHTML"
+            aria-label="Assign {{ school.name }} to a partner through {{ row.project_name }}">{{ row.project_name }}</button>
+    {% endfor %}
+  </div>
+  <p class="edify-text-caption text-slate-500">Opens the project's own activities and partners for this school.{% if school.school_type == "core" %} Project work counts toward the partner's half of the package; a project the SSA does not measure, such as Alumni, does not.{% endif %}</p>
+</div>
+{% endif %}

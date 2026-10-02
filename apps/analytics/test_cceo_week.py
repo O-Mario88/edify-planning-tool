@@ -47,10 +47,10 @@ class OfficerWeekTest(TestCase):
     _act = _pl._act
     _table = _pl._table
 
-    def _week(self, who="", listing=""):
-        return build_week(
-            self.a1, fy="2026", who=who, today=THURSDAY, listing=listing, solo=True
-        )
+    _section = _pl._section
+
+    def _week(self, who=""):
+        return build_week(self.a1, fy="2026", who=who, today=THURSDAY, solo=True)
 
     def test_one_person_three_tabs_opening_on_my_activities(self):
         week = self._week()
@@ -66,7 +66,7 @@ class OfficerWeekTest(TestCase):
     def test_only_the_officers_own_work(self):
         mine = self._act(self.a1_sp, self.s1, MONDAY + timedelta(days=4))
         self._act(self.a2_sp, self.s2, MONDAY)
-        week = self._week(listing=DUE_THIS_WEEK)
+        week = self._week()
         ids = [r["id"] for r in self._table(week["person"], "visits")]
         self.assertEqual(ids, [mine.id])
 
@@ -77,13 +77,12 @@ class OfficerWeekTest(TestCase):
         due = self._act(self.a1_sp, self.s1, THURSDAY)
         week = self._week()
         person = week["person"]
-        self.assertEqual(person["listing"], DUE_THIS_WEEK)
-        self.assertEqual([item["key"] for item in person["lists"]], [DUE_THIS_WEEK])
+        self.assertEqual([s["key"] for s in person["sections"]], [DUE_THIS_WEEK])
         [row] = self._table(person, "visits")
         self.assertEqual(row["id"], due.id)
         # Complete / Reschedule / Cancel, never Verify or Send to.
         self.assertEqual(row["action"], "own")
-        self.assertNotEqual(OVERDUE, person["listing"])
+        self.assertNotIn(OVERDUE, [s["key"] for s in person["sections"]])
 
     def test_the_tab_counts_what_is_past_due(self):
         from apps.my_plan.past_due_service import get_past_due_dashboard_context
@@ -107,7 +106,7 @@ class OfficerWeekTest(TestCase):
             status="submitted_to_pl",
             complete=True,
         )
-        week = self._week(listing=DUE_THIS_WEEK)
+        week = self._week()
         [row] = [r for r in self._table(week["person"], "visits") if r["id"] == done.id]
         self.assertEqual(row["status_label"], OWN_AWAITING_LABEL)
         self.assertEqual(row["action"], "none")

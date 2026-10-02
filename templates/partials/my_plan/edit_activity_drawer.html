@@ -7,8 +7,17 @@ ask them for reason to reschedule … only planned activities that are still at
 scheduled mode should be editable."
 
 One form for what a plan may still change: its day, its school or the schools
-it invites, who facilitates it, and what it is for. Moving the day or the
-school asks why, as Reschedule always has. Every rule is the service's
+it invites, its project, who facilitates it, and what it is for. Moving the
+day, the school or the project asks why, as Reschedule always has.
+
+Project work names its project, and lists its focus from the interventions
+that project is linked to (owner, 2026-10-02: "if a user wants to change a
+project to another they should be able to select an intervention the new
+project is linked to. For example changing from CC-SEL secondary to Alumni
+should be able to change the intervention from Christlike behaviour to
+General which is linked to Alumni"). Choosing another project swaps the list
+for that project's; General is a project's way of saying no SSA intervention
+measures its work. Every rule is the service's
 (apps.activities.editing.edit); the drawer opens only for work the reader may
 run that is still scheduled.
 {% endcomment %}
@@ -31,9 +40,23 @@ run that is still scheduled.
     schoolCode: '{{ act.school.school_id|default:''|escapejs }}',
     firstSchoolCode: '{{ act.school.school_id|default:''|escapejs }}',
     invitedCount: {{ schools_invited|default:0 }},
+    projectId: '{{ edit_project.id|default:''|escapejs }}',
+    firstProjectId: '{{ edit_project.id|default:''|escapejs }}',
+    focus: '{{ act.focus_intervention|default:''|escapejs }}',
+    projectLinks: {% if project_links_json %}{{ project_links_json }}{% else %}{}{% endif %},
     get dayMoved() { return this.planDay !== this.firstDay || this.lastDay !== this.firstLastDay; },
     get schoolMoved() { return this.schoolCode !== this.firstSchoolCode; },
-    get asksWhy() { return this.dayMoved || this.schoolMoved; },
+    get projectMoved() { return this.projectId !== this.firstProjectId; },
+    get asksWhy() { return this.dayMoved || this.schoolMoved || this.projectMoved; },
+    get focusOptions() { return this.projectLinks[this.projectId] || []; },
+    projectChosen() {
+      /* The focus follows the project: keep it when the new project is linked
+         to it too, otherwise take the first intervention the project names. */
+      const options = this.focusOptions;
+      if (options.some((option) => option.code === this.focus)) return;
+      const named = options.find((option) => option.code !== '');
+      this.focus = named ? named.code : '';
+    },
     syncInvited() {
       this.invitedCount = this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked').length;
     }
@@ -98,11 +121,26 @@ run that is still scheduled.
   <p class="edify-text-caption text-slate-500" data-edit-school-fixed>At <strong>{{ act.school.name }}</strong>. This activity holds a place in the school's Core package, so it stays with this school.</p>
   {% endif %}
 
+  {% if edit_project %}
+  <div class="space-y-1" data-edit-project>
+    <label for="edit_project_id" class="block edify-text-caption font-semibold text-slate-600">Project</label>
+    {% if may_change_project %}
+    <select id="edit_project_id" name="project_id" x-model="projectId" @change="projectChosen()"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      {% for project in edit_projects %}<option value="{{ project.id }}"{% if project.id == edit_project.id %} selected{% endif %}>{{ project.name }}{% if project.joins %} (adds this school to it){% endif %}</option>{% endfor %}
+    </select>
+    <p x-show="projectMoved" style="display:none" class="edify-text-caption text-slate-500" role="status" data-edit-project-note>This activity is cancelled under {{ edit_project.name }} and scheduled again under the project you chose, by that project's rules. Its focus is one of the interventions that project is linked to.</p>
+    {% else %}
+    <p id="edit_project_id" class="edify-text-caption text-slate-500" data-edit-project-fixed><strong>{{ edit_project.name }}</strong>. {% if act.school %}{{ act.school.name }} is in no other open project, and none it can join.{% else %}A session for a whole cluster stays with its project.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <template x-if="asksWhy">
     <div class="space-y-1" data-edit-reason>
       <label for="edit_reason" class="block edify-text-caption font-semibold text-slate-600">Reason for the change <span class="text-rose-500">*</span></label>
       <textarea name="reason" id="edit_reason" required rows="3"
-                placeholder="Why the date or the school is changing"
+                placeholder="Why the date, the school or the project is changing"
                 class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"></textarea>
       <p class="edify-text-caption text-slate-500">Recorded with the activity, as for any reschedule.</p>
     </div>
@@ -112,13 +150,26 @@ run that is still scheduled.
   {% include "partials/activities/facilitated_by_field.html" with field_id="edit_facilitating_partner_id" selected=act.facilitating_partner_id session_noun=session_noun %}
   {% endif %}
 
-  <div class="space-y-1">
+  <div class="space-y-1" data-edit-focus>
     <label for="edit_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+    {% if edit_project %}
+    {% comment %}The interventions the chosen project is linked to. Drawn by
+    Alpine so the list changes with the Project field above; :selected keeps
+    the saved focus chosen once the options exist.{% endcomment %}
+    <select id="edit_focus_intervention" name="focus_intervention" x-model="focus"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <template x-for="option in focusOptions" :key="option.code">
+        <option :value="option.code" :selected="option.code === focus" x-text="option.label"></option>
+      </template>
+    </select>
+    <p class="edify-text-caption text-slate-500">The interventions this project is linked to.</p>
+    {% else %}
     <select id="edit_focus_intervention" name="focus_intervention"
             class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
       <option value="">None</option>
       {% for code, label in interventions %}<option value="{{ code }}"{% if code == act.focus_intervention %} selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
+    {% endif %}
   </div>
 
   <div class="space-y-1">

@@ -30,10 +30,11 @@ reconciled through the amendment workflow.
   <div class="overflow-x-auto edify-record-table-wrap">
     <table class="edify-data-table edify-record-table w-full">
       {% paginate reconciliations "reconcile_page" as reconcile_pager %}
-      <thead><tr><th scope="col">School</th><th scope="col">Moved to</th><th scope="col">Effective</th><th scope="col">Note</th><th scope="col">Record</th></tr></thead>
+      <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">Moved to</th><th scope="col">Effective</th><th scope="col">Note</th><th scope="col">Record</th></tr></thead>
       <tbody>
       {% for row in reconcile_pager.rows %}
       <tr>
+        <td data-label="School ID" class="tabular-nums">{{ row.school.school_id|default:"—" }}</td>
         <td data-label="School" data-record-title><a href="/schools/{{ row.school.school_id }}">{{ row.school.name }}</a></td>
         <td data-label="Moved to">{{ row.to_staff.user.name }}</td>
         <td data-label="Effective">{{ row.effective_date|date:"j M Y" }}</td>

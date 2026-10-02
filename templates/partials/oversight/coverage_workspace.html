@@ -36,11 +36,12 @@ quarter inside a year.
       <h3 class="px-4 py-2 edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-muted)]">{{ group.label }} · {{ group.school_count }} school{{ group.school_count|pluralize }} · {{ group.activity_count }} activit{{ group.activity_count|pluralize:"y,ies" }}</h3>
       <div class="overflow-x-auto edify-record-table-wrap">
         <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
-          <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Budget status</th><th scope="col">PL status</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+          <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Planned activity</th><th scope="col">Category</th><th scope="col">Planned date</th><th scope="col">Channel</th><th scope="col">Budget status</th><th scope="col">PL status</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
           <tbody>
           {% paginate group.rows group.page_param as group_pager %}
           {% for row in group_pager.rows %}
           <tr>
+            <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
             <td data-label="School" data-record-title>{{ row.school_name }}</td>
             <td data-label="CCEO owner">{{ row.owner_name }}</td>
             <td data-label="District">{{ row.district_name|default:"—" }}</td>
@@ -74,10 +75,11 @@ quarter inside a year.
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.planned_rows "trained_page" as trained_pager %}
       <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
-        <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Delivery</th><th scope="col">Status</th><th scope="col">Visit status</th><th scope="col">Training plan</th><th scope="col">Action</th></tr></thead>
+        <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">Cluster</th><th scope="col">Activity</th><th scope="col">Date</th><th scope="col">Delivery</th><th scope="col">Status</th><th scope="col">Visit status</th><th scope="col">Training plan</th><th scope="col">Action</th></tr></thead>
         <tbody>
         {% for row in trained_pager.rows %}
         <tr>
+          <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
           <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name|default:"—" }}{% endif %}</td>
@@ -90,7 +92,7 @@ quarter inside a year.
           <td data-label="Action" data-record-action>{% if row.cluster_url %}<a href="{{ row.cluster_url }}" class="rpl-card__link">Open cluster</a>{% endif %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="10">{% include "components/empty_state.html" with message="No cluster training or meeting is planned for these schools in the selected period." %}</td></tr>
+        <tr><td colspan="11">{% include "components/empty_state.html" with message="No cluster training or meeting is planned for these schools in the selected period." %}</td></tr>
         {% endfor %}
         </tbody>
       </table>
@@ -106,10 +108,11 @@ quarter inside a year.
     <div class="overflow-x-auto edify-record-table-wrap">
       {% paginate coverage.missing_rows "untrained_page" as untrained_pager %}
       <table class="edify-data-table edify-record-table w-full whitespace-nowrap">
-        <thead><tr><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Reason</th><th scope="col">Visit status</th><th scope="col">Action</th></tr></thead>
+        <thead><tr><th scope="col">School ID</th><th scope="col">School</th><th scope="col">CCEO owner</th><th scope="col">District</th><th scope="col">Cluster</th><th scope="col">Reason</th><th scope="col">Visit status</th><th scope="col">Action</th></tr></thead>
         <tbody>
         {% for row in untrained_pager.rows %}
         <tr>
+          <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
           <td data-label="District">{{ row.district_name|default:"—" }}</td>
@@ -119,7 +122,7 @@ quarter inside a year.
           <td data-label="Action" data-record-action>{% if row.cluster_url %}<a href="{{ row.cluster_url }}" class="rpl-card__link">Plan a cluster session</a>{% else %}<a href="{{ row.school_url }}" class="rpl-card__link">Open school</a>{% endif %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">{% include "components/empty_state.html" with message="Every active school in your scope has a cluster training or meeting planned in this period." %}</td></tr>
+        <tr><td colspan="8">{% include "components/empty_state.html" with message="Every active school in your scope has a cluster training or meeting planned in this period." %}</td></tr>
         {% endfor %}
         </tbody>
       </table>

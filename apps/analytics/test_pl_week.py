@@ -217,13 +217,15 @@ class PLWeekTest(TestCase):
             )
         return activity
 
-    def _week(self, who="", week=None, today=THURSDAY, listing=""):
-        return build_week(
-            self.pl, fy="2026", who=who, week=week, today=today, listing=listing
-        )
+    def _week(self, who="", week=None, today=THURSDAY):
+        return build_week(self.pl, fy="2026", who=who, week=week, today=today)
 
-    def _table(self, person, key):
-        table = next(t for t in person["tables"] if t["key"] == key)
+    def _section(self, person, listing=DUE_THIS_WEEK):
+        return next(s for s in person["sections"] if s["key"] == listing)
+
+    def _table(self, person, key, listing=DUE_THIS_WEEK):
+        tables = self._section(person, listing)["tables"]
+        table = next(t for t in tables if t["key"] == key)
         return list(table["rows"])
 
     # ── Who ──────────────────────────────────────────────────────────────────
@@ -328,22 +330,47 @@ class PLWeekTest(TestCase):
         self.assertFalse(any(c["on_leave"] for c in amos["cells"]))
 
     # ── Overdue and Due this week ────────────────────────────────────────────
-    def test_an_officer_s_tab_opens_on_overdue_with_the_three_tables(self):
+    def test_an_officer_s_tab_lists_overdue_first_then_the_week(self):
+        # Owner, 2026-10-02: "The overdue table should be included on the PL
+        # table as the first table and then for the rest of the week below
+        # it." They were two tabs; a lead on one did not see the other.
         visit = self._act(self.a1_sp, self.s1, LAST_MONDAY)
         self._act(self.a1_sp, self.s1, LAST_MONDAY, atype="cluster_training")
         self._act(self.a1_sp, self.s1, LAST_MONDAY, atype="cluster_meeting")
-        self._act(self.a1_sp, self.s1, MONDAY)
+        due = self._act(self.a1_sp, self.s1, MONDAY)
         person = self._week(who=self.a1_sp.id)["person"]
-        self.assertEqual(person["listing"], OVERDUE)
         self.assertEqual(
-            [(t["title"], t["count"]) for t in person["tables"]],
-            [("School Visits", 1), ("Group Trainings", 1), ("Cluster Meetings", 1)],
-        )
-        self.assertEqual(
-            [(item["key"], item["count"]) for item in person["lists"]],
+            [(s["key"], s["count"]) for s in person["sections"]],
             [(OVERDUE, 3), (DUE_THIS_WEEK, 1)],
         )
-        row = self._table(person, "visits")[0]
+        overdue, week = person["sections"]
+        self.assertTrue(overdue["is_overdue"])
+        self.assertFalse(week["is_overdue"])
+        self.assertEqual(
+            [(t["title"], t["count"]) for t in overdue["tables"]],
+            [
+                ("Overdue School Visits", 1),
+                ("Overdue Group Trainings", 1),
+                ("Overdue Cluster Meetings", 1),
+            ],
+        )
+        self.assertEqual(
+            [(t["title"], t["count"]) for t in week["tables"]],
+            [("School Visits", 1), ("Group Trainings", 0), ("Cluster Meetings", 0)],
+        )
+        # Each list pages on its own, so a page of one never moves the other.
+        self.assertEqual(
+            {t["page_param"] for s in person["sections"] for t in s["tables"]},
+            {
+                "od_visits_page",
+                "od_trainings_page",
+                "od_meetings_page",
+                "wk_visits_page",
+                "wk_trainings_page",
+                "wk_meetings_page",
+            },
+        )
+        row = self._table(person, "visits", OVERDUE)[0]
         # "What needs you now"'s own row: the same columns' data.
         self.assertEqual(row["id"], visit.id)
         self.assertEqual(row["school_name"], "Hill School")
@@ -351,171 +378,42 @@ class PLWeekTest(TestCase):
         self.assertIn("budget_total", row)
         self.assertEqual((row["status_label"], row["action"]), ("Past Due", "send"))
         self.assertTrue(row["is_overdue"])
+        self.assertEqual([r["id"] for r in self._table(person, "visits")], [due.id])
 
-    def test_with_nothing_overdue_the_tab_opens_on_the_week(self):
+    def test_with_nothing_overdue_the_overdue_list_is_empty_above_the_week(self):
         self._act(self.a2_sp, self.s2, THURSDAY + timedelta(days=1))
         person = self._week(who=self.a2_sp.id)["person"]
-        self.assertEqual(person["listing"], DUE_THIS_WEEK)
         row = self._table(person, "visits")[0]
         self.assertEqual((row["status_label"], row["action"]), ("Scheduled", "send"))
         self.assertFalse(row["is_overdue"])
-        # The other list stays one click away.
-        overdue = self._week(who=self.a2_sp.id, listing=OVERDUE)["person"]
-        self.assertEqual(overdue["listing"], OVERDUE)
+        overdue = self._section(person, OVERDUE)
+        self.assertEqual(overdue["count"], 0)
         self.assertEqual(sum(t["count"] for t in overdue["tables"]), 0)
 
-    def test_verify_when_the_officer_has_completed_it_send_when_not(self):
-        rows = {
-            status: self._act(self.a1_sp, self.s1, MONDAY, status=status)
-            for status in (
-                "submitted_to_pl",
-                "salesforce_id_required",
-                "evidence_uploaded",
-                "scheduled",
-                "ia_verified",
-                "awaiting_ia_verification",
-            )
-        }
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
-        action = {r["id"]: r["action"] for r in self._table(person, "visits")}
-        self.assertEqual(action[rows["submitted_to_pl"].id], "verify")
-        for status in ("salesforce_id_required", "evidence_uploaded", "scheduled"):
-            self.assertEqual(action[rows[status].id], "send", status)
-        # Completed work is off the list altogether.
-        self.assertNotIn(rows["ia_verified"].id, action)
-        self.assertNotIn(rows["awaiting_ia_verification"].id, action)
-        self.assertEqual(person["send_name"], "Amos")
-
-    def test_completed_work_leaves_the_lists_and_the_figures_keep_it(self):
-        verified = self._act(self.a1_sp, self.s1, MONDAY, status="ia_verified")
-        with_ia = self._act(
-            self.a1_sp, self.s1, MONDAY, status="awaiting_ia_verification"
-        )
-        open_ = self._act(self.a1_sp, self.s1, THURSDAY + timedelta(days=1))
-        week = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)
-        person = week["person"]
-        self.assertEqual([r["id"] for r in self._table(person, "visits")], [open_.id])
-        self.assertEqual(person["lists"][1]["count"], 1)
-        self.assertEqual((person["planned"], person["closed"]), (3, 2))
-        # Verifying one takes it off the list on the next read.
-        # Verified, with its Salesforce ID and visit form: complete.
-        open_.status = "ia_verified"
-        open_.salesforce_activity_id = "SVE-OPEN"
-        open_.save(update_fields=["status", "salesforce_activity_id"])
-        from apps.evidence.models import EvidenceRecord
-
-        EvidenceRecord.objects.create(
-            activity=open_, kind="visit_form", uri="v.pdf", uploaded_by="u"
-        )
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
-        self.assertEqual(self._table(person, "visits"), [])
-        # The week board still shows where the work was done.
-        amos = next(p for p in week["people"] if p["key"] == self.a1_sp.id)
-        board = {r["id"] for cell in amos["cells"] for r in cell["rows"]}
-        self.assertTrue({verified.id, with_ia.id} <= board)
-
-    def test_each_row_shows_its_salesforce_id_and_the_form_uploaded(self):
-        from apps.evidence.models import EvidenceRecord
-
-        def evidence(activity, kind, **extra):
-            EvidenceRecord.objects.create(
-                activity=activity,
-                kind=kind,
-                uri=f"{kind}.pdf",
-                uploaded_by="u",
-                **extra,
-            )
-
-        visit = self._act(
-            self.a1_sp, self.s1, MONDAY, salesforce_activity_id="SVE-1234"
-        )
-        evidence(visit, "visit_form")
-        training = self._act(
-            self.a1_sp,
-            self.s1,
-            MONDAY,
-            atype="cluster_training",
-            salesforce_activity_id="TS-5678",
-        )
-        evidence(training, "attendance_form")
-        meeting = self._act(self.a1_sp, self.s1, MONDAY, atype="cluster_meeting")
-        evidence(meeting, "meeting_minutes")
-        bare = self._act(self.a1_sp, self.s1, MONDAY)
-        hidden = self._act(self.a1_sp, self.s1, MONDAY)
-        evidence(hidden, "visit_form", quarantined=True)
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
-        rows = {
-            r["id"]: (r["salesforce_id"], r["evidence_label"])
-            for key in ("visits", "trainings", "meetings")
-            for r in self._table(person, key)
-        }
-        self.assertEqual(rows[visit.id], ("SVE-1234", "Visit Form"))
-        self.assertEqual(rows[training.id], ("TS-5678", "Attendance"))
-        # Other evidence is named, never reported as missing.
-        self.assertEqual(rows[meeting.id], ("", "Meeting Minutes"))
-        # Blank reads "Not in SF" and "No Evidence Uploaded" on the page; a
-        # quarantined file is not evidence, as completion counts it.
-        self.assertEqual(rows[bare.id], ("", ""))
-        self.assertEqual(rows[hidden.id], ("", ""))
-
-    def test_verified_without_both_halves_stays_and_says_what_is_missing(self):
-        # Complete only with both columns green (owner, 2026-09-26).
-        half = self._act(
-            self.a1_sp,
-            self.s1,
-            MONDAY,
-            status="ia_verified",
-            complete=False,
-            salesforce_activity_id="SVE-HALF",
-        )
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
-        rows = {r["id"]: r for r in self._table(person, "visits")}
-        self.assertIn(half.id, rows)
-        self.assertEqual(rows[half.id]["status_label"], "Missing evidence")
-        self.assertEqual(rows[half.id]["action"], "none")
-        self.assertTrue(rows[half.id]["salesforce_ok"])
-        self.assertFalse(rows[half.id]["evidence_ok"])
-        self.assertEqual(person["closed"], 0)
-
-    def test_every_row_past_its_day_is_overdue_whoever_it_waits_on(self):
-        late = self._act(self.a1_sp, self.s1, MONDAY)
-        waiting = self._act(self.a1_sp, self.s1, MONDAY, status="submitted_to_pl")
-        today = self._act(self.a1_sp, self.s1, THURSDAY)
-        ahead = self._act(self.a1_sp, self.s1, THURSDAY + timedelta(days=1))
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
-        overdue = {r["id"]: r["is_overdue"] for r in self._table(person, "visits")}
-        self.assertEqual(
-            overdue,
-            {late.id: True, waiting.id: True, today.id: False, ahead.id: False},
-        )
-
-    def test_overdue_is_last_week_s_work_not_yet_verified(self):
-        kept = {
-            status: self._act(self.a1_sp, self.s1, LAST_MONDAY, status=status)
-            for status in ("scheduled", "in_progress", "submitted_to_pl")
-        }
-        for status in (
-            "completed",
-            "ia_verified",
-            "awaiting_ia_verification",
-            "cancelled",
+    def test_every_staff_tab_carries_its_own_overdue_list(self):
+        # Owner, 2026-10-02: "even overdue needs to have a tab of staff so
+        # that the PL can toggle between staffs."
+        amos = self._act(self.a1_sp, self.s1, LAST_MONDAY)
+        beth = self._act(self.a2_sp, self.s2, LAST_MONDAY)
+        mine = self._act(self.pl_sp, self.s2, LAST_MONDAY)
+        for who, expected in (
+            (self.a1_sp.id, [amos.id]),
+            (self.a2_sp.id, [beth.id]),
+            (ME, [mine.id]),
+            ("", [amos.id, beth.id, mine.id]),
         ):
-            self._act(self.a1_sp, self.s1, LAST_MONDAY, status=status)
-        # Older than last week: the backlog's, under All overdue plans.
-        self._act(self.a1_sp, self.s1, LAST_MONDAY - timedelta(days=3))
-        week = self._week(who=self.a1_sp.id)
-        rows = self._table(week["person"], "visits")
-        self.assertEqual({r["id"] for r in rows}, {a.id for a in kept.values()})
-        self.assertEqual(week["overdue_total"], 3)
-        amos = next(p for p in week["people"] if p["key"] == self.a1_sp.id)
-        self.assertEqual(amos["overdue_count"], 3)
-        tab = next(t for t in week["tabs"] if t["key"] == self.a1_sp.id)
-        self.assertEqual(tab["count"], 3)
+            with self.subTest(who=who or EVERYONE):
+                week = self._week(who=who)
+                rows = self._table(week["person"], "visits", OVERDUE)
+                self.assertCountEqual([r["id"] for r in rows], expected)
+                # One strip of staff tabs for the page, never a tab that
+                # leaves the overdue list behind.
+                self.assertNotIn("list=", " ".join(t["query"] for t in week["tabs"]))
 
     def test_the_lead_s_own_rows_keep_their_own_menu(self):
         self._act(self.pl_sp, self.s2, LAST_MONDAY)
         person = self._week(who=ME)["person"]
-        row = self._table(person, "visits")[0]
+        row = self._table(person, "visits", OVERDUE)[0]
         self.assertTrue(row["is_own"])
         self.assertEqual(row["action"], "own")
         self.assertEqual(person["send_name"], "")
@@ -532,20 +430,17 @@ class PLWeekTest(TestCase):
         week = self._week()
         person = week["person"]
         self.assertEqual(person["key"], EVERYONE)
-        self.assertEqual(person["listing"], OVERDUE)
         self.assertEqual(
-            [(item["key"], item["count"]) for item in person["lists"]],
+            [(item["key"], item["count"]) for item in person["sections"]],
             [(OVERDUE, 2), (DUE_THIS_WEEK, 3)],
         )
         # Last week's, everyone's, in date order; the lead's own keeps its menu.
-        overdue = self._table(person, "visits")
+        overdue = self._table(person, "visits", OVERDUE)
         self.assertEqual([r["id"] for r in overdue], [amos_late.id, mine_late.id])
         self.assertEqual(
             [(r["owner"], r["action"], r["send_name"]) for r in overdue],
             [("Amos Field", "send", "Amos"), (self.pl.name, "own", "")],
         )
-        week = self._week(listing=DUE_THIS_WEEK)
-        person = week["person"]
         visits = self._table(person, "visits")
         self.assertEqual([r["id"] for r in visits], [beth.id, amos.id])
         self.assertEqual(
@@ -585,7 +480,7 @@ class PLWeekTest(TestCase):
             title="Action Required",
             body="Past due",
         )
-        person = self._week(who=self.a1_sp.id, listing=DUE_THIS_WEEK)["person"]
+        person = self._week(who=self.a1_sp.id)["person"]
         row = self._table(person, "visits")[0]
         self.assertEqual(row["action"], "sent")
         self.assertEqual(row["sent_on"], timezone.localdate())
@@ -599,7 +494,6 @@ class PLWeekTest(TestCase):
             fy="2026",
             who=self.a1_sp.id,
             week=next_monday.isoformat(),
-            listing=DUE_THIS_WEEK,
         )["person"]
         self.assertEqual(self._table(person, "visits")[0]["action"], "none")
 
@@ -608,7 +502,7 @@ class PLWeekTest(TestCase):
         week = self._week(who=self.a1_sp.id, week=LAST_MONDAY.isoformat())
         self.assertEqual(week["start"], LAST_MONDAY)
         self.assertFalse(week["is_current"])
-        self.assertEqual(week["person"]["lists"][0]["count"], 1)
+        self.assertEqual(self._section(week["person"], OVERDUE)["count"], 1)
         self.assertEqual(week["overdue_label"], "Overdue from the week of 7 Sep")
         self.assertIn("week=2026-09-07", week["previous_url"])
         self.assertNotIn("week=", week["next_url"])
@@ -740,9 +634,19 @@ class PLWeekTest(TestCase):
         html = response.content.decode()
         self.assertIn(f'data-pl-week-who="{self.a1_sp.id}"', html)
         self.assertNotIn("Leadership Attention", html)
-        self.assertIn('data-pl-week-list="overdue"', html)
+        # Overdue first, the week under it, on the one view (owner,
+        # 2026-10-02); no second tab strip to choose between them.
+        self.assertLess(
+            html.index('data-pl-week-list="overdue"'),
+            html.index('data-pl-week-list="week"'),
+        )
+        self.assertNotIn("data-pl-week-list-tab", html)
+        self.assertNotIn("list=overdue", html)
+        self.assertIn("Overdue School Visits", html)
+        # The overdue list draws only the tables holding work.
+        self.assertNotIn("Overdue Group Trainings", html)
         for heading in ("School Visits", "Group Trainings", "Cluster Meetings"):
-            self.assertIn(heading, html)
+            self.assertIn(f">{heading}</h4>", html)
         # The visit table's own columns, in "What needs you now"'s order.
         for column in (
             "School ID",
@@ -771,7 +675,7 @@ class PLWeekTest(TestCase):
         )
         self.client.force_login(self.pl)
         html = self.client.get(
-            "/dashboard", {"view": "week", "who": self.a1_sp.id, "list": OVERDUE}
+            "/dashboard", {"view": "week", "who": self.a1_sp.id}
         ).content.decode()
         self.assertRegex(html, rf'data-activity="{late.id}"[^>]*data-overdue')
         from pathlib import Path
@@ -825,7 +729,7 @@ class PLWeekTest(TestCase):
         self.client.force_login(self.pl)
         html = self.client.get(
             "/dashboard",
-            {"view": "week", "who": self.a1_sp.id, "list": DUE_THIS_WEEK},
+            {"view": "week", "who": self.a1_sp.id},
         ).content.decode()
         self.assertIn(f'hx-get="/pl/review-queue/{activity.id}/drawer"', html)
         self.assertIn(">Awaiting your verification<", html)
@@ -846,7 +750,7 @@ class PLWeekTest(TestCase):
         self.assertIn("due", notice.title)
         self.assertIn("Salesforce ID", notice.body)
         html = self.client.get(
-            "/dashboard", {"view": "week", "who": self.a1_sp.id, "list": DUE_THIS_WEEK}
+            "/dashboard", {"view": "week", "who": self.a1_sp.id}
         ).content.decode()
         self.assertIn("Sent to Amos", html)
 

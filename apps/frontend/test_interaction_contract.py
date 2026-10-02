@@ -263,12 +263,22 @@ class SegmentedTabsTest(SimpleTestCase):
         self.assertIn("padding: 0 !important;", rail_contract)
         self.assertIn("min-block-size: 2rem !important;", rail_contract)
         # 32px is the rail's floor, not a pin: a rail pinned to 2rem clipped
-        # its second row out of sight (2026-09-06). One row still measures
-        # 32px because each segment is 30px inside the rail's 1px borders.
+        # its second row out of sight (2026-09-06). One row measures 32px
+        # because each segment is 32px and the rail has no border in any
+        # theme. Segments were 30px, sized for a 1px border the rail does not
+        # have: the selected fill stopped 2px above the rail's foot and the
+        # label read as pushed up (owner, 2026-10-02).
         self.assertIn("block-size: auto !important;", rail_contract)
         self.assertIn("height: auto !important;", rail_contract)
-        self.assertNotIn("\n  block-size: 2rem !important;", rail_contract)
-        self.assertIn("block-size: calc(2rem - 2px) !important;", rail_contract)
+        self.assertNotIn(
+            "\n  block-size: 2rem !important;", rail_contract.split(") > :is(", 1)[0]
+        )
+        self.assertNotIn("calc(2rem - 2px)", self.css)
+        segment_size = rail_contract.split(") > :is(", 1)[1]
+        for size in ("block-size", "min-block-size", "max-block-size"):
+            self.assertIn(f"\n  {size}: 2rem !important;", segment_size)
+        # One row at every width: a rail never wraps.
+        self.assertIn("\n  flex-wrap: nowrap;", rail_contract)
 
         segment = self.css.split('main :is(\n  [role="tab"]', 1)[1][:1200]
         self.assertIn("align-self: stretch !important;", segment)

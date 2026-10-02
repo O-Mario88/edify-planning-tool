@@ -1560,7 +1560,8 @@
    into the shared component library.
    ══════════════════════════════════════════════════════════════════════════ */
 .pto-page {
-  --pto-panel-padding: clamp(1rem, 0.78rem + 0.75vw, 1.5rem);
+  /* The platform's one card inset (design-system.css, ONE CONTENT LINE). */
+  --pto-panel-padding: var(--edify-card-inset);
   --pto-panel-gap: clamp(0.875rem, 0.68rem + 0.65vw, 1.25rem);
   width: min(100%, 1500px);
   margin-inline: auto;
@@ -3054,7 +3055,8 @@
 /* ========================================================================== */
 
 .tt-page {
-  --tt-panel-pad: clamp(1rem, 0.8rem + 0.45vw, 1.4rem);
+  /* The platform's one card inset (design-system.css, ONE CONTENT LINE). */
+  --tt-panel-pad: var(--edify-card-inset);
   width: min(100%, 1680px);
   margin: 0 auto;
   padding: clamp(1.15rem, 0.8rem + 0.85vw, 2rem);
@@ -3878,7 +3880,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 }
 
 @media (max-width: 639px) {
-  .tt-page { --tt-panel-pad: 0.9rem; padding: 0.85rem; }
+  .tt-page { padding: 0.85rem; }
   .tt-page-header__context { align-items: flex-start; flex-wrap: wrap; border-radius: var(--edify-radius-md); }
   .tt-filter-panel { padding: 0.7rem; }
   .tt-filter-grid { grid-template-columns: 1fr; }
@@ -5290,7 +5292,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 /* The month column is one card; its three readings are sections. */
 .fund-side.card { padding: 0; }
-.fund-side__section { display: grid; gap: 0.625rem; align-content: start; padding: 1rem 1.125rem; }
+.fund-side__section { display: grid; gap: 0.625rem; align-content: start; padding: 1rem var(--edify-card-inset); }
 .fund-side__section + .fund-side__section { border-block-start: 1px solid var(--edify-border); }
 /* The detail states the total once, in its header; the ledger's own band is redundant here. */
 .fund-detail .budget-ledger-summary { display: none; }
@@ -5427,7 +5429,10 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   min-inline-size: 0;
   flex-direction: column;
   gap: 0.875rem;
-  padding: 1rem 1.25rem;
+  /* The band-to-table rule cancels this gap by name (consistency.css, ONE
+     CONTENT LINE). */
+  --edify-card-gap: 0.875rem;
+  padding: 1rem var(--edify-card-inset);
 }
 
 .rpl-card__header {
@@ -6120,7 +6125,8 @@ button.rpl-row-link {
   min-inline-size: 0;
   flex-direction: column;
   gap: 0.875rem;
-  padding: 1rem 1.25rem;
+  --edify-card-gap: 0.875rem;
+  padding: 1rem var(--edify-card-inset);
 }
 
 .hrd-card__header {

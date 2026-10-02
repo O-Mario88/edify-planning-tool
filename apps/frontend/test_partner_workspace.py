@@ -119,16 +119,27 @@ class PartnerWorkspaceTests(TestCase):
         # added partner-delivered activities with no PartnerAssignment row as a
         # second source — `activity_services.create` writes them, the old
         # directory listed them, and oversight alone would have lost them.
-        # Since 2026-09-23 the page lists work in three tables rather than
-        # per-partner groups: activities, assigned schools, assigned clusters.
-        self.assertContains(response, "In School Training")
+        # Since 2026-09-23 the page lists work in tables rather than
+        # per-partner groups, and since 2026-10-02 each kind of work is a tab
+        # ("Activities (visits, trainings - list of clusters the partners will
+        # facilitate) should be grouped in tabs"): the page opens on the
+        # schools assigned, and the training is one tab away with its count
+        # on the strip.
+        self.assertContains(response, "data-partner-work-tabs")
+        trainings = self.client.get(
+            f"/partner-oversight/?fy={self.fy}&partner={self.partner.id}"
+            "&work=trainings"
+        )
+        self.assertContains(trainings, "In School Training")
+        self.assertContains(trainings, "Trainings (1)")
         # The per-partner "Scheduled & Delivering" / "Yet to Schedule" lists
         # became team tables (2026-09-23); the counts they carried are the
         # KPI strip's, asserted here as the numbers they are.
-        self.assertContains(response, "Partner activities (1)")
         self.assertContains(response, "Partner Work Scheduled: 1.")
-        # The handover, from the live PartnerAssignment row.
-        self.assertContains(response, "School Visit Ssa Collection")
+        # The handover, from the live PartnerAssignment row, by the purpose
+        # it was handed over for. (Its activity type was an option of the
+        # Activity drop-down the work tabs replaced.)
+        self.assertContains(response, "SSA Support")
         self.assertContains(response, "Handovers Yet To Schedule: 1.")
         self.assertContains(response, "Schools assigned (1)")
         # Partner Monitoring counts the same two rows by stage in its status
@@ -159,6 +170,26 @@ class PartnerWorkspaceTests(TestCase):
 
         self.assertContains(response, "Grace Example")
         self.assertContains(response, "+256 700 000 001")
+
+    def test_a_pending_hand_over_that_names_a_focus_does_not_break_the_page(self):
+        """The workspace asked a hand-over for ``get_focus_intervention_display``,
+        which a plain column does not have: the page was a server error for
+        every reader it is not redirected for (HR, the Project Coordinator,
+        the Partner itself) as soon as one waiting hand-over named a focus."""
+        PartnerAssignment.objects.filter(partner=self.partner).update(
+            focus_intervention="leadership"
+        )
+        hr = User.objects.create(
+            email="hr-partners@edify.org",
+            name="HR Reader",
+            roles=[EdifyRole.HUMAN_RESOURCES.value],
+            active_role=EdifyRole.HUMAN_RESOURCES.value,
+            is_active=True,
+        )
+        self.client.force_login(hr)
+        response = self.client.get(f"/partners?fy={self.fy}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Leadership")
 
     def test_a_partner_organisation_still_gets_the_workspace_itself(self):
         """The redirect is conditional: Partner Oversight does not admit

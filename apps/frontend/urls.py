@@ -677,6 +677,12 @@ urlpatterns = [
         oversight_views.planning_monitor_view,
         name="planning_monitor",
     ),
+    # A Programme Lead's "Send to <CCEO>" from the monitor's school list.
+    path(
+        "planning-monitor/send",
+        oversight_views.planning_monitor_send_view,
+        name="planning_monitor_send",
+    ),
     # Country Execution & Completion Oversight — the second Country Oversight
     # tab (/country-planning-oversight/?view=execution) and its drill-downs.
     path(

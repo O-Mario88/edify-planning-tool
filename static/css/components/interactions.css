@@ -259,6 +259,10 @@ main :is(
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface) !important;
   border: none !important;
+  /* One row at every width. A rail written with a wrapping utility broke
+     into two rows on a phone, a divider leading the second; kept on one row
+     it overflows, and an overflowing rail folds into "More" or scrolls. */
+  flex-wrap: nowrap;
 }
 
 :is(.theme-blue, [data-theme="blue"]) main :is(
@@ -321,9 +325,15 @@ main :is(
   .edify-section-nav__cluster,
   .edify-section-nav__link
 ) {
-  block-size: calc(2rem - 2px) !important;
-  min-block-size: calc(2rem - 2px) !important;
-  max-block-size: calc(2rem - 2px) !important;
+  /* A segment is exactly as tall as the track it divides. The rail has no
+     border in any theme (the reset further down removes the blue and dark
+     ones), and segments sized for one — 2rem less 2px — sat 2px short of the
+     track: the selected fill stopped above the rail's foot and its label
+     read as pushed up (owner, 2026-10-02: "not properly placed on the pill
+     and pushed the labels up not center"). */
+  block-size: 2rem !important;
+  min-block-size: 2rem !important;
+  max-block-size: 2rem !important;
 }
 
 main :is(
@@ -944,6 +954,39 @@ main :is(a, button):is(.btn, [class*="btn-"], .edify-primary-solid, [class*="rou
   }
 }
 
+/* ─── RAILS THAT SCROLL SIDEWAYS (owner, 2026-10-02) ────────────────────
+   "the tabs can be scrolled sideways to reveal the next tab when the tab on
+   the edge is clicked for long lists". The entity strips — people, Partners,
+   projects — keep every tab in one row and scroll; micro-ux.js leaves them
+   out of the "More" fold, marks the edge that has more behind it so the
+   strip fades there, and brings a clicked edge tab and the one after it into
+   view. No scrollbar is drawn: the fade and the cut-off tab say there is
+   more, and a wheel, a swipe, the arrow keys and a click all move it. */
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"]) {
+  max-inline-size: 100%;
+  /* The rail contract hides a wide rail's overflow with !important (from
+     64rem); this is the one place that has to answer it in kind. */
+  overflow-x: auto !important;
+  --edify-rail-fade: 2.5rem;
+}
+/* The rest out-ranks the page's own rail rules by naming the rail twice over
+   (`:not(#…)` matches every rail and adds an id's weight), not by priority. */
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"]):not(#edify-no-rail) {
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"]):not(#edify-no-rail)::-webkit-scrollbar { display: none; }
+/* One mask, whose two ends are opaque until the rail says there is more
+   behind them. */
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"]):is([data-rail-more-start], [data-rail-more-end]) {
+  --rail-start: #000;
+  --rail-end: #000;
+  -webkit-mask-image: linear-gradient(to right, var(--rail-start), #000 var(--edify-rail-fade), #000 calc(100% - var(--edify-rail-fade)), var(--rail-end));
+  mask-image: linear-gradient(to right, var(--rail-start), #000 var(--edify-rail-fade), #000 calc(100% - var(--edify-rail-fade)), var(--rail-end));
+}
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"])[data-rail-more-start] { --rail-start: transparent; }
+main :is(.oversight-entity-tabs, [data-rail-overflow="scroll"])[data-rail-more-end] { --rail-end: transparent; }
+
 /* ─── THE RAIL'S "MORE" MENU (2026-09-06) ───────────────────────────────
    A rail is one row. The tabs that do not fit sit in a menu behind a "More"
    segment at the rail's end — the priority navigation pattern — so nothing
@@ -962,7 +1005,11 @@ main .edify-rail-more__toggle {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  block-size: calc(2rem - 2px);
+  block-size: 2rem;
+  /* More is a segment of the rail, as tall as the tabs beside it. On a
+     tablet the touch floor for a summary (36px) made it taller than the
+     tabs, the rail grew to hold it, and the tabs sat 4px short of its foot. */
+  min-block-size: 2rem !important;
   padding-inline: 0.875rem;
   border-inline-start: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
@@ -1075,10 +1122,13 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
   border-end-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
 }
+/* The rail's last segment takes the end curve — unless tabs have folded into
+   "More", which is then the rail's end: a selected tab curved on the side
+   that More sits on read as a pill beside a button. */
 main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
   .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs,
   .tt-segmented, .oversight-entity-tabs, .edify-section-nav__clusters,
-  .edify-section-nav__inner) > :nth-last-child(1 of :is(a, button, [role="tab"], [data-edify-tab])) {
+  .edify-section-nav__inner):not(:has(> .edify-rail-more:not([hidden]))) > :nth-last-child(1 of :is(a, button, [role="tab"], [data-edify-tab])) {
   border-start-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
   border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
 }
@@ -1704,7 +1754,10 @@ main .edify-filter-row > label.edify-filter-row__field {
 @media (max-width: 47.999rem) {
   main :is([data-edify-fill], [data-edify-fill-path]):is([data-edify-fill], [data-edify-fill-path]):nth-child(n) {
     max-inline-size: none !important;
-    margin-inline: 0 !important;
+    /* A row that fills its line fills it up to its card's content line: a tab
+       strip inside a card names the inset (consistency.css, ONE CONTENT
+       LINE); everything else has none. */
+    margin-inline: var(--edify-fill-inset, 0px) !important;
     align-self: stretch !important;
     justify-self: stretch !important;
   }
@@ -1715,7 +1768,7 @@ main .edify-filter-row > label.edify-filter-row__field {
   }
 
   main :is([data-edify-fill="block"], [data-edify-fill-path="block"]):is([data-edify-fill], [data-edify-fill-path]):nth-child(n) {
-    inline-size: 100% !important;
+    inline-size: calc(100% - 2 * var(--edify-fill-inset, 0px)) !important;
   }
 
   main [data-edify-fill][data-edify-fill] > :nth-child(n) {
@@ -1883,7 +1936,7 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
   align-items: flex-start !important;
   gap: 0.5rem !important;
   min-block-size: 2.25rem !important;
-  padding: 0.25rem 0.75rem !important;
+  padding: 0.25rem var(--edify-card-inset) !important;
 }
 
 :root main .school-directory-row.school-directory-row.school-record-row .school-record-row__select {

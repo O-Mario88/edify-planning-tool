@@ -1326,6 +1326,8 @@ def _describe(dataset, records) -> list[dict]:
                     r.activity_type, r.activity_type.replace("_", " ").title()
                 ),
                 "where": schools.get(r.school_id) or clusters.get(r.cluster_id) or "—",
+                # The school's own id, resolved to its School ID on the page.
+                "school_ref": r.school_id or "",
                 "owner": info.name if info else NO_OWNER_LABEL,
                 "lead": info.lead_name if info else NO_LEAD_LABEL,
                 "channel": "Partner" if r.channel == "partner" else "Staff",

@@ -1152,6 +1152,16 @@ def _assert_schedule_entitlement(
     """
     if not school:
         return
+    # Work of a project no SSA intervention measures (owner, 2026-10-02:
+    # "Alumni ... can be assigned to any school but it should not restrict
+    # another project from being assigned to that school ... because it is
+    # not measured via ssa") is outside the school's SSA-measured allowance:
+    # it is not the client school's support visit, not one of the Core
+    # package's four, and no school type refuses it.
+    from apps.projects.models import is_outside_ssa
+
+    if is_outside_ssa(data.get("projectId")):
+        return
     # A Champion school is planned for a donor or story visit only, by any
     # role and from any page (owner, 2026-09-25; Core Graduate joined the
     # client rule on 2026-09-28).
@@ -2552,6 +2562,9 @@ def _create(
                 school_need_=ssa_school_need,
                 cluster_need_=ssa_cluster_need,
                 collects_ssa=is_ssa_activity,
+                # Work under a project no SSA intervention measures (Alumni)
+                # targets none: the school's weakest score is not its focus.
+                outside_ssa=bool(project is not None and not project.measured_by_ssa),
             )
             if ssa_focus:
                 focus = ssa_focus
@@ -3005,6 +3018,9 @@ def _create(
                     is_ssa_activity
                     or p_type in INTERVENTION_FREE_PURPOSES
                     or source_without_focus
+                    # A project no SSA intervention measures (Alumni): its
+                    # work moves none, and is not refused for naming none.
+                    or (project is not None and not project.measured_by_ssa)
                 ),
             )
             if training_course is not None:
@@ -3064,6 +3080,9 @@ def _create(
                     school_need_=ssa_school_need,
                     cluster_need_=ssa_cluster_need,
                     collects_ssa=is_ssa_activity,
+                    outside_ssa=bool(
+                        project is not None and not project.measured_by_ssa
+                    ),
                 ),
             )
         # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
@@ -5256,7 +5275,10 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             if catalogue_item
             else (pa.expected_activity_type or "core_visit")
         )
-        if pa.school_id:
+        # The hand-over of a project no SSA intervention measures (Alumni;
+        # owner, 2026-10-02) is outside the school's allowance: the partner
+        # dates it whatever the school's visits and package already hold.
+        if pa.school_id and not pa.outside_ssa:
             from apps.partners.services import assert_partner_activity_allowance
 
             assert_partner_activity_allowance(
@@ -5306,6 +5328,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 exclude_activity_id=pa.scheduled_activity_id,
                 exclude_assignment_id=pa.id,
             )
+        if pa.school_id:
             from apps.activities.duplicate_visits import (
                 assert_not_duplicate_client_visit,
             )
@@ -5411,6 +5434,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 school_need_=partner_school_need,
                 cluster_need_=partner_cluster_need,
                 collects_ssa=activity.ssa_collection_expected,
+                outside_ssa=bool(pa.outside_ssa),
             )
             if partner_focus:
                 partner_focus_source = "ssa_default"
@@ -5486,6 +5510,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 school_need_=partner_school_need,
                 cluster_need_=partner_cluster_need,
                 collects_ssa=activity.ssa_collection_expected,
+                outside_ssa=bool(pa.outside_ssa),
             ),
         )
 

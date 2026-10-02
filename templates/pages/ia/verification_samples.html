@@ -70,6 +70,7 @@ written, and is the row's only action, so its form stays in the cell.
         {% if samples %}
         <thead>
           <tr>
+            <th scope="col">School ID</th>
             <th scope="col">School</th>
             <th scope="col">Record</th>
             <th scope="col">Original verifier</th>
@@ -83,7 +84,8 @@ written, and is the row's only action, so its form stays in the cell.
         <tbody>
           {% for s in samples %}
           <tr>
-            <th scope="row" data-record-title><span>{% if s.record_url %}<a href="{{ s.record_url }}" class="edify-primary-text">{% school_identity s.school s.school_code %}</a>{% else %}{% school_identity s.school s.school_code %}{% endif %}</span></th>
+            <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if s.school_code %}{% school_code s.school_code %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <th scope="row" data-record-title><span>{% if s.record_url %}<a href="{{ s.record_url }}" class="edify-primary-text">{{ s.school }}</a>{% else %}{{ s.school }}{% endif %}</span></th>
             <td data-label="Record">{{ s.subject }}</td>
             <td data-label="Original verifier">{{ s.original_verifier }}</td>
             <td data-label="Drawn" class="tabular-nums">{{ s.sampled_at|date:"d M Y" }}</td>

@@ -253,14 +253,30 @@ def _plan_period(period: dict) -> dict:
     for FY2026 left out everything their CCEOs had dated from 1 October while
     My Plan listed it. The whole operational year now reads forward through
     the planning horizon (``fy_policy.planning_horizon``), as Cluster, Core
-    School and Partner oversight already do. A month, a quarter or a week is
-    a slice of the chosen year and stays in it.
+    School and Partner oversight already do. A month or a quarter is a slice
+    of the chosen year and stays in it.
+
+    A week is seven dated days, whichever year each falls in. The week of 28
+    September 2026 holds three days of FY2026 and four of FY2027, and read
+    against the page year alone it showed a Programme Lead five of the seven
+    plans their team had in it (owner, 2026-10-02). It reads the years its
+    own days belong to.
     """
     from apps.planning.fy_policy import planning_horizon
 
     service = _service_period(period)
     if period["period"] == "fy":
         service["fys"] = planning_horizon(period["fy"])
+    elif period["period"] == "week" and period["date_start"] and period["date_end"]:
+        last_day = period["date_end"] - timedelta(days=1)
+        years = {
+            get_operational_fy(period["date_start"]),
+            get_operational_fy(last_day),
+        }
+        if len(years) > 1:
+            service["fys"] = tuple(sorted(years))
+        else:
+            service["fy"] = years.pop()
     return service
 
 
@@ -268,6 +284,8 @@ def _plan_period_label(period: dict) -> str:
     """The period label for a plan read: "FY 2026–2027" when it reads ahead."""
     from apps.planning.fy_policy import horizon_label
 
+    if period["period"] != "fy":
+        return period["period_label"]
     fys = _plan_period(period).get("fys")
     return horizon_label(fys) if fys else period["period_label"]
 
@@ -613,13 +631,23 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         gap=gap or None,
         officer_id=officer or None,
     )
+    _mark_gap_follow_ups(request.user, monitor["gap_schools"], gap=gap, fy=fy)
     monitor_url = f"{base_url}?view=monitor&fy={fy}"
+    # Each person's count opens the rows behind it (owner, 2026-10-02: "both
+    # the counts and details of their CCEO"): their planned visits on the
+    # Team Plan — a Lead's reader lands on that person's tab, the country's
+    # on their Lead's — and the schools they handed over on Partner
+    # Monitoring.
     return {
         "fy": fy,
+        "plans_url": f"{TEAM_OVERSIGHT_PATH}?period=fy&fy={fy}",
+        "plans_by_lead": oversight.resolve_oversight_scope(request.user).groups_by_lead,
+        "partner_url": f"{PARTNER_OVERSIGHT_PATH}?period=fy&fy={fy}",
         "monitor": monitor,
         "monitor_totals": monitor["totals"],
         "monitor_url": monitor_url,
         "monitor_gaps": GAPS,
+        "monitor_can_send": bool(gap) and may_delegate(request.user, country=False),
         "monitor_gap": gap,
         "monitor_gap_label": GAP_LABELS.get(gap, ""),
         "monitor_officer": officer,
@@ -628,6 +656,142 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "pl_visits_target": PL_VISITS_TARGET,
         "kpis": _monitor_kpis(monitor["totals"], monitor_url=monitor_url),
     }
+
+
+#: The school action a Programme Lead sends for each gap the monitor lists
+#: (apps.planning.action_service.PLANNING_GAP_KEYS): the ask a Country
+#: Director's follow-up already sends through a Lead, made by the Lead from
+#: the list itself. Each closes when the school's plan closes the gap.
+MONITOR_GAP_ACTIONS = {
+    "no_both": "planning_school_gap",
+    "no_visit": "planning_school_gap",
+    "no_training": "planning_training_gap",
+    "not_clustered": "planning_cluster_gap",
+    "no_partner": "planning_partner_gap",
+}
+
+
+def _gap_condition_key(action_type: str, school_id: str, fy: str) -> str:
+    return f"planning_gap|{action_type}|school|{school_id}|{fy}"
+
+
+def _mark_gap_follow_ups(user, schools, *, gap: str, fy: str) -> None:
+    """Say which of the listed schools a Programme Lead may send their CCEO,
+    and which they already have (owner, 2026-10-02: the Lead reads a CCEO's
+    schools and plans and "can send CCEO notification using (Send to
+    {CCEO}) button").
+
+    A school is sendable when one of the Lead's officers holds it: the Lead's
+    own schools are theirs to plan, and nobody is sent a school no one holds.
+    One query for the asks already open.
+    """
+    action_type = MONITOR_GAP_ACTIONS.get(gap)
+    if not schools or not action_type or not may_delegate(user, country=False):
+        return
+    from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+    scope = oversight.resolve_oversight_scope(user)
+    keys = {
+        _gap_condition_key(action_type, school.id, fy): school for school in schools
+    }
+    sent = set(
+        TeamAction.objects.filter(
+            condition_key__in=list(keys), state__in=ACTIVE_STATES
+        ).values_list("condition_key", flat=True)
+    )
+    visit_gap = gap in ("no_visit", "no_both")
+    for key, school in keys.items():
+        # A school in a partner's hands is the partner's to date (owner,
+        # 2026-10-02): the officer is not asked to plan its visit.
+        school.can_send = school.officer_id in scope.supervised_ids and not (
+            visit_gap and school.has_partner
+        )
+        school.sent = key in sent
+        school.send_name = (school.officer_name or "").split(" ")[0]
+
+
+@require_POST
+@require_page_permission("planning_monitor")
+def planning_monitor_send_view(request):
+    """ "Send to <CCEO>" from the Planning Monitor's school list.
+
+    A Programme Lead reads their officers' schools and plans and changes none
+    of them (owner, 2026-10-02); what they do about a school nobody has
+    planned for, or that should be with a partner and is not, is ask the
+    officer who holds it. The gap is read again from the monitor before
+    anything is sent, so a stale row cannot raise an ask about a school that
+    has since been planned, and the ask goes to the school's holder, who must
+    be one of the Lead's own officers.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.planning.action_service import send_action
+    from apps.planning.planning_monitor import planning_monitor
+    from apps.schools.models import School
+
+    def refuse(message: str):
+        return _action_response(
+            request, message, ok=False, fallback=PLANNING_MONITOR_PATH
+        )
+
+    if not may_delegate(request.user, country=False):
+        return refuse(
+            "Sending from here belongs to the Programme Lead who supervises "
+            "the officer. You can read this list but not send from it."
+        )
+    gap = (request.POST.get("gap") or "").strip()
+    school_id = (request.POST.get("school_id") or "").strip()
+    fy = (request.POST.get("fy") or "").strip() or get_operational_fy()
+    note = (request.POST.get("note") or "").strip()
+    action_type = MONITOR_GAP_ACTIONS.get(gap)
+    if not action_type or not school_id:
+        return refuse("Choose a school from the list to send.")
+
+    monitor = planning_monitor(request.user, fy=fy, gap=gap)
+    state = next((s for s in monitor["gap_schools"] if s.id == school_id), None)
+    if state is None:
+        return refuse(
+            "That school no longer has this gap, so there is nothing to send."
+        )
+    scope = oversight.resolve_oversight_scope(request.user)
+    if state.officer_id not in scope.supervised_ids:
+        return refuse(
+            "That school is not held by one of your officers, so there is "
+            "nobody on your team to send it to."
+        )
+    if gap in ("no_visit", "no_both") and state.has_partner:
+        return refuse(
+            "That school is with a partner, who sets the visit's date. Follow "
+            "it on Partner Monitoring."
+        )
+    recipient = (
+        StaffProfile.objects.filter(id=state.officer_id, deleted_at__isnull=True)
+        .select_related("user")
+        .first()
+    )
+    school = School.objects.filter(id=school_id, deleted_at__isnull=True).first()
+    if recipient is None or school is None:
+        return refuse("That school's officer could not be found.")
+    try:
+        action = send_action(
+            sender=request.user,
+            school=school,
+            issue={
+                "key": action_type,
+                "condition_key": _gap_condition_key(action_type, school.id, fy),
+                "severity": "high",
+                "detail": "",
+            },
+            fy=fy,
+            recipient_staff=recipient,
+            note=note,
+        )
+    except ActionError as exc:
+        return refuse(str(exc))
+    return _action_response(
+        request,
+        f"Sent to {_recipient_name(action)}. Tracked under Actions Sent.",
+        fallback=PLANNING_MONITOR_PATH,
+    )
 
 
 _MONITOR_TEMPLATES = {
@@ -811,8 +975,11 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
         render_kpi_item(
             "monitor_partner_share",
             MetricValue.measured(totals.partner_assigned_schools),
-            helper=f"{totals.partner_scheduled:,} partner activities scheduled · "
+            helper=f"{totals.partner_schools:,} of {totals.partner_needed:,} schools "
+            f"beyond staff reach · {totals.partner_remaining:,} still to assign · "
+            f"{totals.partner_scheduled:,} partner activities scheduled · "
             f"{totals.partner_awaiting:,} awaiting a date",
+            tone="warning" if totals.partner_remaining else "neutral",
             icon="users",
             drilldown_url=f"{monitor_url}&gap=no_partner",
         ),
@@ -1806,18 +1973,23 @@ def _team_roster(user, selected: str) -> list[dict] | None:
 
 
 def _team_members(scope) -> list[dict]:
-    """The supervised staff, for the team-member filter."""
+    """The supervised staff, one tab each.
+
+    Everyone the lens reads (``scope.supervised_ids``), whatever role their
+    account is switched to today (owner, 2026-10-02: "some activities are
+    seen on the CCEO side but hidden from the PL"). The tabs used to keep
+    only accounts whose role IN USE was CCEO, so an officer working in a
+    second role had their plan in Whole team and no tab of their own.
+    """
     if scope.is_country or not scope.supervised_ids:
         return []
     from apps.accounts.models import StaffProfile
-    from apps.core.rbac import EdifyRole
 
     from django.db.models import Q
 
     rows = (
         StaffProfile.objects.filter(
-            Q(id__in=scope.supervised_ids) | Q(user_id__in=scope.supervised_ids),
-            user__active_role=EdifyRole.CCEO.value,
+            Q(id__in=scope.supervised_ids) | Q(user_id__in=scope.supervised_ids)
         )
         .select_related("user")
         .distinct()
@@ -2643,6 +2815,10 @@ def partner_oversight_view(request):
     _lock_project_work(request.user, items)
     _prepare_core_actions(request.user, items)
     summary = partner_oversight.summarize(items)
+    all_tables = partner_oversight.workspace_tables(items)
+    work_tabs, work = partner_oversight.work_tabs(
+        all_tables, trainings, (request.GET.get("work") or "").strip()
+    )
     partner_group = None
     if active_partner:
         partner_group = {"id": partner_id, "name": active_partner["label"]}
@@ -2655,9 +2831,6 @@ def partner_oversight_view(request):
         "program_lead_tabs": program_lead_tabs,
         "partner": partner_id,
         "partner_tabs": partner_tabs,
-        # Many Partners get a picker over the tabs rather than a tab row that
-        # runs off the page.
-        "partner_search": len(partner_tabs) > 6,
         "active_partner": partner_group,
         "member_tabs": member_tabs,
         "member": member,
@@ -2683,8 +2856,14 @@ def partner_oversight_view(request):
                 "returned",
             )
         ],
-        "workspace_tables": partner_oversight.workspace_tables(items),
-        "facilitated_trainings": trainings,
+        # One kind of work a tab (owner, 2026-10-02): the tables of the open
+        # tab alone, with every tab's count on the strip.
+        "work_tabs": work_tabs,
+        "work": work,
+        "workspace_tables": [t for t in all_tables if t["tab"] == work],
+        "facilitated_trainings": (
+            trainings if work == partner_oversight.TAB_CLUSTERS else []
+        ),
         # The years the page read, said beside the tables (FY 2026–2027 in
         # September), so a row dated next October is not a surprise.
         "plan_period_label": horizon_label(plan_fys),

@@ -15,6 +15,7 @@ from apps.activities.models import Activity
 from apps.core.clock import local_day
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.notifications.models import Notification
+from apps.projects.models import is_outside_ssa
 
 TERMINAL_OR_COMPLETED_STATUSES = frozenset(
     {
@@ -425,7 +426,12 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
             ),
             "purpose": (a.activity_purpose_text or a.get_activity_type_display()),
             "focus_intervention": (
-                a.get_focus_intervention_display() if a.focus_intervention else "—"
+                a.get_focus_intervention_display()
+                if a.focus_intervention
+                # Work under a project no SSA intervention measures (Alumni).
+                else "General"
+                if is_outside_ssa(a.project_id)
+                else "—"
             ),
             "budget_total": minimum_amounts.get(a.id, 0),
             "budget_status": "Budget Planned"

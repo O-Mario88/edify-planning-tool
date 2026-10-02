@@ -35,7 +35,9 @@ and every gap count opens the list of the schools behind it.
             <th scope="col" class="px-3 py-2 text-right">Visits planned</th>
             <th scope="col" class="px-3 py-2 text-right">Core visits</th>
             <th scope="col" class="px-3 py-2 text-right">Client visits</th>
-            <th scope="col" class="px-3 py-2 text-right">Partner<br>schools</th>
+            <th scope="col" class="px-3 py-2 text-right" title="Client schools beyond staff reach that are with a partner, of those that should be">Partner<br>schools</th>
+            <th scope="col" class="px-3 py-2 text-right">Core partner<br>visits</th>
+            <th scope="col" class="px-3 py-2 text-right">Core partner<br>trainings</th>
             <th scope="col" class="px-3 py-2 text-right">Partner<br>activities</th>
             <th scope="col" class="px-3 py-2 text-right">Schools visited</th>
             <th scope="col" class="px-3 py-2 text-right">Training planned</th>
@@ -49,7 +51,7 @@ and every gap count opens the list of the schools behind it.
         <tbody>
           {% for lead in monitor.leads %}
           <tr class="edify-group-head">
-            <th colspan="14" scope="colgroup">
+            <th colspan="16" scope="colgroup">
               <span class="edify-group-head__label">{{ lead.name }}</span>
               <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
             </th>
@@ -79,6 +81,7 @@ and every gap count opens the list of the schools behind it.
     {% slot footer %}{% include "components/table_pager.html" with pager=gap_pager param="gap_page" pagination_label=monitor_gap_label %}{% endslot %}
         <thead>
           <tr>
+            <th scope="col" class="px-3 py-2">School ID</th>
             <th scope="col" class="px-3 py-2">School</th>
             <th scope="col" class="px-3 py-2">Type</th>
             <th scope="col" class="px-3 py-2">Staff</th>
@@ -87,12 +90,14 @@ and every gap count opens the list of the schools behind it.
             <th scope="col" class="px-3 py-2">Visit</th>
             <th scope="col" class="px-3 py-2">Training</th>
             <th scope="col" class="px-3 py-2">Project</th>
+            {% if monitor_can_send %}<th scope="col" class="px-3 py-2">Follow up</th>{% endif %}
           </tr>
         </thead>
         <tbody>
           {% for school in gap_pager.rows %}
           <tr>
-            <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{% school_identity school.name school.code %}</a></td>
+            <td class="px-3 py-2 whitespace-nowrap tabular-nums" data-label="School ID">{% if school.code %}{% school_code school.code %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{{ school.name }}</a></td>
             <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% elif school.school_type == "core_graduate" %}Core Graduate{% else %}Client{% endif %}</td>
             <td class="px-3 py-2" data-label="Staff">{{ school.officer_name }}</td>
             <td class="px-3 py-2" data-label="District">{{ school.district|default:"—" }}</td>
@@ -100,9 +105,29 @@ and every gap count opens the list of the schools behind it.
             <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
             <td class="px-3 py-2" data-label="Training">{% if school.training_done %}<span class="edify-status-text" data-edify-tone="success">Trained</span>{% elif school.group_training %}<span class="edify-status-text" data-edify-tone="info">Group training</span>{% elif school.meeting %}<span class="edify-status-text" data-edify-tone="info">Cluster meeting</span>{% elif school.in_school_training %}<span class="edify-status-text" data-edify-tone="info">In-school</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
             <td class="px-3 py-2" data-label="Project">{% if school.in_project %}Yes{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+            {% if monitor_can_send %}
+            <td class="px-3 py-2" data-label="Follow up">
+              {% comment %}The Lead reads the officer's school and changes
+              nothing; this asks the officer who holds it (owner,
+              2026-10-02). It stays "Sent" until the plan closes the gap.{% endcomment %}
+              {% if school.sent %}
+              <span class="pill pill-success" data-monitor-sent>Sent to {{ school.send_name }}</span>
+              {% elif school.can_send %}
+              <button type="button"
+                      hx-post="/planning-monitor/send"
+                      hx-vals='{"school_id": "{{ school.id }}", "gap": "{{ monitor_gap }}", "fy": "{{ fy }}"}'
+                      hx-swap="outerHTML"
+                      class="btn btn-secondary h-8"
+                      title="Ask {{ school.officer_name }} to plan for {{ school.name }}: {{ monitor_gap_label|lower }}"
+                      data-monitor-send>Send to {{ school.send_name }}</button>
+              {% else %}
+              <span class="edify-text-muted">—</span>
+              {% endif %}
+            </td>
+            {% endif %}
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
+          <tr><td colspan="{% if monitor_can_send %}10{% else %}9{% endif %}" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
   {% enddata_table %}

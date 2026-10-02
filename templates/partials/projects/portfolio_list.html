@@ -1,22 +1,32 @@
-{% load table_pagination %}
 {% comment %}The HTMX swap target (#project-list) for the projects filter form.
    Rendered by pages/projects/index.html and the HX-Target branch.
 
-   One card per project (owner, 2026-09-16), each opening on the schools that
-   belong to it. The comparison table that used to follow the cards listed the
-   same projects with the same columns a second time (owner, 2026-09-30: "Show
-   each dataset once"); what only it carried — the target interventions and
-   the project's actions — is on each card now. A page of cards at a time,
-   under the pager the table had.{% endcomment %}
+   One project a tab (owner, 2026-10-02: "all projects should be organized in
+   tabs not below each project table. It should be easy for the users to
+   toggle between tabs"). The projects used to be a column of cards, each
+   opening its schools underneath itself, a page of cards at a time. The strip
+   names every project with its number of schools; the open project's card
+   sits under it, already open on its schools, and a tab swaps this list in
+   place so the page does not reload.{% endcomment %}
 <div id="project-list" class="space-y-4">
   {% if portfolio %}
-  {% paginate portfolio "portfolio_page" as portfolio_pager %}
-  <section class="space-y-3" aria-label="Projects and their schools">
-    {% for row in portfolio_pager.rows %}
-      {% include "partials/projects/project_card.html" %}
+  <nav class="oversight-entity-tabs" aria-label="Projects" data-project-tabs>
+    {% for row in portfolio %}
+    <a class="oversight-entity-tabs__link{% if row.id == open_project %} is-active{% endif %}"
+       href="?{{ project_tab_query }}tab={{ row.id }}"
+       hx-get="?{{ project_tab_query }}tab={{ row.id }}"
+       hx-target="#project-list" hx-swap="outerHTML" hx-push-url="true"
+       {% if row.id == open_project %}aria-current="page"{% endif %}>
+      <span>{{ row.name }}</span>
+      <span class="oversight-entity-tabs__count">{{ row.schools|default:"0" }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+  <section class="space-y-3" aria-label="The open project and its schools">
+    {% for row in open_portfolio %}
+      {% include "partials/projects/project_card.html" with tabbed=True %}
     {% endfor %}
   </section>
-  {% include "components/table_pager.html" with pager=portfolio_pager param="portfolio_page" pagination_label="Projects" %}
   {% else %}
   {% include "components/empty_state.html" with message="No project matches these filters." line="true" %}
   {% endif %}

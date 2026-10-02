@@ -1,4 +1,4 @@
-{% load table_pagination frontend_filters row_actions %}
+{% load table_pagination frontend_filters row_actions school_identity %}
 {% comment %}
 Trainings (Programme Rollout, owner 2026-09-13): the year's team trainings by
 SSA intervention (Christlike Behaviour and the Word of God first), by governed
@@ -180,6 +180,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
             <tr>
               <th scope="col">Date</th>
               <th scope="col">Training</th>
+              <th scope="col">School ID</th>
               <th scope="col">School or cluster</th>
               <th scope="col">Delivered by</th>
               <th scope="col">Intervention</th>
@@ -192,6 +193,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
             <tr>
               <td data-label="Date">{{ row.date|date:"j M" }}</td>
               <th scope="row" data-record-title><span>{{ row.training }}</span></th>
+              <td data-label="School ID">{% if row.school_ref %}{% school_code row.school_ref %}{% else %}—{% endif %}</td>
               <td data-label="School or cluster">{{ row.place }}</td>
               <td data-label="Delivered by">{{ row.delivered_by }}{% if row.delivery == "Partner" %} <span class="rpl-muted">(partner)</span>{% endif %}</td>
               <td data-label="Intervention">{{ row.abbr }}</td>
@@ -200,7 +202,7 @@ apps.analytics.programme_rollout_service.trainings_rollout.
             </tr>
             {% empty %}
             <tr>
-              <td class="rpl-table__empty" colspan="7">
+              <td class="rpl-table__empty" colspan="8">
                 {% include "components/empty_state.html" with message="No team training is scheduled in the next 30 days." hint="Officers schedule trainings from Planning; partner trainings appear once the partner sets a date." compact="true" %}
               </td>
             </tr>

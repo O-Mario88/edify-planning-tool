@@ -149,6 +149,7 @@ def _staff_directory(owner_ids) -> dict[str, dict]:
     space silently disowns half the portfolio. Both are resolved here, once.
     """
     from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+    from apps.core.role_holding import holds_role
 
     ids = {str(i) for i in owner_ids if i}
     if not ids:
@@ -174,10 +175,7 @@ def _staff_directory(owner_ids) -> dict[str, dict]:
         if link.supervisee_id in leads:
             continue
         supervisor = link.supervisor
-        if (
-            getattr(supervisor.user, "active_role", "")
-            != EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        ):
+        if not holds_role(supervisor.user, EdifyRole.COUNTRY_PROGRAM_LEAD):
             continue
         leads[link.supervisee_id] = (
             supervisor.id,
@@ -188,11 +186,7 @@ def _staff_directory(owner_ids) -> dict[str, dict]:
     for profile in profiles:
         name = (profile.user.name if profile.user_id else "") or profile.id
         lead = leads.get(profile.id)
-        if (
-            not lead
-            and getattr(profile.user, "active_role", "")
-            == EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        ):
+        if not lead and holds_role(profile.user, EdifyRole.COUNTRY_PROGRAM_LEAD):
             # A Programme Lead who holds schools directly heads their own
             # column rather than falling into "No Programme Lead".
             lead = (profile.id, name)

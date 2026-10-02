@@ -38,7 +38,10 @@ class MobileDensityContractTests(SimpleTestCase):
         # The inline padding is unchanged — it was the row HEIGHT that read as
         # large, and narrowing the gutters would have cost legibility for
         # nothing.
-        self.assertIn("padding: 0.3rem 0.875rem !important", css)
+        # The inline padding is the card's one inset since 2026-10-02 (owner:
+        # "fix all the padding on every card so that everything is well
+        # aligned"): a row starts where the tabs and the table over it do.
+        self.assertIn("padding: 0.3rem var(--edify-card-inset) !important", css)
 
     def test_shared_mobile_controls_use_compact_accessible_scale(self):
         """Page actions are 40px on a desktop, 36px on a tablet, 32px on a phone.

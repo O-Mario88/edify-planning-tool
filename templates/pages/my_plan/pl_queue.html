@@ -52,6 +52,7 @@ Open, Verified and Return are one Actions menu rather than three buttons
           <tr>
             <th scope="col">Officer</th>
             <th scope="col">Activity</th>
+            <th scope="col">School ID</th>
             <th scope="col">School or cluster</th>
             <th scope="col">Date</th>
             <th scope="col">Intervention</th>
@@ -67,6 +68,7 @@ Open, Verified and Return are one Actions menu rather than three buttons
           <tr data-review-row="{{ row.id }}">
             <th scope="row" data-record-title><span>{{ row.cceo }}</span></th>
             <td data-label="Activity">{{ row.activity }}</td>
+            <td data-label="School ID">{{ row.school_code|default:"—" }}</td>
             <td data-label="School or cluster">{{ row.where|default:"—" }}{% if row.where_kind == "Cluster" %} <span class="rpl-muted">(cluster)</span>{% endif %}</td>
             <td data-label="Date">{% if row.date %}{{ row.date|date:"j M Y" }}{% else %}—{% endif %}</td>
             <td data-label="Intervention">{% if row.intervention %}<abbr title="{{ row.intervention_label }}">{{ row.intervention }}</abbr>{% else %}—{% endif %}</td>
@@ -88,7 +90,7 @@ Open, Verified and Return are one Actions menu rather than three buttons
           </tr>
           {% empty %}
           <tr>
-            <td class="rpl-table__empty" colspan="10">
+            <td class="rpl-table__empty" colspan="11">
               {% include "components/empty_state.html" with message="Nothing is waiting on you" hint="When an officer you supervise submits completed work, it appears here for your confirmation." compact="true" %}
             </td>
           </tr>

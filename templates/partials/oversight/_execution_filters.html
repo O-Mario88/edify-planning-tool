@@ -3,8 +3,9 @@ The Execution & Completion Monitor's filters. On a page of its own they
 are the workspace's filter row; on the Programme Lead's dashboard
 (monitor_embedded) they sit at the end of the section's one head row,
 beside its name and tabs, as compact controls (owner, 2026-09-30: no second
-row of filters), the year named for what it is, since the page's own year
-sits above it.
+row of filters). The year is not asked again there: the dashboard has one, on
+its title line, and the monitor reads it (owner, 2026-10-02: "make sure the
+PLs dont have repeated filters").
 {% endcomment %}
 <form {% if monitor_embedded %}data-pl-section-tools{% else %}class="edify-filter-bar oversight-portfolio-filters"{% endif %}
       aria-label="Execution monitor filters"
@@ -14,14 +15,18 @@ sits above it.
       hx-trigger="change"
       hx-push-url="true">
   <input type="hidden" name="view" value="execution">
+  {% if monitor_embedded %}
+  <input type="hidden" name="fy" value="{{ fy }}">
+  {% else %}
   <label class="edify-page-header-control">
-    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">{% if monitor_embedded %}Delivery year{% else %}FY{% endif %}</span>
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
     <select name="fy" aria-label="Financial year">
       {% for option in fy_options %}
       <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
       {% endfor %}
     </select>
   </label>
+  {% endif %}
   {% if execution.lead_options|length > 1 %}
   <label class="edify-page-header-control">
     <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>

@@ -2141,23 +2141,11 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
-/* The calendar's four event tabs are compact enough to fit at phone width.
-   Keep them as a four-column segmented control rather than letting the global
-   rail minimums clip the final Holidays tab. */
-@media (max-width: 44rem) {
-  main .calendar-workspace__filters {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    overflow: visible !important;
-  }
-
-  main .calendar-workspace__filters > [role="tab"] {
-    min-inline-size: 0 !important;
-    inline-size: 100%;
-    flex: initial !important;
-    padding-inline: 0.2rem !important;
-  }
-}
+/* The calendar's event tabs are a rail like any other, and on a phone it
+   scrolls sideways (the template marks it data-rail-overflow="scroll"). It
+   was a four-column grid from when there were four tabs: the fifth, Other
+   events, sat alone on a second row and the labels were cut to "All even…"
+   (owner, 2026-10-02: "fix the tab design"). */
 
 @media (max-width: 63.999rem) {
   main .pl-ssa-matrix.edify-mobile-table--fit :is(th, td) {
@@ -2708,7 +2696,8 @@ main [data-mobile-family="directory"] .school-filter-clear {
   align-items: baseline;
   justify-content: space-between;
   gap: .75rem;
-  padding: .5rem .875rem .35rem;
+  /* Inline: the card's one inset, with the rows the group heads. */
+  padding: .5rem var(--edify-card-inset, .875rem) .35rem;
   border-block-end: 1px solid var(--edify-border, #e2e8f0);
   background: color-mix(in srgb, var(--edify-accent, #2563eb) 6%, transparent);
   list-style: none;
@@ -3677,7 +3666,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   flex-direction: column;
   align-items: stretch;
   gap: 0.65rem;
-  padding: 1.1rem 1.25rem;
+  padding: 1.1rem var(--edify-card-inset);
   cursor: pointer;
   transition: background-color var(--edify-transition-fast);
 }
@@ -3766,8 +3755,18 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .cluster-card__details {
   display: grid;
   gap: 1.25rem;
-  padding: 1.25rem;
+  padding: 1.25rem var(--edify-card-inset);
+  /* The card's one inset is paid here (ONE CONTENT LINE): a table further
+     in starts on the same line as the card's title. */
+  --edify-section-inset: 0px;
   border-block-start: 1px solid var(--edify-border);
+}
+/* A table shell opened under the summary runs to the card's edge through
+   that padding, so its band spans the card and its first column starts on
+   the card's line, as a padded card's own table does. */
+.cluster-card__details > .edify-structured-surface {
+  margin-inline: calc(-1 * var(--edify-card-inset));
+  --edify-section-inset: var(--edify-card-inset);
 }
 
 .cluster-card__overview {
@@ -3833,7 +3832,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 @container cluster-card (max-width: 42rem) {
   .cluster-card__summary {
     gap: 0.65rem;
-    padding: 0.875rem;
+    padding: 0.875rem var(--edify-card-inset);
   }
 
   .cluster-card__actions {
@@ -3842,14 +3841,14 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
   .cluster-card__details {
     gap: 1rem;
-    padding: 0.875rem;
+    padding: 0.875rem var(--edify-card-inset);
   }
 }
 
 @container cluster-card (max-width: 30rem) {
   .cluster-card__summary {
     gap: 0.45rem;
-    padding: 0.75rem;
+    padding: 0.75rem var(--edify-card-inset);
   }
 
   .cluster-card__title-row {
@@ -5386,9 +5385,11 @@ main table thead .edify-frozen-cell { z-index: 2; }
     min-block-size: 2rem !important;
     padding-block: 0 !important;
   }
-  /* The leave workspace's panels take the platform card padding. */
+  /* The leave workspace's panels take the platform card padding: the one
+     card inset (design-system.css, ONE CONTENT LINE), which the panel's own
+     bleeding header reads as --pto-panel-padding. */
   main :is(article, section).pto-panel {
-    padding: 1.25rem !important;
+    padding: var(--edify-card-inset) !important;
   }
   /* A rail is one row, never two and never a sideways scroll (owner,
      2026-09-06: "make sure the wraps are removed and use more space"). It

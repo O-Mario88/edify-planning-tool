@@ -68,6 +68,10 @@ def team_members(principal) -> list:
     Direct supervisees (StaffSupervisorAssignment) who hold the CCEO role and
     have not left, never the lead themself. A lead covering an absent
     Programme Lead also leads that lead's officers while the cover is active.
+
+    The role an officer HOLDS decides it, not the one their account is
+    switched to today (apps.core.role_holding): an officer working in a
+    second role is still on the team that follows their plan.
     """
 
     from apps.core.request_cache import memoize
@@ -93,6 +97,7 @@ def _read_team_members(profile_id) -> list:
         TemporaryCoverageAssignment,
     )
     from apps.core.rbac import EdifyRole
+    from apps.core.role_holding import holds_role_q
 
     now = timezone.now()
     covered = TemporaryCoverageAssignment.objects.filter(
@@ -104,8 +109,7 @@ def _read_team_members(profile_id) -> list:
     supervisors = {profile_id}
     supervisors.update(
         StaffProfile.objects.filter(
-            id__in=list(covered),
-            user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD), id__in=list(covered)
         ).values_list("id", flat=True)
     )
     supervisee_ids = StaffSupervisorAssignment.objects.filter(
@@ -113,11 +117,11 @@ def _read_team_members(profile_id) -> list:
     ).values_list("supervisee_id", flat=True)
     return list(
         StaffProfile.objects.filter(
+            holds_role_q(EdifyRole.CCEO),
             id__in=list(supervisee_ids),
             deleted_at__isnull=True,
             user__deleted_at__isnull=True,
             user__is_active=True,
-            user__active_role=EdifyRole.CCEO.value,
         )
         .exclude(id=profile_id)
         .select_related("user")

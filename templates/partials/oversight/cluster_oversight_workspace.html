@@ -88,7 +88,7 @@
       {% if lead.cceo_tabs %}
       <div x-data="tabState('activeOfficer', 'officer-{{ lead.id }}', {% tab_values lead.cceo_tabs %}, '{{ lead.cceo_tabs.0.id }}')" class="space-y-4">
         <div class="oversight-team-selector">
-          <div class="flex flex-wrap items-center justify-between gap-3 pb-2 px-1 border-b edify-border mb-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b edify-border mb-1.5">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Team members under {{ lead.name }} ({{ lead.cceo_tabs|length }})
             </span>

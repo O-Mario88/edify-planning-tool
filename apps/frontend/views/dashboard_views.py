@@ -273,7 +273,6 @@ def _cceo_week(request, user, *, past_due_total: int | None = None) -> dict:
         fy=get_operational_fy(),
         who=(request.GET.get("who") or "").strip(),
         week=request.GET.get("week"),
-        listing=request.GET.get("list") or "",
         solo=True,
         past_due_total=past_due_total,
     )
@@ -333,7 +332,6 @@ def _program_lead_dashboard(request, avatar_initials: str):
             fy=fy,
             who=who,
             week=request.GET.get("week"),
-            listing=request.GET.get("list") or "",
         )
         if hx_target == "pl-week-panel":
             # One of the week's own tabs or arrows: the panel alone.
@@ -398,7 +396,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
         from apps.frontend.views import dashboard_embed
 
         context["pl_monitor_query"] = dashboard_embed.carried_query(
-            request, dashboard_embed.PLANNING_MONITOR
+            request, dashboard_embed.PLANNING_MONITOR, fy=fy
         )
         context["pl_staff_activity_query"] = dashboard_embed.carried_query(
             request, dashboard_embed.STAFF_ACTIVITY

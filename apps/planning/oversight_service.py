@@ -40,6 +40,7 @@ from apps.core.activity_types import (
     VISIT_TYPES,
 )
 from apps.partners.purposes import visit_purpose_label
+from apps.projects.models import intervention_or_general
 
 # Work that is live: planned, scheduled, in flight or finished. Cancelled,
 # rejected, deferred and never-planned rows are not part of a plan under
@@ -1022,12 +1023,17 @@ class _StaffDirectory:
         self._supervisor_of: dict[str, str] = {}
         self._staff_for: dict[str, str] = {}
         self._leads: dict[str, tuple[str | None, str]] = {}
+        # Who HOLDS the Programme Lead role, whichever role their account is
+        # switched to (apps.core.role_holding): a Lead working in a second
+        # role still heads their team's column.
+        self._is_lead: set[str] = set()
 
         if not ids:
             return
 
         from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
         from apps.core.rbac import EdifyRole
+        from apps.core.role_holding import holds_role, holds_role_q
 
         profiles = StaffProfile.objects.filter(
             Q(id__in=ids) | Q(user_id__in=ids)
@@ -1037,15 +1043,18 @@ class _StaffDirectory:
             name = getattr(p.user, "name", "") or getattr(p.user, "email", "")
             role = getattr(p.user, "active_role", "") or ""
             staff_ids.add(p.id)
+            leads = holds_role(p.user, EdifyRole.COUNTRY_PROGRAM_LEAD)
             for key in (p.id, p.user_id):
                 if key:
                     self._names[key] = name
                     self._roles[key] = role
                     self._staff_for[key] = p.id
+                    if leads:
+                        self._is_lead.add(key)
 
         links = StaffSupervisorAssignment.objects.filter(
+            holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD, "supervisor__user"),
             supervisee_id__in=staff_ids,
-            supervisor__user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         ).select_related("supervisor__user")
         for link in links:
             supervisor_user = getattr(link.supervisor, "user", None)
@@ -1078,12 +1087,7 @@ class _StaffDirectory:
         if not staff_id:
             return None, ""
         canonical = self._staff_for.get(staff_id, staff_id)
-        from apps.core.rbac import EdifyRole
-
-        if (
-            self._roles.get(canonical) == EdifyRole.COUNTRY_PROGRAM_LEAD.value
-            or self._roles.get(staff_id) == EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        ):
+        if canonical in self._is_lead or staff_id in self._is_lead:
             return canonical, self._names.get(canonical, "")
         supervisor_id = self._supervisor_of.get(canonical)
         return supervisor_id, self._names.get(
@@ -1207,11 +1211,11 @@ def _activity_item(
         project_id=activity.project_id,
         non_school_context=activity.venue or "",
         activity_type=activity.activity_type,
-        target_intervention=(
+        target_intervention=intervention_or_general(
             activity.focus_intervention
             or activity.purpose_intervention
-            or (course_intervention(activity) if is_training else "")
-            or ""
+            or (course_intervention(activity) if is_training else ""),
+            activity.project_id,
         ),
         operational_rationale=(
             activity.support_rationale or activity.activity_purpose_text or ""
@@ -1303,7 +1307,9 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         cluster_name=getattr(assignment.cluster, "name", "") or "",
         project_id=assignment.project_id,
         activity_type=assignment.expected_activity_type or "",
-        target_intervention=assignment.focus_intervention or "",
+        target_intervention=intervention_or_general(
+            assignment.focus_intervention, assignment.project_id
+        ),
         operational_rationale=(
             assignment.purpose_of_visit or assignment.purpose or assignment.notes or ""
         ),
@@ -1670,6 +1676,7 @@ def program_lead_rosters(program_lead_ids) -> dict[str, list[dict]]:
     """
     from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
     from apps.core.rbac import EdifyRole
+    from apps.core.role_holding import holds_role_q
 
     wanted = {str(i) for i in program_lead_ids if i}
     if not wanted:
@@ -1678,7 +1685,7 @@ def program_lead_rosters(program_lead_ids) -> dict[str, list[dict]]:
     for lead in (
         StaffProfile.objects.filter(
             Q(id__in=wanted) | Q(user_id__in=wanted),
-            user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD),
         )
         .select_related("user")
         .order_by("pk")
@@ -1787,15 +1794,17 @@ def system_program_leads() -> list[dict]:
 
     This is the source of truth for PL tabs on the Country Oversight page.
     PLs are defined by their role, not inferred from activity supervisor links.
-    A PL with zero activities still appears; the IA never does.
+    A PL with zero activities still appears; the IA never does. The role HELD
+    counts (apps.core.role_holding): a Lead whose account is switched to a
+    second role keeps their tab, and their team's work stays under it rather
+    than falling to "Unassigned".
     """
     from apps.accounts.models import StaffProfile
     from apps.core.rbac import EdifyRole
+    from apps.core.role_holding import holds_role_q
 
     profiles = list(
-        StaffProfile.objects.filter(
-            user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
-        )
+        StaffProfile.objects.filter(holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD))
         .select_related("user")
         .order_by("user__name")
     )

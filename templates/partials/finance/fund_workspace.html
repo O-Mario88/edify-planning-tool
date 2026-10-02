@@ -125,7 +125,10 @@ workspace, so the roles differ only where their work differs.
       {% endif %}
     </section>
 
-    <aside class="card fund-side" aria-label="This month">
+    {% comment %}A shell: its sections carry the inset (pages.css
+    `.fund-side.card { padding: 0 }` said so, and lost to the card rule, which
+    padded it a second time: the titles sat 34px in).{% endcomment %}
+    <aside class="card fund-side" aria-label="This month" data-edify-padding="flush">
       {% with side=workspace.side %}
       <section class="fund-side__section">
         <h3 class="fund-panel__title">{{ side.month.title }}</h3>

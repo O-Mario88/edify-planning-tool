@@ -130,10 +130,14 @@ class TheNineColumnsTest(_Fixture):
         self.assign()
 
         body = self.page()
+        clusters = self.page(query="?work=clusters")
 
-        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
+        # The schools on their own tab, the cluster work on its own (owner,
+        # 2026-10-02).
+        self.assertEqual(body.count("data-partner-monitoring-table"), 1)
         self.assertEqual(body.count("data-partner-school-columns"), 1)
-        self.assertIn("Activity / purpose", body)
+        self.assertEqual(clusters.count("data-partner-school-columns"), 0)
+        self.assertIn("Activity / purpose", clusters)
 
     def test_every_value_on_the_row_comes_from_the_handover(self):
         handover = self.training()

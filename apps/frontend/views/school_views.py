@@ -37,6 +37,7 @@ from apps.clusters.eligibility import (
     active_cluster_for_geography,
     active_cluster_for_school_geography,
     ineligibility_reason,
+    owner_id_variants,
 )
 from apps.clusters.models import Cluster
 from apps.clusters.services import (
@@ -1976,12 +1977,14 @@ def bulk_match_staff_view(request):
             schools = school_queryset(scope, direct_only=True).filter(
                 id__in=school_ids, deleted_at__isnull=True
             )
+            from apps.schools.ownership_transfer import hold_schools
+
             for s in schools:
                 s.account_owner_id = staff.id
                 s.account_owner_name_raw = staff.user.name
                 s.account_owner_status = "active"
                 s.save()
-                StaffSchoolAssignment.objects.get_or_create(school_id=s.id, staff=staff)
+            hold_schools([s.id for s in schools], staff.id)
             messages.success(
                 request,
                 f"Successfully matched {schools.count()} schools to CCEO '{staff.user.name}'.",
@@ -2102,6 +2105,38 @@ def school_import_result_view(request, batch_id):
 
     context = {"batch": batch, "stats": stats}
     return render(request, "pages/schools/import_result.html", context)
+
+
+def _cluster_the_holder_may_keep(cluster_id, holder):
+    """The cluster a school was in, if it is still one its holder may be in:
+    active, and the holder's own or nobody's. Otherwise none."""
+    if not cluster_id:
+        return None
+    cluster = (
+        Cluster.objects.select_related("district", "sub_county")
+        .filter(
+            id=cluster_id, deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
+        )
+        .first()
+    )
+    if cluster is None:
+        return None
+    owner = (cluster.responsible_staff_id or "").strip()
+    return cluster if not owner or owner in owner_id_variants(holder.id) else None
+
+
+def _may_open_school(user, school) -> bool:
+    """Whether the school's profile is one this person may open now: the same
+    scoped lookup the profile page makes, on the portfolio as it stands (the
+    request may just have changed it)."""
+    from apps.core.scoping import forget_user_scope
+
+    forget_user_scope(user)
+    try:
+        get_school_one(school.id, user)
+    except (NotFoundError, Forbidden):
+        return False
+    return True
 
 
 @require_page_permission("school_directory")
@@ -2274,6 +2309,22 @@ def school_edit_drawer_view(request, school_id):
                 drawer_context(str(exc.detail)),
             )
 
+        # The cluster derived from the sub-county is the school's only when it
+        # belongs to the person who holds the school (a school joins a cluster
+        # of the person responsible for it; owner, 2026-09-21). Nobody chose
+        # it here, so one that belongs to another portfolio is not a refusal
+        # of the edit: the membership is left as it is. It used to be applied
+        # regardless, the membership service refused it inside the save, and
+        # the whole edit — a new holder included — was rolled back behind a
+        # bare "The request could not be completed" (found 2026-10-02).
+        cluster_owner_id = (
+            (new_cluster.responsible_staff_id or "").strip() if new_cluster else ""
+        )
+        derived_cluster_applies = (
+            not cluster_owner_id
+            or cluster_owner_id in owner_id_variants(staff_owner.id)
+        )
+
         previous = {
             "school_id": school.school_id,
             "name": school.name,
@@ -2295,6 +2346,7 @@ def school_edit_drawer_view(request, school_id):
             "account_owner_id": school.account_owner_id,
         }
 
+        cluster_before_id = school.cluster_id
         school.school_id = official_school_id
         school.name = name
         school.school_type = school_type
@@ -2341,11 +2393,25 @@ def school_edit_drawer_view(request, school_id):
                 school_id=school.id,
                 staff_id=owner_id,
             )
-            school = set_school_cluster_membership(
-                school,
-                new_cluster,
-                request.user.user_id,
-            )
+            if derived_cluster_applies:
+                school = set_school_cluster_membership(
+                    school,
+                    new_cluster,
+                    request.user.user_id,
+                )
+            elif school.cluster_id != cluster_before_id:
+                # School.save() derives the same cluster from a changed
+                # sub-county without asking whose it is. Put the school back
+                # where it was, where that is still its holder's to be in.
+                school = set_school_cluster_membership(
+                    school,
+                    _cluster_the_holder_may_keep(cluster_before_id, staff_owner),
+                    request.user.user_id,
+                    reason=(
+                        "The sub-county's cluster belongs to another staff "
+                        "member, so the school did not join it."
+                    ),
+                )
 
         current = {
             "school_id": school.school_id,
@@ -2384,9 +2450,35 @@ def school_edit_drawer_view(request, school_id):
             },
         )
 
+        if previous["account_owner_id"] != school.account_owner_id and (
+            not _may_open_school(request.user, school)
+        ):
+            # The actor gave their school to somebody else, so it has left
+            # their portfolio and its profile is no longer theirs to open.
+            # Reloading the profile answered "School not found" although the
+            # change was saved (owner, 2026-10-02: "when the staff changes
+            # ownership, it will work but first return an error"). They go to
+            # their directory, told who holds the school now.
+            messages.success(
+                request,
+                f"{school.name} now belongs to {staff_owner.user.name} "
+                "and has left your School Directory.",
+            )
+            directory_url = reverse("frontend:schools_directory")
+            response = HttpResponse(
+                f"<script>window.location.assign({json.dumps(directory_url)});</script>"
+            )
+            response["HX-Redirect"] = directory_url
+            return response
         messages.success(
             request,
-            f"School '{school.name}' updated. Data quality was recalculated.",
+            f"School '{school.name}' updated. Data quality was recalculated."
+            + (
+                ""
+                if derived_cluster_applies
+                else f" It was not added to {new_cluster.name}: that cluster "
+                "belongs to another staff member."
+            ),
         )
         if previous["school_id"] != school.school_id:
             # The profile route uses the official School ID. Send both an HTMX

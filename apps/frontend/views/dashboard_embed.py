@@ -55,11 +55,20 @@ def reads_on_dashboard(request) -> bool:
 
 
 def to_dashboard(request, page: EmbeddedPage) -> HttpResponse:
-    """The dashboard section that holds the page, on the page's own query."""
+    """The dashboard section that holds the page, on the page's own query.
+
+    The link's year becomes the dashboard's year: the dashboard has one year,
+    on its title line, and the sections it carries follow it (owner,
+    2026-10-02: no repeated year filter).
+    """
     query = request.GET.urlencode()
     url = "/dashboard"
     if query:
-        url += "?" + urlencode({page.param: query})
+        params = {page.param: query}
+        year = (request.GET.get("fy") or "").strip()
+        if year:
+            params = {"fy": year, **params}
+        url += "?" + urlencode(params)
     url += f"#{page.anchor}"
     if request.headers.get("HX-Request") == "true":
         # The browser follows a 302 inside the request and htmx would swap
@@ -76,8 +85,16 @@ def fragment(response: HttpResponse) -> HttpResponse:
     return response
 
 
-def carried_query(request, page: EmbeddedPage) -> str:
+def carried_query(request, page: EmbeddedPage, *, fy: str = "") -> str:
     """The page's own query the dashboard carried for its section, which the
-    section first fetches the page with (re-encoded, never trusted as is)."""
+    section first fetches the page with (re-encoded, never trusted as is).
+
+    ``fy`` is the dashboard's year. A section that reads a year reads that
+    one, whatever the carried query said: the year is chosen once, on the
+    dashboard's title line.
+    """
     raw = request.GET.get(page.param) or ""
-    return QueryDict(raw).urlencode() if raw else ""
+    query = QueryDict(raw, mutable=True)
+    if fy:
+        query["fy"] = fy
+    return query.urlencode()

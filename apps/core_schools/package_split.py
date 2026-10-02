@@ -26,7 +26,9 @@ What one side of a package holds:
 Not on either side: cluster sessions (a group session is credited to the
 package by `cluster_credit`, but it is nobody's half of the split and is never
 refused over one school), the companion visit of an in-school training pair,
-and donor, story, invitation and social visits, which are not package work.
+donor, story, invitation and social visits, which are not package work, and
+the work of a project no SSA intervention measures (Alumni; owner,
+2026-10-02), which neither takes a side nor is refused over one.
 
 Nothing here touches work that already exists. It answers whether NEW work
 fits, and a package already over a side (planned before the rule) simply takes
@@ -184,6 +186,7 @@ def package_splits(
     from apps.core_schools.package_credit import (
         UNCREDITED_STATUSES,
         assignment_kind,
+        not_outside_package_q,
         package_kind_for,
         package_work_q,
     )
@@ -234,6 +237,7 @@ def package_splits(
             Activity.objects.filter(
                 id__in=list(linked), deleted_at__isnull=True, cluster__isnull=True
             )
+            .filter(not_outside_package_q())
             .exclude(status__in=UNCREDITED_STATUSES)
             .values("id", "activity_type", "purpose_type", "delivery_type")
         )
@@ -252,6 +256,7 @@ def package_splits(
     unlinked = (
         Activity.objects.filter(school_id__in=list(plan_of), deleted_at__isnull=True)
         .filter(package_work_q())
+        .filter(not_outside_package_q())
         .exclude(status__in=UNCREDITED_STATUSES)
         .exclude(
             id__in=CoreActivitySlot.objects.filter(activity_id__isnull=False).values(
@@ -291,6 +296,7 @@ def package_splits(
         ).only(
             "id",
             "school_id",
+            "project_id",
             "support_type",
             "visit_number",
             "training_number",

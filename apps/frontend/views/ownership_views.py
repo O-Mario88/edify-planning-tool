@@ -107,12 +107,13 @@ def school_owner_transfer_drawer(request, school_id):
             return drawer(str(getattr(exc, "detail", exc)), posted)
         messages.success(
             request,
-            f"{school.name} now belongs to {record.to_staff.user.name}."
+            # No full stop after the name: "Alex M.. Open activities ..."
+            f"{school.name} now belongs to {record.to_staff.user.name}"
             + (
-                f" {len(record.transferred_activity_ids)} open activit"
+                f"; {len(record.transferred_activity_ids)} open activit"
                 f"{'y' if len(record.transferred_activity_ids) == 1 else 'ies'} moved with it."
                 if record.transferred_activity_ids
-                else " Open activities kept their current owner."
+                else "; open activities kept their current owner."
             ),
         )
         target = f"/schools/{school.school_id}"

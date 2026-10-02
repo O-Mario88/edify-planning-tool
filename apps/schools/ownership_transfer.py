@@ -58,6 +58,41 @@ SETTLED_STATUSES = (
 #: Roles that can hold a school portfolio.
 PORTFOLIO_ROLES = ("CCEO", "Program Lead")
 
+
+def hold_schools(school_ids, staff_id) -> None:
+    """Make ``staff_id`` the one holder of these schools on the portfolio.
+
+    ``School.account_owner_id`` names the holder and ``StaffSchoolAssignment``
+    is the same fact as the scoping chain reads it. Every path that names a
+    new holder calls this, so the previous holder's row goes with the change.
+    Four of them used to add the new row and leave the old one: the school
+    then sat in two people's scope — and in two Programme Leads' — while the
+    directory, the monitors and the Country Director's page filed it under
+    one (owner, 2026-10-02).
+    """
+    from apps.accounts.models import StaffSchoolAssignment
+
+    ids = [i for i in dict.fromkeys(school_ids) if i]
+    if not ids or not staff_id:
+        return
+    StaffSchoolAssignment.objects.filter(school_id__in=ids).exclude(
+        staff_id=staff_id
+    ).delete()
+    held = set(
+        StaffSchoolAssignment.objects.filter(
+            staff_id=staff_id, school_id__in=ids
+        ).values_list("school_id", flat=True)
+    )
+    StaffSchoolAssignment.objects.bulk_create(
+        [
+            StaffSchoolAssignment(staff_id=staff_id, school_id=school_id)
+            for school_id in ids
+            if school_id not in held
+        ],
+        ignore_conflicts=True,
+    )
+
+
 #: How many ticked schools one bulk reassignment may carry (owner, 2026-09-22:
 #: "make sure time is not wasted reassigning one by one"). It is a guard on the
 #: request, not a policy: a directory page is at most 200 rows, and a selection
@@ -255,7 +290,6 @@ def _portfolio_allocations(staff, fy: str):
 @transaction.atomic
 def transfer_school_owner(school_id: str, data: dict, principal, *, batch=None):
     """Move one school's portfolio ownership. Geography is untouched."""
-    from apps.accounts.models import StaffSchoolAssignment
     from apps.schools.models import School, SchoolOwnershipTransfer
     from apps.schools.ownership_models import OpenActivityDecision, TargetReconciliation
 
@@ -318,12 +352,7 @@ def transfer_school_owner(school_id: str, data: dict, principal, *, batch=None):
             "updated_at",
         ]
     )
-    StaffSchoolAssignment.objects.filter(school_id=school.id).exclude(
-        staff_id=new_owner.id
-    ).delete()
-    StaffSchoolAssignment.objects.get_or_create(
-        school_id=school.id, staff_id=new_owner.id
-    )
+    hold_schools([school.id], new_owner.id)
 
     transferred, kept = _move_open_activities(
         school, old_owner, new_owner, decision, principal

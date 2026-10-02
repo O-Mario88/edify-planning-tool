@@ -509,11 +509,24 @@
       item.classList.toggle('edify-interactive-card', Boolean(item.querySelector('.kpi-strip__item-body--link')));
     });
 
-    elementsWithin(root, 'main :is(.card, .card-elevated, .card-flat, .card-insight, .premium-card, .premium-card-elevated, .panel, .mini, .summary-card, .rail-card, .edify-kpi-card, .card-kpi, .edify-tile, [class*="-card"], [class*="-panel"], [class*="-tile"], .edify-surface[class*="rounded"])').forEach(function (surface) {
-      var structured = Array.from(surface.children).some(function (child) {
+    var surfaceSelector = 'main :is(.card, .card-elevated, .card-flat, .card-insight, .premium-card, .premium-card-elevated, .panel, .mini, .summary-card, .rail-card, .edify-kpi-card, .card-kpi, .edify-tile, [class*="-card"], [class*="-panel"], [class*="-tile"], .edify-surface[class*="rounded"])';
+    elementsWithin(root, surfaceSelector).forEach(function (surface) {
+      /* Marks for consistency.css's ONE CONTENT LINE (the why is there). */
+      var part = surface.matches('[class*="-card__"], [class*="-panel__"], [class*="-tile__"]');
+      var kids = Array.from(surface.children);
+      var structured = !part && kids.some(function (child) {
         return child.matches('header, [class*="__header"], [class*="titlebar"], table, .overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]');
       });
+      if (!structured && !part && !/(^|\s)p[xy]?-\d/.test(surface.className)) {
+        structured = kids.some(function (child) {
+          var names = String(child.className);
+          return /(^|\s)px-\d/.test(names) && /(^|\s)border-[bt](\s|$)/.test(names);
+        });
+      }
       surface.classList.toggle('edify-structured-surface', structured);
+      surface.toggleAttribute('data-edify-nested', structured && Boolean(surface.parentElement.closest(surfaceSelector)));
+      surface.toggleAttribute('data-edify-band-first', structured && kids[0].matches('[class*="titlebar"]'));
+      surface.toggleAttribute('data-edify-table-last', structured && kids[kids.length - 1].matches('table, .overflow-x-auto, .overflow-auto, [data-table-scroll-region], .edify-record-table-wrap'));
     });
 
     elementsWithin(root, 'main :is(div, section, article, p, li)[class*="text-center"]').forEach(function (element) {
@@ -1676,6 +1689,23 @@
     '.pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .oversight-entity-tabs, ' +
     '.edify-section-nav__clusters, .edify-section-nav__inner, .fund-requesters__strip';
   var railItemSelector = 'a, button, [role="tab"]';
+  /* Entity strips scroll sideways (interactions.css says why). */
+  var scrollRailSelector = '.oversight-entity-tabs, [data-rail-overflow="scroll"]';
+
+  function markScrollRail(rail) {
+    var room = rail.scrollWidth - rail.clientWidth;
+    rail.toggleAttribute('data-rail-more-start', room > 1 && rail.scrollLeft > 1);
+    rail.toggleAttribute('data-rail-more-end', room > 1 && rail.scrollLeft < room - 1);
+  }
+
+  function markScrollRails(root) {
+    (root.querySelectorAll ? root : document).querySelectorAll(scrollRailSelector).forEach(markScrollRail);
+  }
+
+  document.addEventListener('scroll', function (event) {
+    var rail = event.target;
+    if (rail && rail.matches && rail.matches(scrollRailSelector)) markScrollRail(rail);
+  }, { capture: true, passive: true });
 
   function isActiveRailItem(item) {
     return item.matches('[aria-selected="true"], [aria-current], [aria-pressed="true"], .is-active, .active');
@@ -1786,8 +1816,9 @@
   }
 
   function fitRails(root) {
+    markScrollRails(root);
     var rails = Array.from((root.querySelectorAll ? root : document).querySelectorAll(railSelector)).filter(function (rail) {
-      return !rail.closest('.edify-rail-more') && rail.getBoundingClientRect().width > 0;
+      return !rail.closest('.edify-rail-more') && !rail.matches(scrollRailSelector) && rail.getBoundingClientRect().width > 0;
     });
     rails.forEach(restoreRail);
     /* Phases across every rail — number the items, measure every rail's

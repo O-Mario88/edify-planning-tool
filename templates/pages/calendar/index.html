@@ -4,7 +4,7 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261002outside2">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261002tabs15">
 {% endblock %}
 
 {% block shell_content %}
@@ -159,7 +159,7 @@
     {% endif %}
   </form>
 
-  <div class="calendar-workspace__filters" role="tablist" aria-label="Calendar event type">
+  <div class="calendar-workspace__filters" role="tablist" aria-label="Calendar event type" data-rail-overflow="scroll">
     <button type="button" role="tab" aria-controls="calendar-event-surfaces" @click="setEventFilter('all')" :aria-selected="eventFilter === 'all'" :class="eventFilter === 'all' ? 'is-active' : ''">
       <span class="calendar-workspace__filter-name">All events</span><span class="calendar-workspace__filter-count">{{ event_total }}</span>
     </button>

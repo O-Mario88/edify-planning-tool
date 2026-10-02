@@ -92,7 +92,7 @@ loses focus mid-interaction.
         <caption class="sr-only">Closures needing review</caption>
         <thead>
           <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
-            <th scope="col" class="px-4 py-2 font-semibold">ID</th>
+            <th scope="col" class="px-4 py-2 font-semibold">School ID</th>
             <th scope="col" class="px-4 py-2 font-semibold">School</th>
             <th scope="col" class="px-4 py-2 font-semibold">District</th>
             <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
@@ -107,7 +107,7 @@ loses focus mid-interaction.
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ row.school.school_id }}</td>
             <td class="px-4 py-2.5">
-              <span class="font-semibold">{% school_identity row.school.name row.school.id %}</span>
+              <span class="font-semibold">{{ row.school.name }}</span>
             </td>
             <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
@@ -226,6 +226,7 @@ loses focus mid-interaction.
         <caption class="sr-only">Schools that reopened after closing</caption>
         <thead>
           <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School ID</th>
             <th scope="col" class="px-4 py-2 font-semibold">School</th>
             <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
             <th scope="col" class="px-4 py-2 font-semibold">Reopened</th>
@@ -236,8 +237,9 @@ loses focus mid-interaction.
         <tbody>
           {% for row in reopened_pager.rows %}
           <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school.id %}{% school_code row.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
             <td class="px-4 py-2.5">
-              <a href="/schools/{{ row.school.school_id }}" class="font-semibold hover:underline edify-primary-text">{% school_identity row.school.name row.school.id %}</a>
+              <a href="/schools/{{ row.school.school_id }}" class="font-semibold hover:underline edify-primary-text">{{ row.school.name }}</a>
               <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}</span>
             </td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>

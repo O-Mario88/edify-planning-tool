@@ -14,6 +14,7 @@ panel).
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
+<th class="px-6 py-4 text-left">School ID</th>
 <th class="px-6 py-4 text-left">School / Scope</th>
 <th class="px-6 py-4 text-left">Activity Type</th>
 <th class="px-6 py-4 text-center">Status</th>
@@ -30,8 +31,9 @@ panel).
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
 </td>
 <!-- School -->
+<td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if item.activity.school.id %}{% school_code item.activity.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.activity.school.name|default:"Cluster-wide" item.activity.school.id %}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
@@ -60,7 +62,7 @@ panel).
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="6" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
+<td colspan="7" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 {% include "components/empty_state.html" with message="No items found in analytics publishing queue." %}
 </td>
 </tr>

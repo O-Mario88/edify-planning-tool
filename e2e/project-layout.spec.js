@@ -47,11 +47,17 @@ test('project filters, queue tabs, and closed action menus survive interaction',
  await page.locator('.spp-readiness summary').click();await expect(page.locator('.spp-band').first()).toBeVisible();
  // Every filter is a field of the row (owner, 2026-09-27); no disclosure to open.
  await expect(page.locator('.spp-more-filters')).toHaveCount(0);
- const project=page.locator('#spp-filters select[name="project"]');
- const value=await project.locator('option').nth(1).getAttribute('value');
- await project.selectOption(value);await expect(page).toHaveURL(new RegExp('project='+value));
+ // One project a tab since 2026-10-02 (owner: "all projects should be organized
+ // in tabs"), where the Project drop-down was: a tab sets the form's project
+ // and every other filter, and the queue tab, keep it.
+ await expect(page.locator('#spp-filters select[name="project"]')).toHaveCount(0);
+ const projects=page.locator('#spp-filters [data-project-tabs] button');
+ await expect(projects.first()).toHaveAttribute('aria-current','page');
+ await projects.nth(1).click();await expect(page).toHaveURL(/project=[^&]+/);
+ const value=await page.locator('#spp-project').inputValue();expect(value).not.toBe('');
+ await expect(page.locator('#spp-filters [data-project-tabs] button').nth(1)).toHaveAttribute('aria-current','page');
  await page.getByRole('button',{name:/Ready for Support/}).click();await expect(page).toHaveURL(/tab=ready/);
- await expect(page.locator('#spp-filters select[name="project"]')).toHaveValue(value);
+ await expect(page.locator('#spp-project')).toHaveValue(value);
  await page.goto('/projects/my-plan');
  await expect(page.locator('.sp-more-filters')).toHaveCount(0);
  await page.getByRole('tab',{name:'Month',exact:true}).click();await expect(page).toHaveURL(/period=month/);

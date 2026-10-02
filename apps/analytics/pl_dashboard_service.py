@@ -243,10 +243,14 @@ class DashboardContext:
         self.today = today or timezone.localdate()
         portfolio = resolve_pl_scope(user, {})
         member_ids = {member.id for member in self.members}
-        team = sorted(
-            (c for c in portfolio.cceos if c["staff_id"] in member_ids),
-            key=lambda c: (c["name"] or "").lower(),
+        # Everyone with a reporting line to this lead, the team or not: an
+        # officer whose account was deactivated is no longer line-managed,
+        # and the plan they left behind is still the lead's to follow
+        # (This Week reads it; see pl_week_service).
+        self.supervised = sorted(
+            portfolio.cceos, key=lambda c: (c["name"] or "").lower()
         )
+        team = [c for c in self.supervised if c["staff_id"] in member_ids]
         responsible = set()
         for c in team:
             responsible.add(c["staff_id"])

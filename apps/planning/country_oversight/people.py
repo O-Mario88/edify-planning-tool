@@ -488,9 +488,15 @@ class Reads:
             )
         )
 
-    def partner_work(self):
-        """Live Partner activities, each marked ``partner_planned`` (1/0)."""
+    def partner_work(self, *, every: bool = False):
+        """Live Partner activities, each marked ``partner_planned`` (1/0).
+
+        Alumni work (a project no SSA intervention measures) is not counted
+        by this rulebook, so it is left out; ``every`` keeps it, for the one
+        list that holds every activity whether it counts or not."""
         held = _activities(self.fy, self.school_ids).filter(rules.partner_held_q())
+        if not every:
+            held = held.filter(rules.not_outside_ssa_q())
         if self.narrow.partner:
             held = held.filter(assigned_partner_id=self.narrow.partner)
         return _in_window(held, self.window).annotate(
@@ -501,13 +507,16 @@ class Reads:
             )
         )
 
-    def handovers(self):
-        """Hand-overs that still put a school in a Partner's hands."""
+    def handovers(self, *, every: bool = False):
+        """Hand-overs that still put a school in a Partner's hands; ``every``
+        as for ``partner_work``."""
         from apps.partners.models import PartnerAssignment
 
         rows = PartnerAssignment.objects.filter(school_id__in=self.school_ids).exclude(
             status__in=rules.CLOSED_HANDOVER_STATUSES
         )
+        if not every:
+            rows = rows.filter(rules.not_outside_ssa_q())
         if self.narrow.partner:
             rows = rows.filter(partner_id=self.narrow.partner)
         return rows
@@ -854,7 +863,9 @@ def school_year(user, fy: str, *, today: date | None = None) -> dict[str, School
     if not year:
         return year
     school_ids = schools.values("id")
-    in_scope = _activities(fy, school_ids)
+    # A school's year by the rulebook is its SSA-measured support: Alumni
+    # work is no visit, no training and no Partner's hold on it.
+    in_scope = _activities(fy, school_ids).filter(rules.not_outside_ssa_q())
     counted = rules.counted_visit_q()
 
     # Staff visits that count, by kind.
@@ -926,18 +937,23 @@ def school_year(user, fy: str, *, today: date | None = None) -> dict[str, School
         partner_id,
         created_at,
         *kind_fields,
-    ) in PartnerAssignment.objects.filter(
-        school_id__in=school_ids, status__in=PartnerAssignment.UNSCHEDULED_STATUSES
-    ).values_list(
-        "school_id",
-        "partner_id",
-        "created_at",
-        "support_type",
-        "visit_number",
-        "training_number",
-        "project_id",
-        "expected_activity_type",
-        "purpose_of_visit",
+    ) in (
+        PartnerAssignment.objects.filter(
+            school_id__in=school_ids,
+            status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+        )
+        .filter(rules.not_outside_ssa_q())
+        .values_list(
+            "school_id",
+            "partner_id",
+            "created_at",
+            "support_type",
+            "visit_number",
+            "training_number",
+            "project_id",
+            "expected_activity_type",
+            "purpose_of_visit",
+        )
     ):
         school = year.get(school_id)
         if school is None:

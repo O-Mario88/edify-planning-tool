@@ -41,7 +41,12 @@ So, per person, for one fiscal year:
 * **Partner share** — client-rule schools beyond what the officer's client
   visits can reach are the partner's: needed = schools − client target;
   assigned = schools with partner work (a visit the partner has dated, or
-  work the partner has not dated yet).
+  work the partner has not dated yet); remaining = needed − assigned.
+* **The Core package's partner half** (owner, 2026-09-30 and 2026-10-02) —
+  each Core school's package is two staff and two partner visits, two staff
+  and two partner trainings. Assigned = what the partner side of each package
+  holds, hand-overs not yet dated included, to the two it takes
+  (apps.core_schools.package_split); the target is 2 × Core schools of each.
 * **Unique schools** with a visit planned, **schools planned for training**
   (invited to a live group training or cluster meeting, or given an in-school
   training), schools **not clustered**, **not planned** for a visit, for
@@ -53,11 +58,11 @@ Only schools the requirement asks a visit of are counted: Core, Client, Core
 Trained and Core Graduate. Champion schools take donor and story visits only
 (owner, 2026-09-25) and are followed on Programme Schools.
 
-Scope is ``scoped_school_queryset``, the rule every other lens reads: the
-country for the CD and IA, a Programme Lead's team for the Lead. Every figure
-is folded from the school rows under it, so a lead's total is the sum of their
-officers' and cannot disagree with them. A fixed handful of queries whatever
-the size of the country.
+Scope is the country for the CD and IA (``scoped_school_queryset``) and, for
+a Programme Lead, the schools held by the Lead and the people who report to
+them (``_monitored_schools``). Every figure is folded from the school rows
+under it, so a lead's total is the sum of their officers' and cannot disagree
+with them. A fixed handful of queries whatever the size of the country.
 """
 
 from __future__ import annotations
@@ -85,6 +90,10 @@ PLANNED_VISIT_TYPES = tuple(str(t) for t in (*VISIT_TYPES, *SSA_TYPES))
 #: Staff visits a year at each Core school (two of the package's four; the
 #: partner delivers the other two).
 CORE_STAFF_VISITS_PER_SCHOOL = 2
+
+#: Partner visits a year at each Core school, and as many partner trainings
+#: (the other half of the package).
+CORE_PARTNER_PER_SCHOOL = 2
 
 #: School types the monitor counts.
 CORE_TYPES = ("core",)
@@ -140,6 +149,10 @@ class SchoolState:
     in_school_training: bool = False
     training_done: bool = False
     in_project: bool = False
+    # The partner half of this Core school's package: visits and trainings a
+    # partner holds, to the two of each it takes (`_count_core_packages`).
+    core_partner_visits: int = 0
+    core_partner_trainings: int = 0
 
     @property
     def is_core(self) -> bool:
@@ -268,6 +281,40 @@ class OfficerMonitor:
     def partner_schools(self) -> int:
         return sum(1 for s in self.schools if not s.is_core and s.has_partner)
 
+    @property
+    def partner_remaining(self) -> int:
+        """Schools beyond staff reach that no partner holds yet."""
+        return max(0, self.partner_needed - self.partner_schools)
+
+    @property
+    def partner_tone(self) -> str:
+        if not self.partner_needed:
+            return "neutral"
+        return "success" if not self.partner_remaining else "warning"
+
+    # ── The Core package's partner half ──
+    @property
+    def core_partner_target(self) -> int:
+        """Partner visits — and as many partner trainings — the Core
+        packages take: two a school."""
+        return CORE_PARTNER_PER_SCHOOL * self.core_schools
+
+    @property
+    def core_partner_visits(self) -> int:
+        return sum(s.core_partner_visits for s in self.schools if s.is_core)
+
+    @property
+    def core_partner_trainings(self) -> int:
+        return sum(s.core_partner_trainings for s in self.schools if s.is_core)
+
+    @property
+    def core_partner_visits_tone(self) -> str:
+        return _share_tone(self.core_partner_visits, self.core_partner_target)
+
+    @property
+    def core_partner_trainings_tone(self) -> str:
+        return _share_tone(self.core_partner_trainings, self.core_partner_target)
+
     # ── Coverage ──
     @property
     def schools_with_visit(self) -> int:
@@ -366,12 +413,34 @@ class LeadMonitor:
         return _tone(self.visit_progress)
 
     @property
+    def partner_tone(self) -> str:
+        if not self.partner_needed:
+            return "neutral"
+        return "success" if not self.partner_remaining else "warning"
+
+    @property
+    def core_partner_visits_tone(self) -> str:
+        return _share_tone(self.core_partner_visits, self.core_partner_target)
+
+    @property
+    def core_partner_trainings_tone(self) -> str:
+        return _share_tone(self.core_partner_trainings, self.core_partner_target)
+
+    @property
     def officer_count(self) -> int:
         return len(self.officers)
 
     @property
     def gap_cells(self) -> list[tuple[dict, int]]:
         return _gap_cells(self)
+
+
+def _share_tone(part: int, whole: int) -> str:
+    """How a count reads against what it should reach; no tone for nothing
+    to reach."""
+    if not whole:
+        return "neutral"
+    return "success" if part >= whole else "warning"
 
 
 def _tone(progress: int | None) -> str:
@@ -399,7 +468,6 @@ def planning_monitor(
     ``gap_schools`` — the schools matching the chosen gap, narrowed to the
     chosen lead and officer, for the drill-down table.
     """
-    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
     from apps.planning.portfolio_service import (
         NO_LEAD_KEY,
         NO_LEAD_LABEL,
@@ -418,7 +486,7 @@ def planning_monitor(
         "officer_options": [],
         "gap_schools": [],
     }
-    queryset = scoped_school_queryset(resolve_user_scope(principal))
+    queryset = _monitored_schools(principal)
     if queryset is None:
         return empty
     queryset = (
@@ -466,6 +534,7 @@ def planning_monitor(
         _count_partner_handovers(schools, school_ids)
         _count_cluster_sessions(schools, school_ids, fy)
         _mark_projects(schools, school_ids)
+        _count_core_packages(schools, fy)
 
     officers, leads = _people(principal, schools)
     if not officers:
@@ -521,6 +590,55 @@ def planning_monitor(
         "officer_options": officer_options,
         "gap_schools": gap_schools,
     }
+
+
+def _monitored_schools(principal):
+    """The schools this reader's monitor follows.
+
+    The country reads the country. A Programme Lead reads the schools HELD by
+    themselves and the people who report to them — ``School.account_owner_id``,
+    the column every row of the monitor is filed by — and the schools in
+    their scope that nobody holds yet.
+
+    The Lead's scope used to decide it (``StaffSchoolAssignment``), and the
+    two can part company: an upload, an edit or a bulk match that names a new
+    holder adds the new holder's assignment row and has not always removed
+    the old one. The old holder's Lead then counted the school, and the
+    monitor added a row for a person on somebody else's team to file it
+    under. Read by the holder, a school sits in one team's monitor — the one
+    the Country Director's page files it in — and a Lead's rows are their
+    own people.
+    """
+    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+    from apps.planning.oversight_service import resolve_oversight_scope
+
+    user_scope = resolve_user_scope(principal)
+    queryset = scoped_school_queryset(user_scope)
+    oversight_scope = resolve_oversight_scope(principal)
+    if queryset is None or oversight_scope.kind != "pl":
+        return queryset
+    from apps.schools.models import School
+
+    held = Q(account_owner_id__in=list(oversight_scope.team_ids))
+    unheld_in_scope = Q(id__in=list(user_scope.school_ids or [])) & (
+        Q(account_owner_id__isnull=True) | Q(account_owner_id="")
+    )
+    return School.objects.filter(deleted_at__isnull=True).filter(held | unheld_in_scope)
+
+
+def _both_ids(staff_ids) -> dict[str, frozenset]:
+    """Each StaffProfile id with the User id of the same person: an
+    activity names its officer in either (apps.core.scoping.owner_ids)."""
+    from apps.accounts.models import StaffProfile
+
+    ids = {str(i) for i in staff_ids if i}
+    spaces = {i: {i} for i in ids}
+    for staff_id, user_id in StaffProfile.objects.filter(id__in=ids).values_list(
+        "id", "user_id"
+    ):
+        if user_id:
+            spaces[str(staff_id)].add(str(user_id))
+    return {key: frozenset(value) for key, value in spaces.items()}
 
 
 def _people(principal, schools: dict) -> tuple[dict, dict]:
@@ -585,6 +703,10 @@ def _people(principal, schools: dict) -> tuple[dict, dict]:
         if s.officer_id not in officers and s.officer_id != UNASSIGNED_KEY
     ]
     roles = roles_of({s.officer_id for s in extra})
+    # Both id spaces, as the roster's people carry them: with the profile id
+    # alone, the visits such a person planned under their User id went
+    # uncounted (a deactivated officer read 6 of their 12).
+    extra_ids = _both_ids({s.officer_id for s in extra})
     for school in sorted(extra, key=lambda s: s.officer_name.casefold()):
         if school.officer_id in officers:
             continue
@@ -598,7 +720,7 @@ def _people(principal, schools: dict) -> tuple[dict, dict]:
             school.officer_id,
             school.officer_name,
             role,
-            {school.officer_id},
+            extra_ids.get(str(school.officer_id), {school.officer_id}),
             VISITS_TARGET_BY_ROLE.get(role, 0),
         )
     if any(s.officer_id == UNASSIGNED_KEY for s in schools.values()):
@@ -667,7 +789,12 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
     from apps.planning.country_oversight import rules
 
     delivered = _delivered_statuses()
-    at_schools = Activity.objects.filter(school_id__in=school_ids, fy=fy)
+    # The school's SSA-measured support. Alumni work (a project no SSA
+    # intervention measures) is not a visit or a training here and does not
+    # put the school in a Partner's hands.
+    at_schools = Activity.objects.filter(school_id__in=school_ids, fy=fy).filter(
+        rules.not_outside_ssa_q()
+    )
     for school_id, delivery_type, status, n in (
         _counted_visits(at_schools)
         .filter(rules.staff_delivery_q() | rules.partner_planned_q())
@@ -792,6 +919,7 @@ def _count_partner_work(officers, fy: str) -> None:
     for activity_id, monitor, responsible, holder, school_id, status, dated in (
         Activity.objects.filter(fy=fy, deleted_at__isnull=True)
         .filter(rules.partner_held_q())
+        .filter(rules.not_outside_ssa_q())
         .filter(
             Q(monitored_by_staff_id__in=ids)
             | Q(responsible_staff_id__in=ids)
@@ -831,7 +959,7 @@ def _count_partner_work(officers, fy: str) -> None:
         | Q(assigning_staff_id__in=ids)
         | Q(school__account_owner_id__in=ids),
         status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
-    )
+    ).filter(rules.not_outside_ssa_q())
     for monitor, assigner, holder, school_id in handovers.values_list(
         "monitoring_staff_id",
         "assigning_staff_id",
@@ -852,12 +980,14 @@ def _count_partner_work(officers, fy: str) -> None:
 def _count_partner_handovers(schools: dict, school_ids) -> None:
     """Handovers a partner has not dated yet: the school is the partner's."""
     from apps.partners.models import PartnerAssignment
+    from apps.planning.country_oversight import rules
 
     for school_id, n in (
         PartnerAssignment.objects.filter(
             school_id__in=school_ids,
             status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
         )
+        .filter(rules.not_outside_ssa_q())
         .values("school_id")
         .annotate(n=Count("id"))
         .values_list("school_id", "n")
@@ -903,6 +1033,36 @@ def _count_cluster_sessions(schools: dict, school_ids, fy: str) -> None:
             school.group_training = True
         if attended and status in delivered:
             school.training_done = True
+
+
+def _count_core_packages(schools: dict, fy: str) -> None:
+    """The partner half of each Core school's package.
+
+    Read from the package's own split (apps.core_schools.package_split), the
+    count every hand-over door refuses by, so the monitor and the drawers
+    cannot disagree about whether a school's partner half is taken. Each kind
+    is counted to the two it takes: a package over its half does not cover
+    for another school's empty one.
+    """
+    from types import SimpleNamespace
+
+    from apps.core_schools.package_split import PARTNER, TRAINING, VISIT, package_splits
+
+    core = [
+        SimpleNamespace(id=s.id, school_id=s.code, school_type=s.school_type)
+        for s in schools.values()
+        if s.is_core and s.code
+    ]
+    if not core:
+        return
+    for school_id, split in package_splits(core, fy).items():
+        school = schools[school_id]
+        school.core_partner_visits = min(
+            split.used(VISIT, PARTNER), CORE_PARTNER_PER_SCHOOL
+        )
+        school.core_partner_trainings = min(
+            split.used(TRAINING, PARTNER), CORE_PARTNER_PER_SCHOOL
+        )
 
 
 def _mark_projects(schools: dict, school_ids) -> None:

@@ -793,30 +793,14 @@ a.calendar-event:focus-visible {
     margin-bottom: 0.35rem;
   }
 
+  /* One row that scrolls sideways (platform.css says why it is no longer a
+     grid): each tab as wide as its whole label. */
   .calendar-workspace__filters {
-    display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.25rem;
-    overflow: visible !important;
     margin-bottom: 0.75rem;
   }
 
   .calendar-workspace__filters button {
-    display: grid;
-    flex: initial !important;
-    min-width: 0;
-    min-height: 3.25rem;
-    place-items: center;
-    align-content: center;
-    gap: 0.1rem;
-    padding: 0.45rem 0.2rem;
     font-size: var(--edify-text-micro-size);
-  }
-
-  .calendar-workspace__filter-name {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .calendar-workspace__filter-count {

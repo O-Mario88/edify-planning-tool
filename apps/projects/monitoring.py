@@ -1324,6 +1324,10 @@ def _enrolment_intervention(assignment, project) -> str:
     from apps.core.enums import SsaIntervention
     from apps.planning.partner_oversight_service import choice_label
 
+    if not project.measured_by_ssa:
+        # No SSA intervention measures this project (Alumni): it is General,
+        # whatever need the school happened to show when it joined.
+        return "General"
     primary, _supporting = project.intervention_plan()
     code = assignment.matched_intervention or assignment.support_area or primary or ""
     return choice_label(code, SsaIntervention)

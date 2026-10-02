@@ -39,6 +39,7 @@ Core School Trainings Planned for {% if period == 'week' %}This Week{% elif peri
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
+<th class="min-w-[90px]">School ID</th>
 <th class="min-w-[240px]">School Name</th>
 <th class="min-w-[110px]">Package</th>
 <th class="min-w-[120px]">District</th>
@@ -57,6 +58,7 @@ Core School Trainings Planned for {% if period == 'week' %}This Week{% elif peri
 <tbody>
 {% for row in core_school_trainings_pager.rows %}
 <tr>
+<td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
   <a href="/schools/{{ row.school_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.school_name|default:"—" }}</a>

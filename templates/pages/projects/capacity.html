@@ -34,15 +34,17 @@ class="btn btn-primary h-8">+ Set Staff Capacity</button>
 {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
 {% include "partials/_section_nav.html" %}
 
+{% comment %}One project a tab (owner, 2026-10-02): the allocations of the
+open project, the others a click away instead of further down the page.{% endcomment %}
 {% if project_options|length > 1 %}
-<form method="get" action="/projects/capacity" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Project" x-data>
-  <div class="edify-filter-field platform-filter-compact"><label for="capacity-project" class="edify-filter-label">Project</label>
-  <select id="capacity-project" name="project" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
-    <option value="">All projects</option>
-    {% for p in project_options %}<option value="{{ p.id }}"{% if p.id == selected_project %} selected{% endif %}>{{ p.name }}</option>{% endfor %}
-  </select></div>
-  <noscript><button type="submit" class="btn btn-secondary h-8 self-end">Show project</button></noscript>
-</form>
+<nav class="oversight-entity-tabs" aria-label="Projects" data-project-tabs>
+  {% for p in project_options %}
+  <a class="oversight-entity-tabs__link{% if p.id == selected_project %} is-active{% endif %}"
+     href="/projects/capacity?project={{ p.id }}"{% if p.id == selected_project %} aria-current="page"{% endif %}>
+    <span>{{ p.name }}</span>
+  </a>
+  {% endfor %}
+</nav>
 {% endif %}
 
 {% comment %}The rule a project without allocations follows, said once for the page

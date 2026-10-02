@@ -111,6 +111,17 @@ def partners_list_view(request):
     return _partner_workspace(request)
 
 
+def _intervention_label(code) -> str:
+    """The SSA intervention's own label for a stored code; "" for none."""
+    if not code:
+        return ""
+    from apps.core.enums import SsaIntervention
+
+    return (
+        dict(SsaIntervention.choices).get(code) or str(code).replace("_", " ").title()
+    )
+
+
 def _partner_workspace(request):
     """The partner-facing workspace body.
 
@@ -332,9 +343,11 @@ def _partner_workspace(request):
                     if assignment.expected_activity_type
                     else "Partner support",
                 ),
-                "focus": assignment.get_focus_intervention_display()
-                if assignment.focus_intervention
-                else "General support",
+                # A hand-over's focus is a plain column with no choices, so
+                # it has no get_…_display(): the page failed for every reader
+                # as soon as one pending hand-over named a focus.
+                "focus": _intervention_label(assignment.focus_intervention)
+                or "General support",
                 "date": assignment.scheduled_date,
                 "status_label": status_label,
                 "status_tone": "danger" if is_overdue else "warning",

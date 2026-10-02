@@ -106,6 +106,7 @@
             <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Category</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Staff</th>
+            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">School ID</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">School</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Planned date</th>
 {% if country_envelope.strategicReserveRequested %}            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Regional Standard Funding</th>{% endif %}
@@ -119,7 +120,8 @@
             <td class="px-4 py-3 font-semibold text-slate-800">{{ item.label }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.category }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
-            <td class="px-3 py-3 text-slate-600">{% school_identity item.school|default:"—" item.school_id %}</td>
+            <td class="px-3 py-3 whitespace-nowrap tabular-nums" data-label="School ID">{% if item.school_id %}{% school_code item.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+            <td class="px-3 py-3 text-slate-600">{{ item.school|default:"—" }}</td>
             <td class="px-3 py-3 text-slate-500">{{ item.planned_date|date:"j M Y" }}</td>
 {% if country_envelope.strategicReserveRequested %}            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.reference_amount_fmt }}</td>{% endif %}
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{{ item.operational_amount_fmt }}</td>

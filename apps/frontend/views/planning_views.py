@@ -591,7 +591,9 @@ def special_projects_bulk_partner_view(request):
                 # piece of work and does not hide the school.
                 if (
                     PartnerAssignment(
-                        school=assignment.school, partner=partner
+                        school=assignment.school,
+                        partner=partner,
+                        project=assignment.project,
                     ).open_duplicate()
                     is not None
                 ):
@@ -2206,8 +2208,34 @@ def assign_partner_modal_view(request):
         # school back to the partner it was just taken from is a mistake worth
         # catching before it is made rather than after.
         "prior_withdrawals": _prior_withdrawals(school),
+        "project_handovers": project_handover_routes(request.user, school),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def project_handover_routes(user, school) -> list[dict]:
+    """The open projects this school is enrolled in, each a way to hand its
+    support to a partner (owner, 2026-10-02: "through either in-school
+    training, follow up, or project").
+
+    Only projects this reader may plan in (`_scoped_projects`, the rule the
+    project hand-over itself asks), so a button never opens a refusal.
+    """
+    if school is None or not RolePermissionService.can_view_page(user, "projects"):
+        return []
+    from apps.projects.models import OPEN_PROJECT_STATUSES, ProjectSchoolAssignment
+    from apps.projects.planning_service import _scoped_projects
+
+    rows = (
+        ProjectSchoolAssignment.objects.filter(
+            school=school,
+            project__in=_scoped_projects(user),
+            project__status__in=[status.value for status in OPEN_PROJECT_STATUSES],
+        )
+        .select_related("project")
+        .order_by("project__name")
+    )
+    return [{"assignment_id": row.id, "project_name": row.project.name} for row in rows]
 
 
 def _partner_training_course_options(school=None) -> list[dict]:

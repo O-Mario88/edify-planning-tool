@@ -5363,7 +5363,9 @@ main .edify-empty-state--line.edify-empty-state--line {
    class by name; the priority here is what keeps the heading intact if a
    fourth one arrives. */
 .edify-group-head > th {
-  padding: 0.5rem 0.75rem !important;
+  /* Its label starts where the rows it heads start: the table's edge, less
+     the accent rule drawn before it (design-system.css, ONE CONTENT LINE). */
+  padding: 0.5rem 0.75rem 0.5rem max(0px, calc(var(--edify-section-inset, 0.75rem) - 3px)) !important;
   background: var(--edify-surface-muted) !important;
   border-block: 1px solid var(--edify-border) !important;
   border-inline-start: 3px solid var(--edify-accent) !important;
@@ -5578,7 +5580,8 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   line-height: 1.4;
 }
 .context-metrics__sentence {
-  display: flex !important;
+  /* A row of facts; from 64rem a grid whose rows the facts share (below). */
+  display: var(--kpi-rail-display, flex) !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
@@ -5812,6 +5815,29 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
     overflow: visible;
     overflow-wrap: break-word;
     -webkit-line-clamp: none;
+  }
+
+  /* The figures of a strip sit on one line (owner, 2026-10-02: "content
+     inside kpi strips"). A label that wrapped to two lines pushed its figure
+     a line below its neighbours', so six figures in a row read at two
+     heights and their helpers at three. The strip is a grid of three rows —
+     label, figure, helper — and every fact lays its parts on those rows, so
+     each row is as tall as the tallest part in it. Where subgrid is not
+     supported the facts stay as they were. */
+  @supports (grid-template-rows: subgrid) {
+    .context-metrics .context-metrics__sentence:not(:has(> .context-metrics__fact:nth-child(9))) {
+      --kpi-rail-display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(min-content, 1fr);
+      grid-template-rows: auto auto 1fr;
+    }
+    .context-metrics .context-metrics__sentence:not(:has(> .context-metrics__fact:nth-child(9))) > .context-metrics__fact,
+    .context-metrics .context-metrics__sentence:not(:has(> .context-metrics__fact:nth-child(9))) > .context-metrics__fact > :is(.context-metrics__text, .context-metrics__link) {
+      display: grid;
+      grid-row: 1 / span 3;
+      grid-template-rows: subgrid;
+      row-gap: 3px;
+    }
   }
 
   /* Nine facts or more cannot share one desktop row at a readable width

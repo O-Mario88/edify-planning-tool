@@ -63,6 +63,8 @@ x-data="{
   <p class="edify-text-caption text-slate-500" data-partner-half>Partner's half of this package: visits {{ partner_visits_used }}/{{ side_cap }} · trainings {{ partner_trainings_used }}/{{ side_cap }}.</p>
 </div>
 
+{% include "partials/partners/_project_handover_routes.html" %}
+
 <template x-if="isSsa">
 <p class="edify-text-caption text-slate-500" role="status">Focus intervention: Data Gathering. The partner uploads the visit form; the SSA scores are recorded at completion.</p>
 </template>

@@ -120,8 +120,10 @@ class FacilitatedTrainingsTest(PartnerOversightFixture):
         self.assertIn(">Upcoming<", table)
         self.assertIn("Not in SF", table)
         self.assertIn("No Evidence Uploaded", table)
-        # The Partner's own three tables are unchanged.
-        self.assertEqual(body.count("data-partner-monitoring-table"), 3)
+        # It sits on the Clusters tab, beside the cluster work and sessions
+        # the Partner holds itself (owner, 2026-10-02).
+        self.assertEqual(body.count("data-partner-monitoring-table"), 2)
+        self.assertIn("<span>Clusters to facilitate</span>", body)
 
     def test_completed_it_offers_the_lead_confirm_verification_or_return(self):
         training = self.complete(self.train())
