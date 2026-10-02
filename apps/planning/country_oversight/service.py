@@ -1658,16 +1658,19 @@ def charts(snapshot: Snapshot) -> list[dict]:
             },
         ],
         "table": {
+            # A heading's line break is written in ("\n"): the tables sit
+            # open under the charts, two to a row, and a heading left to wrap
+            # on its own breaks differently at every width.
             "columns": [
-                "Visit target",
-                "Visits planned",
-                "Follow up",
-                "In-school Training",
-                "SSA Support",
-                "Still to plan",
-                "Assigned to Partners",
-                "Partner planned",
-                "Donor, story and social (not counted)",
+                "Visit\ntarget",
+                "Visits\nplanned",
+                "Follow\nup",
+                "In-school\nTraining",
+                "SSA\nSupport",
+                "Still to\nplan",
+                "Assigned to\nPartners",
+                "Partner\nplanned",
+                "Donor, story, social\n(not counted)",
             ],
             "rows": [
                 [
@@ -1719,13 +1722,13 @@ def charts(snapshot: Snapshot) -> list[dict]:
         ],
         "table": {
             "columns": [
-                "Schools needing a visit",
-                "Staff plan only",
-                "Partner plan only",
+                "Schools needing\na visit",
+                "Staff plan\nonly",
+                "Partner plan\nonly",
                 "Both",
-                "Not yet planned",
-                "In a Partner's hands",
-                "Planned twice",
+                "Not yet\nplanned",
+                "In a Partner's\nhands",
+                "Planned\ntwice",
             ],
             "rows": [
                 [
@@ -1762,11 +1765,11 @@ def charts(snapshot: Snapshot) -> list[dict]:
         ],
         "table": {
             "columns": [
-                "Required slots",
-                "Planned slots",
-                "Remaining slots",
-                "Schools with training",
-                "Schools with none",
+                "Required\nslots",
+                "Planned\nslots",
+                "Remaining\nslots",
+                "Schools with\ntraining",
+                "Schools with\nnone",
             ],
             "rows": [
                 [
@@ -1805,12 +1808,12 @@ def charts(snapshot: Snapshot) -> list[dict]:
         ],
         "table": {
             "columns": [
-                "Eligible schools",
+                "Eligible\nschools",
                 "Clustered",
                 "Unclustered",
-                "Covered by a planned meeting",
-                "Clustered, no meeting planned",
-                "Meetings planned by staff",
+                "Covered by a\nplanned meeting",
+                "Clustered, no\nmeeting planned",
+                "Meetings planned\nby staff",
             ],
             "rows": [
                 [

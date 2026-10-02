@@ -1,0 +1,42 @@
+{% comment %}
+A consolidated table's body: its title bar with what the rows add up to, the
+rows — an ordinary table, the place columns first (owner, 2026-10-02) — and
+the pager. Shared by the planning tables (pages/oversight/country_table.html)
+and the execution tables (pages/oversight/country_execution_table.html), so a
+table of records reads the same wherever a card opens it.
+{% endcomment %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="cpo-table-title">
+    <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+      <h2 id="cpo-table-title">{{ spec.title }} · {% if window.is_annual %}{{ fy_label }}{% else %}{{ window.label }}{% endif %}</h2>
+      {% if not withheld %}<span class="tabular-nums">{{ table.summary }}</span>{% endif %}
+    </header>
+    {% if withheld %}
+    {% include "components/empty_state.html" with message=withheld_message|default:"School-level rows are not part of this role's reading of the country. The figures on Country Planning Oversight are." %}
+    {% elif lines %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll" data-columns="unfrozen" data-consolidated-table="{{ spec.key }}">
+        <caption class="sr-only">{{ spec.description }}</caption>
+        <thead>
+          <tr>
+            {% for column in columns %}
+            <th scope="col" class="px-3 py-2{% if column.numeric %} text-right{% endif %}">{{ column.label }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+          <tr>
+            {% for column, value, blank in line.cells %}
+            <td class="px-3 py-2{% if column.numeric %} text-right tabular-nums{% elif column.is_date %} tabular-nums{% elif column.key == "school_id" %} font-mono{% endif %}" data-label="{{ column.label }}"{% if column.is_school %} data-record-title{% endif %}>{% if column.is_school and value and line.school_id %}<a href="/schools/{{ line.school_id }}" class="font-semibold hover:underline">{{ value }}</a>{% elif column.is_date %}{% if value %}{{ value|date:"j M Y" }}{% else %}<span class="edify-status-text" data-edify-tone="warning">{{ blank|default:"Not yet scheduled" }}</span>{% endif %}{% elif value == "" or value is None %}<span class="edify-text-muted">—</span>{% elif column.key == "flag" %}<span class="edify-status-text" data-edify-tone="danger">{{ value }}</span>{% else %}{{ value }}{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=pager param="page" %}
+    {% else %}
+    {% include "components/empty_state.html" with message="Nothing in this selection." %}
+    {% endif %}
+  </section>
+

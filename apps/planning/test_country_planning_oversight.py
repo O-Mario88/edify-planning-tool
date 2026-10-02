@@ -1609,6 +1609,31 @@ class PageTest(World):
             with self.subTest(heading=heading):
                 self.assertIn(f">{heading}</th>", body)
 
+    def test_each_charts_figures_sit_open_under_it(self):
+        # Two charts to a row, and nobody expands anything to read a chart's
+        # numbers (owner, 2026-10-02): the four data tables are open on
+        # arrival, and their headings carry their own break like the rest.
+        self.school("core", self.cceo)
+        body = (
+            self.as_user(self.cd_user)
+            .get("/country-planning-oversight/")
+            .content.decode()
+        )
+        charts = body[body.index('<section class="cpo-charts"') :]
+        charts = charts[: charts.index("</section>")]
+        self.assertEqual(charts.count('<figure class="cpo-chart"'), 4)
+        self.assertEqual(charts.count('<details class="cpo-chart-data" open>'), 4)
+        self.assertNotIn("View chart data", charts)
+        for heading in (
+            "Visit<br>target",
+            "Assigned to<br>Partners",
+            "Not yet<br>planned",
+            "Remaining<br>slots",
+            "Covered by a<br>planned meeting",
+        ):
+            with self.subTest(heading=heading):
+                self.assertIn(f">{heading}</th>", charts)
+
     def test_a_phone_reads_short_stage_names_and_the_first_three_filters(self):
         # Both stage names side by side on a 390px phone (the second went
         # behind the rail's "More"); the full name stays the accessible name.

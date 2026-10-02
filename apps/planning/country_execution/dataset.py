@@ -19,9 +19,18 @@ so any combination of the page's filters is a sum of whole cells.
 **Who owns an activity.** Staff work belongs to the person delivering it (the
 responsible staff member): supervision is not ownership, and a CCEO's work
 stays the CCEO's while their Lead reads it through the team. Partner work has
-no responsible staff member by construction; it belongs to the owner of the
-school (or the cluster) it is delivered in, as it does on every oversight
-surface (apps.planning.oversight_service._activity_scope_q).
+no responsible staff member by construction; it is credited as Country
+Planning Oversight credits it (apps.planning.country_oversight.people) — to
+whoever monitors or made the hand-over, then the activity's own monitor, then
+whoever holds the school — so a Partner's visit sits under the same person on
+the planning tab, this tab and the monitors (owner audit, 2026-10-02).
+
+**Which visits count.** Every activity is execution to follow, and the six
+figures count them all. Beside them, the visits the rulebook counts toward a
+person's 280 or 560 (apps.planning.country_oversight.rules: staff Follow up,
+In-school Training and SSA Support) are counted on their own — planned,
+delivered, verified — so delivery can be read against the same target the
+plan is read against.
 """
 
 from __future__ import annotations
@@ -37,6 +46,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.planning.country_execution import stages as st
+from apps.planning.country_oversight import policy, rules
 from apps.planning.country_oversight.coverage import Window, _day
 from apps.planning.country_oversight.requirements import (
     NO_OWNER_KEY,
@@ -85,6 +95,14 @@ BASE_FIELDS: tuple[str, ...] = (
     "own_external",
     "carried_forward",
     "funds_pending",
+    # The visits counted toward a person's 280 or 560 (rules.visit_kind, staff
+    # delivery): on the plan, delivered (submitted for review) and verified.
+    "v_planned",
+    "v_delivered",
+    "v_verified",
+    # Donor, story, invitation and social visits staff delivered: shown, not
+    # counted.
+    "v_outreach",
 )
 BASE_WIDTH = len(BASE_FIELDS)
 IDX = {name: index for index, name in enumerate(BASE_FIELDS)}
@@ -209,6 +227,17 @@ class ActivityRecord(NamedTuple):
     verified_day: date | None
     closed_day: date | None
     last_action: date | None
+    school_type: str
+    # The counted kind of a visit at a school (rules.visit_kind), or "".
+    kind: str
+    # A donor, story, invitation or social visit at a school.
+    outreach: bool
+    delivered_day: date | None
+
+    @property
+    def counted(self) -> bool:
+        """One of the visits a person's 280 or 560 is made of."""
+        return bool(self.kind) and self.channel == "staff"
 
 
 class RecordTable(list):
@@ -272,6 +301,7 @@ _COLUMNS = (
     "responsible_staff_id",
     "monitored_by_staff_id",
     "assigned_partner_id",
+    "purpose_type",
     "planned_date",
     "scheduled_date",
     "execution_started_at",
@@ -284,6 +314,7 @@ _COLUMNS = (
     "school__region_id",
     "school__district_id",
     "school__operational_status",
+    "school__school_type",
     "cluster__responsible_staff_id",
     "cluster__district__region_id",
     "cluster__district_id",
@@ -331,25 +362,70 @@ def _local_day(moment) -> date | None:
     return moment
 
 
-def _raw_owner(row: dict) -> str | None:
+_STAFF_ORDER = (
+    "responsible_staff_id",
+    "school__account_owner_id",
+    "cluster__responsible_staff_id",
+    "monitored_by_staff_id",
+)
+_PARTNER_ORDER = (
+    "monitored_by_staff_id",
+    "responsible_staff_id",
+    "school__account_owner_id",
+    "cluster__responsible_staff_id",
+)
+
+
+def _owner_candidates(row: dict, handed: dict) -> list[str]:
+    """The raw ids an activity may be credited to, in order.
+
+    Staff work: the person delivering it. Partner work: whoever monitors or
+    made its hand-over, then the activity's own monitor and responsible
+    person, then whoever holds the school or the cluster — the order Country
+    Planning Oversight credits Partner work in (people.people_plan).
+    """
     if row["delivery_type"] == "partner":
-        order = (
-            "school__account_owner_id",
-            "cluster__responsible_staff_id",
-            "monitored_by_staff_id",
-            "responsible_staff_id",
-        )
+        raw = [*handed.get(row["id"], ()), *(row[name] for name in _PARTNER_ORDER)]
     else:
-        order = (
-            "responsible_staff_id",
-            "school__account_owner_id",
-            "cluster__responsible_staff_id",
-            "monitored_by_staff_id",
+        raw = [row[name] for name in _STAFF_ORDER]
+    return [str(value) for value in raw if value]
+
+
+def _handed_by(activity_ids) -> dict:
+    """Partner activity id → (monitor, assigner) of the hand-over it came
+    from or carries."""
+    from apps.partners.models import PartnerAssignment
+
+    handed: dict = {}
+    for scheduled, source, monitor, assigner in (
+        PartnerAssignment.objects.filter(
+            Q(scheduled_activity_id__in=activity_ids)
+            | Q(source_activity_id__in=activity_ids)
         )
-    for name in order:
-        if row[name]:
-            return str(row[name])
-    return None
+        .values_list(
+            "scheduled_activity_id",
+            "source_activity_id",
+            "monitoring_staff_id",
+            "assigning_staff_id",
+        )
+        .order_by("created_at")
+    ):
+        for activity_id in (scheduled, source):
+            if activity_id:
+                handed[activity_id] = (monitor, assigner)
+    return handed
+
+
+def _is_outreach(row: dict) -> bool:
+    """A donor, story, invitation or social visit at a school
+    (rules.outreach_visit_q, for a row already read)."""
+    if not row["school_id"]:
+        return False
+    activity_type = str(row["activity_type"] or "")
+    return activity_type in rules.OUTREACH_TYPES or (
+        activity_type in rules.COUNTED_VISIT_TYPES
+        and str(row["purpose_type"] or "") in rules.OUTREACH_PURPOSES
+    )
 
 
 def build(
@@ -384,24 +460,38 @@ def build(
     funds = _funds_pending(ids_subquery) if rows else set()
     closure = _closure_owners(queryset) if rows else {}
 
-    raw_ids = {_raw_owner(row) for row in rows}
     moved = (
         _integrity(scope_q, base_q, window, rows)
         if scope_q is not None
         else _empty_integrity()
     )
-    raw_ids |= {_raw_owner(row) for row in moved["moved_rows"]}
-    directory = owner_directory({i for i in raw_ids if i})
+    handed: dict = {}
+    if any(row["delivery_type"] == "partner" for row in rows):
+        handed.update(_handed_by(ids_subquery))
+    moved_partner = [
+        row["id"] for row in moved["moved_rows"] if row["delivery_type"] == "partner"
+    ]
+    if moved_partner:
+        handed.update(_handed_by(moved_partner))
+    candidates = {
+        row["id"]: _owner_candidates(row, handed)
+        for row in (*rows, *moved["moved_rows"])
+    }
+    directory = owner_directory({i for ids in candidates.values() for i in ids})
 
     owners: dict[str, OwnerInfo] = {}
 
     def owner_of(row) -> tuple[str, OwnerInfo | None]:
-        raw = _raw_owner(row)
-        info = directory.get(raw or "")
-        if info is None:
-            return NO_OWNER_KEY, None
-        owners.setdefault(info.key, info)
-        return info.key, info
+        ids = candidates[row["id"]]
+        if row["delivery_type"] != "partner":
+            # Staff work is its responsible person's, known to us or not.
+            ids = ids[:1]
+        for raw in ids:
+            info = directory.get(raw)
+            if info is not None:
+                owners.setdefault(info.key, info)
+                return info.key, info
+        return NO_OWNER_KEY, None
 
     width = BASE_WIDTH + len(TREND_SERIES) * len(buckets)
     cells: dict[tuple, list] = {}
@@ -412,7 +502,11 @@ def build(
         kind = info.kind if info is not None else "unassigned"
         status = row["status"]
         due = row["due_day"]
-        start = _local_day(row["execution_started_at"]) or row["actual_delivery_date"]
+        # On time is read from the day the work was delivered, once the
+        # officer has recorded it (owner, 2026-10-02): a visit delivered on
+        # its day and keyed the next day is not late. Until then the day
+        # execution was started in the app is the only date there is.
+        start = row["actual_delivery_date"] or _local_day(row["execution_started_at"])
         verified_at = row["ia_confirmed_at"] or (
             row["pl_reviewed_at"] if status in st.VERIFIED else None
         )
@@ -438,6 +532,12 @@ def build(
         verified_day = _local_day(verified_at) if stage.verified else None
         closed_day = (
             _local_day(row["closure_details__closed_at"]) if stage.closed else None
+        )
+        at_school = bool(row["school_id"]) and not row["cluster_id"]
+        kind = (
+            rules.visit_kind(row["activity_type"], row["purpose_type"])
+            if at_school
+            else None
         )
         record = ActivityRecord(
             row["id"],
@@ -471,6 +571,10 @@ def build(
             verified_day,
             closed_day,
             _local_day(row["updated_at"]),
+            row["school__school_type"] or "",
+            kind or "",
+            _is_outreach(row),
+            row["actual_delivery_date"],
         )
         records.append(record)
         key = (
@@ -578,6 +682,17 @@ def _add_record(
         vector[i[f"own_{stage.owner}"]] += 1
     if record.funds_pending and not stage.started:
         vector[i["funds_pending"]] += 1
+    if record.counted:
+        # On the plan as the planning tab reads "planned" (a scheduled-or-later
+        # state; a visit sent back to planning is not on it).
+        if record.status in policy.PLANNED_STATES:
+            vector[i["v_planned"]] += 1
+        if stage.executed:
+            vector[i["v_delivered"]] += 1
+        if stage.verified:
+            vector[i["v_verified"]] += 1
+    elif record.outreach and record.channel == "staff" and stage.executed:
+        vector[i["v_outreach"]] += 1
     timing = stage.timing
     if timing == "on_time":
         vector[i["on_time"]] += 1

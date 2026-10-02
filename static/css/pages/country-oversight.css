@@ -437,9 +437,11 @@
 }
 
 /* ── Charts ────────────────────────────────────────────────────────────── */
+/* Two charts to a row, two rows (owner, 2026-10-02): each chart has room for
+   its Programme Leads and for its figures, which sit open under it. */
 .cpo-charts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
 }
 .cpo-chart {
@@ -462,9 +464,6 @@
   line-height: 1.3;
   color: var(--cpo-ink);
 }
-/* Four charts to a row: a title that takes two lines would drop its plot
-   below its neighbours', so every title there holds two lines' room. */
-.cpo-charts > .cpo-chart > .cpo-chart-name { min-block-size: 2.6em; }
 /* The chart engine redraws a beat after its box changes size (a debounced
    resize), so for that beat the old, wider drawing sticks out of the card and
    the workspace scrolls sideways — the full-width execution charts did, going
@@ -479,6 +478,13 @@
   font-weight: 600;
 }
 .cpo-mini { font-size: var(--edify-text-micro-size); }
+/* Open under a chart that is half the page wide (the planning charts and the
+   execution charts alike), the figures keep to a tighter column than a
+   full-width table's, so more of them are on screen before the table has to
+   scroll in its box. The platform pads every cell from this variable, so the
+   variable is what is set. Headings carry their own line break. */
+:is(.cpo-charts, .cxo-charts) .cpo-mini { --edify-table-cell-padding-inline: 0.4rem; }
+:is(.cpo-charts, .cxo-charts) .cpo-mini thead th { line-height: 1.25; vertical-align: bottom; }
 
 /* ── Drill-down table and follow-ups ───────────────────────────────────── */
 .cpo-lower {
@@ -796,7 +802,7 @@
 /* ── Width ─────────────────────────────────────────────────────────────── */
 /* The owner's layout, as far as the screen allows it: the table shares its
    row with the follow-ups only when all fourteen columns still fit; six
-   cards and four charts share a row while each keeps room for its figures. */
+   cards share a row while each keeps room for its figures. */
 @container cpo (max-width: 1760px) {
   .cpo-lower { grid-template-columns: minmax(0, 1fr); }
   .cpo-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem); align-items: start; }
@@ -806,8 +812,6 @@
   .cpo-side .cpo-info { grid-column: 2; grid-row: 2 / span 4; margin-block-start: 0; }
 }
 @container cpo (max-width: 1450px) {
-  .cpo-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cpo-charts > .cpo-chart > .cpo-chart-name { min-block-size: 0; }
   /* Six cards of about 170px: every piece a step smaller. */
   .cpo-metric { padding: 0.75rem 0.8rem 0.7rem; gap: 0.4rem; }
   .cpo-metric-top { gap: 0.5rem; min-block-size: 2rem; }

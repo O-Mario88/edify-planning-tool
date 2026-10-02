@@ -178,7 +178,9 @@
         });
       } else {
         cfg.tooltip = Object.assign({}, cfg.tooltip, {
-          y: { formatter: function (value) { return value == null ? '' : value.toLocaleString() + ' slots'; } }
+          /* What a bar counts: slots on the planning charts, and whatever the
+             server names on the execution ones (activities, visits). */
+          y: { formatter: function (value) { return value == null ? '' : value.toLocaleString() + ' ' + (payload.unit || 'slots'); } }
         });
       }
     } else {

@@ -44,7 +44,7 @@ the activities behind it.
           <tr class="edify-group-head">
             <th colspan="13" scope="colgroup">
               <span class="edify-group-head__label">{{ team.name }}</span>
-              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits delivered · {{ team.overdue|intcomma }} overdue</span>
+              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits delivered · {{ team.overdue|intcomma }} past date, not delivered</span>
             </th>
           </tr>
           {% for person in team.people %}

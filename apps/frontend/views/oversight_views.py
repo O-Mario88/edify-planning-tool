@@ -699,7 +699,15 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_visits_delivered_target",
             totals.visits_delivered,
             totals.visits_target,
-            helper=f"{totals.visits_delivered:,} of {totals.visits_target:,} visits",
+            # Follow up, In-school Training and SSA Support only (the
+            # planning rulebook); outreach visits are named, not counted.
+            helper=f"{totals.visits_delivered:,} of {totals.visits_target:,} visits"
+            + (
+                f" · {totals.outreach_delivered:,} donor, story or social "
+                "(not counted)"
+                if totals.outreach_delivered
+                else ""
+            ),
             icon="target",
             empty="No one in scope",
         ),
@@ -714,7 +722,7 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
         render_kpi_item(
             "execution_overdue",
             MetricValue.measured(totals.overdue),
-            helper="Due, not delivered",
+            helper="Planned day passed, not delivered",
             tone="danger" if totals.overdue else "neutral",
             icon="warning",
             drilldown_url=f"{execution_url}&list=overdue",

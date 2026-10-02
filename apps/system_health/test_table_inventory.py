@@ -58,7 +58,11 @@ class TableBoundsTest(SimpleTestCase):
     #:   2026-10-01): one row per school type. Bounded by the SchoolType enum
     #:   (five), and read as one table: the types beside each other are the
     #:   point of it.
-    UNBOUNDED_CEILING = 7
+    #: * `partials/country_execution/_types.html` — the Execution &
+    #:   Completion tab's "Verified Against the Requirement by School Type"
+    #:   (owner, 2026-10-02): the same rows, read for what is verified.
+    #:   Bounded by the SchoolType enum, as the table above is.
+    UNBOUNDED_CEILING = 8
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

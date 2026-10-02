@@ -1,0 +1,64 @@
+{% comment %}
+The requirement by school type and how much of it is verified (owner,
+2026-10-01: "separate ... Core, Clients, Core Trained, Core Graduates", for
+visits and for trainings; 2026-10-02: the same for execution). One row per
+type, read from the planning tab's own fold for the same selection, so a
+type's requirement and its plan are the ones that tab shows; "verified" is
+programme completion. A type the requirement asks nothing of shows what it
+holds and no gap. The last row is every type together. A real table on every
+screen.
+{% endcomment %}
+{% if type_rows %}
+<section class="cpo-drill cxo-types" aria-labelledby="cxo-types-name">
+  <header class="cpo-drill-head" data-no-titlebar data-card-header>
+    <h2 class="cpo-drill-name" id="cxo-types-name">Verified Against the Requirement by School Type</h2>
+  </header>
+  {% if window.period == "week" %}<p class="cpo-notice cxo-pad" role="note">A week has no phased requirement: each type's requirement is read for the year.</p>{% endif %}
+  <div class="cpo-tscroll" data-mobile-table="scroll">
+    <table class="cpo-table">
+      <thead>
+        <tr>
+          <th scope="col" class="cpo-namecol">School Type</th>
+          <th scope="col">Schools</th>
+          <th scope="col" title="Visit slots the schools of this type need">Visits<br>Needed</th>
+          <th scope="col" title="Visit slots with a visit planned, by staff or dated by a Partner">Visits<br>Planned</th>
+          <th scope="col" title="Visit slots filled by verified work">Visits<br>Verified</th>
+          <th scope="col" title="Visit slots not yet filled by verified work">Visits<br>Remaining</th>
+          <th scope="col" title="Verified, of the visits needed">Visits<br>Completed</th>
+          <th scope="col">Trainings<br>Needed</th>
+          <th scope="col">Trainings<br>Planned</th>
+          <th scope="col">Trainings<br>Verified</th>
+          <th scope="col" title="Training slots not yet filled by verified work">Trainings<br>Remaining</th>
+          <th scope="col" title="Verified, of the trainings needed">Trainings<br>Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in type_rows %}
+        <tr data-level="{% if row.is_total %}0{% else %}1{% endif %}">
+          <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.label }}</span>{% if not row.needs_visits %}<span class="cpo-hint"><span>outreach only</span></span>{% endif %}</th>
+          <td>{{ row.schools }}</td>
+          {% if row.needs_visits %}
+          <td>{{ row.visit_slots }}</td>
+          <td>{{ row.visits_planned }}</td>
+          <td>{{ row.visits_verified }}</td>
+          <td>{% if row.visits_left %}<span class="cpo-alert">{{ row.visits_left }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          <td>{% if row.visit_share is None %}<span class="cpo-none">—</span>{% else %}{{ row.visit_share }}%{% endif %}</td>
+          {% else %}
+          <td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td>
+          {% endif %}
+          {% if row.needs_trainings %}
+          <td>{{ row.training_slots }}</td>
+          <td>{{ row.trainings_planned }}</td>
+          <td>{{ row.trainings_verified }}</td>
+          <td>{% if row.trainings_left %}<span class="cpo-alert">{{ row.trainings_left }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+          <td>{% if row.training_share is None %}<span class="cpo-none">—</span>{% else %}{{ row.training_share }}%{% endif %}</td>
+          {% else %}
+          <td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td><td><span class="cpo-none">—</span></td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}

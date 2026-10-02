@@ -4167,7 +4167,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1692,
+      "bytes": 1841,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4237,7 +4237,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1733,
+      "bytes": 1826,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4309,6 +4309,29 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3991,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Types",
+      "purpose": "Reusable  types interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_execution/_types.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 912,
       "deprecated_alternatives": [],
@@ -4360,7 +4383,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 8595,
+      "bytes": 8603,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots/<str:snapshot_id>"
@@ -4384,7 +4407,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3026,
+      "bytes": 3030,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/snapshots"
@@ -4579,7 +4602,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2621,
+      "bytes": 2645,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4602,7 +4625,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2411,
+      "bytes": 2450,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4627,14 +4650,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14603,
+      "bytes": 16919,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 6,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Workspace",
       "purpose": "Reusable workspace interface primitive",
@@ -4642,7 +4665,7 @@
       "states": [
         "default"
       ],
-      "tables": 4,
+      "tables": 5,
       "template": "partials/country_execution/workspace.html",
       "variants": [
         "{{ card.tone }}"
@@ -4679,7 +4702,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1878,
+      "bytes": 2269,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4697,6 +4720,33 @@
       "tables": 1,
       "template": "partials/country_oversight/_charts.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2886,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/execution/records/<str:key>",
+        "/country-planning-oversight/table/<str:key>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Consolidated Table",
+      "purpose": "Reusable  consolidated table interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/country_oversight/_consolidated_table.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10315,7 +10365,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 705,
+      "bytes": 1189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10425,6 +10475,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
+        "/country-planning-oversight/execution/records/<str:key>",
         "/country-planning-oversight/table/<str:key>",
         "/planning-monitor/",
         "/team-planning-oversight/",
@@ -10903,7 +10954,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6602,
+      "bytes": 6619,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -36412,6 +36463,163 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.records_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-1516D1E2A6",
+      "page_title": "Cpx Records Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "A consolidated table as a workbook: every row, every column.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/records-export/<str:key>",
+      "route_name": "cpx_records_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.country_execution_views",
+      "backend_view": "apps.frontend.views.country_execution_views.records_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/oversight/country_execution_table.html",
+        "test:referenced-by-automated-test",
+        "permission:country_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-74FA6A7E67",
+      "page_title": "\u00b7 Execution &amp; Completion \u00b7 Edify",
+      "page_type": "planning-or-creation",
+      "per_page_css": [
+        "css/pages/oversight-workspace.css"
+      ],
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Complete planning form",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "One consolidated table: every record a card counts, a page at a time, as an ordinary table that opens with where the school sits (owner, 2026-10-02, as the planning cards open theirs).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/execution/records/<str:key>",
+      "route_name": "cpx_records",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.planning.country_oversight.service"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/oversight/country_execution_table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -37543,8 +37751,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -37557,9 +37765,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -105296,6 +105502,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.country_execution_views.records_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/records-export/<str:key>",
+      "route_name": "cpx_records_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.country_execution_views.records_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/execution/records/<str:key>",
+      "route_name": "cpx_records",
+      "templates": [
+        "pages/oversight/country_execution_table.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.country_execution_views.rows_view",
       "kind": "partial",
       "methods": [
@@ -114260,13 +114492,13 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 573,
+    "accessibility_contract_pass": 574,
     "activity_states": 24,
-    "all_routes": 1353,
+    "all_routes": 1355,
     "api_routes": 360,
-    "component_templates": 597,
-    "full_pages": 262,
-    "mobile_contract_pass": 573,
+    "component_templates": 599,
+    "full_pages": 263,
+    "mobile_contract_pass": 574,
     "nonvisual_actions": 279,
     "page_types": {
       "administration-or-configuration": 25,
@@ -114275,15 +114507,15 @@
       "dashboard": 1,
       "interaction-fragment": 587,
       "operational-queue": 152,
-      "planning-or-creation": 13,
+      "planning-or-creation": 14,
       "record-detail": 25,
-      "report": 40
+      "report": 41
     },
     "partials_and_drawers": 308,
-    "permission_gated": 865,
+    "permission_gated": 867,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 881,
+    "routed_surfaces": 883,
     "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
@@ -114291,8 +114523,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 573,
-    "test_referenced": 774,
-    "theme_contract_pass": 573
+    "tablet_contract_pass": 574,
+    "test_referenced": 776,
+    "theme_contract_pass": 574
   }
 }

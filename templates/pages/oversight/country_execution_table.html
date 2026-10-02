@@ -1,0 +1,63 @@
+{% extends "layouts/shell.html" %}
+{% load components static %}
+
+{% block title %}{{ spec.title }} · Execution &amp; Completion · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260925tabrow1">{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+A consolidated table behind a Country Execution & Completion card (owner,
+2026-10-02: what the planning cards open, for execution). The rows are the
+records the card counts, under the tab's own period and filters. An ordinary
+table, as the planning tables are: it opens with the Programme Lead,
+sub-region, district, CCEO or Programme Lead and cluster of the school, then
+the School ID; who the work is credited to is a column of its own, and the
+title band says what the rows add up to. A real table on every screen: on a
+phone it scrolls sideways.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
+
+  {% page_header title=spec.title description=spec.description %}
+    {% slot eyebrow %}<a href="/country-planning-oversight/?{{ query }}" class="hover:underline">Country Execution &amp; Completion Oversight</a>{% endslot %}
+    {% if may_export and not withheld %}
+      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
+         href="{{ export_path }}?{{ query }}"
+         aria-label="Export {{ spec.title }} to Excel" title="Export to Excel" download>
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>Export</span>
+      </a>
+    {% endif %}
+  {% endpage_header %}
+
+  <div class="edify-view-toolbar">
+    {% include "partials/oversight/_lens_tabs.html" %}
+  </div>
+
+  {% comment %}The two choices a reader changes here; the period and everything
+  else the tab was filtered to ride along unchanged. Applies on change.{% endcomment %}
+  {% filter_bar action=records_path label="Table filters" extra_class="oversight-portfolio-filters" %}
+    {% for name, value in carried %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Programme Lead</span>
+      <select name="program_lead" aria-label="Programme Lead">
+        <option value="">All leads</option>
+        {% for lead in leads %}
+        <option value="{{ lead.key }}"{% if lead.key == filters.program_lead %} selected{% endif %}>{{ lead.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="edify-page-header-control">
+      <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Delivered By</span>
+      <select name="channel" aria-label="Delivery channel">
+        <option value="">Staff and Partners</option>
+        {% for key, label in channels %}
+        <option value="{{ key }}"{% if key == filters.channel %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endfilter_bar %}
+
+  {% include "partials/country_oversight/_consolidated_table.html" %}
+
+</div>
+{% endblock %}
