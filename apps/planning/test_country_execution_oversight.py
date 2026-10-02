@@ -1236,6 +1236,15 @@ class ExecutionPageTest(ExecutionWorld):
         # Two stages only: the portfolio moved to the Country Map.
         self.assertNotIn("view=portfolio", body)
 
+    def test_the_funnels_and_the_trends_figures_sit_open_under_them(self):
+        # As on the planning tab (owner, 2026-10-02): nobody expands anything
+        # to read a chart's numbers.
+        body = self.as_user(self.cd_user).get(self.URL).content.decode()
+        charts = body[body.index('<section class="cxo-charts"') :]
+        charts = charts[: charts.index("</section>")]
+        self.assertEqual(charts.count('<details class="cpo-chart-data" open>'), 2)
+        self.assertNotIn("View chart data", charts)
+
     def test_a_rows_chevron_rides_on_its_name(self):
         # On a phone the name column pins and stacks a row's lines: a chevron
         # beside the name's span stood on a line of its own above the name.

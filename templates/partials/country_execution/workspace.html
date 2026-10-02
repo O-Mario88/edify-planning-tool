@@ -3,7 +3,9 @@ The Execution & Completion body: six figures, the funnel and the trend, the
 on-time, backlog, age and forecast readings with the Director's shortcuts, the
 hierarchy table, and the issues, recent movements and follow-ups under it.
 Every figure comes from one fold (apps.planning.country_execution.service), so
-a card is the table's total and a chart's bar is a table's row.
+a card is the table's total and a chart's bar is a table's row. The funnel's
+and the trend's figures sit open under their charts, as the planning charts'
+do (owner, 2026-10-02); they can still be folded away.
 {% endcomment %}
 <div id="cxo-workspace" class="cpo-workspace cxo-workspace">
 
@@ -55,8 +57,8 @@ a card is the table's total and a chart's bar is a table's row.
         <span class="cxo-hint" title="Partner work goes straight to IA: it has no PL review stage.">Staff and Partner</span></h2>
       {{ charts.funnel|json_script:"cxo-funnel-data" }}
       <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Execution funnel: due, started, evidence submitted, PL reviewed (staff only), IA verified and fully closed, in total and for staff and Partner delivery. The figures are in the table under the chart."></div>
-      <details class="cpo-chart-data">
-        <summary>View chart data</summary>
+      <details class="cpo-chart-data" open>
+        <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.funnel.table "funnel_page" as funnel_pager %}
           <table class="cpo-mini">
@@ -72,8 +74,8 @@ a card is the table's total and a chart's bar is a table's row.
         <span class="cxo-hint">{% if window.period == "week" %}Daily{% elif window.period == "month" %}Weekly{% elif window.period == "quarter" %}Monthly{% else %}Quarterly{% endif %}, cumulative</span></h2>
       {{ charts.trend|json_script:"cxo-trend-data" }}
       <div class="cpo-plot cxo-plot" x-ref="plot" role="img" aria-label="Planned, execution completed, IA verified and fully closed work, cumulative through {{ header.window_label }}. The figures are in the table under the chart."></div>
-      <details class="cpo-chart-data">
-        <summary>View chart data</summary>
+      <details class="cpo-chart-data" open>
+        <summary>Chart data</summary>
         <div class="cpo-tscroll">
           {% paginate charts.trend.table "trend_page" as trend_pager %}
           <table class="cpo-mini">
