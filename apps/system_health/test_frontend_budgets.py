@@ -147,7 +147,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: Log counts active time only while a page is visible, focused and in
     #: use, which needs a beat from the page itself (owner: replace Who's
     #: Online with an accurate activity log). Its comments were cut to fit.
-    JS_GZIP_KB = 138
+    #:
+    #: Raised to 140 on 2026-10-02 (137.8 to 139.1 KB, +0.9%) for micro-ux.js
+    #: letting a record table's long text and long headings wrap on a desktop
+    #: when that makes it fit its card, instead of scrolling sideways (owner:
+    #: Work Plan and My Plan still scrolled on a 2560px monitor). Its
+    #: rationale lives in interactions.css, which is minified.
+    JS_GZIP_KB = 140
     INLINE_SCRIPT_KB = 40
 
     @classmethod

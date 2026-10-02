@@ -1525,6 +1525,109 @@
     if (fitted.length) titleTruncatedCells(fitted.map(function (entry) { return entry.table; }));
   }
 
+  /* ── LONG TEXT WRAPS BEFORE A TABLE SCROLLS (owner, 2026-10-02) ──
+     From 64rem up, a table that wrapping would make fit its card wraps: text
+     columns over 13rem give up width (never below 10rem), and a heading wider
+     than its cells takes two lines so its column closes up. A table that
+     would still scroll is left alone. The why is in interactions.css. */
+  var WRAP_COLUMN_FROM = 13 * 16, WRAP_COLUMN_FLOOR = 10 * 16;
+
+  function unwrapLongText(table) {
+    table.querySelectorAll('.edify-cell-wrap').forEach(function (cell) {
+      cell.classList.remove('edify-cell-wrap');
+      cell.style.removeProperty('--edify-cell-wrap');
+    });
+    delete table.dataset.edifyWrapAt;
+  }
+
+  function wrapLongText(root) {
+    /* Rows swapped into a table that was measured: measure it again. */
+    var owner = root.closest && root.closest('table');
+    if (owner) delete owner.dataset.edifyWrapAt;
+    var tables = (owner ? [owner] : elementsWithin(root, 'main table')).filter(function (table) {
+      return table.closest('table') === table && !table.matches('.sr-only, .edify-visually-hidden') && !table.classList.contains('edify-table--truncate');
+    });
+    if (!desktopShell.matches) { tables.forEach(unwrapLongText); return; }
+    var plans = [];
+    tables.forEach(function (table) {
+      var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
+      if (!region) return;
+      var room = region.clientWidth;
+      if (!room || table.dataset.edifyWrapAt === String(room)) return;
+      unwrapLongText(table);
+      var overflow = region.scrollWidth - room;
+      if (overflow <= 4) return;
+      var rows = Array.from(table.querySelectorAll(':scope > tbody > tr')).filter(function (row) {
+        return row.children.length && row.getBoundingClientRect().height > 0 && !row.querySelector(':scope > [colspan]');
+      }).slice(0, 40);
+      if (!rows.length) return;
+      var count = rows[0].children.length;
+      rows = rows.filter(function (row) { return row.children.length === count; });
+      var head = Array.from(table.querySelectorAll(':scope > thead > tr')).filter(function (row) {
+        return row.children.length === count && !row.querySelector(':scope > [colspan]');
+      }).pop();
+      var padding = function (cell) {
+        var style = window.getComputedStyle(cell);
+        return (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      };
+      var columns = [];
+      for (var index = 0; index < count; index += 1) {
+        var width = rows[0].children[index].getBoundingClientRect().width;
+        var heading = head ? head.children[index] : null;
+        var headingText = heading ? cleanText(heading.textContent) : '';
+        var headingNeed = heading ? contentWidth(heading) + padding(heading) : 0;
+        var words = headingText.split(' ');
+        var longest = words.reduce(function (most, word) { return Math.max(most, word.length); }, 0);
+        var headingFloor = heading && headingText.length
+          ? Math.ceil((headingNeed - padding(heading)) * Math.min(1, (longest + 1) / headingText.length) + padding(heading) + 4)
+          : 0;
+        var text = width >= WRAP_COLUMN_FROM && rows.every(function (row) {
+          var cell = row.children[index];
+          return !cell.querySelector(CONTROL_CELL) && !rigidCell(cell);
+        });
+        if (text) {
+          var floor = Math.max(WRAP_COLUMN_FLOOR, headingFloor);
+          if (width - floor > 1) columns.push({ index: index, width: width, floor: floor, body: true, heading: heading });
+          continue;
+        }
+        /* A column held open by its heading closes up to its cells. */
+        if (!heading || words.length < 2) continue;
+        var bodyNeed = rows.reduce(function (most, row) {
+          var cell = row.children[index];
+          return Math.max(most, contentWidth(cell) + padding(cell));
+        }, 0);
+        var closed = Math.max(bodyNeed, headingFloor, 4 * 16);
+        if (headingNeed > bodyNeed + 4 && width - closed > 8) {
+          columns.push({ index: index, width: width, floor: closed, body: false, heading: heading });
+        }
+      }
+      if (!columns.length) return;
+      var spare = columns.reduce(function (sum, column) { return sum + column.width - column.floor; }, 0);
+      var needed = overflow + 2;
+      /* Remembered either way, until the region changes width. */
+      if (spare < needed) { plans.push({ table: table, room: room, count: count, columns: [] }); return; }
+      var share = needed / spare;
+      columns.forEach(function (column) {
+        column.to = Math.floor(column.width - (column.width - column.floor) * share);
+      });
+      plans.push({ table: table, room: room, count: count, columns: columns });
+    });
+    plans.forEach(function (plan) {
+      var mark = function (cell, width) {
+        cell.classList.add('edify-cell-wrap');
+        cell.style.setProperty('--edify-cell-wrap', width + 'px');
+      };
+      plan.columns.forEach(function (column) {
+        if (column.heading) mark(column.heading, column.to);
+        if (!column.body) return;
+        plan.table.querySelectorAll(':scope > tbody > tr').forEach(function (row) {
+          if (row.children.length === plan.count) mark(row.children[column.index], column.to);
+        });
+      });
+      plan.table.dataset.edifyWrapAt = String(plan.room);
+    });
+  }
+
   function settlePlan(table, overflow) {
     /* Columns give the difference back out of their slack above their
        floors; a column below its content would overflow the table again. */
@@ -1698,6 +1801,7 @@
     fitTimer = window.setTimeout(function () {
       fitRails(document);
       fitTables(document);
+      wrapLongText(document);
       pinSelectColumns(document);
       titleTruncatedLabels(document);
       fillPhoneRows(document);
@@ -2393,6 +2497,7 @@
       enhanceCustomDialogs(root);
       fitRails(root);
       fitTables(root);
+      wrapLongText(root);
       pinSelectColumns(root);
       watchScrollRegions(root);
       titleTruncatedLabels(root);
@@ -2481,7 +2586,7 @@
      another style resolution. */
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
     fontsSettled = true;
-    if (enhancedBeforeFonts) { fitRails(document); fitTables(document); }
+    if (enhancedBeforeFonts) { fitRails(document); fitTables(document); wrapLongText(document); }
   });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);

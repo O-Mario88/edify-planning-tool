@@ -79,7 +79,7 @@ inset themselves — see components/mobile-shell.css.
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261001canvas1">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261002wrap1">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261001frame5">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261001groups3">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260927mobile4">
@@ -105,8 +105,8 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261001tokens1">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20261001tokens1">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261002wrap1">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20261002wrap1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260923responsive1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -117,7 +117,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20261001pinned1">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261001tokens1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261002wrap1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -247,7 +247,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260923release1"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260926district1"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20261001tokens1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20261002wrap1"></script>
 <script defer src="{% static 'js/date-picker.js' %}?v=20260927layer1"></script>
 
 {% comment %}
