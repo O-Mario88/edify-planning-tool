@@ -30,9 +30,18 @@ scheduling visit or training can contribute to the core school packages").
 It stays costed and reported as the project's; it also takes the package slot
 its visit or training fills.
 
+An in-school training is a training AND a visit (owner, 2026-10-03: at a Core
+School it should "record the visit package V1, V2, V3, V4 and training
+package T1, T2, T3, T4"). The Training takes the package's next training slot
+and the School Visit written beside it the next visit slot, each on the half
+of whoever delivers it (`slot_kind`). Until then the companion visit took no
+slot, so the school read one training and no visit for a day that was both.
+No door refuses the pair over the visit half: a door asks `package_kind_for`,
+which still reads the companion visit as outside the package, the way it
+reads SSA Support whose deliverer it does not know.
+
 Not credited here, each for its reason:
 
-* the companion visit an in-school training creates — it is the training;
 * donor, content/story, invitation and social visits — not package support
   (owner, 2026-09-30), and unlimited wherever they are planned;
 * data collection (SSA Support) visits — "those visits don't count" (owner,
@@ -163,6 +172,38 @@ def package_kind(activity) -> str | None:
     )
 
 
+def slot_kind_for(
+    activity_type: str | None,
+    purpose_type: str | None = None,
+    *,
+    cluster_id=None,
+    delivery_type: str | None = None,
+) -> str | None:
+    """The package slot SAVED work of this shape takes, and the half it is
+    counted on: `package_kind_for`, plus the School Visit an in-school
+    training writes beside itself, which is a package visit (owner,
+    2026-10-03). The doors keep asking `package_kind_for`, so the pair is
+    never refused over the visit half."""
+    if not cluster_id and str(purpose_type or "") == COMPANION_VISIT_PURPOSE:
+        return "visit"
+    return package_kind_for(
+        activity_type,
+        purpose_type,
+        cluster_id=cluster_id,
+        delivery_type=delivery_type,
+    )
+
+
+def slot_kind(activity) -> str | None:
+    """ "visit", "training", or None: the slot this saved work takes."""
+    return slot_kind_for(
+        activity.activity_type,
+        activity.purpose_type,
+        cluster_id=activity.cluster_id,
+        delivery_type=activity.delivery_type or "staff",
+    )
+
+
 def staff_data_collection_q(prefix: str = "") -> Q:
     """Staff's own SSA Support at a school: a package visit."""
     p = prefix
@@ -186,7 +227,7 @@ def staff_data_collection_q(prefix: str = "") -> Q:
 
 def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
     """Activities that are package work of ``kind`` (both kinds when None) —
-    `package_kind_for` as a filter. Status and deletion are the caller's."""
+    `slot_kind_for` as a filter. Status and deletion are the caller's."""
     p = prefix
     if kind == "visit":
         types = PACKAGE_VISIT_TYPES
@@ -207,7 +248,12 @@ def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
     )
     if kind == "training":
         return ordinary
-    return ordinary | staff_data_collection_q(p)
+    # The visit an in-school training writes beside itself is a package
+    # visit (owner, 2026-10-03), whatever type it was written with.
+    companion = Q(**{f"{p}purpose_type": COMPANION_VISIT_PURPOSE}) & Q(
+        **{f"{p}cluster__isnull": True}
+    )
+    return ordinary | staff_data_collection_q(p) | companion
 
 
 def outside_package(project_id) -> bool:
@@ -240,7 +286,7 @@ def schedule_package_credit(activity) -> None:
     """
     if not activity.school_id or activity.deleted_at is not None:
         return
-    if activity.status in UNCREDITED_STATUSES or package_kind(activity) is None:
+    if activity.status in UNCREDITED_STATUSES or slot_kind(activity) is None:
         return
     if outside_package(activity.project_id):
         return
@@ -348,7 +394,7 @@ def credit_school_activity(activity_id: str):
         return None
     if activity.status in UNCREDITED_STATUSES:
         return None
-    kind = package_kind(activity)
+    kind = slot_kind(activity)
     if kind is None or outside_package(activity.project_id):
         return None
 
@@ -774,5 +820,7 @@ __all__ = [
     "reserve_for_assignment",
     "schedule_package_credit",
     "slot_held_by_assignment",
+    "slot_kind",
+    "slot_kind_for",
     "uncredited_package_work",
 ]

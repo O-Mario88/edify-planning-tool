@@ -1069,9 +1069,11 @@ def _schedule_core_in_school_training(
     companion School Visit are created together
     (apps.planning.services.schedule_in_school_training_pair). The Training
     fills the package's next open training slot — it is the Core training —
-    while the companion visit is the Salesforce/evidence record of the same
-    mission and leaves the visit slots untouched. The visit carries the
-    visit cost and the Training costs nothing (apps.activities.pair_costing).
+    and the companion visit takes the package's next open visit slot once it
+    is saved (owner, 2026-10-03: an in-school training records its V as well
+    as its T; apps.core_schools.package_credit.slot_kind). The pair is not
+    refused over the visit half. The visit carries the visit cost and the
+    Training costs nothing (apps.activities.pair_costing).
     """
     from apps.activity_catalogue.availability import (
         validate_in_school_training_course_selection,
