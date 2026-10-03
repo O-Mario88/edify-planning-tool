@@ -233,20 +233,35 @@ class GroupTrainingsCountInThePackageTest(_YearFixture):
 
 
 @freeze_time(OCTOBER)
-class DataCollectionIsOutsideThePackageTest(_YearFixture):
-    """Owner, 2026-10-02: "the only visits that count are in-school visits
-    and Training Follow Up visits"; data collection is allowed on every
-    school whatever visits it has."""
+class StaffSsaSupportIsAPackageVisitTest(_YearFixture):
+    """Owner, 2026-10-03: "SSA should be part of the core package v1-v4" and
+    "if it is assigned to the partner it does not count". It was outside the
+    package for everybody on 2026-10-02. Nothing refuses one."""
 
-    def test_a_data_collection_visit_takes_no_slot_and_no_half(self):
+    def test_staff_ssa_support_takes_a_visit_slot_on_the_staff_half(self):
         self._work(
             "school_visit_ssa_collection",
             date(2026, 10, 13),
             purpose_type="ssa_support",
         )
         self._work("core_visit", date(2026, 10, 14), purpose_type="ssa_support")
+        self.assertEqual(self._taken("2027", "visit"), ["V1", "V2"])
+        self.assertEqual(
+            [slot.owner for slot in self._slots("2027", "visit")[:2]],
+            ["staff", "staff"],
+        )
+        self.assertEqual(package_split(self.school, "2027").used(VISIT, STAFF), 2)
+
+    def test_a_partners_ssa_support_takes_no_slot_and_no_half(self):
+        self._work(
+            "school_visit_ssa_collection",
+            date(2026, 10, 13),
+            purpose_type="ssa_support",
+            delivery_type="partner",
+        )
         self.assertEqual(self._taken("2027", "visit"), [])
-        self.assertEqual(package_split(self.school, "2027").used(VISIT, STAFF), 0)
+        split = package_split(self.school, "2027")
+        self.assertEqual((split.used(VISIT, STAFF), split.partner_visits), (0, 0))
 
     def test_it_is_allowed_when_staff_have_their_two_visits(self):
         from apps.planning.visit_gate import (
@@ -485,28 +500,30 @@ class RefileTest(_YearFixture):
         ]
         self.assertEqual(linked, [session.id for session in self.sessions[:2]])
 
-    def test_a_data_collection_visit_gives_its_slot_back_and_the_rest_close_up(self):
-        # V1 a data collection visit, V2 a follow up, both in FY2027.
+    def test_a_partners_data_collection_gives_its_slot_back_and_staffs_stays(self):
+        # V1 a Partner's data collection visit, V2 staff's own SSA Support,
+        # both in FY2027: only the Partner's is outside the package.
         plan = self.new_plan
         days = (date(2026, 10, 6), date(2026, 10, 9))
-        kinds = (("core_visit", "ssa_support"), ("core_visit", "training_follow_up"))
         made = []
-        for sequence, (day, (kind, purpose)) in enumerate(zip(days, kinds), start=1):
+        for sequence, (day, delivery) in enumerate(
+            zip(days, ("partner", "staff")), start=1
+        ):
             visit = Activity.objects.create(
-                activity_type=kind,
-                purpose_type=purpose,
+                activity_type="core_visit",
+                purpose_type="ssa_support",
                 school=self.school,
                 fy="2027",
                 planned_date=day,
                 status="scheduled",
-                delivery_type="staff",
+                delivery_type=delivery,
             )
             CoreActivitySlot.objects.filter(
                 core_plan=plan, activity_type="visit", sequence_number=sequence
             ).update(
                 activity_id=visit.id,
                 status="scheduled",
-                owner="staff",
+                owner=delivery,
                 scheduled_for=day.isoformat(),
             )
             made.append(visit)
@@ -514,9 +531,46 @@ class RefileTest(_YearFixture):
         visits = self._slots("2027", "visit")
         linked = [slot.activity_id for slot in visits if slot.activity_id]
         self.assertNotIn(made[0].id, linked)
-        # The follow up and the two moved from FY2026, earliest first.
+        # Staff's SSA Support and the two moved from FY2026, earliest first.
         self.assertEqual(linked, [made[1].id, *(v.id for v in self.visits)])
         self.assertEqual(self._taken("2027", "visit"), ["V1", "V2", "V3"])
+
+    def test_staff_ssa_support_left_without_a_slot_takes_one(self):
+        # As 2026-10-02 left it: staff's SSA Support visit in no slot.
+        visit = Activity.objects.create(
+            activity_type="school_visit_ssa_collection",
+            purpose_type="ssa_support",
+            school=self.school,
+            fy="2027",
+            planned_date=date(2026, 10, 2),
+            status="scheduled",
+            delivery_type="staff",
+        )
+        handed = Activity.objects.create(
+            activity_type="school_visit_ssa_collection",
+            purpose_type="ssa_support",
+            school=self.school,
+            fy="2027",
+            planned_date=date(2026, 10, 3),
+            status="partner_scheduled",
+            delivery_type="partner",
+        )
+        dry, _ = self._refile(write=False)
+        self.assertEqual([e["activity"] for e in dry["ssa_credited"]], [visit.id])
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=visit.id).exists())
+        report, lines = self._refile()
+        self.assertEqual([e["activity"] for e in report["ssa_credited"]], [visit.id])
+        slot = CoreActivitySlot.objects.get(activity_id=visit.id)
+        # The earliest dated visit of the year is V1, on the staff half.
+        self.assertEqual((slot.core_plan.fy, slot.sequence_number), ("2027", 1))
+        self.assertEqual(slot.owner, "staff")
+        self.assertFalse(
+            CoreActivitySlot.objects.filter(activity_id=handed.id).exists()
+        )
+        self.assertTrue(any("staff SSA Support" in line for line in lines))
+        # Run again: nothing more to do.
+        again, _ = self._refile()
+        self.assertEqual(again["ssa_credited"], [])
 
 
 @freeze_time(OCTOBER)

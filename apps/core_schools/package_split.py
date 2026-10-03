@@ -222,7 +222,11 @@ def package_splits(
     for row in work:
         if row["id"] == exclude_activity_id:
             continue
-        kind = package_kind_for(row["activity_type"], row["purpose_type"])
+        kind = package_kind_for(
+            row["activity_type"],
+            row["purpose_type"],
+            delivery_type=row["delivery_type"] or "staff",
+        )
         if kind is not None:
             _add(out[row["school_id"]], kind, row["delivery_type"])
 

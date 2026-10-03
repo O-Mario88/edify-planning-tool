@@ -73,28 +73,28 @@ logger = logging.getLogger(__name__)
 #: and never take one of the package's four visits. Both spellings, because a
 #: Core Schools visit booked before the rule carries the purpose on a
 #: ``core_visit`` row rather than the visit's own type.
-#:
-#: Data collection (SSA Support) joined them on 2026-10-02: "the only visits
-#: that count are in-school visits and Training Follow Up visits ... allow
-#: data collection assignment on every school irrespective of whether they
-#: have the 1 visit by staff or partner because those visits don't count". A
-#: Core package's four visits are follow-up visits, two by staff and two
-#: assigned to a Partner; a data collection visit takes no V1..V4 and is on
-#: neither side of the split.
+OUTREACH_VISIT_TYPES = frozenset(
+    {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
+)
+OUTREACH_VISIT_PURPOSES = frozenset(
+    {"donor_visit", "story_gathering", "school_invitation", "social_visit"}
+)
+#: Data collection (SSA Support). Owner, 2026-10-03: "SSA should be part of
+#: the core package v1-v4" and "Staff scheduled SSA Support for both core and
+#: clients schools counts towards the core visit package"; "if it is assigned
+#: to the partner it does not count". So an SSA Support visit STAFF schedule
+#: is a package visit, on the staff half, and one handed to a Partner takes
+#: no slot and is on neither half. (From 2026-10-02 until then it was outside
+#: the package for everybody.) Nothing refuses one: a door that asks before
+#: the activity exists does not say who delivers it, reads it as outside the
+#: package and applies no limit; the visit takes its slot when it is saved.
 DATA_COLLECTION_VISIT_TYPES = frozenset(
     {"school_visit_ssa_collection", "baseline_ssa_visit", "partner_ssa_collection"}
 )
 DATA_COLLECTION_VISIT_PURPOSES = frozenset({"ssa_support"})
-NON_PACKAGE_VISIT_TYPES = (
-    frozenset(
-        {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
-    )
-    | DATA_COLLECTION_VISIT_TYPES
-)
-NON_PACKAGE_VISIT_PURPOSES = (
-    frozenset({"donor_visit", "story_gathering", "school_invitation", "social_visit"})
-    | DATA_COLLECTION_VISIT_PURPOSES
-)
+#: What a door that does not know the deliverer treats as outside the package.
+NON_PACKAGE_VISIT_TYPES = OUTREACH_VISIT_TYPES | DATA_COLLECTION_VISIT_TYPES
+NON_PACKAGE_VISIT_PURPOSES = OUTREACH_VISIT_PURPOSES | DATA_COLLECTION_VISIT_PURPOSES
 
 #: The visit family — the same set the Core Schools drawer turns into a core
 #: visit, and the one `backfill_core_school_visits` converts.
@@ -111,24 +111,41 @@ PACKAGE_TRAINING_TYPES = frozenset(str(t) for t in SCHOOL_TRAINING_TYPES)
 UNCREDITED_STATUSES = frozenset(DEAD_STATUSES) | frozenset(NOT_YET_PLANNED_STATUSES)
 
 
+def _is_staff(delivery_type) -> bool:
+    return delivery_type is not None and str(delivery_type) != "partner"
+
+
+def is_data_collection_shape(activity_type, purpose_type) -> bool:
+    return (
+        str(activity_type or "") in DATA_COLLECTION_VISIT_TYPES
+        or str(purpose_type or "") in DATA_COLLECTION_VISIT_PURPOSES
+    )
+
+
 def package_kind_for(
     activity_type: str | None,
     purpose_type: str | None = None,
     *,
     cluster_id=None,
+    delivery_type: str | None = None,
 ) -> str | None:
     """ "visit", "training", or None, for work of this shape at a Core School.
 
     Read from the shape alone so a door can ask before the activity exists.
+    ``delivery_type`` is who delivers it, when the caller knows: SSA Support
+    is a package visit for staff, and outside the package for a Partner or
+    for a caller that does not say.
     """
     if cluster_id:
         return None
     purpose = str(purpose_type or "")
-    if purpose == COMPANION_VISIT_PURPOSE or purpose in NON_PACKAGE_VISIT_PURPOSES:
+    if purpose == COMPANION_VISIT_PURPOSE or purpose in OUTREACH_VISIT_PURPOSES:
         return None
     activity_type = str(activity_type or "")
-    if activity_type in NON_PACKAGE_VISIT_TYPES:
+    if activity_type in OUTREACH_VISIT_TYPES:
         return None
+    if is_data_collection_shape(activity_type, purpose):
+        return "visit" if _is_staff(delivery_type) else None
     if activity_type in PACKAGE_VISIT_TYPES:
         return "visit"
     if activity_type in PACKAGE_TRAINING_TYPES:
@@ -139,7 +156,31 @@ def package_kind_for(
 def package_kind(activity) -> str | None:
     """ "visit", "training", or None when this work is not package work."""
     return package_kind_for(
-        activity.activity_type, activity.purpose_type, cluster_id=activity.cluster_id
+        activity.activity_type,
+        activity.purpose_type,
+        cluster_id=activity.cluster_id,
+        delivery_type=activity.delivery_type or "staff",
+    )
+
+
+def staff_data_collection_q(prefix: str = "") -> Q:
+    """Staff's own SSA Support at a school: a package visit."""
+    p = prefix
+    return (
+        (
+            Q(**{f"{p}activity_type__in": sorted(DATA_COLLECTION_VISIT_TYPES)})
+            | Q(**{f"{p}purpose_type__in": sorted(DATA_COLLECTION_VISIT_PURPOSES)})
+        )
+        & ~Q(**{f"{p}delivery_type": "partner"})
+        & Q(**{f"{p}cluster__isnull": True})
+        & ~Q(**{f"{p}activity_type__in": sorted(OUTREACH_VISIT_TYPES)})
+        & ~Q(
+            **{
+                f"{p}purpose_type__in": sorted(
+                    {COMPANION_VISIT_PURPOSE, *OUTREACH_VISIT_PURPOSES}
+                )
+            }
+        )
     )
 
 
@@ -153,7 +194,7 @@ def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
         types = PACKAGE_TRAINING_TYPES
     else:
         types = PACKAGE_VISIT_TYPES | PACKAGE_TRAINING_TYPES
-    return (
+    ordinary = (
         Q(**{f"{p}activity_type__in": sorted(types)})
         & Q(**{f"{p}cluster__isnull": True})
         & ~Q(
@@ -164,6 +205,9 @@ def package_work_q(kind: str | None = None, prefix: str = "") -> Q:
             }
         )
     )
+    if kind == "training":
+        return ordinary
+    return ordinary | staff_data_collection_q(p)
 
 
 def outside_package(project_id) -> bool:
@@ -570,16 +614,21 @@ def release_assignment_slot(assignment, *, replacement=None):
 def non_package_slots():
     """Slots linked to a visit that is not package work — a donor, story,
     invitation or social visit the Core Schools drawer booked as a
-    ``core_visit`` before 2026-09-30, or one credited before that rule."""
+    ``core_visit`` before 2026-09-30, or a Partner's data collection visit.
+    Staff's own SSA Support keeps its slot (owner, 2026-10-03)."""
     from apps.activities.models import Activity
     from apps.core_schools.models import CoreActivitySlot
 
-    outreach = Activity.all_objects.filter(
-        Q(activity_type__in=sorted(NON_PACKAGE_VISIT_TYPES))
-        | Q(purpose_type__in=sorted(NON_PACKAGE_VISIT_PURPOSES))
-    ).values("id")
+    outside = (
+        Activity.all_objects.filter(
+            Q(activity_type__in=sorted(NON_PACKAGE_VISIT_TYPES))
+            | Q(purpose_type__in=sorted(NON_PACKAGE_VISIT_PURPOSES))
+        )
+        .exclude(staff_data_collection_q())
+        .values("id")
+    )
     return list(
-        CoreActivitySlot.objects.filter(activity_id__in=outreach).select_related(
+        CoreActivitySlot.objects.filter(activity_id__in=outside).select_related(
             "core_plan"
         )
     )
@@ -707,6 +756,9 @@ def repair_package_links(*, apply: bool, fy=None, school_code=None) -> dict:
 __all__ = [
     "NON_PACKAGE_VISIT_PURPOSES",
     "NON_PACKAGE_VISIT_TYPES",
+    "OUTREACH_VISIT_PURPOSES",
+    "OUTREACH_VISIT_TYPES",
+    "staff_data_collection_q",
     "PACKAGE_TRAINING_TYPES",
     "PACKAGE_VISIT_TYPES",
     "UNCREDITED_STATUSES",

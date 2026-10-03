@@ -47,6 +47,8 @@ live ones) run one piece of code. It reads no live service code.
 
 from __future__ import annotations
 
+from django.db.models import Q
+
 from apps.core.cuid import deterministic
 
 #: Each side's share of each kind: two of the four visits, two of the four
@@ -116,28 +118,25 @@ SESSION_PLANNED_STATUSES = frozenset(
 #: Every status in which a session holds a slot at all. Outside it — a
 #: cancelled, rejected, deferred or unplanned session — the slots go back.
 SESSION_LIVE_STATUSES = SESSION_CREDITED_STATUSES | SESSION_PLANNED_STATUSES
-#: Visits that are not package work: data collection, and the donor, story,
-#: invitation and social visits (``package_credit.NON_PACKAGE_VISIT_*``).
-NON_PACKAGE_TYPES = frozenset(
-    {
-        "school_visit_ssa_collection",
-        "baseline_ssa_visit",
-        "partner_ssa_collection",
-        "donor_visit",
-        "story_gathering_visit",
-        "school_invitation",
-        "social_visit",
-    }
+#: Visits that are never package work: donor, story, invitation and social
+#: visits (``package_credit.NON_PACKAGE_VISIT_*``).
+OUTREACH_TYPES = frozenset(
+    {"donor_visit", "story_gathering_visit", "school_invitation", "social_visit"}
 )
-NON_PACKAGE_PURPOSES = frozenset(
-    {
-        "ssa_support",
-        "donor_visit",
-        "story_gathering",
-        "school_invitation",
-        "social_visit",
-    }
+OUTREACH_PURPOSES = frozenset(
+    {"donor_visit", "story_gathering", "school_invitation", "social_visit"}
 )
+#: Data collection (SSA Support). Package work when staff schedule it — one
+#: of the two staff visits — and none when it is a Partner's (owner,
+#: 2026-10-03: "SSA should be part of the core package v1-v4"; "if it is
+#: assigned to the partner it does not count"). It was outside the package
+#: for everybody from 2026-10-02 until then.
+DATA_COLLECTION_TYPES = frozenset(
+    {"school_visit_ssa_collection", "baseline_ssa_visit", "partner_ssa_collection"}
+)
+DATA_COLLECTION_PURPOSES = frozenset({"ssa_support"})
+NON_PACKAGE_TYPES = OUTREACH_TYPES | DATA_COLLECTION_TYPES
+NON_PACKAGE_PURPOSES = OUTREACH_PURPOSES | DATA_COLLECTION_PURPOSES
 #: What a slot carries about the work that fills it, moved with the work.
 SLOT_WORK_FIELDS = (
     "status",
@@ -400,22 +399,72 @@ def session_school_ids(rows, activity) -> set:
     return attended & invited
 
 
+def is_data_collection(activity) -> bool:
+    return (
+        activity.activity_type in DATA_COLLECTION_TYPES
+        or (activity.purpose_type or "") in DATA_COLLECTION_PURPOSES
+    )
+
+
 def is_package_work(activity) -> bool:
     """Whether work is package work: a visit or training at the school, or a
-    group training planned through its cluster. Not a cluster meeting, not
-    data collection, not a donor, story, invitation or social visit."""
+    group training planned through its cluster. Not a cluster meeting, not a
+    donor, story, invitation or social visit, and not a Partner's data
+    collection; staff's own SSA Support is a package visit."""
     if activity.cluster_id or activity.activity_type in CLUSTER_SESSION_TYPES:
         return is_group_training(activity)
-    return not (
-        activity.activity_type in NON_PACKAGE_TYPES
-        or (activity.purpose_type or "") in NON_PACKAGE_PURPOSES
+    if (
+        activity.activity_type in OUTREACH_TYPES
+        or (activity.purpose_type or "") in OUTREACH_PURPOSES
+    ):
+        return False
+    if is_data_collection(activity):
+        return side_of(activity) == "staff"
+    return True
+
+
+def staff_data_collection_without_a_slot(
+    Slot, Activity, School, *, from_fy: str, skip=()
+) -> list:
+    """Staff's SSA Support visits at Core schools, dated in ``from_fy`` or
+    later, that hold no package slot: the ones left out between 2026-10-02
+    and 2026-10-03. Oldest first, so the earliest takes the earliest slot."""
+    core_ids = School.objects.filter(
+        school_type="core", deleted_at__isnull=True
+    ).values("id")
+    held = (
+        Slot.objects.exclude(activity_id__isnull=True)
+        .exclude(activity_id="")
+        .values("activity_id")
     )
+    rows = (
+        Activity.objects.filter(
+            school_id__in=core_ids,
+            fy__gte=str(from_fy),
+            deleted_at__isnull=True,
+            cluster_id__isnull=True,
+        )
+        .filter(
+            Q(activity_type__in=sorted(DATA_COLLECTION_TYPES))
+            | Q(purpose_type__in=sorted(DATA_COLLECTION_PURPOSES))
+        )
+        .exclude(delivery_type="partner")
+        .exclude(activity_type__in=sorted(OUTREACH_TYPES))
+        .exclude(purpose_type__in=sorted(OUTREACH_PURPOSES))
+        .exclude(status__in=UNCREDITED)
+        .exclude(id__in=held)
+        .select_related("school")
+        .order_by("school_id", "planned_date", "scheduled_date", "created_at", "id")
+    )
+    if skip:
+        rows = rows.exclude(project_id__in=list(skip))
+    return list(rows)
 
 
 def outside_package(Slot, Activity, *, from_fy: str) -> list[tuple]:
     """``(slot, activity)`` for every slot of a package of ``from_fy`` onward
-    held by work that is no part of a package: a cluster meeting or a data
-    collection visit (owner, 2026-10-02)."""
+    held by work that is no part of a package: a cluster meeting, a donor,
+    story, invitation or social visit, or a Partner's data collection."""
     slots = list(
         Slot.objects.exclude(activity_id__isnull=True)
         .exclude(activity_id="")
@@ -711,14 +760,16 @@ def refile(
     """Put every Core package's work in the package of its own year, and take
     out of the packages what is no part of one.
 
-    1. For packages of ``from_fy`` onward: a slot held by a cluster meeting or
-       by a data collection visit is given back.
+    1. For packages of ``from_fy`` onward: a slot held by a cluster meeting,
+       an outreach visit or a Partner's data collection visit is given back.
     2. A slot a group training holds where the rule does not have it — another
        year's package, a school off its list, a half that already has its two
        — is given back (``_GroupTrainings``).
     3. School visits and trainings linked to another year's package move to
        the package of the year they are dated in, oldest first so the
        earliest is V1. The slot they leave is open again.
+    3b. Staff's SSA Support visits that hold no slot take the next open
+       visit slot of their own year's package.
     4. The group trainings that count and hold no slot take one.
     5. The packages touched in those years lose their gaps: taken slots first,
        earliest dated first.
@@ -733,6 +784,7 @@ def refile(
         "unplaced": [],
         "released": [],
         "credited": [],
+        "ssa_credited": [],
         "plans": [],
     }
     touched: dict[str, object] = {}
@@ -828,6 +880,55 @@ def refile(
             f"{entry.get('to', 'FY' + str(activity.fy))}"
         )
 
+    # 3b. Staff's SSA Support visits with no slot take the next open visit
+    #     slot of their own year's package (owner, 2026-10-03).
+    for activity in staff_data_collection_without_a_slot(
+        Slot, Activity, School, from_fy=from_fy, skip=outside_projects
+    ):
+        code = activity.school.school_id
+        target, created = (
+            ensure_plan(Plan, Slot, code, activity.fy)
+            if write
+            else (
+                Plan.objects.filter(school_id=code, fy=str(activity.fy))
+                .exclude(status__in=CLOSED_PLAN_STATUSES)
+                .first(),
+                False,
+            )
+        )
+        # A dry run does not make the year's package; the write would, from
+        # the school's newest one. A school that never had one has none made.
+        can_be_made = (
+            target is not None
+            or not write
+            and Plan.objects.filter(school_id=code)
+            .exclude(status__in=CLOSED_PLAN_STATUSES)
+            .exclude(fy=str(activity.fy))
+            .exists()
+        )
+        if not can_be_made:
+            report["unplaced"].append(activity.id)
+            say(
+                f"school {code}: SSA Support {activity.id} ({_day(activity)}) "
+                f"takes no slot: no FY{activity.fy} package can be made"
+            )
+            continue
+        if created:
+            report["plans"].append(target.id)
+            say(f"school {code}: FY{activity.fy} package made")
+        entry = {"activity": activity.id, "school": code, "to_fy": str(activity.fy)}
+        if write:
+            destination = _next_open(Slot, target, "visit")
+            _fill_from_session(destination, activity)
+            destination.save()
+            touched[target.id] = target
+            entry["to"] = f"FY{target.fy} {label_of(destination)}"
+        report["ssa_credited"].append(entry)
+        say(
+            f"school {code}: staff SSA Support {activity.id} ({_day(activity)}) "
+            f"-> {entry.get('to', 'FY' + str(activity.fy) + ' next open visit')}"
+        )
+
     # 4. The group trainings that count take their slots.
     group.place(**passes)
 
@@ -846,7 +947,8 @@ def refile(
     say(
         f"{len(report['released'])} slot(s) given back, "
         f"{len(report['moved'])} visit(s)/training(s) moved to their own year's "
-        f"package, {len(report['credited'])} group training place(s) filled, "
+        f"package, {len(report['ssa_credited'])} staff SSA Support visit(s) "
+        f"given a slot, {len(report['credited'])} group training place(s) filled, "
         f"{len(report['plans'])} package(s) made, {len(report['unplaced'])} "
         "left in place"
     )
