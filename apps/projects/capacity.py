@@ -44,6 +44,7 @@ __all__ = [
     "allocations_for_project",
     "allocations_for_staff",
     "annotate_allocations",
+    "attach_visit_load",
     "assert_batch_fits",
     "capacity_refusal",
     "consuming_staff_id",
@@ -143,6 +144,52 @@ def _allocations(queryset) -> list[Allocation]:
         )
         for row in rows
     ]
+
+
+def attach_visit_load(allocations: list[Allocation], fy: str) -> list[Allocation]:
+    """Each allocation's staff member with their own year beside it: the
+    counted visits they have planned in ``fy`` against the visits their role
+    plans (280 a Programme Lead, 560 a CCEO), and how many are past it.
+
+    A project's schools are visited out of the same ceiling as every other
+    school (owner, 2026-10-03), so the coordinator sharing schools out should
+    see who has room. The ceiling warns and never refuses: nothing here stops
+    an allocation. Two queries whatever the number of staff.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.planning import staff_plan
+    from apps.planning.country_oversight import rules
+
+    staff_ids = {a.staff_id for a in allocations if a.staff_id}
+    people = {
+        profile.id: profile
+        for profile in StaffProfile.all_objects.filter(id__in=staff_ids).select_related(
+            "user"
+        )
+    }
+    tallies = staff_plan.visit_tallies(
+        {
+            staff_id: [staff_id, getattr(profile, "user_id", None)]
+            for staff_id, profile in people.items()
+        },
+        str(fy),
+    )
+    for allocation in allocations:
+        profile = people.get(allocation.staff_id)
+        user = getattr(profile, "user", None)
+        cap = rules.target_for(
+            rules.planning_role(
+                getattr(user, "roles", None), getattr(user, "active_role", None)
+            )
+        )
+        tally = tallies.get(allocation.staff_id)
+        planned = tally.total if tally else 0
+        # The dataclass is frozen for its own figures; these are read-only
+        # facts about the person, set once for the page.
+        object.__setattr__(allocation, "visits_planned", planned)
+        object.__setattr__(allocation, "visits_ceiling", cap)
+        object.__setattr__(allocation, "visits_over", rules.over_ceiling(planned, cap))
+    return allocations
 
 
 def allocations_for_project(project_id: str) -> list[Allocation]:

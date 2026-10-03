@@ -158,6 +158,8 @@ class SchoolState:
     # partner holds, to the two of each it takes (`_count_core_packages`).
     core_partner_visits: int = 0
     core_partner_trainings: int = 0
+    # The staff half's trainings, to the two it takes (owner, 2026-10-03).
+    core_staff_trainings: int = 0
 
     @property
     def is_core(self) -> bool:
@@ -286,6 +288,28 @@ class OfficerMonitor:
     def delivery_progress(self) -> int | None:
         return percentage(self.visits_done, self.staff_visits)
 
+    # ── Past the ceiling (owner, 2026-10-03: it warns, it never refuses) ──
+    @property
+    def over_ceiling(self) -> int:
+        """Counted visits planned past the visits the role plans in a year."""
+        from apps.planning.country_oversight import rules
+
+        return rules.over_ceiling(self.staff_visits, self.visits_target)
+
+    @property
+    def over_ceiling_people(self) -> int:
+        return 1 if self.over_ceiling else 0
+
+    @property
+    def core_only_people(self) -> int:
+        """1 when the Core schools held take the whole ceiling at two visits
+        each (``rules.OVER_CAPACITY_CORE_ONLY``): every other school held is
+        the Partner's."""
+        from apps.planning.country_oversight import rules
+
+        share = rules.workload(self.visits_target, self.core_schools, 0)
+        return 1 if share.core_only else 0
+
     # ── The partner's share ──
     @property
     def partner_needed(self) -> int:
@@ -328,6 +352,28 @@ class OfficerMonitor:
     @property
     def core_partner_trainings_tone(self) -> str:
         return _share_tone(self.core_partner_trainings, self.core_partner_target)
+
+    # ── The staff half's trainings, and the Partner's whole target ──
+    @property
+    def core_staff_training_target(self) -> int:
+        """Staff trainings the Core packages take: two a school, beside the
+        two staff visits and using none of the visit ceiling."""
+        return CORE_STAFF_VISITS_PER_SCHOOL * self.core_schools
+
+    @property
+    def core_staff_trainings(self) -> int:
+        return sum(s.core_staff_trainings for s in self.schools if s.is_core)
+
+    @property
+    def core_staff_trainings_tone(self) -> str:
+        return _share_tone(self.core_staff_trainings, self.core_staff_training_target)
+
+    @property
+    def partner_visit_target(self) -> int:
+        """The Partner's visits at this person's schools (owner, 2026-10-03:
+        "the overflow should be the partner target"): two at each Core school
+        and one at each school beyond staff reach."""
+        return self.core_partner_target + self.partner_needed
 
     # ── Coverage ──
     @property
@@ -378,7 +424,8 @@ class OfficerMonitor:
 
     @property
     def visit_tone(self) -> str:
-        return _tone(self.visit_progress)
+        # Past the ceiling is not a better plan than one at it.
+        return "danger" if self.over_ceiling else _tone(self.visit_progress)
 
     @property
     def gap_cells(self) -> list[tuple[dict, int]]:
@@ -445,6 +492,10 @@ class LeadMonitor:
     @property
     def core_partner_trainings_tone(self) -> str:
         return _share_tone(self.core_partner_trainings, self.core_partner_target)
+
+    @property
+    def core_staff_trainings_tone(self) -> str:
+        return _share_tone(self.core_staff_trainings, self.core_staff_training_target)
 
     @property
     def officer_count(self) -> int:
@@ -1069,6 +1120,9 @@ def _count_core_packages(schools: dict, fy: str) -> None:
         )
         school.core_partner_trainings = min(
             split.used(TRAINING, PARTNER), CORE_PARTNER_PER_SCHOOL
+        )
+        school.core_staff_trainings = min(
+            split.staff_trainings, CORE_STAFF_VISITS_PER_SCHOOL
         )
 
 

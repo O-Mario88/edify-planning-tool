@@ -1137,6 +1137,17 @@ def type_rows(snapshot: ExecSnapshot) -> list[dict]:
             "visits_verified": verified,
             "visits_left": max(0, tally.visit_slots - verified),
             "visit_share": Tally.share(verified, tally.visit_slots),
+            # Each side's verified visits against its own target (owner,
+            # 2026-10-03): staff's two at a Core school and the schools their
+            # capacity reaches, the Partner's two and the schools beyond it.
+            "staff_target": tally.staff_expected,
+            "staff_verified": tally.staff_verified,
+            "staff_share": Tally.share(tally.staff_verified, tally.staff_expected),
+            "partner_target": tally.partner_expected,
+            "partner_verified": tally.partner_verified,
+            "partner_share": Tally.share(
+                tally.partner_verified, tally.partner_expected
+            ),
             "training_slots": tally.training_slots,
             "trainings_planned": tally.training,
             "trainings_verified": tally.training_verified,

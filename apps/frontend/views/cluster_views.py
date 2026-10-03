@@ -2028,7 +2028,10 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
         return drawer(str(getattr(exc, "detail", exc)), posted, status=400)
     except Exception as exc:  # noqa: BLE001 — the service's sentence, shown as is
         return error_fragment(exc, action="Could not schedule the day", status=400)
-    from apps.frontend.views.planning_views import _my_plan_url_for_scheduled_date
+    from apps.frontend.views.planning_views import (
+        _ceiling_notice,
+        _my_plan_url_for_scheduled_date,
+    )
 
     focus = result["focusIntervention"]
     target = f" for {SsaIntervention(focus).label}" if focus else ""
@@ -2037,4 +2040,5 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
         f"{result['clusterName']} schools for {result['scheduledDate']}.",
         plan_url=_my_plan_url_for_scheduled_date(result["scheduledDate"]),
         plan_link_label="Open My Plan",
+        notice=_ceiling_notice(request, result["scheduledDate"]),
     )

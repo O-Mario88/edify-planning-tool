@@ -1,17 +1,36 @@
-{% comment %}One row's figures, formatted on the server. The first is the
-person's own plan against the visits their role plans; the Partner cell is the
-work they handed over and how much of it the Partner has dated; the rest are
-the schools they hold. Shares are the server's; their colour follows the same
-thresholds as the cards.{% endcomment %}
-<td class="cpo-cover"><span>{{ cells.p_visits }}{% if cells.has_target %} / {{ cells.target }}{% endif %}</span>{% if cells.has_target %} <span class="cpo-pct" data-tone="{{ cells.plan_tone }}">{% if cells.plan_share is None %}(—){% else %}({{ cells.plan_share }}%){% endif %}</span>{% endif %}</td>
-<td>{{ cells.schools }}</td>
-<td>{{ cells.core_schools }}</td>
-<td>{{ cells.client_schools }}</td>
-<td>{{ cells.core_trained_schools }}</td>
-<td>{{ cells.core_graduate_schools }}</td>
-<td class="cpo-cover"><span>{{ cells.any_visit }}</span> <span class="cpo-pct" data-tone="{{ cells.visit_tone }}">{% if cells.visit_share is None %}(—){% else %}({{ cells.visit_share }}%){% endif %}</span></td>
-<td>{{ cells.pp_work }} / {{ cells.pa_work }}</td>
-<td class="cpo-cover"><span>{{ cells.training }}</span> <span class="cpo-pct" data-tone="{{ cells.training_tone }}">{% if cells.training_share is None %}(—){% else %}({{ cells.training_share }}%){% endif %}</span></td>
-<td>{{ cells.unclustered }}</td>
-<td class="cpo-cover"><span>{{ cells.meeting }}</span> <span class="cpo-pct" data-tone="{{ cells.meeting_tone }}">{% if cells.meeting_share is None %}(—){% else %}({{ cells.meeting_share }}%){% endif %}</span></td>
+{% comment %}One row's figures, formatted on the server, in the table's three
+readings (`data-col`; the table shows one at a time).
+
+Workload — how the year's visits are shared out (owner, 2026-10-03): the
+person's own plan against the visits their role plans, their Core and client
+visits against the staff share of the schools they hold, then the Partner's
+target (the other two visits at each Core school and the schools beyond staff
+capacity), how much of it is in a Partner's hands and how much the Partner has
+dated.
+
+Schools — the schools they hold. Trainings — the trainings and cluster
+meetings those schools are on, each side against its own target.
+
+Shares are the server's; their colour follows the same thresholds as the
+cards, and a plan past its target reads as a warning, never as better.{% endcomment %}
+<td data-col="workload" x-show="view === 'workload'" class="cpo-cover"><span>{{ cells.p_visits }}{% if cells.has_target %} / {{ cells.target }}{% endif %}</span>{% if cells.has_target %} <span class="cpo-pct" data-tone="{{ cells.plan_tone }}">{% if cells.plan_share is None %}(—){% else %}({{ cells.plan_share }}%){% endif %}</span>{% endif %}</td>
+<td data-col="workload" x-show="view === 'workload'" class="cpo-cover"><span>{{ cells.p_core_visits }} / {{ cells.core_target }}</span> <span class="cpo-pct" data-tone="{{ cells.core_plan_tone }}">{% if cells.core_plan_share is None %}(—){% else %}({{ cells.core_plan_share }}%){% endif %}</span></td>
+<td data-col="workload" x-show="view === 'workload'" class="cpo-cover"><span>{{ cells.p_client_visits }} / {{ cells.client_target }}</span> <span class="cpo-pct" data-tone="{{ cells.client_plan_tone }}">{% if cells.client_plan_share is None %}(—){% else %}({{ cells.client_plan_share }}%){% endif %}</span></td>
+<td data-col="workload" x-show="view === 'workload'">{{ cells.partner_target }}</td>
+<td data-col="workload" x-show="view === 'workload'">{{ cells.beyond_staff }}</td>
+<td data-col="workload" x-show="view === 'workload'" class="cpo-cover"><span>{{ cells.partner_assigned_of }}</span> <span class="cpo-pct" data-tone="{{ cells.partner_assigned_tone }}">{% if cells.partner_assigned_share is None %}(—){% else %}({{ cells.partner_assigned_share }}%){% endif %}</span></td>
+<td data-col="workload" x-show="view === 'workload'" class="cpo-cover"><span>{{ cells.partner_scheduled }}</span> <span class="cpo-pct" data-tone="{{ cells.partner_scheduled_tone }}">{% if cells.partner_scheduled_share is None %}(—){% else %}({{ cells.partner_scheduled_share }}%){% endif %}</span></td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.schools }}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.core_schools }}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.client_schools }}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.core_trained_schools }}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.core_graduate_schools }}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak class="cpo-cover"><span>{{ cells.any_visit }}</span> <span class="cpo-pct" data-tone="{{ cells.visit_tone }}">{% if cells.visit_share is None %}(—){% else %}({{ cells.visit_share }}%){% endif %}</span></td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{% if cells.unplanned_any %}<span class="cpo-alert">{{ cells.unplanned }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+<td data-col="schools" x-show="view === 'schools'" x-cloak>{{ cells.unclustered }}</td>
+<td data-col="training" x-show="view === 'training'" x-cloak class="cpo-cover"><span>{{ cells.training_staff }}</span> <span class="cpo-pct" data-tone="{{ cells.training_staff_tone }}">{% if cells.training_staff_share is None %}(—){% else %}({{ cells.training_staff_share }}%){% endif %}</span></td>
+<td data-col="training" x-show="view === 'training'" x-cloak class="cpo-cover"><span>{{ cells.training_partner }}</span> <span class="cpo-pct" data-tone="{{ cells.training_partner_tone }}">{% if cells.training_partner_share is None %}(—){% else %}({{ cells.training_partner_share }}%){% endif %}</span></td>
+<td data-col="training" x-show="view === 'training'" x-cloak class="cpo-cover"><span>{{ cells.training }}</span> <span class="cpo-pct" data-tone="{{ cells.training_tone }}">{% if cells.training_share is None %}(—){% else %}({{ cells.training_share }}%){% endif %}</span></td>
+<td data-col="training" x-show="view === 'training'" x-cloak>{% if cells.no_training_any %}<span class="cpo-alert">{{ cells.no_training }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>
+<td data-col="training" x-show="view === 'training'" x-cloak class="cpo-cover"><span>{{ cells.meeting }}</span> <span class="cpo-pct" data-tone="{{ cells.meeting_tone }}">{% if cells.meeting_share is None %}(—){% else %}({{ cells.meeting_share }}%){% endif %}</span></td>
 <td>{% if followups %}<span class="cpo-alert">{{ followups }}</span>{% else %}<span class="cpo-zero">0</span>{% endif %}</td>

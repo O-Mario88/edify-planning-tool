@@ -633,6 +633,7 @@ def _core_scheduled_response(request, created, scheduled_date, message):
     """
     from apps.frontend.views.planning_views import (
         _calendar_url_for_scheduled_date,
+        _ceiling_notice,
         _my_plan_url_for_scheduled_date,
         _saved_without_leaving,
         _scheduled_into_own_plan,
@@ -649,7 +650,12 @@ def _core_scheduled_response(request, created, scheduled_date, message):
         )
         url = _calendar_url_for_scheduled_date(scheduled_date)
         link_label = "Open in Calendar"
-    return _saved_without_leaving(message, plan_url=url, plan_link_label=link_label)
+    return _saved_without_leaving(
+        message,
+        plan_url=url,
+        plan_link_label=link_label,
+        notice=_ceiling_notice(request, scheduled_date) if lands_here else "",
+    )
 
 
 @require_page_permission("core_schools")

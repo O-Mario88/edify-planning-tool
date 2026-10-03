@@ -582,8 +582,13 @@ class PeopleFirstPageTest(World):
         )
         snapshot = self.snapshot()
         card = self.cards(snapshot)["cpo_partner_planning"]
-        self.assertEqual((card["part"], card["whole"]), ("0", "2"))
         t = snapshot.tree.country
+        # Against the Partner's target (owner, 2026-10-03), and nothing until
+        # a Partner dates a visit; the work handed over is named beside it.
+        self.assertEqual(
+            (card["part"], card["whole"]), ("0", f"{t.partner_expected:,}")
+        )
+        self.assertIn("2 assigned · 2 awaiting the Partner's date", card["extras"])
         # Assigned, never planned: nothing a Partner dated fills a slot yet.
         self.assertEqual((t.partner_assigned, t.partner_scheduled), (2, 0))
         self.assertEqual(t.with_partner, 2)
@@ -599,7 +604,11 @@ class PeopleFirstPageTest(World):
         svc.snapshot_for(self.cd_user, svc.Filters(fy=FY), refresh=True)
         snapshot = self.snapshot()
         card = self.cards(snapshot)["cpo_partner_planning"]
-        self.assertEqual((card["part"], card["whole"]), ("1", "3"))
+        self.assertEqual(
+            (card["part"], card["whole"]),
+            ("1", f"{snapshot.tree.country.partner_expected:,}"),
+        )
+        self.assertIn("3 assigned · 2 awaiting the Partner's date", card["extras"])
         self.assertEqual(snapshot.tree.country.partner_scheduled, 1)
         rows = {row["name"]: row for row in svc.partner_rows(snapshot, self.cceo.id)}
         self.assertEqual(

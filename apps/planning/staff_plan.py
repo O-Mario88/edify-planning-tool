@@ -181,10 +181,97 @@ def visits_target(principal) -> int:
     return rules.target_for(role)
 
 
+def ceiling_notice(principal, fy: str) -> str:
+    """What to tell somebody whose counted visits in ``fy`` have passed the
+    visits their role plans in a year; "" while they are within it.
+
+    The ceiling warns and never refuses (owner, 2026-10-03: "platform should
+    not refuse just warn and let it through"): the visit that took them past
+    it is saved like any other, and this is said beside the confirmation.
+    """
+    from apps.core.scoping import owner_ids
+    from apps.planning.country_oversight import rules
+
+    cap = visits_target(principal)
+    if not cap:
+        return ""
+    planned = visit_tally(owner_ids(principal), str(fy)).total
+    over = rules.over_ceiling(planned, cap)
+    if not over:
+        return ""
+    return (
+        f"You have now planned {planned:,} visits for FY{fy}: {over:,} past the "
+        f"{cap:,} your role plans in a year. Visits past it are the Partner's "
+        "share, so hand those schools to a Partner."
+    )
+
+
+def own_workload(principal, fy: str) -> dict | None:
+    """A Programme Lead's or CCEO's own year, shared out (``rules.workload``):
+    the staff visits their schools take — two at each Core school, then one
+    at each other school until the ceiling is reached — what they have
+    planned against it, and how many of their schools are the Partner's.
+    None for anybody whose role plans no visits. Two queries.
+    """
+    from apps.core.scoping import owner_ids
+    from apps.planning.country_oversight import rules
+    from apps.schools.lifecycle_service import active_schools
+    from apps.schools.models import School
+
+    cap = visits_target(principal)
+    if not cap:
+        return None
+    ids = owner_ids(principal)
+    held: dict[str, int] = {}
+    for school_type, n in (
+        active_schools(School.objects.filter(account_owner_id__in=ids))
+        .values_list("school_type")
+        .annotate(n=Count("id"))
+        .order_by()
+    ):
+        held[school_type or ""] = n
+    share = rules.workload(
+        cap,
+        held.get("core", 0),
+        sum(held.get(t, 0) for t in rules.CLIENT_RULE_TYPES),
+    )
+    tally = visit_tally(ids, str(fy))
+    return {
+        "fy": str(fy),
+        "ceiling": cap,
+        "planned": tally.total,
+        "over": rules.over_ceiling(tally.total, cap),
+        "core_planned": tally.core,
+        "core_target": share.staff_core_visits,
+        "client_planned": tally.client,
+        "client_target": share.staff_client_visits,
+        "partner_schools": share.partner_client_visits,
+        "partner_core_visits": share.partner_core_visits,
+        "partner_target": share.partner_visits,
+        "core_only": share.core_only,
+        "core_over": share.core_over,
+    }
+
+
+def own_workload_or_none(principal, fy: str | None = None) -> dict | None:
+    """``own_workload`` for a page that only says it beside its own content:
+    the operational year unless one is given, and never the reason the page
+    fails."""
+    from apps.core.fy import get_operational_fy
+
+    try:
+        return own_workload(principal, str(fy or get_operational_fy()))
+    except Exception:  # noqa: BLE001 - a summary line, never the page
+        return None
+
+
 __all__ = [
     "CORE_TYPES",
     "PARTNER_ONLY_STATUSES",
     "VisitTally",
+    "ceiling_notice",
+    "own_workload",
+    "own_workload_or_none",
     "counted_visits",
     "delivered_statuses",
     "live_statuses",

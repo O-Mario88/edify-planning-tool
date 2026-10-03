@@ -742,6 +742,8 @@ class SchoolYear:
     partner_ids: set | None = None
     staff_trainings: int = 0
     partner_trainings: int = 0
+    # Group trainings on the planned roster that staff deliver. One a
+    # Partner delivers is on the Partner's half (``partner_trainings``).
     cluster_trainings: int = 0
     meetings: int = 0
 
@@ -799,8 +801,8 @@ class SchoolYear:
     def training_slots(self) -> int:
         requirement = self.requirement
         # A group training planned through the school's cluster is a training
-        # of the school's, in a Core package too (owner, 2026-10-02): it is
-        # one of the staff half's two.
+        # of the school's, in a Core package too (owner, 2026-10-02), on the
+        # half of whoever delivers it.
         staff = self.staff_trainings + self.cluster_trainings
         if requirement.either_trainings:
             return min(staff + self.partner_trainings, requirement.either_trainings)
@@ -998,12 +1000,18 @@ def school_year(user, fy: str, *, today: date | None = None) -> dict[str, School
     cluster_trainings = tuple(
         t for t in TRAINING_TYPES if t not in SCHOOL_TRAINING_TYPES
     )
-    for attribute, types in (
-        ("cluster_trainings", cluster_trainings),
-        ("meetings", CLUSTER_MEETING_TYPES),
+    for attribute, types, side in (
+        ("cluster_trainings", cluster_trainings, rules.staff_delivery_q("activity__")),
+        (
+            "partner_trainings",
+            cluster_trainings,
+            rules.partner_delivery_q("activity__"),
+        ),
+        ("meetings", CLUSTER_MEETING_TYPES, Q()),
     ):
         for school_id, n in (
             ClusterActivityAttendance.objects.filter(
+                side,
                 invited=True,
                 school_id__in=school_ids,
                 activity__fy=fy,

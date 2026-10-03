@@ -357,7 +357,12 @@ def allocate(owner: OwnerInfo | None, schools) -> dict[str, Allocation]:
     follows the plan where there is one. Core schools a member of staff has
     planned keep their capacity ahead of the ones nobody has, which is where a
     deficit lands. Ties break on the school's code, so the split is stable.
+
+    How many schools each side takes is the rulebook's (``rules.workload``):
+    this decides only WHICH schools they are.
     """
+    from apps.planning.country_oversight import rules
+
     ceiling = owner.ceiling if owner is not None else 0
     core = [s for s in schools if s.family == policy.CORE_FAMILY]
     client = [s for s in schools if s.family == policy.CLIENT_FAMILY]
@@ -370,8 +375,10 @@ def allocate(owner: OwnerInfo | None, schools) -> dict[str, Allocation]:
         for s in schools
         if s.family not in (policy.CORE_FAMILY, policy.CLIENT_FAMILY)
     }
-    core_staff_required = per_core.staff_visit_slots * len(core)
-    over = max(0, core_staff_required - ceiling)
+    share = rules.workload(ceiling, len(core), len(client))
+    # With no ceiling at all (nobody's school, or a holder who is neither a
+    # Lead nor a CCEO) every Core staff slot is beyond capacity.
+    over = share.core_over if ceiling else share.staff_core_visits
     ranked_core = sorted(core, key=lambda s: (-s.annual_staff_claims, s.code or s.id))
     # The deficit lands on the least-planned schools, slot by slot from the end.
     deficits: dict[str, int] = {}
@@ -388,10 +395,7 @@ def allocate(owner: OwnerInfo | None, schools) -> dict[str, Allocation]:
             deficits.get(school.id, 0),
         )
 
-    capacity_left = max(0, ceiling - core_staff_required)
-    staff_client = min(
-        len(client), capacity_left // max(1, per_client.flexible_visit_slots)
-    )
+    staff_client = share.staff_client_visits
     order = {"staff": 0, "open": 1, "partner": 2}
     ranked_client = sorted(
         client, key=lambda s: (order.get(s.annual_holder, 1), s.code or s.id)

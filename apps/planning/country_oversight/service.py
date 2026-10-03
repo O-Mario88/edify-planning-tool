@@ -409,7 +409,7 @@ def _names(model_label: str, ids) -> dict[str, str]:
 
 def _key(kind: str, universe: str, window: Window) -> str:
     return (
-        f"cpo:{kind}:v5:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
+        f"cpo:{kind}:v6:{policy.POLICY_VERSION}:{universe}:{window.cache_part}:"
         f"{reporting_date(window.fy).isoformat()}"
     )
 
@@ -896,7 +896,37 @@ def _plan_values(person) -> list:
     values[IDX["pa_work"]] = person.partner_assigned
     values[IDX["pp_work"]] = person.partner_planned
     values[IDX["pa_schools"]] = person.partner_schools
+    core = sum(person.visits_by_type.get(t, 0) for t in CORE_SCHOOL_TYPES)
+    values[IDX["p_core_visits"]] = core
+    values[IDX["p_client_visits"]] = person.visits_planned - core
     return values
+
+
+#: The school types whose visits are a person's Core visits; a counted visit
+#: anywhere else is one of their client visits (``staff_plan.visit_tallies``
+#: draws the same line for My Plan and the Planning Monitor).
+CORE_SCHOOL_TYPES = ("core",)
+
+
+def _ceiling_flags(values: list, ceiling: int, window: Window) -> None:
+    """Mark a person's row where their plan or their schools pass the
+    ceiling (``rules.workload``). The ceiling is a year's: a quarter's or a
+    month's plan is read against its phased share and flags nothing."""
+    if not ceiling or window.has_phased_target:
+        return
+    over = rules.over_ceiling(values[IDX["p_visits"]], ceiling)
+    if over:
+        values[IDX["over_cap"]] = over
+        values[IDX["over_cap_people"]] = 1
+    share = rules.workload(
+        ceiling,
+        values[IDX["core_schools"]],
+        values[IDX["client_schools"]]
+        + values[IDX["core_trained_schools"]]
+        + values[IDX["core_graduate_schools"]],
+    )
+    if share.core_only:
+        values[IDX["core_only_people"]] = 1
 
 
 def _tree(
@@ -961,6 +991,7 @@ def _tree(
                 values[index] += amount
         if plan is not None:
             values[IDX["target"]] = ceiling
+            _ceiling_flags(values, ceiling, window)
         row = OwnerRow(
             key=key,
             name=owner_name,
@@ -1449,15 +1480,27 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             ],
             icon="staff",
         ),
+        # Against the Partner's target (owner, 2026-10-03: "the overflow
+        # should be the partner target"): the other two visits at each Core
+        # school and the schools beyond staff capacity. Still nothing until a
+        # Partner dates a visit. The work staff handed over, which the card's
+        # table lists row for row, is named under it.
         card(
             "cpo_partner_planning",
-            t.pp_work,
-            t.pa_work,
+            t.cum_partner_scheduled if week else t.partner_scheduled,
+            t.partner_expected,
             headline=(_fmt(t.pa_schools), "Schools assigned to Partners"),
-            note="" if phased else period_note,
+            note=period_note,
             extras=[
-                f"of {_fmt(t.visit_schools)} schools needing a visit",
-                f"{_fmt(t.partner_waiting)} awaiting the Partner's date",
+                f"{_fmt(t.core_partner_slots)} Core + "
+                f"{_fmt(t.client_partner_expected)} beyond staff capacity",
+                f"{_fmt(t.pa_work)} assigned · {_fmt(t.partner_waiting)} awaiting "
+                "the Partner's date",
+            ],
+            more=[
+                f"{_fmt(t.partner_assigned)} of the target's visits are in a "
+                f"Partner's hands · {_fmt(t.pp_work)} of {_fmt(t.pa_work)} pieces "
+                "of work assigned are dated by the Partner",
             ],
             icon="partner",
         ),
@@ -1520,11 +1563,25 @@ def kpis(snapshot: Snapshot) -> list[dict]:
 
 def _type_row(key: str, label: str, tally: Tally, need) -> dict:
     planned = tally.staff + tally.partner_scheduled
+    # Every school that needs a visit is in exactly one of these four: all
+    # its visits planned, some of them, none yet with a Partner holding it,
+    # or none and nobody holding it.
+    status = (
+        tally.planned_full,
+        tally.planned_part,
+        tally.partner_to_plan,
+        tally.unplanned,
+    )
+    # "Planned twice" was one figure for two findings. At a Core school two
+    # staff visits are the plan, not a duplicate: what is wrong there is more
+    # than two on a side. At any other school a second booking is a duplicate.
+    is_core = key == "core"
     return {
         "key": key,
         "label": label,
         "needs_visits": bool(need is None or need.visits),
         "needs_trainings": bool(need is None or need.trainings),
+        "is_core": is_core,
         "schools": _fmt(tally.schools),
         "visit_slots": _fmt(tally.visit_slots),
         "staff": _fmt(tally.staff),
@@ -1545,6 +1602,49 @@ def _type_row(key: str, label: str, tally: Tally, need) -> dict:
         "training_tone": _tone(tally.training_share),
         "no_training": _fmt(tally.no_training),
         "duplicates": tally.duplicates,
+        # Schools: where each one stands.
+        "planned_full": _fmt(tally.planned_full),
+        "planned_part": _fmt(tally.planned_part),
+        "awaiting_partner": _fmt(tally.partner_to_plan),
+        "adds_up": sum(status) == tally.visit_schools,
+        "unaccounted": tally.visit_schools - sum(status),
+        "core_staff_done": _fmt(tally.core_staff_done),
+        "core_staff_done_share": Tally.share(tally.core_staff_done, tally.schools),
+        "duplicate_bookings": 0 if is_core else tally.duplicates,
+        "over_package": tally.duplicates if is_core else 0,
+        # Visits: each side against its own target.
+        "staff_target": _fmt(tally.staff_expected),
+        "staff_share": tally.staff_share,
+        "staff_tone": _progress_tone(tally.staff, tally.staff_expected),
+        "partner_target": _fmt(tally.partner_expected),
+        "partner_assigned": _fmt(tally.partner_assigned),
+        "partner_assigned_share": tally.partner_share,
+        "partner_assigned_tone": _progress_tone(
+            tally.partner_assigned, tally.partner_expected
+        ),
+        "partner_scheduled_share": tally.partner_scheduled_share,
+        "partner_scheduled_tone": _progress_tone(
+            tally.partner_scheduled, tally.partner_expected
+        ),
+        "beyond_staff": _fmt(tally.client_partner_expected),
+        # Trainings: the same split.
+        "training_staff_target": _fmt(tally.training_staff_slots),
+        "training_staff": _fmt(tally.training_staff),
+        "training_staff_share": tally.training_staff_share,
+        "training_staff_tone": _progress_tone(
+            tally.training_staff, tally.training_staff_slots
+        ),
+        "training_partner_target": _fmt(tally.training_partner_slots),
+        "training_partner_assigned": _fmt(tally.training_partner_assigned),
+        "training_partner_assigned_share": tally.training_partner_assigned_share,
+        "training_partner_assigned_tone": _progress_tone(
+            tally.training_partner_assigned, tally.training_partner_slots
+        ),
+        "training_partner": _fmt(tally.training_partner),
+        "training_partner_share": tally.training_partner_share,
+        "training_partner_tone": _progress_tone(
+            tally.training_partner, tally.training_partner_slots
+        ),
     }
 
 
@@ -1573,8 +1673,78 @@ def type_rows(snapshot: Snapshot) -> list[dict]:
     if len(rows) > 1:
         total = _type_row("", "All school types", snapshot.tree.country, None)
         total["is_total"] = True
+        # The two findings stay apart in the total too.
+        total["duplicate_bookings"] = sum(row["duplicate_bookings"] for row in rows)
+        total["over_package"] = sum(row["over_package"] for row in rows)
         rows.append(total)
     return rows
+
+
+#: The three readings of the school types, in the order their tabs stand.
+TYPE_VIEWS = (
+    ("schools", "Schools"),
+    ("visits", "Visits"),
+    ("trainings", "Trainings"),
+)
+
+
+def capacity(snapshot: Snapshot) -> dict:
+    """How full staff capacity is, and what that leaves the Partner
+    (``rules.workload``; owner, 2026-10-03).
+
+    Programme Leads against 280 each and CCEOs against 560 each, summed over
+    the people in the selection; the Partner's target is the other half of
+    every Core package and the schools beyond staff capacity. The same rows
+    the table under it lists, so each figure is that table's column total.
+    """
+    t = snapshot.tree.country
+    roles = {"pl_personal": [0, 0, 0], "cceo": [0, 0, 0]}  # people, planned, cap
+    for lead in snapshot.tree.leads:
+        for owner in lead.owners:
+            entry = roles.get(owner.kind)
+            if entry is None or not owner.ceiling:
+                continue
+            entry[0] += 1
+            entry[1] += owner.tally.p_visits
+            entry[2] += owner.tally.target
+
+    def gauge(label: str, each: int, entry: list) -> dict:
+        people, planned, cap = entry
+        share = Tally.share(planned, cap)
+        return {
+            "label": label,
+            "people": _fmt(people),
+            "each": each,
+            "planned": _fmt(planned),
+            "cap": _fmt(cap),
+            "share": share,
+            "meter": min(100, share or 0),
+            "tone": _progress_tone(planned, cap),
+        }
+
+    return {
+        "gauges": [
+            gauge(
+                "Programme Leads",
+                policy.ceiling_for(policy.PROGRAM_LEAD_ROLE),
+                roles["pl_personal"],
+            ),
+            gauge("CCEOs", policy.ceiling_for(policy.CCEO_ROLE), roles["cceo"]),
+        ],
+        "partner_target": _fmt(t.partner_expected),
+        "partner_core": _fmt(t.core_partner_slots),
+        "beyond_staff": _fmt(t.client_partner_expected),
+        "partner_assigned": _fmt(t.partner_assigned),
+        "partner_scheduled": _fmt(t.partner_scheduled),
+        "partner_share": t.partner_share,
+        "partner_meter": min(100, t.partner_share or 0),
+        "partner_tone": _progress_tone(t.partner_assigned, t.partner_expected),
+        "over_cap": _fmt(t.over_cap),
+        "over_cap_count": t.over_cap,
+        "over_cap_people": t.over_cap_people,
+        "core_only_people": t.core_only_people,
+        "phased": snapshot.tree.window.has_phased_target,
+    }
 
 
 def _tone(share) -> str:
@@ -1586,6 +1756,15 @@ def _tone(share) -> str:
     if share >= 40:
         return "fair"
     return "low"
+
+
+def _progress_tone(part: int, whole: int) -> str:
+    """A side's plan against its own target. Past the target is not better
+    than at it: it is work beyond the share, and reads as a warning — by the
+    figures themselves, since 281 of 280 still rounds to 100%."""
+    if whole and part > whole:
+        return "over"
+    return _tone(Tally.share(part, whole))
 
 
 #: Chart series colours, as tokens the page stylesheet defines for both
@@ -1600,8 +1779,11 @@ CHART_COLOURS = {
     "partner_only": "var(--cpo-series-3)",
     "both": "var(--cpo-series-4)",
     "none": "var(--cpo-series-5)",
+    "awaiting": "var(--cpo-series-gap)",
     "required": "var(--cpo-series-1)",
     "planned": "var(--cpo-series-3)",
+    "partner_required": "var(--cpo-series-4)",
+    "partner_planned": "var(--cpo-series-2)",
     "total": "var(--cpo-series-1)",
     "clustered": "var(--cpo-series-3)",
     "meetings": "var(--cpo-series-4)",
@@ -1663,6 +1845,13 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Follow\nup",
                 "In-school\nTraining",
                 "Still to\nplan",
+                # The ceiling warns and never refuses (owner, 2026-10-03):
+                # what each team planned past it, and the plan against the
+                # staff share of the schools held (``rules.workload``).
+                "Past the\nceiling",
+                "Core visits\nof target",
+                "Client visits\nof target",
+                "Partner\ntarget",
                 "Assigned to\nPartners",
                 "Partner\nplanned",
                 "SSA Support, donor,\nstory, social (not counted)",
@@ -1674,6 +1863,10 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.p_follow_up,
                     x.p_in_school,
                     x.plan_remaining,
+                    x.over_cap,
+                    f"{_fmt(x.p_core_visits)} / {_fmt(x.core_staff_slots)}",
+                    f"{_fmt(x.p_client_visits)} / {_fmt(x.client_staff_expected)}",
+                    x.partner_expected,
                     x.pa_work,
                     x.pp_work,
                     x.p_outreach,
@@ -1707,11 +1900,22 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "data": pct([x.both for x in t], [x.visit_schools for x in t]),
                 "counts": [x.both for x in t],
             },
+            # A school a Partner holds and has not dated is the Partner's to
+            # plan: its own band, so the five add up to the schools and "not
+            # yet planned" is only what nobody holds (the by-type table).
+            {
+                "name": "Awaiting a Partner's Date",
+                "color": CHART_COLOURS["awaiting"],
+                "data": pct(
+                    [x.partner_to_plan for x in t], [x.visit_schools for x in t]
+                ),
+                "counts": [x.partner_to_plan for x in t],
+            },
             {
                 "name": "Not Yet Planned",
                 "color": CHART_COLOURS["none"],
-                "data": pct([x.no_visit for x in t], [x.visit_schools for x in t]),
-                "counts": [x.no_visit for x in t],
+                "data": pct([x.unplanned for x in t], [x.visit_schools for x in t]),
+                "counts": [x.unplanned for x in t],
             },
         ],
         "table": {
@@ -1720,6 +1924,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Staff plan\nonly",
                 "Partner plan\nonly",
                 "Both",
+                "Awaiting a\nPartner's date",
                 "Not yet\nplanned",
                 "In a Partner's\nhands",
                 "Planned\ntwice",
@@ -1730,7 +1935,8 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.staff_only,
                     x.partner_only,
                     x.both,
-                    x.no_visit,
+                    x.partner_to_plan,
+                    x.unplanned,
                     x.with_partner,
                     x.duplicates,
                 ]
@@ -1745,16 +1951,28 @@ def charts(snapshot: Snapshot) -> list[dict]:
         "form": "columns",
         "categories": names,
         "keys": keys,
+        # Each side against its own target (owner, 2026-10-03): two and two
+        # at a Core school, and a school's one training where its visit goes.
         "series": [
             {
-                "name": "Required Training Slots",
+                "name": "Staff Target",
                 "color": CHART_COLOURS["required"],
-                "data": [x.training_slots for x in t],
+                "data": [x.training_staff_slots for x in t],
             },
             {
-                "name": "Planned Training Slots",
+                "name": "Planned by Staff",
                 "color": CHART_COLOURS["planned"],
-                "data": [x.training for x in t],
+                "data": [x.training_staff for x in t],
+            },
+            {
+                "name": "Partner Target",
+                "color": CHART_COLOURS["partner_required"],
+                "data": [x.training_partner_slots for x in t],
+            },
+            {
+                "name": "Planned by Partners",
+                "color": CHART_COLOURS["partner_planned"],
+                "data": [x.training_partner for x in t],
             },
         ],
         "table": {
@@ -1762,6 +1980,11 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Required\nslots",
                 "Planned\nslots",
                 "Remaining\nslots",
+                "Staff\ntarget",
+                "Planned\nby staff",
+                "Partner\ntarget",
+                "Assigned to\nPartners",
+                "Planned\nby Partners",
                 "Schools with\ntraining",
                 "Schools with\nnone",
             ],
@@ -1770,6 +1993,11 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.training_slots,
                     x.training,
                     x.training_gap,
+                    x.training_staff_slots,
+                    x.training_staff,
+                    x.training_partner_slots,
+                    x.training_partner_assigned,
+                    x.training_partner,
                     x.any_training,
                     x.no_training,
                 ]
@@ -1855,21 +2083,40 @@ def _even_shares(chart: dict) -> None:
             s["data"][index] = value
 
 
+#: The people table is read three ways (owner, 2026-10-03: one wide table
+#: mixed visits, school counts and trainings): how the year's visits are
+#: shared between staff and the Partner, the schools each person holds, and
+#: their trainings and clusters. A tab picks the columns; the name, the open
+#: follow-ups and the action stay.
+TABLE_VIEWS = (
+    ("workload", "Workload"),
+    ("schools", "Schools"),
+    ("training", "Trainings & Clusters"),
+)
 TABLE_COLUMNS = (
-    ("name", "Name"),
-    ("p_visits", "Visits Planned"),
-    ("schools", "Portfolio"),
-    ("core_schools", "Core"),
-    ("client_schools", "Client"),
-    ("core_trained_schools", "Core Trained"),
-    ("core_graduate_schools", "Core Graduate"),
-    ("any_visit", "Schools Planned"),
-    ("pp_work", "Partner Planned"),
-    ("training", "Training Coverage"),
-    ("unclustered", "Unclustered"),
-    ("meeting", "Cluster Meeting Coverage"),
-    ("followups", "Open Follow-ups"),
-    ("action", "Action"),
+    ("name", "Name", ""),
+    ("p_visits", "Visits Planned", "workload"),
+    ("p_core_visits", "Core Visits", "workload"),
+    ("p_client_visits", "Client Visits", "workload"),
+    ("partner_target", "Partner Target", "workload"),
+    ("beyond_staff", "Client Spillover", "workload"),
+    ("partner_assigned", "Assigned to Partner", "workload"),
+    ("partner_scheduled", "Partner Planned", "workload"),
+    ("schools", "Portfolio", "schools"),
+    ("core_schools", "Core", "schools"),
+    ("client_schools", "Client", "schools"),
+    ("core_trained_schools", "Core Trained", "schools"),
+    ("core_graduate_schools", "Core Graduate", "schools"),
+    ("any_visit", "Schools Planned", "schools"),
+    ("unplanned", "Not Yet Planned", "schools"),
+    ("unclustered", "Unclustered", "schools"),
+    ("training_staff", "Staff Trainings", "training"),
+    ("training_partner", "Partner Trainings", "training"),
+    ("training", "Training Coverage", "training"),
+    ("no_training", "No Training Planned", "training"),
+    ("meeting", "Cluster Meeting Coverage", "training"),
+    ("followups", "Open Follow-ups", ""),
+    ("action", "Action", ""),
 )
 TABLE_WIDTH = len(TABLE_COLUMNS)
 
@@ -1886,7 +2133,55 @@ def row_cells(tally: Tally) -> dict:
         "has_target": bool(tally.target),
         "p_visits": _fmt(tally.p_visits),
         "plan_share": tally.plan_share,
-        "plan_tone": _tone(tally.plan_share),
+        "plan_tone": _progress_tone(tally.p_visits, tally.target),
+        # The year shared out (``rules.workload``): staff's Core and client
+        # visits against their targets, and the Partner's target, what is in
+        # a Partner's hands and what the Partner has dated.
+        "p_core_visits": _fmt(tally.p_core_visits),
+        "core_target": _fmt(tally.core_staff_slots),
+        "core_plan_share": tally.core_plan_share,
+        "core_plan_tone": _progress_tone(tally.p_core_visits, tally.core_staff_slots),
+        "p_client_visits": _fmt(tally.p_client_visits),
+        "client_target": _fmt(tally.client_staff_expected),
+        "client_plan_share": tally.client_plan_share,
+        "client_plan_tone": _progress_tone(
+            tally.p_client_visits, tally.client_staff_expected
+        ),
+        "partner_target": _fmt(tally.partner_expected),
+        "beyond_staff": _fmt(tally.client_partner_expected),
+        "partner_assigned_of": (
+            f"{_fmt(tally.partner_assigned)} / {_fmt(tally.partner_expected)}"
+        ),
+        "partner_assigned_share": tally.partner_share,
+        "partner_assigned_tone": _progress_tone(
+            tally.partner_assigned, tally.partner_expected
+        ),
+        "partner_scheduled_share": tally.partner_scheduled_share,
+        "partner_scheduled_tone": _progress_tone(
+            tally.partner_scheduled, tally.partner_expected
+        ),
+        "over_cap": tally.over_cap,
+        "over_cap_text": _fmt(tally.over_cap),
+        "over_cap_people": tally.over_cap_people,
+        "core_only_people": tally.core_only_people,
+        "unplanned": _fmt(tally.unplanned),
+        "unplanned_any": bool(tally.unplanned),
+        "no_training": _fmt(tally.no_training),
+        "no_training_any": bool(tally.no_training),
+        "training_staff": (
+            f"{_fmt(tally.training_staff)} / {_fmt(tally.training_staff_slots)}"
+        ),
+        "training_staff_share": tally.training_staff_share,
+        "training_staff_tone": _progress_tone(
+            tally.training_staff, tally.training_staff_slots
+        ),
+        "training_partner": (
+            f"{_fmt(tally.training_partner)} / {_fmt(tally.training_partner_slots)}"
+        ),
+        "training_partner_share": tally.training_partner_share,
+        "training_partner_tone": _progress_tone(
+            tally.training_partner, tally.training_partner_slots
+        ),
         "schools": _fmt(tally.schools),
         **{field: _fmt(getattr(tally, field)) for field in TYPE_FIELDS.values()},
         "visit_slots": _fmt(tally.visit_slots),
@@ -1962,6 +2257,9 @@ def partner_rows(snapshot: Snapshot, owner_key: str) -> list[dict]:
         owner.assigned.items(),
         key=lambda item: snapshot.partner_names.get(item[0], item[0]).casefold(),
     ):
+        # The visit slots at this person's schools the Partner holds, and
+        # has dated: the Partner's share of the row above it.
+        held = owner.partners.get(pid)
         rows.append(
             {
                 "key": pid,
@@ -1970,7 +2268,9 @@ def partner_rows(snapshot: Snapshot, owner_key: str) -> list[dict]:
                 "assigned": _fmt(tally.pa_work),
                 "planned": _fmt(tally.pp_work),
                 "waiting": tally.partner_waiting,
-                "has_school_side": pid in owner.partners,
+                "has_school_side": held is not None,
+                "visits_assigned": _fmt(held.partner_assigned) if held else "",
+                "visits_planned": _fmt(held.partner_scheduled) if held else "",
             }
         )
     return rows

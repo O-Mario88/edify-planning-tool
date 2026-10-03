@@ -199,6 +199,10 @@ SESSION_DETAIL_KEYS = tuple(
 #: What a school needs in the year, what is planned and what remains.
 SCHOOL_PLAN = (
     C("visits_needed", "Visits Needed", numeric=True),
+    # Who the visits are expected from (owner, 2026-10-03): staff and the
+    # Partner two each at a Core school; at any other, staff while the
+    # holder's capacity reaches it and the Partner past that.
+    C("expected_from", "Expected From"),
     C("visits_planned", "Visits Planned", numeric=True),
     C("visits_remaining", "Visits Remaining", numeric=True),
     C("with_partner", "With a Partner"),
@@ -1412,6 +1416,9 @@ def _school_rows(user, filters, wanted, extra: Extra | None = None) -> list:
                 "lead": place["holder_lead"],
                 "staff": place["holder"],
                 "visits_needed": values[IDX["visit_slots"]],
+                "expected_from": _expected_from(
+                    values[IDX["staff_expected"]], values[IDX["partner_expected"]]
+                ),
                 "visits_planned": visits,
                 "visits_remaining": max(0, values[IDX["visit_slots"]] - visits),
                 "trainings_needed": values[IDX["training_slots"]],
@@ -1431,6 +1438,16 @@ def _school_rows(user, filters, wanted, extra: Extra | None = None) -> list:
             }
         )
     return places.sort(rows, "school")
+
+
+def _expected_from(staff: int, partner: int) -> str:
+    """Who a school's visits are expected from, in the page's words. No
+    Partner is named: any Partner may take the work."""
+    if staff and partner:
+        return f"Staff {staff} · Partner {partner}"
+    if partner:
+        return "Partner"
+    return "Staff" if staff else ""
 
 
 # ── The tables ───────────────────────────────────────────────────────────────

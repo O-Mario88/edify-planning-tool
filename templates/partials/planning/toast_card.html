@@ -8,17 +8,23 @@ confirmation does: it is the moment the mistake is most likely to be noticed,
 and a button that disappears while the planner is reading the sentence is no
 button at all. The same change stays undoable for a week from Recent changes
 on the Planning page.
+
+A save can carry a `notice`: something the planner should know that did not
+stop the save (owner, 2026-10-03: past the visits a role plans in a year the
+platform "should not refuse just warn and let it through"). It is said under
+the confirmation, in the warning colour, and the card stays up as long as one
+with an Undo does.
 {% endcomment %}
 <div
   x-data="{ show: true }"
   x-show="show"
-  x-init="setTimeout(() => show = false, {% if undo_ids %}20000{% else %}8000{% endif %})"
+  x-init="setTimeout(() => show = false, {% if undo_ids or notice %}20000{% else %}8000{% endif %})"
   x-transition
   data-planning-saved-toast
   data-undo-toast
   class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if tone == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}"
 >
-  <span>{{ message }}{% if plan_url %} <a href="{{ plan_url }}" class="underline font-bold">{{ plan_link_label|default:"Open My Plan" }}</a>{% endif %}</span>
+  <span>{{ message }}{% if plan_url %} <a href="{{ plan_url }}" class="underline font-bold">{{ plan_link_label|default:"Open My Plan" }}</a>{% endif %}{% if notice %}<span class="mt-1 block font-bold text-amber-700" role="status" data-ceiling-notice>{{ notice }}</span>{% endif %}</span>
   {% if undo_ids %}{% include "partials/planning/undo_button.html" %}{% endif %}
   <button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100 -my-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center text-[16px]" aria-label="Dismiss notification">&times;</button>
 </div>

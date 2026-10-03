@@ -1,0 +1,18 @@
+{% comment %}
+The planner's own year, shared out (owner, 2026-10-03). A Programme Lead plans
+at most 280 visits and a CCEO 560: two at each Core school they hold, then one
+at each Client, Core Trained and Core Graduate school until the ceiling is
+reached. Every school past that is the Partner's, with the other two visits of
+each Core package. The ceiling warns and never refuses, so past it the line
+says so and what to do. Shown to the two roles that plan visits only.
+{% endcomment %}
+{% if workload %}
+<p class="edify-note" data-tone="{% if workload.over or workload.core_only %}warning{% else %}info{% endif %}" role="status" data-planning-workload>
+  <strong>Your FY{{ workload.fy }} visits: {{ workload.planned }} of {{ workload.ceiling }} planned.</strong>
+  Core {{ workload.core_planned }} of {{ workload.core_target }} · Client {{ workload.client_planned }} of {{ workload.client_target }}.
+  {% if workload.partner_schools %}{{ workload.partner_schools }} of your Client schools {{ workload.partner_schools|pluralize:"is,are" }} beyond your {{ workload.ceiling }} and {{ workload.partner_schools|pluralize:"is,are" }} the Partner's to visit: assign {{ workload.partner_schools|pluralize:"it,them" }} to a Partner.{% endif %}
+  {% if workload.partner_core_visits %}The Partner also takes two visits and two trainings at each of your Core schools.{% endif %}
+  {% if workload.core_only %}Your Core schools alone take your whole {{ workload.ceiling }}{% if workload.core_over %} ({{ workload.core_over }} over){% endif %}, so every other school you hold is the Partner's.{% endif %}
+  {% if workload.over %}You are {{ workload.over }} past your {{ workload.ceiling }}. Nothing was refused; the visits past it are the Partner's share.{% endif %}
+</p>
+{% endif %}

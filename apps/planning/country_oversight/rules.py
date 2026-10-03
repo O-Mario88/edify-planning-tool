@@ -33,9 +33,25 @@ School type      Visits                      Trainings
 Core             4 (2 staff + 2 Partner)     4 (2 staff + 2 Partner)
 Client           1 (staff or a Partner)      1
 Core Trained     1 (staff or a Partner)      1
-Core Graduate    1 (staff or a Partner)      none
+Core Graduate    1 (staff or a Partner)      1
 Champion         none (outreach only)        none
 ===============  ==========================  ==========================
+
+**How a person's year is shared out** (owner, 2026-10-03; ``workload``). The
+280 or 560 is a ceiling on staff visits. The Core schools a person holds take
+theirs first, two each; the capacity left takes one visit at each Client,
+Core Trained and Core Graduate school until it runs out; every school past
+that is the Partner's. So the Partner's target is the other two visits at each
+Core school plus the schools beyond staff capacity ("the overflow should be
+the partner target"), and a person holding too few schools to reach the
+ceiling hands nothing over. Trainings run beside the visits and use none of
+the ceiling: a Core school's four are two staff and two Partner, and a
+school's one follows its visit. Core schools alone at or past the ceiling
+(``OVER_CAPACITY_CORE_ONLY``) leave no staff visit for any other school.
+
+**The ceiling warns; it never refuses** (owner, 2026-10-03: "platform should
+not refuse just warn and let it through"). A visit planned past it is saved,
+counted and SHOWN as over the ceiling, on the plan and to whoever follows it.
 
 **Partners.** Staff assign a school; the Partner sets the date. *Assigned* is
 every school in a Partner's hands; *Partner planned* is the part of it the
@@ -63,7 +79,7 @@ from apps.core.enums import SchoolType
 from apps.planning.country_oversight import policy
 
 #: Named in every cache key and export, so a figure says which rules made it.
-RULES_VERSION = "2026-10-02.1"
+RULES_VERSION = "2026-10-03.1"
 
 # ── Who plans ────────────────────────────────────────────────────────────────
 PROGRAM_LEAD_ROLE = policy.PROGRAM_LEAD_ROLE
@@ -546,6 +562,115 @@ def portfolio_reach(schools_by_type: dict) -> int:
         requirement_for(school_type).staff_reach * int(count or 0)
         for school_type, count in schools_by_type.items()
     )
+
+
+# ── How a person's year is shared out ────────────────────────────────────────
+#: Raised when a person's Core schools alone take the whole ceiling: every
+#: other school they hold is the Partner's.
+OVER_CAPACITY_CORE_ONLY = "OVER_CAPACITY_CORE_ONLY"
+
+
+@dataclass(frozen=True)
+class Workload:
+    """One person's year, shared between staff and the Partner (module doc).
+
+    ``cap`` is the staff visit ceiling (0 for somebody who is neither a Lead
+    nor a CCEO: no staff capacity stands behind their schools). The schools
+    are the ones the person holds; ``client_schools`` are the Client, Core
+    Trained and Core Graduate schools together.
+    """
+
+    cap: int
+    core_schools: int
+    client_schools: int
+
+    @property
+    def staff_core_visits(self) -> int:
+        return REQUIREMENTS[SchoolType.CORE.value].staff_visits * self.core_schools
+
+    @property
+    def partner_core_visits(self) -> int:
+        return REQUIREMENTS[SchoolType.CORE.value].partner_visits * self.core_schools
+
+    @property
+    def staff_core_trainings(self) -> int:
+        return REQUIREMENTS[SchoolType.CORE.value].staff_trainings * self.core_schools
+
+    @property
+    def partner_core_trainings(self) -> int:
+        return REQUIREMENTS[SchoolType.CORE.value].partner_trainings * self.core_schools
+
+    @property
+    def remaining_capacity(self) -> int:
+        """The ceiling left once the Core schools have theirs."""
+        return max(0, self.cap - self.staff_core_visits)
+
+    @property
+    def staff_client_visits(self) -> int:
+        return min(self.client_schools, self.remaining_capacity)
+
+    @property
+    def partner_client_visits(self) -> int:
+        """The schools beyond staff capacity: the Partner's (the spillover)."""
+        return self.client_schools - self.staff_client_visits
+
+    @property
+    def staff_visits(self) -> int:
+        return self.staff_core_visits + self.staff_client_visits
+
+    @property
+    def partner_visits(self) -> int:
+        """The Partner's target: its half of each Core package and the
+        schools beyond staff capacity."""
+        return self.partner_core_visits + self.partner_client_visits
+
+    @property
+    def staff_trainings(self) -> int:
+        """A school's one training follows its one visit."""
+        return self.staff_core_trainings + self.staff_client_visits
+
+    @property
+    def partner_trainings(self) -> int:
+        return self.partner_core_trainings + self.partner_client_visits
+
+    @property
+    def core_over(self) -> int:
+        """Core staff visits the ceiling cannot hold."""
+        return max(0, self.staff_core_visits - self.cap) if self.cap else 0
+
+    @property
+    def core_only(self) -> bool:
+        return bool(
+            self.cap and self.core_schools and self.staff_core_visits >= self.cap
+        )
+
+    @property
+    def warning(self) -> str:
+        return OVER_CAPACITY_CORE_ONLY if self.core_only else ""
+
+
+def workload(cap: int, core_schools: int, client_schools: int) -> Workload:
+    return Workload(
+        cap=max(0, int(cap or 0)),
+        core_schools=max(0, int(core_schools or 0)),
+        client_schools=max(0, int(client_schools or 0)),
+    )
+
+
+def workload_for(role: str | None, schools_by_type: dict) -> Workload:
+    """The share-out for somebody of this role holding these schools
+    (school type → how many)."""
+    return workload(
+        target_for(role),
+        schools_by_type.get(SchoolType.CORE.value, 0),
+        sum(int(schools_by_type.get(t, 0) or 0) for t in CLIENT_RULE_TYPES),
+    )
+
+
+def over_ceiling(planned: int, cap: int) -> int:
+    """Counted visits planned past the ceiling. Nothing refuses them (the
+    module doc); this is the number every page shows."""
+    return max(0, int(planned or 0) - int(cap)) if cap else 0
 
 
 # ── Partners: assigned, and planned by the Partner ───────────────────────────

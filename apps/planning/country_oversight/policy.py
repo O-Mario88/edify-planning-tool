@@ -25,7 +25,9 @@ neither.
 Core staff slots are required whatever the ceiling says: a ceiling below them
 is shown as an internal capacity deficit, never moved silently to the Partner
 side. Client-rule slots use the capacity left after Core; the balance is the
-Partner's.
+Partner's, and with the other half of each Core package it is the Partner's
+target (owner, 2026-10-03; ``rules.workload``). A school's one training goes
+where its one visit does.
 
 **Planned.** An activity counts as planned when it carries a date and sits in
 a scheduled-or-later state of the canonical ``ActivityStatus`` enum. A Partner
@@ -41,7 +43,7 @@ from apps.core.enums import ActivityStatus, SchoolType
 
 #: Bumped whenever a rule below changes, and stored on every follow-up and in
 #: every cache key, so a snapshot always names the policy it was taken under.
-POLICY_VERSION = "2026-10-02.1"
+POLICY_VERSION = "2026-10-03.1"
 
 # ── School groups ────────────────────────────────────────────────────────────
 CORE_FAMILY = "core_family"

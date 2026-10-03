@@ -35,7 +35,8 @@ and every gap count opens the list of the schools behind it.
             <th scope="col" class="px-3 py-2 text-right">Visits planned</th>
             <th scope="col" class="px-3 py-2 text-right">Core visits</th>
             <th scope="col" class="px-3 py-2 text-right">Client visits</th>
-            <th scope="col" class="px-3 py-2 text-right" title="Client schools beyond staff reach that are with a partner, of those that should be">Partner<br>schools</th>
+            <th scope="col" class="px-3 py-2 text-right" title="Staff trainings the Core packages hold, of two a Core school">Core staff<br>trainings</th>
+            <th scope="col" class="px-3 py-2 text-right" title="Client schools beyond staff reach that are with a partner, of those that should be. With two visits at each Core school they are the partner's target">Partner<br>schools</th>
             <th scope="col" class="px-3 py-2 text-right">Core partner<br>visits</th>
             <th scope="col" class="px-3 py-2 text-right">Core partner<br>trainings</th>
             <th scope="col" class="px-3 py-2 text-right">Partner<br>activities</th>
@@ -51,7 +52,7 @@ and every gap count opens the list of the schools behind it.
         <tbody>
           {% for lead in monitor.leads %}
           <tr class="edify-group-head">
-            <th colspan="16" scope="colgroup">
+            <th colspan="17" scope="colgroup">
               <span class="edify-group-head__label">{{ lead.name }}</span>
               <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
             </th>

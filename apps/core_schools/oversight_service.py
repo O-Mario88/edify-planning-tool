@@ -310,6 +310,21 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
         .annotate(avg_score=Avg("average_score"))
     }
 
+    # 4b. Each package by who delivers it (owner, 2026-09-30 and 2026-10-03):
+    # two visits and two trainings are staff's, two of each the Partner's.
+    # The same split every scheduling door refuses by, so the page and the
+    # doors agree; a Partner's side counts what it holds, dated or not.
+    from apps.core_schools.package_split import (
+        PARTNER,
+        SIDE_CAP,
+        STAFF,
+        TRAINING,
+        VISIT,
+        package_splits,
+    )
+
+    splits = package_splits([s for s in schools if s.school_type == "core"], fy)
+
     # 5. Format school rows
     formatted_schools = []
     completed_count = 0
@@ -343,6 +358,18 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
         if ssa_avg is None and plan and plan.baseline_average is not None:
             ssa_avg = plan.baseline_average
         ssa_str = f"{round(ssa_avg, 1)}" if ssa_avg is not None else "—"
+        split = splits.get(s.id)
+        sides = (
+            {
+                "side_cap": SIDE_CAP,
+                "staff_visits": min(split.used(VISIT, STAFF), SIDE_CAP),
+                "partner_visits": min(split.used(VISIT, PARTNER), SIDE_CAP),
+                "staff_trainings": min(split.used(TRAINING, STAFF), SIDE_CAP),
+                "partner_trainings": min(split.used(TRAINING, PARTNER), SIDE_CAP),
+            }
+            if split is not None and split.has_package
+            else {}
+        )
 
         formatted_schools.append(
             {
@@ -373,6 +400,7 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
                 "is_package_complete": is_package_complete,
                 "status": plan.status if plan else "Not Initialized",
                 "ssa_avg": ssa_str,
+                **sides,
             }
         )
 
