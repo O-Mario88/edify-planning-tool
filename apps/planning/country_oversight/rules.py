@@ -25,6 +25,18 @@ many it takes. Donor, content/story, social and invitation visits are the
 same: real work, shown and costed, and not among the visits a person is
 expected to plan.
 
+**SSA Support counts when staff schedule it** (owner, 2026-10-03: "Only
+Follow up, In-school training and SSA Support scheduled by staff not partner
+... if it is assigned to the partner it does not count", and "Staff scheduled
+SSA Support for both core and clients schools counts towards the core visit
+package and also count towards client visit for client schools"). So the
+counted kinds are three for staff — Follow up, In-school Training and SSA
+Support — and two for a Partner: a Partner's SSA Support is shown as the
+Partner's assignment and counted nowhere. A staff SSA Support visit is one of
+the person's 280 or 560, the school's visit at a Client, Core Trained or Core
+Graduate school, and one of the two staff visits at a Core school. It
+reverses the day before ("data collection counts nowhere") for staff only.
+
 **What a school needs in a year.** By its own type, never a family:
 
 ===============  ==========================  ==========================
@@ -79,7 +91,7 @@ from apps.core.enums import SchoolType
 from apps.planning.country_oversight import policy
 
 #: Named in every cache key and export, so a figure says which rules made it.
-RULES_VERSION = "2026-10-03.1"
+RULES_VERSION = "2026-10-03.2"
 
 # ── Who plans ────────────────────────────────────────────────────────────────
 PROGRAM_LEAD_ROLE = policy.PROGRAM_LEAD_ROLE
@@ -238,10 +250,10 @@ KIND_LABELS = {
     KIND_IN_SCHOOL: "In-school Training",
     KIND_FOLLOW_UP: "Follow up",
 }
-#: The kinds that count, in the order the pages show them. ``KIND_SSA`` keeps
-#: its name and label for the lists that show a data collection visit; it is
-#: no longer one of them (owner, 2026-10-02).
-KIND_ORDER = (KIND_FOLLOW_UP, KIND_IN_SCHOOL)
+#: The kinds that count, in the order the pages show them. ``KIND_SSA`` is a
+#: staff kind only: SSA Support counts when staff schedule it and never when
+#: it is a Partner's (owner, 2026-10-03).
+KIND_ORDER = (KIND_FOLLOW_UP, KIND_IN_SCHOOL, KIND_SSA)
 
 #: The visit an in-school training writes beside itself: the same mission.
 COMPANION_PURPOSE = "in_school_training_delivery_visit"
@@ -311,17 +323,34 @@ def not_outside_ssa_q(prefix: str = "") -> Q:
     return ~Q(**{f"{prefix}project_id__in": outside})
 
 
+#: Every type that can be a counted visit: the two kinds anybody delivers,
+#: and the data collection types, which count as SSA Support for staff.
+VISIT_SHAPE_TYPES: tuple[str, ...] = (*_TYPE_KIND, *DATA_COLLECTION_TYPES)
+
+
+def _is_staff(delivery_type: str | None) -> bool:
+    return delivery_type is not None and str(delivery_type) != "partner"
+
+
 def visit_kind(
     activity_type: str | None,
     purpose_type: str | None = None,
     project_id: str | None = None,
+    *,
+    delivery_type: str | None = None,
 ) -> str | None:
     """The counted kind of an activity of this shape, or None when it is not
     a counted visit. ``counted_visit_q`` and ``visit_kind_case`` say the same
-    for rows in the database."""
+    for rows in the database.
+
+    The purpose a planner chose decides the kind before the type does.
+    ``delivery_type`` is who delivers it, when the caller knows: SSA Support
+    is ``KIND_SSA`` for staff and not counted for a Partner or for a caller
+    that does not say (a hand-over is always a Partner's).
+    """
     activity_type = str(activity_type or "")
     purpose_type = str(purpose_type or "")
-    if activity_type not in _TYPE_KIND:
+    if activity_type not in VISIT_SHAPE_TYPES:
         return None
     if project_id:
         from apps.projects.models import is_outside_ssa
@@ -330,9 +359,15 @@ def visit_kind(
             return None
     if purpose_type == COMPANION_PURPOSE or purpose_type in OUTREACH_PURPOSES:
         return None
-    if purpose_type in DATA_COLLECTION_PURPOSES:
+    kind = _PURPOSE_KIND.get(purpose_type)
+    if kind is None:
+        if purpose_type in DATA_COLLECTION_PURPOSES:
+            kind = KIND_SSA
+        else:
+            kind = _TYPE_KIND.get(activity_type, KIND_SSA)
+    if kind == KIND_SSA and not _is_staff(delivery_type):
         return None
-    return _PURPOSE_KIND.get(purpose_type) or _TYPE_KIND[activity_type]
+    return kind
 
 
 def is_data_collection(
@@ -354,19 +389,24 @@ def data_collection_q(prefix: str = "") -> Q:
     )
 
 
-def is_uncounted_visit(activity_type: str | None, purpose_type=None) -> bool:
-    """A donor, story, invitation or social visit, or a data collection
-    visit: ``outreach_visit_q`` for a row already read at a school."""
+def is_uncounted_visit(
+    activity_type: str | None, purpose_type=None, *, delivery_type: str | None = None
+) -> bool:
+    """A donor, story, invitation or social visit, or SSA Support that is not
+    staff's: ``outreach_visit_q`` for a row already read at a school."""
     activity_type = str(activity_type or "")
     purpose_type = str(purpose_type or "")
-    return (
-        activity_type in OUTREACH_TYPES
-        or activity_type in DATA_COLLECTION_TYPES
-        or (
-            activity_type in COUNTED_VISIT_TYPES
-            and purpose_type in (*OUTREACH_PURPOSES, *DATA_COLLECTION_PURPOSES)
-        )
-    )
+    if activity_type in OUTREACH_TYPES:
+        return True
+    if activity_type not in VISIT_SHAPE_TYPES:
+        return False
+    if purpose_type in OUTREACH_PURPOSES:
+        return True
+    if purpose_type == COMPANION_PURPOSE:
+        return False
+    return visit_kind(activity_type, purpose_type, delivery_type="staff") == (
+        KIND_SSA
+    ) and not _is_staff(delivery_type)
 
 
 def handover_data_collection_q(prefix: str = "") -> Q:
@@ -378,17 +418,32 @@ def handover_data_collection_q(prefix: str = "") -> Q:
     )
 
 
-def counted_visit_q(prefix: str = "") -> Q:
-    """Activities that are a counted visit at a school, whoever delivers them."""
+def _visit_shape_q(prefix: str = "") -> Q:
+    """A visit at a school that is not a companion, an outreach visit or the
+    work of a project no SSA intervention measures."""
     return (
-        Q(**{f"{prefix}activity_type__in": COUNTED_VISIT_TYPES})
+        Q(**{f"{prefix}activity_type__in": VISIT_SHAPE_TYPES})
         & Q(**{f"{prefix}school_id__isnull": False})
         & Q(**{f"{prefix}cluster_id__isnull": True})
         & ~Q(**{f"{prefix}purpose_type": COMPANION_PURPOSE})
         & ~Q(**{f"{prefix}purpose_type__in": OUTREACH_PURPOSES})
-        & ~Q(**{f"{prefix}purpose_type__in": DATA_COLLECTION_PURPOSES})
         & not_outside_ssa_q(prefix)
     )
+
+
+def _ssa_kind_q(prefix: str = "") -> Q:
+    """Of those, the SSA Support ones: by the purpose chosen, or by the type
+    when no purpose names another kind."""
+    return Q(**{f"{prefix}purpose_type__in": DATA_COLLECTION_PURPOSES}) | (
+        Q(**{f"{prefix}activity_type__in": DATA_COLLECTION_TYPES})
+        & ~Q(**{f"{prefix}purpose_type__in": list(_PURPOSE_KIND)})
+    )
+
+
+def counted_visit_q(prefix: str = "") -> Q:
+    """Activities that are a counted visit at a school: a Follow up or an
+    In-school Training whoever delivers it, and SSA Support when staff do."""
+    return _visit_shape_q(prefix) & (~_ssa_kind_q(prefix) | staff_delivery_q(prefix))
 
 
 def visit_kind_case(prefix: str = "") -> Case:
@@ -398,41 +453,51 @@ def visit_kind_case(prefix: str = "") -> Case:
         for purpose, kind in _PURPOSE_KIND.items()
     ]
     whens += [
+        When(**{f"{prefix}purpose_type": purpose}, then=Value(KIND_SSA))
+        for purpose in DATA_COLLECTION_PURPOSES
+    ]
+    whens += [
         When(**{f"{prefix}activity_type": activity_type}, then=Value(kind))
         for activity_type, kind in _TYPE_KIND.items()
+    ]
+    whens += [
+        When(**{f"{prefix}activity_type": activity_type}, then=Value(KIND_SSA))
+        for activity_type in DATA_COLLECTION_TYPES
     ]
     return Case(*whens, default=Value(KIND_FOLLOW_UP), output_field=CharField())
 
 
 def kind_q(kind: str, prefix: str = "") -> Q:
     """Rows ``counted_visit_q`` kept that are of this kind (``visit_kind``)."""
+    if kind == KIND_SSA:
+        return _ssa_kind_q(prefix)
     purposes = [p for p, k in _PURPOSE_KIND.items() if k == kind]
     types = [t for t, k in _TYPE_KIND.items() if k == kind]
-    return Q(**{f"{prefix}purpose_type__in": purposes}) | (
-        Q(**{f"{prefix}activity_type__in": types})
-        & ~Q(**{f"{prefix}purpose_type__in": list(_PURPOSE_KIND)})
-    )
+    return (
+        Q(**{f"{prefix}purpose_type__in": purposes})
+        | (
+            Q(**{f"{prefix}activity_type__in": types})
+            & ~Q(**{f"{prefix}purpose_type__in": list(_PURPOSE_KIND)})
+        )
+    ) & ~_ssa_kind_q(prefix)
 
 
 def outreach_visit_q(prefix: str = "") -> Q:
-    """Donor, story, invitation and social visits, and data collection, at a
-    school: shown beside the counted visits, never among them."""
+    """Donor, story, invitation and social visits, and a Partner's SSA
+    Support, at a school: shown beside the counted visits, never among
+    them."""
+    visit_shaped = Q(**{f"{prefix}activity_type__in": VISIT_SHAPE_TYPES})
     return (
         Q(**{f"{prefix}school_id__isnull": False})
         & Q(**{f"{prefix}cluster_id__isnull": True})
         & (
             Q(**{f"{prefix}activity_type__in": OUTREACH_TYPES})
-            | Q(**{f"{prefix}activity_type__in": DATA_COLLECTION_TYPES})
+            | (visit_shaped & Q(**{f"{prefix}purpose_type__in": OUTREACH_PURPOSES}))
             | (
-                Q(**{f"{prefix}activity_type__in": COUNTED_VISIT_TYPES})
-                & Q(
-                    **{
-                        f"{prefix}purpose_type__in": (
-                            *OUTREACH_PURPOSES,
-                            *DATA_COLLECTION_PURPOSES,
-                        )
-                    }
-                )
+                visit_shaped
+                & ~Q(**{f"{prefix}purpose_type": COMPANION_PURPOSE})
+                & _ssa_kind_q(prefix)
+                & partner_delivery_q(prefix)
             )
         )
     )
@@ -450,10 +515,11 @@ def planned_q(prefix: str = "") -> Q:
     )
 
 
-#: The yearly count at a client-rule school (apps.planning.visit_gate): its
-#: one support visit. SSA Support was a second count until the owner took data
-#: collection out of every count (2026-10-02); ``POOL_SSA`` stays for the
-#: callers that still name it and is always empty.
+#: The yearly counts at a client-rule school: its support visit (a Follow up
+#: or an In-school Training), and the SSA Support staff schedule. Both are
+#: counted visits; they are two kinds of work, so one of each is not the same
+#: visit booked twice (owner, 2026-10-03, restoring the count of 2026-10-01
+#: for staff).
 POOL_SSA = "ssa"
 POOL_SUPPORT = "support"
 
@@ -461,7 +527,7 @@ POOL_SUPPORT = "support"
 def pool_of(kind: str | None) -> str | None:
     if kind is None:
         return None
-    return POOL_SUPPORT
+    return POOL_SSA if kind == KIND_SSA else POOL_SUPPORT
 
 
 # ── What a school needs ──────────────────────────────────────────────────────

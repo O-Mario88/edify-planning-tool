@@ -1,0 +1,120 @@
+{% load components frontend_filters %}
+{% comment %}
+Schools and checks (owner, 2026-10-03): every operating school in the
+reader's scope by its type — Core, Client, Core Trained, Core Graduate and
+Champion — in exactly one of three states, so the three always add up to the
+type's schools and no school is left out for having no holder, no project,
+no Partner or no plan. Under it, what Impact Assessment looks into: schools
+booked more than once, people past their ceiling and Core schools whose
+Partner half is not yet handed over (apps.planning.readiness).
+{% endcomment %}
+<div class="space-y-4">
+{% data_table name="monitor-inventory" %}
+  {% slot title %}Schools by type · FY {{ fy }}{% endslot %}
+  {% slot summary %}{{ monitor_readiness.schools_total|intcomma }} schools = {{ monitor_readiness.schools_fully|intcomma }} fully planned + {{ monitor_readiness.schools_partly|intcomma }} partly planned + {{ monitor_readiness.schools_not_yet|intcomma }} not yet planned{% endslot %}
+  {% slot caption %}Schools of each type, fully planned, partly planned and not yet planned, and those in a project.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No school in your scope." %}{% endslot %}
+  {% slot footer %}
+  <details class="px-4 py-2.5 edify-text-caption edify-text-muted">
+    <summary class="cursor-pointer font-semibold">About these figures</summary>
+    <p class="mt-1">A Core school is fully planned with two staff and two Partner visits and two staff and two Partner trainings; a Client, Core Trained or Core Graduate school with its one visit (staff's, or in a Partner's hands) and its one training. A Champion school takes donor and story visits only, so it has nothing left to plan and is counted for its project. Closed schools and deleted records are not operating and are not counted. The page checks these figures against the schools in scope before it shows them.</p>
+  </details>
+  {% endslot %}
+  {% if monitor_readiness.types %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">School type</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools</th>
+          <th scope="col" class="px-3 py-2 text-right">Fully planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Partly planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Not yet planned</th>
+          <th scope="col" class="px-3 py-2 text-right">In a project</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in monitor_readiness.types %}
+        <tr>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}{% if row.outreach_only %} <span class="edify-text-muted">outreach only</span>{% endif %}</th>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ row.total|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Fully planned"{% if row.outreach_only %} title="Nothing to plan: donor and story visits only"{% endif %}>{{ row.fully|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Partly planned">{{ row.partly|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Not yet planned">{% if row.not_yet %}<span class="edify-status-text" data-edify-tone="danger">{{ row.not_yet|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="In a project">{{ row.in_project|intcomma }}<span class="edify-text-muted"> / {{ row.total|intcomma }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="font-semibold" data-monitor-subtotal>
+          <th scope="row" class="px-3 py-2 text-left">All schools</th>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_total|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_fully|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_partly|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_not_yet|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.project_assigned|intcomma }}<span class="edify-text-muted"> / {{ monitor_readiness.project_total|intcomma }}</span></td>
+        </tr>
+      </tfoot>
+  {% endif %}
+{% enddata_table %}
+
+{% comment %}
+Every planned activity of the year, each in one line: the row figure it is
+counted in, or the rule that leaves it out. The lines add up to the planned
+activities, so nothing planned is missing from the page without a reason, and
+the two flagged lines are planned work no row holds.
+{% endcomment %}
+{% data_table name="monitor-ledger" %}
+  {% slot title %}Planned activities accounted for · FY {{ fy }}{% endslot %}
+  {% slot summary %}{{ monitor_ledger.total|intcomma }} planned · {% if monitor_ledger.unaccounted %}{{ monitor_ledger.unaccounted|intcomma }} on no row{% else %}every one on a row or left out by a rule{% endif %}{% endslot %}
+  {% slot caption %}Planned activities of the year by where they are counted, with those no row holds.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No activity is planned for this year yet." %}{% endslot %}
+  {% if monitor_ledger.total %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Where it is counted</th>
+          <th scope="col" class="px-3 py-2 text-right">Planned activities</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in monitor_ledger.lines %}
+        <tr{% if line.flagged %} data-ledger-flagged{% endif %}>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ line.label }}</th>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Planned activities">{% if line.flagged and line.count %}<span class="edify-status-text" data-edify-tone="danger">{{ line.count|intcomma }}</span>{% elif line.count %}{{ line.count|intcomma }}{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="font-semibold" data-monitor-subtotal>
+          <th scope="row" class="px-3 py-2 text-left">All planned activities</th>
+          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_ledger.total|intcomma }}</td>
+        </tr>
+      </tfoot>
+  {% endif %}
+{% enddata_table %}
+
+{% data_table name="monitor-checks" %}
+  {% slot title %}Checks · FY {{ fy }}{% endslot %}
+  {% slot summary %}{{ monitor_readiness.duplicates|intcomma }} booked more than once · {{ monitor_readiness.over_ceiling_people|intcomma }} past the ceiling · {{ monitor_readiness.core_missing_partner_half|intcomma }} Core schools without their Partner half{% endslot %}
+  {% slot caption %}For each person with something to look into: schools booked more than once, visits past the ceiling and Core schools whose Partner half is not handed over.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="Nothing to look into: no school is booked more than once, nobody is past their ceiling and every Core school's Partner half is handed over." %}{% endslot %}
+  {% if monitor_readiness.flags %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Staff</th>
+          <th scope="col" class="px-3 py-2 text-right" title="Client, Core Trained and Core Graduate schools with two staff visits, two Partner visits, or staff and a Partner both">Booked more than once</th>
+          <th scope="col" class="px-3 py-2 text-right" title="Counted visits planned past 280 for a Programme Lead or 560 for a CCEO. Saved, and shown here">Visits past the ceiling</th>
+          <th scope="col" class="px-3 py-2 text-right" title="Core schools with fewer than two Partner visits or two Partner trainings handed over">Core without the Partner half</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for officer in monitor_totals.officers %}{% if officer.readiness.flags %}
+        <tr>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ officer.name }}{% if officer.role_label %} <span class="edify-text-muted">{% if officer.is_lead %}PL{% else %}{{ officer.role_label }}{% endif %}</span>{% endif %}</th>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Booked more than once">{% if officer.readiness.duplicates %}<span class="edify-status-text" data-edify-tone="danger">{{ officer.readiness.duplicates|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Visits past the ceiling">{% if officer.readiness.over_ceiling_visits %}<span class="edify-status-text" data-edify-tone="danger">{{ officer.readiness.over_ceiling_visits|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Core without the Partner half">{% if officer.readiness.core_missing_partner_half %}<span class="edify-status-text" data-edify-tone="warning">{{ officer.readiness.core_missing_partner_half|intcomma }}</span><span class="edify-text-muted"> / {{ officer.core_schools|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+        </tr>
+        {% endif %}{% endfor %}
+      </tbody>
+  {% endif %}
+{% enddata_table %}
+</div>

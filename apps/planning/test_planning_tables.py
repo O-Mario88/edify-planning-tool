@@ -110,23 +110,24 @@ class PeopleTablesTest(TableWorld):
         table = self.table("visits")
         self.assertEqual(len(table.rows), self.country().p_visits)
         # Under whoever holds the school; who planned the visit is a column.
-        # The Lead's SSA Support (data collection) visit is not one of them:
-        # only a Follow up and an In-school Training count (owner, 2026-10-02).
+        # The Lead's own SSA Support visit is one of them: it counts when
+        # staff schedule it (owner, 2026-10-03).
         self.assertEqual(
             [
                 (row["lead"], row["holder"], row["staff"], row["activity"])
                 for row in table.rows
             ],
             [
+                ("Lead A", "Officer One", "Lead A", "SSA Support"),
                 ("Lead A", "Officer One", "Officer Two", "Follow up"),
                 ("Lead B", "Officer Three", "Officer Three", "Follow up"),
             ],
         )
         self.assertEqual(table.rows[0]["school_id"], here.school_id)
-        self.assertEqual(table.summary, "2 visits planned · 2 of 2,240 · 2,238 to plan")
-        # It is listed with everything planned, and says it is not counted.
+        self.assertEqual(table.summary, "3 visits planned · 3 of 2,240 · 2,237 to plan")
+        # It is listed with everything planned, and says it is counted.
         self.assertIn(
-            ("Lead A", "SSA Support", "No"),
+            ("Lead A", "SSA Support", "Yes"),
             [
                 (row["staff"], row["activity"], row["counted"])
                 for row in self.table("plans").rows

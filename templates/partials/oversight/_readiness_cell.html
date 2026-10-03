@@ -1,0 +1,5 @@
+{% load frontend_filters %}{% comment %}
+One part of a person's year (apps.planning.readiness.Line): what is planned
+of what is asked, and what remains. A part that asks nothing says so.
+{% endcomment %}
+<td class="px-3 py-2 text-right tabular-nums" data-label="{{ label }}"{% if title %} title="{{ title }}"{% endif %}>{% if line.required %}<span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.planned|intcomma }}</span><span class="edify-text-muted"> / {{ line.target|intcomma }} · {{ line.percent }}%</span>{% if line.remaining %} <span class="edify-status-text" data-edify-tone="warning" data-readiness-remaining>{{ line.remaining|intcomma }} left</span>{% endif %}{% if line.over %} <span class="edify-text-muted" data-readiness-over>{{ line.over|intcomma }} over</span>{% endif %}{% elif line.planned %}{{ line.planned|intcomma }}<span class="edify-text-muted"> · none required</span>{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>

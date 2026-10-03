@@ -128,17 +128,17 @@ class ThePlanningMonitorFollowsPeople(PeopleFixture):
     def test_a_cceo_with_no_school_is_still_followed_with_their_plan(self):
         self._work(self.dan, "school_visit")
         self._work(self.dan, "training_follow_up_visit")
-        # Data collection is his work and is not one of his 560 (owner,
-        # 2026-10-02).
+        # SSA Support he schedules himself is one of his 560 (owner,
+        # 2026-10-03, reversing the day before for staff).
         self._work(self.dan, "ssa_activity")
         people, _ = self._people()
         dan = self._row(people, self.dan)
-        self.assertEqual((dan.school_count, dan.staff_visits), (0, 2))
+        self.assertEqual((dan.school_count, dan.staff_visits), (0, 3))
 
     def test_visits_count_what_team_plan_lists(self):
         # A visit returned for correction is still planned; a cancelled visit
-        # and a partner's delivery are not the officer's, and data collection
-        # (SSA Support) counts nowhere (owner, 2026-10-02).
+        # and a partner's delivery are not the officer's. SSA Support the
+        # officer schedules counts (owner, 2026-10-03).
         self._work(self.cara, "school_visit")
         self._work(self.cara, "ssa_activity")
         self._work(self.cara, "school_visit_ssa_collection")
@@ -147,7 +147,7 @@ class ThePlanningMonitorFollowsPeople(PeopleFixture):
         self._work(self.cara, "school_visit", delivery_type="partner")
         self._work(self.cara, "core_visit", school=self.core)
         cara = self._row(self._people()[0], self.cara)
-        self.assertEqual((cara.core_visits, cara.client_visits), (1, 2))
+        self.assertEqual((cara.core_visits, cara.client_visits), (1, 4))
 
     def test_the_lead_total_carries_the_lead_s_own_target(self):
         _, monitor = self._people()

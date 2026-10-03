@@ -62,17 +62,47 @@ class RulebookDefinitionsTest(World):
             "id", "activity_type", "purpose_type"
         ):
             with self.subTest(activity_type=activity_type, purpose=purpose):
+                # The rows are staff's: SSA Support counts for them.
                 self.assertEqual(
-                    counted.get(pk), rules.visit_kind(activity_type, purpose)
+                    counted.get(pk),
+                    rules.visit_kind(activity_type, purpose, delivery_type="staff"),
                 )
                 # A visit is counted or it is outreach, never both.
                 self.assertFalse(pk in counted and pk in outreach)
 
-    def test_the_two_kinds_and_nothing_else(self):
-        # Owner, 2026-10-02: "the only visits that count are in-school visits
-        # and Training Follow Up visits". Data collection was a third kind
-        # for a day.
-        self.assertEqual(rules.KIND_ORDER, (rules.KIND_FOLLOW_UP, rules.KIND_IN_SCHOOL))
+    def test_the_two_kinds_and_staff_ssa_support(self):
+        # Owner, 2026-10-03: "Only Follow up, In-school training and SSA
+        # Support scheduled by staff not partner ... if it is assigned to the
+        # partner it does not count." A day earlier data collection counted
+        # nowhere; it still does not for a Partner, or for a shape whose
+        # deliverer is not known (asserted below).
+        self.assertEqual(
+            rules.KIND_ORDER,
+            (rules.KIND_FOLLOW_UP, rules.KIND_IN_SCHOOL, rules.KIND_SSA),
+        )
+        for activity_type, purpose in (
+            ("school_visit_ssa_collection", "ssa_support"),
+            ("baseline_ssa_visit", None),
+            ("core_visit", "ssa_support"),
+        ):
+            with self.subTest(activity_type=activity_type, by="staff"):
+                self.assertEqual(
+                    rules.visit_kind(activity_type, purpose, delivery_type="staff"),
+                    rules.KIND_SSA,
+                )
+                self.assertIsNone(
+                    rules.visit_kind(activity_type, purpose, delivery_type="partner")
+                )
+                self.assertFalse(
+                    rules.is_uncounted_visit(
+                        activity_type, purpose, delivery_type="staff"
+                    )
+                )
+                self.assertTrue(
+                    rules.is_uncounted_visit(
+                        activity_type, purpose, delivery_type="partner"
+                    )
+                )
         self.assertEqual(
             rules.visit_kind("in_school_training", "in_school_training"),
             rules.KIND_IN_SCHOOL,
@@ -205,11 +235,11 @@ class PeoplePlanTest(World):
         self.assertEqual(holder.visits_planned, 0)
         self.assertEqual(holder.schools, {"client": 2})
         self.assertEqual(self.row(plan, self.cceo2).visits_planned, 1)
-        # The Lead's data collection visit is the Lead's work and none of the
-        # Lead's 280 (owner, 2026-10-02).
+        # The Lead's own SSA Support visit is one of the Lead's 280 (owner,
+        # 2026-10-03: it counts when staff schedule it).
         lead = self.row(plan, self.pl)
-        self.assertEqual(lead.visits_planned, 0)
-        self.assertEqual(lead.outreach, 1)
+        self.assertEqual(lead.visits_planned, 1)
+        self.assertEqual(lead.outreach, 0)
         self.assertEqual(lead.target, 280)
 
     def test_an_id_from_either_id_space_is_the_same_person(self):
@@ -454,13 +484,13 @@ class SchoolYearTest(World):
     def reasons(self, school):
         return self.year()[school.id].duplicate_reasons
 
-    def test_data_collection_is_never_a_duplicate(self):
-        # Beside the school's visit, twice over, by staff and by a Partner:
-        # it counts nowhere (owner, 2026-10-02).
+    def test_one_staff_ssa_support_beside_the_visit_is_not_a_duplicate(self):
+        # A Follow up and an SSA Support visit by staff are two kinds of
+        # work; a Partner's SSA Support hand-over counts nowhere (owner,
+        # 2026-10-03).
         school = self.school("client", self.cceo)
         self.activity(school, "training_follow_up_visit", owner=self.cceo, on=10)
         self.activity(school, "school_visit_ssa_collection", owner=self.cceo, on=20)
-        self.activity(school, "school_visit_ssa_collection", owner=self.cceo2, on=30)
         self.handover(
             school,
             self.partner,
@@ -520,26 +550,26 @@ class PeopleFirstPageTest(World):
     def test_a_leads_row_is_their_own_plan_and_their_cceos(self):
         school = self.school("client", self.cceo)
         other = self.school("client", self.cceo3)
-        # The Lead's own data collection visit counts nowhere (owner,
-        # 2026-10-02); the follow ups are their CCEO's and the other Lead's.
+        # The Lead's own SSA Support visit is the Lead's (owner, 2026-10-03);
+        # the follow ups are their CCEO's and the other Lead's.
         self.activity(school, "school_visit_ssa_collection", owner=self.pl)
         self.activity(school, "training_follow_up_visit", owner=self.cceo)
         self.activity(other, "training_follow_up_visit", owner=self.cceo3)
         tree = self.snapshot().tree
         lead = self.lead_row(tree, self.pl)
         self.assertEqual(lead.tally.target, 280 + 560 + 560)
-        self.assertEqual(lead.tally.p_visits, 1)
+        self.assertEqual(lead.tally.p_visits, 2)
         own = self.owner_row(tree, self.pl)
         self.assertEqual(
             (own.kind, own.tally.target, own.tally.p_visits, own.tally.p_outreach),
-            ("pl_personal", 280, 0, 1),
+            ("pl_personal", 280, 1, 0),
         )
         self.assertEqual(self.lead_row(tree, self.pl2).tally.p_visits, 1)
         chart = svc.charts(self.snapshot())[0]
         self.assertEqual(chart["categories"], ["Lead A", "Lead B"])
         series = {s["name"]: s["data"] for s in chart["series"]}
         self.assertEqual(series["Follow up"], [1, 1])
-        self.assertNotIn("SSA Support", series)
+        self.assertEqual(series["SSA Support"], [1, 0])
 
     def test_a_lead_holding_no_school_still_has_a_row_and_a_target(self):
         tree = self.snapshot().tree

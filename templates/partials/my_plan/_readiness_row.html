@@ -1,0 +1,7 @@
+{% load frontend_filters %}<tr data-readiness-line>
+  <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ label }}{% if note %} <span class="edify-text-muted">{{ note }}</span>{% endif %}</th>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Planned">{{ line.planned|intcomma }}{% if line.over %} <span class="edify-text-muted">{{ line.over|intcomma }} over</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{% if line.required %}{{ line.target|intcomma }}{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining">{% if line.remaining %}<span class="edify-status-text" data-edify-tone="warning">{{ line.remaining|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Share"><span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.percent }}%</span></td>
+</tr>

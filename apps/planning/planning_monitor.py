@@ -112,6 +112,9 @@ GAPS = (
     ("no_training", "No training planned"),
     ("not_clustered", "Not clustered"),
     ("no_partner", "Beyond staff reach, no partner"),
+    # Not gaps: the schools behind two counts of Planned and remaining.
+    ("staff_scheduled", "Scheduled for a visit by staff"),
+    ("staff_and_partner", "Scheduled by staff and also with a Partner"),
 )
 GAP_LABELS = dict(GAPS)
 
@@ -124,9 +127,16 @@ GAP_COLUMNS = (
 )
 
 
+#: The figure each gap column shows, where it is not named as the gap is.
+GAP_FIGURES = {"no_visit": "unplanned"}
+
+
 def _gap_cells(row) -> list[tuple[dict, int]]:
     return [
-        ({"key": key, "label": label, "tone": tone}, getattr(row, key))
+        (
+            {"key": key, "label": label, "tone": tone},
+            getattr(row, GAP_FIGURES.get(key, key)),
+        )
         for key, label, tone in GAP_COLUMNS
     ]
 
@@ -146,6 +156,8 @@ class SchoolState:
     lead_id: str
     lead_name: str
     staff_visits: int = 0
+    # Of those, the SSA Support visits (counted when staff schedule them).
+    staff_ssa_visits: int = 0
     staff_visits_done: int = 0
     partner_visits: int = 0
     partner_pending: int = 0
@@ -174,8 +186,30 @@ class SchoolState:
         return bool(self.partner_visits or self.partner_pending)
 
     @property
+    def awaiting_partner(self) -> bool:
+        """Handed to a Partner who has not dated the visit yet. The school is
+        covered — staff did their part — and it is not "planned by the
+        Partner" until the Partner sets a date."""
+        return self.has_partner and not self.has_visit
+
+    @property
     def has_training(self) -> bool:
-        return self.group_training or self.meeting or self.in_school_training
+        """Attached to an in-school training or a group training (owner,
+        2026-10-03: "for training look at inschool trainings and group
+        trainings ... count all the schools attached to those"). A cluster
+        meeting is not a training; it counted as one from 2026-09-28 until
+        then, and is still shown beside the count."""
+        return self.group_training or self.in_school_training
+
+    @property
+    def staff_scheduled(self) -> bool:
+        """Staff scheduled a counted visit here themselves."""
+        return self.staff_visits > 0
+
+    @property
+    def staff_and_partner(self) -> bool:
+        """Scheduled by staff and also in a Partner's hands."""
+        return self.staff_scheduled and self.has_partner
 
     @property
     def needs_training(self) -> bool:
@@ -197,12 +231,19 @@ class SchoolState:
     def has_gap(self, gap: str) -> bool:
         if gap == "not_clustered":
             return not self.clustered
+        # A school in a Partner's hands is not unplanned (owner, 2026-10-02
+        # for the consolidated tables, and 2026-10-03 here: staff who had
+        # handed every school over still read as having planned nothing).
         if gap == "no_visit":
-            return not self.has_visit
+            return not self.has_visit and not self.has_partner
         if gap == "no_training":
             return self.needs_training and not self.has_training
         if gap == "no_both":
-            return not self.has_visit and not self.has_training
+            return not (self.has_visit or self.has_partner or self.has_training)
+        if gap == "staff_scheduled":
+            return self.staff_scheduled
+        if gap == "staff_and_partner":
+            return self.staff_and_partner
         if gap == "no_partner":
             return not self.is_core and not self.staff_visits and not self.has_partner
         return True
@@ -220,6 +261,11 @@ class OfficerMonitor:
     role: str = ROLE_CCEO
     ids: frozenset = field(default_factory=frozenset)
     schools: list = field(default_factory=list)
+    # Schools held that take no visit and no training (Champion: donor and
+    # story visits only). Outside every visit and training figure, and still
+    # part of what the person holds: the inventory and the project count read
+    # them (apps.planning.readiness).
+    outreach_schools: list = field(default_factory=list)
     # The visits this officer planned — theirs, at any school — split by the
     # school's type, and those already delivered (`_count_planned_visits`).
     planned_core: int = 0
@@ -254,6 +300,10 @@ class OfficerMonitor:
     @property
     def client_schools(self) -> int:
         return self.school_count - self.core_schools
+
+    @property
+    def outreach_count(self) -> int:
+        return len(self.outreach_schools)
 
     # ── Visits against the target ──
     @property
@@ -407,8 +457,46 @@ class OfficerMonitor:
         return sum(1 for s in self.schools if not s.clustered)
 
     @property
+    def schools_staff_scheduled(self) -> int:
+        """Schools held that staff scheduled a counted visit at themselves
+        (owner, 2026-10-03: "how many schools the staff has scheduled for
+        visits for themselves")."""
+        return sum(1 for s in self.schools if s.staff_scheduled)
+
+    @property
+    def schools_staff_and_partner(self) -> int:
+        """Of those, the schools also in a Partner's hands."""
+        return sum(1 for s in self.schools if s.staff_and_partner)
+
+    @property
+    def schools_in_school_training(self) -> int:
+        return sum(1 for s in self.schools if s.in_school_training)
+
+    @property
+    def schools_awaiting_partner(self) -> int:
+        """Schools handed to a Partner and not yet dated by it."""
+        return sum(1 for s in self.schools if s.awaiting_partner)
+
+    @property
+    def schools_covered(self) -> int:
+        """Schools with a visit planned or in a Partner's hands."""
+        return self.schools_with_visit + self.schools_awaiting_partner
+
+    @property
     def no_visit(self) -> int:
+        """Schools with no visit planned yet, a Partner's undated ones
+        included: Country Planning Oversight's ``no_visit``."""
         return self.school_count - self.schools_with_visit
+
+    @property
+    def unplanned(self) -> int:
+        """Of those, the schools no Partner holds either: nobody has them to
+        plan (Country Planning Oversight's ``unplanned``). This is what the
+        page shows as "No visit": a school handed to a Partner is the
+        Partner's to date, and reading it as unplanned made staff who had
+        handed every school over look as if they had planned nothing (owner,
+        2026-10-03)."""
+        return self.school_count - self.schools_covered
 
     @property
     def no_training(self) -> int:
@@ -416,7 +504,7 @@ class OfficerMonitor:
 
     @property
     def no_both(self) -> int:
-        return sum(1 for s in self.schools if not s.has_visit and not s.has_training)
+        return sum(1 for s in self.schools if s.has_gap("no_both"))
 
     @property
     def in_projects(self) -> int:
@@ -539,14 +627,7 @@ def planning_monitor(
     ``gap_schools`` — the schools matching the chosen gap, narrowed to the
     chosen lead and officer, for the drill-down table.
     """
-    from apps.planning.portfolio_service import (
-        NO_LEAD_KEY,
-        NO_LEAD_LABEL,
-        UNASSIGNED_KEY,
-        UNASSIGNED_LABEL,
-        _staff_directory,
-    )
-    from apps.schools.lifecycle_service import active_schools
+    from apps.planning.portfolio_service import NO_LEAD_KEY, UNASSIGNED_KEY
 
     fy = str(fy)
     empty = {
@@ -560,62 +641,20 @@ def planning_monitor(
     queryset = _monitored_schools(principal)
     if queryset is None:
         return empty
-    queryset = (
-        active_schools(queryset)
-        .filter(school_type__in=MONITORED_TYPES)
-        .select_related("district")
-    )
-    rows = list(
-        queryset.order_by("name").values(
-            "id",
-            "school_id",
-            "name",
-            "school_type",
-            "district__name",
-            "cluster_id",
-            "cluster_status",
-            "account_owner_id",
-        )
-    )
-    directory = _staff_directory({r["account_owner_id"] for r in rows})
-    clusters = _cluster_names({r["cluster_id"] for r in rows})
-    active_clusters = _active_clusters(set(clusters))
-    schools: dict[str, SchoolState] = {}
-    for r in rows:
-        owner = directory.get(str(r["account_owner_id"] or ""))
-        schools[r["id"]] = SchoolState(
-            id=r["id"],
-            code=r["school_id"] or "",
-            name=r["name"],
-            school_type=r["school_type"],
-            district=r["district__name"] or "",
-            cluster_id=r["cluster_id"] or "",
-            cluster_name=clusters.get(r["cluster_id"], ""),
-            # In an ACTIVE cluster, as Country Planning Oversight reads it.
-            clustered=r["cluster_id"] in active_clusters,
-            officer_id=owner["officer_id"] if owner else UNASSIGNED_KEY,
-            officer_name=owner["officer_name"] if owner else UNASSIGNED_LABEL,
-            lead_id=owner["lead_id"] if owner else NO_LEAD_KEY,
-            lead_name=owner["lead_name"] if owner else NO_LEAD_LABEL,
-        )
+    schools, outreach = _school_states(queryset, fy)
 
-    if schools:
-        school_ids = queryset.values("id")
-        _count_activities(schools, school_ids, fy)
-        _count_partner_handovers(schools, school_ids)
-        _count_cluster_sessions(schools, school_ids, fy)
-        _mark_projects(schools, school_ids)
-        _count_core_packages(schools, fy)
-
-    officers, leads = _people(principal, schools)
+    officers, leads = _people(principal, {**schools, **outreach})
     if not officers:
         return empty
-    for school in schools.values():
+    for school in (*schools.values(), *outreach.values()):
         officer = officers[school.officer_id]
         # The school follows its officer to the team the roster files them
         # under, so a school and its officer never sit under two Leads.
         school.lead_id, school.lead_name = officer.lead_id, officer.lead_name
-        officer.schools.append(school)
+        if school.id in schools:
+            officer.schools.append(school)
+        else:
+            officer.outreach_schools.append(school)
 
     _count_planned_visits(officers.values(), fy)
     _count_partner_work(officers.values(), fy)
@@ -661,6 +700,125 @@ def planning_monitor(
         "officer_options": officer_options,
         "gap_schools": gap_schools,
     }
+
+
+def _school_states(base, fy: str) -> tuple[dict, dict]:
+    """(monitored, outreach): a SchoolState for every operating school in
+    ``base``, counted for ``fy``.
+
+    *Monitored* are the types the requirement asks a visit of; *outreach* is
+    every other operating school (Champion). Nothing operating is left out of
+    both: a school that takes no visit is still held by somebody and still
+    belongs to a project or to none.
+    """
+    from apps.planning.portfolio_service import (
+        NO_LEAD_KEY,
+        NO_LEAD_LABEL,
+        UNASSIGNED_KEY,
+        UNASSIGNED_LABEL,
+        _staff_directory,
+    )
+    from apps.schools.lifecycle_service import active_schools
+
+    operating = active_schools(base)
+    queryset = operating.filter(school_type__in=MONITORED_TYPES)
+    rows = list(
+        operating.order_by("name").values(
+            "id",
+            "school_id",
+            "name",
+            "school_type",
+            "district__name",
+            "cluster_id",
+            "cluster_status",
+            "account_owner_id",
+        )
+    )
+    directory = _staff_directory({r["account_owner_id"] for r in rows})
+    clusters = _cluster_names({r["cluster_id"] for r in rows})
+    active_clusters = _active_clusters(set(clusters))
+    schools: dict[str, SchoolState] = {}
+    outreach: dict[str, SchoolState] = {}
+    for r in rows:
+        owner = directory.get(str(r["account_owner_id"] or ""))
+        state = SchoolState(
+            id=r["id"],
+            code=r["school_id"] or "",
+            name=r["name"],
+            school_type=r["school_type"] or "",
+            district=r["district__name"] or "",
+            cluster_id=r["cluster_id"] or "",
+            cluster_name=clusters.get(r["cluster_id"], ""),
+            # In an ACTIVE cluster, as Country Planning Oversight reads it.
+            clustered=r["cluster_id"] in active_clusters,
+            officer_id=owner["officer_id"] if owner else UNASSIGNED_KEY,
+            officer_name=owner["officer_name"] if owner else UNASSIGNED_LABEL,
+            lead_id=owner["lead_id"] if owner else NO_LEAD_KEY,
+            lead_name=owner["lead_name"] if owner else NO_LEAD_LABEL,
+        )
+        if state.school_type in MONITORED_TYPES:
+            schools[state.id] = state
+        else:
+            outreach[state.id] = state
+
+    if schools:
+        school_ids = queryset.values("id")
+        _count_activities(schools, school_ids, fy)
+        _count_partner_handovers(schools, school_ids)
+        _count_cluster_sessions(schools, school_ids, fy)
+        _mark_projects(schools, school_ids)
+        _count_core_packages(schools, fy)
+    if outreach:
+        _mark_projects(outreach, list(outreach))
+    return schools, outreach
+
+
+def own_monitor(principal, fy: str) -> OfficerMonitor | None:
+    """One Programme Lead's or CCEO's own year: the row the Planning Monitor
+    shows their Lead and the Country Director, built for the person
+    themselves. None for anybody whose role plans no visits."""
+    from apps.core.scoping import owner_ids
+    from apps.planning.country_oversight import rules
+    from apps.planning.monitor_roster import _role_code
+    from apps.schools.models import School
+
+    role = _role_code(
+        rules.planning_role(
+            getattr(principal, "roles", None), getattr(principal, "active_role", None)
+        )
+        or ""
+    )
+    if not role:
+        return None
+    ids = frozenset(str(i) for i in owner_ids(principal) if i)
+    fy = str(fy)
+    schools, outreach = _school_states(
+        School.objects.filter(account_owner_id__in=list(ids)), fy
+    )
+    officer = OfficerMonitor(
+        key=str(getattr(principal, "staff_profile_id", "") or next(iter(ids), "")),
+        name=getattr(principal, "name", "") or getattr(principal, "email", "") or "",
+        lead_id="",
+        lead_name="",
+        visits_target=VISITS_TARGET_BY_ROLE.get(role, 0),
+        role=role,
+        ids=ids,
+        schools=list(schools.values()),
+        outreach_schools=list(outreach.values()),
+    )
+    _count_planned_visits([officer], fy)
+    _count_partner_work([officer], fy)
+    return officer
+
+
+def schools_in_scope(principal) -> int | None:
+    """How many operating schools this reader's monitor should hold, counted
+    apart from its rows: what `apps.planning.readiness` checks them against.
+    """
+    from apps.schools.lifecycle_service import active_schools
+
+    queryset = _monitored_schools(principal)
+    return None if queryset is None else active_schools(queryset).count()
 
 
 def _monitored_schools(principal):
@@ -866,11 +1024,11 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
     at_schools = Activity.objects.filter(school_id__in=school_ids, fy=fy).filter(
         rules.not_outside_ssa_q()
     )
-    for school_id, delivery_type, status, n in (
+    for school_id, delivery_type, status, n, ssa in (
         _counted_visits(at_schools)
         .filter(rules.staff_delivery_q() | rules.partner_planned_q())
         .values_list("school_id", "delivery_type", "status")
-        .annotate(n=Count("id"))
+        .annotate(n=Count("id"), ssa=Count("id", filter=rules.kind_q(rules.KIND_SSA)))
         .order_by()
     ):
         school = schools.get(school_id)
@@ -880,6 +1038,7 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
             school.partner_visits += n
         else:
             school.staff_visits += n
+            school.staff_ssa_visits += ssa
             if status in delivered:
                 school.staff_visits_done += n
     for school_id, status in (
@@ -1155,5 +1314,6 @@ __all__ = [
     "LeadMonitor",
     "OfficerMonitor",
     "SchoolState",
+    "own_monitor",
     "planning_monitor",
 ]

@@ -1015,7 +1015,10 @@ class _Book:
             # A Follow up or an In-school Training: the two visits that count
             # (an in-school training is a training too).
             "is_visit": rules.visit_kind(
-                activity.activity_type, activity.purpose_type, activity.project_id
+                activity.activity_type,
+                activity.purpose_type,
+                activity.project_id,
+                delivery_type=activity.delivery_type,
             )
             is not None,
         }

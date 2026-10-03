@@ -1,0 +1,36 @@
+{% load components frontend_filters %}
+{% comment %}
+The planner's own year, planned and remaining (owner, 2026-10-03): the row
+their Programme Lead and the Country Director read on the Planning Monitor,
+shown to the person it is about. A CCEO is measured against 560 visits and a
+Programme Lead against 280, or against what their schools ask for when that
+is fewer; the schools beyond that, and those already handed over, are the
+Partner's queue. Shown to the two roles that plan visits only.
+{% endcomment %}
+{% if readiness %}
+{% data_table name="my-plan-readiness" %}
+  {% slot title %}Planned and remaining · FY {{ selected_fy|default:fy }}{% endslot %}
+  {% slot summary %}Readiness {{ readiness.score }}% · {{ readiness.schools_total|intcomma }} schools held{% endslot %}
+  {% slot caption %}Your visits, trainings, Partner hand-overs and project assignments for the year: planned, target, remaining and share.{% endslot %}
+  {% slot footer %}
+  <p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-my-plan-queues>Your own queue is {{ readiness.staff_visits.target|intcomma }} visit{{ readiness.staff_visits.target|pluralize }} of a ceiling of {{ readiness.ceiling|intcomma }}{% if readiness.partner_beyond_staff %}; {{ readiness.partner_beyond_staff|intcomma }} of your Client, Core Trained and Core Graduate schools {{ readiness.partner_beyond_staff|pluralize:"is,are" }} the Partner's (beyond your ceiling, or already handed over){% endif %}{% if readiness.partner_core_schools %}; the Partner also takes two visits and two trainings at each of your {{ readiness.partner_core_schools|intcomma }} Core school{{ readiness.partner_core_schools|pluralize }}{% endif %}. You have scheduled visits at {{ readiness.schools_staff_scheduled|intcomma }} of your schools yourself{% if readiness.schools_staff_and_partner %}; {{ readiness.schools_staff_and_partner|intcomma }} of them {{ readiness.schools_staff_and_partner|pluralize:"is,are" }} also with a Partner{% endif %}. Readiness is the average of your visits, schools in training, schools with a Partner and schools in a project.{% if readiness.partner_visits_awaiting %} {{ readiness.partner_visits_awaiting|intcomma }} school{{ readiness.partner_visits_awaiting|pluralize }} handed over {{ readiness.partner_visits_awaiting|pluralize:"is,are" }} awaiting the Partner's date.{% endif %}</p>
+  {% endslot %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Part of the plan</th>
+          <th scope="col" class="px-3 py-2 text-right">Planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Target</th>
+          <th scope="col" class="px-3 py-2 text-right">Remaining</th>
+          <th scope="col" class="px-3 py-2 text-right">Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include "partials/my_plan/_readiness_row.html" with label="Your visits" line=readiness.staff_visits %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools in training" line=readiness.staff_trainings note="in-school and group trainings" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Partner visits" line=readiness.partner_visits note="dated by Partners" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Core partner trainings" line=readiness.partner_trainings %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a Partner" line=readiness.partner_assignment %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a project" line=readiness.project_assignment %}
+      </tbody>
+{% enddata_table %}
+{% endif %}

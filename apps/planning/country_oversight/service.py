@@ -1472,9 +1472,8 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             ],
             more=[
                 f"Follow up {_fmt(t.p_follow_up)} · In-school Training "
-                f"{_fmt(t.p_in_school)}",
-                f"{_fmt(t.p_outreach)} SSA Support, donor, story and social "
-                "visits not counted"
+                f"{_fmt(t.p_in_school)} · SSA Support {_fmt(t.p_ssa)}",
+                f"{_fmt(t.p_outreach)} donor, story and social visits not " "counted"
                 if t.p_outreach
                 else "",
             ],
@@ -1829,6 +1828,13 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "color": CHART_COLOURS["staff_client"],
                 "data": [x.p_in_school for x in t],
             },
+            # Counted when staff schedule it (owner, 2026-10-03); a Partner's
+            # SSA Support is on the Partner tables and counted nowhere.
+            {
+                "name": "SSA Support",
+                "color": CHART_COLOURS["partner_scheduled"],
+                "data": [x.p_ssa for x in t],
+            },
             {
                 "name": "Still to plan",
                 "color": CHART_COLOURS["gap"],
@@ -1844,6 +1850,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Visits\nplanned",
                 "Follow\nup",
                 "In-school\nTraining",
+                "SSA\nSupport",
                 "Still to\nplan",
                 # The ceiling warns and never refuses (owner, 2026-10-03):
                 # what each team planned past it, and the plan against the
@@ -1854,7 +1861,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                 "Partner\ntarget",
                 "Assigned to\nPartners",
                 "Partner\nplanned",
-                "SSA Support, donor,\nstory, social (not counted)",
+                "Donor, story,\nsocial (not counted)",
             ],
             "rows": [
                 [
@@ -1862,6 +1869,7 @@ def charts(snapshot: Snapshot) -> list[dict]:
                     x.p_visits,
                     x.p_follow_up,
                     x.p_in_school,
+                    x.p_ssa,
                     x.plan_remaining,
                     x.over_cap,
                     f"{_fmt(x.p_core_visits)} / {_fmt(x.core_staff_slots)}",

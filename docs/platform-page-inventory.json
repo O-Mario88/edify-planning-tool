@@ -4809,7 +4809,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2781,
+      "bytes": 2801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/drawer"
@@ -9476,6 +9476,30 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 1024,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Readiness Row",
+      "purpose": "Reusable  readiness row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/_readiness_row.html",
+      "variants": [
+        "warning",
+        "{{ line.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
@@ -10088,6 +10112,27 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 3658,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Readiness",
+      "purpose": "Reusable readiness interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/readiness.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 743,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -10269,7 +10314,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2167,
+      "bytes": 2216,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10409,7 +10454,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1207,
+      "bytes": 1259,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -10542,7 +10587,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1922,
+      "bytes": 2157,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10594,7 +10639,60 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6744,
+      "bytes": 9552,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Monitor Inventory",
+      "purpose": "Reusable  monitor inventory interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_inventory.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 5004,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Monitor Readiness",
+      "purpose": "Reusable  monitor readiness interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_readiness.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 7368,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10617,12 +10715,12 @@
       "template": "partials/oversight/_monitor_row.html",
       "variants": [
         "danger",
+        "{% if row.over_ceiling %}danger{% else %}{{ row.readiness.staff_visits.tone }}{% endif %}",
         "{{ gap.tone }}",
         "{{ row.core_partner_trainings_tone }}",
         "{{ row.core_partner_visits_tone }}",
         "{{ row.core_staff_trainings_tone }}",
-        "{{ row.partner_tone }}",
-        "{{ row.visit_tone }}"
+        "{{ row.partner_tone }}"
       ]
     },
     {
@@ -10692,6 +10790,62 @@
       "tables": 0,
       "template": "partials/oversight/_partner_view_button.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 991,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Readiness Cell",
+      "purpose": "Reusable  readiness cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_readiness_cell.html",
+      "variants": [
+        "warning",
+        "{{ line.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 3809,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Readiness Row",
+      "purpose": "Reusable  readiness row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_readiness_row.html",
+      "variants": [
+        "danger",
+        "{{ figures.score_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -11054,8 +11208,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 9974,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 11355,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11073,7 +11229,8 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "open"
       ],
       "tables": 0,
       "template": "partials/oversight/monitor_workspace.html",
@@ -114753,7 +114910,7 @@
     "activity_states": 24,
     "all_routes": 1356,
     "api_routes": 360,
-    "component_templates": 602,
+    "component_templates": 608,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 280,

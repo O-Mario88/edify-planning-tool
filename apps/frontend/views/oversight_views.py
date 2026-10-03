@@ -484,10 +484,14 @@ def planning_monitor_view(request):
     """
     from apps.frontend.views import dashboard_embed
 
-    if dashboard_embed.reads_on_dashboard(request):
-        return dashboard_embed.to_dashboard(request, dashboard_embed.PLANNING_MONITOR)
     execution = (request.GET.get("view") or "").strip().lower() == "execution"
     lens = "execution" if execution else "monitor"
+    # The figures as data, for every reader of the monitor in their own
+    # scope, wherever the page itself is read.
+    if not execution and request.GET.get("format", "").strip().lower() == "json":
+        return _monitor_readiness_json(request)
+    if dashboard_embed.reads_on_dashboard(request):
+        return dashboard_embed.to_dashboard(request, dashboard_embed.PLANNING_MONITOR)
     # IA reads the monitors as Planning Oversight tabs (owner, 2026-09-30):
     # a bookmark or a figure's drill-down to this page opens the same tab
     # there, on the same filters.
@@ -525,6 +529,50 @@ def planning_monitor_view(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, _MONITOR_TEMPLATES[lens], context)
     return render(request, "pages/oversight/planning_monitor.html", context)
+
+
+def _monitor_readiness_json(request):
+    """Planned and remaining as data: the country's (or the team's) total,
+    each Programme Lead's team and each person, for the reader's own scope.
+    The figures are the page's (apps.planning.readiness), checked the same
+    way before they leave."""
+    from django.http import JsonResponse
+
+    from apps.planning import readiness
+    from apps.planning.fy_policy import next_open_fy
+    from apps.planning.planning_monitor import planning_monitor, schools_in_scope
+
+    period = _period_filters(request)
+    fy = (request.GET.get("fy") or "").strip() or next_open_fy() or period["fy"]
+    monitor = planning_monitor(request.user, fy=fy)
+    figures = readiness.for_monitor(
+        monitor, expected_schools=schools_in_scope(request.user)
+    )
+    return JsonResponse(
+        {
+            "fy": str(fy),
+            "scope": "country" if is_country_reader(request.user) else "team",
+            "total": figures.as_dict(),
+            "planned_activities": readiness.ledger(
+                monitor, fy, whole_country=is_country_reader(request.user)
+            ),
+            "teams": [
+                {
+                    "program_lead": lead.name,
+                    "total": lead.readiness.as_dict(),
+                    "people": [
+                        {
+                            "name": officer.name,
+                            "role": officer.role,
+                            **officer.readiness.as_dict(),
+                        }
+                        for officer in lead.officers
+                    ],
+                }
+                for lead in monitor["leads"]
+            ],
+        }
+    )
 
 
 def _to_planning_monitor(request, lens: str):
@@ -633,6 +681,18 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
     )
     _mark_gap_follow_ups(request.user, monitor["gap_schools"], gap=gap, fy=fy)
     monitor_url = f"{base_url}?view=monitor&fy={fy}"
+    # Planned and remaining in four parts, on every person, team and total
+    # (apps.planning.readiness), checked against the schools in scope before
+    # the page is given a figure.
+    from apps.planning import readiness
+    from apps.planning.planning_monitor import schools_in_scope
+
+    figures = readiness.for_monitor(
+        monitor, expected_schools=schools_in_scope(request.user)
+    )
+    tab = (request.GET.get("tab") or "").strip()
+    if tab not in MONITOR_TABS_BY_KEY:
+        tab = "detail" if gap else "readiness"
     # Each person's count opens the rows behind it (owner, 2026-10-02: "both
     # the counts and details of their CCEO"): their planned visits on the
     # Team Plan — a Lead's reader lands on that person's tab, the country's
@@ -645,6 +705,13 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "partner_url": f"{PARTNER_OVERSIGHT_PATH}?period=fy&fy={fy}",
         "monitor": monitor,
         "monitor_totals": monitor["totals"],
+        "monitor_readiness": figures,
+        # Every planned activity of the year and where it is counted.
+        "monitor_ledger": readiness.ledger(
+            monitor, fy, whole_country=is_country_reader(request.user)
+        ),
+        "monitor_tabs": MONITOR_TABS,
+        "monitor_tab": tab,
         "monitor_url": monitor_url,
         "monitor_gaps": GAPS,
         "monitor_can_send": bool(gap) and may_delegate(request.user, country=False),
@@ -654,8 +721,18 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "selected_program_lead": selected_lead,
         "default_visits_target": DEFAULT_VISITS_TARGET,
         "pl_visits_target": PL_VISITS_TARGET,
-        "kpis": _monitor_kpis(monitor["totals"], monitor_url=monitor_url),
+        "kpis": _monitor_kpis(monitor["totals"], figures, monitor_url=monitor_url),
     }
+
+
+#: The three reads of the Planning Monitor's people, one at a time (owner,
+#: 2026-10-02: tabs, not stacks).
+MONITOR_TABS = (
+    ("readiness", "Planned and remaining"),
+    ("detail", "Planning detail"),
+    ("schools", "Schools and checks"),
+)
+MONITOR_TABS_BY_KEY = dict(MONITOR_TABS)
 
 
 #: The school action a Programme Lead sends for each gap the monitor lists
@@ -920,7 +997,7 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
     ]
 
 
-def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
+def _monitor_kpis(totals, figures, *, monitor_url: str) -> list[dict]:
     """The monitor's tiles, each folded from the officer rows below them."""
 
     def share(key, part, whole, *, helper, icon, drill=None, empty="No schools"):
@@ -940,18 +1017,28 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
     return [
         share(
             "monitor_visits_planned_share",
-            totals.staff_visits,
-            totals.visits_target,
-            helper=f"{totals.staff_visits:,} of {totals.visits_target:,} visits · "
+            # Against what the schools held ask of staff, to each person's
+            # ceiling: the sum of every 280 and 560 counted people holding
+            # no school, and read a fully planned country as a few percent.
+            figures.staff_visits.credited,
+            figures.staff_visits.target,
+            helper=f"{figures.staff_visits.credited:,} of "
+            f"{figures.staff_visits.target:,} staff visits · "
+            f"{figures.staff_visits.remaining:,} remaining · "
             f"{totals.core_visits:,} core, {totals.client_visits:,} client",
             icon="target",
             empty="No one in scope",
         ),
         share(
             "monitor_schools_with_visit",
-            totals.schools_with_visit,
+            # A school handed to a Partner is covered, dated or not: read as
+            # "no visit", staff who had handed everything over looked as if
+            # they had planned nothing.
+            totals.schools_covered,
             schools,
-            helper=f"{totals.schools_with_visit:,} of {schools:,} schools",
+            helper=f"{totals.schools_with_visit:,} with a visit planned · "
+            f"{totals.schools_awaiting_partner:,} with a Partner, awaiting its "
+            f"date · {totals.unplanned:,} with neither, of {schools:,}",
             icon="school",
             drill=f"{monitor_url}&gap=no_visit",
         ),
@@ -962,14 +1049,15 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
             totals.schools_with_training,
             totals.training_schools,
             helper=f"{totals.schools_group_training:,} group training · "
-            f"{totals.schools_meeting:,} cluster meeting",
+            f"{totals.schools_in_school_training:,} in-school training · "
+            f"{totals.schools_meeting:,} in a cluster meeting, not counted",
             icon="users",
             drill=f"{monitor_url}&gap=no_training",
         ),
         render_kpi_item(
             "monitor_schools_unplanned",
             MetricValue.measured(totals.no_both),
-            helper="No visit and no training planned",
+            helper="No visit, no Partner and no training planned",
             tone="danger" if totals.no_both else "neutral",
             icon="warning",
             drilldown_url=f"{monitor_url}&gap=no_both",
@@ -985,11 +1073,16 @@ def _monitor_kpis(totals, *, monitor_url: str) -> list[dict]:
         render_kpi_item(
             "monitor_partner_share",
             MetricValue.measured(totals.partner_assigned_schools),
-            helper=f"{totals.partner_schools:,} of {totals.partner_needed:,} schools "
-            f"beyond staff reach · {totals.partner_remaining:,} still to assign · "
+            # One line from one count (apps.planning.readiness): "29 of 20
+            # ... 20 still to assign" was two sums of different people.
+            helper=f"{figures.partner_assignment.credited:,} of "
+            f"{figures.partner_assignment.target:,} schools the Partner should "
+            f"hold ({figures.partner_core_schools:,} Core, "
+            f"{figures.partner_beyond_staff:,} beyond staff capacity) · "
+            f"{figures.partner_assignment.remaining:,} still to assign · "
             f"{totals.partner_scheduled:,} partner activities scheduled · "
             f"{totals.partner_awaiting:,} awaiting a date",
-            tone="warning" if totals.partner_remaining else "neutral",
+            tone="warning" if figures.partner_assignment.remaining else "neutral",
             icon="users",
             drilldown_url=f"{monitor_url}&gap=no_partner",
         ),

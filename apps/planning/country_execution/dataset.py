@@ -421,7 +421,9 @@ def _is_outreach(row: dict) -> bool:
     school (rules.outreach_visit_q, for a row already read)."""
     if not row["school_id"]:
         return False
-    return rules.is_uncounted_visit(row["activity_type"], row["purpose_type"])
+    return rules.is_uncounted_visit(
+        row["activity_type"], row["purpose_type"], delivery_type=row["delivery_type"]
+    )
 
 
 def build(
@@ -531,7 +533,11 @@ def build(
         )
         at_school = bool(row["school_id"]) and not row["cluster_id"]
         kind = (
-            rules.visit_kind(row["activity_type"], row["purpose_type"])
+            rules.visit_kind(
+                row["activity_type"],
+                row["purpose_type"],
+                delivery_type=row["delivery_type"],
+            )
             if at_school
             else None
         )

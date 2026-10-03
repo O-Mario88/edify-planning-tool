@@ -682,6 +682,22 @@ def compute_next_action(a, today) -> dict:
     }
 
 
+def _own_readiness(principal, fy):
+    """``readiness.own`` beside the plan: never the reason My Plan fails,
+    except in development, where a figure that cannot be true is raised."""
+    from apps.planning import readiness
+
+    try:
+        return readiness.own(principal, str(fy))
+    except readiness.ReadinessMismatch:
+        raise
+    except Exception:  # noqa: BLE001 - a summary beside the plan
+        import logging
+
+        logging.getLogger(__name__).exception("My Plan readiness failed")
+        return None
+
+
 def get_frontend_context(principal, query: dict) -> dict:
     """Consolidated planning dashboard feed resolver for the HTML frontend."""
     today = date.today()
@@ -1008,6 +1024,8 @@ def get_frontend_context(principal, query: dict) -> dict:
             .order_by()
         ):
             counted["core" if school_type in staff_plan.CORE_TYPES else "client"] += n
+        # Donor, story, social and invitation visits. SSA Support staff
+        # schedule is among the counted visits above (owner, 2026-10-03).
         outreach = plan_period.filter(planning_rules.outreach_visit_q()).count()
         activity_totals["visits"] = counted["core"] + counted["client"]
         target = staff_plan.visits_target(principal)
@@ -2187,6 +2205,9 @@ def get_frontend_context(principal, query: dict) -> dict:
         # Planned for a day that has passed and not delivered: counted by the
         # tiles, worked from the Dashboard, and not in the tables below.
         "past_due_count": past_due_count,
+        # The person's own year in four parts: planned, target and remaining
+        # (apps.planning.readiness). None for a role that plans no visits.
+        "readiness": _own_readiness(principal, fy),
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.
