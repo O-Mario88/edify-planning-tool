@@ -38,6 +38,7 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
+        "apps/accounts/presence_labels.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
         "apps/activities/models.py",
@@ -620,8 +621,10 @@
         "apps/pl_review/services.py",
         "apps/planning/action_service.py",
         "apps/planning/country_oversight/freshness.py",
+        "apps/planning/country_oversight/rules.py",
         "apps/planning/fy_policy.py",
         "apps/planning/services.py",
+        "apps/planning/staff_plan.py",
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
@@ -4687,9 +4690,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "5f264c940052a267e3526423adb24a3db48ac5474cd7aa2a70ae01d0e72f2957",
-    "sources": "4d999e925816548c882cbe062b83b1653915126400ab2044269c0dda12f908fd",
-    "sourceCount": 236,
+    "payload": "be9dbeee983674ee80ac636762d1913de0403313256d236b65c08709d87aa453",
+    "sources": "86beb14a90da589bcca9d98d1b093a733e1510d3acd941e8376857962c475ba8",
+    "sourceCount": 238,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

@@ -1,23 +1,34 @@
 {% comment %}The Partners one person handed work to (owner, 2026-10-01): the
 schools they assigned to each, and how much of the work assigned the Partner
-has dated. Shown while the person's row is open. The other columns are the
-person's own and are left blank here.{% endcomment %}
+has dated. Shown while the person's row is open. Under Workload a Partner's
+row carries its share of the row above: the visit slots at the person's
+schools it holds, and those it has dated. The other columns are the person's
+own and are left blank here.{% endcomment %}
 {% for row in rows %}
 <tr data-level="3" x-show="open && owners['{{ owner.key }}']">
   <th scope="row" class="cpo-namecell" data-leaf>
-    <span>{{ row.name }}</span>{% if row.waiting %}<span class="cpo-hint"><span>{{ row.waiting }} awaiting the Partner's date</span></span>{% endif %}
+    <span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.planned }} of {{ row.assigned }} pieces of work dated{% if row.waiting %} · {{ row.waiting }} awaiting the Partner's date{% endif %}</span></span>
   </th>
-  <td><span class="cpo-none">—</span></td>
-  <td title="Schools {{ owner.name }} assigned to {{ row.name }}">{{ row.schools }}</td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
-  <td>{{ row.planned }} / {{ row.assigned }}</td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
-  <td><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'"><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'"><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'"><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'"><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'"><span class="cpo-none">—</span></td>
+  <td data-col="workload" x-show="view === 'workload'" title="Visit slots at {{ owner.name }}'s schools in {{ row.name }}'s hands">{% if row.has_school_side %}{{ row.visits_assigned }}{% else %}<span class="cpo-none">—</span>{% endif %}</td>
+  <td data-col="workload" x-show="view === 'workload'" title="Visits at {{ owner.name }}'s schools {{ row.name }} has dated">{% if row.has_school_side %}{{ row.visits_planned }}{% else %}<span class="cpo-none">—</span>{% endif %}</td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak title="Schools {{ owner.name }} assigned to {{ row.name }}">{{ row.schools }}</td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="schools" x-show="view === 'schools'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="training" x-show="view === 'training'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="training" x-show="view === 'training'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="training" x-show="view === 'training'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="training" x-show="view === 'training'" x-cloak><span class="cpo-none">—</span></td>
+  <td data-col="training" x-show="view === 'training'" x-cloak><span class="cpo-none">—</span></td>
   <td><span class="cpo-none">—</span></td>
   <td class="cpo-actcell">
     <div class="cpo-acts">

@@ -496,6 +496,69 @@ def checks(dataset, tree) -> list[Check]:
         )
     )
 
+    # 11b. The ceiling warns, it never refuses (owner, 2026-10-03): who has
+    # planned past it, and whose Core schools alone take all of it.
+    over = [
+        owner for lead in tree.leads for owner in lead.owners if owner.tally.over_cap
+    ]
+    results.append(
+        Check(
+            "over_ceiling",
+            "Plans past the staff visit ceiling",
+            "More counted visits planned than the role plans in a year (280 a "
+            "Programme Lead, 560 a CCEO). Nothing was refused: the visits past "
+            "the ceiling are the Partner's share.",
+            len(over),
+            "warning" if over else "info",
+            [
+                {
+                    "label": owner.label
+                    if owner.kind != "pl_personal"
+                    else f"{owner.name} (personal)",
+                    "detail": (
+                        f"{owner.tally.p_visits:,} planned, "
+                        f"{owner.tally.over_cap:,} past {owner.ceiling:,}"
+                    ),
+                    "url": f"/staff/{owner.key}" if owner.key != NO_OWNER_KEY else "",
+                }
+                for owner in over[:SAMPLE]
+            ],
+            "Programme Lead (hand the schools past the ceiling to a Partner)",
+        )
+    )
+    core_only = [
+        owner
+        for lead in tree.leads
+        for owner in lead.owners
+        if owner.tally.core_only_people
+    ]
+    results.append(
+        Check(
+            "core_only",
+            "Core schools taking the whole ceiling",
+            "At two staff visits each, the Core schools held take every visit "
+            "the role plans in a year (OVER_CAPACITY_CORE_ONLY), so every other "
+            "school held is the Partner's.",
+            len(core_only),
+            "warning" if core_only else "info",
+            [
+                {
+                    "label": owner.label
+                    if owner.kind != "pl_personal"
+                    else f"{owner.name} (personal)",
+                    "detail": (
+                        f"{owner.tally.core_schools:,} Core schools · "
+                        f"{owner.tally.core_staff_slots:,} staff visits against "
+                        f"{owner.ceiling:,}"
+                    ),
+                    "url": f"/staff/{owner.key}" if owner.key != NO_OWNER_KEY else "",
+                }
+                for owner in core_only[:SAMPLE]
+            ],
+            "Staffing decision (Country Director)",
+        )
+    )
+
     # 12. Totals that must reconcile.
     mismatches = _reconciliation(tree)
     results.append(

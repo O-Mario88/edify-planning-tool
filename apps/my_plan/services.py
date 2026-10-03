@@ -1014,6 +1014,12 @@ def get_frontend_context(principal, query: dict) -> dict:
         visit_helper = f"{counted['core']:,} Core, {counted['client']:,} Client"
         if target:
             visit_helper = f"of {target:,} a year · {visit_helper}"
+        # Past the ceiling the plan is kept and the person is told (owner,
+        # 2026-10-03: warn, never refuse): the year's count, whichever part
+        # of the year the page is showing.
+        ceiling_notice = staff_plan.ceiling_notice(principal, fy) if target else ""
+        if ceiling_notice:
+            visit_helper = f"past the {target:,} a year · {visit_helper}"
         # The tile is narrow; the rule it counts by is its tooltip.
         visit_helper_exact = (
             "Follow up and In-school Training visits you planned"
@@ -1027,6 +1033,7 @@ def get_frontend_context(principal, query: dict) -> dict:
                 if outreach
                 else ""
             )
+            + (f" {ceiling_notice}" if ceiling_notice else "")
         )
     visits_scheduled = activity_totals["visits"]
     trainings_scheduled = activity_totals["trainings"]

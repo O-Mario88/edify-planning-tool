@@ -43,13 +43,29 @@ class ActivityListCreateView(APIView):
         return paginator.get_paginated_response([services._serialize(a) for a in page])
 
     def post(self, request: Request) -> Response:
-        return Response(
-            services.create(
-                {**request.data, "requireCatalogue": True},
-                request.user,
-            ),
-            status=201,
+        created = services.create(
+            {**request.data, "requireCatalogue": True},
+            request.user,
         )
+        # Past the visits a role plans in a year the save stands and the
+        # caller is told (owner, 2026-10-03: warn, never refuse).
+        notice = _ceiling_notice(request.user, created)
+        if notice and isinstance(created, dict):
+            created = {**created, "ceilingNotice": notice}
+        return Response(created, status=201)
+
+
+def _ceiling_notice(user, created) -> str:
+    """``staff_plan.ceiling_notice`` for the year the saved work is dated in;
+    never the reason a save that succeeded reads as failed."""
+    try:
+        from apps.core.fy import get_operational_fy
+        from apps.planning import staff_plan
+
+        fy = (created or {}).get("fy") if isinstance(created, dict) else None
+        return staff_plan.ceiling_notice(user, fy or get_operational_fy())
+    except Exception:  # noqa: BLE001 - a notice, never the save's outcome
+        return ""
 
 
 class ActivityPaymentQueueView(APIView):

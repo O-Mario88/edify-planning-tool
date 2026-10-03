@@ -233,6 +233,8 @@ class SchoolFacts:
     staff_ssa: int = 0
     # In a Partner's hands: any live Partner work, a visit or not.
     with_partner: bool = False
+    # Trainings a Partner holds and has not dated: [before, inside, total].
+    training_waiting: list = field(default_factory=lambda: [0, 0, 0])
 
     @property
     def clustered(self) -> bool:
@@ -280,6 +282,7 @@ class SchoolFacts:
             same(self.training_partner),
             self.staff_ssa,
             self.with_partner,
+            same(self.training_waiting),
         )
 
 
@@ -319,6 +322,7 @@ class SchoolRecord(NamedTuple):
     training_partner: tuple = (0, 0, 0, 0)
     staff_ssa: int = 0
     with_partner: bool = False
+    training_waiting: tuple = (0, 0, 0)
 
     @property
     def clustered(self) -> bool:
@@ -522,22 +526,29 @@ def load_facts(
         ):
             _add(facts.get(row["school_id"]), attribute, row)
 
-    # Cluster trainings and meetings: one slot per school on the planned roster.
+    # Cluster trainings and meetings: one slot per school on the planned
+    # roster. A group training is on the half of whoever delivers it (owner,
+    # 2026-10-02; `core_schools.package_year.side_of`); a meeting has no side.
     cluster_trainings = tuple(
         t for t in TRAINING_TYPES if t not in SCHOOL_TRAINING_TYPES
     )
-    for attribute, types in (
-        ("training", cluster_trainings),
-        ("meeting", CLUSTER_MEETING_TYPES),
+    for attribute, types, side in (
+        ("training", cluster_trainings, rules.staff_delivery_q("activity__")),
+        (
+            "training_partner",
+            cluster_trainings,
+            rules.partner_delivery_q("activity__"),
+        ),
+        ("meeting", CLUSTER_MEETING_TYPES, Q()),
     ):
         for row in (
             _roster(fy, types)
-            .filter(school_id__in=school_ids)
+            .filter(side, school_id__in=school_ids)
             .values("school_id")
             .annotate(
                 **_counts(
                     window,
-                    verified=attribute == "training",
+                    verified=attribute != "meeting",
                     status_field="activity__status",
                 )
             )
@@ -557,11 +568,14 @@ def _load_partner_activities(
     A counted visit the Partner dated is *scheduled*; any other counted visit
     in the Partner's hands is *pending* — undated work is outstanding from the
     year's first day. Work that is not a counted visit (a training, other
-    support) still puts the school in the Partner's hands. An activity that an
-    open handover already carries is read there instead.
+    support) still puts the school in the Partner's hands, and a training the
+    Partner has not dated is *waiting* (one it has dated is read with the
+    school's trainings). An activity that an open handover already carries is
+    read there instead.
     """
     from django.db.models import Case, IntegerField, Value, When
 
+    from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity
     from apps.partners.models import PartnerAssignment
     from apps.planning.country_oversight import rules
@@ -592,10 +606,19 @@ def _load_partner_activities(
                 default=Value(0),
                 output_field=IntegerField(),
             ),
+            trains=Case(
+                When(
+                    activity_type__in=SCHOOL_TRAINING_TYPES,
+                    cluster_id__isnull=True,
+                    then=Value(1),
+                ),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
         )
     )
     rows = (
-        held.values("school_id", "assigned_partner_id", "dated", "counts")
+        held.values("school_id", "assigned_partner_id", "dated", "counts", "trains")
         .annotate(
             before=Count("id", filter=Q(day__lt=window.start)),
             inside=Count("id", filter=inside),
@@ -611,6 +634,12 @@ def _load_partner_activities(
         if school is None or not school.is_governed:
             continue
         school.with_partner = True
+        if row["trains"] and not row["dated"]:
+            # An in-school training is a visit and a training, as staff's is.
+            waiting = school.training_waiting
+            waiting[0] += row["before"]
+            waiting[1] += row["inside"] + (row["undated"] if undated_inside else 0)
+            waiting[2] += row["total"]
         if not row["counts"]:
             continue
         counts = _partner_counts(school, row["assigned_partner_id"] or "")
@@ -755,7 +784,8 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
         handover = _Handover(*kind_fields)
         # A data collection (SSA Support) hand-over is a school in a Partner's
         # hands like any other; it is no visit of the school's (``handover_kind``).
-        is_visit = handover_kind(school.school_type, handover) == "visit"
+        kind = handover_kind(school.school_type, handover)
+        is_visit = kind == "visit"
         if status == PartnerAssignment.STATUS_RETURNED_TO_STAFF:
             moment = returned_at or created_at
             if moment is None or get_operational_fy(moment) != window.fy:
@@ -768,11 +798,15 @@ def _load_handovers(facts: dict[str, SchoolFacts], window: Window, school_ids) -
         # Any open handover, a visit or a training, is a school in a
         # Partner's hands (owner, 2026-10-01: capture every one).
         school.with_partner = True
+        # Carried into a later year, it is outstanding from the year's start.
+        where = _bucket(max(_local_day(created_at), window.fy_start), window)
+        if kind == "training":
+            school.training_waiting[2] += 1
+            if where < 2:
+                school.training_waiting[where] += 1
         if not is_visit:
             continue
         counts = _partner_counts(school, partner_id or "")
-        # Carried into a later year, it is outstanding from the year's start.
-        where = _bucket(max(_local_day(created_at), window.fy_start), window)
         counts[P_PEND_T] += 1
         if _is_ssa_handover(handover):
             counts[P_SSA_T] += 1
@@ -810,6 +844,14 @@ class Claims:
     partner_verified: int = 0
     training: int = 0
     training_verified: int = 0
+    # The training slots by the side they are expected from, and the window's
+    # claims by the side that planned them (``training`` is the two together).
+    # ``training_partner_assigned`` adds what a Partner holds and has not dated.
+    training_staff_slots: int = 0
+    training_partner_slots: int = 0
+    training_staff: int = 0
+    training_partner: int = 0
+    training_partner_assigned: int = 0
     meeting_covered: bool = False
     # Claims up to the window's end (the year so far).
     cum_staff: int = 0
@@ -993,21 +1035,40 @@ def claims_for(
 
     # Training and meeting coverage do not depend on the delivery channel.
     # A Core school's four trainings are two staff and two Partner; a
-    # client-rule school's one is anybody's. A cluster session is staff's.
+    # client-rule school's one is anybody's. A cluster session is on the half
+    # of whoever delivers it.
     staff_need, partner_need, either_need = policy.training_slots_for(
         school.school_type
     )
     claims.training_slots = staff_need + partner_need + either_need
     tb, ti, _tt, tv = school.training
     pb, pi, _pt, pv = school.training_partner
+    wb, wi, _wt = school.training_waiting
     if either_need:
+        # A school's one training goes where its one visit does: staff's
+        # while the holder has capacity for the school, the Partner's past it
+        # (owner, 2026-10-03). Whoever plans it fills the slot.
+        if allocation.partner and not allocation.staff:
+            claims.training_partner_slots = either_need
+        else:
+            claims.training_staff_slots = either_need
         before = min(tb + pb, either_need)
         claims.training = min(ti + pi, either_need - before)
+        claims.training_staff = min(ti, claims.training)
+        claims.training_partner = claims.training - claims.training_staff
+        held = 1 if (wi and not before and not claims.training_staff) else 0
+        claims.training_partner_assigned = max(claims.training_partner, held)
     else:
+        claims.training_staff_slots = staff_need
+        claims.training_partner_slots = partner_need
         staff_before, partner_before = min(tb, staff_need), min(pb, partner_need)
         before = staff_before + partner_before
-        claims.training = min(ti, staff_need - staff_before) + min(
-            pi, partner_need - partner_before
+        claims.training_staff = min(ti, staff_need - staff_before)
+        claims.training_partner = min(pi, partner_need - partner_before)
+        claims.training = claims.training_staff + claims.training_partner
+        held_before = min(pb + wb, partner_need)
+        claims.training_partner_assigned = max(
+            claims.training_partner, min(pi + wi, partner_need - held_before)
         )
     claims.cum_training = before + claims.training
     # Verified inside the window, never more than the window's claims.

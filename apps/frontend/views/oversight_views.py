@@ -2879,7 +2879,7 @@ def partner_oversight_view(request):
         "plan_period_label": horizon_label(plan_fys),
         "plan_reads_forward": len(plan_fys) > 1,
         "summary": summary,
-        "kpis": _partner_kpis(summary),
+        "kpis": _partner_kpis(summary, _partner_visit_target(request.user)),
         # Requests a CCEO raised that this Program Lead has to answer. Kept
         # above the partner table because a decision somebody is waiting on
         # outranks routine monitoring.
@@ -3015,7 +3015,33 @@ def _prepare_core_actions(user, items) -> None:
             item.confirm_block_reason = "Waiting for the partner to submit it"
 
 
-def _partner_kpis(summary) -> list[dict]:
+def _partner_visit_target(user) -> dict | None:
+    """The Partner's visit target across the reader's people (owner,
+    2026-10-03: "the overflow should be the partner target"): two visits at
+    each Core school and one at each Client, Core Trained and Core Graduate
+    school beyond staff capacity, with how much of it is in a Partner's
+    hands. The Planning Monitor's own totals, so the two pages agree; no one
+    Partner is named, since any Partner may take the work. None when the
+    reader has no monitor.
+    """
+    from apps.core.fy import get_operational_fy
+    from apps.planning.planning_monitor import planning_monitor
+
+    try:
+        totals = planning_monitor(user, fy=str(get_operational_fy()))["totals"]
+        if not totals.officers:
+            return None
+        return {
+            "target": totals.partner_visit_target,
+            "core": totals.core_partner_target,
+            "beyond_staff": totals.partner_needed,
+            "held": totals.core_partner_visits + totals.partner_schools,
+        }
+    except Exception:  # noqa: BLE001 - a helper line, never the page
+        return None
+
+
+def _partner_kpis(summary, target: dict | None = None) -> list[dict]:
     """Headline tiles, each a field of the same fold the lists are built from.
 
     Built through the metric registry for the same reason the planning tiles
@@ -3027,7 +3053,16 @@ def _partner_kpis(summary) -> list[dict]:
         render_kpi_item(
             "partner_oversight_active_partners",
             MetricValue.measured(summary["active_partners"]),
-            helper=f"{summary['schools_assigned']} schools assigned",
+            helper=(
+                f"{summary['schools_assigned']} schools assigned"
+                + (
+                    f" · Partner target {target['target']:,} visits "
+                    f"({target['core']:,} Core + {target['beyond_staff']:,} "
+                    f"beyond staff capacity), {target['held']:,} with a Partner"
+                    if target
+                    else ""
+                )
+            ),
             icon="handshake",
         ),
         render_kpi_item(

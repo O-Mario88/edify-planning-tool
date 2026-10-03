@@ -1,0 +1,31 @@
+{% comment %}
+How full staff capacity is, and what that leaves the Partner (owner,
+2026-10-03): Programme Leads against 280 visits each, CCEOs against 560 each,
+and the Partner's target — the other two visits at each Core school and the
+schools beyond staff capacity. Each figure is a column total of the table
+under it, so the number, the table and the people behind it are one read.
+
+The ceiling warns and never refuses: the last figure names who is past it.
+Figures only; nothing here is a link, and the rows are one line below.
+{% endcomment %}
+<dl class="cpo-capacity" aria-label="Staff capacity and the Partner's share">
+  {% for gauge in capacity.gauges %}
+  <div class="cpo-cap" data-tone="{{ gauge.tone }}">
+    <dt class="cpo-cap-name">{{ gauge.label }}</dt>
+    <dd class="cpo-cap-figure"><strong>{{ gauge.planned }}</strong> / {{ gauge.cap }} <span class="cpo-pct" data-tone="{{ gauge.tone }}">{% if gauge.share is None %}(—){% else %}({{ gauge.share }}%){% endif %}</span></dd>
+    <dd class="cpo-cap-meter" aria-hidden="true"><span class="cpo-cap-fill" style="inline-size: {{ gauge.meter }}%"></span></dd>
+    <dd class="cpo-cap-note">visits planned · {{ gauge.people }} × {{ gauge.each }}{% if capacity.phased %}, phased for the period{% endif %}</dd>
+  </div>
+  {% endfor %}
+  <div class="cpo-cap" data-tone="{{ capacity.partner_tone }}">
+    <dt class="cpo-cap-name">Partner target</dt>
+    <dd class="cpo-cap-figure"><strong>{{ capacity.partner_assigned }}</strong> / {{ capacity.partner_target }} <span class="cpo-pct" data-tone="{{ capacity.partner_tone }}">{% if capacity.partner_share is None %}(—){% else %}({{ capacity.partner_share }}%){% endif %}</span></dd>
+    <dd class="cpo-cap-meter" aria-hidden="true"><span class="cpo-cap-fill" style="inline-size: {{ capacity.partner_meter }}%"></span></dd>
+    <dd class="cpo-cap-note">visits assigned · {{ capacity.partner_core }} Core + {{ capacity.beyond_staff }} beyond staff capacity · {{ capacity.partner_scheduled }} dated by Partners</dd>
+  </div>
+  <div class="cpo-cap" data-tone="{% if capacity.over_cap_people or capacity.core_only_people %}low{% else %}good{% endif %}">
+    <dt class="cpo-cap-name">Past the ceiling</dt>
+    <dd class="cpo-cap-figure"><strong>{{ capacity.over_cap_people }}</strong> {{ capacity.over_cap_people|pluralize:"person,people" }}</dd>
+    <dd class="cpo-cap-note">{% if capacity.phased %}read for the whole year, not a quarter or a month{% elif capacity.over_cap_people %}{{ capacity.over_cap }} visit{{ capacity.over_cap_count|pluralize }} planned past 280 or 560: saved, and the Partner's share{% else %}nobody has planned past 280 or 560{% endif %}{% if capacity.core_only_people %} · {{ capacity.core_only_people }} with Core schools taking the whole ceiling{% endif %}</dd>
+  </div>
+</dl>

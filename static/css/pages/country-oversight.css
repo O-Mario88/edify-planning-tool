@@ -541,6 +541,85 @@
 :is(.cpo-export, .cpo-quiet) svg { inline-size: 1rem; block-size: 1rem; }
 .cpo-tscroll { overflow-x: auto; }
 
+/* ── Staff capacity and the Partner's share (owner, 2026-10-03) ──────────
+   Four figures over the people table, each a column total of it: Programme
+   Leads against 280 each, CCEOs against 560 each, the Partner's target, and
+   who has planned past the ceiling. They start on the card's content line. */
+.cpo-capacity {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 1.1rem 0.8rem;
+  padding: 0;
+}
+.cpo-cap {
+  --tone: var(--cpo-good);
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  min-inline-size: 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--cpo-line);
+  border-radius: var(--edify-radius-xs);
+  background: var(--cpo-sunk);
+}
+.cpo-cap[data-tone="fair"] { --tone: var(--cpo-fair); }
+.cpo-cap:is([data-tone="low"], [data-tone="over"]) { --tone: var(--cpo-low); }
+.cpo-cap[data-tone="none"] { --tone: var(--cpo-none); }
+.cpo-cap :is(dt, dd) { margin: 0; }
+.cpo-cap-name {
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  color: var(--cpo-ink-2);
+}
+.cpo-cap-figure {
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--cpo-ink-2);
+}
+.cpo-cap-figure strong {
+  font-size: var(--edify-text-heading-size);
+  font-weight: 700;
+  color: var(--cpo-ink);
+}
+.cpo-cap-meter {
+  display: block;
+  block-size: 0.35rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--cpo-meter-track);
+  overflow: hidden;
+}
+.cpo-cap-fill {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--tone);
+}
+.cpo-cap-note {
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.3;
+  color: var(--cpo-ink-3);
+}
+/* Two to a row from a tablet down, a phone included: four stacked figures
+   push the table they summarise a screen and a half away. */
+@container cpo (max-width: 1100px) {
+  .cpo-capacity { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+}
+@container cpo (max-width: 520px) {
+  .cpo-capacity { margin-inline: 0.75rem; }
+  .cpo-cap { padding: 0.5rem 0.6rem; }
+  .cpo-views { margin-inline: 0.75rem; }
+}
+
+/* ── One table, read one way at a time (owner, 2026-10-03) ───────────────
+   A tab names the reading and each cell says which reading it belongs to
+   (data-col). The cells of the other readings are hidden by Alpine (x-show,
+   and x-cloak before it starts): the platform keeps every cell of a table
+   drawn unless it is hidden that way, so rows fetched later (a Lead's
+   people, a person's Partners) follow the tab too. The tabs start on the
+   card's content line, as its title and its first column do. */
+.cpo-views { margin: 0 1.1rem 0.7rem; }
+
 .cpo-table {
   inline-size: 100%;
   border-collapse: collapse;
@@ -571,7 +650,7 @@
 .cpo-namecell > span { vertical-align: middle; }
 .cpo-table tr[data-level="0"] :is(th, td) { font-weight: 700; color: var(--cpo-ink); }
 .cpo-table tr[data-level="1"] .cpo-namecell { font-weight: 600; }
-.cpo-table tr[data-level="1"][data-open="true"] .cpo-namecell > span:last-child { color: var(--cpo-accent); }
+.cpo-table tr[data-level="1"][data-open="true"] .cpo-namecell > span[data-opens-rows] { color: var(--cpo-accent); }
 /* A Lead's or CCEO's name opens and closes the rows under it, like a
    cluster accordion (owner, 2026-09-30). */
 .cpo-table .cpo-namecell > span[data-opens-rows] { cursor: pointer; }
@@ -645,6 +724,8 @@
 .cpo-pct[data-tone="good"] { color: var(--cpo-good); }
 .cpo-pct[data-tone="fair"] { color: var(--cpo-fair); }
 .cpo-pct[data-tone="low"] { color: var(--cpo-low); }
+/* Past its own target: work beyond the share, so a warning and never green. */
+.cpo-pct[data-tone="over"] { color: var(--cpo-low); }
 .cpo-pct[data-tone="none"] { color: var(--cpo-none); }
 .cpo-alert { color: var(--cpo-low); font-weight: 700; }
 .cpo-zero { color: var(--cpo-ink-3); }

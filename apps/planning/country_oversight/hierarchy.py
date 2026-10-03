@@ -64,6 +64,17 @@ PEOPLE_FIELDS: tuple[str, ...] = (
     "pa_work",
     "pp_work",
     "pa_schools",
+    # The counted visits by the school they are at: a Core school, or a
+    # Client, Core Trained or Core Graduate one (``rules.workload``).
+    "p_core_visits",
+    "p_client_visits",
+    # Visits planned past the ceiling, how many people that is, and how many
+    # hold Core schools enough to take the whole ceiling. Read per person, so
+    # a Lead's row and the country's are sums, never one balance netted
+    # against another.
+    "over_cap",
+    "over_cap_people",
+    "core_only_people",
 )
 
 FIELDS: tuple[str, ...] = (
@@ -124,6 +135,13 @@ FIELDS: tuple[str, ...] = (
     # (owner, 2026-10-02: a school assigned to a Partner is the Partner's to
     # plan, and is followed in the Partner table).
     "unplanned",
+    # The schools with a visit planned, by whether every visit they need is
+    # planned. With the two above they are every school that needs a visit:
+    # planned_full + planned_part + (no_visit - unplanned) + unplanned.
+    "planned_full",
+    "planned_part",
+    # Core schools whose two staff visits are planned.
+    "core_staff_done",
     # Training.
     "training_slots",
     "training",
@@ -131,6 +149,13 @@ FIELDS: tuple[str, ...] = (
     "any_training",
     "no_training",
     "training_gap",
+    # The same slots by the side expected to deliver them, what each side
+    # planned, and what a Partner holds whether it has dated it or not.
+    "training_staff_slots",
+    "training_partner_slots",
+    "training_staff",
+    "training_partner",
+    "training_partner_assigned",
     # Clusters and meetings.
     "clustered",
     "unclustered",
@@ -169,6 +194,8 @@ PHASED_FIELDS = (
     "client_staff_expected",
     "client_partner_expected",
     "training_slots",
+    "training_staff_slots",
+    "training_partner_slots",
     "target",
 )
 
@@ -225,6 +252,11 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
         v[IDX["any_training"]] = 1 if claims.any_training else 0
         v[IDX["no_training"]] = 0 if claims.any_training else 1
         v[IDX["training_gap"]] = max(0, claims.training_slots - claims.cum_training)
+        v[IDX["training_staff_slots"]] = claims.training_staff_slots
+        v[IDX["training_partner_slots"]] = claims.training_partner_slots
+        v[IDX["training_staff"]] = claims.training_staff
+        v[IDX["training_partner"]] = claims.training_partner
+        v[IDX["training_partner_assigned"]] = claims.training_partner_assigned
 
     if claims.outside:
         # A Champion school: in the portfolio, outside the visit requirement.
@@ -288,6 +320,10 @@ def school_values(school: SchoolFacts, claims: Claims) -> list:
             }[state]
         ]
     ] = 1
+    if staff_planned or partner_planned:
+        v[IDX["planned_full" if state == "full" else "planned_part"]] = 1
+    if is_core and claims.staff_expected and claims.cum_staff >= claims.staff_expected:
+        v[IDX["core_staff_done"]] = 1
     if claims.cum_partner_assigned > claims.cum_partner_scheduled:
         v[IDX["awaiting_partner"]] = 1
     if duplicate_reasons(school):
@@ -449,6 +485,29 @@ class Tally:
     @property
     def unique_visit_share(self):
         return self.share(self.any_visit, self.visit_schools)
+
+    # How the year is shared out (``rules.workload``): the staff side
+    # against its target, and the Partner's against the other half of each
+    # Core package plus the schools beyond staff capacity.
+    @property
+    def core_plan_share(self):
+        return self.share(self.p_core_visits, self.core_staff_slots)
+
+    @property
+    def client_plan_share(self):
+        return self.share(self.p_client_visits, self.client_staff_expected)
+
+    @property
+    def training_staff_share(self):
+        return self.share(self.training_staff, self.training_staff_slots)
+
+    @property
+    def training_partner_share(self):
+        return self.share(self.training_partner, self.training_partner_slots)
+
+    @property
+    def training_partner_assigned_share(self):
+        return self.share(self.training_partner_assigned, self.training_partner_slots)
 
     @property
     def reach(self) -> int:

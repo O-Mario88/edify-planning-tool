@@ -256,6 +256,30 @@ def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
     )
 
 
+def _ceiling_notice(request, raw_date) -> str:
+    """The warning a save's confirmation carries when it takes the planner
+    past the visits their role plans in a year (280 a Programme Lead, 560 a
+    CCEO). A warning only: the save stands (owner, 2026-10-03).
+
+    Read for the fiscal year the work is dated in, and never allowed to turn
+    a save that succeeded into an error.
+    """
+    from datetime import date
+
+    from django.utils import timezone
+
+    from apps.planning import staff_plan
+
+    try:
+        day = date.fromisoformat(str(raw_date or "")[:10])
+    except ValueError:
+        day = timezone.localdate()
+    try:
+        return staff_plan.ceiling_notice(request.user, get_operational_fy(day))
+    except Exception:  # noqa: BLE001 - a notice, never the save's outcome
+        return ""
+
+
 def _saved_without_leaving(
     message: str,
     *,
@@ -263,6 +287,7 @@ def _saved_without_leaving(
     plan_link_label: str = "",
     undo_kind: str = "",
     undo_ids=(),
+    notice: str = "",
 ) -> HttpResponse:
     """Confirm a save and stay on the page the planner is working on.
 
@@ -287,11 +312,17 @@ def _saved_without_leaving(
     The toast carries the link to My Plan rather than following it, and —
     given ``undo_kind`` and the rows the save made — an Undo that reverses
     exactly those rows (owner, 2026-09-28; apps.planning.undo).
+
+    ``notice`` is a warning the save raised without being refused — the
+    planner is past the visits their role plans in a year (``_ceiling_notice``).
+    It is said under the confirmation, and the card stays up long enough to
+    read it.
     """
     html = render_to_string(
         "partials/planning/saved_toast.html",
         {
             "message": message,
+            "notice": notice,
             "plan_url": plan_url,
             "plan_link_label": plan_link_label,
             "undo_kind": undo_kind if undo_ids else "",
@@ -446,6 +477,7 @@ def special_projects_bulk_schedule_view(request):
             message,
             plan_url="/projects/my-plan",
             plan_link_label="Open My Plan",
+            notice=_ceiling_notice(request, scheduled_date),
         )
     except Exception as exc:
         return error_fragment(
@@ -973,6 +1005,15 @@ def planning_dashboard_view(request):
         "planning_priority": planning_priority,
         "priority_allocation_id": priority_allocation_id,
     }
+    if not table_only:
+        # The planner's own year, shared out: what is theirs to visit and
+        # what is the Partner's (owner, 2026-10-03).
+        from apps.planning import staff_plan
+
+        try:
+            context["workload"] = staff_plan.own_workload(request.user, fy)
+        except Exception:  # noqa: BLE001 - a summary line, never the page
+            context["workload"] = None
 
     # If the target is only the school table
     if table_only:
@@ -2076,7 +2117,10 @@ def schedule_action_view(request):
                 "responsible staff member comes from the school's owner."
             )
         return _saved_without_leaving(
-            message, plan_url=plan_url, plan_link_label=link_label
+            message,
+            plan_url=plan_url,
+            plan_link_label=link_label,
+            notice=_ceiling_notice(request, scheduled_date) if lands_here else "",
         )
     except Exception as e:
         return error_fragment(e, status=400)

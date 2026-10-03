@@ -64,8 +64,13 @@ def project_capacity_view(request):
     shown = [p for p in projects if p.id == selected]
     by_project = capacity.allocations_by_project([p.id for p in shown])
     sections = []
+    from apps.core.fy import get_operational_fy
+
+    visit_year = str(get_operational_fy())
     for project in shown:
-        allocations = by_project.get(project.id, [])
+        allocations = capacity.attach_visit_load(
+            by_project.get(project.id, []), visit_year
+        )
         sections.append(
             {
                 "project": project,
@@ -81,6 +86,7 @@ def project_capacity_view(request):
             "project_options": projects,
             "selected_project": selected,
             "sections": sections,
+            "visit_year": visit_year,
         },
     )
 

@@ -8,8 +8,8 @@
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">School Name</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[130px]">District</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[160px]">Cluster</th>
-        <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]">Visits (4)</th>
-        <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]">Trainings (4)</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]" title="Completed of the package's four visits: two staff and two partner. Beside it, how many of each side's two are planned">Visits (4)</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[110px]" title="Completed of the package's four trainings: two staff and two partner. Beside it, how many of each side's two are planned">Trainings (4)</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Package Progress</th>
         <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[100px]">SSA Score</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[110px]">Status</th>
@@ -40,12 +40,12 @@
         <td class="px-4 py-2.5 text-center tabular-nums font-medium">
           <span class="{% if row.visits_completed >= row.visits_target %}text-emerald-600 font-bold{% else %}text-slate-700 dark:text-slate-300{% endif %}">
             {{ row.visits_completed }} / {{ row.visits_target }}
-          </span>
+          </span>{% if row.side_cap %}<span class="edify-text-muted" title="Planned of each side's two visits" data-core-sides> · staff {{ row.staff_visits }}/{{ row.side_cap }} · partner {{ row.partner_visits }}/{{ row.side_cap }}</span>{% endif %}
         </td>
         <td class="px-4 py-2.5 text-center tabular-nums font-medium">
           <span class="{% if row.trainings_completed >= row.trainings_target %}text-emerald-600 font-bold{% else %}text-slate-700 dark:text-slate-300{% endif %}">
             {{ row.trainings_completed }} / {{ row.trainings_target }}
-          </span>
+          </span>{% if row.side_cap %}<span class="edify-text-muted" title="Planned of each side's two trainings" data-core-sides> · staff {{ row.staff_trainings }}/{{ row.side_cap }} · partner {{ row.partner_trainings }}/{{ row.side_cap }}</span>{% endif %}
         </td>
         <td class="px-4 py-2.5">
           <div class="flex items-center gap-2">
