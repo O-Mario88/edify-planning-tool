@@ -124,10 +124,10 @@ class PeopleTablesTest(TableWorld):
             ],
         )
         self.assertEqual(table.rows[0]["school_id"], here.school_id)
-        self.assertEqual(table.summary, "2 visits planned · 2 of 2,240 · 2,238 to plan")
-        # It is listed with everything planned, and says it is not counted.
+        self.assertEqual(table.summary, "3 visits planned · 3 of 2,240 · 2,237 to plan")
+        # It is listed with everything planned, and says it is counted.
         self.assertIn(
-            ("Lead A", "SSA Support", "No"),
+            ("Lead A", "SSA Support", "Yes"),
             [
                 (row["staff"], row["activity"], row["counted"])
                 for row in self.table("plans").rows
