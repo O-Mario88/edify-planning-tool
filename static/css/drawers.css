@@ -593,19 +593,6 @@
 .drawer-body .text-slate-600, .drawer-body .text-slate-700 { color: var(--edify-text) !important; }
 .drawer-body .text-slate-800, .drawer-body .text-slate-900 { color: var(--edify-text) !important; }
 
-/* Primary actions inside drawers must never have labels repainted dark */
-.drawer-body :is(button, a, [role="button"]):is(
-  .btn-primary, .btn-premium-primary, .edify-action-button.primary,
-  .edify-primary-solid, .premium-button-primary,
-  .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
-  .admin-button--primary, .ia-button--primary,
-  [class*="bg-blue"], [class*="bg-indigo"], [class*="bg-sky"],
-  button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"])
-) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
-  color: inherit !important;
-  fill: currentColor;
-}
 
 /* Cards/sections inside drawers */
 .drawer-body .bg-white,
@@ -1543,7 +1530,7 @@
 .drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary),
 .drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]),
 .drawer-body .btn-premium-primary {
-  color: #ffffff !important;
+  color: var(--edify-on-accent, #fff) !important;
   border: 1px solid color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
@@ -1553,7 +1540,7 @@
 .drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary):hover:not(:disabled),
 .drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]):hover:not(:disabled),
 .drawer-body .btn-premium-primary:hover:not(:disabled) {
-  color: #ffffff !important;
+  color: var(--edify-on-accent, #fff) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
   transform: translateY(-1px);

@@ -83,7 +83,7 @@
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
   .bg-\[var\(--brand-primary\)\],
-  [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+  [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
 ):not(:disabled):not([aria-disabled="true"]) {
   color: #ffffff !important;
   background-color: var(--edify-primary-action-fill) !important;
@@ -108,7 +108,7 @@
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
   .bg-\[var\(--brand-primary\)\],
-  [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+  [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
 ) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
   color: inherit !important;
   fill: currentColor;
@@ -131,7 +131,7 @@
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-\[var\(--brand-primary\)\],
-    [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+    [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
   ):hover:not(:disabled):not([aria-disabled="true"]) {
     color: #ffffff !important;
     background-color: var(--edify-primary-action-fill-hover) !important;
@@ -154,7 +154,7 @@
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-\[var\(--brand-primary\)\],
-    [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+    [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
   ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
     color: inherit !important;
     fill: currentColor;
@@ -2320,7 +2320,6 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) {
   display: flex !important;
   flex-wrap: wrap !important;
@@ -2332,7 +2331,6 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) > div {
   display: inline-flex !important;
   flex: 0 1 auto !important;
@@ -2347,7 +2345,6 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) :is(dt, dd) {
   margin: 0 !important;
   font-size: var(--edify-text-table-size) !important;
@@ -2356,20 +2353,17 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dt {
   color: var(--edify-text-muted) !important;
   font-weight: 500 !important;
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dd {
   font-weight: 600 !important;
 }
 
 :root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
   :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) a[href]:not(#edify-filter-none) {
   display: inline !important;
   min-block-size: 0 !important;

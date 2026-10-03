@@ -43,7 +43,7 @@
     {% if selected_project and selected_project != "all" %}<input type="hidden" name="project" value="{{ selected_project }}">{% endif %}
     <label class="block">
       <span class="edify-filter-label">Fiscal year</span>
-      <select name="fy" aria-label="Fiscal year" onchange="this.form.submit()" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
         {% for option in fy_options %}
         <option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY {{ option }}</option>
         {% endfor %}
@@ -51,7 +51,7 @@
     </label>
     <label class="block">
       <span class="edify-filter-label">Planning stage</span>
-      <select name="stage" aria-label="Planning stage" onchange="this.form.submit()" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+      <select name="stage" aria-label="Planning stage" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
         <option value="">All schools</option>
         {% for value, label in stage_options %}
         {% if value %}<option value="{{ value }}"{% if value == selected_stage %} selected{% endif %}>{{ label }}</option>{% endif %}
@@ -60,7 +60,7 @@
     </label>
     <label class="block">
       <span class="edify-filter-label">Project status</span>
-      <select name="project_status" aria-label="Project status" onchange="this.form.submit()" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700" data-project-status-filter>
+      <select name="project_status" aria-label="Project status" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700" data-project-status-filter>
         <option value="schools"{% if selected_project_status == 'schools' or not selected_project_status %} selected{% endif %}>Project schools</option>
         <option value="partner"{% if selected_project_status == 'partner' %} selected{% endif %}>Assigned to partner</option>
         <option value="scheduled"{% if selected_project_status == 'scheduled' %} selected{% endif %}>Activity scheduled</option>
