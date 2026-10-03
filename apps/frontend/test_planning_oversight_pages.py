@@ -433,12 +433,15 @@ class ProjectCoordinatorSidebarTest(TestCase):
 
         sidebar = build_sidebar_for_user(user, "/projects")
         daily_group = next((g for g in sidebar if g["label"] == "DAILY"), None)
-        self.assertIsNotNone(daily_group, "DAILY group should exist for Project Coordinator")
+        self.assertIsNotNone(
+            daily_group, "DAILY group should exist for Project Coordinator"
+        )
         item_keys = [item["page_key"] for item in daily_group["items"]]
         self.assertIn("project_capacity", item_keys)
         capacity_item = next(
-            item for item in daily_group["items"] if item["page_key"] == "project_capacity"
+            item
+            for item in daily_group["items"]
+            if item["page_key"] == "project_capacity"
         )
         self.assertEqual(capacity_item["url"], "/projects/capacity")
         self.assertEqual(capacity_item["label"], "Project Capacity")
-

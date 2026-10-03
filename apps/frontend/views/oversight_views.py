@@ -885,7 +885,11 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     from apps.core.fy import fy_options, get_operational_fy
     from apps.projects import monitoring
 
-    fy = (request.GET.get("fy") or "").strip() or period.get("fy") or get_operational_fy()
+    fy = (
+        (request.GET.get("fy") or "").strip()
+        or period.get("fy")
+        or get_operational_fy()
+    )
     selected_project = (request.GET.get("project") or "").strip()
     stages = dict(monitoring.STAGE_FILTERS)
     requested_stage = (request.GET.get("stage") or "").strip()
@@ -894,15 +898,23 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
 
     result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
     project_ids = [row.id for row in result.rows]
-    if selected_project and selected_project != "all" and selected_project not in project_ids:
+    if (
+        selected_project
+        and selected_project != "all"
+        and selected_project not in project_ids
+    ):
         selected_project = ""
 
     # Filter school rows if Project status is narrowed
     if selected_project_status == "partner":
         for row in result.rows:
             row.school_rows = [
-                s for s in row.school_rows
-                if s.partner_name or getattr(s, "has_partner", False) or s.plan_stage in (
+                s
+                for s in row.school_rows
+                if s.partner_name
+                or getattr(s, "has_partner", False)
+                or s.plan_stage
+                in (
                     monitoring.PLAN_PARTNER_AWAITING,
                     monitoring.PLAN_PARTNER_SCHEDULED,
                     monitoring.PLAN_PARTNER_RETURNED,
@@ -911,13 +923,18 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     elif selected_project_status == "scheduled":
         for row in result.rows:
             row.school_rows = [
-                s for s in row.school_rows
-                if s.activity_date or s.next_date or s.status_key in (
+                s
+                for s in row.school_rows
+                if s.activity_date
+                or s.next_date
+                or s.status_key
+                in (
                     monitoring.STATUS_SCHEDULED,
                     monitoring.STATUS_IN_PROGRESS,
                     monitoring.STATUS_AWAITING_VERIFICATION,
                     monitoring.STATUS_COMPLETED,
-                ) or s.execution != monitoring.EXEC_NONE
+                )
+                or s.execution != monitoring.EXEC_NONE
             ]
 
     project_tabs = [
@@ -1826,7 +1843,10 @@ def team_planning_oversight_view(request):
     can_view_monitors = can_view_planning and monitors_on_oversight(request.user)
     can_view_projects = can_view_planning and (
         monitors_on_oversight(request.user)
-        or (getattr(request.user, "active_role", "") in ("ImpactAssessment", "CountryDirector", "Admin"))
+        or (
+            getattr(request.user, "active_role", "")
+            in ("ImpactAssessment", "CountryDirector", "Admin")
+        )
     )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     # The people monitors moved to their own page (owner, 2026-09-29).
