@@ -95,15 +95,17 @@ class WorkFromAnyDoorIsCountedTest(_PackageFixture):
         self.assertEqual(self._slot("v", 2).activity_id, second.id)
         self.assertEqual(self._visits(), 2)
 
-    def test_an_in_school_training_takes_T1_and_its_companion_visit_takes_none(self):
+    def test_an_in_school_training_takes_T1_and_its_companion_visit_takes_V1(self):
+        """Owner, 2026-10-03: an in-school training records its V as well as
+        its T. Until then the visit written beside it took no slot."""
         training = self._activity("in_school_training")
         companion = self._activity(
             "school_visit", purpose_type="in_school_training_delivery_visit"
         )
 
         self.assertEqual(self._slot("t", 1).activity_id, training.id)
-        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=companion.id))
-        self.assertEqual((self._visits(), self._trainings()), (0, 1))
+        self.assertEqual(self._slot("v", 1).activity_id, companion.id)
+        self.assertEqual((self._visits(), self._trainings()), (1, 1))
 
     def test_completed_work_counts_as_completed(self):
         self._activity(status="completed", on=date.today() - timedelta(days=10))

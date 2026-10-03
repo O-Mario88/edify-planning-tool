@@ -265,7 +265,9 @@ FOLLOW_UP_VISIT_TYPES = (
     "partner_ssa_collection",
 )
 # The visit the in-school training pair creates beside the training: one
-# mission, recorded twice for Salesforce. It is the training, not a visit.
+# mission, recorded twice for Salesforce. No rule here counts or refuses it.
+# At a Core school it takes a visit slot of the package once it is saved
+# (owner, 2026-10-03; apps.core_schools.package_credit.slot_kind).
 COMPANION_VISIT_PURPOSE = "in_school_training_delivery_visit"
 
 # The client rule counts a school's staff visits in two pools (owner,

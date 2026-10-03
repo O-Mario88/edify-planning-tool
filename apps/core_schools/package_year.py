@@ -135,6 +135,10 @@ DATA_COLLECTION_TYPES = frozenset(
     {"school_visit_ssa_collection", "baseline_ssa_visit", "partner_ssa_collection"}
 )
 DATA_COLLECTION_PURPOSES = frozenset({"ssa_support"})
+#: The School Visit an in-school training writes beside itself
+#: (``visit_gate.COMPANION_VISIT_PURPOSE``). A package visit (owner,
+#: 2026-10-03: an in-school training records its V as well as its T).
+COMPANION_VISIT_PURPOSE = "in_school_training_delivery_visit"
 NON_PACKAGE_TYPES = OUTREACH_TYPES | DATA_COLLECTION_TYPES
 NON_PACKAGE_PURPOSES = OUTREACH_PURPOSES | DATA_COLLECTION_PURPOSES
 #: What a slot carries about the work that fills it, moved with the work.
@@ -461,6 +465,39 @@ def staff_data_collection_without_a_slot(
     return list(rows)
 
 
+def companion_visits_without_a_slot(
+    Slot, Activity, School, *, from_fy: str, skip=()
+) -> list:
+    """The School Visits in-school trainings wrote beside themselves at Core
+    schools, dated in ``from_fy`` or later, that hold no package slot: every
+    one written before 2026-10-03, when the pair's visit became a package
+    visit. Oldest first, so the earliest takes the earliest slot."""
+    core_ids = School.objects.filter(
+        school_type="core", deleted_at__isnull=True
+    ).values("id")
+    held = (
+        Slot.objects.exclude(activity_id__isnull=True)
+        .exclude(activity_id="")
+        .values("activity_id")
+    )
+    rows = (
+        Activity.objects.filter(
+            school_id__in=core_ids,
+            fy__gte=str(from_fy),
+            deleted_at__isnull=True,
+            cluster_id__isnull=True,
+            purpose_type=COMPANION_VISIT_PURPOSE,
+        )
+        .exclude(status__in=UNCREDITED)
+        .exclude(id__in=held)
+        .select_related("school")
+        .order_by("school_id", "planned_date", "scheduled_date", "created_at", "id")
+    )
+    if skip:
+        rows = rows.exclude(project_id__in=list(skip))
+    return list(rows)
+
+
 def outside_package(Slot, Activity, *, from_fy: str) -> list[tuple]:
     """``(slot, activity)`` for every slot of a package of ``from_fy`` onward
     held by work that is no part of a package: a cluster meeting, a donor,
@@ -770,6 +807,8 @@ def refile(
        earliest is V1. The slot they leave is open again.
     3b. Staff's SSA Support visits that hold no slot take the next open
        visit slot of their own year's package.
+    3c. The visits in-school trainings wrote beside themselves that hold no
+       slot do the same.
     4. The group trainings that count and hold no slot take one.
     5. The packages touched in those years lose their gaps: taken slots first,
        earliest dated first.
@@ -785,6 +824,7 @@ def refile(
         "released": [],
         "credited": [],
         "ssa_credited": [],
+        "companion_credited": [],
         "plans": [],
     }
     touched: dict[str, object] = {}
@@ -882,9 +922,20 @@ def refile(
 
     # 3b. Staff's SSA Support visits with no slot take the next open visit
     #     slot of their own year's package (owner, 2026-10-03).
-    for activity in staff_data_collection_without_a_slot(
-        Slot, Activity, School, from_fy=from_fy, skip=outside_projects
-    ):
+    #     3c. So do the visits in-school trainings wrote beside themselves
+    #     (owner, 2026-10-03): the training has its T, the visit its V.
+    unslotted = [
+        (activity, "ssa_credited", "staff SSA Support")
+        for activity in staff_data_collection_without_a_slot(
+            Slot, Activity, School, from_fy=from_fy, skip=outside_projects
+        )
+    ] + [
+        (activity, "companion_credited", "in-school training visit")
+        for activity in companion_visits_without_a_slot(
+            Slot, Activity, School, from_fy=from_fy, skip=outside_projects
+        )
+    ]
+    for activity, credited_as, what in unslotted:
         code = activity.school.school_id
         target, created = (
             ensure_plan(Plan, Slot, code, activity.fy)
@@ -909,7 +960,7 @@ def refile(
         if not can_be_made:
             report["unplaced"].append(activity.id)
             say(
-                f"school {code}: SSA Support {activity.id} ({_day(activity)}) "
+                f"school {code}: {what} {activity.id} ({_day(activity)}) "
                 f"takes no slot: no FY{activity.fy} package can be made"
             )
             continue
@@ -923,9 +974,9 @@ def refile(
             destination.save()
             touched[target.id] = target
             entry["to"] = f"FY{target.fy} {label_of(destination)}"
-        report["ssa_credited"].append(entry)
+        report[credited_as].append(entry)
         say(
-            f"school {code}: staff SSA Support {activity.id} ({_day(activity)}) "
+            f"school {code}: {what} {activity.id} ({_day(activity)}) "
             f"-> {entry.get('to', 'FY' + str(activity.fy) + ' next open visit')}"
         )
 
@@ -948,6 +999,7 @@ def refile(
         f"{len(report['released'])} slot(s) given back, "
         f"{len(report['moved'])} visit(s)/training(s) moved to their own year's "
         f"package, {len(report['ssa_credited'])} staff SSA Support visit(s) "
+        f"and {len(report['companion_credited'])} in-school training visit(s) "
         f"given a slot, {len(report['credited'])} group training place(s) filled, "
         f"{len(report['plans'])} package(s) made, {len(report['unplaced'])} "
         "left in place"

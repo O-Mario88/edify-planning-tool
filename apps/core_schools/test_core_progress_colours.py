@@ -162,3 +162,29 @@ class CoreRowMarksTest(_CoreFixture):
             [(m["label"], m["state"]) for m in row["visit_marks"]][:2],
             [("V1", "planned"), ("V2", "open")],
         )
+
+
+class MyPlanPackageNumberIsAFilledMarkTest(SimpleTestCase):
+    """Owner, 2026-10-03: the V and T numbers on My Plan are filled marks,
+    blue while planned and green once completed, like the Core Schools list,
+    so staff can tell at a glance what is planned and what is done."""
+
+    def _source(self, path):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        return (Path(settings.BASE_DIR) / path).read_text(encoding="utf-8")
+
+    def test_both_core_tables_draw_the_number_as_the_package_mark(self):
+        for name in ("core_school_visits", "core_school_trainings"):
+            html = self._source(f"templates/partials/my_plan/{name}.html")
+            self.assertIn('class="core-seq__mark" data-state="', html, name)
+            self.assertNotIn("mp-badge--{{ row.status_tone|default:'blue' }}", html)
+        self.assertIn(
+            "core-progress.css", self._source("templates/pages/my_plan/index.html")
+        )
+
+    def test_a_table_does_not_flatten_the_mark(self):
+        script = self._source("static/js/micro-ux.js")
+        self.assertIn(".sal-dot, .core-seq__mark')", script)

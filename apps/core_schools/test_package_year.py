@@ -277,6 +277,74 @@ class StaffSsaSupportIsAPackageVisitTest(_YearFixture):
 
 
 @freeze_time(OCTOBER)
+class AnInSchoolTrainingIsAVisitAndATrainingTest(_YearFixture):
+    """Owner, 2026-10-03: an in-school training at a Core school "does not
+    record the visit package V1, V2, V3, V4" beside its T. The Training takes
+    the next training slot and the visit written beside it the next visit
+    slot, each on its deliverer's half. Nothing refuses the pair over it."""
+
+    COMPANION = "in_school_training_delivery_visit"
+
+    def _pair(self, day, **fields):
+        training = self._work("in_school_training", day, **fields)
+        visit = self._work("school_visit", day, purpose_type=self.COMPANION, **fields)
+        return training, visit
+
+    def test_the_pair_takes_T1_and_V1_on_the_staff_half(self):
+        training, visit = self._pair(date(2026, 10, 13))
+        self.assertEqual(self._slots("2027", "training")[0].activity_id, training.id)
+        self.assertEqual(self._slots("2027", "visit")[0].activity_id, visit.id)
+        self.assertEqual(self._slots("2027", "visit")[0].owner, "staff")
+        split = package_split(self.school, "2027")
+        self.assertEqual((split.staff_visits, split.staff_trainings), (1, 1))
+
+    def test_a_partners_pair_is_on_the_partners_half(self):
+        self._pair(date(2026, 10, 13), delivery_type="partner")
+        self.assertEqual(self._slots("2027", "visit")[0].owner, "partner")
+        split = package_split(self.school, "2027")
+        self.assertEqual((split.partner_visits, split.partner_trainings), (1, 1))
+        self.assertEqual((split.staff_visits, split.staff_trainings), (0, 0))
+
+    def test_it_follows_the_visits_already_planned(self):
+        self._work("training_follow_up_visit", date(2026, 10, 6))
+        _training, visit = self._pair(date(2026, 10, 13))
+        slot = CoreActivitySlot.objects.get(activity_id=visit.id)
+        self.assertEqual((slot.activity_type, slot.sequence_number), ("visit", 2))
+
+    def test_no_door_refuses_the_pair_when_staff_have_their_two_visits(self):
+        from apps.activities.services import _assert_schedule_entitlement
+
+        self._work("training_follow_up_visit", date(2026, 10, 6))
+        self._work("training_follow_up_visit", date(2026, 11, 17))
+        # The door is asked about the visit before it exists, as the pair
+        # asks it: it is let through, and counted once it is saved.
+        _assert_schedule_entitlement(
+            "school_visit", self.school, "2027", {"purposeType": self.COMPANION}
+        )
+        _training, visit = self._pair(date(2026, 12, 1))
+        slot = CoreActivitySlot.objects.get(activity_id=visit.id)
+        self.assertEqual((slot.activity_type, slot.sequence_number), ("visit", 3))
+
+    def test_a_called_off_pair_gives_both_slots_back(self):
+        training, visit = self._pair(date(2026, 10, 13))
+        for activity in (training, visit):
+            with self.captureOnCommitCallbacks(execute=True):
+                activity.status = "cancelled"
+                activity.save()
+        # Called-off work no longer holds its slot: the package counts none
+        # and both halves are open again.
+        from apps.core_schools.core_planning_services import (
+            CorePackageSchedulingService,
+        )
+
+        plan = CorePlan.objects.get(school_id="YEAR-1", fy="2027")
+        summary = CorePackageSchedulingService.summary(plan)
+        self.assertEqual((summary["visits"], summary["trainings"]), (0, 0))
+        split = package_split(self.school, "2027")
+        self.assertEqual((split.staff_visits, split.staff_trainings), (0, 0))
+
+
+@freeze_time(OCTOBER)
 class RefileTest(_YearFixture):
     """What the deploy migration does to the links already written."""
 
@@ -571,6 +639,46 @@ class RefileTest(_YearFixture):
         # Run again: nothing more to do.
         again, _ = self._refile()
         self.assertEqual(again["ssa_credited"], [])
+
+    def test_an_in_school_training_s_visit_left_without_a_slot_takes_one(self):
+        # As it was written before 2026-10-03: the training in T, the visit
+        # beside it in no slot.
+        visit = Activity.objects.create(
+            activity_type="school_visit",
+            purpose_type="in_school_training_delivery_visit",
+            school=self.school,
+            fy="2027",
+            planned_date=date(2026, 10, 2),
+            status="scheduled",
+            delivery_type="staff",
+        )
+        called_off = Activity.objects.create(
+            activity_type="school_visit",
+            purpose_type="in_school_training_delivery_visit",
+            school=self.school,
+            fy="2027",
+            planned_date=date(2026, 10, 5),
+            status="cancelled",
+            delivery_type="staff",
+        )
+        dry, _ = self._refile(write=False)
+        self.assertEqual([e["activity"] for e in dry["companion_credited"]], [visit.id])
+        self.assertFalse(CoreActivitySlot.objects.filter(activity_id=visit.id).exists())
+        report, lines = self._refile()
+        self.assertEqual(
+            [e["activity"] for e in report["companion_credited"]], [visit.id]
+        )
+        slot = CoreActivitySlot.objects.get(activity_id=visit.id)
+        self.assertEqual(
+            (slot.core_plan.fy, slot.activity_type, slot.sequence_number, slot.owner),
+            ("2027", "visit", 1, "staff"),
+        )
+        self.assertFalse(
+            CoreActivitySlot.objects.filter(activity_id=called_off.id).exists()
+        )
+        self.assertTrue(any("in-school training visit" in line for line in lines))
+        again, _ = self._refile()
+        self.assertEqual(again["companion_credited"], [])
 
 
 @freeze_time(OCTOBER)

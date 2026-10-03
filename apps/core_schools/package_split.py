@@ -29,9 +29,15 @@ is the work dated in its year):
   be dated (each holds its slot from the moment it is made), counted in the
   running year.
 
-Not on either side, and never refused over a package: the companion visit of
-an in-school training pair; donor, story, invitation and social visits; data
-collection (SSA Support) visits; cluster meetings, which are not trainings; a
+The School Visit an in-school training writes beside itself is a visit of the
+package, on the half of whoever delivers it (owner, 2026-10-03: an in-school
+training records its V as well as its T). It is counted here once it is
+saved; the pair itself is not refused over the visit half, because the doors
+ask `package_kind_for`, which does not name it.
+
+Not on either side, and never refused over a package: donor, story,
+invitation and social visits; a Partner's data collection (SSA Support)
+visits; cluster meetings, which are not trainings; a
 group training past its half's two, which is on the school's history and in
 no slot (a group session is never refused over one school); and the work of a
 project no SSA intervention measures (Alumni; owner, 2026-10-02).
@@ -166,8 +172,8 @@ def package_splits(
         UNCREDITED_STATUSES,
         assignment_kind,
         not_outside_package_q,
-        package_kind_for,
         package_work_q,
+        slot_kind_for,
     )
     from apps.core_schools import package_year
     from apps.core_schools.models import CoreActivitySlot
@@ -222,7 +228,7 @@ def package_splits(
     for row in work:
         if row["id"] == exclude_activity_id:
             continue
-        kind = package_kind_for(
+        kind = slot_kind_for(
             row["activity_type"],
             row["purpose_type"],
             delivery_type=row["delivery_type"] or "staff",
