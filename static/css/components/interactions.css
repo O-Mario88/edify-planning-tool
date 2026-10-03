@@ -83,7 +83,8 @@
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
   .bg-\[var\(--brand-primary\)\],
-  [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
+  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+  .bg-sky-600, .bg-sky-700
 ):not(:disabled):not([aria-disabled="true"]) {
   color: #ffffff !important;
   background-color: var(--edify-primary-action-fill) !important;
@@ -108,7 +109,8 @@
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
   .bg-\[var\(--brand-primary\)\],
-  [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
+  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+  .bg-sky-600, .bg-sky-700
 ) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
   color: inherit !important;
   fill: currentColor;
@@ -131,7 +133,8 @@
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-\[var\(--brand-primary\)\],
-    [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
+    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+    .bg-sky-600, .bg-sky-700
   ):hover:not(:disabled):not([aria-disabled="true"]) {
     color: #ffffff !important;
     background-color: var(--edify-primary-action-fill-hover) !important;
@@ -154,7 +157,8 @@
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-\[var\(--brand-primary\)\],
-    [class*="bg-blue-"], [class*="bg-indigo-"], [class*="bg-sky-"], [class*="bg-cyan-"]
+    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+    .bg-sky-600, .bg-sky-700
   ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
     color: inherit !important;
     fill: currentColor;
