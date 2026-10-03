@@ -118,7 +118,7 @@ class TypeInventory:
     in_project: int = 0
 
     @property
-    def planned_none_required(self) -> bool:
+    def outreach_only(self) -> bool:
         return not rules.requirement_for(self.key).visits
 
     @property
@@ -145,7 +145,7 @@ _SUMMED = (
     "partner_required",
     "partner_assigned",
     "partner_credited",
-    "partner_core_required",
+    "partner_core_schools",
     "partner_beyond_staff",
     "schools_staff_scheduled",
     "schools_staff_and_partner",
@@ -181,7 +181,7 @@ class Readiness:
     partner_required: int = 0
     partner_assigned: int = 0
     partner_credited: int = 0
-    partner_core_required: int = 0
+    partner_core_schools: int = 0
     partner_beyond_staff: int = 0
     # Schools held that staff scheduled a visit at themselves, and those of
     # them also in a Partner's hands.
@@ -352,7 +352,7 @@ class Readiness:
             },
             "partner_assignment": {
                 **line(self.partner_assignment),
-                "core_schools": self.partner_core_required,
+                "core_schools": self.partner_core_schools,
                 "beyond_staff_capacity": self.partner_beyond_staff,
             },
             "project_assignment": line(self.project_assignment),
@@ -517,7 +517,7 @@ def person_readiness(officer) -> Readiness:
         partner_required=len(core) + partner_client,
         partner_assigned=core_assigned + client_assigned,
         partner_credited=core_assigned + min(client_assigned, partner_client),
-        partner_core_required=len(core),
+        partner_core_schools=len(core),
         partner_beyond_staff=partner_client,
         schools_staff_scheduled=officer.schools_staff_scheduled,
         schools_staff_and_partner=officer.schools_staff_and_partner,

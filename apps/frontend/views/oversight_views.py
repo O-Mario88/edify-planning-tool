@@ -1077,7 +1077,7 @@ def _monitor_kpis(totals, figures, *, monitor_url: str) -> list[dict]:
             # ... 20 still to assign" was two sums of different people.
             helper=f"{figures.partner_assignment.credited:,} of "
             f"{figures.partner_assignment.target:,} schools the Partner should "
-            f"hold ({figures.partner_core_required:,} Core, "
+            f"hold ({figures.partner_core_schools:,} Core, "
             f"{figures.partner_beyond_staff:,} beyond staff capacity) · "
             f"{figures.partner_assignment.remaining:,} still to assign · "
             f"{totals.partner_scheduled:,} partner activities scheduled · "
