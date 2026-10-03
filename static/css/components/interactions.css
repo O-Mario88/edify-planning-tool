@@ -44,20 +44,20 @@
   --edify-press-out: 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
   --edify-primary-action-fill: var(--brand-primary);
   --edify-primary-action-fill-hover: var(--brand-primary-hover);
-  --edify-primary-action-ink: var(--brand-primary-on-solid);
+  --edify-primary-action-ink: #ffffff;
   --edify-primary-action-border: var(--brand-primary);
   --edify-invert-fill: var(--brand-primary);
-  --edify-invert-fill-ink: var(--brand-primary-on-solid);
+  --edify-invert-fill-ink: #ffffff;
 }
 
 .theme-blue,
 .theme-dark {
   --edify-primary-action-fill: var(--edify-accent);
   --edify-primary-action-fill-hover: var(--edify-accent-hover);
-  --edify-primary-action-ink: var(--edify-on-accent);
+  --edify-primary-action-ink: #ffffff;
   --edify-primary-action-border: var(--edify-accent);
   --edify-invert-fill: var(--edify-accent);
-  --edify-invert-fill-ink: var(--edify-on-accent);
+  --edify-invert-fill-ink: #ffffff;
 }
 
 /* ── Who is a control ──────────────────────────────────────────────────────
@@ -73,18 +73,19 @@
   .edify-action-button.primary, .edify-primary-solid,
   .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
   .admin-button--primary, .ia-button--primary, .urgent-action--primary,
   .ad-action--primary, .agreement-action--primary,
+  .cpo-apply, .cxo-shortcut--primary, .upload-primary-action,
   .edify-session-dialog__primary, .mobile-sticky-actions__primary,
   .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
   [data-mobile-primary-action],
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
-  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
-  .bg-sky-600, .bg-sky-700
+  .bg-\[var\(--brand-primary\)\],
+  [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
 ):not(:disabled):not([aria-disabled="true"]) {
-  color: var(--edify-primary-action-ink) !important;
+  color: #ffffff !important;
   background-color: var(--edify-primary-action-fill) !important;
   border-color: var(--edify-primary-action-border) !important;
   text-shadow: none !important;
@@ -97,18 +98,20 @@
   .edify-action-button.primary, .edify-primary-solid,
   .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
   .admin-button--primary, .ia-button--primary, .urgent-action--primary,
   .ad-action--primary, .agreement-action--primary,
+  .cpo-apply, .cxo-shortcut--primary, .upload-primary-action,
   .edify-session-dialog__primary, .mobile-sticky-actions__primary,
   .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
   [data-mobile-primary-action],
   .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
   .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
-  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
-  .bg-sky-600, .bg-sky-700
-) :is(span, strong, small, svg, path, b, em, i) {
+  .bg-\[var\(--brand-primary\)\],
+  [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
   color: inherit !important;
+  fill: currentColor;
 }
 
 /* Primary on rest → deeper primary on hover. White ink is invariant. */
@@ -118,18 +121,19 @@
     .edify-action-button.primary, .edify-primary-solid,
     .school-record-action--schedule, .premium-button-primary,
     .pto-button--primary, .sp-button--primary, .spa-button--primary,
-    .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+    .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
     .admin-button--primary, .ia-button--primary, .urgent-action--primary,
     .ad-action--primary, .agreement-action--primary,
+    .cpo-apply, .cxo-shortcut--primary, .upload-primary-action,
     .edify-session-dialog__primary, .mobile-sticky-actions__primary,
     .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
     [data-mobile-primary-action],
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
-    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
-    .bg-sky-600, .bg-sky-700
+    .bg-\[var\(--brand-primary\)\],
+    [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
   ):hover:not(:disabled):not([aria-disabled="true"]) {
-    color: var(--edify-primary-action-ink) !important;
+    color: #ffffff !important;
     background-color: var(--edify-primary-action-fill-hover) !important;
     background-image: none !important;
     border-color: var(--edify-primary-action-fill-hover) !important;
@@ -140,18 +144,20 @@
     .edify-action-button.primary, .edify-primary-solid,
     .school-record-action--schedule, .premium-button-primary,
     .pto-button--primary, .sp-button--primary, .spa-button--primary,
-    .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+    .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
     .admin-button--primary, .ia-button--primary, .urgent-action--primary,
     .ad-action--primary, .agreement-action--primary,
+    .cpo-apply, .cxo-shortcut--primary, .upload-primary-action,
     .edify-session-dialog__primary, .mobile-sticky-actions__primary,
     .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
     [data-mobile-primary-action],
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
-    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
-    .bg-sky-600, .bg-sky-700
-  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i) {
+    .bg-\[var\(--brand-primary\)\],
+    [class~="bg-blue-500"], [class~="bg-blue-700"], [class~="bg-blue-800"], [class~="bg-blue-900"], [class~="bg-indigo-500"], [class~="bg-indigo-800"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"], [class~="bg-cyan-600"], [class~="bg-cyan-700"]
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
     color: inherit !important;
+    fill: currentColor;
   }
 
   /* White on rest → blue on hover. */
@@ -2313,7 +2319,9 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   white-space: nowrap !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: baseline !important;
@@ -2323,7 +2331,9 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   grid-template-columns: none !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata > div {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) > div {
   display: inline-flex !important;
   flex: 0 1 auto !important;
   align-items: baseline !important;
@@ -2336,23 +2346,31 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   grid-template-columns: none !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata :is(dt, dd) {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) :is(dt, dd) {
   margin: 0 !important;
   font-size: var(--edify-text-table-size) !important;
   line-height: 1.4 !important;
   white-space: normal !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata dt {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dt {
   color: var(--edify-text-muted) !important;
   font-weight: 500 !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata dd {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dd {
   font-weight: 600 !important;
 }
 
-:root main .core-school-row.core-school-row.school-record-row dl.school-record-row__metadata a[href]:not(#edify-filter-none) {
+:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
+  :is(.core-school-row, .cluster-card, .project-card, .school-record-row, .cluster-school-row, .planning-school-row, [data-project-card], [data-project-monitoring], tr.school-plan-table__details, tr.school-record-row)
+  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) a[href]:not(#edify-filter-none) {
   display: inline !important;
   min-block-size: 0 !important;
   min-inline-size: 0 !important;

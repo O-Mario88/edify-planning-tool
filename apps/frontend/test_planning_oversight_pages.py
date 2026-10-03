@@ -383,3 +383,62 @@ class RosterOpensOnWorkTest(OversightPageFixture):
         )
 
         self.assertEqual(response.context["default_officer"], self.james.id)
+
+
+class SpecialProjectsOversightTest(OversightPageFixture):
+    def test_ia_can_view_special_projects_tab_on_planning_oversight(self):
+        client = self.as_user(self.ia_user)
+        response = client.get(PL_URL, {"view": "projects"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Special Projects")
+        self.assertContains(response, "Fiscal year")
+        self.assertContains(response, "Planning stage")
+        self.assertContains(response, "Project status")
+        self.assertContains(response, "All schools")
+        self.assertContains(response, "Project schools")
+        self.assertContains(response, "Assigned to partner")
+        self.assertContains(response, "Activity scheduled")
+        self.assertContains(response, "data-project-status-filter")
+
+        # Lens tabs ordering: Planning Monitor -> Special Projects -> Execution & Completion
+        lens_tabs = response.context["lens_tabs"]
+        keys = [tab["key"] for tab in lens_tabs]
+        self.assertIn("projects", keys)
+        self.assertIn("monitor", keys)
+        self.assertIn("execution", keys)
+        self.assertEqual(keys.index("projects"), keys.index("monitor") + 1)
+        self.assertEqual(keys.index("execution"), keys.index("projects") + 1)
+
+    def test_country_oversight_workspace_no_longer_has_cpo_notice(self):
+        client = self.as_user(self.cd_user)
+        response = client.get(CD_URL)
+        self.assertEqual(response.status_code, 200)
+        # cpo-notice was moved from Country Planning Oversight to Planning Oversight Special Projects tab
+        self.assertNotContains(response, "data-cpo-project-tables")
+
+
+class ProjectCoordinatorSidebarTest(TestCase):
+    def test_project_capacity_menu_restored_in_sidebar(self):
+        from apps.accounts.models import StaffProfile, User
+        from apps.core.navigation import build_sidebar_for_user
+        from apps.core.rbac import EdifyRole
+
+        user = User.objects.create_user(
+            email="pc@test.com",
+            name="Project Coordinator",
+            roles=[EdifyRole.PROJECT_COORDINATOR.value],
+            active_role=EdifyRole.PROJECT_COORDINATOR.value,
+        )
+        StaffProfile.objects.create(user=user, title="Project Coordinator")
+
+        sidebar = build_sidebar_for_user(user, "/projects")
+        daily_group = next((g for g in sidebar if g["label"] == "DAILY"), None)
+        self.assertIsNotNone(daily_group, "DAILY group should exist for Project Coordinator")
+        item_keys = [item["page_key"] for item in daily_group["items"]]
+        self.assertIn("project_capacity", item_keys)
+        capacity_item = next(
+            item for item in daily_group["items"] if item["page_key"] == "project_capacity"
+        )
+        self.assertEqual(capacity_item["url"], "/projects/capacity")
+        self.assertEqual(capacity_item["label"], "Project Capacity")
+

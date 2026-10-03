@@ -270,7 +270,7 @@
   min-inline-size: 7.5rem;
 }
 .cpo-apply:hover { background: var(--cpo-accent-hover); border-color: var(--cpo-accent-hover); }
-:root:is(.theme-dark, .theme-blue) .cpo-apply { color: #062a20; }
+:root:is(.theme-dark, .theme-blue) .cpo-apply { color: #ffffff; }
 .cpo-reset {
   background: var(--cpo-surface);
   color: var(--cpo-ink);
@@ -1367,7 +1367,7 @@
   color: #fff;
 }
 .cxo-shortcut--primary:hover { background: color-mix(in srgb, var(--cxo-total) 88%, black); }
-:root:is(.theme-dark, .theme-blue) .cxo-shortcut--primary { color: #0b1a33; }
+:root:is(.theme-dark, .theme-blue) .cxo-shortcut--primary { color: #ffffff; }
 
 /* The table. */
 .cxo-drill-bar {
