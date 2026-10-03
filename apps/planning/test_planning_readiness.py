@@ -257,12 +257,14 @@ class LedgerLineTests(SimpleTestCase):
         )
 
     def test_what_the_rulebook_leaves_out_says_why(self):
-        self.assertEqual(
-            self.key(
-                activity_type="school_visit_ssa_collection", purpose_type="ssa_support"
-            ),
-            "data_collection",
-        )
+        # SSA Support is a counted visit when staff schedule it, and counted
+        # nowhere when it is a Partner's (owner, 2026-10-03).
+        ssa = {
+            "activity_type": "school_visit_ssa_collection",
+            "purpose_type": "ssa_support",
+        }
+        self.assertEqual(self.key(**ssa), "staff_visit")
+        self.assertEqual(self.key(**ssa, delivery_type="partner"), "data_collection")
         self.assertEqual(
             self.key(activity_type="donor_visit", purpose_type="donor_visit"),
             "outreach",
