@@ -1759,10 +1759,6 @@ NAV_FOLDS: dict[str, dict[str, dict]] = {
             "folds": ("todos", "my_actions"),
             "paths": ("/todos", "/actions/mine"),
         },
-        "projects": {
-            "folds": ("project_capacity",),
-            "paths": ("/projects/capacity",),
-        },
         "project_monitoring": {
             "folds": ("analytics",),
             "paths": ("/projects/analytics",),
