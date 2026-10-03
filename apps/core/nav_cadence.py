@@ -219,6 +219,7 @@ ROLE_RANK: dict[str, dict[str, tuple[int, int]]] = {
     },
     "PROJECT_COORDINATOR": {
         "projects": (DAILY, 15),
+        "project_capacity": (DAILY, 20),
         "planning": (DAILY, 25),
         "schools": (WEEKLY, 10),
         "coverage": (WEEKLY, 15),

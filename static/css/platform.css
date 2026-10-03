@@ -390,19 +390,19 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   .hcos-button--primary, .admin-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
   button.bg-blue-600, a.bg-blue-600) {
-  color: var(--edify-on-accent) !important;
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent) !important;
   background-image: var(--edify-button-primary-treatment) !important;
   border: 1px solid rgba(8, 76, 137, .36) !important;
   box-shadow: 0 10px 20px -12px rgba(8, 76, 137, .28), inset 0 1px 0 rgba(255,255,255,.15) !important;
 }
-
 :root:not(.theme-blue):not(.theme-dark) :where(.btn-primary, .edify-action-button.primary,
   .premium-button-primary, .pto-button--primary, .sp-button--primary,
   .spa-button--primary, .spp-button--primary, .tt-button--primary,
   .hcos-button--primary, .admin-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
   button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(180deg, var(--edify-brand-primary-hover) 0%, var(--edify-brand-primary-active) 100%) !important;
   box-shadow: var(--edify-shadow-md), inset 0 1px 0 rgba(255,255,255,.15) !important;
@@ -521,15 +521,15 @@ main :is(a, button, input, summary):is(.btn, .edify-action-button, .btn-premium-
 
 main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule) {
-  color: var(--edify-on-accent) !important;
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent) !important;
   background-image: none !important;
   border: 1px solid var(--edify-accent) !important;
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--edify-accent) 44%, transparent) !important;
 }
-
 main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule):hover:not(:disabled) {
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: none !important;
 }
@@ -3222,97 +3222,50 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row:not(.is-expanded) .school-record-row__metadata,
 .school-record-row:not(.is-expanded) .school-record-row__details { display: none; }
 
-/* Cluster metadata stays visible at every viewport width. School records
-   retain their disclosure behavior. On small screens, each label/value pair
-   wraps within the card while expansion reveals the cluster's school list
-   and detailed SSA breakdown. */
-@media (max-width: 63.999rem) {
-  .cluster-card .cluster-card__metadata,
-  .school-record-row.is-expanded .school-record-row__metadata {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.35rem 1.15rem;
-    margin-block-start: 0.6rem;
-    max-inline-size: none;
-  }
-
-  /* Each label+value is one unit. `inline-flex` keeps them on the same line
-     and `flex: 0 1 auto` lets a long pair shrink rather than push the row
-     wider than the card. */
-  .cluster-card .cluster-card__metadata > div,
-  .school-record-row.is-expanded .school-record-row__metadata > div {
-    display: inline-flex;
-    align-items: baseline;
-    flex: 0 1 auto;
-    gap: 0.3rem;
-    min-inline-size: 0;
-  }
-
-  /* The label never breaks away from the value it introduces. */
-  .cluster-card .cluster-card__metadata dt,
-  .school-record-row.is-expanded .school-record-row__metadata dt {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    /* Quiet label, strong value: the pair separates by weight and colour
-       rather than by case. */
-    color: var(--edify-text-muted);
-    font-weight: var(--edify-text-label-weight);
-    text-transform: none;
-    letter-spacing: normal;
-  }
-
-  .cluster-card .cluster-card__metadata dd,
-  .school-record-row.is-expanded .school-record-row__metadata dd {
-    font-weight: var(--edify-text-title-weight);
-  }
-
-  .cluster-card .cluster-card__metadata dd,
-  .school-record-row.is-expanded .school-record-row__metadata dd {
-    /* `break-word`, deliberately between the two extremes. `anywhere` breaks
-       eagerly and is what split the cluster leader's phone number across
-       three lines; `normal` cannot break at all, so an address written with
-       no spaces — "Sembabule,Nakasenyi,Kabale" — ran straight past the card
-       edge. `break-word` breaks a token ONLY when it would otherwise
-       overflow, so the phone number stays whole and the address wraps. */
-    overflow-wrap: break-word;
-    word-break: normal;
-    min-inline-size: 0;
-  }
+/* Cluster metadata stays visible at every viewport width, flowing as "Label: value"
+   pairs that wrap seamlessly, matching the core school metadata view rhythm.
+   School records retain their disclosure behavior. */
+.cluster-card .cluster-card__metadata,
+.school-record-row.is-expanded .school-record-row__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.15rem;
+  margin-block-start: 0.6rem;
+  max-inline-size: none;
 }
 
-/* A cluster card's fifteen facts line up (2026-10-01). On a desktop they ran
-   on as wrapped text — "Location: Mukono, Central Division  Cluster Leader:
-   Not Assigned  Cluster Leader Phone: Not Entered …" — so each pair started
-   wherever the one before it ended, and no two cards put "Avg SSA" in the same
-   place. They are still "Label: value" pairs that wrap (owner, 2026-09-27),
-   but in columns: every pair takes one cell of a grid whose columns are the
-   same on every card, so the eye runs down a column to compare clusters. A
-   phone keeps the flowing rows above. */
-@media (min-width: 64rem) {
-  main .cluster-card .cluster-card__metadata {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    align-items: baseline;
-    gap: 0.4rem 1.5rem;
-  }
+/* Each label+value is one unit. `inline-flex` keeps them on the same line
+   and `flex: 0 1 auto` lets a long pair shrink rather than push the row
+   wider than the card. */
+.cluster-card .cluster-card__metadata > div,
+.school-record-row.is-expanded .school-record-row__metadata > div {
+  display: inline-flex;
+  align-items: baseline;
+  flex: 0 1 auto;
+  gap: 0.3rem;
+  min-inline-size: 0;
+}
 
-  main .cluster-card .cluster-card__metadata > div {
-    display: flex;
-    align-items: baseline;
-    gap: 0.35rem;
-    min-inline-size: 0;
-  }
+/* The label never breaks away from the value it introduces. */
+.cluster-card .cluster-card__metadata dt,
+.school-record-row.is-expanded .school-record-row__metadata dt {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  /* Quiet label, strong value: the pair separates by weight and colour
+     rather than by case. */
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-label-weight);
+  text-transform: none;
+  letter-spacing: normal;
+}
 
-  main .cluster-card .cluster-card__metadata dt {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
-  main .cluster-card .cluster-card__metadata dd {
-    min-inline-size: 0;
-    overflow-wrap: break-word;
-  }
+.cluster-card .cluster-card__metadata dd,
+.school-record-row.is-expanded .school-record-row__metadata dd {
+  font-weight: var(--edify-text-title-weight);
+  overflow-wrap: break-word;
+  word-break: normal;
+  min-inline-size: 0;
 }
 
 /* Hiding the metadata alone barely moved the row: at 1280px it went 151px to

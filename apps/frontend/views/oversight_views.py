@@ -387,6 +387,7 @@ def _lens_tabs(
             "Team Plan" if base_url == TEAM_OVERSIGHT_PATH else "Country Plan",
         ),
         ("monitor", "Planning Monitor"),
+        ("projects", "Special Projects"),
         ("execution", "Execution & Completion"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
@@ -873,8 +874,107 @@ def planning_monitor_send_view(request):
 
 _MONITOR_TEMPLATES = {
     "monitor": "partials/oversight/monitor_workspace.html",
+    "projects": "partials/oversight/special_projects_workspace.html",
     "execution": "partials/oversight/execution_workspace.html",
 }
+
+
+def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
+    """Special Projects oversight (owner, 2026-10-03): every live project and
+    the schools assigned to them, with their planning and delivery status."""
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.projects import monitoring
+
+    fy = (
+        (request.GET.get("fy") or "").strip()
+        or period.get("fy")
+        or get_operational_fy()
+    )
+    selected_project = (request.GET.get("project") or "").strip()
+    stages = dict(monitoring.STAGE_FILTERS)
+    requested_stage = (request.GET.get("stage") or "").strip()
+    selected_stage = requested_stage if requested_stage in stages else ""
+    selected_project_status = (request.GET.get("project_status") or "schools").strip()
+
+    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
+    project_ids = [row.id for row in result.rows]
+    if (
+        selected_project
+        and selected_project != "all"
+        and selected_project not in project_ids
+    ):
+        selected_project = ""
+
+    # Filter school rows if Project status is narrowed
+    if selected_project_status == "partner":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.partner_name
+                or getattr(s, "has_partner", False)
+                or s.plan_stage
+                in (
+                    monitoring.PLAN_PARTNER_AWAITING,
+                    monitoring.PLAN_PARTNER_SCHEDULED,
+                    monitoring.PLAN_PARTNER_RETURNED,
+                )
+            ]
+    elif selected_project_status == "scheduled":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.activity_date
+                or s.next_date
+                or s.status_key
+                in (
+                    monitoring.STATUS_SCHEDULED,
+                    monitoring.STATUS_IN_PROGRESS,
+                    monitoring.STATUS_AWAITING_VERIFICATION,
+                    monitoring.STATUS_COMPLETED,
+                )
+                or s.execution != monitoring.EXEC_NONE
+            ]
+
+    project_tabs = [
+        {
+            "key": "all",
+            "label": "All Projects",
+            "count": sum(len(row.school_rows) for row in result.rows),
+            "is_active": selected_project in ("", "all"),
+        }
+    ] + [
+        {
+            "key": row.id,
+            "label": row.name,
+            "count": len(row.school_rows),
+            "is_active": row.id == selected_project,
+        }
+        for row in result.rows
+    ]
+
+    if selected_project in ("", "all"):
+        active_rows = result.rows
+    else:
+        active_rows = [row for row in result.rows if row.id == selected_project]
+
+    period_val = period.get("period") or "fy"
+    table_query = f"fy={fy}&period={period_val}"
+
+    return {
+        "result": result,
+        "rows": active_rows,
+        "project_tabs": project_tabs,
+        "selected_project": selected_project or "all",
+        "stage_options": monitoring.STAGE_FILTERS,
+        "selected_stage": selected_stage,
+        "selected_project_status": selected_project_status,
+        "fy": fy,
+        "fy_options": fy_options(),
+        "table_query": table_query,
+        "base_url": base_url,
+    }
 
 
 def _execution_context(request, period: dict, *, base_url: str) -> dict:
@@ -1741,6 +1841,13 @@ def team_planning_oversight_view(request):
     # IA reads the people monitors here, as tabs beside the Team Plan (owner,
     # 2026-09-30).
     can_view_monitors = can_view_planning and monitors_on_oversight(request.user)
+    can_view_projects = can_view_planning and (
+        monitors_on_oversight(request.user)
+        or (
+            getattr(request.user, "active_role", "")
+            in ("ImpactAssessment", "CountryDirector", "Admin")
+        )
+    )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     # The people monitors moved to their own page (owner, 2026-09-29).
     if requested_view in ("monitor", "execution") and not can_view_monitors:
@@ -1756,7 +1863,7 @@ def team_planning_oversight_view(request):
     active_view = (
         requested_view
         if requested_view
-        in {"targets", "coverage", "portfolio", "monitor", "execution"}
+        in {"targets", "coverage", "portfolio", "monitor", "projects", "execution"}
         else "planning"
     )
     if active_view == "targets" and not can_view_targets:
@@ -1764,6 +1871,8 @@ def team_planning_oversight_view(request):
     if active_view == "coverage" and not can_view_coverage:
         active_view = "planning"
     if active_view == "portfolio" and not can_view_portfolio:
+        active_view = "planning"
+    if active_view == "projects" and not can_view_projects:
         active_view = "planning"
     if active_view in ("planning", "coverage", "portfolio") and not can_view_planning:
         active_view = "targets"
@@ -1773,6 +1882,7 @@ def team_planning_oversight_view(request):
         for key, allowed in (
             ("planning", can_view_planning),
             ("monitor", can_view_monitors),
+            ("projects", can_view_projects),
             ("execution", can_view_monitors),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
@@ -1808,10 +1918,13 @@ def team_planning_oversight_view(request):
 
     # The people monitors read the reporting line, not the period's planning
     # items, so they are answered before `build_items` as well.
-    if active_view in ("monitor", "execution"):
-        lens_context = (
-            _monitor_context if active_view == "monitor" else _execution_context
-        )
+    if active_view in ("monitor", "projects", "execution"):
+        if active_view == "monitor":
+            lens_context = _monitor_context
+        elif active_view == "projects":
+            lens_context = _special_projects_context
+        else:
+            lens_context = _execution_context
         context = {
             **period,
             **lens_context(request, period, base_url=TEAM_OVERSIGHT_PATH),

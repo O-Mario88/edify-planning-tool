@@ -593,6 +593,7 @@
 .drawer-body .text-slate-600, .drawer-body .text-slate-700 { color: var(--edify-text) !important; }
 .drawer-body .text-slate-800, .drawer-body .text-slate-900 { color: var(--edify-text) !important; }
 
+
 /* Cards/sections inside drawers */
 .drawer-body .bg-white,
 .drawer-body .bg-slate-50 {
@@ -1617,14 +1618,14 @@
 }
 
 .edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
-  color: var(--edify-on-accent, #fff) !important;
+  color: #ffffff !important;
   border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
 }
 
 .edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
-  color: var(--edify-on-accent, #fff) !important;
+  color: #ffffff !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
 }
@@ -1697,14 +1698,14 @@
 }
 
 .edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
-  color: var(--edify-on-accent, #fff) !important;
+  color: #ffffff !important;
   border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
   background-color: var(--edify-accent) !important;
   background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
 }
 
 .edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
-  color: var(--edify-on-accent, #fff) !important;
+  color: #ffffff !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
 }

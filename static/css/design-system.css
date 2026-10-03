@@ -708,6 +708,7 @@
   --edify-accent: var(--brand-primary);
   --edify-accent-hover: var(--brand-primary-hover);
   /* Per theme — see the note beside the first definition. */
+  --text-on-brand: #ffffff;
   --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
@@ -890,6 +891,7 @@ html.theme-blue body {
   --edify-accent: var(--brand-primary);
   --edify-accent-hover: var(--brand-primary-hover);
   /* Per theme — see the note beside the first definition. */
+  --text-on-brand: #ffffff;
   --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);

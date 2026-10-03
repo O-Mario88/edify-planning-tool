@@ -3262,11 +3262,13 @@
   border-color: rgba(8, 76, 137, 0.36);
   background-color: var(--edify-accent);
   background-image: var(--edify-button-primary-treatment);
+  color: #fff !important;
   box-shadow: 0 10px 20px -12px rgba(8, 76, 137, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .tt-button--recovery:hover {
   background-color: var(--edify-accent-hover);
   background-image: linear-gradient(180deg, var(--edify-brand-primary-hover) 0%, var(--edify-brand-primary-active) 100%);
+  color: #fff !important;
   box-shadow: var(--edify-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }

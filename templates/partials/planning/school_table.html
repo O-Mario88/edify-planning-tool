@@ -3,7 +3,7 @@
 
   {% if active_tab == 'clusters' %}
     <!-- Clusters Tab Cards -->
-    <div class="p-4 bg-slate-50/30 space-y-4">
+    <div class="p-4 bg-slate-50/30 space-y-4" data-clusters-list>
       {% if clusters %}
         {% for cluster in clusters %}
           {% include "partials/clusters/cluster_card.html" with cluster=cluster can_plan_clusters=can_plan_clusters %}

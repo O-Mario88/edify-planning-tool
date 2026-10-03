@@ -49,17 +49,6 @@ person who planned it; a school's coverage for whoever holds the school
     {% endfor %}
   </section>
 
-  {% comment %}The projects have no card of their own: these are their three
-  consolidated tables, for Impact Assessment and the Country Director (owner,
-  2026-10-02: "all the schools assigned to project, assigned by project
-  coordinators to partners and scheduled").{% endcomment %}
-  <p class="cpo-notice" role="navigation" aria-label="Project tables" data-cpo-project-tables>
-    Special Projects:
-    <a class="cpo-link" href="/country-planning-oversight/table/projects?{{ query }}">Project Schools</a> ·
-    <a class="cpo-link" href="/country-planning-oversight/table/project-partners?{{ query }}">Assigned to Partners</a> ·
-    <a class="cpo-link" href="/country-planning-oversight/table/project-activities?{{ query }}">Activities Scheduled</a>
-  </p>
-
   {% include "partials/country_oversight/_types.html" %}
 
   {% include "partials/country_oversight/_charts.html" %}

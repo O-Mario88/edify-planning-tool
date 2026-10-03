@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **608**
+Components and application partials: **609**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -474,6 +474,7 @@ Components and application partials: **608**
 | `partials/oversight/planning_monitor_embed.html` | application-partial | Reusable planning monitor embed interface primitive | canonical; default | inherits containing page contract | accessible name and label | /planning-monitor/ | 0 |
 | `partials/oversight/portfolio_workspace.html` | application-partial | Reusable portfolio workspace interface primitive | danger, executive, {% if lead.coverage is None %}neutral{% elif lead.coverage >= 80 %}success{% elif lead.coverage >= 50 %}warning{% else %}danger{% endif %}; default | explicit responsive contract | accessible name and label | /country-map/<br>/country-planning-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/resolve_return_drawer.html` | application-partial | Reusable resolve return drawer interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label | /partner-oversight/resolve<br>/projects/monitoring/resolve | 0 |
+| `partials/oversight/special_projects_workspace.html` | application-partial | Reusable special projects workspace interface primitive | danger, {{ school.status_tone }}; default, empty, open | explicit responsive contract | accessible name and label | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/team_country_workspace.html` | application-partial | Reusable team country workspace interface primitive | executive, info; default | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/withdrawal_drawer.html` | application-partial | Reusable withdrawal drawer interface primitive | info; default, open | explicit responsive contract | accessible name and label | /partner-oversight/withdraw<br>/projects/monitoring/withdraw | 0 |
 | `partials/partner/invoice_drawer.html` | application-partial | Reusable invoice drawer interface primitive | danger; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/invoices/new | 0 |

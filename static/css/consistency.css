@@ -579,23 +579,25 @@ main table tbody tr:hover,
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
-  .admin-button--primary
+  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary,
+
 ) {
-  color: var(--brand-primary-on-solid) !important;
+  color: var(--brand-primary-on-solid, #ffffff) !important;
   background-color: var(--brand-primary) !important;
   background-image: none !important;
   border: 1px solid var(--brand-primary) !important;
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
-
 :root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
-  .admin-button--primary
+  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary,
+
 ):hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--brand-primary-on-solid, #ffffff) !important;
   background-color: var(--brand-primary-hover) !important;
   border-color: var(--brand-primary-hover) !important;
   box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
@@ -611,8 +613,8 @@ main table tbody tr:hover,
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
-  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
-  .admin-button--primary
+  .spp-button--primary, .tt-button--primary, .tt-button--recovery, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary
 ):is(:disabled, [aria-disabled="true"]) {
   color: var(--edify-text-disabled) !important;
   background-color: var(--edify-surface-muted) !important;
@@ -674,13 +676,12 @@ main table tbody tr:hover,
   [class~="bg-blue-600"], [class~="bg-blue-700"],
   [class~="bg-indigo-600"], [class~="bg-indigo-700"]
 ) {
-  color: var(--brand-primary-on-solid) !important;
+  color: var(--brand-primary-on-solid, #ffffff) !important;
   background-color: var(--brand-primary) !important;
   background-image: none !important;
   border: 1px solid var(--brand-primary) !important;
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
-
 :root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
   .fc-button-primary,
@@ -688,6 +689,7 @@ main table tbody tr:hover,
   [class~="bg-blue-600"], [class~="bg-blue-700"],
   [class~="bg-indigo-600"], [class~="bg-indigo-700"]
 ):hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--brand-primary-on-solid, #ffffff) !important;
   background-color: var(--brand-primary-hover) !important;
   border-color: var(--brand-primary-hover) !important;
 }
@@ -1554,7 +1556,7 @@ main .settings-detail-tile {
 
 /* Blue primary actions stay unmistakable through white-on-Edify-blue contrast,
    not gradients or elevation. Secondary actions use the card/filter surface. */
-.theme-blue :is(
+:is(.theme-blue, .theme-dark) :is(
   .btn-primary,
   .btn-premium-primary,
   .edify-action-button.primary,
@@ -1564,8 +1566,10 @@ main .settings-detail-tile {
   .spa-button--primary,
   .spp-button--primary,
   .tt-button--primary,
+  .tt-button--recovery,
   .hcos-button--primary,
   .admin-button--primary,
+  .ia-button--primary,
   button.bg-indigo-600,
   a.bg-indigo-600,
   button.bg-indigo-700,
@@ -1579,7 +1583,7 @@ main .settings-detail-tile {
   button.bg-cyan-600,
   a.bg-cyan-600
 ) {
-  color: var(--edify-on-accent) !important;
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent) !important;
   background-image: none !important;
   border-color: var(--edify-accent) !important;
@@ -1591,7 +1595,7 @@ main .settings-detail-tile {
   transform: none !important;
 }
 
-.theme-blue :is(
+:is(.theme-blue, .theme-dark) :is(
   .btn-primary,
   .btn-premium-primary,
   .edify-action-button.primary,
@@ -1601,8 +1605,10 @@ main .settings-detail-tile {
   .spa-button--primary,
   .spp-button--primary,
   .tt-button--primary,
+  .tt-button--recovery,
   .hcos-button--primary,
   .admin-button--primary,
+  .ia-button--primary,
   button.bg-indigo-600,
   a.bg-indigo-600,
   button.bg-indigo-700,
@@ -1616,6 +1622,7 @@ main .settings-detail-tile {
   button.bg-cyan-600,
   a.bg-cyan-600
 ):hover:not(:disabled) {
+  color: var(--edify-on-accent, #ffffff) !important;
   background-color: var(--edify-accent-hover) !important;
   background-image: none !important;
   border-color: var(--edify-accent-hover) !important;
@@ -1625,7 +1632,7 @@ main .settings-detail-tile {
 
 /* A nested legacy utility must not turn a primary action label dark again.
    This covers icons and helper spans inside every shared primary family. */
-.theme-blue :is(
+:is(.theme-blue, .theme-dark) :is(
   .btn-primary,
   .btn-premium-primary,
   .edify-action-button.primary,
@@ -1635,8 +1642,10 @@ main .settings-detail-tile {
   .spa-button--primary,
   .spp-button--primary,
   .tt-button--primary,
+  .tt-button--recovery,
   .hcos-button--primary,
   .admin-button--primary,
+  .ia-button--primary,
   button.bg-indigo-600,
   a.bg-indigo-600,
   button.bg-indigo-700,
@@ -1649,8 +1658,9 @@ main .settings-detail-tile {
   a.bg-sky-700,
   button.bg-cyan-600,
   a.bg-cyan-600
-) :is(span, strong, small, svg) {
-  color: var(--edify-on-accent) !important;
+) :is(span, strong, small, svg, path, b, em, i, p, div, label, *) {
+  color: var(--edify-on-accent, #ffffff) !important;
+  fill: currentColor;
 }
 
 /* Card CTAs size to their label instead of becoming a heavy full-width bar.
@@ -1938,13 +1948,14 @@ main .help-stat-list dt {
 /* IA hero actions now use the same primary/secondary button treatments as the
    rest of the platform instead of the removed navy banner's inverse palette. */
 main .ia-hero .ia-button--primary {
-  color: var(--edify-on-accent) !important;
+  color: #ffffff !important;
   background: var(--edify-accent) !important;
   border-color: var(--edify-accent) !important;
   box-shadow: none !important;
 }
 
 main .ia-hero .ia-button--primary:hover {
+  color: #ffffff !important;
   background: var(--edify-accent-hover) !important;
   border-color: var(--edify-accent-hover) !important;
 }

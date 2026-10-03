@@ -4,14 +4,14 @@
 
 {% block title %}Planning Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15">{% if request.GET.followup %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15">{% if request.GET.followup or active_oversight_view == "projects" %}
 <link rel="stylesheet" href="{% static 'css/pages/country-oversight.css' %}?v=20261003workload2">{% endif %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   {% page_header title="Planning Oversight" %}
-    {% slot description %}{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}{% endslot %}
+    {% slot description %}{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif active_oversight_view == "monitor" %}Each Programme Lead's and CCEO's year against the visits it should hold — 280 and 560 — their partner work, the schools planned for training, and the schools nobody has planned for yet.{% elif active_oversight_view == "projects" %}Every live project and the schools assigned to it: whether planned by the coordinator or handed to a partner and scheduled, whether the work happened, and whether its focus SSA interventions moved.{% elif active_oversight_view == "execution" %}Each Programme Lead's and CCEO's plan as it is delivered, completed with its Salesforce ID and form, and verified — and what is past its date.{% elif active_oversight_view == "portfolio" %}{% if portfolio_is_country %}Every school in the country portfolio{% else %}Every school your team holds{% endif %}, under the Programme Lead and the CCEO who hold it — and what is planned on each.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}{% endslot %}
   {% slot aside %}
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
@@ -67,6 +67,8 @@
         {% include "partials/oversight/portfolio_workspace.html" %}
       {% elif active_oversight_view == "monitor" %}
         {% include "partials/oversight/monitor_workspace.html" %}
+      {% elif active_oversight_view == "projects" %}
+        {% include "partials/oversight/special_projects_workspace.html" %}
       {% elif active_oversight_view == "execution" %}
         {% include "partials/oversight/execution_workspace.html" %}
       {% elif active_oversight_view == "coverage" %}

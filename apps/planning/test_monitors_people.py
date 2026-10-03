@@ -403,6 +403,7 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
             [
                 ("planning", "Team Plan"),
                 ("monitor", "Planning Monitor"),
+                ("projects", "Special Projects"),
                 ("execution", "Execution & Completion"),
                 ("portfolio", "Country Portfolio"),
                 ("coverage", "Schools & Coverage"),
@@ -411,6 +412,7 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
         )
         body = response.content.decode()
         self.assertIn('href="/team-planning-oversight/?view=monitor"', body)
+        self.assertIn('href="/team-planning-oversight/?view=projects"', body)
         self.assertIn('href="/team-planning-oversight/?view=execution"', body)
         # The page of its own is gone from their sidebar.
         self.assertNotIn('href="/planning-monitor/"', body)

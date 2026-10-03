@@ -171,16 +171,24 @@
 }
 
 .ia-button--primary {
-  background: #fff;
-  color: #18313b;
+  background-color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #ffffff;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
 }
 
 .ia-button--primary:hover {
-  background: #edf7f3;
+  background-color: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+  color: #ffffff;
 }
 
 .ia-button--primary span {
+  color: inherit;
+}
+
+.ia-button--primary span.badge,
+.ia-button--primary [data-badge] {
   display: inline-grid;
   min-width: 1.25rem;
   min-height: 1.25rem;
