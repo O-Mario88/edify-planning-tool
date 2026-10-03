@@ -3,6 +3,8 @@
 {% load static %}
 
 {% block title %}My Plan — Edify Command Center{% endblock %}
+{# A Core School row's V1..V4 / T1..T4 number is the filled mark the Core Schools list shows: completed green, planned blue (owner, 2026-10-03; core-progress.css). #}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/core-progress.css' %}?v=20261004marks1">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="workday">

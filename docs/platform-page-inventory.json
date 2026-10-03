@@ -9776,7 +9776,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6236,
+      "bytes": 6383,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9797,7 +9797,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6043,
+      "bytes": 6187,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -63088,7 +63088,9 @@
       "page_id": "UI-PAGE-81D22F3012",
       "page_title": "My Plan",
       "page_type": "operational-queue",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/core-progress.css"
+      ],
       "permission_key": "my_plan",
       "primary_action": "Send Invoice",
       "primary_user_decision": "Which queued record should be handled next?",
