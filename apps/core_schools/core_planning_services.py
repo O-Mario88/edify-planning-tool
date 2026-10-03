@@ -182,7 +182,10 @@ def core_visit_q(prefix: str = ""):
     """
     from django.db.models import Q
 
-    from apps.core_schools.package_credit import NON_PACKAGE_VISIT_PURPOSES
+    from apps.core_schools.package_credit import (
+        NON_PACKAGE_VISIT_PURPOSES,
+        staff_data_collection_q,
+    )
 
     slot_activity_ids = CoreActivitySlot.objects.filter(
         activity_type="visit", activity_id__isnull=False
@@ -196,7 +199,11 @@ def core_visit_q(prefix: str = ""):
             | Q(**{f"{prefix}id__in": slot_activity_ids})
         )
         & Q(**{f"{prefix}cluster__isnull": True})
-        & ~Q(**{f"{prefix}purpose_type__in": sorted(NON_PACKAGE_VISIT_PURPOSES)})
+        # Staff's own SSA Support is a package visit (owner, 2026-10-03).
+        & (
+            ~Q(**{f"{prefix}purpose_type__in": sorted(NON_PACKAGE_VISIT_PURPOSES)})
+            | staff_data_collection_q(prefix)
+        )
     )
 
 

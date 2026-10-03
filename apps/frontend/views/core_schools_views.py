@@ -809,8 +809,8 @@ def core_schedule_visit_action(request):
             )
         if not purpose_of_visit:
             # An unnamed visit is read as SSA Support, as it always was. It
-            # is data collection, which is no longer package work (owner,
-            # 2026-10-02), so it is booked as itself below.
+            # is booked as itself below, and takes its package slot when it
+            # is saved (owner, 2026-10-03).
             purpose_of_visit = "ssa_support"
         if purpose_of_visit in NON_PACKAGE_VISIT_PURPOSES:
             return _schedule_core_outreach_visit(
@@ -990,10 +990,12 @@ def _schedule_core_outreach_visit(
     """A donor, content/story, invitation or social visit, or a data
     collection (SSA Support) visit, at a Core School.
 
-    Not package work (owner, 2026-09-30; data collection since 2026-10-02):
-    it takes none of the package's four visits, is costed as its own kind of
-    visit rather than as a Core Visit, and has no limit — the same visit a
-    client school gets from the Planning drawer. It used to be booked as a
+    Booked as its own kind of visit, costed as itself rather than as a Core
+    Visit, and never refused — the same visit a client school gets from the
+    Planning drawer. A donor, story, invitation or social visit takes none of
+    the package's four visits (owner, 2026-09-30). An SSA Support visit staff
+    schedule IS a package visit (owner, 2026-10-03): it takes the next open
+    visit slot when it is saved (apps.core_schools.package_credit). It used to be booked as a
     ``core_visit`` that took a V1..V4 slot, so two donor visits could read as
     half the package delivered.
     """
