@@ -1270,18 +1270,23 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="cpo_partner_planning",
         label="Partner Planning",
         definition=(
-            "Work Partners have dated themselves, against the work staff "
-            "assigned to Partners. Staff assign a school and the Partner sets "
-            "the date: nothing counts as Partner planned until a Partner does, "
-            "and a day staff chose for a Partner is assigned, not planned."
+            "Visits Partners have dated themselves, against the Partner's "
+            "target: two visits at each Core school and one at each Client, "
+            "Core Trained and Core Graduate school beyond staff capacity "
+            "(280 a Programme Lead, 560 a CCEO). Staff assign a school and the "
+            "Partner sets the date: nothing counts as Partner planned until a "
+            "Partner does, and a day staff chose for a Partner is assigned, "
+            "not planned."
         ),
-        question="How much of what staff handed to Partners have Partners dated?",
+        question="How much of the Partner's target have Partners dated?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        denominator="Work staff assigned to Partners (dated or not)",
+        denominator=(
+            "Core schools x 2, plus the schools beyond their holders' staff capacity"
+        ),
         service="apps.planning.country_oversight.service.kpis",
         source_models=("partners.PartnerAssignment", "activities.Activity"),
-        numerator="Partner work the Partner has put a date on",
+        numerator="Visit slots a Partner has put a date on",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's country portfolio",

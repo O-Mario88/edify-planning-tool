@@ -253,12 +253,25 @@ def own_workload(principal, fy: str) -> dict | None:
     }
 
 
+def own_workload_or_none(principal, fy: str | None = None) -> dict | None:
+    """``own_workload`` for a page that only says it beside its own content:
+    the operational year unless one is given, and never the reason the page
+    fails."""
+    from apps.core.fy import get_operational_fy
+
+    try:
+        return own_workload(principal, str(fy or get_operational_fy()))
+    except Exception:  # noqa: BLE001 - a summary line, never the page
+        return None
+
+
 __all__ = [
     "CORE_TYPES",
     "PARTNER_ONLY_STATUSES",
     "VisitTally",
     "ceiling_notice",
     "own_workload",
+    "own_workload_or_none",
     "counted_visits",
     "delivered_statuses",
     "live_statuses",

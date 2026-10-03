@@ -2698,6 +2698,11 @@ def special_projects_planning_view(request):
             )
         return response
 
+    # Project visits come out of the same 280 or 560 as every other visit
+    # (owner, 2026-10-03): the planner's own share-out, as on Planning.
+    from apps.planning import staff_plan
+
+    context["workload"] = staff_plan.own_workload_or_none(request.user)
     if context["is_htmx"]:
         return render(request, "partials/projects/planning_workspace.html", context)
     # One persistent search: the top bar, bound to this workspace.
@@ -4521,6 +4526,7 @@ def project_monitoring_view(request):
             "selected_project": selected_project,
             "stage_options": monitoring.STAGE_FILTERS,
             "selected_stage": selected_stage,
+            "workload": _own_workload(request, fy),
             "fy": fy,
             "fy_options": fy_options(),
             # The country's projects as flat, exportable tables, for whoever
@@ -4803,3 +4809,11 @@ def project_monitoring_resolve_submit_view(request):
         "Decision recorded"
         + (" — reassigned." if result.get("replacementAssignmentId") else "."),
     )
+
+
+def _own_workload(request, fy=None):
+    """The reader's own visits against their 280 or 560, for a project page
+    (``staff_plan.own_workload``); None for a role that plans no visits."""
+    from apps.planning import staff_plan
+
+    return staff_plan.own_workload_or_none(request.user, fy)

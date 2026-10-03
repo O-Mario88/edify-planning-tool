@@ -11853,7 +11853,9 @@
       "bytes": 1773,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/planning"
+        "/planning",
+        "/projects/monitoring",
+        "/projects/planning"
       ],
       "findings": [],
       "forms": 0,
@@ -13211,7 +13213,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 19446,
+      "bytes": 19500,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"

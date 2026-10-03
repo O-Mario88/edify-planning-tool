@@ -81,6 +81,8 @@ as "no change".
     {% endkpi_metric %}
   {% endkpi_strip %}
 
+  {% include "partials/planning/_workload_line.html" %}
+
   {% if result.allocations %}
   {% comment %}
   My Projects (brief, 2026-09-29): how many schools this staff member may add

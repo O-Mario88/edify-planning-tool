@@ -1480,15 +1480,27 @@ def kpis(snapshot: Snapshot) -> list[dict]:
             ],
             icon="staff",
         ),
+        # Against the Partner's target (owner, 2026-10-03: "the overflow
+        # should be the partner target"): the other two visits at each Core
+        # school and the schools beyond staff capacity. Still nothing until a
+        # Partner dates a visit. The work staff handed over, which the card's
+        # table lists row for row, is named under it.
         card(
             "cpo_partner_planning",
-            t.pp_work,
-            t.pa_work,
+            t.cum_partner_scheduled if week else t.partner_scheduled,
+            t.partner_expected,
             headline=(_fmt(t.pa_schools), "Schools assigned to Partners"),
-            note="" if phased else period_note,
+            note=period_note,
             extras=[
-                f"of {_fmt(t.visit_schools)} schools needing a visit",
-                f"{_fmt(t.partner_waiting)} awaiting the Partner's date",
+                f"{_fmt(t.core_partner_slots)} Core + "
+                f"{_fmt(t.client_partner_expected)} beyond staff capacity",
+                f"{_fmt(t.pa_work)} assigned · {_fmt(t.partner_waiting)} awaiting "
+                "the Partner's date",
+            ],
+            more=[
+                f"{_fmt(t.partner_assigned)} of the target's visits are in a "
+                f"Partner's hands · {_fmt(t.pp_work)} of {_fmt(t.pa_work)} pieces "
+                "of work assigned are dated by the Partner",
             ],
             icon="partner",
         ),

@@ -996,3 +996,36 @@ class EveryPageSaysTheSameTest(Bulk, World):
         core = next(r for r in esvc.type_rows(snapshot) if r["key"] == "core")
         self.assertEqual((core["visit_slots"], core["staff_target"]), (4, 2))
         self.assertEqual(core["partner_target"], 2)
+
+
+class ProjectPagesSayItTooTest(Bulk, World):
+    """Project visits come out of the same ceiling, so the pages staff plan
+    project work from carry the planner's own share-out."""
+
+    def test_the_project_pages_carry_the_planners_share(self):
+        self.portfolio(self.cceo, core=70, client=444)
+        client = self.as_user(self.cceo_user)
+        # Project Planning draws it beside its figures once the person has a
+        # project; with none it shows its empty state.
+        for path in ("/projects/monitoring", "/planning"):
+            with self.subTest(path=path):
+                response = client.get(path)
+                self.assertEqual(response.status_code, 200)
+                body = response.content.decode()
+                self.assertIn("data-planning-workload", body)
+                self.assertIn("0 of 560 planned", body)
+                self.assertIn("24 of your Client schools are beyond your 560", body)
+
+    def test_a_role_that_plans_no_visits_is_told_nothing(self):
+        body = self.as_user(self.cd_user).get("/projects/monitoring").content.decode()
+        self.assertNotIn("data-planning-workload", body)
+
+    def test_the_partner_planning_card_reads_against_the_partners_target(self):
+        self.portfolio(self.cceo, core=70, client=444)
+        card = next(
+            c
+            for c in svc.kpis(self.snapshot())
+            if c["metric_key"] == "cpo_partner_planning"
+        )
+        self.assertEqual((card["part"], card["whole"]), ("0", "164"))
+        self.assertIn("140 Core + 24 beyond staff capacity", card["extras"])

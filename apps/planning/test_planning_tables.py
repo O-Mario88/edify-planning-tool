@@ -455,12 +455,19 @@ class CardsAreTheirTablesTest(TableWorld):
                 visits = self.table("visits", **filters)
                 self.assertEqual(len(visits.rows), cards["cpo_staff_visit_planning"][0])
                 partners = self.table("partners", **filters)
-                self.assertEqual(len(partners.rows), cards["cpo_partner_planning"][1])
+                # The Partner card is read against the Partner's target
+                # (owner, 2026-10-03); the work its table lists is the
+                # "assigned" figure named on the card.
+                self.assertEqual(len(partners.rows), country.pa_work)
                 self.assertEqual(
                     sum(
                         1 for r in partners.rows if r["state"] == tables.PARTNER_PLANNED
                     ),
-                    cards["cpo_partner_planning"][0],
+                    country.pp_work,
+                )
+                self.assertEqual(
+                    cards["cpo_partner_planning"],
+                    (country.partner_scheduled, country.partner_expected),
                 )
                 self.assertEqual(
                     len(self.table("clusters", **filters).rows),

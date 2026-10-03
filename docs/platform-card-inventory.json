@@ -2750,7 +2750,7 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 90,
+   "line": 92,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
@@ -7017,7 +7017,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 66,
+   "line": 67,
    "title": "Project school planning queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -7031,7 +7031,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 156,
+   "line": 157,
    "title": "Selected school",
    "heading_level": 2,
    "has_card_key": false,
@@ -7045,7 +7045,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 165,
+   "line": 166,
    "title": "0 selected",
    "heading_level": 2,
    "has_card_key": false,
@@ -7059,7 +7059,7 @@
   },
   {
    "template": "templates/partials/projects/planning_workspace.html",
-   "line": 181,
+   "line": 182,
    "title": "Project Planning Summary",
    "heading_level": 2,
    "has_card_key": false,
