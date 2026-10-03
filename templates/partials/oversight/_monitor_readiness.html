@@ -1,0 +1,59 @@
+{% load components frontend_filters %}
+{% comment %}
+Planned and remaining (owner, 2026-10-03): for each Programme Lead and CCEO,
+what they have planned and what is left, in four parts — staff visits and
+the schools in training, the Partner's visits and Core trainings, the schools handed to a
+Partner and the schools in a project — against what the schools THEY hold ask
+for, never a flat 280 or 560 a small portfolio cannot reach. Readiness is the
+average of visits, trainings, Partner assignment and project assignment
+(apps.planning.readiness), so a person who has planned all four reads 100%.
+{% endcomment %}
+{% data_table name="monitor-readiness" %}
+  {% slot title %}Planned and remaining · FY {{ fy }}{% endslot %}
+  {% slot summary %}{{ monitor_readiness.schools_total|intcomma }} schools · {{ monitor_readiness.net_visits_remaining|intcomma }} visits not yet planned · readiness {{ monitor_readiness.score }}%{% endslot %}
+  {% slot caption %}Each Programme Lead's and CCEO's staff visits and trainings, Partner visits and trainings, schools with a Partner and schools in a project: planned, target and remaining, grouped by Programme Lead.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
+  {% slot footer %}
+  <details class="px-4 py-2.5 edify-text-caption edify-text-muted" data-readiness-about>
+    <summary class="cursor-pointer font-semibold">About these figures</summary>
+    <p class="mt-1">What counts as a staff visit is every Follow up, In-school Training and SSA Support visit staff schedule themselves; SSA Support assigned to a Partner does not count. The target is two at each Core school and one at each Client, Core Trained and Core Graduate school, to the ceiling of {{ pl_visits_target }} for a Programme Lead and {{ default_visits_target }} for a CCEO; somebody whose schools ask for fewer is measured against what they ask for. The Partner takes the other two visits and two trainings at each Core school and every school beyond staff capacity; a school already in a Partner's hands is the Partner's. Schools scheduled by staff are the schools held where staff scheduled a visit themselves; Staff and Partner counts those of them that are also in a Partner's hands, and opens the list. Schools in training are the schools attached to an in-school training or a group training, of the schools that take one; a cluster meeting is not a training. Core partner trainings are the Partner's two at each Core school. A Partner visit is planned once the Partner has dated it. Schools in a project counts every school held, Champion included. Each percentage stops at 100, so planning past one target does not cover another, and a part that asks nothing is complete. Readiness is the average of staff visits, schools in training, schools with a Partner and schools in a project. The ceiling warns and never refuses, and no school is assigned to a Partner by this page: the Partner's share is a target.</p>
+  </details>
+  {% endslot %}
+  {% if monitor.leads %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Staff</th>
+          <th scope="col" class="px-3 py-2 text-right">Readiness</th>
+          <th scope="col" class="px-3 py-2 text-right">Staff visits</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools scheduled<br>by staff</th>
+          <th scope="col" class="px-3 py-2 text-right">Staff and<br>Partner</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools in<br>training</th>
+          <th scope="col" class="px-3 py-2 text-right">Partner visits</th>
+          <th scope="col" class="px-3 py-2 text-right">Core partner<br>trainings</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools with a Partner</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools in a project</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in monitor.leads %}
+        <tr class="edify-group-head">
+          <th colspan="10" scope="colgroup">
+            <span class="edify-group-head__label">{{ lead.name }}</span>
+            <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.readiness.schools_total|intcomma }} schools · readiness {{ lead.readiness.score }}%</span>
+          </th>
+        </tr>
+        {% for officer in lead.officers %}
+        {% include "partials/oversight/_readiness_row.html" with row=officer is_officer=True %}
+        {% endfor %}
+        {% if lead.officer_count > 1 %}
+        {% include "partials/oversight/_readiness_row.html" with row=lead is_subtotal=True label=lead.name|add:" total" %}
+        {% endif %}
+        {% endfor %}
+      </tbody>
+      {% if monitor.leads|length > 1 %}
+      <tfoot>
+        {% include "partials/oversight/_readiness_row.html" with row=monitor_totals is_subtotal=True label=monitor_is_country|yesno:"Country total,Team total" %}
+      </tfoot>
+      {% endif %}
+  {% endif %}
+{% enddata_table %}

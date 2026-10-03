@@ -231,9 +231,11 @@ class CoverageAndGaps(MonitorFixture):
         self.assertEqual(anna.schools_with_visit, 4)
         self.assertEqual(anna.schools_group_training, 2)
         self.assertEqual(anna.schools_meeting, 1)
-        self.assertEqual(anna.schools_with_training, 3)
+        # The school in the cluster meeting alone is not planned for a
+        # training (owner, 2026-10-03: in-school and group trainings).
+        self.assertEqual(anna.schools_with_training, 2)
         self.assertEqual(anna.not_clustered, 1)
-        self.assertEqual((anna.no_visit, anna.no_training, anna.no_both), (1, 2, 0))
+        self.assertEqual((anna.no_visit, anna.no_training, anna.no_both), (1, 3, 0))
         self.assertEqual(anna.in_projects, 1)
 
     def test_an_officer_with_nothing_planned_reads_every_gap(self):
@@ -252,13 +254,14 @@ class CoverageAndGaps(MonitorFixture):
     def test_the_drill_down_lists_the_schools_behind_a_count(self):
         monitor = planning_monitor(self.cd_user, fy=FY, gap="no_training")
         self.assertEqual(
-            {s.code for s in monitor["gap_schools"]}, {"MON-C2", "MON-3", "MON-B1"}
+            {s.code for s in monitor["gap_schools"]},
+            {"MON-C2", "MON-2", "MON-3", "MON-B1"},
         )
         only_anna = planning_monitor(
             self.cd_user, fy=FY, gap="no_training", officer_id=self.anna.id
         )
         self.assertEqual(
-            {s.code for s in only_anna["gap_schools"]}, {"MON-C2", "MON-3"}
+            {s.code for s in only_anna["gap_schools"]}, {"MON-C2", "MON-2", "MON-3"}
         )
 
     def test_another_year_is_a_year_with_nothing_planned(self):

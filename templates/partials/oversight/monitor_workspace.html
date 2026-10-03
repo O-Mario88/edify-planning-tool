@@ -15,15 +15,35 @@ it names. Every number is folded from the school rows under it
 (apps.planning.planning_monitor), so a lead's subtotal and its officers agree,
 and every gap count opens the list of the schools behind it.
 {% endcomment %}
-<section class="space-y-4" data-planning-monitor>
+<section class="space-y-4" data-planning-monitor x-data="{ view: '{{ monitor_tab }}' }">
 
   {% include "components/context_metrics.html" with items=kpis variant="executive" title=monitor_is_country|yesno:"Country planning monitor,Team planning monitor" %}
 
   {% if not monitor_embedded %}{% include "partials/oversight/_monitor_filters.html" %}{% endif %}
 
+  {% comment %}
+  Three reads of the same people, one at a time (owner, 2026-10-02: tabs, not
+  stacks). Planned and remaining is the first: what each person has planned
+  and what is left, in four parts, against what THEIR schools ask of them.
+  {% endcomment %}
+  <nav data-edify-tablist aria-label="Planning monitor tables" data-monitor-views>
+    {% for key, label in monitor_tabs %}
+    <button type="button" data-edify-tab @click="view = '{{ key }}'" :aria-pressed="view === '{{ key }}' ? 'true' : 'false'" aria-pressed="{% if key == monitor_tab %}true{% else %}false{% endif %}">{{ label }}</button>
+    {% endfor %}
+  </nav>
+
+  <div x-show="view === 'readiness'"{% if monitor_tab != "readiness" %} x-cloak{% endif %} data-monitor-view="readiness">
+  {% include "partials/oversight/_monitor_readiness.html" %}
+  </div>
+
+  <div x-show="view === 'schools'"{% if monitor_tab != "schools" %} x-cloak{% endif %} data-monitor-view="schools">
+  {% include "partials/oversight/_monitor_inventory.html" %}
+  </div>
+
+  <div class="space-y-4" x-show="view === 'detail'"{% if monitor_tab != "detail" %} x-cloak{% endif %} data-monitor-view="detail">
   {% data_table name="monitor-cceo" %}
     {% slot title %}Planning against target · FY {{ fy }}{% endslot %}
-    {% slot summary %}{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_totals.staff_visits|intcomma }} of {{ monitor_totals.visits_target|intcomma }} visits planned{% endslot %}
+    {% slot summary %}{{ monitor_totals.officer_count }} staff · {{ monitor_totals.school_count|intcomma }} schools · {{ monitor_readiness.staff_visits.credited|intcomma }} of {{ monitor_readiness.staff_visits.target|intcomma }} staff visits planned{% endslot %}
     {% slot caption %}Each Programme Lead's and CCEO's schools, visits planned against their target, partner work, training coverage and planning gaps, grouped by Programme Lead.{% endslot %}
     {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
     {% slot footer %}{% include "partials/oversight/_monitor_about.html" %}{% endslot %}
@@ -54,7 +74,7 @@ and every gap count opens the list of the schools behind it.
           <tr class="edify-group-head">
             <th colspan="17" scope="colgroup">
               <span class="edify-group-head__label">{{ lead.name }}</span>
-              <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.school_count|intcomma }} schools · {{ lead.staff_visits|intcomma }} of {{ lead.visits_target|intcomma }} visits planned</span>
+              <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.school_count|intcomma }} schools · {{ lead.readiness.staff_visits.credited|intcomma }} of {{ lead.readiness.staff_visits.target|intcomma }} staff visits planned</span>
             </th>
           </tr>
           {% for officer in lead.officers %}
@@ -103,8 +123,8 @@ and every gap count opens the list of the schools behind it.
             <td class="px-3 py-2" data-label="Staff">{{ school.officer_name }}</td>
             <td class="px-3 py-2" data-label="District">{{ school.district|default:"—" }}</td>
             <td class="px-3 py-2" data-label="Cluster">{% if school.clustered and school.cluster_url %}<a href="{{ school.cluster_url }}" class="hover:underline">{{ school.cluster_name|default:"Cluster" }}</a>{% else %}<span class="edify-status-text" data-edify-tone="warning">Not clustered</span>{% endif %}</td>
-            <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
-            <td class="px-3 py-2" data-label="Training">{% if school.training_done %}<span class="edify-status-text" data-edify-tone="success">Trained</span>{% elif school.group_training %}<span class="edify-status-text" data-edify-tone="info">Group training</span>{% elif school.meeting %}<span class="edify-status-text" data-edify-tone="info">Cluster meeting</span>{% elif school.in_school_training %}<span class="edify-status-text" data-edify-tone="info">In-school</span>{% elif not school.needs_training %}<span class="edify-text-muted">Not required</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% if school.has_partner %} <span class="edify-status-text" data-edify-tone="danger">+ Partner</span>{% endif %}{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
+            <td class="px-3 py-2" data-label="Training">{% if school.training_done %}<span class="edify-status-text" data-edify-tone="success">Trained</span>{% elif school.group_training %}<span class="edify-status-text" data-edify-tone="info">Group training</span>{% elif school.in_school_training %}<span class="edify-status-text" data-edify-tone="info">In-school</span>{% elif school.meeting %}<span class="edify-status-text" data-edify-tone="warning">Cluster meeting only</span>{% elif not school.needs_training %}<span class="edify-text-muted">Not required</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
             <td class="px-3 py-2" data-label="Project">{% if school.in_project %}Yes{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
             {% if monitor_can_send %}
             <td class="px-3 py-2" data-label="Follow up">
@@ -133,4 +153,5 @@ and every gap count opens the list of the schools behind it.
         </tbody>
   {% enddata_table %}
   {% endif %}
+  </div>
 </section>

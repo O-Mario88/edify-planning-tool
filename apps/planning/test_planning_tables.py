@@ -110,14 +110,15 @@ class PeopleTablesTest(TableWorld):
         table = self.table("visits")
         self.assertEqual(len(table.rows), self.country().p_visits)
         # Under whoever holds the school; who planned the visit is a column.
-        # The Lead's SSA Support (data collection) visit is not one of them:
-        # only a Follow up and an In-school Training count (owner, 2026-10-02).
+        # The Lead's own SSA Support visit is one of them: it counts when
+        # staff schedule it (owner, 2026-10-03).
         self.assertEqual(
             [
                 (row["lead"], row["holder"], row["staff"], row["activity"])
                 for row in table.rows
             ],
             [
+                ("Lead A", "Officer One", "Lead A", "SSA Support"),
                 ("Lead A", "Officer One", "Officer Two", "Follow up"),
                 ("Lead B", "Officer Three", "Officer Three", "Follow up"),
             ],

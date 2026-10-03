@@ -150,6 +150,18 @@ def my_plan_view(request):
         "hx_include": "#filters-form",
     }
 
+    # The person's own planned-and-remaining figures as data: the numbers the
+    # table on the page shows, for whoever reads them without the page.
+    if request.GET.get("format", "").strip().lower() == "readiness-json":
+        from django.http import JsonResponse
+
+        figures = context.get("readiness")
+        return JsonResponse(
+            {"fy": str(context.get("fy") or ""), "readiness": figures.as_dict()}
+            if figures
+            else {"fy": str(context.get("fy") or ""), "readiness": None}
+        )
+
     # The currently filtered feed, as CSV or as a workbook. Owner, 2026-09-22:
     # "IA and PL and CD and Regional Programme Leads, and CCEO should be able
     # to export all of their plans into Excel." This is the personal plan every

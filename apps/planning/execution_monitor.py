@@ -390,13 +390,17 @@ def execution_monitor(
         is_due = planned_date is not None and planned_date <= today
         person.planned += 1
         at_school = bool(school_pk) and not cluster_pk
-        if at_school and rules.visit_kind(activity_type, purpose_type):
+        if at_school and rules.visit_kind(
+            activity_type, purpose_type, delivery_type="staff"
+        ):
             # On the plan as the Planning tab reads it: a visit sent back to
             # planning is not one of the visits planned.
             if status in _planned_states():
                 person.visits_planned += 1
             person.visits_delivered += is_delivered
-        elif at_school and _is_outreach(activity_type, purpose_type):
+        elif at_school and rules.is_uncounted_visit(
+            activity_type, purpose_type, delivery_type="staff"
+        ):
             person.outreach_planned += 1
             person.outreach_delivered += is_delivered
         if activity_type in TRAINING_KINDS:

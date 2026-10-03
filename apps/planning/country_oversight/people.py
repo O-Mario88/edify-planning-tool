@@ -413,7 +413,9 @@ class Reads:
         )
 
     def counted_visits(self):
-        """Staff visits that count, with their ``kind``."""
+        """Staff visits that count toward a person's target, with their
+        ``kind``: Follow up, In-school Training and the SSA Support staff
+        schedule themselves (owner, 2026-10-03)."""
         return _in_window(
             self._staff.filter(rules.counted_visit_q()), self.window
         ).annotate(kind=rules.visit_kind_case())

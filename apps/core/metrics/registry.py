@@ -1782,20 +1782,24 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="monitor_visits_planned_share",
         label="Visits Planned Against Target",
         definition=(
-            "Staff visits each person planned in the fiscal year — every "
-            "visit type and SSA Support, in any live state, counted by the "
-            "person responsible — against the sum of their visit targets: "
-            "280 for a Programme Lead, 560 for a CCEO (owner, 2026-09-29). "
-            "Each target holds two visits per Core school; the rest are "
-            "client visits."
+            "Counted staff visits (Follow up and In-school Training) each "
+            "person planned in the fiscal year, no further than their own "
+            "target, against the sum of those targets. A person's target is "
+            "two visits at each Core school they hold and one at each Client, "
+            "Core Trained and Core Graduate school not in a Partner's hands, "
+            "up to the ceiling: 280 for a Programme Lead, 560 for a CCEO "
+            "(owner, 2026-09-29 and 2026-10-03)."
         ),
         question="How far is the team's plan from the visits it is expected to hold?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
         service="apps.planning.planning_monitor.planning_monitor",
         source_models=("schools.School", "activities.Activity"),
-        numerator="Live staff visits planned in the fiscal year",
-        denominator="Each Programme Lead's 280 and each CCEO's 560, summed",
+        numerator="Counted staff visits planned, to each person's target",
+        denominator=(
+            "Each person's staff visit target: what their schools ask of "
+            "staff, to the 280 or 560 ceiling, summed"
+        ),
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
@@ -1808,16 +1812,18 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="monitor_schools_with_visit",
         label="Schools With A Visit Planned",
         definition=(
-            "Unique Core, Client and Core Trained schools with at least one "
-            "live visit planned in the fiscal year, by staff or by a partner."
+            "Unique Core, Client, Core Trained and Core Graduate schools "
+            "with a counted visit planned in the fiscal year by staff or "
+            "dated by a Partner, or handed to a Partner who has not dated it "
+            "yet. The tile says how many are each."
         ),
         question="How many different schools will be visited this year?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
         service="apps.planning.planning_monitor.planning_monitor",
         source_models=("schools.School", "activities.Activity"),
-        numerator="Schools with one or more live visits in the fiscal year",
-        denominator="Core, Client and Core Trained schools in scope",
+        numerator="Schools with a visit planned or in a Partner's hands",
+        denominator="Core, Client, Core Trained and Core Graduate schools in scope",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
@@ -1858,15 +1864,16 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="monitor_schools_unplanned",
         label="Schools With No Visit Or Training",
         definition=(
-            "Schools with neither a live visit nor a training planned in the "
-            "fiscal year — the list the CD and IA follow up first."
+            "Schools with no visit planned, no Partner holding them and no "
+            "training planned in the fiscal year — the list the CD and IA "
+            "follow up first."
         ),
         question="Which schools has nobody planned anything for?",
         category=Category.RISK,
         unit=Unit.COUNT,
         service="apps.planning.planning_monitor.planning_monitor",
         source_models=("schools.School", "activities.Activity"),
-        numerator="Schools with no live visit and no planned training",
+        numerator="Schools with no visit, no Partner and no planned training",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",

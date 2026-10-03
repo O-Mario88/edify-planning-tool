@@ -99,8 +99,10 @@ class VisitTally:
 
 def counted_visits(queryset):
     """The visits in ``queryset`` that count toward a person's target: a
-    Follow up or an In-school Training at a school, delivered
-    by staff, planned and dated, not deleted (the planning rulebook)."""
+    Follow up, an In-school Training or an SSA Support visit at a school,
+    scheduled and delivered by staff, planned and dated, not deleted (the
+    planning rulebook; owner, 2026-10-03: SSA Support counts when staff
+    schedule it, never when it is a Partner's)."""
     from apps.planning.country_oversight import rules
 
     return queryset.filter(
