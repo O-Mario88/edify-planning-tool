@@ -24,5 +24,8 @@
     "fullcalendar": "^6.1.11",
     "htmx.org": "^1.9.12",
     "leaflet": "^1.9.4"
+  },
+  "overrides": {
+    "@parcel/watcher": "2.6.0"
   }
 }
