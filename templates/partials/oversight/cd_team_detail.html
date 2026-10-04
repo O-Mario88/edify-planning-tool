@@ -42,7 +42,7 @@ and level 3 (4 distinct tables per staff member:
               aria-controls="officer-panel-{{ forloop.counter }}"
               @click="pick('officer', '{{ group.id }}')"
               class="team-officer-tab px-3 py-2 rounded-md border text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer">
-        <div class="w-5 h-5 rounded-full edify-avatar-neutral text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+        <div class="w-5 h-5 rounded-full edify-avatar-neutral flex items-center justify-center font-bold text-xs flex-shrink-0">
           {{ group.name|slice:":2"|upper }}
         </div>
         <span>{{ group.name }}</span>

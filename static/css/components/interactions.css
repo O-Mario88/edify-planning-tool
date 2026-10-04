@@ -635,6 +635,41 @@ main :is(
   opacity: 1 !important;
 }
 
+/* Selected tab buttons (such as team officer tabs) with blue surfaces:
+   Avatar, badges, and all nested labels must be white ink with high contrast. */
+main :is(
+  [role="tab"][aria-selected="true"],
+  .team-officer-tab[aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab].is-active
+) :is(span, strong, div, b, small, p, label) {
+  color: #ffffff;
+}
+
+main :is(
+  [role="tab"][aria-selected="true"],
+  .team-officer-tab[aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab].is-active
+) .edify-avatar-neutral {
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
+main :is(
+  [role="tab"][aria-selected="true"],
+  .team-officer-tab[aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab].is-active
+) .pill-neutral {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
 /* ── Tabs do not invert on hover ───────────────────────────────────────────
    A rail is a set of choices, and only one of them is true. Filling a segment
    blue under the pointer says "this is selected" about four things at once,
@@ -2323,8 +2358,7 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   white-space: nowrap !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: baseline !important;
@@ -2334,8 +2368,7 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   grid-template-columns: none !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) > div {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) > div {
   display: inline-flex !important;
   flex: 0 1 auto !important;
   align-items: baseline !important;
@@ -2348,27 +2381,23 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   grid-template-columns: none !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) :is(dt, dd) {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) :is(dt, dd) {
   margin: 0 !important;
   font-size: var(--edify-text-table-size) !important;
   line-height: 1.4 !important;
   white-space: normal !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dt {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) dt {
   color: var(--edify-text-muted) !important;
   font-weight: 500 !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) dd {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) dd {
   font-weight: 600 !important;
 }
 
-:root :is(main, .drawer-body, [role="dialog"], #schools-table-container, [data-clusters-list], .planning-school-list-wrap)
-  :is(dl.school-record-row__metadata, dl.cluster-card__metadata, dl.core-school-row__metadata) a[href]:not(#edify-filter-none) {
+:root main :is(.core-school-row, .cluster-card, .project-card) :is(dl.cluster-card__metadata, dl.core-school-row__metadata, .core-school-row dl.school-record-row__metadata) a[href]:not(#edify-filter-none) {
   display: inline !important;
   min-block-size: 0 !important;
   min-inline-size: 0 !important;
