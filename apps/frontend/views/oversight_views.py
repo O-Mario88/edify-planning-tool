@@ -2598,6 +2598,12 @@ def country_planning_export_view(request):
     )
 
 
+@require_any_page_permission(
+    "team_planning_oversight",
+    "country_planning_oversight",
+    "project_monitoring",
+    "projects",
+)
 @require_export_permission
 def special_project_export_view(request, project_id: str = "all"):
     """Export a special project and all attached schools (or all projects) to Excel.

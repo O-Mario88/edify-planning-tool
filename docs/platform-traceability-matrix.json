@@ -1362,9 +1362,13 @@
       "roles": [
         "Accountant",
         "Admin",
+        "BusinessTransformationOfficer",
         "CountryDirector",
         "ImpactAssessment",
-        "ProjectCoordinator"
+        "Program Lead",
+        "ProjectCoordinator",
+        "RegionalProgramLead",
+        "RegionalVicePresident"
       ],
       "routes": [
         "GET /projects/{id}"
@@ -1521,6 +1525,7 @@
         "ssa.SsaScore"
       ],
       "permissions": [
+        "data.export",
         "fundRequest.approveEscalated",
         "payment.act",
         "project.configurePriorities"
@@ -2945,6 +2950,7 @@
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/forbidden_links_middleware.py",
+        "apps/core/logging_filters.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/nav_cadence.py",
@@ -4689,8 +4695,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "f3fcbd0125611b60a7e14120a5dd9e99e7ca78bbe1fb5ba56728082d13107d38",
-    "sources": "83c06953ca9ccbdb30896e607d95c3b4f35a9af4696984180c57fd7c18c56a93",
+    "payload": "d36269b7bfc4004f0babb40cb7ac965faa142c3659e919f61c35191fb131580b",
+    "sources": "9d7139201f37214dc93d560ff762051925c604771c4aa01b6c033daa4ce9c1fa",
     "sourceCount": 237,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
