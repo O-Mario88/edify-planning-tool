@@ -4753,8 +4753,8 @@ main #sp-plan-filters { display: flow-root !important; }
 
 
 main .edify-avatar-neutral {
-  background: var(--edify-surface-muted) !important;
-  color: var(--edify-text) !important;
+  background: var(--edify-surface-muted);
+  color: var(--edify-text);
 }
 
 /* Header links need their own light surface inside an inverse title band. */
