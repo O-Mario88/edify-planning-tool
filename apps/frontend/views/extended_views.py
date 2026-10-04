@@ -1098,12 +1098,30 @@ def reports_view(request):
         },
     ]
 
-    def _target_for(target_type):
-        if not target_type:
-            return None
-        return TargetSetting.objects.filter(
-            fy=fy, target_type=target_type, is_active=True
-        ).aggregate(s=Sum("target_value"))["s"]
+    target_types = [
+        area["target_type"] for area in _REPORTS_AREA_DEFS if area.get("target_type")
+    ]
+    target_totals = dict(
+        TargetSetting.objects.filter(
+            fy=fy, target_type__in=target_types, is_active=True
+        )
+        .values("target_type")
+        .annotate(s=Sum("target_value"))
+        .values_list("target_type", "s")
+    )
+
+    aggregations = {}
+    for i, area in enumerate(_REPORTS_AREA_DEFS):
+        for j, p in enumerate(periods):
+            aggregations[f"c_{i}_{j}"] = Count(
+                "id",
+                filter=Q(
+                    activity_type__in=area["types"],
+                    status__in=_REPORTS_ACHIEVED_STATUSES,
+                )
+                & p["filter"],
+            )
+    achieved_counts = activities_fy.aggregate(**aggregations)
 
     matrix_rows = []
     # Running totals across all areas, per period — backs the chevron row and
@@ -1112,14 +1130,11 @@ def reports_view(request):
         p["key"]: {"achieved": 0, "target": 0, "has_target": False} for p in periods
     }
 
-    for area in _REPORTS_AREA_DEFS:
-        base_qs = activities_fy.filter(activity_type__in=area["types"])
-        target_total = _target_for(area["target_type"])
+    for i, area in enumerate(_REPORTS_AREA_DEFS):
+        target_total = target_totals.get(area["target_type"])
         row = {"area": area["label"], "periods": []}
-        for p in periods:
-            achieved = base_qs.filter(
-                p["filter"], status__in=_REPORTS_ACHIEVED_STATUSES
-            ).count()
+        for j, p in enumerate(periods):
+            achieved = achieved_counts.get(f"c_{i}_{j}", 0) or 0
             pct = round(achieved / target_total * 100) if target_total else None
             row["periods"].append(
                 {
@@ -2265,6 +2280,9 @@ def _projects_context(request):
         row for row in portfolio if str(row["id"]) == open_project
     ]
     context["project_tab_query"] = f"{kept.urlencode()}&" if kept else ""
+    context["can_export"] = RolePermissionService.can_export(
+        request.user, request.path
+    )
     return context
 
 
@@ -3263,6 +3281,9 @@ def project_detail_view(request, project_id):
         # may read the page (owner, 2026-09-16).
         "can_edit_project": can_edit_project,
         "delete_block": delete_block,
+        "can_export": RolePermissionService.can_export(
+            request.user, request.path
+        ),
     }
     # Planned and completed project work with its actions (owner, 2026-09-28).
     from apps.activities import profile_activities as profile_acts
@@ -4539,6 +4560,7 @@ def project_monitoring_view(request):
                 )
                 else ""
             ),
+            "can_export": RolePermissionService.can_export(request.user, request.path),
         },
     )
 

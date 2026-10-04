@@ -160,6 +160,8 @@
         branch = parent;
       }
       if (!table.matches('table')) return; // an empty region: the band only
+      if (table.dataset.plainContentEnhanced) return;
+      table.dataset.plainContentEnhanced = 'true';
 
       table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
         /* The menu's own trigger is a control in the cell and keeps the row
@@ -2641,7 +2643,13 @@
      another style resolution. */
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
     fontsSettled = true;
-    if (enhancedBeforeFonts) { fitRails(document); fitTables(document); wrapLongText(document); }
+    if (enhancedBeforeFonts) {
+      var needsRefit = Array.from(document.querySelectorAll('main table')).some(function (tbl) {
+        var region = tbl.closest('.edify-table-scroll-region') || scrollAncestor(tbl);
+        return region && Math.abs(region.scrollWidth - region.clientWidth) > 4;
+      });
+      if (needsRefit) { fitRails(document); fitTables(document); wrapLongText(document); }
+    }
   });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);

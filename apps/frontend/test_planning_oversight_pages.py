@@ -416,6 +416,154 @@ class SpecialProjectsOversightTest(OversightPageFixture):
         # cpo-notice was moved from Country Planning Oversight to Planning Oversight Special Projects tab
         self.assertNotContains(response, "data-cpo-project-tables")
 
+    def test_ia_sees_export_button_on_project_and_can_export(self):
+        from apps.projects.models import Project, ProjectSchoolAssignment
+
+        project = Project.objects.create(
+            name="Test Special Project",
+            code="SP-TEST",
+            category="pilot",
+            status="active",
+        )
+        ProjectSchoolAssignment.objects.create(
+            project=project,
+            school=self.school,
+            assigned_by=self.james.id,
+        )
+        client = self.as_user(self.ia_user)
+        response = client.get(PL_URL, {"view": "projects"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'data-project-export="{project.id}"')
+        self.assertContains(response, "data-special-projects-export")
+
+        # Export single project
+        export_url = f"/team-planning-oversight/projects/{project.id}/export"
+        export_resp = client.get(export_url)
+        self.assertEqual(export_resp.status_code, 200)
+        self.assertEqual(
+            export_resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("SP-TEST", export_resp["Content-Disposition"].upper())
+
+        # Export single project as CSV
+        csv_resp = client.get(f"{export_url}?format=csv")
+        self.assertEqual(csv_resp.status_code, 200)
+        self.assertIn("text/csv", csv_resp["Content-Type"])
+        self.assertContains(csv_resp, self.school.name)
+
+        # Export all projects
+        all_export_url = "/team-planning-oversight/projects/export"
+        all_resp = client.get(all_export_url)
+        self.assertEqual(all_resp.status_code, 200)
+        self.assertIn("special-projects-schools", all_resp["Content-Disposition"])
+
+    def test_role_without_export_permission_cannot_export_projects(self):
+        from apps.projects.models import Project
+
+        project = Project.objects.create(
+            name="Restricted Project",
+            code="SP-RESTRICTED",
+            category="pilot",
+            status="active",
+        )
+        # James is CCEO - does not hold Permission.EXPORT
+        client = self.as_user(self.james_user)
+        export_url = f"/team-planning-oversight/projects/{project.id}/export"
+        response = client.get(export_url)
+        self.assertNotEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+
+        # HTMX request gets 403
+        htmx_resp = client.get(export_url, HTTP_HX_REQUEST="true")
+        self.assertEqual(htmx_resp.status_code, 403)
+
+    def test_project_coordinator_sees_export_buttons_and_can_export(self):
+        from apps.accounts.models import StaffProfile, User
+        from apps.core.rbac import EdifyRole
+        from apps.projects.models import Project, ProjectSchoolAssignment
+
+        pc_user = User.objects.create_user(
+            email="pc_export_test@test.com",
+            name="Project Coordinator Export",
+            roles=[EdifyRole.PROJECT_COORDINATOR.value],
+            active_role=EdifyRole.PROJECT_COORDINATOR.value,
+        )
+        pc_staff = StaffProfile.objects.create(
+            user=pc_user, title="Project Coordinator"
+        )
+        project = Project.objects.create(
+            name="PC Managed Special Project",
+            code="SP-PC-TEST",
+            category="pilot",
+            status="active",
+            manager_staff_id=pc_staff.id,
+        )
+        ProjectSchoolAssignment.objects.create(
+            project=project,
+            school=self.school,
+            assigned_by=pc_staff.id,
+        )
+
+        client = self.as_user(pc_user)
+
+        # 1. Project Monitoring page has export buttons for coordinator
+        monitoring_resp = client.get("/projects/monitoring")
+        self.assertEqual(monitoring_resp.status_code, 200)
+        self.assertContains(
+            monitoring_resp, f'data-project-export="{project.id}"'
+        )
+        self.assertContains(monitoring_resp, "data-monitoring-filter-export")
+        self.assertContains(
+            monitoring_resp, "data-project-monitoring-export-top"
+        )
+
+        # 2. Projects list page has export button
+        projects_resp = client.get("/projects")
+        self.assertEqual(projects_resp.status_code, 200)
+        self.assertContains(
+            projects_resp, f'data-project-export="{project.id}"'
+        )
+
+        # 3. Project detail page has export button
+        detail_resp = client.get(f"/projects/{project.id}")
+        self.assertEqual(detail_resp.status_code, 200)
+        self.assertContains(
+            detail_resp, f'data-project-export="{project.id}"'
+        )
+
+        # 4. Coordinator can export single project (Excel)
+        single_export = client.get(f"/projects/{project.id}/export")
+        self.assertEqual(single_export.status_code, 200)
+        self.assertEqual(
+            single_export["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("SP-PC-TEST", single_export["Content-Disposition"].upper())
+
+        # 5. Coordinator can export single project as CSV
+        csv_resp = client.get(f"/projects/{project.id}/export?format=csv")
+        self.assertEqual(csv_resp.status_code, 200)
+        self.assertIn("text/csv", csv_resp["Content-Type"])
+        self.assertContains(csv_resp, self.school.name)
+
+        # 6. Coordinator can export all their scoped projects
+        all_export = client.get("/projects/export")
+        self.assertEqual(all_export.status_code, 200)
+        self.assertIn(
+            "special-projects-schools", all_export["Content-Disposition"]
+        )
+
+        # 7. Coordinator cannot export projects outside their scope (e.g. unmanaged project)
+        other_project = Project.objects.create(
+            name="Other Coordinator Project",
+            code="SP-OTHER",
+            category="pilot",
+            status="active",
+        )
+        forbidden_resp = client.get(f"/projects/{other_project.id}/export")
+        self.assertEqual(forbidden_resp.status_code, 404)
+
 
 class ProjectCoordinatorSidebarTest(TestCase):
     def test_project_capacity_menu_restored_in_sidebar(self):

@@ -367,6 +367,33 @@ class BudgetSpecificationTest(TestCase):
         ).update(approved_minimum=0)
         self.assertEqual(planned_minimum_amounts([act])[act.id], 0)
 
+    def test_minimum_estimate_reads_a_retired_rate_line_at_its_saved_amount(self):
+        """A group training priced while the per-session Cluster Training rate
+        was charged keeps that line after budget 0023 deleted the rate; the
+        estimate must not collapse to missing (shown as UGX 0)."""
+        act, payload = self.planned_training()
+        snapshot = ActivityCostSnapshot.objects.get(activity=act, is_current=True)
+        snapshot.operational_breakdown = [
+            {
+                "key": "group_training_facilitation_fee",
+                "unit": 30000,
+                "amount": 15000,
+                "qty": 1,
+                "missing": False,
+            },
+            {
+                "key": "cluster_meetings_trainings",
+                "unit": 22000,
+                "amount": 22000,
+                "qty": 1,
+                "missing": False,
+            },
+        ]
+        snapshot.save(update_fields=["operational_breakdown"])
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        self.assertEqual(planned_minimum_amounts([act])[act.id], 2500 + 22000)
+
     def test_old_weekly_budget_link_keeps_the_selected_week_month(self):
         self.cost()
         self.client.force_login(self.owner)

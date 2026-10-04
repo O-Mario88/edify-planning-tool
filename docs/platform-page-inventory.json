@@ -11642,7 +11642,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14003,
+      "bytes": 15919,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -13454,7 +13454,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5240,
+      "bytes": 5433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -13761,7 +13761,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10648,
+      "bytes": 10595,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -14047,7 +14047,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8044,
+      "bytes": 8093,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -15442,7 +15442,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-D4F8C108E9",
-      "page_title": "Fund Disbursement Dashboard",
+      "page_title": "Dashboard",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "disbursements",
@@ -15529,7 +15529,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-252D9AB81D",
-      "page_title": "Fund Disbursement Dashboard",
+      "page_title": "Dashboard",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "disbursements",
@@ -112524,6 +112524,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/projects/<str:project_id>/export",
+      "route_name": "project_monitoring_export",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.project_assign_school_action_view",
       "kind": "action",
       "methods": [
@@ -112677,6 +112689,18 @@
       "required_permissions": [],
       "route": "/projects/create/action",
       "route_name": "project_create_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/projects/export",
+      "route_name": "project_monitoring_export_all",
       "templates": []
     },
     {
@@ -114364,6 +114388,30 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/projects/<str:project_id>/export",
+      "route_name": "special_project_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/projects/export",
+      "route_name": "special_projects_export_all",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.team_planning_send_action_view",
       "kind": "action",
       "methods": [
@@ -114940,7 +114988,7 @@
   "summary": {
     "accessibility_contract_pass": 574,
     "activity_states": 24,
-    "all_routes": 1356,
+    "all_routes": 1360,
     "api_routes": 360,
     "component_templates": 609,
     "full_pages": 263,

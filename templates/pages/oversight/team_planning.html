@@ -21,6 +21,16 @@
       {% include "partials/oversight/_export_menu.html" with export_path="/team-planning-oversight/export" %}
     </div>
     {% endif %}
+    {% if active_oversight_view == "projects" and can_export %}
+    <div id="oversight-export-slot" class="oversight-export-slot">
+      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
+         href="{% url 'frontend:special_project_export' selected_project|default:'all' %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
+         aria-label="Export to Excel" title="Export to Excel" data-oversight-export>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export</span>
+      </a>
+    </div>
+    {% endif %}
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
       <span class="tt-context-dot" aria-hidden="true"></span>

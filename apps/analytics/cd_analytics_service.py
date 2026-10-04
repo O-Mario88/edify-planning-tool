@@ -1227,13 +1227,13 @@ class CDAnalyticsService:
         `pooled_monthly_series` over the team computes."""
         from apps.hr.accountability import allocation_priorities
 
-        ids = StaffProfile.objects.filter(user_id__in=user_ids).values_list(
-            "id", flat=True
-        )
         period = cd.target_period
         if cd.contract_empty:
             contract = {"rows": []}
         else:
+            ids = StaffProfile.objects.filter(user_id__in=user_ids).values_list(
+                "id", flat=True
+            )
             contract = allocation_priorities(
                 None,
                 cd.fy,
@@ -2222,8 +2222,8 @@ class CDAnalyticsService:
             "awaiting_ia_verification",
         }
         lead_teams = [
-            (pl, CDAnalyticsService._pl_cceos(pl, cd))
-            for pl in CDAnalyticsService._pls()
+            (pl, teams.get(pl.id, []))
+            for pl in pls
         ]
         every_team_school = set()
         for _pl, members in lead_teams:

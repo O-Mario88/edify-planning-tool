@@ -43,6 +43,15 @@ as "no change".
     scheduled — for the readers who follow the country's planning from them
     (owner, 2026-10-02).{% endcomment %}
     {% if consolidated_tables_url %}<a href="{{ consolidated_tables_url }}" class="edify-action-button h-9" data-project-consolidated-tables>Consolidated tables</a>{% endif %}
+    {% if can_export and rows %}
+    <a href="{% if selected_project %}{% url 'frontend:special_project_export' selected_project %}{% else %}{% url 'frontend:project_monitoring_export_all' %}{% endif %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}"
+       class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold rounded-control"
+       title="Export project data and attached schools to Excel"
+       data-project-monitoring-export-top>
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Export to Excel</span>
+    </a>
+    {% endif %}
   {% endpage_header %}
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}
@@ -135,6 +144,17 @@ as "no change".
         {% endfor %}
       </select>
     </label>
+    {% if can_export and rows %}
+    <div class="ml-auto flex items-end">
+      <a href="{% if selected_project %}{% url 'frontend:special_project_export' selected_project %}{% else %}{% url 'frontend:project_monitoring_export_all' %}{% endif %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}"
+         class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold rounded-control"
+         title="Export project data and attached schools to Excel"
+         data-monitoring-filter-export>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export</span>
+      </a>
+    </div>
+    {% endif %}
   {% endfilter_bar %}
 
   {% if rows %}
@@ -169,6 +189,16 @@ as "no change".
         <span class="pill pill-info">{{ row.schools_planned }} planned</span>
         {% if row.schools_awaiting_partner %}<span class="pill pill-warn">{{ row.schools_awaiting_partner }} awaiting partner</span>{% endif %}
         <span class="pill pill-success">{{ row.schools_delivered }} delivered</span>
+        {% if can_export %}
+        <a href="{% url 'frontend:special_project_export' row.id %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}"
+           class="edify-action-button secondary h-8 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-control"
+           title="Export {{ row.name }} and attached schools to Excel"
+           aria-label="Export {{ row.name }} to Excel"
+           data-project-export="{{ row.id }}">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export</span>
+        </a>
+        {% endif %}
       </div>
     </div>
 
