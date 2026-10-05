@@ -25,8 +25,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | ID | Route | Page | Type | Mobile / tablet | Theme / a11y | Findings | Test |
 |---|---|---|---|---|---|---:|---|
 | UI-PAGE-9742C80CF8 | / | Sign in | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-D4F8C108E9 | /accounts | Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-252D9AB81D | /accounts/ | Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D4F8C108E9 | /accounts | Fund Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-252D9AB81D | /accounts/ | Fund Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E2B7D125EC | /accounts/accountability | Accountability Tracking - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F3E2C55053 | /accounts/accountability/ | Accountability Tracking - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3815BDB66D | /accounts/activities/<str:activity_id> | Activity Finance Detail - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

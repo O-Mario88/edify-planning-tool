@@ -1940,7 +1940,6 @@ SIDEBAR_ITEMS = [
                 "role_urls": {
                     PARTNER: "/partner/assigned-schools",
                     IA: "/ia/dashboard/",
-                    ACCOUNTANT: "/accounts",
                     # Country Oversight is the Country Director's dashboard
                     # (owner, 2026-09-28): planning coverage and execution &
                     # completion, with Who's Online under the planning tab.
