@@ -172,3 +172,42 @@ bar where it is always rendered: not inside a folded `<details>`.
 It is on My Plan, the Work Plan, the Dashboard's past-due tables, a Program
 Lead's week tables, the Planned table of every profile, the Calendar and
 Planning's Calendar View.
+
+## Live regions
+
+Owner, 2026-10-05: "Every event should update (schedules, school withdrawal
+from the partner or project, training schedules, activity completion etc)
+should update in real time and fast."
+
+A page that shows the plan keeps up with it without being refreshed. Mark the
+part that shows it:
+
+```django
+<div id="my-plan-workspace" data-live-region>…</div>
+```
+
+The region needs an id, and its state (filters, tab, page) belongs in the
+address bar, because the page is read again from the address it is at.
+
+How it works:
+
+- `apps/activities/live.py` hangs on the save and delete of an activity, a
+  hand-over to a partner and a school's place in a project. After the change
+  commits it sends a `plan.changed` event, carrying only the time, to the
+  people whose pages show that record: the owner and the monitor, the people
+  they report to, the holder of the school or cluster, the partner, the
+  project's coordinator and the country readers.
+- `static/js/live-regions.js` opens the stream the server already had
+  (`/api/realtime/stream`) on a page that has a live region. On the event it
+  fetches the page it is on and replaces each marked region with the fresh
+  one of the same id, then lets htmx, Alpine and the table scripts take it up.
+- It never swaps under an open drawer, a ticked activity, an open Actions
+  menu or a field in use: it waits until they are done. A hidden tab closes
+  its stream; when it is looked at again the stream says whether anything
+  changed meanwhile, and only then is the page read again.
+
+Production needs the ASGI workers and Redis the stream was built for
+(`Procfile`). `LIVE_UPDATES_ENABLED=false` switches the announcements off
+without a deploy; under the test runner they are off unless a test turns
+them on, so they add nothing to the suite's query counts. Locally the stream
+needs `manage.py runserver` without `--noasgi`.

@@ -877,6 +877,17 @@ REALTIME_STREAM_OPENS_PER_MINUTE = _as_int(
     os.environ.get("REALTIME_STREAM_OPENS_PER_MINUTE"), 30
 )
 
+# Open pages hear when the plan changes and read themselves again
+# (apps.activities.live; owner, 2026-10-05). Off under the test runner: the
+# announcement works out who to tell after each commit, and those queries
+# would be counted against every query budget in the suite. Its own tests
+# turn it on. LIVE_UPDATES_ENABLED=false switches it off in production
+# without a deploy.
+LIVE_UPDATES_ENABLED = (
+    os.environ.get("LIVE_UPDATES_ENABLED", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
 # How long a role dashboard's computed payload is reused before it is rebuilt.
 # The Country Director dashboard is ~96 queries and over a second even warm
 # (2026-09-12); five minutes of reuse turn the second and later loads into one

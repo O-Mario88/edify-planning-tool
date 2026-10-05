@@ -57,10 +57,19 @@ def stream(request):
     # or a reconnect loop stops here instead of holding the worker.
     from django.conf import settings
 
-    from apps.core.throttling import throttle_by_ip
+    # Every page that shows a plan holds a stream now (static/js/live-regions.js,
+    # 2026-10-05), and opens one on each visit. The loop this rate stops is one
+    # account's, so it is the account that is counted at the reviewed rate; an
+    # office behind one address is counted at ten times it, which still stops
+    # a flood from a single address.
+    from apps.core.throttling import throttle_by_account, throttle_by_ip
 
     opens_per_minute = int(getattr(settings, "REALTIME_STREAM_OPENS_PER_MINUTE", 30))
-    if not throttle_by_ip(request, name="realtime_stream", limit=opens_per_minute):
+    if not throttle_by_account(
+        user_id, name="realtime_stream", limit=opens_per_minute
+    ) or not throttle_by_ip(
+        request, name="realtime_stream", limit=opens_per_minute * 10
+    ):
         response = StreamingHttpResponse(
             ["data: too many stream opens, try again in a minute\n\n"],
             content_type="text/event-stream",
@@ -116,7 +125,13 @@ def stream(request):
             await asyncio.to_thread(bus.unsubscribe, user_id, q)
             raise
         try:
-            yield _sse({"type": "connected", "at": _now_iso()})
+            # A page that was away (a hidden tab closes its stream) learns
+            # here whether the plan it shows changed meanwhile, and reads
+            # itself again only then (apps.activities.live; owner, 2026-10-05).
+            from apps.activities.live import last_change
+
+            changed = await asyncio.to_thread(last_change, user_id)
+            yield _sse({"type": "connected", "at": _now_iso(), "changed": changed})
             last_beat = time.monotonic()
             while True:
                 drained = False

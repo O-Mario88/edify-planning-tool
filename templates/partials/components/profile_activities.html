@@ -15,6 +15,7 @@ Optional: `heading` (default "Planned & Completed Activities"), `caption`,
 `subject_label` (the Where column's heading, default "Where").
 {% endcomment %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden"
+         id="{{ acts.param }}-activities" data-live-region
          data-profile-activities="{{ acts.param }}"
          aria-labelledby="{{ acts.param }}-title"
          x-data="tabState('actsTab', '{{ acts.tab_param }}', ['planned', 'completed'], '{{ acts.active_tab }}')">

@@ -8,9 +8,12 @@
 {% endblock %}
 
 {% block shell_content %}
+{# Read again when an activity on it is rescheduled or cancelled by anyone (owner, 2026-10-05; static/js/live-regions.js). #}
 <section
+  id="calendar-workspace"
   class="calendar-workspace edify-page-canvas"
   data-mobile-family="workday"
+  data-live-region
   x-data="{
     eventFilter: '{{ selected_event_kind|escapejs }}',
     selectedDate: '{% if year == today.year and month == today.month %}{{ today|date:"Y-m-d" }}{% endif %}',

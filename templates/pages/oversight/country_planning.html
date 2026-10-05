@@ -59,7 +59,7 @@ still open — the second Country Oversight tab.{% endcomment %}
   one they target: the country plan's own controls swap #country-workspace, and
   the shared lens workspaces swap #oversight-workspace as they do on Team
   Oversight. One element carrying both keeps the shared partials shared.{% endcomment %}
-  <div id="country-workspace"><div id="oversight-workspace">
+  <div id="country-workspace"><div id="oversight-workspace" data-live-region>
     {% if active_oversight_view == "portfolio" %}
       {% include "partials/oversight/portfolio_workspace.html" %}
     {% elif active_oversight_view == "monitor" %}

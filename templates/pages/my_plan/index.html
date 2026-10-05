@@ -47,7 +47,8 @@ Export
 {% comment %}No longer a tabpanel: the period tabs it was the panel for are
 gone, and a panel with no tablist is a promise to a screen reader that nothing
 keeps.{% endcomment %}
-<div id="my-plan-workspace" class="space-y-6" aria-live="polite">
+{# Read again when an activity on it is rescheduled or cancelled by anyone (owner, 2026-10-05; static/js/live-regions.js). #}
+<div id="my-plan-workspace" class="space-y-6" aria-live="polite" data-live-region>
 {% include "partials/my_plan/workspace.html" %}
 </div>
 

@@ -3602,7 +3602,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3374,
+      "bytes": 3433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -5735,7 +5735,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1266,
+      "bytes": 1283,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6742,7 +6742,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5243,
+      "bytes": 5260,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7247,7 +7247,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 40937,
+      "bytes": 40954,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -12560,7 +12560,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10118,
+      "bytes": 10135,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -15614,7 +15614,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4400,
+      "bytes": 4417,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",

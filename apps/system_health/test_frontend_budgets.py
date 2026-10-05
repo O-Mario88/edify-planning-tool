@@ -180,7 +180,14 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: because a list of tick boxes can arrive in a drawer on any page. It
     #: adds no stylesheet: the bar is the Planning page's own, and the tick
     #: column uses the classes selection tables already had.
-    JS_GZIP_KB = 141.5
+    #:
+    #: Raised to 143.5 the same day (141.46 to 143.3 KB) for live-regions.js
+    #: (1.9 KB gzipped, deferred), after the owner asked that "every event
+    #: should update ... in real time and fast": a page that shows the plan
+    #: listens to the stream the server already had and reads its marked
+    #: regions again when the plan changes. It opens a stream only on a page
+    #: that has such a region, and closes it while the tab is hidden.
+    JS_GZIP_KB = 143.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod
