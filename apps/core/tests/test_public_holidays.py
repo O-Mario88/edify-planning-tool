@@ -209,3 +209,97 @@ class EveryReaderAgreesTest(TestCase):
             verdict["calendarConflicts"],
             ["This date is a public holiday: Independence Day."],
         )
+
+
+class HolidaySettingsPagesTest(TestCase):
+    """Human Resources sees the national calendar where holidays are kept,
+    and recording a day tells the people with work planned on it."""
+
+    def setUp(self):
+        self.hr = User.objects.create_user(
+            email="holiday-hr@example.com",
+            name="Holiday HR",
+            roles=["HumanResources"],
+            active_role="HumanResources",
+        )
+        StaffProfile.objects.create(user=self.hr, title="HR")
+        self.client.force_login(self.hr)
+
+    def test_both_settings_pages_list_the_national_calendar(self):
+        for path in ("/leave/policies", "/public-holidays"):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+
+                self.assertEqual(response.status_code, 200)
+                names = [
+                    holiday.name for holiday in response.context["national_holidays"]
+                ]
+                self.assertIn("Independence Day", names)
+                self.assertIn("Christmas Day", names)
+                self.assertContains(response, "National calendar")
+
+    def test_a_recorded_day_is_not_listed_twice(self):
+        day = upcoming_public_holidays(date.today(), limit=1)[0]
+        PublicHoliday.objects.create(name="Recorded by HR", date=day.date)
+
+        response = self.client.get("/leave/policies")
+
+        self.assertNotIn(
+            day.date,
+            [holiday.date for holiday in response.context["national_holidays"]],
+        )
+        self.assertContains(response, "Recorded by HR")
+
+    def test_recording_a_holiday_notifies_the_people_planned_on_it(self):
+        from datetime import timedelta
+
+        from apps.activities.day_off import DAY_OFF_EVENT
+        from apps.activities.models import Activity
+        from apps.core.fy import get_operational_fy, get_quarter_for_date
+        from apps.geography.models import District, Region
+        from apps.notifications.models import Notification
+        from apps.schools.models import School
+
+        # A weekday three weeks out that is no holiday yet.
+        day = date.today() + timedelta(days=21)
+        while day.weekday() >= 5 or public_holiday_name(day):
+            day += timedelta(days=1)
+        officer = User.objects.create_user(
+            email="holiday-officer@example.com",
+            name="Holiday Officer",
+            roles=["CCEO"],
+            active_role="CCEO",
+        )
+        profile = StaffProfile.objects.create(user=officer, title="CCEO")
+        region = Region.objects.create(name="Holiday Region")
+        school = School.objects.create(
+            school_id="HOL-1",
+            name="Holiday Primary",
+            region=region,
+            district=District.objects.create(name="Holiday District", region=region),
+            school_type="client",
+        )
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=school,
+            fy=get_operational_fy(day),
+            quarter=get_quarter_for_date(day),
+            planned_date=day,
+            responsible_staff_id=profile.id,
+            status="scheduled",
+        )
+
+        response = self.client.post(
+            "/leave/policies",
+            {
+                "action": "add_holiday",
+                "holiday_name": "Census Day",
+                "holiday_date": day.isoformat(),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        notice = Notification.objects.get(
+            source_event_type=DAY_OFF_EVENT, recipient_id=officer.id
+        )
+        self.assertIn("a public holiday (Census Day)", notice.body)

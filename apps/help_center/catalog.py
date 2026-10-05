@@ -1217,7 +1217,7 @@ FEATURES = [
         ["calendar"],
         ["apps/frontend/views/extended_views.py", "apps/activities/models.py"],
         "The Calendar is the one central schedule of authorised work. It is a projection of canonical Activities, not a separate diary: nothing is entered here, so it can never drift from what Planning and the Work Plan say. Approved leave and public holidays appear as clearly separate overlays and are never counted as Activities.",
-        "Use the month grid, or the Agenda view on a narrow screen, and filter by financial year, Activity type and status. A multi-day Activity is drawn on each of its days and still counts once — continuation days are marked. Open an event to reach the Activity, where its cost, funding status, evidence requirements and next action live. You only ever see Activities inside your own role scope.",
+        "Use the month grid, or the Agenda view on a narrow screen, and filter by financial year, Activity type and status. A multi-day Activity is drawn on each of its days and still counts once — continuation days are marked. Open an event to reach the Activity, where its cost, funding status, evidence requirements and next action live. An Activity planned on a public holiday, or on a day its responsible staff member is on approved leave, is drawn in red and listed above the month; that person is notified, and My Plan lists it first with a Reschedule button. You only ever see Activities inside your own role scope.",
     ),
 ]
 TROUBLESHOOTING = [

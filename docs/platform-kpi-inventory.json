@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 772,
+   "line": 807,
    "label": null,
    "keys": [
     "amount",
@@ -9717,7 +9717,7 @@
    "audit_id": "KPI-SOURCE-539",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 476,
+   "line": 542,
    "label": "Undated",
    "keys": [
     "at_risk",
@@ -9739,7 +9739,7 @@
    "audit_id": "KPI-SOURCE-540",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 467,
+   "line": 533,
    "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
@@ -9761,13 +9761,14 @@
    "audit_id": "KPI-SOURCE-541",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 597,
+   "line": 670,
    "label": null,
    "keys": [
     "cost",
     "cost_missing_count",
     "count",
-    "label"
+    "label",
+    "unit_cost_note"
    ],
    "has_metric_key": false,
    "has_drilldown": false,
@@ -9780,7 +9781,7 @@
    "audit_id": "KPI-SOURCE-542",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 711,
+   "line": 817,
    "label": null,
    "keys": [
     "amount",
@@ -11067,7 +11068,7 @@
    "audit_id": "KPI-SOURCE-610",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1659,
+   "line": 1664,
    "label": "All Activities",
    "keys": [
     "count",
@@ -11086,7 +11087,7 @@
    "audit_id": "KPI-SOURCE-611",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1668,
+   "line": 1673,
    "label": null,
    "keys": [
     "count",

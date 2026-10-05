@@ -26,7 +26,7 @@ from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
-from apps.frontend.work_plan_tables import grouped_tables
+from apps.frontend.work_plan_tables import DETAIL_PAGE_PARAM
 
 ANALYTICS_CONTROLS = (
     'href="/analytics/export',
@@ -130,7 +130,41 @@ class WorkPlanRowLinksTest(SimpleTestCase):
                 "description": "",
             },
         }
-        return {"detail_tables": grouped_tables([row]), "period_label": "Q4"}
+        return {
+            "detail_rows": [row],
+            "detail_page_param": DETAIL_PAGE_PARAM,
+            "period_label": "Q4",
+        }
+
+    def test_the_planners_own_row_offers_complete_reschedule_and_cancel(self):
+        """Owner, 2026-10-05: "Complete, Reschedule or cancel activity if it
+        is yours". One Actions menu, each item the drawer My Plan opens."""
+        context = self._tables(
+            action_url="/my-plan/act-1/reschedule-drawer", action_text="Reschedule"
+        )
+        context["detail_rows"][0]["table_action"].update(
+            own=True, complete=True, drawer=True
+        )
+        html = _render(self.TEMPLATE, "CCEO", context)
+        self.assertIn("data-row-actions", html)
+        for path, text in (
+            ("/my-plan/act-1/complete-drawer", "Complete"),
+            ("/my-plan/act-1/reschedule-drawer", "Reschedule"),
+            ("/my-plan/act-1/cancel-drawer", "Cancel"),
+        ):
+            with self.subTest(text=text):
+                self.assertIn(f'hx-get="{path}"', html)
+                self.assertIn(f">{text}</a>", html)
+        self.assertIn("View details", html)
+
+        # Not yet dated: nothing to complete.
+        context["detail_rows"][0]["table_action"].update(
+            complete=False, text="Schedule"
+        )
+        html = _render(self.TEMPLATE, "CCEO", context)
+        self.assertNotIn("complete-drawer", html)
+        self.assertIn(">Schedule</a>", html)
+        self.assertIn(">Cancel</a>", html)
 
     def test_readers_activity_records_refuse_get_no_record_links(self):
         for role in ("RegionalVicePresident", "HumanResources"):

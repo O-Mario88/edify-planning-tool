@@ -194,6 +194,10 @@ _KEY_LABEL = {
     "secondary_transport_per_day": "Secondary district daily transport pool",
     "secondary_lunch_per_day": "Secondary district daily lunch pool",
     "secondary_accommodation_per_night": "Secondary district accommodation per night",
+    "management_accommodation_per_night": (
+        "Accommodation per night for staff other than a CCEO (Program Lead, "
+        "Country Director, Impact Assessment, Accountant and other staff)"
+    ),
     "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
     "secondary_breakfast_per_day": "Breakfast",
     "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
@@ -448,8 +452,14 @@ def planned_minimum_amounts(activities) -> dict:
     Re-price each stored component's actual share instead of re-running a whole
     visit-day recipe for every school. Two bulk reads avoid per-activity queries.
     Missing minimum rates or provenance never fall back to operational amounts.
+
+    A component priced from a rate that has since been retired is the
+    exception: it has no minimum to re-price at, and counts at what it was
+    priced.
     """
     from decimal import Decimal, ROUND_HALF_UP
+
+    from apps.budget.reference import RATE_ALIASES
 
     # Only the five columns the estimate reads. A whole snapshot carries five
     # JSON documents, and decoding them for every activity in a field
@@ -487,10 +497,23 @@ def planned_minimum_amounts(activities) -> dict:
             or bool(missing_configuration)
         )
         for line in breakdown:
-            setting = rates.get((rate_card_id, line.get("key")))
+            key = line.get("key")
+            setting = rates.get((rate_card_id, key))
+            if setting is None:
+                # A card from before a rate was renamed or split carries the
+                # row under its old key (the second accommodation rate was
+                # split off the first on 2026-10-05).
+                setting = next(
+                    (
+                        rates[(rate_card_id, old)]
+                        for old in RATE_ALIASES.get(key, ())
+                        if (rate_card_id, old) in rates
+                    ),
+                    None,
+                )
             if (
                 setting is None
-                and line.get("key") in RETIRED_COST_SETTING_KEYS
+                and key in RETIRED_COST_SETTING_KEYS
                 and not line.get("missing")
             ):
                 # A rate retired after this line was priced (budget 0023 and
@@ -572,6 +595,12 @@ def _planning_day_context(
     )
 
     input = dict(_profiled_input(input))
+    if responsible_user_id:
+        # The night away is paid at the traveller's accommodation rate
+        # (owner, 2026-10-05), whether or not the day is chosen yet.
+        from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+        input["accommodationKey"] = accommodation_key_for_staff(responsible_user_id)
     raw_date = input.get("plannedDate") or input.get("date")
     if not raw_date or not responsible_user_id:
         return input, 1
@@ -621,6 +650,12 @@ def _planning_day_context(
         or _days_of(input) > 1
     ):
         return input, 1
+    if input.get("districtType") == "secondary":
+        # The last of a run of days in a secondary district is the day the
+        # traveller comes home: no night, no dinner (owner, 2026-10-05).
+        from apps.daily_visit_batches.return_day import is_return_day
+
+        input["returnDay"] = is_return_day(responsible_user_id, day)
     batch = DailyVisitBatch.objects.filter(
         responsible_user=responsible_user_id,
         visit_date=day,
@@ -834,7 +869,10 @@ def _line_item_type(key: str) -> str:
         return "transport"
     if key in ("primary_lunch_per_day", "secondary_lunch_per_day", "lunch_per_day"):
         return "lunch"
-    if key == "secondary_accommodation_per_night":
+    if key in (
+        "secondary_accommodation_per_night",
+        "management_accommodation_per_night",
+    ):
         return "accommodation"
     if key == "secondary_overnight_dinner_per_day":
         return "dinner"
@@ -933,6 +971,7 @@ def _programme_period_specs(cost, activity, planned_date):
         "secondary_transport_per_day",
         "secondary_lunch_per_day",
         "secondary_accommodation_per_night",
+        "management_accommodation_per_night",
         "secondary_overnight_dinner_per_day",
         "secondary_breakfast_per_day",
         "secondary_incidentals_per_day",
@@ -1200,6 +1239,12 @@ def apply_to_activity(
                 activity=activity, vendor_paid=True
             ).values_list("cost_setting_key", flat=True)
         )
+        # The night is one booking under either accommodation rate: a line
+        # re-priced from the CCEO's rate onto its traveller's keeps it.
+        from apps.daily_visit_batches.pricing import ACCOMMODATION_KEYS
+
+        if vendor_paid_keys & ACCOMMODATION_KEYS:
+            vendor_paid_keys |= ACCOMMODATION_KEYS
         ActivityScheduleCostLine.objects.filter(activity=activity).delete()
 
         # Tag Core activity budget lines

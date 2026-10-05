@@ -567,9 +567,20 @@ class ASpecialProjectCostsLikeAnythingElseTest(SimpleTestCase):
 
 class DistrictMeetingsAreCostedSeparatelyTest(SimpleTestCase):
     def test_a_field_event_is_priced_per_day_away(self):
+        """Every day away, bar the night and the dinner of the last one: the
+        traveller comes home that day (owner, 2026-10-05)."""
+        night_and_dinner = (
+            RATES["secondary_accommodation_per_night"]
+            + RATES["secondary_overnight_dinner_per_day"]
+        )
         self.assertEqual(
             _cost(activityType="field_event", districtType="secondary", days=3).amount,
-            3 * SECONDARY_STAFF_DAY,
+            3 * SECONDARY_STAFF_DAY - night_and_dinner,
+        )
+        # One day away on its own keeps both.
+        self.assertEqual(
+            _cost(activityType="field_event", districtType="secondary", days=1).amount,
+            SECONDARY_STAFF_DAY,
         )
 
     def test_a_cluster_meeting_is_the_room_the_materials_and_the_staff_day(self):

@@ -500,34 +500,43 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         workbook = load_workbook(BytesIO(response.content), read_only=True)
         sheet = workbook["Work Plan"]
         headers = [cell.value for cell in next(sheet.iter_rows(max_row=1))]
+        # The Detailed Activity Plan's columns (owner, 2026-10-05), then the
+        # planning detail the page leaves to the record.
         self.assertEqual(
             headers,
             [
-                "Group",
                 "Activity Date",
-                "Activity Title",
-                "Activity Type",
+                "Activity",
+                "School ID",
+                "School Name",
+                "District",
+                "Cluster Name",
+                "Activity Purpose",
                 "SSA Intervention",
+                "Previous SSA Score",
+                "Delivery Mode",
+                "Person Responsible",
+                "Cost (UGX)",
+                "Planned Period",
+                "Status",
+                "Activity Title",
                 "Number of Schools",
                 "Number of Participants",
-                "Responsible Party",
-                "Party Type",
-                "School ID",
                 "Venue",
-                "Delivery Mode",
-                "Cost (UGX)",
-                "Status",
             ],
         )
         data = [cell.value for cell in next(sheet.iter_rows(min_row=2, max_row=2))]
-        self.assertEqual(data[0], "Non-School Activities")
-        self.assertEqual(data[2], "Student Conference/Camps - Student camps")
-        self.assertEqual(data[3], "Student Activities")
-        self.assertEqual(data[5], 12)
-        self.assertEqual(data[6], 40)
+        self.assertEqual(data[1], "Student Activities")
         # A programme event is at no school, so it has no School ID.
-        self.assertIn(data[9], ("", None))
-        self.assertEqual(data[11], "Group")
+        self.assertIn(data[2], ("", None))
+        self.assertEqual(data[6], "Student Conference/Camps - Student camps")
+        # No SSA intervention measures a non-school activity.
+        self.assertEqual(data[7], "General")
+        self.assertEqual(data[9], "Group")
+        self.assertEqual(data[13], "Scheduled")
+        self.assertEqual(data[14], "Student Conference/Camps - Student camps")
+        self.assertEqual(data[15], 12)
+        self.assertEqual(data[16], 40)
         summary = workbook["Plan Summary"]
         summary_headers = [cell.value for cell in next(summary.iter_rows(max_row=1))]
         self.assertEqual(
@@ -550,17 +559,23 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         response = client.get(f"/work-plan?fy={FY}&view=fy")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        # A programme activity is non-school work: the Work Plan's non-school
-        # ledger (templates/partials/work_plan/detail_tables.html, 2026-09-14).
+        # A programme activity is non-school work and sits in the one
+        # Detailed Activity Plan table with every other plan (owner,
+        # 2026-10-05; templates/partials/work_plan/detail_tables.html).
         for heading in (
             '<th scope="col">Activity Date</th>',
             '<th scope="col">Activity</th>',
-            '<th scope="col">Venue</th>',
+            '<th scope="col">Activity Purpose</th>',
+            '<th scope="col">SSA Intervention</th>',
+            '<th scope="col">Delivery Mode</th>',
+            '<th scope="col">Person Responsible</th>',
             '<th scope="col">Cost</th>',
             '<th scope="col">Status</th>',
             '<th scope="col">Action</th>',
         ):
             self.assertIn(heading, html)
+        # No SSA intervention measures a programme activity.
+        self.assertIn("General", html)
         self.assertIn("Submit completed plan to RVP", html)
         self.assertIn("Export Excel", html)
 

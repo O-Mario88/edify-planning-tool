@@ -21,7 +21,10 @@ from __future__ import annotations
 
 
 from django.db import transaction
-from apps.daily_visit_batches.districts import district_type_for_staff
+from apps.daily_visit_batches.districts import (
+    accommodation_key_for_staff,
+    district_type_for_staff,
+)
 
 from apps.routes.location import (
     SchoolCoordinateService,
@@ -605,9 +608,20 @@ class PlanningRoutePreviewService:
             try:
                 from apps.budget.costing_service import _rate_card
 
+                from apps.daily_visit_batches.return_day import is_return_day
+
                 rates, _ = _rate_card(catalogue)
+                day_type = "secondary" if "secondary" in dtypes else "primary"
                 pool = compute_daily_pool(
-                    rates, "secondary" if "secondary" in dtypes else "primary"
+                    rates,
+                    day_type,
+                    accommodation_key_for_staff(responsible_user),
+                    # The day home has no night and no dinner (2026-10-05).
+                    return_day=(
+                        day_type == "secondary"
+                        and visit_date is not None
+                        and is_return_day(responsible_user, visit_date)
+                    ),
                 )
                 # Split with the same exact-allocation math the Daily Visit
                 # Batch pricing engine uses (sum of shares == pool; remainder

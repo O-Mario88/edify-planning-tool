@@ -838,6 +838,13 @@ def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
     }
 
 
+def _accommodation_key_for(responsible_staff_id) -> str:
+    """The accommodation rate the responsible person's night away fetches."""
+    from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+    return accommodation_key_for_staff(responsible_staff_id)
+
+
 def _field_event_district_type(activity: Activity) -> str:
     """MOU travel profile for a field event: destination vs home district.
 
@@ -930,6 +937,10 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "photocopyPages": value("photocopyPages", activity.photocopy_pages),
         "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
+        # The night away is paid at the traveller's accommodation rate
+        # (owner, 2026-10-05): the CCEO's, or the one set for every other
+        # member of staff.
+        "accommodationKey": _accommodation_key_for(activity.responsible_staff_id),
         "nights": data.get("nights"),
         "projectId": activity.project_id,
         "fy": activity.fy,
@@ -2768,6 +2779,7 @@ def _create(
                 "catalogueItemId": catalogue_item.id if catalogue_item else None,
                 "deliveryType": "partner" if is_partner else "staff",
                 "districtType": data.get("districtType"),
+                "accommodationKey": _accommodation_key_for(responsible_staff_id),
                 "teachersAttended": data.get("teachersAttended"),
                 "leadersAttended": data.get("leadersAttended"),
                 "otherParticipants": data.get("otherParticipants"),

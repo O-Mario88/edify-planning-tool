@@ -9703,7 +9703,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7451,
+      "bytes": 7716,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9799,7 +9799,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6290,
+      "bytes": 6408,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10205,7 +10205,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5157,
+      "bytes": 5275,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -15258,7 +15258,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8009,
+      "bytes": 7453,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -15266,7 +15266,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Detail Tables",
       "purpose": "Reusable detail tables interface primitive",
@@ -15336,7 +15336,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4272,
+      "bytes": 4400,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",

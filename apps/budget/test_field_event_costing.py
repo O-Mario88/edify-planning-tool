@@ -77,12 +77,14 @@ class FieldTravelCostingTest(TestCase):
         # Transport accrues per day away (owner rule, 2026-08-19).
         self.assertEqual(lines["secondary_transport_per_day"].qty, 3)
         self.assertEqual(lines["lunch_per_day"].qty, 3)
-        self.assertEqual(lines["secondary_accommodation_per_night"].qty, 3)
-        self.assertEqual(lines["secondary_overnight_dinner_per_day"].qty, 3)
         self.assertEqual(lines["secondary_breakfast_per_day"].qty, 3)
+        # The last day is the day home: no night and no dinner (owner,
+        # 2026-10-05). Three days away are two nights.
+        self.assertEqual(lines["secondary_accommodation_per_night"].qty, 2)
+        self.assertEqual(lines["secondary_overnight_dinner_per_day"].qty, 2)
         self.assertEqual(
             cost.amount,
-            3 * (60_000 + 15_000 + 80_000 + 12_000 + 8_000),
+            3 * (60_000 + 15_000 + 8_000) + 2 * (80_000 + 12_000),
         )
 
     def test_missing_rate_blocks_rather_than_undercosts(self):
@@ -248,13 +250,15 @@ class FieldEventEndToEndTest(TestCase):
         lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
         self.assertEqual(lines["secondary_transport_per_day"].amount, 3 * 60_000)
         self.assertEqual(lines["lunch_per_day"].amount, 3 * 15_000)
-        self.assertEqual(lines["secondary_accommodation_per_night"].amount, 3 * 80_000)
-        self.assertEqual(lines["secondary_overnight_dinner_per_day"].amount, 3 * 12_000)
+        # Three days away, two nights: the last day is the day home, with
+        # no night and no dinner (owner, 2026-10-05).
+        self.assertEqual(lines["secondary_accommodation_per_night"].amount, 2 * 80_000)
+        self.assertEqual(lines["secondary_overnight_dinner_per_day"].amount, 2 * 12_000)
         self.assertEqual(lines["secondary_breakfast_per_day"].amount, 3 * 8_000)
         # One Lunch row for every district, and no incidentals: the owner's
         # 2026-09-06 catalogue has neither a second lunch nor an incidentals row.
         self.assertNotIn("secondary_incidentals_per_day", lines)
-        expected_total = 180_000 + 45_000 + 240_000 + 36_000 + 24_000
+        expected_total = 180_000 + 45_000 + 160_000 + 24_000 + 24_000
 
         # Money trail: the owner's weekly request materialised automatically.
         wfr = WeeklyFundRequest.objects.get(

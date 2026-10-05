@@ -90,12 +90,13 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
     {% if row.delivery_type == 'in-school' or 'in_school' in row.activity_type %}in-school{% else %}group{% endif %}
   </span>
 </td>
+{% comment %}
+An in-school Training is done during its School Visit, so it stays at UGX 0
+and says where its cost is (owner, 2026-10-05). A partner facilitator's fee
+is the Training's own, and one scheduled with no visit carries the day itself.
+{% endcomment %}
 <td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">
-  {% if row.delivery_type == "in-school" or "in_school" in row.activity_type %}
-  UGX 0
-  {% else %}
-  UGX {{ row.budget_total|default:0|intcomma }}
-  {% endif %}
+  UGX {{ row.budget_total|default:0|intcomma }}{% if row.cost_note %} <span class="font-normal edify-text-muted" data-cost-note>{{ row.cost_note }}</span>{% endif %}
 </td>
 <td data-label="Budget status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>

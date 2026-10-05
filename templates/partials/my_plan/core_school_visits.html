@@ -83,7 +83,7 @@ Core School Visits Planned for {% if period == 'week' %}This Week{% elif period 
 <span class="text-slate-400">—</span>
 {% endif %}
 </td>
-<td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">UGX {{ row.budget_total|default:0|intcomma }}</td>
+<td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">UGX {{ row.budget_total|default:0|intcomma }}{% if row.cost_note %} <span class="font-normal edify-text-muted" data-cost-note>{{ row.cost_note }}</span>{% endif %}</td>
 <td data-label="Budget status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>
 </td>
