@@ -135,6 +135,46 @@ class Rescheduling(PairFixture):
             self.assertEqual(half.planned_date, self.old_day)
             self.assertEqual(half.reschedule_count, 0)
 
+    def test_a_refusal_of_the_other_half_keeps_its_kind(self):
+        """Refused permission stays refused permission, with which half it
+        was said of in front; it does not become a bad request."""
+        from apps.core.exceptions import Forbidden
+
+        real = services.reschedule
+
+        def refuse_the_visit(activity_id, data, principal):
+            if activity_id == self.visit.id:
+                raise Forbidden("Only its owner may move this visit.")
+            return real(activity_id, data, principal)
+
+        with mock.patch.object(services, "reschedule", side_effect=refuse_the_visit):
+            with self.assertRaises(Forbidden) as refused:
+                self._move(self.training)
+
+        message = str(refused.exception.detail)
+        self.assertTrue(message.startswith("The school visit on the same day"))
+        self.assertTrue(message.endswith("Only its owner may move this visit."))
+        self._reread()
+        self.assertEqual(self.training.planned_date, self.old_day)
+
+    def test_a_refusal_that_is_not_a_sentence_is_replaced_by_ours(self):
+        real = services.reschedule
+
+        def refuse_the_visit(activity_id, data, principal):
+            if activity_id == self.visit.id:
+                raise BadRequest({"scheduledDate": ["not this day"]})
+            return real(activity_id, data, principal)
+
+        with mock.patch.object(services, "reschedule", side_effect=refuse_the_visit):
+            with self.assertRaises(BadRequest) as refused:
+                self._move(self.training)
+
+        self.assertEqual(
+            str(refused.exception.detail),
+            "The school visit on the same day could not be moved, and the two "
+            "go together, so neither was changed.",
+        )
+
     def test_its_own_refusal_is_said_in_the_services_own_words(self):
         """A day that has passed is refused for the record that was asked
         for, as it always was, and neither half moves."""

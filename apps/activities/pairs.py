@@ -30,6 +30,7 @@ from __future__ import annotations
 from datetime import date
 
 from django.db import transaction
+from rest_framework.exceptions import ErrorDetail
 
 from apps.core.exceptions import BadRequest, EdifyAPIException
 
@@ -165,12 +166,22 @@ def _target_day(data: dict) -> date | None:
 
 def _with_its_pair(member, verb: str, change) -> None:
     """Change the half that was not asked for; if it refuses, say which half
-    and why, and let the transaction leave both as they were."""
+    and let the transaction leave both as they were.
+
+    The refusal that reaches the reader is the service's own, kept whole: its
+    kind (a refusal of permission stays one) and its words, which an
+    `EdifyAPIException` writes to be read by a user. Which half it was said of
+    is put in front. Nothing is built from the text of an exception: a
+    refusal whose detail is not a plain sentence is replaced by ours alone.
+    """
     try:
         change()
     except EdifyAPIException as exc:
-        why = str(getattr(exc, "detail", "") or exc).strip()
-        raise BadRequest(
+        said_of = (
             f"The {label(member).lower()} on the same day could not be {verb}, "
-            f"and the two go together, so neither was changed. {why}".strip()
-        ) from exc
+            "and the two go together, so neither was changed."
+        )
+        if isinstance(exc.detail, ErrorDetail):
+            exc.detail = ErrorDetail(f"{said_of} {exc.detail}", code=exc.detail.code)
+            raise
+        raise BadRequest(said_of) from None
