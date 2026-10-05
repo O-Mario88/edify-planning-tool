@@ -35,6 +35,11 @@ from apps.frontend.work_plan_tables import (
     work_plan_action,
 )
 from apps.activities.models import Activity
+from apps.activities.pair_costing import (
+    CAPTURED_IN_TRAINING_NOTE,
+    CAPTURED_IN_VISIT_NOTE,
+    pair_cost_notes,
+)
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
     COMPLETED_WORK_STATUSES,
@@ -253,7 +258,16 @@ def _activity_group(a) -> tuple[str, str]:
     return "non_school", NON_SCHOOL_GROUP_LABEL
 
 
-def _summary_bucket_label(a) -> str:
+#: The UGX 0 half of an in-school Training / School Visit pair is summed on
+#: a line of its own, named for the half that carries the cost, so it does
+#: not pull down the average of the work that carries its own.
+_PAIR_BUCKET_SUFFIX = {
+    CAPTURED_IN_VISIT_NOTE: " (with School Visit)",
+    CAPTURED_IN_TRAINING_NOTE: " (with In-school Training)",
+}
+
+
+def _summary_bucket_label(a, cost_note: str = "") -> str:
     """One summary line per (executor, activity type) — "Staff School Visit",
     "Partner School Visit", "Staff Cluster Meeting", … The canonical type
     display keeps named curricula from fragmenting the summary into
@@ -266,6 +280,8 @@ def _summary_bucket_label(a) -> str:
         label = a.activity_name_snapshot or (
             a.catalogue_item.display_name if a.catalogue_item_id else label
         )
+    else:
+        label += _PAIR_BUCKET_SUFFIX.get(cost_note, "")
     return f"{executor} {label}"
 
 
@@ -282,6 +298,10 @@ def _finish_summary_rows(bucket: dict[str, dict]) -> list[dict]:
             if row["cost_missing_count"]
             else format(unit_cost, ",.0f" if unit_cost == int(unit_cost) else ",.2f")
         )
+        # The UGX 0 half of an in-school pair stays at 0 and says where its
+        # cost is (owner, 2026-10-05).
+        if row["cost"] or row["cost_missing_count"]:
+            row["unit_cost_note"] = ""
     return rows
 
 
@@ -491,6 +511,12 @@ def build_work_plan_context(user, params) -> dict:
         "fy": f"FY{fy}",
     }[view] or f"FY{fy}"
 
+    # An in-school Training is done during its School Visit and costs UGX 0
+    # of its own: the visit carries the day (owner, 2026-09-28). Having no
+    # cost lines is therefore not a cost left unset, unless the other half
+    # of the pair has none either.
+    pair_notes = pair_cost_notes(activities)
+
     rows: list[dict] = []
     period_budget = 0
     pending_approval_count = 0
@@ -537,7 +563,8 @@ def build_work_plan_context(user, params) -> dict:
                 in_period = bool(anchor and window_start <= anchor <= window_end)
             if in_period:
                 cost_lines.append(line)
-        missing_cost = a.cost_missing or not all_cost_lines
+        cost_note = pair_notes.get(a.id, "")
+        missing_cost = a.cost_missing or (not all_cost_lines and not cost_note)
 
         # Cost lines land in the band of their own service month (multi-day
         # allocations), falling back to the parent activity's band, so each
@@ -586,10 +613,16 @@ def build_work_plan_context(user, params) -> dict:
             continue
 
         group_key, group_label = _activity_group(a)
-        bucket_label = _summary_bucket_label(a)
+        bucket_label = _summary_bucket_label(a, cost_note)
         summary_row = summary_buckets[group_key].setdefault(
             bucket_label,
-            {"label": bucket_label, "count": 0, "cost": 0, "cost_missing_count": 0},
+            {
+                "label": bucket_label,
+                "count": 0,
+                "cost": 0,
+                "cost_missing_count": 0,
+                "unit_cost_note": cost_note,
+            },
         )
         summary_row["count"] += 1
         summary_row["cost"] += activity_period_cost
@@ -676,6 +709,9 @@ def build_work_plan_context(user, params) -> dict:
                 "status_tone": status_tone(status_class),
                 "cost": activity_period_cost,
                 "cost_missing": missing_cost,
+                # The UGX 0 half of an in-school pair says where its cost
+                # is; the money is counted once, on the other half's row.
+                "cost_note": cost_note,
                 "action": action,
                 # Expanded detail (server-rendered, no extra endpoint).
                 "purpose": a.activity_purpose_text or "",

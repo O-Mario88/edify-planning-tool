@@ -367,6 +367,77 @@ class BudgetSpecificationTest(TestCase):
         ).update(approved_minimum=0)
         self.assertEqual(planned_minimum_amounts([act])[act.id], 0)
 
+    def test_minimum_estimate_counts_a_retired_rate_at_what_it_was_priced(self):
+        """Owner, 2026-10-05: "the CCEOs are not seeing the costs on their my
+        plan pages". The per-session Cluster Training rate left the rate card
+        on 2026-10-01; every training priced while it was charged still
+        carries its line, and one line with no row to re-price at blanked the
+        whole estimate."""
+        act, _payload = self.planned_training()
+        snapshot = ActivityCostSnapshot.objects.get(activity=act, is_current=True)
+        snapshot.operational_breakdown = [
+            {
+                "key": "group_training_facilitation_fee",
+                "unit": 30000,
+                "amount": 30000,
+                "qty": 1,
+                "missing": False,
+            },
+            {
+                "key": "cluster_meetings_trainings",
+                "label": "Cluster Training",
+                "unit": 22000,
+                "amount": 22000,
+                "qty": 1,
+                "missing": False,
+            },
+        ]
+        snapshot.save(update_fields=["operational_breakdown"])
+        self.assertFalse(
+            CostSetting.objects.filter(
+                catalogue=snapshot.operational_rate_card,
+                key="cluster_meetings_trainings",
+            ).exists()
+        )
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        # The facilitator at the minimum (5,000); the retired rate as priced.
+        self.assertEqual(planned_minimum_amounts([act])[act.id], 5000 + 22000)
+
+        # A rate still on the card with no minimum set is still not replaced
+        # by its operational price.
+        CostSetting.objects.filter(
+            catalogue=snapshot.operational_rate_card,
+            key="group_training_facilitation_fee",
+        ).update(approved_minimum=None)
+        self.assertIsNone(planned_minimum_amounts([act])[act.id])
+
+    def test_minimum_estimate_reads_a_split_rate_from_the_row_it_was_split_off(self):
+        """A night priced at the second accommodation rate on a card from
+        before the split is re-priced from the one accommodation row."""
+        act, _payload = self.planned_training()
+        snapshot = ActivityCostSnapshot.objects.get(activity=act, is_current=True)
+        card = snapshot.operational_rate_card
+        CostSetting.objects.filter(
+            catalogue=card, key="management_accommodation_per_night"
+        ).delete()
+        CostSetting.objects.filter(
+            catalogue=card, key="secondary_accommodation_per_night"
+        ).update(unit_cost=40000, approved_minimum=25000)
+        snapshot.operational_breakdown = [
+            {
+                "key": "management_accommodation_per_night",
+                "unit": 40000,
+                "amount": 40000,
+                "qty": 1,
+                "missing": False,
+            }
+        ]
+        snapshot.save(update_fields=["operational_breakdown"])
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        self.assertEqual(planned_minimum_amounts([act])[act.id], 25000)
+
     def test_old_weekly_budget_link_keeps_the_selected_week_month(self):
         self.cost()
         self.client.force_login(self.owner)

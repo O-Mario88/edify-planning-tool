@@ -41,7 +41,12 @@
           <th scope="row" data-record-title>{{ r.name }}</th>
           <td>{{ r.detail_venue|default:"Not recorded" }}</td>
           {% endif %}
-          <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% endif %}
+          {% comment %}
+          An in-school Training is done during its School Visit, so it stays
+          at UGX 0 and says where its cost is (owner, 2026-10-05); the money
+          is on the visit's row, which is what the weekly request fetches.
+          {% endcomment %}
+          <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% if r.cost_note %} <span class="edify-text-muted" data-cost-note>{{ r.cost_note }}</span>{% endif %}{% endif %}
             {% if r.cost_lines %}<details name="work-plan-cost-breakdown"><summary class="edify-text-caption edify-primary-text">Breakdown</summary><ul>{% for line in r.cost_lines %}<li>{{ line.label }}: UGX {{ line.amount|intcomma }}</li>{% endfor %}</ul></details>{% endif %}
           </td>
           {% if section.key != 'non_school' %}<td>{{ r.planned_period }}</td>{% endif %}

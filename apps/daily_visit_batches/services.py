@@ -21,10 +21,11 @@ from django.db.models import Count, Q
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 
-from .districts import district_type_for_staff
+from .districts import accommodation_key_for_staff, district_type_for_staff
 from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
-from .pricing import KEY_LABELS, allocate_pool, compute_daily_pool
+from .pricing import ACCOMMODATION_KEYS, KEY_LABELS, allocate_pool, compute_daily_pool
+from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
 
 
 def _catalogue_for_batch_date(visit_date: date):
@@ -82,12 +83,29 @@ def batch_needs_repricing(batch) -> bool:
     )
     if expected_type != batch.district_type:
         return True
+    # The day the traveller comes home has no night and no dinner (owner,
+    # 2026-10-05); a day priced before that rule, or whose neighbours have
+    # since changed, still carries them, or lacks them.
+    if (
+        expected_type == "secondary"
+        and batch.school_count
+        and priced_as_return_day(batch)
+        != is_return_day(batch.responsible_user, batch.visit_date)
+    ):
+        return True
     snapshots = list(
         ActivityCostSnapshot.objects.filter(activity__in=members, is_current=True)
     )
+    # A night priced before the accommodation rates were split (2026-10-05)
+    # sits under the CCEO's rate whoever travelled.
+    accommodation_key = accommodation_key_for_staff(batch.responsible_user)
     return len(snapshots) != batch.school_count or any(
         line.get("dailyAllocation", {}).get("policy") != "staff-day-v2"
         or line.get("dailyAllocation", {}).get("count") != batch.school_count
+        or (
+            line.get("key") in ACCOMMODATION_KEYS
+            and line.get("key") != accommodation_key
+        )
         for snapshot in snapshots
         for line in snapshot.operational_breakdown
         if line.get("key") in KEY_LABELS
@@ -395,7 +413,9 @@ def attach_activity_to_batch(
 
     rates, _by_key = _rate_card(catalogue)
     try:
-        compute_daily_pool(rates, district_type)
+        compute_daily_pool(
+            rates, district_type, accommodation_key_for_staff(responsible_user_id)
+        )
     except BadRequest:
         if batch:
             raise
@@ -554,7 +574,10 @@ def _recalculate_and_write_lines(
     """Recompute the batch's shared pool, split it across every active member
     activity, and re-price each one via the existing apply_to_activity writer
     (date derivation, catalogue provenance, advance-request sync — all reused
-    unchanged), then resync the day's weekly fund request and monthly draft."""
+    unchanged), then resync the day's weekly fund request and monthly draft.
+
+    The day before and the day after are re-priced with it when this day
+    changed which of them is the day the traveller comes home."""
     from apps.budget.costing_service import rate_cards_held
 
     # Every member prices against the same published cards: read them once.
@@ -562,8 +585,52 @@ def _recalculate_and_write_lines(
         _write_day_lines(batch, catalogue, responsible_user_id)
 
 
+#: A neighbouring day is re-priced only while it is still a plan: a day
+#: already worked was slept and eaten as it was priced.
+_PLANNED_DAY_STATUSES = ("planned", "scheduled", "rescheduled")
+
+
+def _settle_neighbouring_days(batch: DailyVisitBatch, away) -> None:
+    """Re-price the day before and the day after this one where it changed
+    whether they are the day the traveller comes home.
+
+    Friday is the return day of a Monday-to-Friday week until Saturday is
+    planned; then Friday needs its night and dinner back. A neighbour whose
+    week has left draft, whose money has moved or whose work is done is left
+    as it was priced; `batch_needs_repricing` still reports it.
+    """
+    for neighbour in DailyVisitBatch.objects.filter(
+        responsible_user=batch.responsible_user, visit_date__in=list(away)
+    ):
+        if priced_as_return_day(neighbour) == is_return_day(
+            neighbour.responsible_user, neighbour.visit_date
+        ):
+            continue
+        if _is_locked(neighbour.responsible_user, neighbour.visit_date):
+            continue
+        if (
+            neighbour.activities.filter(deleted_at__isnull=True)
+            .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+            .exclude(status__in=_PLANNED_DAY_STATUSES)
+            .exists()
+        ):
+            continue
+        try:
+            with transaction.atomic():
+                _write_day_lines(
+                    neighbour, None, neighbour.responsible_user, settle_neighbours=False
+                )
+        except BadRequest:
+            # Its money has moved (the cost writer's finance locks).
+            continue
+
+
 def _write_day_lines(
-    batch: DailyVisitBatch, catalogue, responsible_user_id: str
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    settle_neighbours: bool = True,
 ) -> None:
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
@@ -585,6 +652,8 @@ def _write_day_lines(
         .order_by("id")
     )
     n = len(activities)
+    # Where this day stood for its neighbours the last time it was priced.
+    was_away = batch.district_type == "secondary" and bool(batch.school_count)
     district_types = {
         district_type_for_staff(responsible_user_id, member_district(member))
         or "primary"
@@ -594,7 +663,30 @@ def _write_day_lines(
         batch.district_type = (
             "secondary" if "secondary" in district_types else "primary"
         )
-    pool = compute_daily_pool(rates, batch.district_type)
+    # The day the traveller comes home has no night and no dinner (owner,
+    # 2026-10-05; apps.daily_visit_batches.return_day). Only a day in a
+    # secondary district, now or as last priced, has neighbours to ask.
+    is_away = batch.district_type == "secondary" and n > 0
+    away = (
+        away_on(
+            batch.responsible_user,
+            (batch.visit_date - ONE_DAY, batch.visit_date + ONE_DAY),
+        )
+        if was_away or is_away
+        else set()
+    )
+    return_day = is_away and is_return_day(
+        batch.responsible_user, batch.visit_date, away=away
+    )
+    # The night away is paid at the traveller's accommodation rate: the
+    # CCEO's, or the one set for the Program Lead, the Country Director,
+    # Impact Assessment and the Accountant (owner, 2026-10-05).
+    pool = compute_daily_pool(
+        rates,
+        batch.district_type,
+        accommodation_key_for_staff(responsible_user_id),
+        return_day=return_day,
+    )
 
     # Each member's own recipe, computed ONCE here because the day's pool
     # depends on it and the loop below needs it again.
@@ -608,6 +700,7 @@ def _write_day_lines(
             **_costing_input(member, {}),
             "plannedDate": batch.visit_date,
             "districtType": batch.district_type,
+            "returnDay": return_day,
         }
         recipes[member.id] = (
             member_input,
@@ -659,6 +752,8 @@ def _write_day_lines(
 
     if n == 0:
         _sync_route_batch(batch)  # day emptied → route twin cleans itself up
+        if settle_neighbours and away:
+            _settle_neighbouring_days(batch, away)
         return
 
     allocations = allocate_pool(pool, n)
@@ -710,6 +805,9 @@ def _write_day_lines(
     sync_monthly_drafts_for_activities(activities)
 
     _sync_route_batch(batch)
+
+    if settle_neighbours and away:
+        _settle_neighbouring_days(batch, away)
 
 
 def _sync_route_batch(batch: DailyVisitBatch) -> None:

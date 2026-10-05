@@ -79,6 +79,76 @@ def resolve_district_type(role, primary_district, target_district) -> str:
     return hq_district_type(target_district)
 
 
+def _staff_profile(responsible_id):
+    """The traveller's profile, read once per person per request: pricing a
+    day asks for it for every member, from the batch, the pricing input and
+    the route alike."""
+    if not responsible_id:
+        return None
+    from apps.accounts.models import StaffProfile
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("district_type_profile", responsible_id),
+        lambda: StaffProfile.objects.filter(
+            Q(user_id=responsible_id) | Q(id=responsible_id)
+        )
+        .select_related("user")
+        .first(),
+    )
+
+
+def _role_of(user):
+    roles = list(getattr(user, "roles", None) or [])
+    return getattr(user, "active_role", None) or (roles[0] if roles else None)
+
+
+# Whose night away is paid at the second accommodation rate (owner,
+# 2026-10-05: "the accommodation for program leads, cd, IA and accountant
+# should be separate from the accommodation of CCEO"). Every other traveller
+# keeps the CCEO's.
+MANAGEMENT_ACCOMMODATION_ROLES: frozenset[str] = frozenset(
+    {
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+    }
+)
+
+
+def accommodation_key_for_role(role) -> str:
+    """The accommodation rate a night away fetches for ``role``."""
+    from .pricing import ACCOMMODATION_KEY, MANAGEMENT_ACCOMMODATION_KEY
+
+    text = str(getattr(role, "value", role) or "")
+    if text in MANAGEMENT_ACCOMMODATION_ROLES:
+        return MANAGEMENT_ACCOMMODATION_KEY
+    return ACCOMMODATION_KEY
+
+
+def accommodation_key_for_staff(responsible_id) -> str:
+    """The accommodation rate a night away fetches for the staff member
+    ``responsible_id`` (a User id or a StaffProfile id), by their role.
+
+    Nobody to resolve for — a partner's work, an unassigned plan — is the
+    CCEO's rate, which is what every night cost before the rates were split.
+    """
+    profile = _staff_profile(responsible_id)
+    user = profile.user if profile is not None else None
+    if user is None and responsible_id:
+        # Some accounts hold no staff profile (an Admin, a head-office user
+        # created outside the seed); their role is on the account itself.
+        from apps.accounts.models import User
+        from apps.core.request_cache import memoize
+
+        user = memoize(
+            ("accommodation_role_user", responsible_id),
+            lambda: User.objects.filter(id=responsible_id).first(),
+        )
+    return accommodation_key_for_role(_role_of(user) if user is not None else None)
+
+
 def district_type_for_staff(responsible_id, district):
     """The district type of a visit to ``district`` by the staff member
     ``responsible_id`` (a User id or a StaffProfile id).
@@ -92,28 +162,11 @@ def district_type_for_staff(responsible_id, district):
     """
     if district is None:
         return PRIMARY
-    from apps.accounts.models import StaffProfile
-    from apps.core.request_cache import memoize
-
-    # One read per person per request: pricing a day asks this for every
-    # member, from the batch, the pricing input and the route alike.
-    profile = (
-        memoize(
-            ("district_type_profile", responsible_id),
-            lambda: StaffProfile.objects.filter(
-                Q(user_id=responsible_id) | Q(id=responsible_id)
-            )
-            .select_related("user")
-            .first(),
-        )
-        if responsible_id
-        else None
-    )
+    profile = _staff_profile(responsible_id)
     if profile is None:
         return district.district_type
     user = profile.user
-    roles = list(getattr(user, "roles", None) or [])
-    role = getattr(user, "active_role", None) or (roles[0] if roles else None)
+    role = _role_of(user)
     if is_field_role(role):
         home = profile.primary_district_id
         if home:
@@ -131,4 +184,7 @@ __all__ = [
     "hq_district_type",
     "resolve_district_type",
     "district_type_for_staff",
+    "MANAGEMENT_ACCOMMODATION_ROLES",
+    "accommodation_key_for_role",
+    "accommodation_key_for_staff",
 ]

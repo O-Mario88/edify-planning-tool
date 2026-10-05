@@ -346,7 +346,9 @@ class ClusterSessionRatesAreRetiredTest(TestCase):
 
         self.assertEqual(RETIRED_SESSION_RATE_KEYS, set(self.KEYS))
         self.assertTrue(RETIRED_SESSION_RATE_KEYS <= RETIRED_COST_SETTING_KEYS)
-        self.assertEqual(len(CANONICAL_RATES), 20)
+        # Twenty after the two were retired; the second accommodation rate
+        # (owner, 2026-10-05) is the twenty-first.
+        self.assertEqual(len(CANONICAL_RATES), 21)
         # A fresh database: the migrations have run and the reference data is
         # in place, and neither row is among it.
         self.assertFalse(CostSetting.objects.filter(key__in=self.KEYS).exists())

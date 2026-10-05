@@ -251,12 +251,16 @@ def non_school_activity_preview(request):
             "days": days,
         }
         travel_profile = None
+        responsible = (
+            (request.POST.get("responsible_staff_id") or "").strip()
+            or request.user.staff_profile_id
+            or request.user.user_id
+        )
+        # The night away is the responsible person's (owner, 2026-10-05).
+        from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+        payload["accommodationKey"] = accommodation_key_for_staff(responsible)
         if item.costing_profile == "FIELD_TRAVEL":
-            responsible = (
-                (request.POST.get("responsible_staff_id") or "").strip()
-                or request.user.staff_profile_id
-                or request.user.user_id
-            )
             district_type = _travel_district_type(
                 (request.POST.get("district_id") or "").strip(), responsible
             )
@@ -514,7 +518,9 @@ def work_plan_export(request):
                 [
                     row["label"],
                     row["count"],
-                    row["unit_cost"]
+                    f"{row['unit_cost_display']} {row['unit_cost_note']}"
+                    if row["unit_cost_note"]
+                    else row["unit_cost"]
                     if row["unit_cost"] is not None
                     else "Cost setup required",
                     row["cost"],
