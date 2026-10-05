@@ -9530,7 +9530,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11151,
+      "bytes": 9350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9550,7 +9550,7 @@
         "selected",
         "open"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/my_plan/activity_detail_drawer.html",
       "variants": [
         "danger"
@@ -9626,6 +9626,30 @@
       "template": "partials/my_plan/attention.html",
       "variants": [
         "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4581,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>",
+        "/my-plan/<str:activity_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Budget Breakdown",
+      "purpose": "Reusable budget breakdown interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/budget_breakdown.html",
+      "variants": [
+        "warning"
       ]
     },
     {
@@ -19384,8 +19408,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -63344,8 +63368,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -115407,7 +115431,7 @@
     "activity_states": 24,
     "all_routes": 1360,
     "api_routes": 360,
-    "component_templates": 611,
+    "component_templates": 612,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 280,

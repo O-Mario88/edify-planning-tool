@@ -6,19 +6,19 @@
    "browser-rendered": 807,
    "none": 290,
    "page-tested": 1446,
-   "request-tested": 1225
+   "request-tested": 1227
   },
   "by_kind": {
    "button": 1292,
    "disclosure": 75,
    "field": 1292,
-   "link": 1042,
+   "link": 1044,
    "tab": 67
   },
-  "controls": 3768,
+  "controls": 3770,
   "high_consequence": 200,
   "state_changing": 443,
-  "templates_scanned": 627,
+  "templates_scanned": 628,
   "unresolved_destinations": 0,
   "untested": 290,
   "untested_state_changing": 23
@@ -1722,7 +1722,6 @@
     "/actions/<str:action_id>/<str:transition>",
     "/actions/mine",
     "/actions/sent",
-    "/activities/<str:activity_id>",
     "/activities/closure/blocked",
     "/activities/closure/blocked/",
     "/admin-ops/planning",
@@ -1837,7 +1836,6 @@
     "/my-performance/documents",
     "/my-performance/values",
     "/my-plan",
-    "/my-plan/<str:activity_id>",
     "/my-professional-development",
     "/my-professional-development/",
     "/my-targets",
@@ -7990,6 +7988,22 @@
     "PROJECT_COORDINATOR"
    ]
   },
+  "partials/my_plan/budget_breakdown.html": {
+   "pages": [
+    "/activities/<str:activity_id>",
+    "/my-plan/<str:activity_id>"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "IA",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR"
+   ]
+  },
   "partials/my_plan/cancel_drawer.html": {
    "pages": [
     "/my-plan/<str:activity_id>/cancel-drawer"
@@ -11472,8 +11486,8 @@
   {"accessible_name": "Record Salesforce IDCompletes this partner activity", "destination": "/activities/{{ act.id }}/salesforce-id", "destination_route": "/activities/<str:activity_id>/salesforce-id", "evidence": "request-tested", "high_consequence": false, "id": "INT-8B4F99939CCB", "kind": "button", "line": 156, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/detail.html"},
   {"accessible_name": "Discuss This ActivityRaise it in your daily debrief", "destination": "/debriefs/submit?activity={{ act.id }}", "destination_route": "/debriefs/submit", "evidence": "request-tested", "high_consequence": false, "id": "INT-CC81E24C50AD", "kind": "link", "line": 162, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/my_plan/detail.html"},
   {"accessible_name": "Record learning resultsClass results from this OneTest visit", "destination": "{{ onetest_results_drawer }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EFC8E310E494", "kind": "button", "line": 181, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/detail.html"},
-  {"accessible_name": "No evidence uploaded yet for this activity. Click to upload supporting evidence Accepted: JPG, PNG, PDF, DOC, DOCX", "destination": "/my-plan/{{ act.id }}/complete-drawer", "destination_route": "/my-plan/<str:activity_id>/complete-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-C859119DACAB", "kind": "button", "line": 215, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/detail.html"},
-  {"accessible_name": "View activity guidelines", "destination": "/help", "destination_route": "/help", "evidence": "request-tested", "high_consequence": false, "id": "INT-99BE79853897", "kind": "link", "line": 260, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/my_plan/detail.html"},
+  {"accessible_name": "No evidence uploaded yet for this activity. Click to upload supporting evidence Accepted: JPG, PNG, PDF, DOC, DOCX", "destination": "/my-plan/{{ act.id }}/complete-drawer", "destination_route": "/my-plan/<str:activity_id>/complete-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-C859119DACAB", "kind": "button", "line": 222, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/detail.html"},
+  {"accessible_name": "View activity guidelines", "destination": "/help", "destination_route": "/help", "evidence": "request-tested", "high_consequence": false, "id": "INT-99BE79853897", "kind": "link", "line": 267, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/my_plan/detail.html"},
   {"accessible_name": "View Timeline", "destination": "/activities/{{ act.id }}/timeline", "destination_route": "/activities/<str:activity_id>/timeline", "evidence": "none", "high_consequence": false, "id": "INT-1E7AA20F6ADA", "kind": "button", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/evidence_packet.html"},
   {"accessible_name": "Submit for Review", "destination": "/activities/{{ act.id }}/submit", "destination_route": "/activities/<str:activity_id>/submit", "evidence": "none", "high_consequence": false, "id": "INT-E05423F1F021", "kind": "button", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/evidence_packet.html"},
   {"accessible_name": "+ Upload File", "destination": "/activities/{{ act.id }}/evidence", "destination_route": "/activities/<str:activity_id>/evidence", "evidence": "request-tested", "high_consequence": false, "id": "INT-4DE3CF4E6C2A", "kind": "button", "line": 61, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/my_plan/evidence_packet.html"},
@@ -13214,13 +13228,13 @@
   {"accessible_name": "Finance", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8C872152B9DD", "kind": "tab", "line": 56, "method": "", "selector": "#activity-detail-tab-finance", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
   {"accessible_name": "Evidence & SF ID ({{ evidence_list|length }})", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-22B0F145E288", "kind": "tab", "line": 65, "method": "", "selector": "#activity-detail-tab-evidence", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
   {"accessible_name": "Change", "destination": "/activities/{{ act.id }}/facilitator", "destination_route": "/activities/<str:activity_id>/facilitator", "evidence": "request-tested", "high_consequence": false, "id": "INT-87C8BB845055", "kind": "button", "line": 104, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1A2B617E330C", "kind": "button", "line": 202, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Update SSA & complete", "destination": "/activities/{{ act.id }}/partner-ssa-complete", "destination_route": "/activities/<str:activity_id>/partner-ssa-complete", "evidence": "request-tested", "high_consequence": false, "id": "INT-8106437CCC96", "kind": "button", "line": 205, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Edit", "destination": "/my-plan/{{ act.id }}/edit-drawer", "destination_route": "/my-plan/<str:activity_id>/edit-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-BF818D6CEA94", "kind": "button", "line": 218, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Already carried out, so it can no longer be edited.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-76F7A5013BF9", "kind": "button", "line": 230, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Reschedule", "destination": "/my-plan/{{ act.id }}/reschedule-drawer", "destination_route": "/my-plan/<str:activity_id>/reschedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-035B71664A29", "kind": "button", "line": 233, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Complete activity", "destination": "/my-plan/{{ act.id }}/complete-drawer", "destination_route": "/my-plan/<str:activity_id>/complete-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-BA0FB01D690D", "kind": "button", "line": 245, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
-  {"accessible_name": "Already carried out, so it can no longer be edited.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-202FC7BA09E6", "kind": "button", "line": 254, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1A2B617E330C", "kind": "button", "line": 156, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Update SSA & complete", "destination": "/activities/{{ act.id }}/partner-ssa-complete", "destination_route": "/activities/<str:activity_id>/partner-ssa-complete", "evidence": "request-tested", "high_consequence": false, "id": "INT-8106437CCC96", "kind": "button", "line": 159, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Edit", "destination": "/my-plan/{{ act.id }}/edit-drawer", "destination_route": "/my-plan/<str:activity_id>/edit-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-BF818D6CEA94", "kind": "button", "line": 172, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Already carried out, so it can no longer be edited.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-76F7A5013BF9", "kind": "button", "line": 184, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Reschedule", "destination": "/my-plan/{{ act.id }}/reschedule-drawer", "destination_route": "/my-plan/<str:activity_id>/reschedule-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-035B71664A29", "kind": "button", "line": 187, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Complete activity", "destination": "/my-plan/{{ act.id }}/complete-drawer", "destination_route": "/my-plan/<str:activity_id>/complete-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-BA0FB01D690D", "kind": "button", "line": 199, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
+  {"accessible_name": "Already carried out, so it can no longer be edited.", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-202FC7BA09E6", "kind": "button", "line": 208, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_detail_drawer.html"},
   {"accessible_name": "View Completed Activity", "destination": "/my-plan/{{ row.id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A5220E361E04", "kind": "button", "line": 18, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_row.html"},
   {"accessible_name": "Actions for {{ row.title|default:'this activity' }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-BB5E86F3DF08", "kind": "button", "line": 30, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_row.html"},
   {"accessible_name": "View Details", "destination": "/my-plan/{{ row.id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-857A03600C3A", "kind": "button", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/activity_row.html"},
@@ -13256,6 +13270,8 @@
   {"accessible_name": "{{ row.school_name }}", "destination": "/schools/{{ row.school_id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-C6CD6ACA435E", "kind": "link", "line": 239, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/my_plan/attention.html"},
   {"accessible_name": "{{ row.cluster_name }}", "destination": "/clusters/{{ row.cluster_id }}", "destination_route": "/clusters/<str:cluster_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-E466E3D4030B", "kind": "link", "line": 243, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/my_plan/attention.html"},
   {"accessible_name": "{{ row.next_action.text }}", "destination": "{{ row.next_action.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-269DFBE3546F", "kind": "button", "line": 253, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/attention.html"},
+  {"accessible_name": "{{ budget.empty_link.label }}", "destination": "/activities/{{ budget.empty_link.id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-4B85B22AD74A", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/my_plan/budget_breakdown.html"},
+  {"accessible_name": "{{ other.name }} at {{ other.place }}", "destination": "/activities/{{ other.id }}", "destination_route": "/activities/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-2911C5AD72FB", "kind": "link", "line": 25, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/my_plan/budget_breakdown.html"},
   {"accessible_name": "e.g. School closed for the term", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EEB17B4F479C", "kind": "field", "line": 32, "method": "", "selector": "#reason", "state_changing": false, "tag": "textarea", "template": "partials/my_plan/cancel_drawer.html"},
   {"accessible_name": "Keep activity", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7D8B27F86F8B", "kind": "button", "line": 45, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/my_plan/cancel_drawer.html"},
   {"accessible_name": "Cancel activity", "destination": "/my-plan/{{ act.id }}/cancel", "destination_route": "/my-plan/<str:activity_id>/cancel", "evidence": "request-tested", "high_consequence": true, "id": "INT-150F0EF9EE6B", "kind": "button", "line": 46, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/my_plan/cancel_drawer.html"},

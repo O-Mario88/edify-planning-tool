@@ -4554,6 +4554,10 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .ad-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; }
 }
 
+/* The budget breakdown is a table of its own, so it takes the whole row
+   under the overview and the actions rather than one of the two columns. */
+.ad-budget { grid-column: 1 / -1; min-inline-size: 0; }
+
 .ad-card {
   display: grid;
   gap: 14px;

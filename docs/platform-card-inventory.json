@@ -4,8 +4,8 @@
   "templates": 249,
   "distinct_titles": 634,
   "with_card_key": 13,
-  "untitled_surfaces": 593,
-  "untitled_chrome": 154,
+  "untitled_surfaces": 592,
+  "untitled_chrome": 153,
   "untitled_nested": 191,
   "untitled_headless": 248,
   "templates_with_same_title_twice": 0,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 190,
+   "line": 197,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 226,
+   "line": 233,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,

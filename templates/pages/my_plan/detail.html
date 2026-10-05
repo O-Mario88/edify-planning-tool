@@ -186,6 +186,13 @@
       {% endif %}
     </section>
 
+    {# ── Budget breakdown ──────────────────────────────────────────────── #}
+    {% comment %}Every cost item behind the figure above, how it was worked
+    out and who shares the day (owner, 2026-10-05), across both columns.{% endcomment %}
+    <div class="ad-budget" data-activity-budget>
+      {% include "partials/my_plan/budget_breakdown.html" with budget_name="activity-budget" %}
+    </div>
+
     {# ── Verification evidence ─────────────────────────────────────────── #}
     <section class="ad-card">
       <header class="ad-card__head">
