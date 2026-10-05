@@ -108,23 +108,14 @@ intervention that the save then ignored.{% endcomment %}
   <input type="number" name="duration_hours" id="duration_hours" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 
-<div class="space-y-1">
-  <label for="core_training_delivery_type" class="block edify-text-caption font-semibold text-slate-600">Delivery</label>
-  <select id="core_training_delivery_type" aria-label="Delivery type" x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-    <option value="staff">Internal field staff (CCEO)</option>
-    <option value="partner">Partner agency</option>
-  </select>
-</div>
-
-<div x-show="delivery === 'partner'" class="space-y-1" style="display: none;">
-  <label for="assigned_partner_id" class="block edify-text-caption font-semibold text-slate-600">Partner</label>
-  <select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-    <option value="">Select a partner…</option>
-    {% for p in partners %}
-    <option value="{{ p.id }}">{{ p.name }}</option>
-    {% endfor %}
-  </select>
-</div>
+{% comment %}
+No delivery choice, and no partner picker (owner, 2026-10-05: "Block any
+potential scheduling for the partner visit"). This drawer dates the training,
+and a Partner dates their own. A school goes to a Partner from Assign; a
+Partner who facilitates a training staff deliver is named below.
+{% endcomment %}
+<input type="hidden" name="delivery_type" value="staff">
+<p class="edify-text-caption text-slate-500" data-partner-dates-own-work>Staff deliver this training. To have a partner deliver it, use Assign on the school's row: the partner chooses the date.</p>
 
 <template x-if="delivery === 'staff'">
 {% include "partials/activities/facilitated_by_field.html" with field_id="core_facilitating_partner_id" %}

@@ -178,8 +178,11 @@ class AProjectWithNoApprovedActivityTest(_Fixture):
 
     def test_the_date_is_the_partner_s_to_choose(self):
         """Owner: the project is assigned "to the partner to schedule"."""
-        self.assertContains(self.drawer(), "Target date")
-        self.assertNotContains(self.drawer(), 'name="scheduled_date" required')
+        # The hand-over shows the day it is made and asks for no date
+        # (owner, 2026-10-05): a date typed here read as the partner's plan.
+        self.assertContains(self.drawer(), "Assigned date")
+        self.assertNotContains(self.drawer(), "Target date")
+        self.assertNotContains(self.drawer(), 'name="scheduled_date"')
         response = self.hand_over(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:400])
         self.assertFalse(

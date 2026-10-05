@@ -2535,7 +2535,7 @@
   },
   {
    "template": "templates/pages/planning/schedule.html",
-   "line": 234,
+   "line": 213,
    "title": "Live Costing Breakdown",
    "heading_level": 3,
    "has_card_key": false,

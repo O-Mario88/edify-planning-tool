@@ -811,10 +811,7 @@ def special_projects_bulk_partner_view(request):
             },
         )
 
-    from datetime import date
-
     partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
-    scheduled_date = request.POST.get("scheduled_date", "").strip()
     override_reason = request.POST.get("override_reason", "").strip()
     if needs_reason and partner.id not in project_partner_ids and not override_reason:
         return error_fragment(
@@ -824,18 +821,8 @@ def special_projects_bulk_partner_view(request):
             ),
             status=400,
         )
-    # The partner schedules the work; a date given here is the day the
-    # coordinator has in mind, and none leaves the choice to the partner.
-    parsed_date = None
-    if scheduled_date:
-        try:
-            parsed_date = date.fromisoformat(scheduled_date)
-        except ValueError:
-            return HttpResponse(
-                '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a valid delivery date.</div>',
-                status=400,
-            )
-
+    # The partner schedules the work, so the hand-over takes no date: it
+    # carries the day it is made (owner, 2026-10-05).
     try:
         from apps.ssa.services import latest_applicable_record
 
@@ -891,7 +878,6 @@ def special_projects_bulk_partner_view(request):
                                 handover, assignment.project
                             ),
                             expected_activity_type=item.workflow_kind,
-                            scheduled_date=parsed_date,
                             notes=f"Project: {assignment.project.name}",
                             override_reason=override_reason,
                         )
@@ -2674,7 +2660,7 @@ def _bulk_handover_focus(handover: dict, school):
     )
 
 
-def _assert_bulk_handover_allowed(handover: dict, school, partner, bulk_date) -> None:
+def _assert_bulk_handover_allowed(handover: dict, school, partner) -> None:
     """The single Assign's own school rules, so a school its drawer would
     refuse is left out of a bulk hand-over too."""
     from apps.activity_catalogue.services import validate_context
@@ -2693,7 +2679,7 @@ def _assert_bulk_handover_allowed(handover: dict, school, partner, bulk_date) ->
         partner.id,
         school.id,
         item.workflow_kind,
-        get_operational_fy(bulk_date) if bulk_date else get_operational_fy(),
+        get_operational_fy(),
     )
     if is_gated_visit(rule_for(school.school_type), item.workflow_kind, item):
         assert_may_assign_partner_visit(school)
@@ -3180,7 +3166,6 @@ def bulk_action_view(request):
             )
         # Only a partner who may take new work: active, and not on hold.
         partner = get_object_or_404(assignable_partners(), id=partner_id)
-        from datetime import date as _date
         from apps.ssa.services import latest_applicable_record
 
         # What the selection is handed over for: the planner's choice, the
@@ -3192,14 +3177,6 @@ def bulk_action_view(request):
             handover = _bulk_partner_handover(request)
         except Exception as exc:
             return error_fragment(exc, status=400)
-
-        bulk_date_raw = request.POST.get("scheduled_date", "").strip()
-        bulk_date = None
-        if bulk_date_raw:
-            try:
-                bulk_date = _date.fromisoformat(bulk_date_raw)
-            except ValueError:
-                pass
 
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
@@ -3230,9 +3207,7 @@ def bulk_action_view(request):
                         # this year) is left out and named, and the rest of
                         # the selection still goes.
                         with transaction.atomic():
-                            _assert_bulk_handover_allowed(
-                                handover, s, partner, bulk_date
-                            )
+                            _assert_bulk_handover_allowed(handover, s, partner)
                             created = partner_services.create_assignment(
                                 school=s,
                                 partner=partner,
@@ -3248,7 +3223,6 @@ def bulk_action_view(request):
                                 purpose_of_visit=handover["purpose_of_visit"],
                                 focus_intervention=_bulk_handover_focus(handover, s),
                                 expected_activity_type=item.workflow_kind,
-                                scheduled_date=bulk_date,
                                 notes=(
                                     "Bulk Partner Assignment · final schedule "
                                     "and cost pending"

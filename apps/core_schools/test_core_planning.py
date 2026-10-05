@@ -277,6 +277,20 @@ class CoreSchoolsPlanningTest(TestCase):
             payload,
         )
 
+    def _hand_over_visit(self, seq="", *, client=None):
+        """Assign one of the package's visits to the partner, who dates it
+        (owner, 2026-10-05: staff no longer schedule for a partner)."""
+        return (client or self._client(self.cceo)).post(
+            "/core-schools/assign-partner/action",
+            {
+                "school_id": self.school.school_id,
+                "partner_id": self.partner.id,
+                "purpose_of_visit": "training_follow_up",
+                "visit_training_number": seq,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
     # ── 1–6: sidebar + scope ─────────────────────────────────────────────────
     def test_core_schools_sidebar_visible_to_field_roles(self):
         for user in (self.cceo, self.pl):
@@ -571,25 +585,48 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertEqual(third.status_code, 400)
         self.assertIn("2 staff core visits", third.content.decode())
 
-        for seq, when in (("3", "2026-06-09"), ("4", "2026-06-16")):
-            partner = self._schedule_visit(
-                seq=seq, when=when, partner_id=self.partner.id
-            )
+        for seq in ("3", "4"):
+            partner = self._hand_over_visit(seq)
             self.assertIn(partner.status_code, (200, 302), partner.content[:200])
-        third_partner = self._schedule_visit(
-            seq="5", when="2026-06-23", partner_id=self.partner.id
-        )
+        third_partner = self._hand_over_visit("5")
         self.assertEqual(third_partner.status_code, 400)
         self.assertIn("2 partner core visits", third_partner.content.decode())
+
+    def test_staff_do_not_schedule_a_visit_for_the_partner(self):
+        """Owner, 2026-10-05: "Block any potential scheduling for the partner
+        visit." The drawer offers no partner, and a POST that still names one
+        is told where the work goes instead."""
+        drawer = self._client(self.cceo).get(
+            "/core-schools/schedule-visit", {"school_id": self.school.school_id}
+        )
+        self.assertEqual(drawer.status_code, 200)
+        self.assertNotContains(drawer, 'name="assigned_partner_id"')
+        self.assertNotContains(drawer, "Partner agency")
+        self.assertContains(drawer, "data-partner-dates-own-work")
+
+        refused = self._schedule_visit(
+            seq="1", when="2026-06-09", partner_id=self.partner.id
+        )
+
+        self.assertEqual(refused.status_code, 403)
+        self.assertIn("Core Helper Org chooses the date", refused.content.decode())
+        self.assertFalse(
+            Activity.objects.filter(
+                school=self.school, assigned_partner_id=self.partner.id
+            ).exists()
+        )
+        self.assertFalse(
+            CoreActivitySlot.objects.filter(
+                core_plan=self.plan, assigned_partner_id=self.partner.id
+            ).exists()
+        )
 
     def test_a_partner_may_still_take_the_package_beyond_the_staff_cap(self):
         """The cap is the staff share, not the school's need."""
         self._schedule_visit(seq="1", when="2026-04-21")
         self._schedule_visit(seq="2", when="2026-04-28")
 
-        partner_delivery = self._schedule_visit(
-            seq="3", when="2026-07-21", partner_id=self.partner.id
-        )
+        partner_delivery = self._hand_over_visit("3")
 
         self.assertIn(
             partner_delivery.status_code, (200, 302), partner_delivery.content[:200]
@@ -637,9 +674,7 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertTrue(row["package_complete"])
         self.assertEqual(row["package_status"], "Package complete")
 
-        beyond = self._schedule_visit(
-            seq="1", when="2026-07-21", partner_id=self.partner.id
-        )
+        beyond = self._hand_over_visit("1")
 
         self.assertIn(beyond.status_code, (200, 302), beyond.content[:300])
         self.assertNotIn(b"core package is complete", beyond.content)
@@ -689,28 +724,42 @@ class CoreSchoolsPlanningTest(TestCase):
         )
         self.assertEqual(Activity.objects.count(), acts_before)  # no budget yet
 
-    def test_partner_schedule_updates_partner_and_staff_my_plan(self):
+    def _partner_core_visit(self):
+        return {
+            "activityType": "core_visit",
+            "catalogueItemId": self.core_visit_item.id,
+            "requireCatalogue": True,
+            "focusIntervention": "teaching_environment",
+            "schoolId": self.school.school_id,
+            "deliveryType": "partner",
+            "assignedPartnerId": self.partner.id,
+            "responsibleStaffId": self.cceo_sp.id,
+            "activityPurposeText": "Partner core coaching",
+        }
+
+    def test_work_created_for_a_partner_takes_no_date_from_staff(self):
+        """Owner, 2026-10-05: the partner dates their own work. Created for
+        them it waits, undated, with the staff member as its monitor."""
         from apps.activities import services as asvc
+        from apps.core.exceptions import Forbidden
+
+        with self.assertRaises(Forbidden) as refused:
+            asvc.create(
+                {**self._partner_core_visit(), "scheduledDate": "2026-04-22"},
+                principal=self.cceo,
+                core_slot_verified=True,
+            )
+        self.assertIn("Core Helper Org chooses the date", str(refused.exception))
+        self.assertFalse(Activity.objects.filter(school=self.school).exists())
 
         result = asvc.create(
-            {
-                "activityType": "core_visit",
-                "catalogueItemId": self.core_visit_item.id,
-                "requireCatalogue": True,
-                "focusIntervention": "teaching_environment",
-                "schoolId": self.school.school_id,
-                "deliveryType": "partner",
-                "assignedPartnerId": self.partner.id,
-                "responsibleStaffId": self.cceo_sp.id,
-                "scheduledDate": "2026-04-22",
-                "activityPurposeText": "Partner core coaching",
-            },
-            principal=self.cceo,
-            core_slot_verified=True,
+            self._partner_core_visit(), principal=self.cceo, core_slot_verified=True
         )
         act = Activity.objects.get(id=result["id"])
         self.assertEqual(act.delivery_type, "partner")
         self.assertEqual(act.assigned_partner_id, self.partner.id)
+        self.assertEqual(act.status, "assigned_to_partner")
+        self.assertIsNone(act.scheduled_date)
         self.assertTrue(act.monitored_by_staff_id)  # staff monitors read-only
 
     def test_staff_partner_activity_is_read_only_for_assigning_staff(self):
@@ -719,20 +768,7 @@ class CoreSchoolsPlanningTest(TestCase):
         from apps.activities import services as asvc
 
         result = asvc.create(
-            {
-                "activityType": "core_visit",
-                "catalogueItemId": self.core_visit_item.id,
-                "requireCatalogue": True,
-                "focusIntervention": "teaching_environment",
-                "schoolId": self.school.school_id,
-                "deliveryType": "partner",
-                "assignedPartnerId": self.partner.id,
-                "responsibleStaffId": self.cceo_sp.id,
-                "scheduledDate": "2026-04-23",
-                "activityPurposeText": "Partner core coaching",
-            },
-            principal=self.cceo,
-            core_slot_verified=True,
+            self._partner_core_visit(), principal=self.cceo, core_slot_verified=True
         )
         act = Activity.objects.get(id=result["id"])
         na = compute_next_action(act, date(2026, 4, 23))

@@ -78,11 +78,7 @@ for, and a project with none could not be handed over (owner, 2026-10-05:
       <p x-show="partnerCourses[partnerId]" style="display:none" class="edify-text-caption text-slate-500" data-partner-courses>Showing the trainings this partner is recorded as delivering.</p>
     </div>
   </template>
-  <div class="space-y-1">
-    <label for="bulk-partner-date" class="block edify-text-caption font-semibold text-slate-600">Target date <span class="font-normal text-slate-500">(optional)</span></label>
-    <input id="bulk-partner-date" aria-label="Target date" type="date" name="scheduled_date" class="w-full rounded-control border border-slate-200 px-3 py-2">
-    <p class="edify-text-caption text-slate-500">Leave blank if the partner will choose the date.</p>
-  </div>
+  {% include "partials/partners/_assigned_date.html" %}
   <p class="edify-text-caption text-slate-500">Every school listed is handed over for this purpose. The activity, final cost and budget lines are created when the partner schedules it.</p>
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>

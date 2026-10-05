@@ -318,12 +318,20 @@ def _edit_state(activity, user) -> str:
     return edit_state(activity, user)
 
 
-def _can_reschedule(activity) -> bool:
+def _can_reschedule(activity, user) -> bool:
     """Whether Reschedule is offered: never on work already carried out,
-    which `services.reschedule` refuses (owner, 2026-10-02)."""
+    which `services.reschedule` refuses (owner, 2026-10-02), and on a
+    partner's work only to the partner, who dates it (owner, 2026-10-05;
+    apps.partners.dating_policy). The plan's rows already say "The partner
+    reschedules"."""
     from apps.activities.editing import is_executed
+    from apps.partners.dating_policy import acts_for_partner, is_agency_booking
 
-    return not is_executed(activity)
+    if is_executed(activity):
+        return False
+    if activity.delivery_type == "partner" and not is_agency_booking(activity):
+        return acts_for_partner(user)
+    return True
 
 
 def _budget_breakdown(user, activity, snapshot, staff_name) -> dict:
@@ -501,7 +509,7 @@ def activity_detail_view(request, activity_id):
         # "locked" (greyed) once it has been carried out, "" when it is not
         # this reader's to edit. Reschedule follows the same line.
         "edit_state": _edit_state(a, request.user),
-        "can_reschedule": _can_reschedule(a),
+        "can_reschedule": _can_reschedule(a, request.user),
         **_return_context(a),
         **_facilitator_context(request.user, a),
     }

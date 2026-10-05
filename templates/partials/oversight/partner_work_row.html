@@ -30,11 +30,13 @@ journeys and the Resolve drawer address it by.
     and Return (owner, 2026-09-26). Otherwise: Resolve Exception on a hand-back,
     or View and the withdrawal the record permits. Two or more actions are one
     Actions menu (owner, 2026-09-26); a row with one keeps its one button.
+    Partner work with no handover record offers the same withdrawal (owner,
+    2026-10-05; _partner_activity_items.html).
     {% endcomment %}
     {% firstof item.school_name item.cluster_name as record_name %}
     {% if item.can_review %}
     {% row_actions record_name %}
-    {% if item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" with menu=True %}{% else %}<a class="row-menu__item" role="menuitem" href="/activities/{{ item.partner_activity_id }}">View activity</a>{% endif %}
+    {% if item.partner_assignment_id %}{% include "partials/oversight/_partner_view_button.html" with menu=True %}{% else %}{% include "partials/oversight/_partner_activity_items.html" %}{% endif %}
     {% include "partials/oversight/_partner_review_items.html" %}
     {% endrow_actions %}
     {% elif item.awaits_staff_decision and can_resolve_returns and not item.project_locked %}
@@ -52,6 +54,8 @@ journeys and the Resolve drawer address it by.
     {% else %}
     <div class="school-record-row__actions">{% include "partials/oversight/_partner_view_button.html" %}</div>
     {% endif %}
+    {% elif item.withdrawal_label %}
+    {% row_actions record_name %}{% include "partials/oversight/_partner_activity_items.html" %}{% endrow_actions %}
     {% else %}
     {# data-record-action: the lone link styles as a button (micro-ux.js). #}
     <div class="school-record-row__actions" data-record-action>
@@ -73,7 +77,6 @@ journeys and the Resolve drawer address it by.
       {% if item.district %}<div><dt>District:</dt><dd>{{ item.district }}</dd></div>{% endif %}
       {% if item.cluster_name and item.school_name %}<div><dt>Cluster:</dt><dd>{{ item.cluster_name }}</dd></div>{% endif %}
       {% if item.target_intervention %}<div><dt>Target intervention:</dt><dd>{{ item.target_intervention }}</dd></div>{% endif %}
-      {% if item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}
       {% comment %}Where the Partner's work stands past its schedule (owner,
       2026-09-23): read only — staff never edit these here.{% endcomment %}
       {% if item.partner_activity_id %}
