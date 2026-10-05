@@ -12,7 +12,12 @@ priced at, and the person who saved the rate is told what it did.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from django.db import connection
 from django.test import SimpleTestCase
+from django.test.utils import CaptureQueriesContext
 
 from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -22,6 +27,7 @@ from apps.budget import repricing
 from apps.budget import services as budget_services
 from apps.budget.costing_service import active_catalogue
 from apps.budget.models import CostSetting
+from apps.core.exceptions import BadRequest
 
 
 class RepricingFixture(EditingFixture):
@@ -126,8 +132,6 @@ class ASavedRateReachesThePlansAlreadyMade(RepricingFixture):
     def test_the_sweep_finds_a_plan_a_save_did_not_reach(self):
         """The scheduled job and the command re-price what is left."""
         rate = self._a_rate_the_visit_uses()
-        from unittest.mock import patch
-
         nothing = {"repriced": [], "kept": [], "left": []}
         with patch(
             "apps.budget.repricing.reprice_after_catalogue_change",
@@ -147,6 +151,113 @@ class ASavedRateReachesThePlansAlreadyMade(RepricingFixture):
 
         self.assertEqual(result["left"], [self.visit.id])
         self.assertEqual(result["repriced"], [])
+
+
+class TheSweepWorksThroughABacklog(RepricingFixture):
+    """Production, 2026-10-05: the scheduler went from 58% to 90% of its
+    512 MB the hour the sweep first ran, and DigitalOcean reported the app
+    Degraded. Each run read every plan in the backlog to re-price the few
+    dozen it had time for, and asked the writer again about every plan it had
+    already been refused on."""
+
+    def setUp(self):
+        super().setUp()
+        repricing.forget_refusals()
+        self.addCleanup(repricing.forget_refusals)
+        self.later = self._visit(self.fresh_two, days=9)
+
+    def _refusing(self, *refused):
+        def writer(activity):
+            if activity.id in refused:
+                raise BadRequest("This date's visits have already left draft status.")
+
+        return patch("apps.activities.services.reprice_activity", side_effect=writer)
+
+    def test_a_plan_past_the_deadline_is_not_read(self):
+        with self.assertNumQueries(0):
+            result = repricing.reprice_stale_plans([self.visit.id], deadline=0.0)
+
+        self.assertEqual(result["left"], [self.visit.id])
+
+    def test_the_backlog_is_read_as_far_as_the_run_gets(self):
+        clock = SimpleNamespace(now=0.0, monotonic=lambda: clock.now)
+
+        def writer(_activity):
+            clock.now = 100.0
+
+        with (
+            patch.object(repricing, "time", clock),
+            patch.object(repricing, "_READ_AT_A_TIME", 1),
+            patch(
+                "apps.activities.services.reprice_activity", side_effect=writer
+            ) as asked,
+            CaptureQueriesContext(connection) as queries,
+        ):
+            result = repricing.reprice_stale_plans(
+                [self.visit.id, self.later.id], deadline=50.0
+            )
+
+        self.assertEqual(asked.call_count, 1)
+        self.assertEqual(result["repriced"], [self.visit.id])
+        self.assertEqual(result["left"], [self.later.id])
+        self.assertFalse([q for q in queries if self.later.id in q["sql"]])
+
+    def test_the_sweep_does_not_ask_a_refused_plan_again(self):
+        with self._refusing(self.visit.id) as asked:
+            first = repricing.reprice_stale_plans([self.visit.id], skip_refused=True)
+            again = repricing.reprice_stale_plans([self.visit.id], skip_refused=True)
+
+        self.assertEqual(first["kept"], [self.visit.id])
+        self.assertEqual(again["kept"], [self.visit.id])
+        self.assertEqual(asked.call_count, 1)
+
+    def test_a_refused_plan_does_not_hold_up_the_one_behind_it(self):
+        both = [self.visit.id, self.later.id]
+        with self._refusing(self.visit.id) as asked:
+            repricing.reprice_stale_plans(both, skip_refused=True)
+            asked.reset_mock()
+            again = repricing.reprice_stale_plans(both, skip_refused=True)
+
+        self.assertEqual(
+            [call.args[0].id for call in asked.call_args_list], [self.later.id]
+        )
+        self.assertEqual(again["kept"], [self.visit.id])
+        self.assertEqual(again["repriced"], [self.later.id])
+
+    def test_a_refused_plan_is_asked_again_later(self):
+        with self._refusing(self.visit.id) as asked:
+            repricing.reprice_stale_plans([self.visit.id], skip_refused=True)
+            repricing._refused[self.visit.id] -= repricing.REFUSED_FOR_SECONDS + 1
+            repricing.reprice_stale_plans([self.visit.id], skip_refused=True)
+
+        self.assertEqual(asked.call_count, 2)
+
+    def test_a_saved_rate_and_the_command_ask_every_plan(self):
+        """What the Country Director is told was kept is the writer's answer
+        to this save, not something remembered from an earlier run."""
+        with self._refusing(self.visit.id) as asked:
+            repricing.reprice_stale_plans([self.visit.id], skip_refused=True)
+            repricing.reprice_stale_plans([self.visit.id])
+
+        self.assertEqual(asked.call_count, 2)
+
+
+class TheScheduledSweep(SimpleTestCase):
+    def test_it_skips_refused_plans_and_says_what_it_did(self):
+        from apps.realtime import jobs
+
+        result = {"repriced": ["a", "b"], "kept": ["c"], "left": ["d", "e", "f"]}
+        with (
+            patch(
+                "apps.budget.repricing.reprice_stale_plans", return_value=result
+            ) as sweep,
+            self.assertLogs("edify.jobs", level="INFO") as logs,
+        ):
+            done = jobs._do_cost_reprice_sweep()
+
+        self.assertEqual(done, 2)
+        self.assertTrue(sweep.call_args.kwargs["skip_refused"])
+        self.assertIn("'repriced': 2, 'kept': 1, 'left': 3", logs.output[0])
 
 
 class WhatTheDirectorIsTold(SimpleTestCase):
