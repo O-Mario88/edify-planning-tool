@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0;
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0;
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -47,7 +47,13 @@
     loading = true;
     var began = Date.now();
     fetch(location.href, { credentials: 'same-origin', headers: { 'X-Requested-With': 'EdifyLive' } })
-      .then(function (response) { return response.ok && !response.redirected ? response.text() : ''; })
+      .then(function (response) {
+        if (response.ok && !response.redirected) return response.text();
+        // Signed out, or the page is gone: nothing left to keep up with.
+        refused = 9;
+        close();
+        return '';
+      })
       .then(function (html) {
         loading = false;
         // A busy day does not turn into a page reading itself without pause:
@@ -82,6 +88,7 @@
     stream.onmessage = function (event) {
       var data;
       try { data = JSON.parse(event.data); } catch (_) { return; }
+      refused = 0;
       if (data.type === 'plan.changed') soon();
       // Back after being away: read again only if something changed meanwhile.
       else if (data.type === 'connected' && seen && data.changed && data.changed > seen) soon();
@@ -89,20 +96,23 @@
     };
     stream.onerror = function () {
       // Refused (too many tabs, signed out): the browser will not retry.
+      // Ask again a few times, each a minute later than the last, then stop:
+      // a signed-out page must not knock for ever.
       if (stream && stream.readyState === 2) {
         close();
         clearTimeout(retryTimer);
-        retryTimer = setTimeout(open, 60000);
+        refused += 1;
+        if (refused <= 4) retryTimer = setTimeout(open, refused * 60000);
       }
     };
   }
 
   doc.addEventListener('visibilitychange', function () {
     if (doc.hidden) close();
-    else { open(); if (wanted) refresh(); }
+    else if (refused <= 4) { open(); if (wanted) refresh(); }
   });
   window.addEventListener('pagehide', close);
-  doc.addEventListener('htmx:afterSettle', function () { if (!stream) open(); });
+  doc.addEventListener('htmx:afterSettle', function () { if (!stream && !refused) open(); });
   setInterval(function () { if (wanted) refresh(); }, 1000);
   // Not on a page passed through on the way to another.
   setTimeout(open, 1500);
