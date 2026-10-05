@@ -64,6 +64,7 @@ class Command(BaseCommand):
             "ia_verification_digest": jobs.ia_verification_digest_job,
             "verification_sampling": jobs.verification_sampling_job,
             "activity_reminders": jobs.activity_reminders_job,
+            "day_off_alerts": jobs.day_off_alerts_job,
             "target_ledger_sync": jobs.target_ledger_sync_job,
             "pd_reminders": jobs.pd_reminders_job,
             "loan_tracking_notifications": jobs.loan_tracking_notifications_job,

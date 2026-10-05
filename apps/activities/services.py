@@ -128,6 +128,19 @@ def _resolve_overdue_reminder(a) -> None:
     transaction.on_commit(resolve)
 
 
+def _settle_day_off_notices(a) -> None:
+    """Bring the owner's "reschedule: planned on a holiday or leave day"
+    notices up to date once the plan moves or is released (owner, 2026-10-05;
+    apps.activities.day_off). After commit; the helper never raises."""
+
+    def settle():
+        from apps.activities.day_off import settle_day_off_alerts
+
+        settle_day_off_alerts(a)
+
+    transaction.on_commit(settle)
+
+
 # Statuses from which a field worker may (re)enter completion: work in progress,
 # plus anything a reviewer returned for correction.
 COMPLETABLE_STATUSES = (
@@ -4936,6 +4949,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 ),
             )
     _resolve_overdue_reminder(a)
+    _settle_day_off_notices(a)
     return _serialize(a)
 
 
@@ -5975,6 +5989,7 @@ def _cancel_or_defer(
             ),
         )
     _resolve_overdue_reminder(a)
+    _settle_day_off_notices(a)
     return _serialize(a)
 
 

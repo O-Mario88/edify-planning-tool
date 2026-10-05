@@ -45,7 +45,7 @@ School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'm
 </thead>
 <tbody>
 {% for row in school_visits_pager.rows %}
-<tr>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
@@ -55,7 +55,7 @@ School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'm
   {% endif %}
 </td>
 <td class="font-semibold text-slate-700">{{ row.activity_type_label|default:"School Visit" }}</td>
-<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="text-slate-600 text-xs" data-label="Purpose">{{ row.purpose|default:"—" }}</td>
 <td data-label="Intervention">

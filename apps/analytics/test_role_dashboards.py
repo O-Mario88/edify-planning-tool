@@ -120,13 +120,16 @@ class RoleDashboardsTest(TestCase):
             end_date=date.today().isoformat(),
         )
         PublicHoliday.objects.create(
-            name="Independence Day", date=date.today() + timedelta(days=30)
+            name="District Polling Day", date=date.today() + timedelta(days=30)
         )
         d = HRDashboardService.get_dashboard(self.hr)
         # Leave moved from the headline panel into the dashboard's Leave card.
         self.assertEqual(d["leave"]["pending"], 1)
         self.assertEqual(d["leave"]["on_leave_today"], 1)
-        self.assertEqual(d["holidays"][0]["name"], "Independence Day")
+        # Recorded days sit in one list with the national calendar's own.
+        self.assertIn(
+            "District Polling Day", [holiday["name"] for holiday in d["holidays"]]
+        )
         self.assertTrue(any(r["count"] for r in d["roles"]))
 
     @freeze_time("2026-08-03")  # fixed Monday, mid-FY2026 — REG-02 §1.1

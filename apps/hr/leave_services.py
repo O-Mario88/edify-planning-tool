@@ -15,7 +15,6 @@ from apps.accounts.models import (
     LeaveTypePolicy,
     LeaveBalance,
     TemporaryCoverageAssignment,
-    PublicHoliday,
     StaffProfile,
     StaffSupervisorAssignment,
     User,
@@ -1112,6 +1111,15 @@ class LeaveApprovalService:
         # This also runs _close_pending_request_notices, so the approver's
         # "needs approval" notice stops being promoted to urgent at 48 hours.
         LeaveNotificationService.notify_leave_approved(leave)
+        # Their planned work inside the leave now sits on a day off: say
+        # which activities to reschedule (owner, 2026-10-05). Never able to
+        # fail the approval it follows.
+        try:
+            from apps.activities.day_off import send_day_off_alerts
+
+            send_day_off_alerts(user_id=leave.staff.user_id)
+        except Exception:  # noqa: BLE001
+            logger.exception("day-off notices not sent for leave %s", leave.id)
         return leave
 
     @staticmethod
@@ -1494,27 +1502,12 @@ class PublicHolidayService:
             )
         )
 
-        p_dates = set(
-            PublicHoliday.objects.filter(date__range=(s, e)).values_list(
-                "date", flat=True
-            )
-        )
+        # The national calendar plus the days recorded under Holidays &
+        # Blackouts: one answer, shared with the Calendar and the scheduling
+        # policy (apps.core.public_holidays).
+        from apps.core.public_holidays import public_holidays_between
 
-        b_qs = CalendarBlock.objects.filter(
-            block_type="PUBLIC_HOLIDAY",
-            is_active=True,
-            country=country,
-            start_date__lte=e,
-            end_date__gte=s,
-        )
-        for b in b_qs:
-            curr = max(b.start_date, s)
-            stop = min(b.end_date, e)
-            while curr <= stop:
-                p_dates.add(curr)
-                curr += timedelta(days=1)
-
-        return sorted(list(p_dates))
+        return sorted(public_holidays_between(s, e, country=country))
 
 
 class BlackoutDateService:

@@ -47,10 +47,10 @@ Group Trainings Planned for {% if period == 'week' %}This Week{% elif period == 
 </thead>
 <tbody>
 {% for row in group_trainings_pager.rows %}
-<tr>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.cluster_district|default:"—" }}</td>
-<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="text-slate-600 text-xs" data-label="Purpose">{% firstof row.activity_name row.purpose "Group Training" %}</td>
 <td data-label="Intervention">
