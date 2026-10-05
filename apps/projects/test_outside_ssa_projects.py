@@ -15,6 +15,7 @@ with the same partner. The limit on how many partners hold one school stays.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from unittest import mock
 
 from django.test import TestCase
 
@@ -344,9 +345,15 @@ class CorePackageTest(_Fixture):
             expected_activity_type="training_follow_up_visit",
             purpose_of_visit="training_follow_up",
         )
-        with self.assertRaises(BadRequest):
-            partner_services.create_assignment(project=self.edtech, **fields)
-        handover = partner_services.create_assignment(project=self.alumni, **fields)
+        # The half, held with its switch on: every project's hand-over goes
+        # past it for now (owner, 2026-10-05; apps.partners.handover_policy),
+        # and Alumni's does whichever way the switch is.
+        with mock.patch(
+            "apps.partners.handover_policy.PROJECT_HANDOVERS_KEEP_SCHOOL_RULES", True
+        ):
+            with self.assertRaises(BadRequest):
+                partner_services.create_assignment(project=self.edtech, **fields)
+            handover = partner_services.create_assignment(project=self.alumni, **fields)
         self.assertTrue(handover.outside_ssa)
         self.assertEqual(
             package_split(self.core_school, self.fy).used(VISIT, PARTNER), 2

@@ -5,7 +5,7 @@
 {% load frontend_filters table_pagination row_actions %}
 
 {% block title %}Project Monitoring · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261005controls4">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -33,7 +33,20 @@ project they added a school to. The SSA verdict is the impact engine's
 (apps.projects.ssa_impact) — a missing follow-up says so and is never shown
 as "no change".
 {% endcomment %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-oversight-workspace>
+{% comment %}A hand-over or a schedule saved from one of this page's drawers
+closes the drawer without leaving the page (`planning-saved`); the page reads
+itself again in place, so a school just handed to a partner stops reading
+"Not planned" and the confirmation, with its Undo, stays up. The request sits
+on an element of its own: on the wrapper, htmx would hand its hx-select down
+to every drawer button inside.
+
+`selected` is the schools ticked in the project table, for the Assign bar at
+the foot of the page (owner, 2026-10-05).{% endcomment %}
+<div id="project-monitoring-root" class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-oversight-workspace
+     x-data="{ selected: [] }" @planning-saved.window="selected = []">
+  <span hidden data-project-monitoring-refresh
+        hx-get="/projects/monitoring?project={{ selected_project }}&amp;stage={{ selected_stage }}&amp;fy={{ fy }}{% if filter_query %}&amp;{{ filter_query }}{% endif %}" hx-trigger="planning-saved from:body"
+        hx-target="#project-monitoring-root" hx-select="#project-monitoring-root" hx-swap="outerHTML"></span>
 
   {# The lens note under this header said the description again (owner, 2026-09-30: show each thing once); its period is the sentence above. #}
   {% page_header eyebrow="Special Projects" title="Project Monitoring" %}
@@ -49,7 +62,7 @@ as "no change".
     the page's filters. They sit here rather than on the project's card: a
     button in a card's heading squeezes the heading off a phone.{% endcomment %}
     {% if can_export and rows %}
-    <a href="/projects/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}"
+    <a href="/projects/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if filter_query %}&amp;{{ filter_query }}{% endif %}"
        class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold rounded-control"
        title="Export every project and its schools to one Excel file"
        data-project-export-all>
@@ -57,7 +70,7 @@ as "no change".
       <span>Export all projects</span>
     </a>
     {% for row in rows %}
-    <a href="/projects/{{ row.id }}/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}"
+    <a href="/projects/{{ row.id }}/export?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if filter_query %}&amp;{{ filter_query }}{% endif %}"
        class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 px-3 text-xs font-semibold rounded-control"
        title="Export {{ row.name }} and its schools to Excel"
        data-project-export="{{ row.id }}">
@@ -67,8 +80,35 @@ as "no change".
     {% endfor %}
     {% endif %}
   {% endpage_header %}
-  {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
-  {% include "partials/_section_nav.html" %}
+  {% comment %}One line above the figures (owner, 2026-10-05: "move the
+  filters above the KPI strip next to Monitor and analytic tabs. Start with the
+  filters then the tab pill"): the filters, then the sidebar entry's other
+  pages as a strip (apps.core.navigation WORKSPACES; the Project
+  Coordinator's, owner 2026-09-30).{% endcomment %}
+  <div class="edify-view-toolbar" data-project-monitoring-controls>
+    {# Filters apply as they change, as on every other page (owner, 2026-09-30). #}
+    {% filter_bar action="/projects/monitoring" extra_class="flex flex-wrap items-end gap-3" reset_url=filter_reset_url %}
+      {# The project is the tab strip below; the filters keep the open tab. #}
+      {% if selected_project %}<input type="hidden" name="project" value="{{ selected_project }}">{% endif %}
+      {% comment %}Where the schools are, where they stand and which year,
+      then the table's other columns (owner, 2026-10-05: "add all other
+      relevant filters like district"). The column filters offer the values
+      the reader's schools hold (apps.projects.monitoring.ROW_FILTERS); one
+      with nothing to offer yet is not drawn, and a narrow screen folds the
+      tail behind More filters (micro-ux.js).{% endcomment %}
+      {% for field in monitor_fields %}
+      <label class="block">
+        <span class="edify-filter-label">{{ field.label }}</span>
+        <select name="{{ field.key }}" aria-label="{{ field.label }}" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+          {% for value, label in field.options %}
+          <option value="{{ value }}"{% if value == field.selected %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+    {% endfilter_bar %}
+    {% include "partials/_section_nav.html" %}
+  </div>
 
 
   {% kpi_strip %}
@@ -102,6 +142,32 @@ as "no change".
       {{ result.schools_improved|intcomma }}
       {% kpi_helper %}Confirmed SSA movement on the target intervention{% endkpi_helper %}
     {% endkpi_metric %}
+    {% comment %}The open project's own activity, which stood as four loose
+    figures inside its card (owner, 2026-10-05: "can you move that to the KPI
+    Strip. it looks ugly there"). Each names the project it counts, since the
+    figures before them count every project in view.{% endcomment %}
+    {% for row in rows %}
+    {% kpi_metric %}
+      {% kpi_label %}Trainings{% endkpi_label %}
+      {{ row.trainings_completed|intcomma }} / {{ row.trainings_scheduled|intcomma }}
+      {% kpi_helper %}Delivered of scheduled · {{ row.name }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}School visits{% endkpi_label %}
+      {{ row.visits_completed|intcomma }} / {{ row.visits_scheduled|intcomma }}
+      {% kpi_helper %}Delivered of scheduled · {{ row.name }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Other project work{% endkpi_label %}
+      {{ row.other_completed|intcomma }} / {{ row.other_scheduled|intcomma }}
+      {% kpi_helper %}{{ row.completion_label }} · {{ row.name }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Who delivered{% endkpi_label %}
+      {{ row.staff_delivered|intcomma }} staff · {{ row.partner_delivered|intcomma }} partner
+      {% kpi_helper %}Activities in {% firstof result.plan_period_label "this financial year" %} · {{ row.name }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% endfor %}
   {% endkpi_strip %}
 
   {% include "partials/planning/_workload_line.html" %}
@@ -138,28 +204,6 @@ as "no change".
   </section>
   {% endif %}
 
-  {# Filters apply as they change, as on every other page (owner, 2026-09-30). #}
-  {% filter_bar action="/projects/monitoring" extra_class="flex flex-wrap items-end gap-3" %}
-    {# The project is the tab strip below; the filters keep the open tab. #}
-    {% if selected_project %}<input type="hidden" name="project" value="{{ selected_project }}">{% endif %}
-    <label class="block">
-      <span class="edify-filter-label">School stage</span>
-      <select name="stage" aria-label="School stage" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
-        {% for value, label in stage_options %}
-        <option value="{{ value }}"{% if value == selected_stage %} selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label class="block">
-      <span class="edify-filter-label">Fiscal year</span>
-      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
-        {% for option in fy_options %}
-        <option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY {{ option }}</option>
-        {% endfor %}
-      </select>
-    </label>
-  {% endfilter_bar %}
-
   {% if rows %}
   {% comment %}One project a tab (owner, 2026-10-02), each with the number of
   its schools the reader sees: the open project's card is under the strip, and
@@ -167,7 +211,7 @@ as "no change".
   <nav class="oversight-entity-tabs" aria-label="Projects" data-project-tabs>
     {% for entry in project_tabs %}
     <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
-       href="?project={{ entry.key }}&stage={{ selected_stage }}&fy={{ fy }}"{% if entry.is_active %} aria-current="page"{% endif %}>
+       href="?project={{ entry.key }}&stage={{ selected_stage }}&fy={{ fy }}{% if filter_query %}&{{ filter_query }}{% endif %}"{% if entry.is_active %} aria-current="page"{% endif %}>
       <span>{{ entry.label }}</span>
       <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
     </a>
@@ -192,29 +236,6 @@ as "no change".
         <span class="pill pill-info">{{ row.schools_planned }} planned</span>
         {% if row.schools_awaiting_partner %}<span class="pill pill-warn">{{ row.schools_awaiting_partner }} awaiting partner</span>{% endif %}
         <span class="pill pill-success">{{ row.schools_delivered }} delivered</span>
-      </div>
-    </div>
-
-    <div class="px-5 py-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-keep-columns>
-      <div>
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Trainings</p>
-        <p class="text-[18px] font-semibold tabular-nums">{{ row.trainings_completed }} / {{ row.trainings_scheduled }}</p>
-        <p class="edify-text-caption edify-text-muted">Delivered of scheduled</p>
-      </div>
-      <div>
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">School visits</p>
-        <p class="text-[18px] font-semibold tabular-nums">{{ row.visits_completed }} / {{ row.visits_scheduled }}</p>
-        <p class="edify-text-caption edify-text-muted">Delivered of scheduled</p>
-      </div>
-      <div>
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Other project work</p>
-        <p class="text-[18px] font-semibold tabular-nums">{{ row.other_completed }} / {{ row.other_scheduled }}</p>
-        <p class="edify-text-caption edify-text-muted">{{ row.completion_label }}</p>
-      </div>
-      <div>
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle">Who delivered</p>
-        <p class="text-[18px] font-semibold tabular-nums">{{ row.staff_delivered }} staff · {{ row.partner_delivered }} partner</p>
-        <p class="edify-text-caption edify-text-muted">Activities in {% firstof result.plan_period_label "this financial year" %}</p>
       </div>
     </div>
 
@@ -285,6 +306,50 @@ as "no change".
   {% else %}
   {% include "components/empty_state.html" with title="You have not added a school to a project yet" message="Add a school to a project from its profile or the School Directory, and the coordinator's work at that school appears here. Schools other officers added stay with them." %}
   {% endif %}
+  {% endif %}
+
+  {% if result.controls %}
+  {% comment %}Tick schools in the project table and this bar comes up, as the
+  Planning page's does for a CCEO or a Programme Lead (owner, 2026-10-05: "the
+  button for assign pops up just like the way bulk assign to partner by cceo
+  and pl is designed"). It opens the project hand-over drawer for the ticked
+  schools, which a row's own Assign opens for one, or the coordinator's own
+  bulk Schedule.{% endcomment %}
+  <div x-show="selected.length > 0"
+       x-transition:enter="transition ease-out duration-300 transform"
+       x-transition:enter-start="translate-y-24 opacity-0"
+       x-transition:enter-end="translate-y-0 opacity-100"
+       x-transition:leave="transition ease-in duration-200 transform"
+       x-transition:leave-start="translate-y-0 opacity-100"
+       x-transition:leave-end="translate-y-24 opacity-0"
+       class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-surface shadow-lg flex items-center gap-6 border border-slate-800/80"
+       style="display: none;" data-project-bulk-bar>
+    <div class="flex items-center gap-2 select-none" aria-live="polite">
+      <span class="h-6 w-6 edify-primary-solid rounded-pill flex items-center justify-center edify-text-caption font-semibold text-white" x-text="selected.length"></span>
+      <span class="text-[12px] font-semibold text-slate-300" x-text="selected.length === 1 ? 'school selected' : 'schools selected'">schools selected</span>
+    </div>
+    <div class="h-5 w-px bg-slate-700"></div>
+    <form hx-get="/projects/planning/bulk-partner" hx-target="#drawer-container" hx-swap="innerHTML" class="flex items-center gap-2">
+      <input type="hidden" name="assignments" :value="selected.join(',')">
+      <button type="submit" data-project-assign-selected
+              class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all">
+        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Assign to partner
+      </button>
+    </form>
+    {% comment %}The same ticked schools, scheduled by the coordinator instead
+    (owner, 2026-10-05: "apply to the staff (project coordinator)"): the
+    drawer Special Projects Planning's bulk Schedule opens.{% endcomment %}
+    <form hx-get="/projects/planning/bulk-schedule" hx-target="#drawer-container" hx-swap="innerHTML" class="flex items-center gap-2">
+      <input type="hidden" name="assignments" :value="selected.join(',')">
+      <button type="submit" data-project-schedule-selected
+              class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all">
+        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Schedule
+      </button>
+    </form>
+    <button type="button" class="h-8 px-3 text-slate-300 rounded-control edify-text-caption font-bold" @click="selected = []">Clear</button>
+  </div>
   {% endif %}
 </div>
 {% endblock %}

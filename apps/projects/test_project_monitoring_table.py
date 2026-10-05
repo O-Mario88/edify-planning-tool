@@ -85,10 +85,15 @@ class TheOwnersColumnsTest(_TableFixture):
                 body = self.page(user)
                 start = body.index("data-project-schools")
                 table = body[start : body.index("</thead>", start)]
-                # A long heading is written on two lines.
+                # A long heading is written on two lines. The coordinator's
+                # tick column is a control, not one of the owner's columns.
                 headers = [
                     re.sub(r"\s*<br>\s*", " ", heading)
-                    for heading in re.findall(r'<th scope="col"[^>]*>(.+?)</th>', table)
+                    for heading in re.findall(
+                        r'<th scope="col"(?! class="school-plan-table__select")'
+                        r"[^>]*>(.+?)</th>",
+                        table,
+                    )
                 ]
                 self.assertEqual(headers, COLUMNS)
 

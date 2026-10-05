@@ -2750,14 +2750,14 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 115,
+   "line": 181,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     7,
+     12,
      0
     ]
    ]

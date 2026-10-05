@@ -1115,13 +1115,19 @@ def create_assignment(**fields):
 
     from .models import PartnerAssignment
 
+    from .handover_policy import past_school_rules
+
     fields.pop("status", None)
     school = fields.get("school")
     assert_operating(school)
-    _assert_school_takes_partner_work(school)
-    _assert_partner_half_open(school, fields)
-    _assert_project_partner(fields)
-    _assert_partner_delivers(fields)
+    # A project's hand-over goes past the school rules below for now (owner,
+    # 2026-10-05; `handover_policy`). A closed school takes no new work either
+    # way.
+    if not past_school_rules(fields.get("project"), fields.get("project_id")):
+        _assert_school_takes_partner_work(school)
+        _assert_partner_half_open(school, fields)
+        _assert_project_partner(fields)
+        _assert_partner_delivers(fields)
     try:
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.
