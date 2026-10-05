@@ -1,0 +1,11 @@
+{% comment %}
+The date a hand-over carries is the day it is made (owner, 2026-10-05: "the
+date on the partner assignment drawer should change from target date to
+assigned date so that the staff cannot schedule for the partner"). Shown,
+never entered: the Partner chooses the day of the work.
+{% endcomment %}
+<div class="space-y-1" data-assigned-date>
+  <span class="block edify-text-caption font-semibold text-slate-600">Assigned date</span>
+  <div class="flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">{% now "j M Y" %}</div>
+  <p class="edify-text-caption text-slate-500">The day this assignment is made. The partner chooses the date of the work.</p>
+</div>

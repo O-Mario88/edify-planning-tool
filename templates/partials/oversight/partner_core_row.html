@@ -86,7 +86,6 @@ unscheduled) and Resolve Exception on a hand-back. `row_id` is
   <td colspan="{% if selectable %}12{% else %}11{% endif %}">
     <dl class="school-record-row__metadata">
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
-      {% if item.stage == "awaiting_schedule" and item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}
       {% if item.training_name %}<div><dt>Training:</dt><dd>{{ item.training_name }}</dd></div>{% endif %}
       {% if item.intervention_label %}<div><dt>SSA Intervention:</dt><dd>{{ item.intervention_label }}</dd></div>{% endif %}
       {% if item.field_officer %}<div><dt>Partner officer:</dt><dd>{{ item.field_officer }}</dd></div>{% endif %}

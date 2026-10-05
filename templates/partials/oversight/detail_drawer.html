@@ -84,8 +84,6 @@ here sends a corrective action, which writes a TeamAction and nothing else.
         <dd>FY {{ item.fy|default:"—" }} {% if item.quarter %}· {{ item.quarter }}{% endif %}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Assigned</dt>
         <dd>{% if item.assigned_date %}{{ item.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
-      <div><dt class="edify-text-caption edify-text-subtle">Schedule by</dt>
-        <dd>{% if item.schedule_by_date %}{{ item.schedule_by_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Intervention</dt>
         <dd>{{ item.target_intervention|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Rationale</dt>

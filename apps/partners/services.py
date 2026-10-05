@@ -1110,6 +1110,12 @@ def create_assignment(**fields):
     only thing that moves it. Audit + partner notification ride on the
     post_save signal (apps/partners/signals.py), which covers every creation
     path by construction.
+
+    Nor do callers date it (owner, 2026-10-05: "the date on the partner
+    assignment drawer should change from target date to assigned date so that
+    the staff cannot schedule for the partner"). A hand-over carries the day
+    it was made, which is ``created_at``; ``scheduled_date`` is written when
+    the partner schedules the work and by nothing before that.
     """
     from apps.schools.lifecycle_service import assert_operating
 
@@ -1118,6 +1124,7 @@ def create_assignment(**fields):
     from .handover_policy import past_school_rules
 
     fields.pop("status", None)
+    fields.pop("scheduled_date", None)
     school = fields.get("school")
     assert_operating(school)
     # A project's hand-over goes past the school rules below for now (owner,

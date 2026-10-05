@@ -1,0 +1,15 @@
+{% comment %}
+The Actions-menu items of Partner work that has no handover record: View
+activity, and the withdrawal its state permits (owner, 2026-10-05: "A user
+scheduled for a partner and he cant withdraw the school from the partner. It
+has only view in the action button"). The drawer is the handover's own, opened
+on the activity; confirming it writes the handover record the work never had
+(apps.partners.withdrawal_service.withdraw_activity).
+{% endcomment %}
+<a class="row-menu__item" role="menuitem" href="/activities/{{ item.partner_activity_id }}">View activity</a>
+{% if item.withdrawal_label %}
+<button type="button" class="row-menu__item" role="menuitem" data-activity-withdraw
+        hx-get="/partner-oversight/withdraw?activity_id={{ item.partner_activity_id }}"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML">{{ item.withdrawal_label }}</button>
+{% endif %}

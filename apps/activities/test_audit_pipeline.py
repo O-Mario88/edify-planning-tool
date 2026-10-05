@@ -136,11 +136,27 @@ class PartnerSingleChannelTest(_PipelineFixture):
             expected_activity_type="school_visit",
             status="pending_scheduling",
         )
+        # The partner dates what was handed to them (owner, 2026-10-05).
+        officer = User.objects.create_user(
+            email="audit-partner@edify.org",
+            name="Audit Partner Officer",
+            roles=["PartnerFieldOfficer"],
+            active_role="PartnerFieldOfficer",
+            password="pw",
+            is_active=True,
+        )
+        self.partner.user = officer
+        self.partner.save(update_fields=["user"])
         # No outer transaction here — this is the production autocommit shape
         # that used to raise TransactionManagementError from the misplaced
         # select_for_update.
         result = asvc.partner_schedule(
-            pa.id, {"scheduledDate": "2026-08-19T09:00:00+03:00"}, self.admin
+            pa.id,
+            {
+                "scheduledDate": "2026-08-19T09:00:00+03:00",
+                "deliveryContactName": "Audit Partner Officer",
+            },
+            officer,
         )
         activity = Activity.objects.get(id=result["id"])
         self.assertEqual(activity.delivery_type, "partner")
@@ -157,7 +173,7 @@ class PartnerSingleChannelTest(_PipelineFixture):
         # Scheduling the same assignment again is refused.
         with self.assertRaises(BadRequest):
             asvc.partner_schedule(
-                pa.id, {"scheduledDate": "2026-08-20T09:00:00+03:00"}, self.admin
+                pa.id, {"scheduledDate": "2026-08-20T09:00:00+03:00"}, officer
             )
         self.assertEqual(
             Activity.objects.filter(assigned_partner_id=self.partner.id).count(), 1

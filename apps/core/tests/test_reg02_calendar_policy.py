@@ -287,8 +287,12 @@ class Reg02CalendarPolicyTest(_CalendarFixture, TestCase):
         row = Activity.objects.get(id=activity["id"])
         # Partner delivery is a real shape here, and it is the one the batch
         # branch legitimately skips: partners are not in a staff daily batch.
+        # An agency Edify booked onto the day, because that is the partner
+        # work staff still move (owner, 2026-10-05: an assigned partner dates
+        # and moves their own; apps.partners.dating_policy).
         row.delivery_type = "partner"
-        row.save(update_fields=["delivery_type"])
+        row.executor_type = "certified_partner_agency"
+        row.save(update_fields=["delivery_type", "executor_type"])
 
         with self.assertRaises(BadRequest) as caught:
             reschedule(

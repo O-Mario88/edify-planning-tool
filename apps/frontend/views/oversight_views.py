@@ -3269,9 +3269,14 @@ def _prepare_core_actions(user, items) -> None:
       who may never confirm it, it is not shown.
     * Withdraw school — only while the Partner has not scheduled it, and only
       to a role that may withdraw partner work (the service refuses the rest).
+      A day a staff member put on the work is not the Partner's scheduling
+      (owner, 2026-10-05: "A user scheduled for a partner and he cant
+      withdraw the school from the partner. It has only view in the action
+      button").
     """
     from apps.activities.models import Activity
     from apps.core.permissions import has_permission
+    from apps.partners.withdrawal_models import WithdrawalKind
     from apps.planning import partner_oversight_service as partner_oversight
     from apps.planning.partner_oversight_service import STAGE_AWAITING_SCHEDULE
 
@@ -3294,11 +3299,19 @@ def _prepare_core_actions(user, items) -> None:
         if RolePermissionService.can_confirm_partner_activity(user, activity)
     }
     for item in core:
+        # Until the Partner schedules it: a handover nobody has dated, and
+        # one that carries only a day staff chose (owner, 2026-10-05).
         item.can_withdraw_school = bool(
             may_withdraw
-            and item.stage == STAGE_AWAITING_SCHEDULE
             and item.withdrawal_label
             and not item.project_locked
+            and (
+                item.stage == STAGE_AWAITING_SCHEDULE
+                or (
+                    item.withdrawal_kind == WithdrawalKind.RECALL_SCHEDULED
+                    and not item.partner_has_dated
+                )
+            )
         )
         if not item.evidence_ok:
             continue
@@ -3476,6 +3489,39 @@ def _partner_item_in_scope(user, assignment_id: str):
     return item
 
 
+def _partner_work_in_scope(user, source):
+    """The row a withdrawal acts on: a handover, or Partner work that was
+    made without one (owner, 2026-10-05). None when the reader's lens does
+    not read it."""
+    from apps.partners.models import PartnerAssignment
+    from apps.planning import partner_oversight_service as partner_oversight
+
+    assignment_id = (source.get("assignment_id") or "").strip()
+    if assignment_id:
+        return _partner_item_in_scope(user, assignment_id)
+    activity_id = (source.get("activity_id") or "").strip()
+    if not activity_id:
+        return None
+    paired = (
+        PartnerAssignment.objects.filter(scheduled_activity_id=activity_id)
+        .values_list("id", flat=True)
+        .first()
+    )
+    if paired:
+        return _partner_item_in_scope(user, paired)
+    return partner_oversight.build_item_by_activity(user, activity_id)
+
+
+def _withdrawal_preview(user, item) -> dict:
+    """The preview of the record the row is: its handover's, or the Partner
+    activity's own when it has none."""
+    from apps.partners import withdrawal_service
+
+    if item.partner_assignment_id:
+        return withdrawal_service.preview(user, item.partner_assignment_id)
+    return withdrawal_service.preview_activity(user, item.partner_activity_id)
+
+
 def _partner_lineage(item) -> dict:
     """The canonical records behind one handover, each read from its source."""
     from apps.activities.models import ActivityScheduleCostLine
@@ -3620,11 +3666,7 @@ def partner_withdrawal_preview_view(request):
     does; this asks the same functions the service asks, so the number shown
     is the number that will move.
     """
-    from apps.partners import withdrawal_service
-
-    item = _partner_item_in_scope(
-        request.user, (request.GET.get("assignment_id") or "").strip()
-    )
+    item = _partner_work_in_scope(request.user, request.GET)
     if item is None:
         return render(
             request,
@@ -3635,7 +3677,7 @@ def partner_withdrawal_preview_view(request):
 
     from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
 
-    preview = withdrawal_service.preview(request.user, item.partner_assignment_id)
+    preview = _withdrawal_preview(request.user, item)
     _lock_project_work(request.user, [item])
     return render(
         request,
@@ -3833,9 +3875,16 @@ def _must_request(user, item, preview) -> bool:
     from apps.partners.withdrawal_models import WithdrawalKind
 
     role = getattr(user, "active_role", "") or ""
-    return (
-        role == EdifyRole.CCEO.value
-        and preview["kind"] != WithdrawalKind.WITHDRAW_UNSCHEDULED
+    if role != EdifyRole.CCEO.value:
+        return False
+    if preview["kind"] == WithdrawalKind.WITHDRAW_UNSCHEDULED:
+        return False
+    # A day staff put on the work is not the Partner's commitment (owner,
+    # 2026-10-05): until the Partner dates it or starts it, the CCEO takes it
+    # back themselves, as they do a handover nobody has dated.
+    return not (
+        preview["kind"] == WithdrawalKind.RECALL_SCHEDULED
+        and not preview.get("partner_has_dated", True)
     )
 
 
@@ -3846,9 +3895,7 @@ def partner_withdrawal_submit_view(request):
     from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
     from apps.partners import withdrawal_service
 
-    item = _partner_item_in_scope(
-        request.user, (request.POST.get("assignment_id") or "").strip()
-    )
+    item = _partner_work_in_scope(request.user, request.POST)
     if item is None:
         return _action_response(
             request,
@@ -3865,18 +3912,32 @@ def partner_withdrawal_submit_view(request):
         "replacement_partner_id": request.POST.get("replacement_partner_id"),
     }
     requesting = (request.POST.get("intent") or "") == "request"
+    # Partner work made without a handover record gets one as it is taken
+    # back (withdrawal_service.withdraw_activity).
+    handover_id, activity_id = item.partner_assignment_id, item.partner_activity_id
 
     try:
+        # What the drawer called the decision, read before it is carried out
+        # (a cancelled activity no longer says whose date it carried).
+        label = (
+            "" if requesting else _withdrawal_preview(request.user, item)["kind_label"]
+        )
         if requesting:
-            withdrawal_service.request_withdrawal(
-                item.partner_assignment_id, data, request.user
-            )
+            if handover_id:
+                withdrawal_service.request_withdrawal(handover_id, data, request.user)
+            else:
+                withdrawal_service.request_activity_withdrawal(
+                    activity_id, data, request.user
+                )
             message = "Sent to your Program Lead for a decision."
         else:
-            result = withdrawal_service.withdraw(
-                item.partner_assignment_id, data, request.user
-            )
-            message = f"{result.get_kind_display()} — {result.get_state_display()}."
+            if handover_id:
+                result = withdrawal_service.withdraw(handover_id, data, request.user)
+            else:
+                result = withdrawal_service.withdraw_activity(
+                    activity_id, data, request.user
+                )
+            message = f"{label} — {result.get_state_display()}."
     except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
         return _action_response(
             request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH

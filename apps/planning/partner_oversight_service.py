@@ -151,6 +151,9 @@ class PartnerOversightItem:
 
     # When
     assignment_date: date | None = None
+    # No hand-over sets one since 2026-10-05: the date staff gave a hand-over
+    # is the day it was made (assignment_date), and the Partner chooses the
+    # day of the work. Risk reads the grace period from the assigned date.
     schedule_by_date: date | None = None
     scheduled_date: date | None = None
     month: int | None = None
@@ -229,6 +232,10 @@ class PartnerOversightItem:
     # actually going to be suspended is a promise the service will break.
     withdrawal_kind: str = ""
     withdrawal_label: str = ""
+    # Whether the date the work carries is the Partner's own. A day staff
+    # chose is not (owner, 2026-10-05; apps.partners.dating_policy): taking
+    # that work back is a withdrawal, and no Program Lead has to decide it.
+    partner_has_dated: bool = False
 
     @property
     def is_scheduled(self) -> bool:
@@ -739,7 +746,7 @@ def filter_counts(items) -> dict:
 
 
 def _unassigned_partner_activities(
-    scope, *, fys, partner_id, already: set
+    scope, *, fys, partner_id, already: set, only_id: str | None = None
 ) -> list[PartnerOversightItem]:
     """Partner-delivered activities that no PartnerAssignment points at.
 
@@ -751,10 +758,11 @@ def _unassigned_partner_activities(
     assignment row, so that work would have disappeared from the only remaining
     partner page.
 
-    They arrive as scheduled-stage items with no assignment id. That is honest
-    rather than tidy: there is no handover record to open, and inventing one
-    would put a withdrawal control on a row the withdrawal service cannot act
-    on.
+    They arrive as scheduled-stage items with no assignment id: there is no
+    handover record to open. The withdrawal the work's state permits is still
+    offered (owner, 2026-10-05: "he cant withdraw the school from the partner.
+    It has only view in the action button"); confirming it writes the record
+    (withdrawal_service.withdraw_activity).
     """
     from apps.activities.models import Activity
 
@@ -768,6 +776,8 @@ def _unassigned_partner_activities(
         .exclude(status__in=("cancelled", "rejected", "deferred"))
         .select_related("school", "school__district", "cluster", "training_course")
     )
+    if only_id:
+        qs = qs.filter(id=only_id)
     if fys:
         qs = qs.filter(fy__in=tuple(fys))
     if partner_id:
@@ -792,6 +802,7 @@ def _unassigned_partner_activities(
     if not activities:
         return []
 
+    from apps.partners.dating_policy import partner_has_dated
     from apps.partners.models import Partner
 
     names = dict(
@@ -892,7 +903,12 @@ def _unassigned_partner_activities(
             reschedule_count=activity.reschedule_count or 0,
             last_updated=activity.updated_at,
         )
+        item.partner_has_dated = partner_has_dated(activity)
         _set_next_action(item)
+        # No hand-over record, and still the Partner's work to take back
+        # (owner, 2026-10-05): the withdrawal writes the record it lacks
+        # (withdrawal_service.withdraw_activity).
+        _set_withdrawal_action(item)
         items.append(item)
     return items
 
@@ -1148,7 +1164,6 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         intervention_label=intervention,
         project_name=getattr(assignment.project, "name", "") or "",
         assignment_date=assignment.created_at.date() if assignment.created_at else None,
-        schedule_by_date=assignment.scheduled_date,
         assignment_status=assignment.status,
         return_reason_category=assignment.return_reason_category or "",
         return_reason=assignment.return_reason or "",
@@ -1195,6 +1210,9 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
             item.last_updated is None or activity.updated_at > item.last_updated
         ):
             item.last_updated = activity.updated_at
+        from apps.partners.dating_policy import partner_has_dated
+
+        item.partner_has_dated = partner_has_dated(activity)
 
     _set_next_action(item)
     _set_withdrawal_action(item)
@@ -1208,8 +1226,7 @@ def _set_withdrawal_action(item) -> None:
     Two implementations of "what can be done to this" is how a page comes to
     offer a control the service refuses.
     """
-    from apps.partners.withdrawal_models import WithdrawalKind
-    from apps.partners.withdrawal_service import resolve_kind
+    from apps.partners.withdrawal_service import action_label, resolve_kind
 
     # A lightweight stand-in: the resolver reads only status fields, and
     # building it from the item avoids re-fetching the assignment row the
@@ -1220,9 +1237,7 @@ def _set_withdrawal_action(item) -> None:
     activity = _ActivityView(item) if item.partner_activity_id else None
     kind = resolve_kind(_AssignmentView(item), activity)
     item.withdrawal_kind = kind
-    item.withdrawal_label = (
-        "" if kind == WithdrawalKind.BLOCKED else WithdrawalKind(kind).label
-    )
+    item.withdrawal_label = action_label(kind, partner_has_dated=item.partner_has_dated)
 
 
 class _AssignmentView:
@@ -1359,6 +1374,22 @@ def build_item_by_assignment(assignment_id: str):
 
     partner_risk_service.annotate([item])
     return item
+
+
+def build_item_by_activity(principal, activity_id: str):
+    """Partner work with no handover record, as the page builds it — or None.
+
+    Scoped, unlike the handover's builder: it reads the page's own list of
+    such work for this principal, so a row the page shows opens and one it
+    does not show is not found.
+    """
+    scope = _resolve_scope(principal)
+    if not activity_id or (scope["kind"] == "team" and not scope["staff_ids"]):
+        return None
+    items = _unassigned_partner_activities(
+        scope, fys=None, partner_id=None, already=set(), only_id=activity_id
+    )
+    return items[0] if items else None
 
 
 # ── Folds ────────────────────────────────────────────────────────────────────

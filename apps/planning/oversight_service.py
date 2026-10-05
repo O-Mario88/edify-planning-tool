@@ -1357,7 +1357,6 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         partner_id=assignment.partner_id,
         partner_name=getattr(assignment.partner, "name", "") or "",
         assigned_date=assignment.created_at.date() if assignment.created_at else None,
-        schedule_by_date=assignment.scheduled_date,
         assignment_status=assignment.status,
         planned_cost=0,
         next_action_owner_id=assignment.partner_id,

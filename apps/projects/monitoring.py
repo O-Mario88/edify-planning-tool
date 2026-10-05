@@ -1532,9 +1532,10 @@ def _attach_doors(line: ProjectWorkLine, handover, activity=None) -> None:
     """
     from urllib.parse import urlencode
 
+    from apps.partners.dating_policy import partner_has_dated
     from apps.partners.models import PartnerAssignment
     from apps.partners.withdrawal_models import WithdrawalKind
-    from apps.partners.withdrawal_service import resolve_kind
+    from apps.partners.withdrawal_service import action_label, resolve_kind
 
     if handover is None:
         return
@@ -1552,7 +1553,9 @@ def _attach_doors(line: ProjectWorkLine, handover, activity=None) -> None:
     kind = resolve_kind(handover, activity)
     if kind == WithdrawalKind.BLOCKED:
         return
-    line.withdraw_label = WithdrawalKind(kind).label
+    line.withdraw_label = action_label(
+        kind, partner_has_dated=partner_has_dated(activity)
+    )
     line.withdraw_url = f"/projects/monitoring/withdraw?{query}"
 
 

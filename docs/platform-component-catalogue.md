@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **627**
+Components and application partials: **629**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -455,6 +455,7 @@ Components and application partials: **627**
 | `partials/oversight/_monitor_readiness.html` | application-partial | Reusable  monitor readiness interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/planning-monitor/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_monitor_row.html` | application-partial | Reusable  monitor row interface primitive | danger, {% if row.over_ceiling %}danger{% else %}{{ row.readiness.staff_visits.tone }}{% endif %}, {{ row.partner_tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/planning-monitor/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/_officer_panel_body.html` | application-partial | Reusable  officer panel body interface primitive | canonical; default | explicit responsive contract | accessible name and label | /country-planning-oversight/team/<str:staff_id><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/oversight/_partner_activity_items.html` | application-partial | Reusable  partner activity items interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/_partner_review_items.html` | application-partial | Reusable  partner review items interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/_partner_view_button.html` | application-partial | Reusable  partner view button interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /partner-oversight/ | 0 |
 | `partials/oversight/_readiness_cell.html` | application-partial | Reusable  readiness cell interface primitive | warning; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/<br>/planning-monitor/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
@@ -493,6 +494,7 @@ Components and application partials: **627**
 | `partials/oversight/team_country_workspace.html` | application-partial | Reusable team country workspace interface primitive | executive, info; default | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/withdrawal_drawer.html` | application-partial | Reusable withdrawal drawer interface primitive | info; default, open | explicit responsive contract | accessible name and label | /partner-oversight/withdraw<br>/projects/monitoring/withdraw | 0 |
 | `partials/partner/invoice_drawer.html` | application-partial | Reusable invoice drawer interface primitive | danger; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/invoices/new | 0 |
+| `partials/partners/_assigned_date.html` | application-partial | Reusable  assigned date interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /core-schools/assign-partner<br>/planning/assign-partner-modal<br>/planning/bulk-assign-partner-drawer<br>/projects/planning/bulk-partner | 0 |
 | `partials/partners/_capability_picker.html` | application-partial | Reusable  capability picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |
 | `partials/partners/_project_handover_routes.html` | application-partial | Reusable  project handover routes interface primitive | canonical; default | inherits containing page contract | accessible name and label | /core-schools/assign-partner<br>/planning/assign-partner-modal | 0 |
 | `partials/partners/_region_picker.html` | application-partial | Reusable  region picker interface primitive | info; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /partners/<str:partner_id>/edit-drawer<br>/partners/create | 0 |

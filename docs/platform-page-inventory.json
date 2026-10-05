@@ -3015,7 +3015,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6266,
+      "bytes": 5863,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/bulk-assign-partner-drawer"
@@ -3749,7 +3749,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10199,
+      "bytes": 10254,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -4064,7 +4064,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7857,
+      "bytes": 7396,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -4093,7 +4093,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13195,
+      "bytes": 12709,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -11142,6 +11142,27 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 894,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Partner Activity Items",
+      "purpose": "Reusable  partner activity items interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_partner_activity_items.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 1245,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -11526,7 +11547,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10025,
+      "bytes": 9830,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -11636,7 +11657,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8663,
+      "bytes": 8496,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11733,7 +11754,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7086,
+      "bytes": 6919,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11813,7 +11834,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7036,
+      "bytes": 7138,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12086,7 +12107,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10702,
+      "bytes": 11220,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/withdraw",
@@ -12136,6 +12157,30 @@
       "variants": [
         "danger"
       ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 729,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools/assign-partner",
+        "/planning/assign-partner-modal",
+        "/planning/bulk-assign-partner-drawer",
+        "/projects/planning/bulk-partner"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Assigned Date",
+      "purpose": "Reusable  assigned date interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_assigned_date.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -12508,7 +12553,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9744,
+      "bytes": 9801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -13532,7 +13577,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7912,
+      "bytes": 7496,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -116035,7 +116080,7 @@
     "activity_states": 24,
     "all_routes": 1362,
     "api_routes": 360,
-    "component_templates": 627,
+    "component_templates": 629,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 282,

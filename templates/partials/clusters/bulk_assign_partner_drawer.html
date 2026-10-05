@@ -74,11 +74,7 @@ until the partner (or you) dates it.
     </div>
   </template>
   <p class="edify-text-caption text-slate-500">Every selected school is handed over for this reason. No activity, cost or budget line is created until it is scheduled.</p>
-  <div class="space-y-1">
-    <label for="bulk-partner-date" class="block edify-text-caption font-semibold text-slate-600">Target date <span class="font-normal text-slate-500">(optional)</span></label>
-    <input id="bulk-partner-date" type="date" name="scheduled_date" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50">
-    <p class="edify-text-caption text-slate-500">Leave blank if the partner will choose the date.</p>
-  </div>
+  {% include "partials/partners/_assigned_date.html" %}
   {% endif %}
 
   <div id="bulk-assign-partner-feedback"></div>

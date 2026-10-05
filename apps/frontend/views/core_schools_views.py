@@ -599,6 +599,21 @@ def _locked_core_plan(school, scheduled_for=None):
     return ensure_core_plan(school, fy, lock=True)
 
 
+def _refuse_dating_partner_work(partner_id):
+    """A Partner dates their own work (owner, 2026-10-05).
+
+    The Schedule drawers no longer offer "Partner agency"; this answers a
+    stale tab or a typed POST that still names one, with where the work goes
+    instead. None when no Partner was named.
+    """
+    if not (partner_id or "").strip():
+        return None
+    from apps.core.exceptions import Forbidden
+    from apps.partners.dating_policy import partner_name_for, refusal
+
+    return error_fragment(Forbidden(refusal(partner_name_for(partner_id))), status=400)
+
+
 def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
     payload = {
         "schoolId": school_id,
@@ -769,6 +784,9 @@ def core_schedule_visit_action(request):
     # (apps.planning.visit_requests); anyone scheduling at a school outside
     # their own portfolio is likewise the one going, rather than filing a core
     # visit onto the holder's My Plan and fund request.
+    refused = _refuse_dating_partner_work(partner_id)
+    if refused is not None:
+        return refused
     visit_request = _core_visit_request_context(school, request.user)
     visit_request_owner_id = visit_request["visit_request_owner_id"]
     visit_justification = request.POST.get("visit_justification", "").strip()
@@ -1206,6 +1224,9 @@ def core_schedule_training_action(request):
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+    refused = _refuse_dating_partner_work(partner_id)
+    if refused is not None:
+        return refused
     facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     focus_intervention = request.POST.get("focus_intervention", "").strip()

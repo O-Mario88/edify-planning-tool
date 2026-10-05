@@ -6,6 +6,7 @@ half-delivered visit are different problems, and a single destructive action
 for both is how evidence gets lost and budgets go stale.
 
     awaiting schedule      → withdraw outright, UGX 0, no activity ever existed
+    dated by staff         → recall, exactly as below: the partner never chose it
     scheduled, unlocked    → recall: cancel the activity, budget unwinds
     scheduled, locked      → recall + formal budget amendment, snapshot intact
     in progress            → suspend and review, never an outright withdrawal
@@ -15,6 +16,14 @@ for both is how evidence gets lost and budgets go stale.
 Nothing here deletes. The assignment, the activity, its cost lines and its
 evidence are the record of what was asked for and what happened, and a record
 that can be removed is not a record.
+
+Partner work made without a hand-over record — an activity staff created for
+a partner, on a date staff chose — is withdrawn the same way (owner,
+2026-10-05: "A user scheduled for a partner and he cant withdraw the school
+from the partner. It has only view in the action button"). `withdraw_activity`
+writes the hand-over record it never had, in the same transaction, and runs
+the withdrawal above on it: one decision, one record, whichever shape the work
+arrived in.
 
 The financial work is delegated, not reimplemented: `activities.services.cancel`
 already retains cost lines as history, drops un-moved advance requests, keeps
@@ -45,7 +54,16 @@ REASON_MIN_LENGTH = 20
 REASON_MAX_LENGTH = 600
 
 # Activity states, grouped by what a withdrawal may still do to them.
-_NOT_STARTED_STATUSES = ("planned", "scheduled", "partner_scheduled", "rescheduled")
+# `assigned_to_partner` is work staff created for a partner that the partner
+# has not scheduled: it fell through to "blocked", so the one record a partner
+# had not touched was the one that could not be taken back.
+_NOT_STARTED_STATUSES = (
+    "planned",
+    "scheduled",
+    "partner_scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+)
 _IN_PROGRESS_STATUSES = ("in_progress", "completion_started")
 _EVIDENCE_STATUSES = (
     "evidence_uploaded",
@@ -99,6 +117,21 @@ def resolve_kind(assignment, activity=None) -> str:
     if status in _NOT_STARTED_STATUSES:
         return WithdrawalKind.RECALL_SCHEDULED
     return WithdrawalKind.BLOCKED
+
+
+#: What taking back work the partner has not dated is called. A day staff put
+#: on it is cancelled with the activity; nothing the partner planned is.
+WITHDRAW_FROM_PARTNER = "Withdraw from partner"
+
+
+def action_label(kind: str, *, partner_has_dated: bool = True) -> str:
+    """The words the row, the drawer and its button use for this decision,
+    or "" when the record's state permits none."""
+    if kind == WithdrawalKind.BLOCKED or kind not in WithdrawalKind.values:
+        return ""
+    if kind == WithdrawalKind.RECALL_SCHEDULED and not partner_has_dated:
+        return WITHDRAW_FROM_PARTNER
+    return WithdrawalKind(kind).label
 
 
 def is_financially_locked(activity) -> bool:
@@ -203,9 +236,28 @@ def preview(principal, assignment_id: str) -> dict:
     not seen.
     """
     assignment = _load(assignment_id)
-    activity = assignment.scheduled_activity
+    return _preview_of(assignment, assignment.scheduled_activity)
+
+
+def preview_activity(principal, activity_id: str) -> dict:
+    """The same preview for partner work that has no hand-over record yet.
+
+    Read from the record `withdraw_activity` would write, without writing it:
+    opening a drawer changes nothing.
+    """
+    activity = _load_partner_activity(activity_id)
+    paired = PartnerAssignment.objects.filter(scheduled_activity_id=activity.id).first()
+    if paired is not None:
+        return preview(principal, paired.id)
+    return _preview_of(_handover_shape(activity, principal), activity)
+
+
+def _preview_of(assignment, activity) -> dict:
+    from apps.partners.dating_policy import partner_has_dated
+
     kind = resolve_kind(assignment, activity)
     locked = is_financially_locked(activity)
+    dated = partner_has_dated(activity)
 
     cost = 0
     if activity is not None:
@@ -221,11 +273,16 @@ def preview(principal, assignment_id: str) -> dict:
         )
 
     return {
-        "assignment_id": assignment.id,
+        # Empty for work with no hand-over record: the form posts the
+        # activity instead, and the record is written when it is confirmed.
+        "assignment_id": "" if assignment._state.adding else assignment.id,
+        "activity_id": getattr(activity, "id", "") or "",
+        # Whose date the work carries. A day staff chose is not the partner's
+        # commitment, so taking it back is not a decision for a Program Lead.
+        "partner_has_dated": dated,
         "kind": kind,
-        "kind_label": WithdrawalKind(kind).label
-        if kind in WithdrawalKind.values
-        else kind,
+        "kind_label": action_label(kind, partner_has_dated=dated)
+        or (WithdrawalKind(kind).label if kind in WithdrawalKind.values else kind),
         "available": kind != WithdrawalKind.BLOCKED,
         "school": getattr(assignment.school, "name", "") or "",
         "partner": getattr(assignment.partner, "name", "") or "",
@@ -278,6 +335,120 @@ def _load(assignment_id: str) -> PartnerAssignment:
     if assignment is None:
         raise NotFoundError("Assignment not found.")
     return assignment
+
+
+# ── Partner work that was made without a hand-over record ────────────────────
+ADOPTED_NOTE = (
+    "Hand-over recorded at withdrawal: this work was created for the partner "
+    "without one."
+)
+
+
+def _load_partner_activity(activity_id: str, *, lock: bool = False):
+    from apps.activities.models import Activity
+
+    activities = Activity.objects.filter(id=activity_id, deleted_at__isnull=True)
+    if lock:
+        activities = activities.select_for_update()
+    activity = activities.first()
+    if (
+        activity is None
+        or activity.delivery_type != "partner"
+        or not activity.assigned_partner_id
+    ):
+        raise NotFoundError("That partner work was not found.")
+    return activity
+
+
+def _handover_shape(activity, principal=None) -> PartnerAssignment:
+    """The hand-over record this activity never had, unsaved.
+
+    It names no package slot: at a Core School the slot is the activity's
+    (`CoreActivitySlot.activity_id`), and cancelling the activity is what
+    frees it.
+    """
+    from apps.planning.partner_oversight_service import activity_day
+
+    project_id = activity.project_id or None
+    outside_ssa = False
+    if project_id:
+        from apps.projects.models import Project, is_outside_ssa
+
+        if Project.objects.filter(id=project_id).exists():
+            outside_ssa = is_outside_ssa(project_id)
+        else:
+            project_id = None
+    staff_id = (
+        activity.monitored_by_staff_id
+        or activity.responsible_staff_id
+        or getattr(principal, "staff_profile_id", None)
+        or getattr(principal, "user_id", None)
+    )
+    return PartnerAssignment(
+        school_id=activity.school_id,
+        cluster_id=activity.cluster_id,
+        partner_id=activity.assigned_partner_id,
+        assigning_staff_id=staff_id,
+        monitoring_staff_id=staff_id,
+        assignment_mode="specific_activity",
+        catalogue_item_id=activity.catalogue_item_id,
+        training_course_id=activity.training_course_id,
+        source_ssa_id=activity.source_ssa_id,
+        project_id=project_id,
+        outside_ssa=outside_ssa,
+        purpose=activity.activity_purpose_text or None,
+        purpose_of_visit=activity.purpose_type or None,
+        focus_intervention=activity.focus_intervention or None,
+        expected_activity_type=activity.activity_type,
+        scheduled_date=activity_day(activity),
+        scheduled_activity=activity,
+        status=PartnerAssignment.STATUS_PARTNER_SCHEDULED,
+        notes=ADOPTED_NOTE,
+    )
+
+
+def handover_for_activity(activity, principal=None) -> PartnerAssignment:
+    """The hand-over record of this partner work, written if it has none.
+
+    Call inside a transaction, with the activity locked. `bulk_create` on
+    purpose: `PartnerAssignment.save` and its creation signal are the doors
+    for NEW work — a partner on hold takes none, and each one tells the
+    partner a school has arrived. This records work the partner already
+    holds, so that it can be taken back.
+    """
+    paired = PartnerAssignment.objects.filter(scheduled_activity_id=activity.id).first()
+    if paired is not None:
+        return paired
+    handover = _handover_shape(activity, principal)
+    PartnerAssignment.objects.bulk_create([handover])
+    return handover
+
+
+def withdraw_activity(
+    activity_id: str, data: dict, principal
+) -> PartnerAssignmentWithdrawal:
+    """Take back partner work that has no hand-over record.
+
+    One transaction: a withdrawal that is refused (the role, the project's
+    rule, a form left unfinished) leaves no hand-over record behind.
+    """
+    _validate(data)
+    with transaction.atomic():
+        activity = _load_partner_activity(activity_id, lock=True)
+        handover = handover_for_activity(activity, principal)
+        return withdraw(handover.id, data, principal)
+
+
+def request_activity_withdrawal(
+    activity_id: str, data: dict, principal
+) -> PartnerAssignmentWithdrawal:
+    """A CCEO's request to their Program Lead, for work with no hand-over
+    record: the record is written with the request, or not at all."""
+    _validate(data)
+    with transaction.atomic():
+        activity = _load_partner_activity(activity_id, lock=True)
+        handover = handover_for_activity(activity, principal)
+        return request_withdrawal(handover.id, data, principal)
 
 
 # ── Validation ───────────────────────────────────────────────────────────────
