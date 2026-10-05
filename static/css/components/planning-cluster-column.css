@@ -16,5 +16,17 @@
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(7) { width: 8rem; }
 :root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6rem; }
 :root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(8) { width: 8rem; }
-/* A long cluster name ends in an ellipsis and reads whole in its title. */
-:root main table.school-plan-table tbody td.school-plan-table__cluster { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A longer cluster name ends in an ellipsis and reads whole in its title.
+   This table fixes its column widths, so a cell cannot grow to fit what it
+   holds, and the platform's one-line rule (consistency.css, EVERY TABLE STAYS
+   ON ONE LINE) forbids a cell to clip with !important: without the same
+   weight here the name ran over the Visit Plan Status beside it (owner,
+   2026-10-05: "make sure the columns are not overlapping into each other"). */
+:root main table.school-plan-table--selectable tbody td.school-plan-table__cluster { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap; }
+/* Where the page is wide enough the column holds a cluster's name as they
+   are written ("Greater Abako Cluster", "Bata - Amwoma Cluster"); the room
+   comes from the school name, which still has the most of any column there.
+   Narrower screens keep the 7.5rem column, so the name gives nothing up. */
+@media (min-width: 90rem) {
+  :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(4) { width: 11rem; }
+}
