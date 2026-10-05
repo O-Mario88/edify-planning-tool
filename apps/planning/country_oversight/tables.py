@@ -26,6 +26,10 @@ school is under one person in every table; who planned the work there is a
 column of its own. The page's Programme Lead and CCEO choice still keeps a
 PERSON's plan, as the cards count it.
 
+Project Schools matches the project table (owner, 2026-10-05): after those
+five it carries that table's columns, in its order and with its cells
+(``apps.projects.school_table``).
+
 Every table is one flat list, sorted by those five columns and then by what a
 reader scans for: the page shows it a page at a time and the workbook holds
 all of it, with the planning details beside it.
@@ -54,7 +58,6 @@ PARTNER_PLANNED = "Planned by the Partner"
 #: (owner, 2026-10-02: "Partner visit should be scheduled by partner. Date
 #: entered by staff should just indicate when the school is assigned").
 AWAITING_PARTNER = "Awaiting partner schedule"
-AWAITING_COORDINATOR = "Awaiting Project Coordinator"
 ASSIGNED = "Assigned to Partner"
 UNCLUSTERED = "Unclustered"
 #: What a data collection visit is called in a list: shown, never counted
@@ -79,6 +82,12 @@ class Column:
     # What a date column says while it has no date. A row may say its own
     # (``<key>_note``): whose turn it is to set one.
     blank: str = ""
+    # A date nobody is waiting for: with no date and no note the cell is
+    # simply empty, where another date column says "Not yet scheduled".
+    quiet: bool = False
+    # How a figure is written: "score"; "change", coloured by its sign (green
+    # above nought, red below, neutral at); or "money", in thousands.
+    kind: str = ""
 
 
 @dataclass(frozen=True)
@@ -216,6 +225,30 @@ def _without(columns, *keys) -> tuple:
     return tuple(column for column in columns if column.key not in keys)
 
 
+def _project_school_columns() -> tuple:
+    """The project table's own columns (owner, 2026-10-05), in its order and
+    under its headings — ``apps.projects.school_table`` is their one
+    definition, shared with Project Monitoring and its workbook. District is
+    left out here: it is one of the place columns this table opens with.
+    """
+    from apps.projects import school_table
+
+    how = {
+        "school": {"is_school": True},
+        "previous_score": {"numeric": True, "kind": "score"},
+        "current_score": {"numeric": True, "kind": "score"},
+        "improvement": {"numeric": True, "kind": "change"},
+        "date": {"is_date": True, "quiet": True},
+        "enrolled_on": {"is_date": True, "quiet": True},
+        "cost": {"numeric": True, "kind": "money"},
+    }
+    return tuple(
+        Column(key, label, **how.get(key, {}))
+        for key, label in school_table.FIELDS
+        if key != "district"
+    )
+
+
 SPECS: dict[str, Spec] = {
     spec.key: spec
     for spec in (
@@ -305,38 +338,10 @@ SPECS: dict[str, Spec] = {
             "Project Schools",
             "school",
             "Every school in a live project, read from the Project "
-            "Coordinators' own records: the project it is in, who added it, "
-            "who holds the work, the activity planned, its SSA intervention "
-            "and the planned date — or whose turn it is to set one.",
-            (
-                *PLACE,
-                C("project", "Project"),
-                *SCHOOL,
-                C("activity", "Activity"),
-                INTERVENTION,
-                C("coordinator", "Project Coordinator"),
-                C("added_by", "Added By"),
-                C("channel", "By"),
-                C("by_name", "Planned By"),
-                PLANNED_DATE,
-                C("status", "Status"),
-                C("purpose", "Purpose"),
-                C("enrolled_on", "Enrolled On", is_date=True),
-                C("planned_n", "Activities Planned", numeric=True),
-                C("delivered_n", "Activities Delivered", numeric=True),
-                C("verified_n", "Activities Verified", numeric=True),
-                C("last_delivered", "Last Delivered", is_date=True),
-                C("movement", "SSA Movement"),
-            ),
-            export_only=(
-                "purpose",
-                "enrolled_on",
-                "planned_n",
-                "delivered_n",
-                "verified_n",
-                "last_delivered",
-                "movement",
-            ),
+            "Coordinators' own records, with the project table's columns: "
+            "the work planned there, its SSA intervention and scores, where "
+            "it stands, who planned it, and its cost once scheduled.",
+            (*PLACE, *_project_school_columns()),
             short="Projects",
         ),
         Spec(
@@ -1545,7 +1550,7 @@ def _duplicate_table(user, filters, table: Table, extra: Extra) -> Table:
 def _project_table(user, filters, table: Table, extra: Extra) -> Table:
     """Every enrolment in a live project, from the coordinators' own records
     (apps.projects.monitoring), under where its school sits."""
-    from apps.projects import monitoring
+    from apps.projects import monitoring, school_table
 
     places = _Places(user, filters)
     dataset = places.dataset
@@ -1566,36 +1571,18 @@ def _project_table(user, filters, table: Table, extra: Extra) -> Table:
             continue
         if extra.cluster and place["_cluster"] != extra.cluster:
             continue
-        with_partner = bool(school.partner_name)
-        note = ""
-        if school.awaiting_date:
-            note = AWAITING_PARTNER
-        elif school.status_key == monitoring.STATUS_AWAITING_COORDINATOR:
-            note = AWAITING_COORDINATOR
+        # The project table's own cells (owner, 2026-10-05: this table
+        # matches it), under where the school sits. A date column holds a
+        # date; what the Activity Date says without one is its note.
+        said = school_table.values(school)
+        dated = isinstance(said["date"], date)
         rows.append(
             {
+                **said,
                 **place,
                 "lead": place["holder_lead"],
-                "project": project.name,
-                "activity": school.training_name
-                or (school.purpose_label if school.is_planned else ""),
-                "purpose": school.purpose_label,
-                "intervention": school.intervention_label,
-                "coordinator": coordinator,
-                "added_by": "" if school.added_by == "—" else school.added_by,
-                "channel": "Partner"
-                if with_partner
-                else ("Staff" if school.is_planned else ""),
-                "by_name": school.partner_name or school.planned_by,
-                "date": None if note else school.activity_date,
-                "date_note": note,
-                "status": school.status_label,
-                "enrolled_on": school.enrolled_on,
-                "planned_n": school.planned,
-                "delivered_n": school.delivered,
-                "verified_n": school.verified,
-                "last_delivered": school.last_delivered_on,
-                "movement": school.impact_label,
+                "date": said["date"] if dated else None,
+                "date_note": "" if dated else (said["date"] or ""),
                 "_planned": school.is_planned,
             }
         )
@@ -1795,16 +1782,32 @@ def sheet(table: Table) -> dict:
             return _blank(column, row)
         return value
 
+    formats = {}
+    for index, column in enumerate(columns, start=1):
+        if column.is_date:
+            formats[index] = "d mmm yyyy"
+        elif column.kind in _FIGURE_FORMATS:
+            formats[index] = _FIGURE_FORMATS[column.kind]
     return {
         "title": table.spec.title,
         "headers": [column.label for column in columns],
-        "number_formats": {
-            index: "d mmm yyyy"
-            for index, column in enumerate(columns, start=1)
-            if column.is_date
-        },
+        "number_formats": formats,
         "rows": [[cell(row, column) for column in columns] for row in table.rows],
     }
+
+
+def _figure_formats() -> dict:
+    from apps.projects import school_table
+
+    return {
+        "score": school_table.SCORE_FORMAT,
+        "change": school_table.CHANGE_FORMAT,
+        "money": school_table.MONEY_FORMAT,
+    }
+
+
+#: A figure column's Excel format, by ``Column.kind``.
+_FIGURE_FORMATS = _figure_formats()
 
 
 # ── What a table can be narrowed to ──────────────────────────────────────────
