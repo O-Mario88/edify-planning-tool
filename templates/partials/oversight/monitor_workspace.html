@@ -1,4 +1,4 @@
-{% load components frontend_filters school_identity table_pagination %}
+{% load components frontend_filters school_identity table_pagination row_actions %}
 {% comment %}
 The Planning Monitor (owner, 2026-09-28, 2026-09-29): each person's year
 against the visits it should hold — 280 for a Programme Lead, 560 for a CCEO,
@@ -96,6 +96,10 @@ and every gap count opens the list of the schools behind it.
   {% if monitor_gap %}
   {% paginate monitor.gap_schools "gap_page" as gap_pager %}
   {# Where a count lands: the schools behind it (owner, 2026-10-05; _monitor_count.html). #}
+  {% comment %}What each school on this page offers the reader, where it is
+  their own, and its tick box (owner, 2026-10-05; apps.planning.list_actions).
+  A colleague's school keeps the read-only row and its Send to.{% endcomment %}
+  {% school_list_actions gap_pager.rows fy as tickable %}
   <div id="monitor-list" class="scroll-mt-24" data-monitor-list="{{ monitor_gap }}">
   {% data_table name="monitor-list" %}
     {% slot title %}{{ monitor_gap_label }}{% endslot %}
@@ -104,6 +108,7 @@ and every gap count opens the list of the schools behind it.
     {% slot footer %}{% include "components/table_pager.html" with pager=gap_pager param="gap_page" pagination_label=monitor_gap_label %}{% endslot %}
         <thead>
           <tr>
+            {% if tickable %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-school-pick]" aria-label="Select all your schools on this page"></label></th>{% endif %}
             <th scope="col" class="px-3 py-2">School ID</th>
             <th scope="col" class="px-3 py-2">School</th>
             <th scope="col" class="px-3 py-2">Type</th>
@@ -114,11 +119,13 @@ and every gap count opens the list of the schools behind it.
             <th scope="col" class="px-3 py-2">Training</th>
             <th scope="col" class="px-3 py-2">Project</th>
             {% if monitor_can_send %}<th scope="col" class="px-3 py-2">Follow up</th>{% endif %}
+            <th scope="col" class="px-3 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for school in gap_pager.rows %}
           <tr>
+            {% if tickable %}{% include "partials/planning/_list_pick_cell.html" %}{% endif %}
             <td class="px-3 py-2 whitespace-nowrap tabular-nums" data-label="School ID">{% if school.code %}{% school_code school.code %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
             <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{{ school.name }}</a></td>
             <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% elif school.school_type == "core_graduate" %}Core Graduate{% else %}Client{% endif %}</td>
@@ -148,12 +155,14 @@ and every gap count opens the list of the schools behind it.
               {% endif %}
             </td>
             {% endif %}
+            <td class="px-3 py-2 text-right" data-record-action data-label="Actions">{% include "partials/planning/_list_row_actions.html" %}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="{% if monitor_can_send %}10{% else %}9{% endif %}" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
+          <tr><td colspan="{% if monitor_can_send %}12{% else %}11{% endif %}" class="px-3 py-6 text-center edify-text-muted">No school in scope matches: {{ monitor_gap_label|lower }}.</td></tr>
           {% endfor %}
         </tbody>
   {% enddata_table %}
+  {% if tickable %}{% include "partials/activities/selection_bar.html" with bar_schools=True %}{% endif %}
   </div>
   {% endif %}
   </div>

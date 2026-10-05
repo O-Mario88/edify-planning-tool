@@ -187,7 +187,13 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: listens to the stream the server already had and reads its marked
     #: regions again when the plan changes. It opens a stream only on a page
     #: that has such a region, and closes it while the tab is hidden.
-    JS_GZIP_KB = 143.5
+    #:
+    #: Raised to 144 the same day (143.3 to 143.8 KB) for group-select.js
+    #: reading a ticked school as well as a ticked activity, after the owner
+    #: asked that the lists the summaries open take the group actions too:
+    #: the bar's Assign to partner for the ticked schools, and Reschedule and
+    #: Cancel for the staff work planned at them.
+    JS_GZIP_KB = 144
     INLINE_SCRIPT_KB = 40
 
     @classmethod

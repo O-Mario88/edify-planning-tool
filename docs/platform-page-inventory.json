@@ -988,21 +988,21 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3023,
+      "bytes": 3843,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar",
         "/clusters/<str:cluster_id>",
+        "/country-planning-oversight/",
         "/dashboard",
         "/districts/<str:district_id>",
         "/my-plan",
         "/partners/<str:partner_id>",
-        "/planning",
-        "/projects/<str:project_id>"
+        "/planning"
       ],
       "findings": [],
-      "forms": 2,
-      "htmx_controls": 2,
+      "forms": 3,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Selection Bar",
       "purpose": "Reusable selection bar interface primitive",
@@ -6764,7 +6764,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5260,
+      "bytes": 5282,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -10449,8 +10449,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 4448,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5230,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -11577,7 +11579,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11542,
+      "bytes": 12527,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -12393,6 +12395,63 @@
       "variants": [
         "danger"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 729,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/my-plan",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " List Pick Cell",
+      "purpose": "Reusable  list pick cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/_list_pick_cell.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3066,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/my-plan",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 5,
+      "kind": "application-partial",
+      "name": " List Row Actions",
+      "purpose": "Reusable  list row actions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/planning/_list_row_actions.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -95389,6 +95448,20 @@
         "retryable": false
       },
       {
+        "cron": "every 10 min",
+        "cron_kwargs": {
+          "minute": "*/10"
+        },
+        "description": "Re-prices planned, unpaid activities whose saved cost lines carry a rate the Cost Catalogue has since changed or removed, and rebuilds their draft weekly and monthly requests.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "A plan re-priced against the active catalogue is no longer found; a second run finds only what the first did not reach.",
+        "idempotent": true,
+        "max_interval_minutes": 45,
+        "max_retries": 1,
+        "name": "cost_reprice_sweep",
+        "retryable": true
+      },
+      {
         "cron": "daily 00:20 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 0,
@@ -115933,7 +116006,7 @@
     "activity_states": 24,
     "all_routes": 1362,
     "api_routes": 360,
-    "component_templates": 624,
+    "component_templates": 626,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 282,
@@ -115953,7 +116026,7 @@
     "permission_keys": 127,
     "roles": 15,
     "routed_surfaces": 890,
-    "scheduled_jobs": 35,
+    "scheduled_jobs": 36,
     "severity_counts": {
       "critical": 0,
       "high": 0,

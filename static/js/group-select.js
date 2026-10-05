@@ -10,6 +10,8 @@
   if (window.EdifyGroupSelect) return;
   var doc = document, busy = false;
   var PICK = 'input[data-activity-pick]', ALL = 'input[data-select-all]';
+  // A listed school: its code, and the staff activities planned there.
+  var SCHOOL = 'input[data-school-pick]';
 
   function each(root, selector, fn) {
     Array.prototype.forEach.call(root.querySelectorAll(selector), fn);
@@ -33,9 +35,13 @@
 
   function picked() {
     var ids = [];
-    each(doc, PICK + ':checked', function (box) {
-      if (ids.indexOf(box.value) < 0) ids.push(box.value);
-    });
+    function add(value) {
+      String(value || '').split(',').forEach(function (id) {
+        if (id && ids.indexOf(id) < 0) ids.push(id);
+      });
+    }
+    each(doc, PICK + ':checked', function (box) { add(box.value); });
+    each(doc, SCHOOL + ':checked', function (box) { add(box.getAttribute('data-activity-ids')); });
     return ids;
   }
 
@@ -52,13 +58,30 @@
     });
     var bar = doc.querySelector('[data-activity-bar]');
     if (!bar) return;
-    var ids = picked();
-    bar.hidden = !ids.length;
-    each(bar, '[data-activity-count]', function (node) { node.textContent = ids.length; });
+    var ids = picked(), schools = 0, assign = [];
+    each(doc, SCHOOL + ':checked', function (box) {
+      schools += 1;
+      if (box.hasAttribute('data-school-assign')) assign.push(box.value);
+    });
+    var count = schools || ids.length, noun = schools ? 'school' : 'activity';
+    bar.hidden = !count;
+    each(bar, '[data-activity-count]', function (node) { node.textContent = count; });
     each(bar, '[data-activity-noun]', function (node) {
-      node.textContent = ids.length === 1 ? 'activity selected' : 'activities selected';
+      node.textContent = (count === 1 ? noun : noun === 'school' ? 'schools' : 'activities') + ' selected';
     });
     each(bar, 'input[name="ids"]', function (input) { input.value = ids.join(','); });
+    // A button with nothing to act on is not shown.
+    each(bar, '[data-needs-activities]', function (form) { form.style.display = ids.length ? '' : 'none'; });
+    each(bar, '[data-needs-schools]', function (form) {
+      form.style.display = assign.length ? '' : 'none';
+      var slot = form.querySelector('[data-school-inputs]');
+      slot.textContent = '';
+      assign.forEach(function (code) {
+        var input = doc.createElement('input');
+        input.type = 'hidden'; input.name = 'school_ids'; input.value = code;
+        slot.appendChild(input);
+      });
+    });
   }
 
   function during(fn) {
@@ -90,7 +113,7 @@
 
   doc.addEventListener('click', function (event) {
     if (event.target.closest && event.target.closest('[data-activity-clear]')) {
-      during(function () { each(doc, PICK + ':checked', function (box) { set(box, false); }); });
+      during(function () { each(doc, PICK + ':checked, ' + SCHOOL + ':checked', function (box) { set(box, false); }); });
     } else if (doc.querySelector(ALL)) {
       // A "Clear" that empties an Alpine list unticks boxes without an event.
       setTimeout(settle, 0);

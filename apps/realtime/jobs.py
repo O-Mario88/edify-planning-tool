@@ -948,6 +948,25 @@ def planning_oversight_warm_job():
     run_tracked_job("planning_oversight_warm", _do_planning_oversight_warm)
 
 
+def _do_cost_reprice_sweep() -> int:
+    """Re-price the open plans a rate change did not reach in its own request
+    (owner, 2026-10-05: a changed or removed cost was still being fetched;
+    apps.budget.repricing). Stops starting new plans after a minute, so a
+    country's worth of plans is worked through over a few runs."""
+    import time
+
+    from apps.budget.repricing import reprice_stale_plans
+
+    result = reprice_stale_plans(deadline=time.monotonic() + 60)
+    return len(result["repriced"])
+
+
+def cost_reprice_sweep_job():
+    if not _enabled():
+        return
+    run_tracked_job("cost_reprice_sweep", _do_cost_reprice_sweep)
+
+
 def _do_execution_period_snapshots() -> int:
     """Lock each recently ended week, month, quarter and financial year of
     Country Execution & Completion Oversight (owner spec 2026-09-28, §22), so

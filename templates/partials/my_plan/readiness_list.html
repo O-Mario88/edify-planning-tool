@@ -1,4 +1,4 @@
-{% load components frontend_filters school_identity table_pagination %}
+{% load components frontend_filters school_identity table_pagination row_actions %}
 {% comment %}
 The schools behind a figure of Planned and remaining (owner, 2026-10-05: "All
 those numbers should be link to the actual tables where those schools are
@@ -8,6 +8,9 @@ profile, where its visit, training and hand-over are planned.
 {% endcomment %}
 {% if plan_list %}
 {% paginate plan_list.schools "list_page" as list_pager %}
+{% comment %}What each school on this page offers, and its tick box (owner,
+2026-10-05; apps.planning.list_actions).{% endcomment %}
+{% school_list_actions list_pager.rows selected_fy|default:fy as tickable %}
 <div id="plan-list" class="scroll-mt-24" data-plan-list="{{ plan_list.key }}">
 {% data_table name="my-plan-list" %}
   {% slot title %}{{ plan_list.label }}{% endslot %}
@@ -16,6 +19,7 @@ profile, where its visit, training and hand-over are planned.
   {% slot footer %}{% include "components/table_pager.html" with pager=list_pager param="list_page" pagination_label=plan_list.label %}{% endslot %}
       <thead>
         <tr>
+          {% if tickable %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-school-pick]" aria-label="Select all schools on this page"></label></th>{% endif %}
           <th scope="col" class="px-3 py-2">School ID</th>
           <th scope="col" class="px-3 py-2">School</th>
           <th scope="col" class="px-3 py-2">Type</th>
@@ -24,11 +28,13 @@ profile, where its visit, training and hand-over are planned.
           <th scope="col" class="px-3 py-2">Visit</th>
           <th scope="col" class="px-3 py-2">Training</th>
           <th scope="col" class="px-3 py-2">Project</th>
+          <th scope="col" class="px-3 py-2 text-right">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for school in list_pager.rows %}
         <tr>
+          {% if tickable %}{% include "partials/planning/_list_pick_cell.html" %}{% endif %}
           <td class="px-3 py-2 whitespace-nowrap tabular-nums" data-label="School ID">{% if school.code %}{% school_code school.code %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <td class="px-3 py-2" data-record-title><a href="{{ school.url }}" class="font-semibold hover:underline">{{ school.name }}</a></td>
           <td class="px-3 py-2" data-label="Type">{% if school.is_core %}Core{% elif school.school_type == "core_trained" %}Core Trained{% elif school.school_type == "core_graduate" %}Core Graduate{% elif school.school_type == "champion" %}Champion{% else %}Client{% endif %}</td>
@@ -37,9 +43,10 @@ profile, where its visit, training and hand-over are planned.
           <td class="px-3 py-2" data-label="Visit">{% if school.staff_visits %}<span class="edify-status-text" data-edify-tone="info">{{ school.staff_visits }} staff</span>{% if school.has_partner %} <span class="edify-status-text" data-edify-tone="danger">+ Partner</span>{% endif %}{% elif school.has_partner %}<span class="edify-status-text" data-edify-tone="info">Partner</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
           <td class="px-3 py-2" data-label="Training">{% if school.training_done %}<span class="edify-status-text" data-edify-tone="success">Trained</span>{% elif school.group_training %}<span class="edify-status-text" data-edify-tone="info">Group training</span>{% elif school.in_school_training %}<span class="edify-status-text" data-edify-tone="info">In-school</span>{% elif school.meeting %}<span class="edify-status-text" data-edify-tone="warning">Cluster meeting only</span>{% elif not school.needs_training %}<span class="edify-text-muted">Not required</span>{% else %}<span class="edify-status-text" data-edify-tone="danger">Not planned</span>{% endif %}</td>
           <td class="px-3 py-2" data-label="Project">{% if school.in_project %}Yes{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right" data-record-action data-label="Actions">{% include "partials/planning/_list_row_actions.html" %}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="px-3 py-6 text-center edify-text-muted">None of your schools: {{ plan_list.label|lower }}.</td></tr>
+        <tr><td colspan="10" class="px-3 py-6 text-center edify-text-muted">None of your schools: {{ plan_list.label|lower }}.</td></tr>
         {% endfor %}
       </tbody>
 {% enddata_table %}

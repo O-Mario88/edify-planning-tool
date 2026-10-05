@@ -17,7 +17,7 @@
   function busy() {
     var host = doc.getElementById('drawer-container');
     if (host && host.childElementCount) return true;
-    if (doc.querySelector('input[data-activity-pick]:checked, ' + REGION + ' .row-menu__trigger[aria-expanded="true"]')) return true;
+    if (doc.querySelector('input[data-activity-pick]:checked, input[data-school-pick]:checked, ' + REGION + ' .row-menu__trigger[aria-expanded="true"]')) return true;
     var at = doc.activeElement;
     return !!(at && at.closest && at.closest(REGION) &&
       at.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select'));

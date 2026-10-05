@@ -48,7 +48,7 @@
   {% comment %}Reschedule or cancel the ticked activities together (owner,
   2026-10-05). Out here, not in the folded backlog: a closed fold draws
   nothing inside it, and the lead's own rows in the week tables tick too.{% endcomment %}
-  {% include "partials/activities/selection_bar.html" %}
+  {% include "partials/activities/selection_bar.html" with bar_schools=True %}
 
   {% comment %}The Staff Activity Log, the team's use of the platform (owner,
   2026-09-29: moved here from the sidebar with the Planning Monitor). It
