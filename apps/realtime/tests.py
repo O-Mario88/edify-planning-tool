@@ -525,6 +525,48 @@ class SchedulerResilienceTests(TransactionTestCase):
         tracked.assert_not_called()
 
 
+class DailyDebriefReminderTests(TestCase):
+    """Production, 2026-10-05: "value too long for type character varying(30)"
+    on the evening run, three attempts, nobody reminded. The reminder's key
+    was the person's id and the date, 32 characters in a column of 30, and
+    nothing had ever run the job as far as the notification."""
+
+    def _field_officer(self):
+        from django.contrib.auth import get_user_model
+
+        from apps.core.rbac import EdifyRole
+
+        return get_user_model().objects.create_user(
+            email="debrief-due@t.org",
+            name="Debrief Due",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
+        )
+
+    @override_settings(ENABLE_BACKGROUND_JOBS=True)
+    def test_someone_with_work_and_no_debrief_is_reminded_once(self):
+        from apps.realtime import jobs
+
+        user = self._field_officer()
+        with patch(
+            "apps.debriefs.field_debrief_service.DailyDebriefFlowService."
+            "activities_for",
+            side_effect=lambda principal, _day: principal.user_id == user.user_id,
+        ):
+            first = jobs.daily_debrief_reminders_job()
+            again = jobs.daily_debrief_reminders_job()
+
+        self.assertEqual(first["reminded"], 1)
+        self.assertEqual(again["reminded"], 1)
+        due = Notification.objects.filter(
+            recipient_id=user.user_id, source_event_type="field_debrief.due"
+        )
+        self.assertEqual(due.count(), 1)
+        self.assertEqual(due.get().context_id, first["for_date"])
+
+
 class SchedulerHistoryPruneTests(TestCase):
     """Run history has a retention, and health keeps what it reads (R13)."""
 

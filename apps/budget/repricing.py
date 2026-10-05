@@ -56,6 +56,19 @@ UNPAID_PAYMENT_STATUSES = ("", "none")
 #: request before handing the rest to the scheduled sweep.
 INLINE_SECONDS = 12.0
 
+#: How many plans are read at a time. A run reaches a few dozen plans before
+#: its deadline; reading the whole backlog to reach them held every one of its
+#: activities in memory (about 100 MB for ten thousand plans, in a scheduler
+#: that has 512 MB: production, 2026-10-05).
+_READ_AT_A_TIME = 50
+
+#: A plan the writer refused is not asked again by the sweep for this long.
+#: Its week has left draft or its money has moved, and that does not change in
+#: ten minutes. They are also the soonest plans, so the first in the queue:
+#: asked on every run they are refused again before the rest are reached.
+REFUSED_FOR_SECONDS = 6 * 60 * 60
+_refused: dict[str, float] = {}
+
 
 def _base_key(key: str) -> str:
     """A line of a trip that crosses a month is stored "<key>#mYYYYMM"."""
@@ -143,13 +156,32 @@ def stale_plan_ids(*, limit: int | None = None) -> list[str]:
     return ordered[:limit] if limit else ordered
 
 
-def reprice_stale_plans(ids=None, *, deadline=None, write=None) -> dict:
-    """Re-price each stale plan through the one cost writer.
+def _recently_refused() -> set[str]:
+    """The plans this process was refused on lately, forgetting the old ones."""
+    cutoff = time.monotonic() - REFUSED_FOR_SECONDS
+    for activity_id in [i for i, at in _refused.items() if at < cutoff]:
+        del _refused[activity_id]
+    return set(_refused)
+
+
+def forget_refusals() -> None:
+    """Ask every plan again (tests)."""
+    _refused.clear()
+
+
+def reprice_stale_plans(
+    ids=None, *, deadline=None, write=None, skip_refused=False
+) -> dict:
+    """Re-price each stale plan through the one cost writer, in the order
+    given (`stale_plan_ids` gives the soonest first).
 
     ``deadline`` is a ``time.monotonic()`` value after which no further plan
     is started; those not reached are returned as ``left`` and are found
     again by a later run. A plan the writer refuses (its week has left
     draft, its money has moved) is ``kept`` at the cost it was approved at.
+    ``skip_refused`` keeps a plan this process was refused on in the last
+    `REFUSED_FOR_SECONDS` without asking the writer again: the scheduled
+    sweep, which would otherwise ask every ten minutes for ever.
     """
     from apps.activities.models import Activity
     from apps.activities.services import reprice_activity
@@ -159,36 +191,52 @@ def reprice_stale_plans(ids=None, *, deadline=None, write=None) -> dict:
     if not ids:
         return result
     say = write or (lambda _line: None)
+    if skip_refused:
+        refused = _recently_refused()
+        result["kept"] = [i for i in ids if i in refused]
+        ids = [i for i in ids if i not in refused]
     # A day's visits are priced together: re-pricing one settles the others.
     settled_days: set[str] = set()
-    for activity in Activity.objects.filter(id__in=ids).order_by("planned_date", "id"):
+    for start in range(0, len(ids), _READ_AT_A_TIME):
         if deadline is not None and time.monotonic() >= deadline:
-            result["left"].append(activity.id)
-            continue
-        if activity.daily_visit_batch_id in settled_days:
+            result["left"].extend(ids[start:])
+            break
+        some = ids[start : start + _READ_AT_A_TIME]
+        read = {a.id: a for a in Activity.objects.filter(id__in=some)}
+        for position, activity_id in enumerate(some):
+            activity = read.get(activity_id)
+            if activity is None:
+                continue
+            if deadline is not None and time.monotonic() >= deadline:
+                result["left"].extend(ids[start + position :])
+                return result
+            if activity.daily_visit_batch_id in settled_days:
+                result["repriced"].append(activity.id)
+                continue
+            before = activity.est_cost_cents or 0
+            try:
+                with transaction.atomic():
+                    reprice_activity(activity)
+            except BadRequest as exc:
+                _refused[activity.id] = time.monotonic()
+                result["kept"].append(activity.id)
+                say(f"  kept {activity.id}: {getattr(exc, 'detail', exc)}")
+                continue
+            except Exception:  # noqa: BLE001 - one plan never stops the sweep
+                logger.exception("Re-pricing failed for activity %s", activity.id)
+                _refused[activity.id] = time.monotonic()
+                result["kept"].append(activity.id)
+                say(f"  kept {activity.id}: could not be re-priced (logged)")
+                continue
+            _refused.pop(activity.id, None)
+            activity.refresh_from_db(fields=["est_cost_cents", "daily_visit_batch"])
+            if activity.daily_visit_batch_id:
+                settled_days.add(activity.daily_visit_batch_id)
             result["repriced"].append(activity.id)
-            continue
-        before = activity.est_cost_cents or 0
-        try:
-            with transaction.atomic():
-                reprice_activity(activity)
-        except BadRequest as exc:
-            result["kept"].append(activity.id)
-            say(f"  kept {activity.id}: {getattr(exc, 'detail', exc)}")
-            continue
-        except Exception:  # noqa: BLE001 - one plan never stops the sweep
-            logger.exception("Re-pricing failed for activity %s", activity.id)
-            result["kept"].append(activity.id)
-            say(f"  kept {activity.id}: could not be re-priced (logged)")
-            continue
-        activity.refresh_from_db(fields=["est_cost_cents", "daily_visit_batch"])
-        if activity.daily_visit_batch_id:
-            settled_days.add(activity.daily_visit_batch_id)
-        result["repriced"].append(activity.id)
-        say(
-            f"  re-priced {activity.id}: UGX {before:,} -> "
-            f"UGX {activity.est_cost_cents or 0:,}"
-        )
+            say(
+                f"  re-priced {activity.id}: UGX {before:,} -> "
+                f"UGX {activity.est_cost_cents or 0:,}"
+            )
     return result
 
 

@@ -802,7 +802,11 @@ def daily_debrief_reminders_job():
                 body="You had scheduled activities but no debrief yet. "
                 "It takes two to three minutes.",
                 context_type="daily_debrief_due",
-                context_id=f"{user.user_id}:{target}",
+                # The day alone: a notification is already kept per person,
+                # and with the person's id in front this was 32 characters in
+                # a column of 30, so every run that had someone to remind
+                # failed and nobody was reminded (production, 2026-10-05).
+                context_id=str(target),
                 recipients=[user.user_id],
             )
             reminded += 1
@@ -957,8 +961,11 @@ def _do_cost_reprice_sweep() -> int:
 
     from apps.budget.repricing import reprice_stale_plans
 
-    result = reprice_stale_plans(deadline=time.monotonic() + 60)
-    return len(result["repriced"])
+    result = reprice_stale_plans(deadline=time.monotonic() + 60, skip_refused=True)
+    report = {outcome: len(plans) for outcome, plans in result.items()}
+    if any(report.values()):
+        logger.info("Cost re-price sweep: %s", report)
+    return report["repriced"]
 
 
 def cost_reprice_sweep_job():
