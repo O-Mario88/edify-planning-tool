@@ -1041,6 +1041,7 @@ def _workflow_issues() -> dict:
     # ── Daily Visit Batch integrity checks ───────────────────────────────────
     from apps.daily_visit_batches.models import DailyVisitBatch
     from apps.daily_visit_batches.pricing import (
+        ACCOMMODATION_KEYS,
         DAILY_BATCH_ELIGIBLE_TYPES,
         REQUIRED_KEYS,
     )
@@ -1145,8 +1146,11 @@ def _workflow_issues() -> dict:
     )
 
     # Active Cost Catalogue missing one of the Daily Visit Batch required keys.
-    _all_required_batch_keys = set(REQUIRED_KEYS["primary"]) | set(
-        REQUIRED_KEYS["secondary"]
+    _all_required_batch_keys = (
+        set(REQUIRED_KEYS["primary"])
+        | set(REQUIRED_KEYS["secondary"])
+        # Either accommodation rate can be the night's, by who travels.
+        | ACCOMMODATION_KEYS
     )
     if _active_cat:
         from apps.budget.models import CostSetting as _CostSetting

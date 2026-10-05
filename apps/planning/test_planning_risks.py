@@ -73,6 +73,38 @@ class NoFalsePositivesTest(SimpleTestCase):
         self.assertEqual(keys(item), set())
 
 
+class InSchoolTrainingIsNotUncostedTest(SimpleTestCase):
+    """An in-school Training is delivered during its School Visit, and the
+    visit carries the day's cost (owner, 2026-09-28). These pages show the
+    Training's planned cost as 0 by design; that is not a cost left unset."""
+
+    def test_the_training_of_a_pair_is_not_scheduled_without_cost(self):
+        item = staff_item(
+            planned_cost=0,
+            budget=0,
+            is_in_school_training=True,
+            cost_on_school_visit=True,
+        )
+        self.assertNotIn("scheduled_without_cost", keys(item))
+
+    def test_a_training_carrying_the_visit_day_itself_is_judged_on_its_lines(self):
+        """One scheduled without a companion visit (the Core Schools training
+        drawer) holds the visit day's lines; its planned cost still reads 0."""
+        costed = staff_item(planned_cost=0, budget=62_000, is_in_school_training=True)
+        self.assertNotIn("scheduled_without_cost", keys(costed))
+        unpriced = staff_item(planned_cost=0, budget=0, is_in_school_training=True)
+        self.assertIn("scheduled_without_cost", keys(unpriced))
+
+    def test_a_pair_whose_rate_is_missing_still_fires(self):
+        item = staff_item(
+            planned_cost=0,
+            cost_missing=True,
+            is_in_school_training=True,
+            cost_on_school_visit=True,
+        )
+        self.assertIn("scheduled_without_cost", keys(item))
+
+
 class DetectorTest(SimpleTestCase):
     def test_a_stalled_partner_handover_fires(self):
         item = assignment_item(

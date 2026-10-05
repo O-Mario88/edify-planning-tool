@@ -251,23 +251,29 @@ def non_school_activity_preview(request):
             "days": days,
         }
         travel_profile = None
+        responsible = (
+            (request.POST.get("responsible_staff_id") or "").strip()
+            or request.user.staff_profile_id
+            or request.user.user_id
+        )
+        # The night away is the responsible person's (owner, 2026-10-05).
+        from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+        payload["accommodationKey"] = accommodation_key_for_staff(responsible)
         if item.costing_profile == "FIELD_TRAVEL":
-            responsible = (
-                (request.POST.get("responsible_staff_id") or "").strip()
-                or request.user.staff_profile_id
-                or request.user.user_id
-            )
             district_type = _travel_district_type(
                 (request.POST.get("district_id") or "").strip(), responsible
             )
             payload["districtType"] = district_type
             if district_type == "secondary":
-                # Every secondary away-day carries the full per-diem set —
-                # meals and a night's accommodation per day (owner rule,
-                # 2026-08-19), matching the secondary visit-day policy.
+                # Every secondary away-day carries the full per-diem set
+                # (owner rule, 2026-08-19); a trip of several days has no
+                # night and no dinner on the day home (owner, 2026-10-05).
                 travel_profile = (
-                    f"Another district · {days} day"
-                    f"{'' if days == 1 else 's'} · full per-diems per day"
+                    f"Another district · {days} days · per-diems per day, "
+                    "no night or dinner on the last day"
+                    if days > 1
+                    else "Another district · 1 day · full per-diems"
                 )
             else:
                 travel_profile = "Home district — transport and lunch per day"
@@ -452,46 +458,56 @@ def work_plan_export(request):
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Work Plan"
+    # The Detailed Activity Plan's columns, in its order (owner, 2026-10-05),
+    # then the planning detail the page leaves to the record.
     headers = [
-        "Group",
         "Activity Date",
-        "Activity Title",
-        "Activity Type",
+        "Activity",
+        "School ID",
+        "School Name",
+        "District",
+        "Cluster Name",
+        "Activity Purpose",
         "SSA Intervention",
+        "Previous SSA Score",
+        "Delivery Mode",
+        "Person Responsible",
+        "Cost (UGX)",
+        "Planned Period",
+        "Status",
+        "Activity Title",
         "Number of Schools",
         "Number of Participants",
-        "Responsible Party",
-        "Party Type",
-        "School ID",
         "Venue",
-        "Delivery Mode",
-        "Cost (UGX)",
-        "Status",
     ]
     sheet.append(headers)
-    for row in context["rows"]:
+    for row in context["detail_rows"]:
         sheet.append(
             [
-                row["group_label"],
                 row["date_label"],
-                row["name"],
-                row["programme_activity_type"],
+                row["activity_word"],
+                row["school_code"],
+                row["school_name"],
+                row["district_name"],
+                row["cluster_name"],
+                row["activity_purpose"],
                 row["focus_intervention"],
+                row["previous_ssa_score"],
+                row["delivery_mode"],
+                row["responsible"],
+                int(row["cost"] or 0),
+                row["planned_period"],
+                row["delivery_status"],
+                row["name"],
                 row["school_count"] or 0,
                 row["participants"] or 0,
-                row["responsible"],
-                row["responsibility_type"],
-                row["school_code"],
                 row["venue"],
-                row["programme_delivery_mode"],
-                int(row["cost"] or 0),
-                row["status_label"],
             ]
         )
 
     style_header(sheet)
-    style_body(sheet, {13: "#,##0"})
-    widths = [22, 20, 38, 28, 26, 18, 21, 28, 14, 12, 28, 18, 18, 20]
+    style_body(sheet, {12: "#,##0"})
+    widths = [20, 16, 12, 34, 18, 26, 26, 26, 14, 20, 28, 18, 18, 14, 38, 18, 21, 28]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "A2"
@@ -514,7 +530,9 @@ def work_plan_export(request):
                 [
                     row["label"],
                     row["count"],
-                    row["unit_cost"]
+                    f"{row['unit_cost_display']} {row['unit_cost_note']}"
+                    if row["unit_cost_note"]
+                    else row["unit_cost"]
                     if row["unit_cost"] is not None
                     else "Cost setup required",
                     row["cost"],

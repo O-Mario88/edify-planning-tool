@@ -46,7 +46,7 @@ See Details
 <tr class="edify-data-row">
 <th scope="row" class="text-left font-semibold text-slate-700">{{ row.label }}</th>
 <td class="text-right tabular-nums font-semibold text-slate-700">{{ row.count|intcomma }}</td>
-<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}</td>
+<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}{% if row.unit_cost_note %} <span class="font-normal edify-text-muted" data-cost-note>{{ row.unit_cost_note }}</span>{% endif %}</td>
 <td class="text-right tabular-nums font-bold text-slate-800">{{ row.cost|intcomma }}</td>
 </tr>
 {% empty %}

@@ -17,6 +17,11 @@ from django.test import SimpleTestCase, TestCase
 from apps.budget.costing import cost_for_activity
 from apps.budget.costing_service import _COSTING_PROFILES, _profiled_input
 from apps.budget.reference import CANONICAL_RATE_KEYS
+from apps.daily_visit_batches.pricing import (
+    ACCOMMODATION_KEY,
+    ACCOMMODATION_KEYS,
+    MANAGEMENT_ACCOMMODATION_KEY,
+)
 
 CARD = dict.fromkeys(CANONICAL_RATE_KEYS, 1_000)
 STATED = {
@@ -101,8 +106,9 @@ def _fetched(profile, delivery, district, **extra):
     return [line.key for line in cost.lines]
 
 
-def _spelled_out(keys, district):
+def _spelled_out(keys, district, accommodation=ACCOMMODATION_KEY):
     day = PRIMARY_DAY if district == "primary" else SECONDARY_DAY
+    day = [accommodation if key == ACCOMMODATION_KEY else key for key in day]
     out = []
     for key in keys:
         out.extend(day if key == DAY else [key])
@@ -125,6 +131,49 @@ class EveryProfileFetchesItsRowsTest(SimpleTestCase):
                             _spelled_out(keys, district),
                         )
 
+    def test_the_night_away_is_the_travellers_accommodation_rate(self):
+        """Owner, 2026-10-05: "the accommodation for program leads, cd, IA
+        and accountant should be separate from the accommodation of CCEO".
+        Every plan that carries a day away fetches the traveller's row for
+        the night and nothing else changes."""
+        for profile, (staff, partner) in EXPECTED.items():
+            for delivery, keys in (("staff", staff), ("partner", partner)):
+                for district in ("primary", "secondary"):
+                    with self.subTest(
+                        profile=profile, delivery=delivery, district=district
+                    ):
+                        self.assertEqual(
+                            _fetched(
+                                profile,
+                                delivery,
+                                district,
+                                accommodationKey=MANAGEMENT_ACCOMMODATION_KEY,
+                            ),
+                            _spelled_out(keys, district, MANAGEMENT_ACCOMMODATION_KEY),
+                        )
+
+    def test_a_night_fetches_one_accommodation_rate_never_both(self):
+        for accommodation in sorted(ACCOMMODATION_KEYS):
+            fetched = _fetched(
+                "STAFF_SCHOOL_VISIT",
+                "staff",
+                "secondary",
+                accommodationKey=accommodation,
+            )
+            with self.subTest(accommodation=accommodation):
+                self.assertEqual(
+                    [key for key in fetched if key in ACCOMMODATION_KEYS],
+                    [accommodation],
+                )
+
+    def test_an_unknown_accommodation_rate_is_the_cceos(self):
+        self.assertEqual(
+            _fetched(
+                "STAFF_SCHOOL_VISIT", "staff", "secondary", accommodationKey="lunch"
+            ),
+            _spelled_out([DAY], "secondary"),
+        )
+
     def test_every_catalogue_row_is_fetched_by_some_plan(self):
         """A row no plan reads is an editable rate that prices nothing."""
         fetched = {
@@ -132,7 +181,10 @@ class EveryProfileFetchesItsRowsTest(SimpleTestCase):
             for profile in EXPECTED
             for delivery in ("staff", "partner")
             for district in ("primary", "secondary")
-            for key in _fetched(profile, delivery, district)
+            for accommodation in sorted(ACCOMMODATION_KEYS)
+            for key in _fetched(
+                profile, delivery, district, accommodationKey=accommodation
+            )
         }
         self.assertEqual(fetched, CANONICAL_RATE_KEYS)
 

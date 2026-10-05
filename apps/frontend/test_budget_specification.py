@@ -394,6 +394,33 @@ class BudgetSpecificationTest(TestCase):
 
         self.assertEqual(planned_minimum_amounts([act])[act.id], 2500 + 22000)
 
+    def test_minimum_estimate_reads_a_split_rate_from_the_row_it_was_split_off(self):
+        """A night priced at the second accommodation rate (owner,
+        2026-10-05) on a card from before the split is re-priced from the
+        one accommodation row that card has."""
+        act, _payload = self.planned_training()
+        snapshot = ActivityCostSnapshot.objects.get(activity=act, is_current=True)
+        card = snapshot.operational_rate_card
+        CostSetting.objects.filter(
+            catalogue=card, key="management_accommodation_per_night"
+        ).delete()
+        CostSetting.objects.filter(
+            catalogue=card, key="secondary_accommodation_per_night"
+        ).update(unit_cost=40000, approved_minimum=25000)
+        snapshot.operational_breakdown = [
+            {
+                "key": "management_accommodation_per_night",
+                "unit": 40000,
+                "amount": 40000,
+                "qty": 1,
+                "missing": False,
+            }
+        ]
+        snapshot.save(update_fields=["operational_breakdown"])
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        self.assertEqual(planned_minimum_amounts([act])[act.id], 25000)
+
     def test_old_weekly_budget_link_keeps_the_selected_week_month(self):
         self.cost()
         self.client.force_login(self.owner)

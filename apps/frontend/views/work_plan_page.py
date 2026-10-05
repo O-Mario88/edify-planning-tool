@@ -30,11 +30,17 @@ from urllib.parse import urlencode
 from django.db.models import Q
 
 from apps.frontend.work_plan_tables import (
+    DETAIL_PAGE_PARAM,
+    GENERAL,
     detail_fields,
-    grouped_tables,
     work_plan_action,
 )
 from apps.activities.models import Activity
+from apps.activities.pair_costing import (
+    CAPTURED_IN_TRAINING_NOTE,
+    CAPTURED_IN_VISIT_NOTE,
+    pair_cost_notes,
+)
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
     COMPLETED_WORK_STATUSES,
@@ -253,7 +259,16 @@ def _activity_group(a) -> tuple[str, str]:
     return "non_school", NON_SCHOOL_GROUP_LABEL
 
 
-def _summary_bucket_label(a) -> str:
+#: The UGX 0 half of an in-school Training / School Visit pair is summed on
+#: a line of its own, named for the half that carries the cost, so it does
+#: not pull down the average of the work that carries its own.
+_PAIR_BUCKET_SUFFIX = {
+    CAPTURED_IN_VISIT_NOTE: " (with School Visit)",
+    CAPTURED_IN_TRAINING_NOTE: " (with In-school Training)",
+}
+
+
+def _summary_bucket_label(a, cost_note: str = "") -> str:
     """One summary line per (executor, activity type) — "Staff School Visit",
     "Partner School Visit", "Staff Cluster Meeting", … The canonical type
     display keeps named curricula from fragmenting the summary into
@@ -266,6 +281,8 @@ def _summary_bucket_label(a) -> str:
         label = a.activity_name_snapshot or (
             a.catalogue_item.display_name if a.catalogue_item_id else label
         )
+    else:
+        label += _PAIR_BUCKET_SUFFIX.get(cost_note, "")
     return f"{executor} {label}"
 
 
@@ -282,6 +299,10 @@ def _finish_summary_rows(bucket: dict[str, dict]) -> list[dict]:
             if row["cost_missing_count"]
             else format(unit_cost, ",.0f" if unit_cost == int(unit_cost) else ",.2f")
         )
+        # The UGX 0 half of an in-school pair stays at 0 and says where its
+        # cost is (owner, 2026-10-05).
+        if row["cost"] or row["cost_missing_count"]:
+            row["unit_cost_note"] = ""
     return rows
 
 
@@ -375,7 +396,10 @@ def build_work_plan_context(user, params) -> dict:
 
     activities = list(
         period_qs.select_related(
-            "school", "cluster", "event_district", "catalogue_item"
+            "school__district",
+            "cluster__district",
+            "event_district",
+            "catalogue_item",
         )
         .prefetch_related(
             "schedule_cost_lines",
@@ -426,6 +450,48 @@ def build_work_plan_context(user, params) -> dict:
             ).values_list("id", "name"):
                 name_map[user_id] = user_name or "Staff"
                 recipient_map[user_id] = user_id
+
+    # The Country Director's message about a row goes to the Program Lead
+    # over the person responsible (owner, 2026-10-05: "Send to PL if it is
+    # being viewed by CD"): a Program Lead's own work, to that Program Lead.
+    lead_map: dict[str, tuple[str, str]] = {}
+    if staff_ids and user.active_role == EdifyRole.COUNTRY_DIRECTOR.value:
+        from apps.accounts.models import StaffSupervisorAssignment
+
+        lead_role = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        by_profile = {profile.id: profile for profile in profiles}
+        leads: dict[str, tuple[str, str]] = {
+            profile.id: (profile.user_id, profile.user.name)
+            for profile in profiles
+            if profile.user_id and profile.user.active_role == lead_role
+        }
+        for supervisee_id, lead_user_id, lead_name in (
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=set(by_profile) - set(leads),
+                supervisor__user__active_role=lead_role,
+                supervisor__user__is_active=True,
+            )
+            .order_by("supervisee_id", "id")
+            .values_list(
+                "supervisee_id", "supervisor__user_id", "supervisor__user__name"
+            )
+        ):
+            leads.setdefault(supervisee_id, (lead_user_id, lead_name))
+        for profile_id, lead in leads.items():
+            lead_map[profile_id] = lead
+            lead_map[by_profile[profile_id].user_id] = lead
+
+    # A school's cluster is an id on the school: named in one read.
+    school_cluster_ids = {
+        a.school.cluster_id for a in activities if a.school_id and a.school.cluster_id
+    }
+    school_cluster_map: dict[str, str] = {}
+    if school_cluster_ids:
+        from apps.clusters.models import Cluster
+
+        school_cluster_map = dict(
+            Cluster.objects.filter(id__in=school_cluster_ids).values_list("id", "name")
+        )
 
     partner_map: dict[str, str] = {}
     if partner_ids:
@@ -491,6 +557,12 @@ def build_work_plan_context(user, params) -> dict:
         "fy": f"FY{fy}",
     }[view] or f"FY{fy}"
 
+    # An in-school Training is done during its School Visit and costs UGX 0
+    # of its own: the visit carries the day (owner, 2026-09-28). Having no
+    # cost lines is therefore not a cost left unset, unless the other half
+    # of the pair has none either.
+    pair_notes = pair_cost_notes(activities)
+
     rows: list[dict] = []
     period_budget = 0
     pending_approval_count = 0
@@ -537,7 +609,8 @@ def build_work_plan_context(user, params) -> dict:
                 in_period = bool(anchor and window_start <= anchor <= window_end)
             if in_period:
                 cost_lines.append(line)
-        missing_cost = a.cost_missing or not all_cost_lines
+        cost_note = pair_notes.get(a.id, "")
+        missing_cost = a.cost_missing or (not all_cost_lines and not cost_note)
 
         # Cost lines land in the band of their own service month (multi-day
         # allocations), falling back to the parent activity's band, so each
@@ -586,10 +659,16 @@ def build_work_plan_context(user, params) -> dict:
             continue
 
         group_key, group_label = _activity_group(a)
-        bucket_label = _summary_bucket_label(a)
+        bucket_label = _summary_bucket_label(a, cost_note)
         summary_row = summary_buckets[group_key].setdefault(
             bucket_label,
-            {"label": bucket_label, "count": 0, "cost": 0, "cost_missing_count": 0},
+            {
+                "label": bucket_label,
+                "count": 0,
+                "cost": 0,
+                "cost_missing_count": 0,
+                "unit_cost_note": cost_note,
+            },
         )
         summary_row["count"] += 1
         summary_row["cost"] += activity_period_cost
@@ -614,13 +693,24 @@ def build_work_plan_context(user, params) -> dict:
             if a.delivery_type == "partner"
             else a.responsible_staff_id
         )
-        table_action = work_plan_action(
-            a,
-            owned=owned,
-            enabled=actions_enabled,
-            recipient=recipient_map.get(recipient_id),
-            recipient_name=name_map.get(recipient_id, "responsible person"),
-        )
+        lead_id, lead_name = lead_map.get(recipient_id, (None, ""))
+        if lead_id and lead_id not in viewer_ids:
+            table_action = work_plan_action(
+                a,
+                owned=owned,
+                enabled=actions_enabled,
+                recipient=lead_id,
+                recipient_name=lead_name or "the Program Lead",
+                recipient_label="PL",
+            )
+        else:
+            table_action = work_plan_action(
+                a,
+                owned=owned,
+                enabled=actions_enabled,
+                recipient=recipient_map.get(recipient_id),
+                recipient_name=name_map.get(recipient_id, "responsible person"),
+            )
 
         place = (
             a.venue
@@ -654,7 +744,14 @@ def build_work_plan_context(user, params) -> dict:
                 "id": a.id,
                 "date_label": _date_label(anchor, a.end_date),
                 "band_month": band_month,
-                **detail_fields(a, group_key, period_label),
+                **detail_fields(
+                    a,
+                    group_key,
+                    period_label,
+                    school_cluster_name=school_cluster_map.get(
+                        a.school.cluster_id if a.school_id else None, ""
+                    ),
+                ),
                 "table_action": table_action or action,
                 "responsible_person": name_map.get(recipient_id, "Unassigned"),
                 "group": group_key,
@@ -676,13 +773,22 @@ def build_work_plan_context(user, params) -> dict:
                 "status_tone": status_tone(status_class),
                 "cost": activity_period_cost,
                 "cost_missing": missing_cost,
+                # The UGX 0 half of an in-school pair says where its cost
+                # is; the money is counted once, on the other half's row.
+                "cost_note": cost_note,
                 "action": action,
                 # Expanded detail (server-rendered, no extra endpoint).
                 "purpose": a.activity_purpose_text or "",
                 "rationale": rationale_labels.get(a.support_rationale, ""),
-                "focus_intervention": a.get_focus_intervention_display()
+                # Work no SSA intervention measures reads General: every
+                # non-school activity (owner, 2026-10-05: "If the activity is
+                # non school activity SSA intervention should be General"),
+                # and school work under a project outside the SSA.
+                "focus_intervention": GENERAL
+                if group_key == "non_school"
+                else a.get_focus_intervention_display()
                 if a.focus_intervention
-                else "General"
+                else GENERAL
                 if is_outside_ssa(a.project_id)
                 else "",
                 "programme_activity_type": (
@@ -710,8 +816,10 @@ def build_work_plan_context(user, params) -> dict:
             }
         )
 
-    # Detailed rows keep their chronological order inside each group; School
-    # Activities lead, Non-School Activities follow (stable sort).
+    # The Detailed Activity Plan is one table in date order (owner,
+    # 2026-10-05); the export keeps School Activities ahead of Non-School
+    # ones, each in date order (stable sort).
+    detail_rows = list(rows)
     rows.sort(key=lambda r: 0 if r["group"] == "school" else 1)
 
     school_summary_rows = _finish_summary_rows(summary_buckets["school"])
@@ -936,7 +1044,8 @@ def build_work_plan_context(user, params) -> dict:
         "groups": groups,
         "fy_totals": fy_totals,
         "rows": rows,
-        "detail_tables": grouped_tables(rows),
+        "detail_rows": detail_rows,
+        "detail_page_param": DETAIL_PAGE_PARAM,
         "rows_visible": rows_visible,
         "total_activities": len(activities),
         "completed_activities": completed_count,

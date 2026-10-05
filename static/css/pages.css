@@ -6751,10 +6751,9 @@ main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
 /* ── IA review · IA-R ── */
 /* ── end IA-R ── */
 
-/* The three work-plan ledgers retain readable columns within a scroll region. */
+/* The Detailed Activity Plan keeps fifteen readable columns within a scroll region. */
 .work-plan-detail-group { border-block-start: 1px solid var(--edify-border); min-inline-size: 0; }
-.work-plan-table--school, .work-plan-table--cluster { min-inline-size: 90rem; }
-.work-plan-table--non_school { min-inline-size: 48rem; }
+.work-plan-table--plan { min-inline-size: 118rem; }
 .work-plan-detail-group th[scope="row"] { min-inline-size: 12rem; }
 .work-plan-detail-group td { overflow-wrap: anywhere; }
 

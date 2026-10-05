@@ -18,7 +18,7 @@ from __future__ import annotations
 
 # The Country Cost Catalogue (owner, 2026-09-06: "these are the list of
 # activities to put in the cost catalog; remove the ones you have now").
-# Twenty rows in four groups: the per-activity rates, the partner rates,
+# Twenty-one rows in four groups: the per-activity rates, the partner rates,
 # the group-session components and the travel per-diems. A key is the stable
 # handle the recipes read (`apps/budget/costing.py`); the label is what the
 # Country Director sees. Where the owner's list renamed a rate the platform
@@ -63,7 +63,17 @@ TRAVEL_RATES: tuple[tuple[str, str, int], ...] = (
     ("lunch_per_day", "Lunch", 12000),
     ("secondary_breakfast_per_day", "Breakfast", 8000),
     ("secondary_overnight_dinner_per_day", "Dinner", 12000),
-    ("secondary_accommodation_per_night", "Accommodation", 40000),
+    # The night away has two rates (owner, 2026-10-05: "the accommodation for
+    # program leads, cd, IA and accountant should be separate from the
+    # accommodation of CCEO"): the CCEO's, and one for every other member of
+    # staff. Which one a day fetches is the traveller's role:
+    # apps.daily_visit_batches.districts.accommodation_key_for_staff.
+    ("secondary_accommodation_per_night", "Accommodation - CCEO", 40000),
+    (
+        "management_accommodation_per_night",
+        "Accommodation - PL, CD, IA, Accountant and other staff",
+        40000,
+    ),
 )
 
 # The basis each rate is charged on, shown under its label on Cost Settings.
@@ -88,6 +98,7 @@ RATE_UNITS: dict[str, str] = {
     "secondary_breakfast_per_day": "per day away",
     "secondary_overnight_dinner_per_day": "per day away",
     "secondary_accommodation_per_night": "per night",
+    "management_accommodation_per_night": "per night",
 }
 
 CANONICAL_RATES = ACTIVITY_RATES + PARTNER_RATES + GROUP_SESSION_RATES + TRAVEL_RATES
@@ -112,8 +123,11 @@ OPTIONAL_RATE_KEYS = frozenset(
 )
 
 # Keys the owner's list renamed. A rate card that still carries the old key
-# (a saved snapshot's, a test's) answers for the new one.
+# (a saved snapshot's, a test's) answers for the new one. The second
+# accommodation rate was split off the first on 2026-10-05, so a card from
+# before the split prices every traveller's night from the one row it has.
 RATE_ALIASES: dict[str, tuple[str, ...]] = {
+    "management_accommodation_per_night": ("secondary_accommodation_per_night",),
     "lunch_per_day": ("primary_lunch_per_day", "secondary_lunch_per_day"),
     "client_partner_visit": ("partner_visit_lump_sum",),
     "core_partner_visit": ("partner_visit_lump_sum",),

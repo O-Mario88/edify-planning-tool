@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import datetime
 from unittest.mock import patch
 
 from django.test import Client
 
+from apps.accounts.models import StaffSchoolAssignment
 from apps.activities.models import (
     Activity,
     ActivitySalesforceReference,
@@ -209,6 +211,267 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertEqual(visit.planned_date, training.planned_date)
         self.assertEqual(missing_cost_lines_count(), 0)
 
+    def _plain_visit(self, school, day):
+        from apps.activities.services import create
+
+        result = create(
+            {
+                "schoolId": school.school_id,
+                "catalogueItemId": self.item("STANDARD_SCHOOL_VISIT").id,
+                "focusIntervention": SsaIntervention.LEADERSHIP,
+                "activityPurposeText": "Coach the head teacher",
+                "scheduledDate": _at(day).isoformat(),
+                "responsibleStaffId": self.staff.id,
+                "requireCatalogue": True,
+            },
+            self.user,
+        )
+        return Activity.objects.get(id=result["id"])
+
+    def _cost(self, activity):
+        return sorted(
+            ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
+                "cost_setting_key", "amount"
+            )
+        )
+
+    def _assert_pair_costs_what_a_visit_costs(self, day_keys):
+        """An in-school training and a plain School Visit by the same
+        officer, on separate trips, at neighbouring schools of one district."""
+        from apps.schools.models import School
+
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        neighbour = School.objects.get(school_id="STD-MEM-0")
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=neighbour.id)
+        # Two days apart: on consecutive days in a secondary district the
+        # second is the day the officer comes home, and costs less.
+        first = _schedulable_date(room=4)
+        second = first + datetime.timedelta(days=2)
+        while second.weekday() == 6:
+            second += datetime.timedelta(days=1)
+
+        result = schedule_in_school_training_pair(
+            {**self.payload(), "scheduledDate": _at(first).isoformat()}, self.user
+        )
+        training = Activity.objects.get(id=result["id"])
+        companion = Activity.objects.get(id=result["pairedSchoolVisitId"])
+        plain = self._plain_visit(neighbour, second)
+
+        self.assertEqual({key for key, _amount in self._cost(plain)}, day_keys)
+        self.assertEqual(self._cost(companion), self._cost(plain))
+        self.assertEqual(companion.est_cost_cents, plain.est_cost_cents)
+        self.assertGreater(companion.est_cost_cents, 0)
+        # The Training adds nothing on top of the one visit day.
+        self.assertEqual(self._cost(training), [])
+        self.assertEqual(training.est_cost_cents, 0)
+
+    def test_in_a_primary_district_the_pair_costs_a_primary_district_visit(self):
+        """Owner, 2026-10-05: "make sure in-school training uses the same cost
+        as school visits. If it is from primary district, it should fetch cost
+        for primary district visit"."""
+        self._assert_pair_costs_what_a_visit_costs(
+            {"primary_transport_per_day", "lunch_per_day"}
+        )
+
+    def test_in_a_secondary_district_the_pair_costs_a_secondary_district_visit(self):
+        """... "and if it from secondary district, it should fetch cost from
+        secondary District." The officer's own district is another one, so
+        this school is a night away."""
+        from apps.geography.models import District
+
+        home = District.objects.create(
+            name="Standard Home District", region=self.region, district_type="primary"
+        )
+        self.staff.primary_district_id = home.id
+        self.staff.save(update_fields=["primary_district_id"])
+        self._assert_pair_costs_what_a_visit_costs(
+            {
+                "secondary_transport_per_day",
+                "lunch_per_day",
+                "secondary_breakfast_per_day",
+                "secondary_overnight_dinner_per_day",
+                "secondary_accommodation_per_night",
+            }
+        )
+
+    def _work_plan(self, day, **params):
+        from apps.core.fy import get_operational_fy
+        from apps.frontend.views.work_plan_page import build_work_plan_context
+
+        return build_work_plan_context(
+            self.user,
+            {
+                "fy": get_operational_fy(day),
+                "view": "month",
+                "period": str(day.month),
+                **params,
+            },
+        )
+
+    def test_the_work_plan_keeps_the_training_at_zero_and_says_where_its_cost_is(
+        self,
+    ):
+        """Owner, 2026-10-05: "On the work plan the cost is missing", then
+        "since in-school training is done during school visit, it is ok to
+        keep it at UGX 0 just add (captured in the school visit cost) to UGX
+        0". The Training has no cost lines of its own and the page read that
+        as a cost nobody had set up."""
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+
+        context = self._work_plan(training.planned_date)
+        rows = {row["id"]: row for row in context["rows"]}
+        training_row, visit_row = rows[training.id], rows[visit.id]
+
+        self.assertFalse(training_row["cost_missing"])
+        self.assertEqual(training_row["cost"], 0)
+        self.assertEqual(
+            training_row["cost_note"], "(captured in the school visit cost)"
+        )
+        # The day's money is the visit's, counted once.
+        self.assertFalse(visit_row["cost_missing"])
+        self.assertEqual(visit_row["cost"], visit.est_cost_cents)
+        self.assertEqual(visit_row["cost_note"], "")
+        self.assertEqual(context["plan_summary"]["total"]["cost"], visit.est_cost_cents)
+        self.assertEqual(context["plan_summary"]["total"]["cost_missing_count"], 0)
+
+        summary = {
+            row["label"]: row
+            for section in context["plan_summary_sections"]
+            for row in section["rows"]
+        }
+        pair_row = summary["Staff In-school Training (with School Visit)"]
+        self.assertEqual(pair_row["count"], 1)
+        self.assertEqual(pair_row["cost"], 0)
+        self.assertEqual(pair_row["unit_cost_display"], "0")
+        self.assertEqual(
+            pair_row["unit_cost_note"], "(captured in the school visit cost)"
+        )
+        self.assertEqual(summary["Staff School Visit"]["cost"], visit.est_cost_cents)
+        self.assertEqual(summary["Staff School Visit"]["unit_cost_note"], "")
+
+        # Nothing is left for the "Cost setup required" drill-down to list.
+        flagged = self._work_plan(training.planned_date, flag="cost_missing")
+        self.assertEqual(flagged["rows"], [])
+
+    def test_the_work_plan_page_and_export_say_where_the_cost_is(self):
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        from apps.core.fy import get_operational_fy
+
+        query = (
+            f"?fy={get_operational_fy(training.planned_date)}&view=month"
+            f"&period={training.planned_date.month}"
+        )
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(f"/work-plan{query}")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertNotIn("Cost setup required", html)
+        self.assertRegex(
+            html,
+            r"UGX 0 <span[^>]*data-cost-note>\(captured in the school visit cost\)",
+        )
+
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        # A CCEO reads the page; the export belongs to the roles above them.
+        from apps.accounts.models import User
+
+        director = User.objects.create_user(
+            email="standard-cd@edify.org",
+            name="Standard CD",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+            password="x",
+            is_active=True,
+        )
+        client.force_login(director)
+        export = client.get(f"/work-plan/export.xlsx{query}")
+        self.assertEqual(export.status_code, 200)
+        summary = load_workbook(BytesIO(export.content))["Plan Summary"]
+        cells = {row[0]: row for row in summary.iter_rows(values_only=True)}
+        self.assertEqual(
+            cells["Staff In-school Training (with School Visit)"][2],
+            "0 (captured in the school visit cost)",
+        )
+        self.assertEqual(cells["Staff In-school Training (with School Visit)"][3], 0)
+        self.assertNotIn("Cost setup required", cells)
+
+    def test_my_plan_keeps_the_training_at_zero_and_says_where_its_cost_is(self):
+        from apps.core.fy import get_operational_fy
+        from apps.my_plan.services import get_frontend_context
+
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        fy = get_operational_fy(training.planned_date)
+
+        context = get_frontend_context(self.user, {"fy": fy, "period": "fy"})
+        row = next(r for r in context["cluster_trainings"] if r["id"] == training.id)
+        # Never priced, so it holds no estimate: the page writes UGX 0.
+        self.assertFalse(row["budget_total"])
+        self.assertEqual(row["cost_note"], "(captured in the school visit cost)")
+        self.assertEqual(row["budget_status"], "In School Visit")
+
+        client = Client()
+        client.force_login(self.user)
+        html = client.get(f"/my-plan?fy={fy}&period=fy").content.decode("utf-8")
+        self.assertRegex(
+            html,
+            r"UGX 0 <span[^>]*data-cost-note>\(captured in the school visit cost\)",
+        )
+
+        # A pair whose visit has no price is not papered over.
+        ActivityScheduleCostLine.objects.filter(
+            activity_id=result["pairedSchoolVisitId"]
+        ).delete()
+        context = get_frontend_context(self.user, {"fy": fy, "period": "fy"})
+        row = next(r for r in context["cluster_trainings"] if r["id"] == training.id)
+        self.assertEqual(row["cost_note"], "")
+        self.assertEqual(row["budget_status"], "No Budget")
+
+    def test_the_work_plan_still_flags_a_pair_whose_visit_has_no_price(self):
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        ActivityScheduleCostLine.objects.filter(
+            activity_id=result["pairedSchoolVisitId"]
+        ).delete()
+
+        context = self._work_plan(training.planned_date)
+        rows = {row["id"]: row for row in context["rows"]}
+        self.assertTrue(rows[training.id]["cost_missing"])
+        self.assertTrue(rows[result["pairedSchoolVisitId"]]["cost_missing"])
+
+    def test_planning_oversight_does_not_call_the_training_uncosted(self):
+        from apps.core.fy import get_operational_fy
+        from apps.planning.oversight_service import build_items
+
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        items = {
+            item.activity_id: item
+            for item in build_items(
+                self.user, fy=get_operational_fy(training.planned_date)
+            )
+        }
+        for activity_id in (training.id, result["pairedSchoolVisitId"]):
+            with self.subTest(activity=activity_id):
+                self.assertNotIn(
+                    "scheduled_without_cost",
+                    {risk["key"] for risk in items[activity_id].risks},
+                )
+        self.assertTrue(items[training.id].cost_on_school_visit)
+        self.assertFalse(items[result["pairedSchoolVisitId"]].cost_on_school_visit)
+
     def test_training_needs_no_participant_count(self):
         """The in-school drawer asks for no participants. The Training used
         to be priced, and a Training priced as a group session was refused
@@ -272,6 +535,52 @@ class InSchoolTrainingPairTest(StandardSupportBase):
             },
         )
         return training, visit, visit_total
+
+    def test_an_older_pair_reads_the_other_way_round_and_neither_half_is_flagged(
+        self,
+    ):
+        """A pair scheduled before 2026-09-28 that has not been moved carries
+        the cost on its Training. The live Work Plan listed every such visit
+        as "Cost setup required" and My Plan as "No Budget" (2026-10-05)."""
+        from apps.core.fy import get_operational_fy
+        from apps.my_plan.services import get_frontend_context
+
+        training, visit, visit_total = self._pair_in_the_old_shape()
+        training.refresh_from_db()
+        self.assertEqual(training.est_cost_cents, visit_total)
+
+        context = self._work_plan(training.planned_date)
+        rows = {row["id"]: row for row in context["rows"]}
+        self.assertFalse(rows[visit.id]["cost_missing"])
+        self.assertEqual(rows[visit.id]["cost"], 0)
+        self.assertEqual(
+            rows[visit.id]["cost_note"], "(captured in the in-school training cost)"
+        )
+        self.assertFalse(rows[training.id]["cost_missing"])
+        self.assertEqual(rows[training.id]["cost"], visit_total)
+        self.assertEqual(rows[training.id]["cost_note"], "")
+        self.assertEqual(context["plan_summary"]["total"]["cost_missing_count"], 0)
+        self.assertEqual(context["plan_summary"]["total"]["cost"], visit_total)
+        summary = {
+            row["label"]: row
+            for section in context["plan_summary_sections"]
+            for row in section["rows"]
+        }
+        self.assertEqual(
+            summary["Staff School Visit (with In-school Training)"]["unit_cost_note"],
+            "(captured in the in-school training cost)",
+        )
+        # The Training carries the day itself, like one with no visit.
+        self.assertEqual(summary["Staff In-school Training"]["cost"], visit_total)
+        self.assertEqual(summary["Staff In-school Training"]["unit_cost_note"], "")
+
+        fy = get_operational_fy(training.planned_date)
+        my_plan = get_frontend_context(self.user, {"fy": fy, "period": "fy"})
+        visit_row = next(r for r in my_plan["school_visits"] if r["id"] == visit.id)
+        self.assertEqual(
+            visit_row["cost_note"], "(captured in the in-school training cost)"
+        )
+        self.assertEqual(visit_row["budget_status"], "In Training")
 
     def test_a_pair_scheduled_before_the_change_moves_its_cost_to_the_visit(self):
         """Pairs made before 2026-09-28 carry the cost on the Training."""
