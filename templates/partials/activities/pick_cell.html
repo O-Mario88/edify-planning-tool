@@ -1,0 +1,5 @@
+{% comment %}A planned activity's tick box (owner, 2026-10-05). Ticking one
+shows the page's bar (partials/activities/selection_bar.html) with Reschedule
+and Cancel for the ticked set. `pick_id` empty: the row is finished work, and
+its cell stays empty so the columns still line up.{% endcomment %}
+<td class="school-plan-table__select">{% if pick_id %}<label class="school-record-row__select"><input type="checkbox" value="{{ pick_id }}" data-activity-pick aria-label="Select {{ pick_kind|default:"activity" }}{% if pick_name %} at {{ pick_name }}{% endif %}{% if pick_day %} on {{ pick_day|date:"j M Y" }}{% endif %}"></label>{% endif %}</td>

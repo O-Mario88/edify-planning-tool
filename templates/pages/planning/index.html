@@ -3,7 +3,7 @@
 
 {% block title %}Planning — Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/fullcalendar.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/planning-cluster-column.css' %}?v=20261005cluster3">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/components/planning-cluster-column.css' %}?v=20261005pick2">{% endblock %}
 
 {% block shell_content %}
 <div
@@ -230,9 +230,10 @@ Clear Filters
 
 </div>
 
-<!-- Floating Bulk Actions Bar -->
+<!-- Floating Bulk Actions Bar. The list view's: the Calendar View has its
+     own, for ticked activities (owner, 2026-10-05). -->
 <div
-x-show="selectedSchools.length > 0"
+x-show="selectedSchools.length > 0 && activeView === 'list'"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-y-24 opacity-0"
 x-transition:enter-end="translate-y-0 opacity-100"

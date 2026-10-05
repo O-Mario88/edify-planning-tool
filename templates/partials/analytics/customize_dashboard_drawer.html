@@ -18,6 +18,7 @@
 
   <fieldset class="space-y-2">
     <legend class="block edify-text-caption font-semibold text-slate-600">KPI groups</legend>
+    {% include "partials/components/select_all.html" with boxes="input[name=visible_cards]" %}
     {% with selected=form.visible_cards.value %}
     <label class="min-h-11 flex items-center justify-between gap-3 rounded-control border border-slate-200 px-3 cursor-pointer"><span>Overall target achievement</span><input type="checkbox" name="visible_cards" value="targets"{% if "targets" in selected %} checked{% endif %}></label>
     <label class="min-h-11 flex items-center justify-between gap-3 rounded-control border border-slate-200 px-3 cursor-pointer"><span>Teachers and leaders trained</span><input type="checkbox" name="visible_cards" value="training"{% if "training" in selected %} checked{% endif %}></label>

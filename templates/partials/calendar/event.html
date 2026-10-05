@@ -2,8 +2,24 @@
 list so both views render identical data identically. Expects `event` in
 context. A multi-day Activity renders one chip per day of its range; the
 continuation days carry calendar-event--continued. An activity planned on a
-public holiday or its owner's leave day carries calendar-event--dayoff.{% endcomment %}
-{% if event.href %}
+public holiday or its owner's leave day carries calendar-event--dayoff.
+
+A planned activity the reader may move or cancel carries a tick box where its
+dot was (owner, 2026-10-05: "add checkboxes to the calendar entry so people
+can reschedule from the calendar direct"). A box cannot sit inside a link, so
+that chip is a box with the link beside it; ticking shows the page's bar
+(partials/activities/selection_bar.html). On a multi-day activity every day's
+box is the one tick.{% endcomment %}
+{% if event.pick_id %}
+<div
+  class="calendar-event calendar-event--{{ event.kind }}{% if event.family %} calendar-event--{{ event.family }}{% endif %}{% if event.continued %} calendar-event--continued{% endif %}{% if event.day_off %} calendar-event--dayoff{% endif %} calendar-event--pick"
+  x-show="eventFilter === 'all' || eventFilter === '{{ event.kind }}'"
+  title="{{ event.tooltip }}"
+>
+  <label class="calendar-event__pick"><input type="checkbox" value="{{ event.pick_id }}" data-activity-pick aria-label="Select {{ event.title }}{% if event.meta %}, {{ event.meta }}{% endif %}"></label>
+  <a href="{{ event.href }}" class="calendar-event__copy"><strong>{{ event.title }}</strong>{% if event.meta %}<small>{{ event.meta }}</small>{% endif %}</a>
+</div>
+{% elif event.href %}
 <a
   href="{{ event.href }}"
   class="calendar-event calendar-event--{{ event.kind }}{% if event.family %} calendar-event--{{ event.family }}{% endif %}{% if event.continued %} calendar-event--continued{% endif %}{% if event.day_off %} calendar-event--dayoff{% endif %}"

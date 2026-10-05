@@ -651,7 +651,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 935,
+      "bytes": 1033,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -921,6 +921,97 @@
       ],
       "tables": 0,
       "template": "partials/activities/facilitated_by_field.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 645,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Pick Cell",
+      "purpose": "Reusable pick cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/pick_cell.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 450,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Pick Head",
+      "purpose": "Reusable pick head interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/pick_head.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3023,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/calendar",
+        "/clusters/<str:cluster_id>",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/planning",
+        "/projects/<str:project_id>"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Selection Bar",
+      "purpose": "Reusable selection bar interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/selection_bar.html",
       "variants": []
     },
     {
@@ -1435,7 +1526,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3164,
+      "bytes": 3259,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/customize-dashboard"
@@ -2421,7 +2512,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 2860,
+      "bytes": 2952,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/schedule-report"
@@ -2819,8 +2910,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1523,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1823,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar"
@@ -2841,8 +2934,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1578,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2747,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar"
@@ -3171,7 +3266,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8401,
+      "bytes": 8503,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/create-drawer"
@@ -3197,7 +3292,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8971,
+      "bytes": 9204,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -3507,7 +3602,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3114,
+      "bytes": 3374,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3536,7 +3631,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4767,
+      "bytes": 5480,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3586,6 +3681,36 @@
       ],
       "tables": 0,
       "template": "partials/components/reason_disclosure.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 888,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/attendance",
+        "/activities/<str:activity_id>/complete",
+        "/admin-panel/users",
+        "/admin-panel/users/<str:user_id>",
+        "/analytics/customize-dashboard",
+        "/analytics/schedule-report",
+        "/clusters/<str:cluster_id>/edit-drawer",
+        "/clusters/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Select All",
+      "purpose": "Reusable select all interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/components/select_all.html",
       "variants": []
     },
     {
@@ -6201,7 +6326,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 16088,
+      "bytes": 17671,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6617,7 +6742,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4915,
+      "bytes": 5243,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7122,7 +7247,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 38802,
+      "bytes": 40937,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -8725,7 +8850,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10294,
+      "bytes": 10392,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/ssa-mapping/<str:item_id>/drawer"
@@ -9530,7 +9655,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9350,
+      "bytes": 10140,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9538,7 +9663,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 5,
+      "htmx_controls": 6,
       "kind": "application-partial",
       "name": "Activity Detail Drawer",
       "purpose": "Reusable activity detail drawer interface primitive",
@@ -9585,7 +9710,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7987,
+      "bytes": 8116,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -9607,7 +9732,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 12545,
+      "bytes": 13196,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9681,7 +9806,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5289,
+      "bytes": 6006,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9728,7 +9853,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7716,
+      "bytes": 8434,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9753,7 +9878,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24211,
+      "bytes": 24374,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -9803,7 +9928,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6486,
+      "bytes": 7224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9824,7 +9949,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6408,
+      "bytes": 7126,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9872,7 +9997,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12446,
+      "bytes": 12606,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -9996,8 +10121,105 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 3137,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Group Cancel Drawer",
+      "purpose": "Reusable group cancel drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_cancel_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 631,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Group Outcome",
+      "purpose": "Reusable group outcome interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_outcome.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1710,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Group Picks",
+      "purpose": "Reusable group picks interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_picks.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 2943,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Group Reschedule Drawer",
+      "purpose": "Reusable group reschedule drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_reschedule_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 5485,
+      "bytes": 6201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10118,7 +10340,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4452,
+      "bytes": 5189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10230,7 +10452,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5275,
+      "bytes": 5988,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -11802,7 +12024,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4251,
+      "bytes": 4366,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer",
@@ -11854,7 +12076,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1562,
+      "bytes": 1674,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer",
@@ -12522,8 +12744,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3227,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5259,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -13251,7 +13475,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5707,
+      "bytes": 5945,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -13277,7 +13501,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5820,
+      "bytes": 5967,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"
@@ -15312,7 +15536,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7453,
+      "bytes": 8279,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -19339,6 +19563,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/facilitator",
+        "GET /my-plan/{{ act.id }}/cancel-drawer",
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/edit-drawer",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
@@ -22200,6 +22425,164 @@
         "text-[12px]",
         "text-[14px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.activity_group_views",
+      "backend_view": "apps.frontend.views.activity_group_views.group_cancel_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0192399382",
+      "page_title": "Activity Group Cancel",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Activity Group Cancel",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Cancel the ticked activities, with one reason.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activity-selection/cancel",
+      "route_name": "activity_group_cancel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.activity_group_views",
+      "backend_view": "apps.frontend.views.activity_group_views.group_reschedule_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4AD166CCBA",
+      "page_title": "Activity Group Reschedule",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Activity Group Reschedule",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Move the ticked activities to one date.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activity-selection/reschedule",
+      "route_name": "activity_group_reschedule",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -63299,6 +63682,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/facilitator",
+        "GET /my-plan/{{ act.id }}/cancel-drawer",
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/edit-drawer",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
@@ -96276,6 +96660,30 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.activity_group_views.group_cancel_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activity-selection/cancel",
+      "route_name": "activity_group_cancel",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.activity_group_views.group_reschedule_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activity-selection/reschedule",
+      "route_name": "activity_group_reschedule",
+      "templates": []
+    },
+    {
       "callback": "apps.admin_ops.views.incidents_view",
       "kind": "page",
       "methods": [
@@ -115429,28 +115837,28 @@
   "summary": {
     "accessibility_contract_pass": 574,
     "activity_states": 24,
-    "all_routes": 1360,
+    "all_routes": 1362,
     "api_routes": 360,
-    "component_templates": 612,
+    "component_templates": 620,
     "full_pages": 263,
     "mobile_contract_pass": 574,
-    "nonvisual_actions": 280,
+    "nonvisual_actions": 282,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 588,
+      "interaction-fragment": 590,
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
       "report": 45
     },
     "partials_and_drawers": 308,
-    "permission_gated": 872,
+    "permission_gated": 874,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 888,
+    "routed_surfaces": 890,
     "scheduled_jobs": 35,
     "severity_counts": {
       "critical": 0,
@@ -115459,7 +115867,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 574,
-    "test_referenced": 781,
+    "test_referenced": 783,
     "theme_contract_pass": 574
   }
 }

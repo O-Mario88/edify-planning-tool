@@ -122,3 +122,53 @@ their counts so that branches in flight on 2026-10-02 can land.
 Use the three tags. Do not write `class="edify-page-header"` or a `<form>` with
 its own `requestSubmit()` by hand: the ratchet will fail. A table that fits the
 card anatomy uses `{% data_table %}`.
+
+## Tick boxes
+
+Owner, 2026-10-05: "all the places with checkboxes can you add Select All
+Checkbox", and "use checkboxes to mark all the cluster meetings or group
+training, or school visits ... and then select reschedule in the action
+buttons". One script, `static/js/group-select.js`, loaded by the shell, does
+both. It reads attributes and keeps no state of its own, so a list swapped in
+by htmx or drawn by Alpine works without being registered.
+
+**Select all.** A checkbox carrying `data-select-all` ticks every enabled box
+that can be seen in its scope: the nearest `[data-select-scope]`, else the
+table, fieldset or form it sits in. Give it a selector as its value where the
+scope holds other boxes too (`data-select-all="input[name=staffIds]"`). Each
+box gets its own `change` event, so a list bound with `x-model` or counted by
+an `@change` handler keeps up, and the box reads back ticked, part-ticked or
+clear as the list changes. For a list in a form:
+
+```django
+{% include "partials/components/select_all.html" with boxes="input[name=staffIds]" %}
+```
+
+A table's tick column puts the box in its header cell instead.
+
+A list where ticking everything is not a choice anyone makes has none: a set
+of return reasons, the nine attestations of an IA review, a list of roles to
+grant. `SelectAllContract` in `apps/frontend/test_group_select.py` names each
+one and why, and fails when a template repeats a tick box without a Select
+all.
+
+**Ticked activities.** A planned activity the reader may move or cancel
+carries `input[data-activity-pick]` with the activity's id as its value:
+
+```django
+{% include "partials/activities/pick_head.html" %}   {# the header cell #}
+{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}
+{% include "partials/activities/selection_bar.html" %}  {# once per page #}
+```
+
+Ticking one shows the bar with Reschedule, Cancel and Clear. The two buttons
+open `/activity-selection/reschedule` and `/activity-selection/cancel`, which
+list what will change and what will be left, and why
+(`apps/activities/group_actions.py`). The same activity drawn twice (a
+calendar's month grid and its agenda) is one tick. Draw the tick column only
+where a row on the page can be ticked (`|any_attr:"can_pick"`), and put the
+bar where it is always rendered: not inside a folded `<details>`.
+
+It is on My Plan, the Work Plan, the Dashboard's past-due tables, a Program
+Lead's week tables, the Planned table of every profile, the Calendar and
+Planning's Calendar View.

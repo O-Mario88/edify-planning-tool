@@ -326,6 +326,16 @@ def _can_reschedule(activity) -> bool:
     return not is_executed(activity)
 
 
+def _can_cancel(activity, user) -> bool:
+    """Whether Cancel is offered on the activity's own page (owner,
+    2026-10-05): work still live, for a reader who passes the checks
+    `services.cancel` makes. A supervisor reads it and is offered nothing."""
+    from apps.activities.group_actions import may_tick
+    from apps.activities.profile_activities import _may_run
+
+    return may_tick(activity.status) and _may_run(activity, user)
+
+
 def _budget_breakdown(user, activity, snapshot, staff_name) -> dict:
     from apps.budget.breakdown import activity_budget_breakdown
     from apps.core.scoping import resolve_partner_ids
@@ -502,6 +512,7 @@ def activity_detail_view(request, activity_id):
         # this reader's to edit. Reschedule follows the same line.
         "edit_state": _edit_state(a, request.user),
         "can_reschedule": _can_reschedule(a),
+        "can_cancel": _can_cancel(a, request.user),
         **_return_context(a),
         **_facilitator_context(request.user, a),
     }

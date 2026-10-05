@@ -51,5 +51,9 @@ keeps.{% endcomment %}
 {% include "partials/my_plan/workspace.html" %}
 </div>
 
+{% comment %}Reschedule or cancel the ticked activities together (owner,
+2026-10-05). Outside the workspace, so a filter reload does not redraw it.{% endcomment %}
+{% include "partials/activities/selection_bar.html" %}
+
 </div>
 {% endblock %}

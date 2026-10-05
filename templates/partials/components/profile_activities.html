@@ -42,3 +42,6 @@ Optional: `heading` (default "Planned & Completed Activities"), `caption`,
     {% include "partials/components/profile_activity_table.html" with pager=acts.completed param=acts.completed_param kind="completed" %}
   </div>
 </section>
+{% comment %}Reschedule or cancel the ticked planned activities together
+(owner, 2026-10-05); drawn only where a row can be ticked.{% endcomment %}
+{% if acts.planned.rows|any_attr:"can_pick" %}{% include "partials/activities/selection_bar.html" %}{% endif %}

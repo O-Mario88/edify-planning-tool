@@ -18,6 +18,7 @@
 
   <fieldset class="space-y-2">
     <legend class="block edify-text-caption font-semibold text-slate-600">Include analytics categories</legend>
+    {% include "partials/components/select_all.html" with boxes="input[name=categories]" %}
     <div class="grid gap-2">
       {% with selected=form.categories.value %}
       <label class="min-h-11 flex items-center gap-2 rounded-control border border-slate-200 px-3 cursor-pointer"><input type="checkbox" name="categories" value="targets"{% if "targets" in selected %} checked{% endif %}><span>Target achievement</span></label>

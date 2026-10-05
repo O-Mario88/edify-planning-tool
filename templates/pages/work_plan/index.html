@@ -235,6 +235,9 @@ Showing: {{ flag_label }}
 </div>
 {% include "partials/work_plan/detail_tables.html" %}
 </section>
+{% comment %}Reschedule or cancel the ticked activities together (owner,
+2026-10-05); only where the reader has work of their own to tick.{% endcomment %}
+{% if detail_rows|any_attr:"can_pick" %}{% include "partials/activities/selection_bar.html" %}{% endif %}
 {% else %}
 <div class="card p-5">
 <p class="text-[13px] font-bold text-slate-700">Regional summary view</p>

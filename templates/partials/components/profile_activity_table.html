@@ -6,12 +6,18 @@ every row; Edit, Complete, Reschedule and Cancel only where the reader may run
 the work, so the menu never offers what the endpoint would refuse. Edit stays
 on the list, greyed, once the work has been carried out (owner, 2026-10-02).
 {% endcomment %}
+{% comment %}A tick box on each planned row the reader may move or cancel,
+and one in the header for all of them (owner, 2026-10-05): the ticked
+activities are rescheduled or cancelled together from the bar that appears.
+No tick column where nothing can be ticked.{% endcomment %}
+{% with selectable=pager.rows|any_attr:"can_pick" %}
 <div class="overflow-x-auto mt-3">
   <table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse whitespace-nowrap"
          aria-label="{% if kind == 'completed' %}Completed activities{% else %}Planned activities{% endif %}"
          data-mobile-table="scroll" data-pinned-actions>
     <thead>
       <tr>
+        {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
         <th scope="col" class="px-4 py-2.5">{% if kind == 'completed' %}Delivered{% else %}Planned Date{% endif %}</th>
         <th scope="col" class="px-4 py-2.5">Activity</th>
         <th scope="col" class="px-4 py-2.5">{{ subject_label|default:"Where" }}</th>
@@ -24,6 +30,7 @@ on the list, greyed, once the work has been carried out (owner, 2026-10-02).
     <tbody class="divide-y divide-[var(--edify-border)]">
       {% for row in pager.rows %}
       <tr data-activity-row="{{ row.id }}">
+        {% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.title pick_name=row.subject pick_day=row.day %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
         <td class="px-4 py-3 tabular-nums" data-label="{% if kind == 'completed' %}Delivered{% else %}Planned Date{% endif %}">{% if row.day %}{{ row.day|date:"j M Y" }}{% if row.end_day %} – {{ row.end_day|date:"j M" }}{% endif %}{% else %}<span class="edify-text-muted">Not dated</span>{% endif %}</td>
         <td class="px-4 py-3 font-semibold" data-record-title>{{ row.title }}</td>
         <td class="px-4 py-3" data-label="{{ subject_label|default:'Where' }}">{% if row.subject_url %}<a href="{{ row.subject_url }}" class="hover:underline">{{ row.subject }}</a>{% else %}{{ row.subject }}{% endif %}</td>
@@ -62,4 +69,5 @@ on the list, greyed, once the work has been carried out (owner, 2026-10-02).
     </tbody>
   </table>
 </div>
+{% endwith %}
 {% include "components/table_pager.html" with pager=pager param=param pagination_label=kind|title|add:" activities" %}

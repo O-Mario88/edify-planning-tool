@@ -106,6 +106,26 @@ Evidence &amp; SF ID ({{ evidence_list|length }})
 {% endif %}
 </dl>
 </div>
+{% comment %}Cancel (owner, 2026-10-05: "add cancel activity from the activity
+profile"): the drawer My Plan's row menu opens, for work still live that this
+reader may run. Here rather than in the footer, whose one row already holds
+Close, Edit, Reschedule and Complete.{% endcomment %}
+{% if can_cancel %}
+<div class="flex items-center justify-between gap-3" data-cancel-activity>
+<p class="edify-text-caption text-slate-500">Not going ahead? It stays on the record as Cancelled and its cost is withdrawn.</p>
+<button
+type="button"
+data-cancel-trigger
+hx-get="/my-plan/{{ act.id }}/cancel-drawer"
+hx-trigger="click consume"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="edify-action-button edify-destructive-outline h-8 shrink-0"
+>
+Cancel activity
+</button>
+</div>
+{% endif %}
 </div>
 
 <!-- Tab: finance -->
@@ -154,6 +174,7 @@ Evidence &amp; SF ID ({{ evidence_list|length }})
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+
 
 {% if can_complete_partner_ssa_support %}
 <button

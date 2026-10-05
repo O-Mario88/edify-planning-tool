@@ -397,6 +397,11 @@ def calendar_view(request):
     # 2026-10-05; apps.activities.day_off).
     day_off_by_activity = day_off_marks(activity_rows, spans=spans)
     day_off_rows: list[dict] = []
+    # A planned activity the reader may move or cancel carries a tick box, so
+    # it is rescheduled from the calendar itself (owner, 2026-10-05).
+    from apps.activities.group_actions import tickable_ids
+
+    tickable = tickable_ids(activity_rows, user)
 
     for activity in activity_rows:
         if activity.id not in spans:
@@ -476,6 +481,7 @@ def calendar_view(request):
                     "tooltip": tooltip,
                     "continued": current_date > start_date,
                     "day_off": bool(day_off),
+                    "pick_id": activity.id if activity.id in tickable else "",
                 }
             )
             current_date += timedelta(days=1)
@@ -591,6 +597,9 @@ def calendar_view(request):
     def kind_counts(day_events):
         """Small per-day projection shared by the mobile grid and agenda."""
         return {
+            # Activities with a tick box: a day with several has one box for
+            # the day as well.
+            "pick": sum(bool(event.get("pick_id")) for event in day_events),
             "all": len(day_events),
             "activity": sum(event["kind"] == "activity" for event in day_events),
             "leave": sum(event["kind"] == "leave" for event in day_events),
@@ -665,6 +674,7 @@ def calendar_view(request):
         "event_counts": event_counts,
         "event_total": sum(event_counts.values()),
         "day_off_rows": sorted(day_off_rows, key=lambda row: row["date"]),
+        "pickable_total": len(tickable),
         "project_scope": project_scope,
         "selected_project": selected_project,
         "activity_type_choices": ActivityType.choices,

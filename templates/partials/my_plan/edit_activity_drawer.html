@@ -88,6 +88,7 @@ run that is still scheduled.
       <span id="edit-schools-invited-title" class="edify-text-caption font-semibold text-slate-600">Schools invited <span class="text-rose-500">*</span></span>
       <span class="edify-text-caption text-slate-500" aria-live="polite"><span x-text="invitedCount"></span> of {{ member_schools|length }}</span>
     </div>
+    {% if member_schools %}<div class="mt-1.5">{% include "partials/components/select_all.html" with boxes="input[name=invited_school_ids]" %}</div>{% endif %}
     <div role="group" aria-labelledby="edit-schools-invited-title" x-ref="invitedList"
          class="mt-1.5 max-h-56 overflow-y-auto rounded-control border border-slate-200 bg-slate-50">
       {% for s in member_schools %}

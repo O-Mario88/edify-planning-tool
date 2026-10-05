@@ -102,6 +102,7 @@
       <p class="text-[12px] edify-text-muted mb-3">Your scheduled activities from My Plan. Tick the ones you worked on — this never starts, completes or credits an activity.</p>
 
       {% if rows %}
+      <div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=activity_ids]" %}</div>
       <div class="space-y-2">
         {% for row in rows %}
         {% comment %}The activity a user arrived to discuss is ticked and

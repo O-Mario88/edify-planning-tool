@@ -17,6 +17,7 @@ from apps.core.activity_types import (
 import calendar
 from datetime import date, timedelta
 from django.db.models import Count, Q
+from apps.activities.group_actions import may_tick
 from apps.activities.models import Activity
 from apps.activities.facilitation import (
     FACILITATOR_EDITABLE_STATUSES,
@@ -2167,6 +2168,9 @@ def get_frontend_context(principal, query: dict) -> dict:
                 row["status_label"] = row["completion_gap"]
                 row["status_class"] = "bg-amber-50 text-amber-700 border-amber-200"
                 row["status_tone"] = "amber"
+            # A row still live carries a tick box for the group Reschedule
+            # and Cancel (owner, 2026-10-05); finished work has neither.
+            row["can_pick"] = may_tick(row["status"]) and not row["shows_complete"]
         rows.sort(
             key=lambda row: completed_last_key(row["is_complete"], row["planned_date"])
         )

@@ -759,6 +759,9 @@ def build_work_plan_context(user, params) -> dict:
                     ),
                 ),
                 "table_action": table_action or action,
+                # The reader's own open work carries a tick box for the
+                # group Reschedule and Cancel (owner, 2026-10-05).
+                "can_pick": bool(table_action and table_action.get("own")),
                 "responsible_person": name_map.get(recipient_id, "Unassigned"),
                 "group": group_key,
                 "group_label": group_label,

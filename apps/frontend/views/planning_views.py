@@ -897,9 +897,23 @@ def planning_dashboard_view(request):
             fy=fy,
         ).select_related("school")
         if request.user.active_role == "CCEO":
+            # Both ids an officer's work is written under
+            # (apps.core.scoping.owner_ids): the user id alone matched none
+            # of the visits scheduled through the drawers, and the Calendar
+            # View was empty.
+            from apps.core.scoping import owner_ids
+
             scheduled_activities = scheduled_activities.filter(
-                responsible_staff_id=request.user.id
+                responsible_staff_id__in=owner_ids(request.user)
             )
+        # A planned activity the reader may move or cancel carries a tick box
+        # in the Calendar View (owner, 2026-10-05).
+        from apps.activities.group_actions import tickable_ids
+
+        scheduled_activities = list(scheduled_activities)
+        _tickable = tickable_ids(scheduled_activities, request.user)
+        for _activity in scheduled_activities:
+            _activity.can_pick = _activity.id in _tickable
 
     # Distinguishes "your filters match nothing" from "nothing is clustered
     # yet", which look identical on screen and need opposite responses. Scoped

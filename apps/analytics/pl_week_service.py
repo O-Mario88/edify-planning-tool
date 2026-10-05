@@ -337,6 +337,9 @@ def table_rows(activity_ids, *, own_ids, today: date, send_until: date) -> list[
         else:
             action = "none"
         row["action"] = action
+        # The lead's own open work carries a tick box for the group
+        # Reschedule and Cancel (owner, 2026-10-05).
+        row["can_pick"] = action == "own"
         row["sent_on"] = sent_on.get(row["id"])
     return rows
 
