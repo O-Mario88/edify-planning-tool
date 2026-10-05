@@ -679,8 +679,8 @@ def _write_day_lines(
         batch.responsible_user, batch.visit_date, away=away
     )
     # The night away is paid at the traveller's accommodation rate: the
-    # CCEO's, or the one set for the Program Lead, the Country Director,
-    # Impact Assessment and the Accountant (owner, 2026-10-05).
+    # CCEO's, or the one set for every other member of staff (owner,
+    # 2026-10-05).
     pool = compute_daily_pool(
         rates,
         batch.district_type,

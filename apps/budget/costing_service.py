@@ -195,8 +195,8 @@ _KEY_LABEL = {
     "secondary_lunch_per_day": "Secondary district daily lunch pool",
     "secondary_accommodation_per_night": "Secondary district accommodation per night",
     "management_accommodation_per_night": (
-        "Accommodation per night for the Program Lead, Country Director, "
-        "Impact Assessment and Accountant"
+        "Accommodation per night for staff other than a CCEO (Program Lead, "
+        "Country Director, Impact Assessment, Accountant and other staff)"
     ),
     "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
     "secondary_breakfast_per_day": "Breakfast",

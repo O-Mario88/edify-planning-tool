@@ -46,7 +46,10 @@ DAY_WITHOUT_NIGHT = sum(dict(SECONDARY_RATES).values()) - CCEO_NIGHT
 
 
 class AccommodationRateByRoleTest(SimpleTestCase):
-    def test_the_four_named_roles_fetch_the_second_rate(self):
+    def test_every_member_of_staff_but_a_cceo_fetches_the_second_rate(self):
+        """The four roles the owner named, and the six asked about the same
+        day ("Yes"): HR, Project Coordinator, Business Transformation
+        Officer, Regional Vice President, Regional Program Lead, Admin."""
         self.assertEqual(
             MANAGEMENT_ACCOMMODATION_ROLES,
             {
@@ -54,6 +57,12 @@ class AccommodationRateByRoleTest(SimpleTestCase):
                 EdifyRole.COUNTRY_DIRECTOR.value,
                 EdifyRole.IMPACT_ASSESSMENT.value,
                 EdifyRole.PROGRAM_ACCOUNTANT.value,
+                EdifyRole.HUMAN_RESOURCES.value,
+                EdifyRole.PROJECT_COORDINATOR.value,
+                EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+                EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+                EdifyRole.REGIONAL_PROGRAM_LEAD.value,
+                EdifyRole.ADMIN.value,
             },
         )
         for role in MANAGEMENT_ACCOMMODATION_ROLES:
@@ -62,10 +71,20 @@ class AccommodationRateByRoleTest(SimpleTestCase):
                     accommodation_key_for_role(role), MANAGEMENT_ACCOMMODATION_KEY
                 )
 
-    def test_a_cceo_and_every_role_not_named_fetch_the_cceo_rate(self):
-        others = set(EdifyRole.values()) - MANAGEMENT_ACCOMMODATION_ROLES
-        self.assertIn(EdifyRole.CCEO.value, others)
-        for role in sorted(others) + [None, ""]:
+    def test_the_first_rate_is_the_cceos_alone(self):
+        """Every role is decided: a new one fails here until it is placed. A
+        partner's roles are not staff, and partner work fetches no night."""
+        partner_roles = {
+            EdifyRole.PARTNER_ADMIN.value,
+            EdifyRole.PARTNER_FIELD_OFFICER.value,
+            EdifyRole.MFI_PARTNER_ADMIN.value,
+            EdifyRole.MFI_LOAN_OFFICER.value,
+        }
+        self.assertEqual(
+            set(EdifyRole.values()) - MANAGEMENT_ACCOMMODATION_ROLES - partner_roles,
+            {EdifyRole.CCEO.value},
+        )
+        for role in [EdifyRole.CCEO.value, *sorted(partner_roles), None, ""]:
             with self.subTest(role=role):
                 self.assertEqual(accommodation_key_for_role(role), ACCOMMODATION_KEY)
 
@@ -110,7 +129,7 @@ class NightAwayByRoleTest(DailyVisitBatchTestCase):
             key=MANAGEMENT_ACCOMMODATION_KEY,
             catalogue=self.catalogue,
             defaults={
-                "label": "Accommodation - PL, CD, IA and Accountant",
+                "label": "Accommodation - PL, CD, IA, Accountant and other staff",
                 "unit_cost": MANAGEMENT_NIGHT,
                 "fy": self.catalogue.fy,
                 "version": 1,
@@ -162,18 +181,21 @@ class NightAwayByRoleTest(DailyVisitBatchTestCase):
         self.assertEqual(night[ACCOMMODATION_KEY].amount, CCEO_NIGHT)
         self.assertEqual(visit.est_cost_cents, DAY_WITHOUT_NIGHT + CCEO_NIGHT)
 
-    def test_each_named_roles_night_is_the_second_rate(self):
-        for offset, role in enumerate(sorted(MANAGEMENT_ACCOMMODATION_ROLES)):
+    #: The roles that plan school visits of their own. The others (HR, the
+    #: Business Transformation Officer, the two regional roles) travel on
+    #: non-school work, and are checked on the estimate below.
+    VISITING_ROLES = (
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+    )
+
+    def test_a_visiting_roles_night_is_the_second_rate(self):
+        for offset, role in enumerate(self.VISITING_ROLES):
             user, profile = self._traveller(role)
             self.principal = user
             with self.subTest(role=role):
-                self.assertEqual(
-                    accommodation_key_for_staff(user.id), MANAGEMENT_ACCOMMODATION_KEY
-                )
-                self.assertEqual(
-                    accommodation_key_for_staff(profile.id),
-                    MANAGEMENT_ACCOMMODATION_KEY,
-                )
                 school = self._own_secondary_school(profile, f"NIGHT-{offset}")
                 result = self._schedule(
                     [school.school_id], date(2026, 8, 10 + offset), reason="solo"
@@ -193,6 +215,37 @@ class NightAwayByRoleTest(DailyVisitBatchTestCase):
                     batch.daily_pool_amount, DAY_WITHOUT_NIGHT + MANAGEMENT_NIGHT
                 )
                 self.assertFalse(batch_needs_repricing(batch))
+
+    def test_every_other_staff_roles_night_is_estimated_at_the_second_rate(self):
+        """All ten, by the account and by the staff profile: the day's
+        estimate for each names the second rate and never the CCEO's."""
+        for role in sorted(MANAGEMENT_ACCOMMODATION_ROLES):
+            user, profile = self._traveller(role)
+            with self.subTest(role=role):
+                self.assertEqual(
+                    accommodation_key_for_staff(user.id), MANAGEMENT_ACCOMMODATION_KEY
+                )
+                self.assertEqual(
+                    accommodation_key_for_staff(profile.id),
+                    MANAGEMENT_ACCOMMODATION_KEY,
+                )
+                result = preview(
+                    {
+                        "activityType": "field_event",
+                        "deliveryType": "staff",
+                        "districtType": "secondary",
+                        "plannedDate": "2026-08-06",
+                    },
+                    responsible_user_id=user.id,
+                )
+                nights = {
+                    line["key"]: line["amount"]
+                    for line in result["lines"]
+                    if line["key"] in ACCOMMODATION_KEYS
+                }
+                self.assertEqual(
+                    nights, {MANAGEMENT_ACCOMMODATION_KEY: MANAGEMENT_NIGHT}
+                )
 
     def test_the_night_is_shared_across_the_days_schools_at_the_second_rate(self):
         user, _profile = self._traveller(EdifyRole.COUNTRY_PROGRAM_LEAD.value)

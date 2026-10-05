@@ -21,7 +21,10 @@ before them, each exactly as an edit of the day would:
    setup required" on the Work Plan. The same mover carries on from there.
 2. Planned days in a secondary district still priced with a night and a
    dinner on the day the traveller comes home, or with the CCEO's
-   accommodation rate for a traveller who has their own.
+   accommodation rate for a traveller who is not a CCEO.
+3. Planned work of several days (a camp, a conference, a field event) still
+   priced with a night and a dinner on its last day. Asked whether such
+   events drop them too, the owner said yes.
 
 A day whose week has left draft, whose money has moved or whose work is done
 is kept as it was priced, and printed. As in activities 0057, 0058, 0060 and
@@ -35,7 +38,7 @@ atomic: each pair and each day commits on its own, nothing is started after
 BUDGET_SECONDS, and what is left is printed for
 `move_in_school_training_cost_to_visit --apply` and
 `refresh_daily_cost_allocations --apply`. A deployment stopped anyway keeps
-what it moved, and the next one carries on from there.
+what it moved.
 
 Reverse is a no-op.
 """
@@ -54,7 +57,12 @@ def reprice(apps, schema_editor):
         find_pair_trainings_carrying_cost,
         move_pair_costs_to_visits,
     )
-    from apps.daily_visit_batches.repricing import find_days_to_reprice, reprice_days
+    from apps.daily_visit_batches.repricing import (
+        find_days_to_reprice,
+        find_trips_to_reprice,
+        reprice_days,
+        reprice_trips,
+    )
 
     deadline = time.monotonic() + BUDGET_SECONDS
 
@@ -81,6 +89,14 @@ def reprice(apps, schema_editor):
                 f"{len(result['left'])} not reached: run `python manage.py "
                 "refresh_daily_cost_allocations --apply`."
             )
+
+    trips = find_trips_to_reprice(apps)
+    if trips:
+        print(f"\nRe-pricing {len(trips)} planned trip(s) of several days:")
+        result = reprice_trips(trips, deadline=deadline)
+        print(f"Re-priced {len(result['repriced'])}, kept {len(result['skipped'])}.")
+        if result["left"]:
+            print(f"{len(result['left'])} not reached and still priced the old way.")
 
 
 class Migration(migrations.Migration):

@@ -2,7 +2,10 @@
 
 Owner, 2026-10-05: "the accommodation for program leads, cd, IA and accountant
 should be separate from the accommodation of CCEO. add a new accommodation
-cost for the above roles."
+cost for the above roles." Asked whether the other staff roles (HR, Project
+Coordinator, Business Transformation Officer, Regional Vice President,
+Regional Program Lead, Admin) use it too, the owner said yes: the first row
+is the CCEO's alone.
 
 Until now every traveller's night fetched the one Accommodation row. The new
 row is created here for every rate card that carries that one, copying its
@@ -21,7 +24,7 @@ from django.db import migrations
 CCEO_KEY = "secondary_accommodation_per_night"
 NEW_KEY = "management_accommodation_per_night"
 CCEO_LABEL = "Accommodation - CCEO"
-NEW_LABEL = "Accommodation - PL, CD, IA and Accountant"
+NEW_LABEL = "Accommodation - PL, CD, IA, Accountant and other staff"
 
 
 def forwards(apps, schema_editor):

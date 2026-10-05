@@ -76,8 +76,8 @@ OPTIONAL_KEYS: dict[str, list[str]] = {
 }
 
 # The night away is paid at one of two rates, by who travels (owner,
-# 2026-10-05): a CCEO's, which REQUIRED_KEYS names, or the one set for the
-# Program Lead, the Country Director, Impact Assessment and the Accountant.
+# 2026-10-05): a CCEO's, which REQUIRED_KEYS names, or the one set for every
+# other member of staff.
 # apps.daily_visit_batches.districts.accommodation_key_for_staff picks it.
 ACCOMMODATION_KEY = "secondary_accommodation_per_night"
 MANAGEMENT_ACCOMMODATION_KEY = "management_accommodation_per_night"

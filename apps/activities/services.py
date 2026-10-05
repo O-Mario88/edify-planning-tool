@@ -925,8 +925,8 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
         # The night away is paid at the traveller's accommodation rate
-        # (owner, 2026-10-05): the CCEO's, or the one set for the Program
-        # Lead, the Country Director, Impact Assessment and the Accountant.
+        # (owner, 2026-10-05): the CCEO's, or the one set for every other
+        # member of staff.
         "accommodationKey": _accommodation_key_for(activity.responsible_staff_id),
         "nights": data.get("nights"),
         "projectId": activity.project_id,

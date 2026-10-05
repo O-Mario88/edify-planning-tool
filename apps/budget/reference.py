@@ -65,12 +65,13 @@ TRAVEL_RATES: tuple[tuple[str, str, int], ...] = (
     ("secondary_overnight_dinner_per_day", "Dinner", 12000),
     # The night away has two rates (owner, 2026-10-05: "the accommodation for
     # program leads, cd, IA and accountant should be separate from the
-    # accommodation of CCEO"). Which one a day fetches is the traveller's
-    # role: apps.daily_visit_batches.districts.accommodation_key_for_staff.
+    # accommodation of CCEO"): the CCEO's, and one for every other member of
+    # staff. Which one a day fetches is the traveller's role:
+    # apps.daily_visit_batches.districts.accommodation_key_for_staff.
     ("secondary_accommodation_per_night", "Accommodation - CCEO", 40000),
     (
         "management_accommodation_per_night",
-        "Accommodation - PL, CD, IA and Accountant",
+        "Accommodation - PL, CD, IA, Accountant and other staff",
         40000,
     ),
 )

@@ -5,15 +5,18 @@ before them keeps the price it was planned at until something re-prices it:
 
 * the last of a run of days in a secondary district is the day the traveller
   comes home, with no night and no dinner (``return_day``);
-* the Program Lead, the Country Director, Impact Assessment and the
-  Accountant sleep at their own accommodation rate (``districts``).
+* every member of staff but a CCEO sleeps at the second accommodation rate
+  (``districts``);
+* a trip of several days has no night and no dinner on its last day.
 
 ``find_days_to_reprice`` lists the planned days that still carry the old
 price and ``reprice_days`` re-prices them one at a time, each in its own
-transaction. A day whose week has left draft, whose money has moved or whose
-work is done is left as it was priced. Daily visit batches migration 0003
-runs both inside the deploy's time limit; ``refresh_daily_cost_allocations
---apply`` picks up whatever it did not reach.
+transaction; ``find_trips_to_reprice`` and ``reprice_trips`` do the same for
+planned work of several days, which is priced on its own and belongs to no
+day. A day or a trip whose week has left draft, whose money has moved or
+whose work is done is left as it was priced. Daily visit batches migration
+0003 runs them inside the deploy's time limit; ``refresh_daily_cost_allocations
+--apply`` picks up the days it did not reach.
 """
 
 from __future__ import annotations
@@ -150,4 +153,107 @@ def reprice_days(ids=None, *, write=print, deadline=None) -> dict:
     return {"repriced": repriced, "skipped": skipped, "left": left}
 
 
-__all__ = ["night_is_stale", "find_days_to_reprice", "reprice_days"]
+#: Work still a plan: the owner may yet move it, and so may a rule.
+_PLANNED_STATUSES = ("planned", "scheduled", "rescheduled")
+
+
+def find_trips_to_reprice(apps=None, *, today=None) -> list[str]:
+    """Ids of planned staff work of several days that still charges a night
+    for every one of them, earliest first.
+
+    A trip in a secondary district sleeps away every night but the last
+    (owner, 2026-10-05); one priced before that carries as many nights as
+    days. Read off the saved accommodation lines, so a trip in the home
+    district, which has none, is never listed."""
+    from django.db.models import Q, Sum
+
+    if apps is not None:
+        Activity = apps.get_model("activities", "Activity")
+        CostLine = apps.get_model("activities", "ActivityScheduleCostLine")
+    else:
+        from apps.activities.models import Activity
+        from apps.activities.models import ActivityScheduleCostLine as CostLine
+
+    today = today or timezone.localdate()
+    trips = {
+        activity_id: (end - start).days + 1
+        for activity_id, start, end in Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="staff",
+            status__in=_PLANNED_STATUSES,
+            planned_date__gte=today,
+            end_date__isnull=False,
+        ).values_list("id", "planned_date", "end_date")
+        if end > start
+    }
+    if not trips:
+        return []
+    # A night's line is stored once, or once a month for a trip that crosses
+    # one ("<key>#mYYYYMM"): the nights are their sum.
+    night_lines = Q()
+    for key in ACCOMMODATION_KEYS:
+        night_lines |= Q(cost_setting_key=key) | Q(
+            cost_setting_key__startswith=f"{key}#"
+        )
+    nights = dict(
+        CostLine.objects.filter(night_lines, activity_id__in=trips)
+        .values_list("activity_id")
+        .annotate(nights=Sum("quantity"))
+    )
+    stale = [
+        activity_id
+        for activity_id, days in trips.items()
+        if nights.get(activity_id) and nights[activity_id] != days - 1
+    ]
+    order = dict(
+        Activity.objects.filter(id__in=stale).values_list("id", "planned_date")
+    )
+    return sorted(stale, key=lambda activity_id: (order[activity_id], activity_id))
+
+
+def reprice_trips(ids=None, *, write=print, deadline=None) -> dict:
+    """Re-price each stale trip through the one cost writer, which also
+    rebuilds its draft weekly and monthly requests.
+
+    A trip whose money has moved, or whose request has left draft, is refused
+    by the writer's finance locks; it is reported and left as it is rather
+    than failing the rest. ``deadline`` works as in ``reprice_days``."""
+    from apps.activities.models import Activity
+    from apps.activities.services import reprice_activity
+
+    ids = find_trips_to_reprice() if ids is None else list(ids)
+    repriced: list[str] = []
+    skipped: list[str] = []
+    left: list[str] = []
+    for activity in Activity.objects.filter(id__in=ids).order_by("planned_date", "id"):
+        if deadline is not None and time.monotonic() >= deadline:
+            left.append(activity.id)
+            continue
+        label = (
+            f"{activity.id} ({activity.activity_name_snapshot or activity.activity_type}, "
+            f"{activity.planned_date} to {activity.end_date})"
+        )
+        before = activity.est_cost_cents or 0
+        try:
+            with transaction.atomic():
+                reprice_activity(activity)
+        except BadRequest as exc:
+            skipped.append(activity.id)
+            write(f"  kept {label}: {getattr(exc, 'detail', exc)}")
+            continue
+        activity.refresh_from_db(fields=["est_cost_cents"])
+        repriced.append(activity.id)
+        write(
+            f"  re-priced {label}: UGX {before:,} -> "
+            f"UGX {activity.est_cost_cents or 0:,}"
+        )
+    return {"repriced": repriced, "skipped": skipped, "left": left}
+
+
+__all__ = [
+    "night_is_stale",
+    "find_days_to_reprice",
+    "reprice_days",
+    "find_trips_to_reprice",
+    "reprice_trips",
+]

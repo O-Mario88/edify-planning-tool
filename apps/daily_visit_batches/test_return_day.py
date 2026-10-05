@@ -30,7 +30,7 @@ from .pricing import (
 )
 from .return_day import is_return_day, priced_as_return_day
 from .services import batch_needs_repricing, remove_school
-from .tests import SECONDARY_RATES, DailyVisitBatchTestCase
+from .tests import PRIMARY_RATES, SECONDARY_RATES, DailyVisitBatchTestCase
 
 RATES = dict(SECONDARY_RATES)
 NIGHT = RATES[ACCOMMODATION_KEY]
@@ -86,7 +86,8 @@ class ReturnDayRecipeTest(SimpleTestCase):
         home = cost_for_activity({**visit, "returnDay": True}, RATES)
         self.assertEqual(home.amount, DAY_HOME)
         self.assertFalse(home.cost_missing)
-        # A trip of several days is priced by its own recipe, as it was.
+        # A trip of several days has its own day home: the mark changes
+        # nothing about it.
         trip = {
             "activityType": "field_event",
             "deliveryType": "staff",
@@ -96,6 +97,67 @@ class ReturnDayRecipeTest(SimpleTestCase):
         self.assertEqual(
             cost_for_activity({**trip, "returnDay": True}, RATES).amount,
             cost_for_activity(trip, RATES).amount,
+        )
+
+    def _quantities(self, **activity):
+        """The days and nights a plan fetches, by day rate."""
+        rates = {**dict(PRIMARY_RATES), **RATES}
+        cost = cost_for_activity({"deliveryType": "staff", **activity}, rates)
+        return {line.key: line.qty for line in cost.lines if line.key in rates}
+
+    def test_a_trip_of_several_days_has_no_night_or_dinner_on_its_last(self):
+        """Owner, 2026-10-05, asked whether camps and field events drop the
+        last night and dinner too: "Yes". Five days away are four nights and
+        four dinners, with transport, breakfast and lunch on all five."""
+        self.assertEqual(
+            self._quantities(
+                activityType="field_event", districtType="secondary", days=5
+            ),
+            {
+                "secondary_transport_per_day": 5,
+                "lunch_per_day": 5,
+                "secondary_breakfast_per_day": 5,
+                DINNER_KEY: 4,
+                ACCOMMODATION_KEY: 4,
+            },
+        )
+        two_days = self._quantities(
+            activityType="field_event", districtType="secondary", days=2
+        )
+        self.assertEqual((two_days[ACCOMMODATION_KEY], two_days[DINNER_KEY]), (1, 1))
+
+    def test_one_day_away_on_its_own_keeps_its_night_and_dinner(self):
+        """Asked whether a single day in a secondary district loses them
+        too, the owner said no."""
+        for activity_type in ("field_event", "school_visit"):
+            with self.subTest(activity_type=activity_type):
+                one_day = self._quantities(
+                    activityType=activity_type, districtType="secondary", days=1
+                )
+                self.assertEqual(
+                    (one_day[ACCOMMODATION_KEY], one_day[DINNER_KEY]), (1, 1)
+                )
+
+    def test_a_session_of_several_days_follows_the_same_rule(self):
+        """A group training away for three days: the trainer's own day."""
+        training = self._quantities(
+            activityType="cluster_training",
+            districtType="secondary",
+            days=3,
+            expectedParticipants=10,
+        )
+        self.assertEqual(training["secondary_transport_per_day"], 3)
+        self.assertEqual(training["lunch_per_day"], 3)
+        self.assertEqual(training["secondary_breakfast_per_day"], 3)
+        self.assertEqual(training[ACCOMMODATION_KEY], 2)
+        self.assertEqual(training[DINNER_KEY], 2)
+
+    def test_a_trip_at_home_has_no_night_to_drop(self):
+        self.assertEqual(
+            self._quantities(
+                activityType="field_event", districtType="primary", days=4
+            ),
+            {"primary_transport_per_day": 4, "lunch_per_day": 4},
         )
 
 
@@ -439,7 +501,7 @@ class PlansMadeBeforeTheRulesTest(WeekAwayTest):
             key=MANAGEMENT_ACCOMMODATION_KEY,
             catalogue=self.catalogue,
             defaults={
-                "label": "Accommodation - PL, CD, IA and Accountant",
+                "label": "Accommodation - PL, CD, IA, Accountant and other staff",
                 "unit_cost": 210000,
                 "fy": self.catalogue.fy,
                 "version": 1,
@@ -479,3 +541,75 @@ class PlansMadeBeforeTheRulesTest(WeekAwayTest):
         visit.refresh_from_db()
         self.assertEqual(visit.est_cost_cents, FULL_DAY - NIGHT + 210000)
         self.assertEqual(find_days_to_reprice(), [])
+
+    def _field_trip(self, days):
+        from datetime import datetime, time
+
+        from django.utils import timezone
+
+        from apps.activities.services import reprice_activity
+        from apps.core.fy import get_operational_fy
+
+        trip = Activity.objects.create(
+            activity_type="field_event",
+            activity_name_snapshot="District boot camp",
+            delivery_type="staff",
+            status="scheduled",
+            fy=get_operational_fy(MON),
+            responsible_staff_id=self.staff_profile.id,
+            event_district=self.secondary_district_a,
+            scheduled_date=timezone.make_aware(datetime.combine(MON, time(9))),
+            planned_date=MON,
+            end_date=MON + timedelta(days=days - 1),
+        )
+        reprice_activity(trip)
+        return trip
+
+    def _trip_quantities(self, trip):
+        return dict(
+            ActivityScheduleCostLine.objects.filter(activity=trip).values_list(
+                "cost_setting_key", "quantity"
+            )
+        )
+
+    def test_a_trip_planned_earlier_loses_its_last_night_and_dinner(self):
+        from .repricing import find_trips_to_reprice, reprice_trips
+
+        trip = self._field_trip(days=3)
+        priced = self._trip_quantities(trip)
+        self.assertEqual((priced[ACCOMMODATION_KEY], priced[DINNER_KEY]), (2, 2))
+        self.assertEqual(priced["secondary_transport_per_day"], 3)
+        self.assertEqual(find_trips_to_reprice(), [])
+
+        # As it was priced before the rule: a night and a dinner every day.
+        for key, rate in ((ACCOMMODATION_KEY, NIGHT), (DINNER_KEY, DINNER)):
+            ActivityScheduleCostLine.objects.filter(
+                activity=trip, cost_setting_key=key
+            ).update(quantity=3, amount=3 * rate, total_cost=3 * rate)
+        old_total = trip.est_cost_cents + NIGHT + DINNER
+        Activity.objects.filter(id=trip.id).update(est_cost_cents=old_total)
+
+        self.assertEqual(find_trips_to_reprice(), [trip.id])
+        lines = []
+        result = reprice_trips(write=lines.append)
+
+        self.assertEqual(result, {"repriced": [trip.id], "skipped": [], "left": []})
+        self.assertIn(
+            f"UGX {old_total:,} -> UGX {old_total - NIGHT - DINNER:,}", lines[0]
+        )
+        priced = self._trip_quantities(trip)
+        self.assertEqual((priced[ACCOMMODATION_KEY], priced[DINNER_KEY]), (2, 2))
+        self.assertEqual(find_trips_to_reprice(), [])
+
+    def test_the_migration_finds_trips_through_its_historical_models(self):
+        from django.apps import apps as django_apps
+
+        from .repricing import find_trips_to_reprice
+
+        trip = self._field_trip(days=2)
+        ActivityScheduleCostLine.objects.filter(
+            activity=trip, cost_setting_key=ACCOMMODATION_KEY
+        ).update(quantity=2)
+        self.assertEqual(find_trips_to_reprice(django_apps), [trip.id])
+        # A trip already past is history.
+        self.assertEqual(find_trips_to_reprice(today=MON + timedelta(days=1)), [])

@@ -103,16 +103,26 @@ def _role_of(user):
     return getattr(user, "active_role", None) or (roles[0] if roles else None)
 
 
-# Whose night away is paid at the second accommodation rate (owner,
+# Whose night away is paid at the second accommodation rate. Owner,
 # 2026-10-05: "the accommodation for program leads, cd, IA and accountant
-# should be separate from the accommodation of CCEO"). Every other traveller
-# keeps the CCEO's.
+# should be separate from the accommodation of CCEO", and, asked the same day
+# whether HR, the Project Coordinator, the Business Transformation Officer,
+# the Regional Vice President, the Regional Program Lead and Admin use it
+# too: "Yes". So the first rate is the CCEO's alone and every other member
+# of staff sleeps at the second. A partner's roles are not staff: their work
+# is priced at the partner rates and never fetches a night.
 MANAGEMENT_ACCOMMODATION_ROLES: frozenset[str] = frozenset(
     {
         EdifyRole.COUNTRY_PROGRAM_LEAD.value,
         EdifyRole.COUNTRY_DIRECTOR.value,
         EdifyRole.IMPACT_ASSESSMENT.value,
         EdifyRole.PROGRAM_ACCOUNTANT.value,
+        EdifyRole.HUMAN_RESOURCES.value,
+        EdifyRole.PROJECT_COORDINATOR.value,
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+        EdifyRole.REGIONAL_PROGRAM_LEAD.value,
+        EdifyRole.ADMIN.value,
     }
 )
 

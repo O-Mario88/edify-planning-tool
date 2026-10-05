@@ -266,12 +266,14 @@ def non_school_activity_preview(request):
             )
             payload["districtType"] = district_type
             if district_type == "secondary":
-                # Every secondary away-day carries the full per-diem set —
-                # meals and a night's accommodation per day (owner rule,
-                # 2026-08-19), matching the secondary visit-day policy.
+                # Every secondary away-day carries the full per-diem set
+                # (owner rule, 2026-08-19); a trip of several days has no
+                # night and no dinner on the day home (owner, 2026-10-05).
                 travel_profile = (
-                    f"Another district · {days} day"
-                    f"{'' if days == 1 else 's'} · full per-diems per day"
+                    f"Another district · {days} days · per-diems per day, "
+                    "no night or dinner on the last day"
+                    if days > 1
+                    else "Another district · 1 day · full per-diems"
                 )
             else:
                 travel_profile = "Home district — transport and lunch per day"
