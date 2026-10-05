@@ -667,6 +667,17 @@ urlpatterns = [
         oversight_views.country_planning_export_view,
         name="country_planning_oversight_export",
     ),
+    path(
+        "team-planning-oversight/projects/export",
+        oversight_views.special_project_export_view,
+        {"project_id": "all"},
+        name="special_projects_export_all",
+    ),
+    path(
+        "team-planning-oversight/projects/<str:project_id>/export",
+        oversight_views.special_project_export_view,
+        name="special_project_export",
+    ),
     # The planning-coverage dashboard's drill-downs (owner, 2026-09-28): rows
     # a Lead or an officer expands into, the drawers, the schools behind a
     # figure, one school's requirement slots, the Country Director's "Follow
@@ -2541,6 +2552,17 @@ urlpatterns = [
         "projects/my-plan",
         extended_views.special_projects_my_plan_view,
         name="special_projects_my_plan",
+    ),
+    path(
+        "projects/export",
+        oversight_views.special_project_export_view,
+        {"project_id": "all"},
+        name="project_monitoring_export_all",
+    ),
+    path(
+        "projects/<str:project_id>/export",
+        oversight_views.special_project_export_view,
+        name="project_monitoring_export",
     ),
     # Read-only monitoring for CCEO, Programme Lead and Impact Assessment
     # (owner, 2026-09-21). Above the <str:project_id> detail route, which

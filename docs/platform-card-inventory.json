@@ -2636,7 +2636,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 84,
+   "line": 92,
    "title": "Delivery overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2645,7 +2645,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 174,
+   "line": 182,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 260,
+   "line": 268,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 279,
+   "line": 287,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -2672,92 +2672,92 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 126,
+   "line": 135,
    "title": "Budget & Execution",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-5 space-y-4",
    "branch_path": [
     [
-     5,
+     6,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 156,
+   "line": 165,
    "title": "Delivery by Intervention",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-5 space-y-4",
    "branch_path": [
     [
-     5,
+     6,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 189,
+   "line": 198,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-5 space-y-3",
    "branch_path": [
     [
-     5,
+     6,
      1
     ],
     [
-     8,
+     9,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 247,
+   "line": 256,
    "title": "Upcoming Follow-Ups",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-5 space-y-3",
    "branch_path": [
     [
-     5,
+     6,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 276,
+   "line": 285,
    "title": "Partner Delivery",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-5 space-y-3",
    "branch_path": [
     [
-     5,
+     6,
      1
     ],
     [
-     18,
+     19,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 92,
+   "line": 101,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     4,
+     7,
      0
     ]
    ]

@@ -856,11 +856,13 @@ def personalized_articles(role: str, limit: int = 6):
         f"role-{slugify(role)}",
         *priorities_by_role.get(role, ["getting-started"]),
     ]
-    found = [
-        article
-        for slug in priorities
-        if (article := articles.filter(slug=slug).first())
-    ]
+    priority_qs = {
+        a.slug: a
+        for a in articles.filter(slug__in=priorities).select_related(
+            "category", "reviewer"
+        )
+    }
+    found = [priority_qs[slug] for slug in priorities if slug in priority_qs]
     seen = {article.id for article in found}
     return (
         found
@@ -1244,9 +1246,12 @@ def create_revision(article: HelpArticle, author) -> HelpArticle:
 
 
 def mark_review_due_articles() -> int:
-    return HelpArticle.objects.filter(
+    qs = HelpArticle.objects.filter(
         state=HelpArticleState.PUBLISHED, review_due_at__lt=timezone.now()
-    ).update(state=HelpArticleState.REVIEW_DUE)
+    )
+    if not qs.exists():
+        return 0
+    return qs.update(state=HelpArticleState.REVIEW_DUE)
 
 
 def collect_workflow_statuses() -> list[tuple[str, str, str, str]]:

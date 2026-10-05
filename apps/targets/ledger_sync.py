@@ -100,10 +100,11 @@ def refresh_many(users, fy: str) -> None:
     A mark written while the rebuild ran has a newer `marked_at` and
     survives, so the next load picks it up.
     """
+    from apps.accounts.models import attach_staff_profile_ids
     from apps.targets.models import TargetLedgerDirty
     from apps.targets.my_targets import TargetAchievementService, _user_ids
 
-    users = list(users)
+    users = attach_staff_profile_ids(users)
     ids_of = {u.id: set(map(str, _user_ids(u))) for u in users}
     owners = set().union(*ids_of.values()) if ids_of else set()
     if not owners:

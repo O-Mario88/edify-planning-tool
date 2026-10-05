@@ -11642,7 +11642,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14003,
+      "bytes": 15811,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -13454,7 +13454,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5240,
+      "bytes": 5433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -13761,7 +13761,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10648,
+      "bytes": 10595,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -14047,7 +14047,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8044,
+      "bytes": 8093,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -79287,6 +79287,94 @@
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.special_project_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-82BED4DCF8",
+      "page_title": "Project Monitoring Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/projects/<str:project_id>/export",
+      "route_name": "project_monitoring_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_assign_school_action_view",
       "card_count": 0,
@@ -80353,6 +80441,94 @@
         "loading": false
       },
       "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.special_project_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C902A291E9",
+      "page_title": "Project Monitoring Export All",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/projects/export",
+      "route_name": "project_monitoring_export_all",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "not-applicable-nonvisual",
@@ -90500,6 +90676,182 @@
       ],
       "route": "/team-planning-oversight/export",
       "route_name": "team_planning_oversight_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.special_project_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-00521CFE7C",
+      "page_title": "Special Project Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/team-planning-oversight/projects/<str:project_id>/export",
+      "route_name": "special_project_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.special_project_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-1B3DAC63BA",
+      "page_title": "Special Projects Export All",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/team-planning-oversight/projects/export",
+      "route_name": "special_projects_export_all",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -112524,6 +112876,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/projects/<str:project_id>/export",
+      "route_name": "project_monitoring_export",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.project_assign_school_action_view",
       "kind": "action",
       "methods": [
@@ -112677,6 +113041,18 @@
       "required_permissions": [],
       "route": "/projects/create/action",
       "route_name": "project_create_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/projects/export",
+      "route_name": "project_monitoring_export_all",
       "templates": []
     },
     {
@@ -114364,6 +114740,30 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/projects/<str:project_id>/export",
+      "route_name": "special_project_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.special_project_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/projects/export",
+      "route_name": "special_projects_export_all",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.team_planning_send_action_view",
       "kind": "action",
       "methods": [
@@ -114940,7 +115340,7 @@
   "summary": {
     "accessibility_contract_pass": 574,
     "activity_states": 24,
-    "all_routes": 1356,
+    "all_routes": 1360,
     "api_routes": 360,
     "component_templates": 609,
     "full_pages": 263,
@@ -114955,13 +115355,13 @@
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
-      "report": 41
+      "report": 45
     },
     "partials_and_drawers": 308,
-    "permission_gated": 868,
+    "permission_gated": 872,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 884,
+    "routed_surfaces": 888,
     "scheduled_jobs": 34,
     "severity_counts": {
       "critical": 0,
@@ -114970,7 +115370,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 574,
-    "test_referenced": 777,
+    "test_referenced": 781,
     "theme_contract_pass": 574
   }
 }

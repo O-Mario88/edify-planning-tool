@@ -93,6 +93,9 @@ chevron beside the menu opens the card; it does not act on the project.
   <a href="/projects/{{ row.id }}" class="row-menu__item" role="menuitem">Open Project</a>
   <a href="/projects/planning?project={{ row.id }}&amp;partner_type=unassigned" class="row-menu__item" role="menuitem">Assign</a>
   <a href="/projects/analytics?project={{ row.id }}" class="row-menu__item" role="menuitem">View Impact</a>
+  {% if can_export %}
+  <a href="{% url 'frontend:special_project_export' row.id %}" class="row-menu__item" role="menuitem" data-project-export="{{ row.id }}">Export to Excel</a>
+  {% endif %}
 {% endrow_actions %}
 
 {% if not tabbed %}<button

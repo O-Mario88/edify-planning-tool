@@ -44,6 +44,7 @@
     aria-label="Schools"
     x-data="{ openSchoolId: null }"
     @click.outside="openSchoolId = null"
+    @keydown.escape.window="openSchoolId = null"
   >
   {% for school in view_models %}
     {% if group_by_owner %}{% ifchanged school.group_key %}

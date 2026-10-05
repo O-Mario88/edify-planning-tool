@@ -117,6 +117,9 @@ class DatabaseConcurrencyGuardMiddleware:
         2026-09-23). Refused, the browser discards it and navigates normally
         when — if — the link is actually clicked.
         """
+        with self._lock:
+            if self._waiting > 0:
+                return busy_response(request, retry_after=5)
         if not self.semaphore.acquire(blocking=False):
             return busy_response(request, retry_after=5)
         request.edify_queue_wait_ms = 0.0

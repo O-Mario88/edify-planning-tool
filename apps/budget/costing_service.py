@@ -34,7 +34,7 @@ from .models import (
     RateCardKind,
     RateCardStatus,
 )
-from .reference import CANONICAL_RATE_KEYS
+from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 
 
 # ── Rate cards held for one pricing run ──────────────────────────────────────
@@ -488,6 +488,20 @@ def planned_minimum_amounts(activities) -> dict:
         )
         for line in breakdown:
             setting = rates.get((rate_card_id, line.get("key")))
+            if (
+                setting is None
+                and line.get("key") in RETIRED_COST_SETTING_KEYS
+                and not line.get("missing")
+            ):
+                # A rate retired after this line was priced (budget 0023 and
+                # its predecessors delete the row) has no minimum left to
+                # re-price against. The line keeps the amount it was priced
+                # at, as its ActivityScheduleCostLine does, rather than
+                # blanking the whole estimate -- which the plan tables read
+                # as UGX 0 (owner, 2026-10-04: "Group Trainings Planned for
+                # This FY does not show cost").
+                total += int(line.get("amount") or 0)
+                continue
             rate = setting.approved_minimum if setting else None
             unit = line.get("unit")
             if rate is None or unit is None or line.get("missing"):

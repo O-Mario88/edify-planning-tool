@@ -16510,6 +16510,23 @@
    "view": "apps.frontend.views.extended_views.project_edit_drawer_view"
   },
   {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/projects/<str:project_id>/export",
+   "route_name": "project_monitoring_export",
+   "view": "apps.frontend.views.oversight_views.special_project_export_view"
+  },
+  {
    "page_permission": "projects",
    "required_permissions": [],
    "role_exclusive": false,
@@ -16672,6 +16689,23 @@
    "route": "/projects/create/action",
    "route_name": "project_create_action",
    "view": "apps.frontend.views.extended_views.project_create_action_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/projects/export",
+   "route_name": "project_monitoring_export_all",
+   "view": "apps.frontend.views.oversight_views.special_project_export_view"
   },
   {
    "page_permission": "projects",
@@ -18376,6 +18410,40 @@
     "Accountant",
     "Admin"
    ],
+   "route": "/team-planning-oversight/projects/<str:project_id>/export",
+   "route_name": "special_project_export",
+   "view": "apps.frontend.views.oversight_views.special_project_export_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/team-planning-oversight/projects/export",
+   "route_name": "special_projects_export_all",
+   "view": "apps.frontend.views.oversight_views.special_project_export_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
    "route": "/team-planning-oversight/send",
    "route_name": "team_planning_oversight_send",
    "view": "apps.frontend.views.oversight_views.team_planning_send_action_view"
@@ -18948,27 +19016,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 428,
-  "Admin": 1065,
+  "Accountant": 432,
+  "Admin": 1069,
   "BusinessTransformationOfficer": 238,
   "CCEO": 557,
-  "CountryDirector": 818,
+  "CountryDirector": 822,
   "HumanResources": 336,
-  "ImpactAssessment": 676,
+  "ImpactAssessment": 680,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
   "PartnerAdmin": 228,
   "PartnerFieldOfficer": 228,
-  "Program Lead": 652,
+  "Program Lead": 656,
   "ProjectCoordinator": 470,
-  "RegionalProgramLead": 332,
-  "RegionalVicePresident": 405
+  "RegionalProgramLead": 336,
+  "RegionalVicePresident": 409
  },
  "summary": {
   "page_keys_declared": 183,
   "page_keys_in_navigation": 200,
-  "routes_guarded": 1162,
-  "routes_total": 1356,
+  "routes_guarded": 1166,
+  "routes_total": 1360,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

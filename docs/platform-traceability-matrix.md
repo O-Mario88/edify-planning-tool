@@ -20,13 +20,13 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-03` | Standard staff school visit | ✓ | 12 | 112 | 33 | 3 | 8 | 10 | 26 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 70 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 57 | 27 | 2 | 2 | 1 | 4 | 91 |
-| `journey-06` | Special Project | ✓ | 1 | 118 | 29 | 3 | 5 | 6 | 19 | 80 |
+| `journey-06` | Special Project | ✓ | 1 | 118 | 29 | 4 | 9 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 87 | 27 | 4 | 10 | 9 | 23 | 80 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 84 | 25 | 3 | 6 | 7 | 18 | 79 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 57 | 15 | 0 | 0 | 1 | 4 | 25 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 105 | 35 | 2 | 2 | 7 | 25 | 80 |
 | `journey-11` | Professional Development | ✓ | 1 | 45 | 8 | 1 | 9 | 1 | 1 | 1 |
-| `journey-12` | Policy lifecycle | ✓ | 1 | 41 | 12 | 0 | 0 | 1 | 10 | 5 |
+| `journey-12` | Policy lifecycle | ✓ | 1 | 42 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 42 | 7 | 0 | 0 | 0 | 3 | 1 |
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 61 | 14 | 1 | 9 | 2 | 3 | 25 |
 | `journey-15` | Financial Health | ✓ | 1 | 57 | 17 | 2 | 4 | 1 | 6 | 29 |
@@ -148,9 +148,9 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 
 | Dimension | Traced to |
 | --- | --- |
-| Roles that hold the checked permissions | `Accountant`, `Admin`, `CountryDirector`, `ImpactAssessment`, `ProjectCoordinator` |
+| Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /projects/{id}` |
-| Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
+| Permissions checked | `data.export`, `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools_oversight` _+50 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/editing.py`, `apps/activities/facilitation.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py` _+108 more_ |
@@ -273,7 +273,7 @@ Steps: Upload → Review → Return → Approval → Publication → Employee ac
 | Permissions checked | — |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/client_ip.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py` _+31 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/client_ip.py`, `apps/core/concurrency.py`, `apps/core/context_processors.py`, `apps/core/cuid.py` _+32 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `audit.AuditLog`, `documents.DocumentAcknowledgement`, `documents.DocumentAsset`, `documents.DocumentAudienceRule`, `documents.DocumentVersion`, `help_center.HelpArticle`, `help_center.HelpArticleRoleAccess`, `help_center.HelpCategory`, `notifications.Notification`, `sessions.Session` |
 | Notifications raised | `documents.policy_published` |
 | Audit actions (evidence) | `documents.audience_changed`, `documents.created`, `documents.help_mapping_created`, `documents.help_mapping_updated`, `documents.policy_agreed`, `documents.published`, `documents.review_completed`, `documents.review_requested` _+2 more_ |
