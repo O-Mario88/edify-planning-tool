@@ -180,6 +180,20 @@
   transition: transform 160ms ease, opacity 160ms ease;
 }
 
+/* The ticked-activities bar (partials/activities/selection_bar.html) stands
+   clear of this nav, and on a phone spans the screen rather than running off
+   both sides of it (owner, 2026-10-05). */
+@media (max-width: 63.99rem) {
+  [data-activity-bar] {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+    inset-inline: 0.5rem;
+    translate: none;
+  }
+
+  /* The count says it; four buttons need the room. */
+  [data-activity-bar] [data-activity-noun] { display: none; }
+}
+
 /* Yield to the software keyboard. A fixed bottom bar and an Android keyboard
    occupy the same space, and the bar would otherwise cover the field being
    typed into — or the Submit directly beneath it. */

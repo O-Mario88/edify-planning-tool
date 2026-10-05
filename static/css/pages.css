@@ -4651,6 +4651,11 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 .ad-action--primary:hover { background: var(--edify-accent-hover); border-color: var(--edify-accent-hover); }
 
+/* Cancel activity (owner, 2026-10-05): danger ink at rest, filled on hover,
+   as a destructive header action is (.edify-destructive-outline). */
+.ad-action--cancel { border-color: var(--edify-border); color: var(--edify-danger-text); }
+.ad-action--cancel:hover { background: var(--edify-danger-light); border-color: var(--edify-danger); }
+
 .ad-note {
   display: flex;
   align-items: center;

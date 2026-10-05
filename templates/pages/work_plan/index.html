@@ -228,13 +228,16 @@ Showing: {{ flag_label }}
 
 {% if rows_visible %}
 <!-- Activity table -->
-<section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="space-y-4 scroll-mt-24">
+<section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="space-y-4 scroll-mt-24" data-live-region>
 <div class="flex flex-wrap items-center justify-between gap-2 px-1">
 <h2 id="work-plan-detail-title" class="text-[15px] font-bold text-slate-800 dark:text-slate-100">Detailed Activity Plan — {{ period_label }}</h2>
 <a href="#work-plan-summary" class="btn btn-secondary h-8">Back to Summary</a>
 </div>
 {% include "partials/work_plan/detail_tables.html" %}
 </section>
+{% comment %}Reschedule or cancel the ticked activities together (owner,
+2026-10-05); only where the reader has work of their own to tick.{% endcomment %}
+{% if detail_rows|any_attr:"can_pick" %}{% include "partials/activities/selection_bar.html" %}{% endif %}
 {% else %}
 <div class="card p-5">
 <p class="text-[13px] font-bold text-slate-700">Regional summary view</p>

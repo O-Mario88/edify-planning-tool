@@ -329,6 +329,12 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             },
             required=True,
         )
+    # The plans already made follow the catalogue (owner, 2026-10-05: "I still
+    # see the old cost being fetched ... even when the cost is changed"):
+    # open, unpaid work priced with the old rate is re-priced now, and its
+    # draft weekly and monthly requests with it (apps.budget.repricing).
+    from apps.budget.repricing import reprice_after_catalogue_change
+
     return {
         "id": setting.id,
         "key": setting.key,
@@ -337,6 +343,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         "fy": setting.fy,
         "version": setting.version,
         "catalogueItemId": setting.catalogue_item_id,
+        "repricing": reprice_after_catalogue_change(),
     }
 
 

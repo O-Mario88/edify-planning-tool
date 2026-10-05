@@ -673,12 +673,17 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
     gap = (request.GET.get("gap") or "").strip()
     gap = gap if gap in GAP_LABELS else ""
     officer = (request.GET.get("officer") or "").strip()
+    # A count on Schools by type opens the schools of that type behind it.
+    from apps.planning.country_oversight import rules as _rules
+
+    school_type = (request.GET.get("school_type") or "").strip()
     monitor = planning_monitor(
         request.user,
         fy=fy,
         program_lead_id=selected_lead or None,
         gap=gap or None,
         officer_id=officer or None,
+        school_type=school_type,
     )
     _mark_gap_follow_ups(request.user, monitor["gap_schools"], gap=gap, fy=fy)
     monitor_url = f"{base_url}?view=monitor&fy={fy}"
@@ -715,9 +720,13 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "monitor_tab": tab,
         "monitor_url": monitor_url,
         "monitor_gaps": GAPS,
-        "monitor_can_send": bool(gap) and may_delegate(request.user, country=False),
+        # A follow-up is sent from a gap, never from the list behind a count.
+        "monitor_can_send": gap in dict(GAPS)
+        and may_delegate(request.user, country=False),
         "monitor_gap": gap,
-        "monitor_gap_label": GAP_LABELS.get(gap, ""),
+        "monitor_gap_label": GAP_LABELS.get(gap, "")
+        + (f" · {_rules.type_label(school_type)}" if gap and school_type else ""),
+        "monitor_school_type": school_type,
         "monitor_officer": officer,
         "selected_program_lead": selected_lead,
         "default_visits_target": DEFAULT_VISITS_TARGET,

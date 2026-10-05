@@ -171,7 +171,29 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: when that makes it fit its card, instead of scrolling sideways (owner:
     #: Work Plan and My Plan still scrolled on a 2560px monitor). Its
     #: rationale lives in interactions.css, which is minified.
-    JS_GZIP_KB = 140
+    #:
+    #: Raised to 141.5 on 2026-10-05 (139.98 to 141.42 KB, +1%) for
+    #: group-select.js (1.44 KB gzipped, deferred), which the owner asked for
+    #: across the platform: "all the places with checkboxes can you add Select
+    #: All Checkbox", and tick boxes on planned activities with a bar that
+    #: reschedules or cancels the ticked ones together. It is in the shell
+    #: because a list of tick boxes can arrive in a drawer on any page. It
+    #: adds no stylesheet: the bar is the Planning page's own, and the tick
+    #: column uses the classes selection tables already had.
+    #:
+    #: Raised to 143.5 the same day (141.46 to 143.3 KB) for live-regions.js
+    #: (1.9 KB gzipped, deferred), after the owner asked that "every event
+    #: should update ... in real time and fast": a page that shows the plan
+    #: listens to the stream the server already had and reads its marked
+    #: regions again when the plan changes. It opens a stream only on a page
+    #: that has such a region, and closes it while the tab is hidden.
+    #:
+    #: Raised to 144 the same day (143.3 to 143.8 KB) for group-select.js
+    #: reading a ticked school as well as a ticked activity, after the owner
+    #: asked that the lists the summaries open take the group actions too:
+    #: the bar's Assign to partner for the ticked schools, and Reschedule and
+    #: Cancel for the staff work planned at them.
+    JS_GZIP_KB = 144
     INLINE_SCRIPT_KB = 40
 
     @classmethod
@@ -276,7 +298,15 @@ class PagePayloadBudgetTest(TestCase):
         # rows drawn are no more than before, so the bytes did not move.
         ("/today/panel", 46, 385),
         ("/my-targets", 170, 940),
-        ("/calendar", 285, 2210),
+        # Was 285 KB / 2210. Raised on 2026-10-05 (measured 287 / 2248) for
+        # the tick box on each calendar entry the officer may move or cancel
+        # (owner: "add checkboxes to the calendar entry so people can
+        # reschedule from the calendar direct"), a box for a day that holds
+        # several, Select all, and the bar they open. An entry is drawn in
+        # the month grid and in both agendas, so each box is drawn three
+        # times; it is named by its label attribute rather than a hidden
+        # span to keep that to one element.
+        ("/calendar", 290, 2270),
     )
 
     @classmethod

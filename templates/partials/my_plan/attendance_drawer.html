@@ -67,6 +67,7 @@ class="edify-text-caption font-semibold edify-primary-text edify-primary-text-ho
 </button>
 {% endif %}
 </div>
+{% if cluster_schools %}{% include "partials/components/select_all.html" with boxes="input[name=attended_schools]" %}{% endif %}
 <div role="group" aria-labelledby="attendance-schools-label" class="rounded-control border border-slate-200 divide-y divide-slate-100 max-h-48 overflow-y-auto">
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">

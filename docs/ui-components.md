@@ -122,3 +122,116 @@ their counts so that branches in flight on 2026-10-02 can land.
 Use the three tags. Do not write `class="edify-page-header"` or a `<form>` with
 its own `requestSubmit()` by hand: the ratchet will fail. A table that fits the
 card anatomy uses `{% data_table %}`.
+
+## Tick boxes
+
+Owner, 2026-10-05: "all the places with checkboxes can you add Select All
+Checkbox", and "use checkboxes to mark all the cluster meetings or group
+training, or school visits ... and then select reschedule in the action
+buttons". One script, `static/js/group-select.js`, loaded by the shell, does
+both. It reads attributes and keeps no state of its own, so a list swapped in
+by htmx or drawn by Alpine works without being registered.
+
+**Select all.** A checkbox carrying `data-select-all` ticks every enabled box
+that can be seen in its scope: the nearest `[data-select-scope]`, else the
+table, fieldset or form it sits in. Give it a selector as its value where the
+scope holds other boxes too (`data-select-all="input[name=staffIds]"`). Each
+box gets its own `change` event, so a list bound with `x-model` or counted by
+an `@change` handler keeps up, and the box reads back ticked, part-ticked or
+clear as the list changes. For a list in a form:
+
+```django
+{% include "partials/components/select_all.html" with boxes="input[name=staffIds]" %}
+```
+
+A table's tick column puts the box in its header cell instead.
+
+A list where ticking everything is not a choice anyone makes has none: a set
+of return reasons, the nine attestations of an IA review, a list of roles to
+grant. `SelectAllContract` in `apps/frontend/test_group_select.py` names each
+one and why, and fails when a template repeats a tick box without a Select
+all.
+
+**Ticked activities.** A planned activity the reader may move or cancel
+carries `input[data-activity-pick]` with the activity's id as its value:
+
+```django
+{% include "partials/activities/pick_head.html" %}   {# the header cell #}
+{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}
+{% include "partials/activities/selection_bar.html" %}  {# once per page #}
+```
+
+Ticking one shows the bar with Reschedule, Cancel and Clear. The two buttons
+open `/activity-selection/reschedule` and `/activity-selection/cancel`, which
+list what will change and what will be left, and why
+(`apps/activities/group_actions.py`). The same activity drawn twice (a
+calendar's month grid and its agenda) is one tick. Draw the tick column only
+where a row on the page can be ticked (`|any_attr:"can_pick"`), and put the
+bar where it is always rendered: not inside a folded `<details>`.
+
+It is on My Plan, the Work Plan, the Dashboard's past-due tables, a Program
+Lead's week tables, the Planned table of every profile, the Calendar and
+Planning's Calendar View.
+
+## Live regions
+
+Owner, 2026-10-05: "Every event should update (schedules, school withdrawal
+from the partner or project, training schedules, activity completion etc)
+should update in real time and fast."
+
+A page that shows the plan keeps up with it without being refreshed. Mark the
+part that shows it:
+
+```django
+<div id="my-plan-workspace" data-live-region>…</div>
+```
+
+The region needs an id, and its state (filters, tab, page) belongs in the
+address bar, because the page is read again from the address it is at.
+
+How it works:
+
+- `apps/activities/live.py` hangs on the save and delete of an activity, a
+  hand-over to a partner and a school's place in a project. After the change
+  commits it sends a `plan.changed` event, carrying only the time, to the
+  people whose pages show that record: the owner and the monitor, the people
+  they report to, the holder of the school or cluster, the partner, the
+  project's coordinator and the country readers.
+- `static/js/live-regions.js` opens the stream the server already had
+  (`/api/realtime/stream`) on a page that has a live region. On the event it
+  fetches the page it is on and replaces each marked region with the fresh
+  one of the same id, then lets htmx, Alpine and the table scripts take it up.
+- It never swaps under an open drawer, a ticked activity, an open Actions
+  menu or a field in use: it waits until they are done. A hidden tab closes
+  its stream; when it is looked at again the stream says whether anything
+  changed meanwhile, and only then is the page read again.
+
+A region that holds state the address does not (rows opened, a tab chosen in
+the page) looks after it itself, as Country Planning Oversight's two tables
+do (`partials/country_oversight/_table.html`, `_types.html`):
+
+- a tab chosen with Alpine is kept in a `window` variable and read back when
+  the region is drawn again;
+- while a reader has rows open the region gives up its mark
+  (`:data-live-region="open ? false : ''"`), notes that it missed a change
+  (`@edify:live-refreshed.document`), and calls `window.EdifyLive.refresh()`
+  once the rows are closed. A region whose view cannot be recovered at all
+  (the execution lens's table of five views) is left unmarked.
+
+A page that serves kept figures tells the reader when to ask again. Country
+Oversight rebuilds its fold no more often than its settle window, so a read
+inside the window includes `partials/country_oversight/_settle.html`, which
+asks once more when newer figures are due (`freshness.settles_in`). The page's
+own re-read names itself (`X-Requested-With: EdifyLive`): it is never a forced
+rebuild (`freshness.live_read`) and never marks the person as present in the
+Staff Activity Log (`SlidingSessionMiddleware`).
+
+The settled hooks run a moment after the swap, as htmx's own do: fired at
+once, the table scripts moved rows before Alpine had seen them and every menu
+inside the region was left dead.
+
+Production needs the ASGI workers and Redis the stream was built for
+(`Procfile`). `LIVE_UPDATES_ENABLED=false` switches the announcements off
+without a deploy; under the test runner they are off unless a test turns
+them on, so they add nothing to the suite's query counts. Locally the stream
+needs `manage.py runserver` without `--noasgi`.

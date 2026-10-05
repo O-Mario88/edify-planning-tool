@@ -40,17 +40,20 @@
   <fieldset class="space-y-2">
     <legend class="block edify-text-caption font-semibold text-slate-600">Target interventions</legend>
     <p class="edify-text-caption text-slate-500">Choose at least one. Choose General when the project does not work on one SSA intervention. A project on General alone (Alumni, for example) is not measured by the SSA: its activities are offered at every school it enrols, and they do not use a school's support visit or its Core package.</p>
+    {% include "partials/components/select_all.html" %}
     <div class="grid gap-2">{% for value, label in interventions %}<label class="flex items-center gap-2"><input type="checkbox" name="targetInterventions" value="{{ value }}" class="h-4 w-4"><span>{{ label }}</span></label>{% endfor %}</div>
   </fieldset>
   <fieldset class="space-y-2">
     <legend class="block edify-text-caption font-semibold text-slate-600">Approved Activity Catalogue items</legend>
     <p class="edify-text-caption text-slate-500">Only these activities will be available in Project Planning.</p>
+    {% if catalogue_items %}{% include "partials/components/select_all.html" %}{% endif %}
     <div class="max-h-72 space-y-2 overflow-y-auto">{% for item in catalogue_items %}<label class="flex items-start gap-2 rounded-control border border-slate-200 p-2"><input type="checkbox" name="catalogueItemIds" value="{{ item.id }}" class="mt-1 h-4 w-4"><span><strong>{{ item.display_name }}</strong><span class="block edify-text-caption text-slate-500">{{ item.stable_code }} · {{ item.get_delivery_method_display }}</span></span></label>{% endfor %}</div>
   </fieldset>
   {% comment %}The partners contracted to deliver this project. Its work goes to them; anyone else needs a reason at hand-over.{% endcomment %}
   <fieldset class="space-y-2" data-project-partners>
     <legend class="block edify-text-caption font-semibold text-slate-600">Project partners</legend>
     <p class="edify-text-caption text-slate-500">The partners delivering this project. Handing its work to another partner asks for a reason. Leave empty to allow any partner.</p>
+    {% if partner_choices %}{% include "partials/components/select_all.html" %}{% endif %}
     <div class="max-h-48 grid gap-2 overflow-y-auto">{% for partner in partner_choices %}<label class="flex items-center gap-2"><input type="checkbox" name="partnerIds" value="{{ partner.id }}" class="h-4 w-4" {% if partner.id in selected_partner_ids %}checked{% endif %}><span>{{ partner.name }}</span></label>{% empty %}<p class="edify-text-caption text-slate-500">No partner can take new work right now.</p>{% endfor %}</div>
   </fieldset>
   <div class="drawer-footer">

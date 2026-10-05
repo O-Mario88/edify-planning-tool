@@ -4,7 +4,7 @@
     "ID" (both still named for a screen reader), so neither is wider than what
     it holds and the school name gets the room (owner, 2026-09-27: "there is a
     huge gap between checkboxes and the school id").{% endcomment %}
-    {% if selectable %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
+    {% if selectable %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all aria-label="Select all schools on this page"></label></th>{% endif %}
     <th scope="col" aria-label="School ID" title="School ID">ID</th>
     <th scope="col">School Name</th>
     {% if cluster_column %}<th scope="col" class="school-plan-table__cluster">Cluster</th>{% endif %}

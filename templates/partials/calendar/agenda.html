@@ -7,6 +7,7 @@ from the one events_by_date projection.{% endcomment %}
   {% for day in agenda_days %}
   <li
     class="calendar-agenda__day{% if day.is_today %} calendar-agenda__day--today{% endif %}"
+    data-select-scope
     {% if mobile_calendar %}
     x-show="dayMatches('{{ day.date|date:"Y-m-d" }}', { all: {{ day.kind_counts.all }}, activity: {{ day.kind_counts.activity }}, leave: {{ day.kind_counts.leave }}, holiday: {{ day.kind_counts.holiday }}, event: {{ day.kind_counts.event }} })"
     x-cloak
@@ -15,6 +16,8 @@ from the one events_by_date projection.{% endcomment %}
     <h3 class="calendar-agenda__date">
       <time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"l j F" }}</time>
       {% if day.is_today %}<span class="calendar-agenda__today">Today</span>{% endif %}
+      {# A day with several activities to tick has one box for the day (owner, 2026-10-05). #}
+      {% if day.kind_counts.pick > 1 %}<label class="calendar-day__pick"><input type="checkbox" data-select-all="input[data-activity-pick]"><span>Select day</span></label>{% endif %}
     </h3>
     <div class="calendar-agenda__events">
       {% for event in day.events %}{% include "partials/calendar/event.html" %}{% endfor %}

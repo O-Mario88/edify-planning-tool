@@ -1,0 +1,32 @@
+{% comment %}
+The ticked activities in a group drawer (group_reschedule_drawer.html,
+group_cancel_drawer.html): what will change, then what is left and why
+(apps.activities.group_actions.selection). `ready_heading` and `left_heading`
+name the two lists.
+{% endcomment %}
+{% if ready %}
+<section aria-labelledby="group-picks-ready">
+  <h3 id="group-picks-ready" class="text-sm font-semibold mb-2">{{ ready_heading }} ({{ ready|length }})</h3>
+  <ul class="space-y-1.5 text-sm" data-group-ready>
+    {% for pick in ready %}
+    <li class="flex items-start justify-between gap-3" data-group-pick="{{ pick.id }}">
+      <span><strong class="font-semibold">{{ pick.title }}</strong> · {{ pick.where }}{% if pick.joined %} <span class="edify-text-caption edify-text-muted">· goes with its in-school training pair</span>{% endif %}</span>
+      <span class="edify-text-caption whitespace-nowrap tabular-nums text-slate-700">{% if pick.day %}{{ pick.day|date:"j M Y" }}{% if pick.end_day %} – {{ pick.end_day|date:"j M" }}{% endif %}{% else %}Not dated{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% if left %}
+<section aria-labelledby="group-picks-left">
+  <h3 id="group-picks-left" class="text-sm font-semibold mb-2">{{ left_heading }} ({{ left|length }})</h3>
+  <ul class="space-y-1.5 text-sm" data-group-left>
+    {% for pick in left %}
+    <li data-group-pick="{{ pick.id }}">
+      <span><strong class="font-semibold">{{ pick.title }}</strong> · {{ pick.where }}{% if pick.day %} · {{ pick.day|date:"j M Y" }}{% endif %}</span>
+      <span class="block edify-text-caption edify-text-muted">{{ pick.refusal }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}

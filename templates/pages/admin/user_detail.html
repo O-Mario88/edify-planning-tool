@@ -164,6 +164,7 @@ class="edify-profile-field__value w-full h-9 px-2.5 rounded-control border borde
 <div>
 <label class="edify-profile-field__label block mb-1.5">Secondary District Assignments</label>
 <p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
+<div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=additional_districts]" %}</div>
 <div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">
@@ -236,6 +237,7 @@ Save Profile Updates
 <p id="managed-people-hint" class="mt-1 edify-text-caption font-medium text-slate-500">{% if management_team.role == "Program Lead" %}Selecting a CCEO who reports to another Program Lead will move that reporting line to {{ member.name }}.{% else %}Selections add management oversight without changing each person's direct supervisor.{% endif %}</p>
 
 {% if management_team.people %}
+<div class="mt-3">{% include "partials/components/select_all.html" with boxes="input[name=managed_staff_ids]" %}</div>
 <div class="mt-3 max-h-72 space-y-1.5 overflow-y-auto rounded-surface border border-slate-100 bg-slate-50/50 p-2">
 {% for person in management_team.people %}
 <label for="manager-{{ member.id }}-staff-{{ person.id }}" class="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border px-3 py-2 transition-colors {% if person.assigned %}border-emerald-200 bg-emerald-50/60{% else %}edify-surface border-transparent hover:border-slate-200{% endif %}">

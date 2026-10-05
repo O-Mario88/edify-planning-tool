@@ -97,6 +97,7 @@ for review" hands it to a second reviewer with the reason for the change.
 
     <fieldset class="hr-drawer-form__field">
       <legend class="block edify-text-caption font-semibold text-slate-600">Which schools this is for</legend>
+      {% include "partials/components/select_all.html" with boxes="input[name=eligible_bands]" %}
       {% for band in bands %}
       <label class="hr-drawer-form__check" for="band-{{ band|lower }}">
         <input type="checkbox" id="band-{{ band|lower }}" name="eligible_bands" value="{{ band }}"{% if band in current_bands %} checked{% endif %}>

@@ -1,4 +1,4 @@
-{% load school_identity table_pagination %}
+{% load frontend_filters school_identity table_pagination %}
 <!-- Non-School Programme Activities Card -->
 <div class="card overflow-hidden">
 
@@ -24,9 +24,15 @@ Programme Activities Planned for {% if period == 'week' %}This Week{% elif perio
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate programme_activities "programme_activities_page" as programme_activities_pager %}
 {% if programme_activities %}
+{% comment %}A tick box on each activity still live, and one in the header for
+all of them: the ticked ones are rescheduled or cancelled together from the
+bar that appears (owner, 2026-10-05). No tick column on a page with nothing
+to tick.{% endcomment %}
+{% with selectable=programme_activities_pager.rows|any_attr:"can_pick" %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
+{% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th class="min-w-[90px]">Venue ID</th>
 <th class="min-w-[240px]">School / Venue Name</th>
 <th class="min-w-[130px]">Activity</th>
@@ -42,6 +48,7 @@ Programme Activities Planned for {% if period == 'week' %}This Week{% elif perio
 <tbody>
 {% for row in programme_activities_pager.rows %}
 <tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
+{% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
@@ -70,6 +77,7 @@ Programme Activities Planned for {% if period == 'week' %}This Week{% elif perio
 {% endfor %}
 </tbody>
 </table>
+{% endwith %}
 {% include "components/table_pager.html" with pager=programme_activities_pager param="programme_activities_page" pagination_label="Programme activity pages" %}
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline

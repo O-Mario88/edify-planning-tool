@@ -1,7 +1,11 @@
-{% load frontend_filters %}<tr data-readiness-line>
+{% load frontend_filters %}{% comment %}
+One part of the planner's year. Each figure opens the schools behind it,
+under the table (owner, 2026-10-05; readiness_list.html): `planned_key`,
+`target_key` and `left_key` name the lists.
+{% endcomment %}<tr data-readiness-line>
   <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ label }}{% if note %} <span class="edify-text-muted">{{ note }}</span>{% endif %}</th>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Planned">{{ line.planned|intcomma }}{% if line.over %} <span class="edify-text-muted">{{ line.over|intcomma }} over</span>{% endif %}</td>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{% if line.required %}{{ line.target|intcomma }}{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining">{% if line.remaining %}<span class="edify-status-text" data-edify-tone="warning">{{ line.remaining|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Planned">{% include "partials/my_plan/_readiness_count.html" with count=line.planned key=planned_key %}{% if line.over %} <span class="edify-text-muted">{{ line.over|intcomma }} over</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{% if line.required %}{% include "partials/my_plan/_readiness_count.html" with count=line.target key=target_key %}{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining">{% include "partials/my_plan/_readiness_count.html" with count=line.remaining key=left_key tone="warning" %}</td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Share"><span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.percent }}%</span></td>
 </tr>

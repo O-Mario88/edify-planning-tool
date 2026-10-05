@@ -1,0 +1,56 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Move the ticked activities to one date (owner, 2026-10-05: "group reschedule
+where the users use checkboxes ... and then select reschedule in the action
+buttons"). Each one is moved by the single reschedule
+(apps.activities.group_actions), so every date rule still applies to it; the
+ones that cannot move are listed with the reason before anyone confirms.
+{% endcomment %}
+
+{% block drawer_title %}Reschedule selected activities{% endblock %}
+{% block drawer_subtitle %}{% if picks %}{{ picks|length }} selected{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if error %}
+<p class="text-sm edify-text-muted" role="alert">{{ error }}</p>
+<div class="drawer-footer">
+  <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+</div>
+{% else %}
+<form hx-post="/activity-selection/reschedule"
+      hx-target="#group-outcome"
+      hx-swap="innerHTML"
+      class="space-y-4 pr-1 edify-drawer-scroll"
+      data-group-reschedule>
+  {% csrf_token %}
+  {% for pick in ready %}<input type="hidden" name="activity_ids" value="{{ pick.id }}">{% endfor %}
+
+  {% include "partials/my_plan/group_picks.html" with ready_heading="Moving" left_heading="Staying where they are" %}
+
+  {% if ready %}
+  <div class="space-y-1">
+    <label for="group-scheduled-date" class="block edify-text-caption font-semibold text-slate-600">New date <span class="text-rose-500">*</span></label>
+    <input id="group-scheduled-date" type="date" name="scheduled_date" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+    <p class="edify-text-caption edify-text-muted">Every activity above moves to this date. An activity of several days keeps its length.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="group-reschedule-reason" class="block edify-text-caption font-semibold text-slate-600">Reason for changing the date <span class="text-rose-500">*</span></label>
+    <textarea name="reason" id="group-reschedule-reason" required rows="3"
+              placeholder="Why the date is changing"
+              class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"></textarea>
+    <p class="edify-text-caption edify-text-muted">One reason, recorded on each activity.</p>
+  </div>
+  {% else %}
+  <p class="edify-note" data-tone="warning" role="status">None of the selected activities can be rescheduled.</p>
+  {% endif %}
+
+  <div id="group-outcome" class="mt-1"></div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">{% if ready %}Keep dates{% else %}Close{% endif %}</button>
+    {% if ready %}<button type="submit" class="btn btn-primary h-8">Reschedule {{ ready|length }} activit{{ ready|length|pluralize:"y,ies" }}</button>{% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

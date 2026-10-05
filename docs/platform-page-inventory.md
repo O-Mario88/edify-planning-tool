@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **888**
-- All registered routes: **1360**
+- Routed product surfaces: **890**
+- All registered routes: **1362**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **35**
+- Scheduled jobs: **36**
 - Activity states: **24**
-- Shared component templates: **612**
+- Shared component templates: **627**
 - Full pages: **263**
 - Partials and drawers: **308**
-- Permission-gated surfaces: **872**
-- Referenced by automated tests: **781**
+- Permission-gated surfaces: **874**
+- Referenced by automated tests: **783**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -99,6 +99,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-90CD8CB5FA | /activities/closure/ | Activity Closure Center - Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-066BC4C799 | /activities/closure/blocked | Blocked Closures - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-773AE497F1 | /activities/closure/blocked/ | Blocked Closures - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0192399382 | /activity-selection/cancel | Activity Group Cancel | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4AD166CCBA | /activity-selection/reschedule | Activity Group Reschedule | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D963B414A9 | /admin-ops/incidents | System Incidents | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-06180AB33B | /admin-ops/incidents/<str:incident_id> | Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-B2C9E9652D | /admin-ops/incidents/<str:incident_id>/acknowledge | Admin Acknowledge Incident | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |

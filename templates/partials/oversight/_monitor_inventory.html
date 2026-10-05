@@ -35,22 +35,22 @@ Partner half is not yet handed over (apps.planning.readiness).
         {% for row in monitor_readiness.types %}
         <tr>
           <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}{% if row.outreach_only %} <span class="edify-text-muted">outreach only</span>{% endif %}</th>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ row.total|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Fully planned"{% if row.outreach_only %} title="Nothing to plan: donor and story visits only"{% endif %}>{{ row.fully|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Partly planned">{{ row.partly|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Not yet planned">{% if row.not_yet %}<span class="edify-status-text" data-edify-tone="danger">{{ row.not_yet|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="In a project">{{ row.in_project|intcomma }}<span class="edify-text-muted"> / {{ row.total|intcomma }}</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{% with total=row.total fully=row.fully partly=row.partly not_yet=row.not_yet in_project=row.in_project kind=row.key %}{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=total key="all" %}{% endwith %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Fully planned"{% if row.outreach_only %} title="Nothing to plan: donor and story visits only"{% endif %}>{% with count=row.fully kind=row.key %}{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=count key="fully_planned" %}{% endwith %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Partly planned">{% with count=row.partly kind=row.key %}{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=count key="partly_planned" %}{% endwith %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Not yet planned">{% with count=row.not_yet kind=row.key %}{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=count key="not_yet_planned" tone="danger" %}{% endwith %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="In a project">{% with count=row.in_project total=row.total kind=row.key %}{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=count key="in_project" %}<span class="edify-text-muted"> / </span>{% include "partials/oversight/_monitor_count.html" with row=monitor_totals school_type=kind count=total key="all" muted=1 %}{% endwith %}</td>
         </tr>
         {% endfor %}
       </tbody>
       <tfoot>
         <tr class="font-semibold" data-monitor-subtotal>
           <th scope="row" class="px-3 py-2 text-left">All schools</th>
-          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_total|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_fully|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_partly|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.schools_not_yet|intcomma }}</td>
-          <td class="px-3 py-2 text-right tabular-nums">{{ monitor_readiness.project_assigned|intcomma }}<span class="edify-text-muted"> / {{ monitor_readiness.project_total|intcomma }}</span></td>
+          <td class="px-3 py-2 text-right tabular-nums">{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.schools_total key="all" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.schools_fully key="fully_planned" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.schools_partly key="partly_planned" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.schools_not_yet key="not_yet_planned" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.project_assigned key="in_project" %}<span class="edify-text-muted"> / </span>{% include "partials/oversight/_monitor_count.html" with row=monitor_totals count=monitor_readiness.project_total key="all" muted=1 %}</td>
         </tr>
       </tfoot>
   {% endif %}
@@ -109,9 +109,9 @@ the two flagged lines are planned work no row holds.
         {% for officer in monitor_totals.officers %}{% if officer.readiness.flags %}
         <tr>
           <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ officer.name }}{% if officer.role_label %} <span class="edify-text-muted">{% if officer.is_lead %}PL{% else %}{{ officer.role_label }}{% endif %}</span>{% endif %}</th>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Booked more than once">{% if officer.readiness.duplicates %}<span class="edify-status-text" data-edify-tone="danger">{{ officer.readiness.duplicates|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Booked more than once">{% include "partials/oversight/_monitor_count.html" with row=officer count=officer.readiness.duplicates key="duplicates" tone="danger" %}</td>
           <td class="px-3 py-2 text-right tabular-nums" data-label="Visits past the ceiling">{% if officer.readiness.over_ceiling_visits %}<span class="edify-status-text" data-edify-tone="danger">{{ officer.readiness.over_ceiling_visits|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Core without the Partner half">{% if officer.readiness.core_missing_partner_half %}<span class="edify-status-text" data-edify-tone="warning">{{ officer.readiness.core_missing_partner_half|intcomma }}</span><span class="edify-text-muted"> / {{ officer.core_schools|intcomma }}</span>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Core without the Partner half">{% include "partials/oversight/_monitor_count.html" with row=officer count=officer.readiness.core_missing_partner_half key="core_no_partner_half" tone="warning" %}<span class="edify-text-muted"> / </span>{% include "partials/oversight/_monitor_count.html" with row=officer count=officer.core_schools key="core" muted=1 %}</td>
         </tr>
         {% endif %}{% endfor %}
       </tbody>

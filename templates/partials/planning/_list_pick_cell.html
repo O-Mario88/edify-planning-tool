@@ -1,0 +1,6 @@
+{% comment %}A listed school's tick box (owner, 2026-10-05: "ensure group
+actions can be applied to those schools and tables and lists as well"). It
+carries the school, for the bar's Assign to partner, and the staff activities
+planned there, for its Reschedule and Cancel
+(static/js/group-select.js reads data-school-pick and data-activity-ids).{% endcomment %}
+<td class="school-plan-table__select">{% if school.acts.can_tick %}<label class="school-record-row__select"><input type="checkbox" value="{% firstof school.code school.id %}" data-school-pick{% if school.acts.assign_url %} data-school-assign{% endif %} data-activity-ids="{{ school.acts.activity_ids }}" aria-label="Select {{ school.name }}"></label>{% endif %}</td>

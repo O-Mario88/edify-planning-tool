@@ -14,7 +14,8 @@ Partner's two visits at a Core school — and Trainings. The cells of the other
 reading are hidden the way the platform keeps a table's cells (x-show).
 {% endcomment %}
 {% if type_rows %}
-<section class="cpo-drill cxo-types" aria-labelledby="cxo-types-name" x-data="{ view: 'visits' }">
+<section class="cpo-drill cxo-types" id="cxo-types" data-live-region aria-labelledby="cxo-types-name"
+         x-data="{ view: window.cxoTypesView || 'visits' }" x-effect="window.cxoTypesView = view">
   <header class="cpo-drill-head" data-no-titlebar data-card-header>
     <h2 class="cpo-drill-name" id="cxo-types-name">Verified Against the Requirement by School Type</h2>
   </header>
