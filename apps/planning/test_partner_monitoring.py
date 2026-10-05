@@ -270,10 +270,15 @@ class FiltersAndTotalsTest(MonitoringFixture):
             return_reason_category="capacity",
             return_reason="No facilitator free this term.",
         )
-        # The two still waiting come last: a school waits on the same partner
-        # once at a time, so they cannot sit open while the others are made.
+        # Overdue is the partner's own date gone by with nothing started. A
+        # hand-over still waiting has no date to be late against (owner,
+        # 2026-10-05: staff do not date a partner's work).
+        self.overdue = self.assign(school=self.second_school)
+        self.schedule(self.overdue, when=past)
+        # The one still waiting comes last: a school waits on the same
+        # partner once at a time, so it cannot sit open while the others are
+        # made.
         self.awaiting = self.assign()
-        self.overdue = self.assign(school=self.second_school, scheduled_date=past)
         self.items = svc.build_items(self.pl_user, fy=self.fy)
 
     def matching(self, key):
@@ -281,8 +286,8 @@ class FiltersAndTotalsTest(MonitoringFixture):
 
     def test_each_filter_returns_its_records(self):
         expected = {
-            "awaiting_schedule": {self.awaiting.id, self.overdue.id},
-            "scheduled": {self.scheduled.id},
+            "awaiting_schedule": {self.awaiting.id},
+            "scheduled": {self.scheduled.id, self.overdue.id},
             "evidence_submitted": {self.submitted.id},
             "returned_by_ia": {self.returned_by_ia.id},
             "ia_verified": {self.verified.id, self.paid.id},

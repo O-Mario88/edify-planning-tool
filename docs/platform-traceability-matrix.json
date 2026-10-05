@@ -537,7 +537,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/accounts/presence_labels.py",
         "apps/activities/closure_services.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
@@ -650,7 +649,6 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
-        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -4236,7 +4234,6 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
-        "apps/accounts/presence_labels.py",
         "apps/accounts/staff_matching.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
@@ -4284,7 +4281,6 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
-        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -4710,9 +4706,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "95bf9915e149e9c0fac4867791cc26c204db63a1774a8c2c599885b8c2054075",
-    "sources": "dcaaad3e1a4e5caef6d1deac987132ab08b2bf63136afc9a8dd0690db0232964",
-    "sourceCount": 241,
+    "payload": "62d230eea5e59acd640b95efada06a324895d00399eebce0c5eada9029228e09",
+    "sources": "aea80a24085de8a50d747693351957f555a20ab160d88d0437f7468071cae5f9",
+    "sourceCount": 240,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
