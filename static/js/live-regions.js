@@ -36,7 +36,9 @@
     if (window.htmx) {
       window.htmx.process(node);
       window.htmx.trigger(node, 'htmx:load');
-      window.htmx.trigger(node, 'htmx:afterSettle');
+      // Settled a moment later, as htmx does: Alpine must see the region
+      // first, or the menus inside it are left dead.
+      setTimeout(function () { window.htmx.trigger(node, 'htmx:afterSettle'); }, 20);
     }
   }
 
@@ -96,8 +98,7 @@
     };
     stream.onerror = function () {
       // Refused (too many tabs, signed out): the browser will not retry.
-      // Ask again a few times, each a minute later than the last, then stop:
-      // a signed-out page must not knock for ever.
+      // Ask a few times, each a minute later than the last, then stop.
       if (stream && stream.readyState === 2) {
         close();
         clearTimeout(retryTimer);

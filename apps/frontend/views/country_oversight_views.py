@@ -28,6 +28,7 @@ from apps.core.permissions import (
     require_page_permission,
 )
 from apps.planning.country_oversight import followups as fu
+from apps.planning.country_oversight import freshness
 from apps.planning.country_oversight import service as svc
 from apps.planning.country_oversight.coverage import fy_label
 from apps.planning.country_oversight.requirements import NO_LEAD_KEY, NO_OWNER_KEY
@@ -190,9 +191,12 @@ def _linked_cards(cards: list[dict]) -> list[dict]:
 def coverage_page(request):
     """The planning-coverage dashboard: the page's default lens."""
     filters = svc.read_filters(request)
-    refresh = request.GET.get("refresh") == "1"
+    refresh = request.GET.get("refresh") == "1" and not freshness.live_read(request)
     snapshot = svc.snapshot_for(request.user, filters, refresh=refresh)
     context = _dashboard_context(request, snapshot, filters)
+    # The page follows the plan live; inside the settle window it is told
+    # when to ask again (freshness.settles_in).
+    context["settle_seconds"] = freshness.settles_in(snapshot.built_at)
     if request.headers.get("HX-Request") == "true":
         # A partial for every in-page request: the workspace when only it is
         # swapped, otherwise the whole dashboard, never the shell around it.

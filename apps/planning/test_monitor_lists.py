@@ -227,3 +227,25 @@ class MyPlanFiguresOpenTheirSchools(ProfileActivitiesFixture):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["plan_list"])
+
+
+class LinkedNumbersArePlain(SimpleTestCase):
+    """Owner, 2026-10-05: "the numbers with links do not have to be
+    underlined." Not at rest and not under the pointer."""
+
+    PARTIALS = (
+        "partials/oversight/_monitor_count.html",
+        "partials/oversight/_monitor_row.html",
+        "partials/my_plan/_readiness_count.html",
+    )
+
+    def test_no_count_asks_for_an_underline(self):
+        for name in self.PARTIALS:
+            with self.subTest(template=name):
+                text = (settings.BASE_DIR / "templates" / name).read_text()
+                self.assertNotIn("hover:underline", text)
+                self.assertNotRegex(text, r'class="[^"]*(?<!no-)underline')
+
+    def test_a_country_oversight_figure_is_not_underlined(self):
+        css = (settings.BASE_DIR / "static/css/pages/country-oversight.css").read_text()
+        self.assertRegex(css, r"\.cpo-table a\.cpo-link\s*\{\s*text-decoration:\s*none")

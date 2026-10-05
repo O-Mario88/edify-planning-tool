@@ -1581,7 +1581,13 @@ class PageTest(World):
         lead = lead[: lead.index("</tbody>")]
         self.assertIn('<span data-opens-rows @click="toggle()">Lead A</span>', lead)
         self.assertRegex(lead, r'class="cpo-toggle"[^>]*\s@click="toggle\(\)"')
-        self.assertIn("toggle() { this.open = !this.open; this.load(); }", body)
+        # The toggle also counts the Leads open, so the table is not read
+        # again under a reader who has rows open (owner, 2026-10-05).
+        self.assertIn(
+            "toggle() { this.open = !this.open; "
+            "this.openLeads += this.open ? 1 : -1; this.load(); }",
+            body,
+        )
         self.assertIn("if (!this.loaded) { this.loaded = true;", body)
         self.assertIn("if (more && !more.dataset.asked)", body)
         people = client.get(

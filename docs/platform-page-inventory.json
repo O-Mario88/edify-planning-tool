@@ -4436,7 +4436,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8090,
+      "bytes": 8192,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4777,7 +4777,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16919,
+      "bytes": 17489,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4863,7 +4863,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2269,
+      "bytes": 2302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5065,10 +5065,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 713,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Settle",
+      "purpose": "Reusable  settle interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_settle.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14190,
+      "bytes": 14978,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5093,7 +5114,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 18946,
+      "bytes": 19185,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5380,7 +5401,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10315,
+      "bytes": 10539,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5502,7 +5523,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3473,
+      "bytes": 3825,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -9625,7 +9646,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 647,
+      "bytes": 661,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10958,7 +10979,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1420,
+      "bytes": 1434,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11065,7 +11086,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8201,
+      "bytes": 8229,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -116013,7 +116034,7 @@
     "activity_states": 24,
     "all_routes": 1362,
     "api_routes": 360,
-    "component_templates": 626,
+    "component_templates": 627,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 282,

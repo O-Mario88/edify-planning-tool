@@ -206,6 +206,30 @@ How it works:
   its stream; when it is looked at again the stream says whether anything
   changed meanwhile, and only then is the page read again.
 
+A region that holds state the address does not (rows opened, a tab chosen in
+the page) looks after it itself, as Country Planning Oversight's two tables
+do (`partials/country_oversight/_table.html`, `_types.html`):
+
+- a tab chosen with Alpine is kept in a `window` variable and read back when
+  the region is drawn again;
+- while a reader has rows open the region gives up its mark
+  (`:data-live-region="open ? false : ''"`), notes that it missed a change
+  (`@edify:live-refreshed.document`), and calls `window.EdifyLive.refresh()`
+  once the rows are closed. A region whose view cannot be recovered at all
+  (the execution lens's table of five views) is left unmarked.
+
+A page that serves kept figures tells the reader when to ask again. Country
+Oversight rebuilds its fold no more often than its settle window, so a read
+inside the window includes `partials/country_oversight/_settle.html`, which
+asks once more when newer figures are due (`freshness.settles_in`). The page's
+own re-read names itself (`X-Requested-With: EdifyLive`): it is never a forced
+rebuild (`freshness.live_read`) and never marks the person as present in the
+Staff Activity Log (`SlidingSessionMiddleware`).
+
+The settled hooks run a moment after the swap, as htmx's own do: fired at
+once, the table scripts moved rows before Alpine had seen them and every menu
+inside the region was left dead.
+
 Production needs the ASGI workers and Redis the stream was built for
 (`Procfile`). `LIVE_UPDATES_ENABLED=false` switches the announcements off
 without a deploy; under the test runner they are off unless a test turns

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **626**
+Components and application partials: **627**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -211,6 +211,7 @@ Components and application partials: **626**
 | `partials/country_oversight/_followup_list.html` | application-partial | Reusable  followup list interface primitive | {{ item.tone }}; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/drawer<br>/country-planning-oversight/execution/follow-up<br>/country-planning-oversight/follow-up | 0 |
 | `partials/country_oversight/_gaps.html` | application-partial | Reusable  gaps interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/drawer | 0 |
 | `partials/country_oversight/_glyph.html` | application-partial | Reusable  glyph interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/ | 0 |
+| `partials/country_oversight/_settle.html` | application-partial | Reusable  settle interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_table.html` | application-partial | Reusable  table interface primitive | canonical; default, empty, open | explicit responsive contract | accessible name and label | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_types.html` | application-partial | Reusable  types interface primitive | fair, good, {% if row.core_staff_done_share is None %}none{% else %}good{% endif %}, {{ row.partner_assigned_tone }}, {{ row.partner_scheduled_tone }}, {{ row.slot_tone }}, {{ row.staff_tone }}, {{ row.training_partner_assigned_tone }}, {{ row.training_partner_tone }}, {{ row.training_staff_tone }}, {{ row.training_tone }}; default, empty, open | explicit responsive contract | accessible name and label | /country-planning-oversight/ | 0 |
 | `partials/country_oversight/_uganda_outline.html` | application-partial | Reusable  uganda outline interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /country-planning-oversight/ | 0 |

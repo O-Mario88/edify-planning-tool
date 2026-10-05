@@ -21,7 +21,10 @@ too. A tab picks the columns, and the rows stay where they are:
 * Trainings — the same split: a school's one training goes where its one
   visit does.
 {% endcomment %}
-<section class="cpo-drill" aria-labelledby="cpo-types-name" x-data="{ view: 'schools' }">
+{% comment %}Read again when the plan changes; the tab the reader chose is
+kept across the redraw (window.cpoTypesView).{% endcomment %}
+<section class="cpo-drill" id="cpo-types" data-live-region aria-labelledby="cpo-types-name"
+         x-data="{ view: window.cpoTypesView || 'schools' }" x-effect="window.cpoTypesView = view">
   <header class="cpo-drill-head" data-no-titlebar data-card-header>
     <h2 class="cpo-drill-name" id="cpo-types-name">Planned and Not Yet Planned by School Type</h2>
   </header>

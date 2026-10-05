@@ -1,0 +1,9 @@
+{% comment %}
+Read again once the figures have settled. These pages follow the plan live
+(static/js/live-regions.js), and a read inside the settle window is served the
+figures as they were (apps.planning.country_oversight.freshness.settles_in):
+this asks once more when a newer fold is due, so the last change of a busy
+minute still shows. Drawn only while the figures are behind the plan, and
+inside a region that is itself read again, so it never repeats on its own.
+{% endcomment %}
+{% if settle_seconds %}<span style="display: none" x-data x-init="clearTimeout(window.cpoSettle); window.cpoSettle = setTimeout(() => window.EdifyLive && window.EdifyLive.refresh(), {{ settle_seconds }}000)"></span>{% endif %}

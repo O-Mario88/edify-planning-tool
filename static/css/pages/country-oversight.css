@@ -312,6 +312,10 @@
   cursor: pointer;
   text-decoration: underline;
 }
+/* A figure that opens the table behind it is not underlined (owner,
+   2026-10-05): its colour and weight say it is a link, and a table of
+   underlined numbers reads as a table of corrections. */
+.cpo-table a.cpo-link { text-decoration: none; }
 
 .cpo-workspace { display: flex; flex-direction: column; gap: 0.9rem; }
 

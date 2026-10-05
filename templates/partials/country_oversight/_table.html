@@ -16,7 +16,15 @@ the year's visits are shared between staff and the Partner, against the 280 or
 tabs, how full staff capacity is and what that leaves the Partner: each figure
 is a column total of the table under it.
 {% endcomment %}
-<section class="cpo-drill" aria-labelledby="cpo-drill-name" x-data="{ country: true, view: 'workload' }">
+{% comment %}Read again when the plan changes (owner, 2026-10-05), but never
+under a reader who has rows open: while a Lead is open or the country is folded
+the table gives up its live mark, notes that it missed a change, and reads
+itself once the rows are closed. The tab is kept across the redraw.{% endcomment %}
+<section class="cpo-drill" id="cpo-drill" data-live-region aria-labelledby="cpo-drill-name"
+         x-data="{ country: true, view: window.cpoDrillView || 'workload', openLeads: 0, missed: false }"
+         x-effect="window.cpoDrillView = view; if (!openLeads && country && missed) { missed = false; window.EdifyLive && window.EdifyLive.refresh(); }"
+         :data-live-region="openLeads || !country ? false : ''"
+         @edify:live-refreshed.document="if (openLeads || !country) missed = true">
   <header class="cpo-drill-head" data-no-titlebar data-card-header>
     <h2 class="cpo-drill-name" id="cpo-drill-name">Country <span aria-hidden="true">→</span> Program Lead <span aria-hidden="true">→</span> CCEO <span aria-hidden="true">→</span> Partner Drill-down</h2>
     <div class="cpo-drill-tools">
@@ -88,8 +96,8 @@ is a column total of the table under it.
       another closes them. The chevron is the same switch for the keyboard
       and screen readers. Rows are fetched on the first opening only.{% endcomment %}
       <tbody x-data="{ open: false, loaded: false, owners: {},
-                       show() { this.open = true; this.load(); },
-                       toggle() { this.open = !this.open; this.load(); },
+                       show() { if (!this.open) { this.open = true; this.openLeads += 1; } this.load(); },
+                       toggle() { this.open = !this.open; this.openLeads += this.open ? 1 : -1; this.load(); },
                        load() { if (!this.loaded) { this.loaded = true; this.$nextTick(() => htmx.trigger(this.$refs.more, 'cpo-load')); } },
                        toggleOwner(key, ref) { this.owners[key] = !this.owners[key]; const more = this.$refs[ref]; if (more && !more.dataset.asked) { more.dataset.asked = '1'; htmx.trigger(more, 'cpo-load'); } } }"
              x-show="country"
