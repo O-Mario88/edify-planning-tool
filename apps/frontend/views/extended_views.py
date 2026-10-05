@@ -4498,7 +4498,6 @@ def project_monitoring_view(request):
     """
     from django.http import HttpResponseNotAllowed
 
-    from apps.core.fy import fy_options
     from apps.projects import monitoring
 
     # Nothing here writes — the coordinator's controls open drawers served by
@@ -4520,7 +4519,13 @@ def project_monitoring_view(request):
     # the strip and its counts; the open tab's card is the one drawn, and the
     # first project opens when none is asked for. The stage filter narrows
     # school rows, never projects, so every project keeps its tab.
-    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
+    # The column filters (district, partner, training, purpose, activity
+    # status) narrow the same rows the stage does, and travel with every link
+    # that keeps the page's filters: the tabs, the exports, the refresh.
+    picks = monitoring.row_picks(request.GET)
+    result = monitoring.project_monitoring(
+        request.user, fy=fy, stage=selected_stage, picks=picks
+    )
     project_ids = [row.id for row in result.rows]
     if selected_project not in project_ids:
         selected_project = project_ids[0] if project_ids else ""
@@ -4541,11 +4546,22 @@ def project_monitoring_view(request):
             "rows": [row for row in result.rows if row.id == selected_project],
             "project_tabs": project_tabs,
             "selected_project": selected_project,
-            "stage_options": monitoring.STAGE_FILTERS,
             "selected_stage": selected_stage,
+            "monitor_fields": _project_monitoring_filters(
+                monitoring.row_filter_options(result, picks),
+                selected_stage,
+                fy,
+            ),
+            "filter_query": urlencode(picks),
+            # Clear takes the filters off and keeps the open project and year.
+            "filter_reset_url": (
+                "/projects/monitoring?"
+                + urlencode({"project": selected_project, "fy": fy})
+                if selected_stage or picks
+                else ""
+            ),
             "workload": _own_workload(request, fy),
             "fy": fy,
-            "fy_options": fy_options(),
             # The country's projects as flat, exportable tables, for whoever
             # reads Country Planning Oversight (Impact Assessment, the
             # Country Director).
@@ -4559,6 +4575,34 @@ def project_monitoring_view(request):
             "can_export": RolePermissionService.can_export(request.user, request.path),
         },
     )
+
+
+def _project_monitoring_filters(column_filters, selected_stage, fy) -> list[dict]:
+    """Project Monitoring's filter row, in the order it is read: where the
+    schools are, where they stand, which year, then the table's other
+    columns. A narrow screen folds the tail behind More filters, so the
+    filters reached for most come first (owner, 2026-10-05: "add all other
+    relevant filters like district")."""
+    from apps.core.fy import fy_options
+    from apps.projects import monitoring
+
+    district, *others = column_filters
+    return [
+        district,
+        {
+            "key": "stage",
+            "label": "School stage",
+            "selected": selected_stage,
+            "options": list(monitoring.STAGE_FILTERS),
+        },
+        {
+            "key": "fy",
+            "label": "Fiscal year",
+            "selected": str(fy),
+            "options": [(str(option), f"FY {option}") for option in fy_options()],
+        },
+        *others,
+    ]
 
 
 def _monitoring_fy(request) -> str:

@@ -2652,7 +2652,12 @@ def special_project_export_view(request, project_id: str = "all"):
     requested_stage = (request.GET.get("stage") or "").strip()
     selected_stage = requested_stage if requested_stage in stages else ""
 
-    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
+    result = monitoring.project_monitoring(
+        request.user,
+        fy=fy,
+        stage=selected_stage,
+        picks=monitoring.row_picks(request.GET),
+    )
     _narrow_project_schools(
         result, (request.GET.get("project_status") or "schools").strip()
     )

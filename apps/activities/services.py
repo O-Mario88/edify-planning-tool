@@ -5322,7 +5322,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 _gated_type = (
                     "school_visit"  # a school handover with no type is a visit
                 )
-            if is_gated_visit(_rule, _gated_type, catalogue_item):
+            # A project's hand-over goes past the school rules for now
+            # (owner, 2026-10-05; `partners.handover_policy`) — here as where
+            # it was made, so the partner is not refused work it was handed:
+            # the gate's one partner refusal (a Champion school), and the
+            # Core package's partner half below.
+            from apps.partners.handover_policy import past_school_rules
+
+            _past_rules = past_school_rules(project_id=pa.project_id)
+            if not _past_rules and is_gated_visit(_rule, _gated_type, catalogue_item):
                 assert_partner_may_schedule_visit(
                     pa.school, fy, exclude_activity_id=pa.scheduled_activity_id
                 )
@@ -5332,14 +5340,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             from apps.core_schools.package_credit import package_kind_for
             from apps.core_schools.package_split import PARTNER, assert_side_open
 
-            assert_side_open(
-                pa.school,
-                package_kind_for(_sched_activity_type, pa.purpose_of_visit),
-                PARTNER,
-                fy=fy,
-                exclude_activity_id=pa.scheduled_activity_id,
-                exclude_assignment_id=pa.id,
-            )
+            if not _past_rules:
+                assert_side_open(
+                    pa.school,
+                    package_kind_for(_sched_activity_type, pa.purpose_of_visit),
+                    PARTNER,
+                    fy=fy,
+                    exclude_activity_id=pa.scheduled_activity_id,
+                    exclude_assignment_id=pa.id,
+                )
         if pa.school_id:
             from apps.activities.duplicate_visits import (
                 assert_not_duplicate_client_visit,

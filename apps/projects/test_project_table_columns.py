@@ -43,11 +43,16 @@ PAGE_COLUMNS = [
 
 
 def _headings(body: str) -> list[str]:
+    """The table's column headings. The coordinator's tick column is a
+    control beside them, not one of the owner's columns."""
     start = body.index("data-project-schools")
     table = body[start : body.index("</thead>", start)]
     return [
         re.sub(r"\s*<br>\s*", " ", heading)
-        for heading in re.findall(r'<th scope="col"[^>]*>(.+?)</th>', table)
+        for heading in re.findall(
+            r'<th scope="col"(?! class="school-plan-table__select")[^>]*>(.+?)</th>',
+            table,
+        )
     ]
 
 

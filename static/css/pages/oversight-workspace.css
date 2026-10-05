@@ -792,3 +792,30 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
 @media (prefers-reduced-motion: reduce) {
   .oversight-export__chevron { transition: none; }
 }
+
+/* Project Monitoring: the filters, then the workspace's tab pill, on one line
+   above the figures (owner, 2026-10-05). The shared view toolbar pushes its
+   two groups apart; here the pill follows the filters, on their baseline. */
+.edify-view-toolbar[data-project-monitoring-controls] {
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+/* The platform's filter contract makes every filter row the full width, at an
+   id's weight; the page's own id lets this one take the room the pill leaves,
+   and drop the pill to a line of its own only where the fields would have
+   less than 26rem. */
+#project-monitoring-root [data-project-monitoring-controls] > .edify-filter-bar {
+  flex: 1 1 26rem;
+  inline-size: auto;
+  min-inline-size: 0;
+}
+[data-project-monitoring-controls] > .edify-section-nav { flex: 0 0 auto; }
+
+/* The bar that comes up once project schools are ticked sits above the phone
+   and tablet bottom navigation rather than over it. */
+@media (max-width: 63.999rem) {
+  .fixed[data-project-bulk-bar] {
+    inset-block-end: calc(var(--edify-bottom-nav-height, 3.5rem) + env(safe-area-inset-bottom, 0px) + .75rem);
+    max-inline-size: calc(100vw - 1.5rem);
+  }
+}

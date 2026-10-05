@@ -324,6 +324,42 @@ class EveryDoorAsksTest(_SplitFixture):
                 visit_number="3",
             )
 
+    def test_a_project_s_hand_over_goes_past_the_partner_half_for_now(self):
+        """Owner, 2026-10-05: "all projects schools added to a project can be
+        assigned to any partner"; asked whether that goes past the Core
+        package's partner half, "yes for now"
+        (apps.partners.handover_policy). The half is unchanged for every
+        hand-over that names no project, and one switch brings it back."""
+        from unittest import mock
+
+        from apps.projects.models import Project, ProjectCategory
+
+        project = Project.objects.create(
+            name="Split Hand-over Project", category=ProjectCategory.choices[0][0]
+        )
+        self._handover(VISIT, 1)
+        self._partner_activity()
+
+        def hand_over(**fields):
+            return partner_services.create_assignment(
+                school=self.school,
+                partner=Partner.objects.create(
+                    name=f"Split Partner {Partner.objects.count()}", active_status=True
+                ),
+                expected_activity_type="school_visit",
+                purpose_of_visit="training_follow_up",
+                **fields,
+            )
+
+        with self.assertRaisesMessage(BadRequest, "2 partner core visits"):
+            hand_over()
+        with mock.patch(
+            "apps.partners.handover_policy.PROJECT_HANDOVERS_KEEP_SCHOOL_RULES", True
+        ):
+            with self.assertRaisesMessage(BadRequest, "2 partner core visits"):
+                hand_over(project=project)
+        self.assertEqual(hand_over(project=project).project_id, project.id)
+
     def test_a_partner_hand_over_is_not_refused_over_a_full_package(self):
         """It used to refuse once all 4 + 4 were taken, even with the
         partner's own half empty."""

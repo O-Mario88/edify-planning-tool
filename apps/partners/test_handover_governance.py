@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+from unittest import mock
+
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
@@ -129,7 +131,12 @@ class ProjectPartnerListTest(_Fixture):
         with self.assertRaises(BadRequest):
             set_partners(self.project, ["no-such-partner"])
 
+    @mock.patch(
+        "apps.partners.handover_policy.PROJECT_HANDOVERS_KEEP_SCHOOL_RULES", True
+    )
     def test_a_partner_outside_the_list_needs_a_reason(self):
+        """The rule, held with its switch on: project hand-overs go past it
+        for now (owner, 2026-10-05; apps.partners.handover_policy)."""
         from apps.projects.services import set_partners
 
         set_partners(self.project, [self.partner.id])

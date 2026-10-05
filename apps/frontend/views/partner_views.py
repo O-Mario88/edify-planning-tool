@@ -1686,12 +1686,17 @@ def _annotate_schedule_gate(assignment, gate_map) -> None:
     """``can_schedule`` / ``schedule_blocked_reason`` on a partner assignment,
     from the school's visit gate. Cluster work and returned rows are not
     gated here."""
+    from apps.partners.handover_policy import past_school_rules
     from apps.planning.visit_gate import is_gated_visit
 
     assignment.can_schedule = True
     assignment.schedule_blocked_reason = ""
     gate = gate_map.get(assignment.school_id) if assignment.school_id else None
     if gate is None or assignment.status not in ("assigned", "pending_scheduling"):
+        return
+    # A project's hand-over goes past the gate's partner refusal for now
+    # (owner, 2026-10-05), as the door that dates it does.
+    if past_school_rules(project_id=assignment.project_id):
         return
     # An assignment with no recorded type is a school visit: that is what a
     # school-scoped handover is (see _assignment_is_school_scoped).

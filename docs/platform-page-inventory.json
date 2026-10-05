@@ -13084,7 +13084,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5285,
+      "bytes": 7912,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -13104,15 +13104,13 @@
       ],
       "tables": 0,
       "template": "partials/projects/bulk_partner_drawer.html",
-      "variants": [
-        "warning"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3254,
+      "bytes": 5323,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-schedule"
@@ -13123,10 +13121,9 @@
       "kind": "application-partial",
       "name": "Bulk Schedule Drawer",
       "purpose": "Reusable bulk schedule drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty",
         "error",
         "disabled"
       ],
@@ -13299,7 +13296,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 13560,
+      "bytes": 15351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/monitoring",
@@ -13430,7 +13427,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 19500,
+      "bytes": 19526,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -13850,6 +13847,7 @@
         "/planning/assign-partner-modal",
         "/planning/schedule-modal",
         "/projects/<str:project_id>/schools/bulk-assign-drawer",
+        "/projects/planning/bulk-partner",
         "/schools/<str:school_id>/add-to-cluster",
         "/schools/<str:school_id>/assign-to-project"
       ],
@@ -80820,9 +80818,13 @@
       "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "shared-page-header-component",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /projects/monitoring?project={{ selected_project }}&amp;stage={{ selected_stage }}&amp;fy={{ fy }}{% if filter_query %}&amp;{{ filter_query }}{% endif %}",
+        "GET /projects/planning/bulk-partner",
+        "GET /projects/planning/bulk-schedule"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -80908,6 +80910,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[12px]",
         "text-[13px]",
         "text-[15px]",
         "text-[18px]"
@@ -81702,11 +81705,12 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/drawer_error.html",
         "template:partials/projects/bulk_partner_drawer.html",
         "test:referenced-by-automated-test",
         "permission:projects"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -81726,9 +81730,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Assign activit",
+      "primary_action": "Assign school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Create traceable partner activities for selected project-school pairs.",
+      "purpose": "Hand project schools to a partner, who schedules them: one school from its row's Actions menu, or the schools ticked on Project Monitoring or Special Projects Planning.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -81779,6 +81783,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/projects/bulk_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -81795,7 +81800,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.planning_views",
       "backend_view": "apps.frontend.views.planning_views.special_projects_bulk_schedule_view",
       "card_count": 0,
@@ -81806,7 +81811,7 @@
         "test:referenced-by-automated-test",
         "permission:projects"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -81826,9 +81831,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Schedule activit",
+      "primary_action": "Schedule school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Schedule the same dated visit for selected project-school pairs.",
+      "purpose": "Schedule the same dated work, by the coordinator, at selected project schools.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -81866,7 +81871,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -81886,7 +81891,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[13px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -113229,6 +113235,7 @@
       "route": "/projects/planning/bulk-partner",
       "route_name": "special_projects_bulk_partner",
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/projects/bulk_partner_drawer.html"
       ]
     },
