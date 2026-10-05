@@ -1127,7 +1127,7 @@
    "audit_id": "KPI-SOURCE-058",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2753,
+   "line": 2750,
    "label": null,
    "keys": [
     "aging",
@@ -1217,7 +1217,7 @@
    "audit_id": "KPI-SOURCE-062",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2671,
+   "line": 2668,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1235,7 +1235,7 @@
    "audit_id": "KPI-SOURCE-063",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2672,
+   "line": 2669,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1253,7 +1253,7 @@
    "audit_id": "KPI-SOURCE-064",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2673,
+   "line": 2670,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1271,7 +1271,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2674,
+   "line": 2671,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1289,7 +1289,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2675,
+   "line": 2672,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1307,7 +1307,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2676,
+   "line": 2673,
    "label": "Returned",
    "keys": [
     "amount",
@@ -2084,7 +2084,7 @@
    "audit_id": "KPI-SOURCE-107",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 2121,
+   "line": 2119,
    "label": null,
    "keys": [
     "amount",
@@ -3845,7 +3845,7 @@
    "audit_id": "KPI-SOURCE-203",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3720,
+   "line": 3716,
    "label": null,
    "keys": [
     "label",
@@ -3862,7 +3862,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4532,
+   "line": 4528,
    "label": null,
    "keys": [
     "count",
@@ -3919,7 +3919,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3626,
+   "line": 3622,
    "label": "About",
    "keys": [
     "label",
@@ -3936,7 +3936,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3627,
+   "line": 3623,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3953,7 +3953,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3628,
+   "line": 3624,
    "label": "Flag",
    "keys": [
     "label",
@@ -3970,7 +3970,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3629,
+   "line": 3625,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8700,7 +8700,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3186,
+   "line": 3185,
    "label": null,
    "keys": [
     "count",
@@ -8813,7 +8813,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3217,
+   "line": 3216,
    "label": "All team members",
    "keys": [
     "count",
@@ -8831,7 +8831,7 @@
    "audit_id": "KPI-SOURCE-488",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3223,
+   "line": 3222,
    "label": null,
    "keys": [
     "count",
@@ -15672,7 +15672,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/accounts",
-   "page_title": "Dashboard",
+   "page_title": "Fund Disbursement Dashboard",
    "roles": [
     "ACCOUNTANT",
     "ADMIN"
@@ -15697,7 +15697,7 @@
    "presentation": "context",
    "page_type": "operational",
    "route": "/accounts",
-   "page_title": "Dashboard",
+   "page_title": "Fund Disbursement Dashboard",
    "roles": [
     "ACCOUNTANT",
     "ADMIN"
@@ -42134,7 +42134,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3177,
+   "line": 3175,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42156,7 +42156,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3924,
+   "line": 3920,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
