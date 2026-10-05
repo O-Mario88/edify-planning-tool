@@ -1795,6 +1795,15 @@ def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)
 
 
+def _admin_lines_totals_by_month(fy: str) -> dict[str, int]:
+    """Map of month_key -> admin lines sum for the entire FY in one query."""
+    from apps.monthly_work_plan.models import AdminBudgetLine
+
+    qs = AdminBudgetLine.objects.filter(monthly_budget__fy=fy, status="active")
+    rows = qs.values("monthly_budget__month_key").annotate(total=Sum("total_cost"))
+    return {r["monthly_budget__month_key"]: int(r["total"] or 0) for r in rows}
+
+
 _REQUESTED_ADVANCE_STATUSES = [
     "pending_responsible_confirmation",
     "confirmed_for_advance",
@@ -1969,12 +1978,24 @@ def monthly_budget(query: dict) -> dict:
 def monthly_budgets(fy: str) -> list[dict]:
     """`monthly_budget` for months 1..12 of the FY, from one grouped rollup."""
     rollups = get_budget_rollups(fy, by="month")
-    return [_monthly_budget_from(fy, month, rollups[month]) for month in range(1, 13)]
+    admin_totals = _admin_lines_totals_by_month(fy)
+    return [
+        _monthly_budget_from(
+            fy,
+            month,
+            rollups[month],
+            admin_total=admin_totals.get(_month_key(fy, month), 0),
+        )
+        for month in range(1, 13)
+    ]
 
 
-def _monthly_budget_from(fy: str, month: int, rollup: dict) -> dict:
+def _monthly_budget_from(
+    fy: str, month: int, rollup: dict, *, admin_total: int | None = None
+) -> dict:
     month_key = _month_key(fy, month)
-    admin_total = _admin_lines_total(fy, month_key=month_key)
+    if admin_total is None:
+        admin_total = _admin_lines_total(fy, month_key=month_key)
     return {
         "fy": fy,
         "month": month,
@@ -2000,9 +2021,8 @@ def quarterly_budget(query: dict) -> dict:
     quarter = query.get("quarter") or "Q1"
     # Admin items are monthly; approximate the quarter as the union of its months.
     quarter_months = _quarter_months(quarter)
-    admin_total = sum(
-        _admin_lines_total(fy, month_key=_month_key(fy, m)) for m in quarter_months
-    )
+    admin_totals = _admin_lines_totals_by_month(fy)
+    admin_total = sum(admin_totals.get(_month_key(fy, m), 0) for m in quarter_months)
     rollup = get_budget_rollup(fy, quarter=quarter)
     return {
         "fy": fy,

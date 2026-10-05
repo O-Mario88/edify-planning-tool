@@ -974,6 +974,7 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
         "fy_options": fy_options(),
         "table_query": table_query,
         "base_url": base_url,
+        "can_export": RolePermissionService.can_export(request.user, request.path),
     }
 
 
@@ -1749,8 +1750,8 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                     fb_item = copy.copy(item)
                     fb_item.school_name = item.cluster_name or "Cluster Training"
                     fb_item.participants = pps
-                    fb_item.planned_cost = per_school_meal_cost
-                    fb_item.budget = per_school_meal_cost
+                    fb_item.planned_cost = item.planned_cost or per_school_meal_cost
+                    fb_item.budget = item.budget or fb_item.planned_cost
                     new_planned_trainings.append(fb_item)
 
             group["planned_trainings"] = new_planned_trainings
@@ -2595,6 +2596,247 @@ def country_planning_export_view(request):
         request_user=request.user,
         excel=_wants_excel(request),
     )
+
+
+@require_any_page_permission(
+    "team_planning_oversight",
+    "country_planning_oversight",
+    "project_monitoring",
+    "projects",
+)
+@require_export_permission
+def special_project_export_view(request, project_id: str = "all"):
+    """Export a special project and all attached schools (or all projects) to Excel.
+
+    Owner, 2026-10-04: "Add the button for export on project so the IA can
+    export the project and all the schools attached to it."
+    """
+    from django.http import Http404
+
+    from apps.core.excel import table_download
+    from apps.core.fy import get_operational_fy
+    from apps.core.permissions import render_access_denied
+    from apps.projects import monitoring
+
+    # Require oversight, project_monitoring or projects access
+    can_view = (
+        RolePermissionService.can_view_page(request.user, "team_planning_oversight")
+        or RolePermissionService.can_view_page(
+            request.user, "country_planning_oversight"
+        )
+        or RolePermissionService.can_view_page(request.user, "project_monitoring")
+        or RolePermissionService.can_view_page(request.user, "projects")
+    )
+    if not can_view:
+        return render_access_denied(
+            request, "You do not have access to special projects."
+        )
+
+    fy = (request.GET.get("fy") or "").strip() or str(get_operational_fy())
+    stages = dict(monitoring.STAGE_FILTERS)
+    requested_stage = (request.GET.get("stage") or "").strip()
+    selected_stage = requested_stage if requested_stage in stages else ""
+    selected_project_status = (request.GET.get("project_status") or "schools").strip()
+
+    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
+
+    # Filter school rows if Project status is narrowed
+    if selected_project_status == "partner":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.partner_name
+                or getattr(s, "has_partner", False)
+                or s.plan_stage
+                in (
+                    monitoring.PLAN_PARTNER_AWAITING,
+                    monitoring.PLAN_PARTNER_SCHEDULED,
+                    monitoring.PLAN_PARTNER_RETURNED,
+                )
+            ]
+    elif selected_project_status == "scheduled":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.activity_date
+                or s.next_date
+                or s.status_key
+                in (
+                    monitoring.STATUS_SCHEDULED,
+                    monitoring.STATUS_IN_PROGRESS,
+                    monitoring.STATUS_AWAITING_VERIFICATION,
+                    monitoring.STATUS_COMPLETED,
+                )
+                or s.execution != monitoring.EXEC_NONE
+            ]
+
+    project_id = (project_id or "all").strip()
+    if project_id and project_id not in ("all", "export"):
+        matching = [r for r in result.rows if r.id == project_id]
+        if not matching:
+            raise Http404("Special project not found or not in scope.")
+        target_rows = matching
+        single = True
+        project_obj = matching[0]
+        stem = f"project-{(project_obj.code or project_obj.id).lower()}-schools-FY{fy}"
+    else:
+        target_rows = result.rows
+        single = False
+        stem = f"special-projects-schools-FY{fy}"
+
+    # Build Sheet 1: Project Schools
+    school_headers = []
+    if not single:
+        school_headers.extend(["Project Code", "Project Name"])
+    school_headers.extend(
+        [
+            "School ID",
+            "School Name",
+            "District",
+            "Staff Name",
+            "Training",
+            "Purpose of Assignment",
+            "SSA Intervention",
+            "Status",
+            "Activity Date",
+            "Enrolled On",
+            "Planning Stage",
+            "Planned By",
+            "Execution",
+            "Activities Planned",
+            "Activities Delivered",
+            "Activities Verified",
+            "Last Delivered",
+            "Improvement",
+            "Focus Interventions",
+        ]
+    )
+
+    school_data_rows = []
+    for prow in target_rows:
+        for s in prow.school_rows:
+            row_vals = []
+            if not single:
+                row_vals.extend([prow.code or "", prow.name])
+            focus_summary = ", ".join(
+                f"{f.abbreviation or f.label}: {f.baseline if f.baseline is not None else '–'} -> {f.latest if f.latest is not None else '–'}"
+                + (
+                    f" ({'+' if f.direction == 'up' else ''}{f.change})"
+                    if f.change is not None
+                    else ""
+                )
+                for f in s.focus
+                if f.latest is not None or f.baseline is not None
+            )
+            who = s.partner_name or s.planned_by or ""
+            plan_str = s.plan_label
+            if who and not s.planned_by_coordinator:
+                plan_str = f"{plan_str} · {who}"
+            exec_str = s.execution_label
+            if s.planned:
+                exec_str = f"{exec_str} · {s.delivered}/{s.planned} done"
+
+            act_date = ""
+            if s.activity_date:
+                act_date = s.activity_date.isoformat()
+            elif s.awaiting_date:
+                act_date = "Awaiting scheduling"
+
+            row_vals.extend(
+                [
+                    s.school_code or "",
+                    s.school_name or "",
+                    s.district or "",
+                    s.added_by or "",
+                    s.training_name or "",
+                    s.purpose_label or "",
+                    s.intervention_label or "",
+                    s.status_label or "",
+                    act_date,
+                    s.enrolled_on.isoformat() if s.enrolled_on else "",
+                    plan_str,
+                    who,
+                    exec_str,
+                    s.planned,
+                    s.delivered,
+                    s.verified,
+                    s.last_delivered_on.isoformat() if s.last_delivered_on else "",
+                    s.impact_label or "",
+                    focus_summary,
+                ]
+            )
+            school_data_rows.append(row_vals)
+
+    # Build Sheet 2: Project Summary
+    summary_headers = [
+        "Project ID",
+        "Project Code",
+        "Project Name",
+        "Coordinator",
+        "Status",
+        "Partners",
+        "Total Schools",
+        "Schools Planned",
+        "Schools Awaiting Partner",
+        "Schools Delivered",
+        "Trainings Scheduled",
+        "Trainings Completed",
+        "Visits Scheduled",
+        "Visits Completed",
+        "Other Scheduled",
+        "Other Completed",
+        "Staff Delivered",
+        "Partner Delivered",
+    ]
+    summary_data_rows = []
+    for prow in target_rows:
+        summary_data_rows.append(
+            [
+                prow.id,
+                prow.code or "",
+                prow.name,
+                prow.coordinator,
+                prow.status_label,
+                ", ".join(prow.partners) if prow.partners else "None",
+                prow.schools,
+                prow.schools_planned,
+                prow.schools_awaiting_partner,
+                prow.schools_delivered,
+                prow.trainings_scheduled,
+                prow.trainings_completed,
+                prow.visits_scheduled,
+                prow.visits_completed,
+                prow.other_scheduled,
+                prow.other_completed,
+                prow.staff_delivered,
+                prow.partner_delivered,
+            ]
+        )
+
+    sheet_title = (
+        "Project Schools"
+        if not single
+        else f"Schools - {target_rows[0].code or target_rows[0].name}"[:31]
+    )
+    for char in "[]:*?/\\":
+        sheet_title = sheet_title.replace(char, "")
+
+    sheets = [
+        {
+            "title": sheet_title or "Project Schools",
+            "headers": school_headers,
+            "rows": school_data_rows,
+        },
+        {
+            "title": "Project Summary",
+            "headers": summary_headers,
+            "rows": summary_data_rows,
+        },
+    ]
+
+    return table_download(request, stem, sheets)
 
 
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")

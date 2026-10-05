@@ -23,6 +23,14 @@ Project
 
 <div class="edify-page-header__controls flex flex-wrap items-center gap-2">
 {% include "partials/_back_link.html" with back_href="/projects" back_label="Projects" %}
+{% if can_export %}
+<a href="{% url 'frontend:special_project_export' project.id %}"
+   class="flex items-center gap-1.5 px-3 py-1.5 edify-surface text-slate-700 border border-slate-200 hover:bg-slate-50 edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+   title="Export {{ project.name }} and attached schools to Excel"
+   data-project-export="{{ project.id }}">
+  <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Export
+</a>
+{% endif %}
 {% if can_edit_project %}
 <button
 type="button"

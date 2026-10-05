@@ -34,7 +34,7 @@ from .models import (
     RateCardKind,
     RateCardStatus,
 )
-from .reference import CANONICAL_RATE_KEYS
+from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 
 
 # ── Rate cards held for one pricing run ──────────────────────────────────────
@@ -453,12 +453,9 @@ def planned_minimum_amounts(activities) -> dict:
     visit-day recipe for every school. Two bulk reads avoid per-activity queries.
     Missing minimum rates or provenance never fall back to operational amounts.
 
-    A component whose rate has since left the rate card is the exception: it
-    has no minimum to re-price at, and counts at what it was priced. The
-    per-session Cluster Training rate was retired on 2026-10-01, and every
-    training priced while it was charged then read as "minimum viable cost
-    not configured" and showed its planner UGX 0 (owner, 2026-10-05: "the
-    CCEOs are not seeing the costs on their my plan pages").
+    A component priced from a rate that has since been retired is the
+    exception: it has no minimum to re-price at, and counts at what it was
+    priced.
     """
     from decimal import Decimal, ROUND_HALF_UP
 
@@ -503,7 +500,9 @@ def planned_minimum_amounts(activities) -> dict:
             key = line.get("key")
             setting = rates.get((rate_card_id, key))
             if setting is None:
-                # A card from before a rename carries the row under its old key.
+                # A card from before a rate was renamed or split carries the
+                # row under its old key (the second accommodation rate was
+                # split off the first on 2026-10-05).
                 setting = next(
                     (
                         rates[(rate_card_id, old)]
@@ -512,16 +511,23 @@ def planned_minimum_amounts(activities) -> dict:
                     ),
                     None,
                 )
-            unit = line.get("unit")
-            if unit is None or line.get("missing"):
-                missing = True
-                break
-            if setting is None:
-                # Priced from a rate the card no longer carries.
+            if (
+                setting is None
+                and key in RETIRED_COST_SETTING_KEYS
+                and not line.get("missing")
+            ):
+                # A rate retired after this line was priced (budget 0023 and
+                # its predecessors delete the row) has no minimum left to
+                # re-price against. The line keeps the amount it was priced
+                # at, as its ActivityScheduleCostLine does, rather than
+                # blanking the whole estimate -- which the plan tables read
+                # as UGX 0 (owner, 2026-10-04: "Group Trainings Planned for
+                # This FY does not show cost").
                 total += int(line.get("amount") or 0)
                 continue
-            rate = setting.approved_minimum
-            if rate is None:
+            rate = setting.approved_minimum if setting else None
+            unit = line.get("unit")
+            if rate is None or unit is None or line.get("missing"):
                 missing = True
                 break
             allocation = line.get("dailyAllocation")

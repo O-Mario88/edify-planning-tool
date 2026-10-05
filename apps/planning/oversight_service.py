@@ -513,6 +513,7 @@ _ACTIVITY_COLUMNS = (
     "paired_school_visit_id",
     "participants_per_school",
     "expected_participants",
+    "est_cost_cents",
     "cost_missing",
     "reschedule_count",
     "venue",
@@ -1155,7 +1156,7 @@ def _activity_item(
         or activity.activity_type == "in_school_training"
         or getattr(activity, "delivery_type", "") == "in-school"
     )
-    raw_cost = int(costs.get(activity.id, 0))
+    raw_cost = int(costs.get(activity.id) or activity.est_cost_cents or 0)
     planned_cost = 0 if is_in_school else raw_cost
     budget = raw_cost
     cluster_planned_from = (

@@ -140,7 +140,8 @@ def _manager_required(request):
 
 @require_page_permission("help")
 def home(request):
-    ensure_canonical_content()
+    if not HelpArticle.objects.exists():
+        ensure_canonical_content()
     mark_review_due_articles()
     if not HelpArticleRouteContext.objects.exists():
         sync_route_contexts()
@@ -190,7 +191,8 @@ def home(request):
 
 @require_page_permission("help")
 def search(request):
-    ensure_canonical_content()
+    if not HelpArticle.objects.exists():
+        ensure_canonical_content()
     query = request.GET.get("q", "").strip()
     role = _role(request)
     articles = list(search_articles(query, role)[:40])
@@ -253,7 +255,8 @@ def feature(request, feature_slug):
 
 @require_page_permission("help")
 def article(request, slug):
-    ensure_canonical_content()
+    if not HelpArticle.objects.exists():
+        ensure_canonical_content()
     item = get_object_or_404(HelpArticle, slug=slug)
     # Return an explicit 403 here rather than redirecting to a general access
     # page. Search results must not leak restricted titles, and a copied Help

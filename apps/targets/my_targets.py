@@ -577,6 +577,9 @@ class _RebuildSources:
         # Query each with the matching canonical FY boundary type so Django
         # never silently coerces a date into a naïve midnight datetime.
         fy_start, fy_end = get_fy_date_range(fy)
+        from apps.accounts.models import attach_staff_profile_ids
+
+        users = attach_staff_profile_ids(users)
         user_ids = [u.id for u in users]
         source_ids: list[str] = []
         for u in users:
