@@ -17,12 +17,12 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 119 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 45 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 114 | 33 | 3 | 8 | 10 | 26 | 80 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 115 | 34 | 3 | 8 | 10 | 26 | 80 |
 | `journey-04` | Cluster training | ✓ | 1 | 71 | 17 | 1 | 2 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 60 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 120 | 29 | 4 | 9 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 89 | 27 | 4 | 10 | 9 | 23 | 80 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 87 | 25 | 3 | 6 | 7 | 18 | 79 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 88 | 25 | 3 | 6 | 7 | 18 | 79 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 59 | 15 | 0 | 0 | 1 | 4 | 25 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 107 | 35 | 2 | 2 | 7 | 25 | 80 |
 | `journey-11` | Professional Development | ✓ | 1 | 45 | 8 | 1 | 9 | 1 | 1 | 1 |
@@ -93,8 +93,8 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools` _+42 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/salesforce.py` _+104 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+21 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/accounts/presence_labels.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py` _+105 more_ |
+| Models written | `accounts.PresenceTime`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker` _+22 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
@@ -193,7 +193,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py` _+77 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py` _+78 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleChange`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest` _+13 more_ |
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |

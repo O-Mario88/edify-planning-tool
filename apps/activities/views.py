@@ -11,7 +11,7 @@ from apps.core.pagination import EdifyPagination
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
 
-from . import services
+from . import pairs, services
 
 PLANNING_VIEW = [Permission.PLANNING_VIEW.value]
 ASSIGN = [Permission.ACTIVITY_ASSIGN.value]
@@ -91,9 +91,11 @@ def _action_view(action_fn, perm):
 StartCompletionView = _action_view(services.start_completion, COMPLETE)
 CompleteView = _action_view(services.complete, COMPLETE)
 IaConfirmView = _action_view(services.ia_confirm, IA_VERIFY)
-RescheduleView = _action_view(services.reschedule, ASSIGN)
+# The two doors that change one activity take the other half of an in-school
+# Training pair with it (apps.activities.pairs).
+RescheduleView = _action_view(pairs.reschedule, ASSIGN)
 ReassignView = _action_view(services.reassign, ASSIGN)
-CancelView = _action_view(services.cancel, ASSIGN)
+CancelView = _action_view(pairs.cancel, ASSIGN)
 DeferView = _action_view(services.defer, ASSIGN)
 
 

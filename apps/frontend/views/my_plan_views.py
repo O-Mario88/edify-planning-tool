@@ -20,9 +20,12 @@ from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
 
 from apps.my_plan.services import get_frontend_context as get_my_plan
+
+# The single Reschedule door: an in-school Training and its School Visit
+# move together (apps.activities.pairs).
+from apps.activities.pairs import reschedule as reschedule_activity
 from apps.activities.services import (
     get_activity,
-    reschedule as reschedule_activity,
     start_completion,
     start_in_school_training_pair,
     complete as complete_activity,
@@ -1077,9 +1080,14 @@ def reschedule_drawer_view(request, activity_id):
             ).first()
             if staff_user:
                 assigning_staff_name = staff_user.name
+    from apps.activities import pairs
+
     context = {
         "reschedule_mode": True,
         "reschedule_activity": a,
+        # Said before the date is saved: the other half of an in-school
+        # Training pair moves with it.
+        "pair_joins": pairs.joins(a, action=pairs.RESCHEDULE),
         "reschedule_action_url": f"/my-plan/{a.id}/reschedule",
         "schedule_subject_name": subject_name,
         "recommended_activity_type": a.activity_type,
@@ -1123,17 +1131,28 @@ def reschedule_activity_action(request, activity_id):
             except ValueError:
                 pass
 
+        from apps.activities import pairs
+
+        joined = pairs.joins(a, action=pairs.RESCHEDULE)
         try:
             reschedule_activity(activity_id, payload, request.user)
-            audit_log(
-                action="reschedule_activity",
-                subject_kind="Activity",
-                subject_id=str(a.id),
-                actor_id=str(request.user.id),
-                actor_role=request.user.active_role,
-                success=True,
-                payload={"new_date": new_date_str, "reason": reason},
-            )
+            # Each record that moved has its own line in the audit trail.
+            for moved in (a, joined):
+                if moved is None:
+                    continue
+                audit_log(
+                    action="reschedule_activity",
+                    subject_kind="Activity",
+                    subject_id=str(moved.id),
+                    actor_id=str(request.user.id),
+                    actor_role=request.user.active_role,
+                    success=True,
+                    payload={
+                        "new_date": new_date_str,
+                        "reason": reason,
+                        **({"moved_with": str(a.id)} if moved is not a else {}),
+                    },
+                )
             if request.headers.get("HX-Request") == "true":
                 response = HttpResponse("<script>window.location.reload();</script>")
                 response["HX-Trigger"] = "close-drawer"
@@ -2150,14 +2169,25 @@ def cancel_activity_drawer_view(request, activity_id):
     # What the person needs to know before they confirm is that the money does
     # not go away with the activity: it still has to be accounted for and the
     # remainder returned. Told up front rather than discovered afterwards.
+    # The other half of an in-school Training pair is cancelled with it, and
+    # it is the visit that carries the pair's money.
+    from apps.activities import pairs
+
+    joined = pairs.joins(a, action=pairs.CANCEL)
     money_moved = AdvanceRequest.objects.filter(
-        activity=a, status__in=MONEY_MOVED_ADVANCE_STATUSES
+        activity_id__in=[a.id, *([joined.id] if joined else [])],
+        status__in=MONEY_MOVED_ADVANCE_STATUSES,
     ).exists()
 
     return render(
         request,
         "partials/my_plan/cancel_drawer.html",
-        {"act": a, "money_moved": money_moved, "drawer_size": "sm"},
+        {
+            "act": a,
+            "money_moved": money_moved,
+            "pair_joins": joined,
+            "drawer_size": "sm",
+        },
     )
 
 
@@ -2180,8 +2210,10 @@ def cancel_activity_action(request, activity_id):
 
     if request.method == "POST":
         reason = request.POST.get("reason", "").strip()
-        from apps.activities.services import cancel as cancel_activity
+        from apps.activities import pairs
+        from apps.activities.pairs import cancel as cancel_activity
 
+        joined = pairs.joins(a, action=pairs.CANCEL)
         try:
             cancel_activity(activity_id, {"reason": reason}, request.user)
         except Exception as exc:
@@ -2196,16 +2228,23 @@ def cancel_activity_action(request, activity_id):
             )
             return error_fragment(exc, action="Cancellation Error", status=400)
 
-        audit_log(
-            action="cancel_activity",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=True,
-            reason="Activity cancelled",
-            payload={"reason": reason},
-        )
+        # Each record that was called off has its own line in the trail.
+        for stopped in (a, joined):
+            if stopped is None:
+                continue
+            audit_log(
+                action="cancel_activity",
+                subject_kind="Activity",
+                subject_id=str(stopped.id),
+                actor_id=str(request.user.id),
+                actor_role=request.user.active_role,
+                success=True,
+                reason="Activity cancelled",
+                payload={
+                    "reason": reason,
+                    **({"cancelled_with": str(a.id)} if stopped is not a else {}),
+                },
+            )
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")

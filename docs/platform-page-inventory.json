@@ -9849,7 +9849,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 1801,
+      "bytes": 2201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/cancel-drawer"
@@ -9867,6 +9867,7 @@
       "tables": 0,
       "template": "partials/my_plan/cancel_drawer.html",
       "variants": [
+        "info",
         "warning"
       ]
     },
@@ -12655,7 +12656,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 33619,
+      "bytes": 34024,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
