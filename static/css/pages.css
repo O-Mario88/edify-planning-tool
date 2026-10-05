@@ -4467,7 +4467,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .mp-dayoff {
   margin-inline-start: 0.4rem;
   color: var(--edify-danger-text);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-caption-size);
   font-weight: 700;
   white-space: nowrap;
 }
