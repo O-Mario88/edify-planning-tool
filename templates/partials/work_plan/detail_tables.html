@@ -16,8 +16,9 @@ The rows and their figures are the ones the summary above is added up from.
       </tr></thead>
       <tbody>
       {% for r in detail_pager.rows %}
-        <tr class="align-top">
-          <td class="whitespace-nowrap">{{ r.date_label }}</td>
+        {# A row planned on a public holiday or its owner's leave day (owner, 2026-10-05; apps.activities.day_off). #}
+        <tr class="align-top{% if r.day_off %} mp-dayoff-row{% endif %}">
+          <td class="whitespace-nowrap">{{ r.date_label }}{% if r.day_off %}<span class="mp-dayoff" data-tone="danger" title="{{ r.day_off.advice }}">{{ r.day_off.label }}: reschedule</span>{% endif %}</td>
           <td class="whitespace-nowrap">{{ r.activity_word }}</td>
           <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"—" }}</td>
           <th scope="row" data-record-title>{{ r.school_name|default:"—" }}</th>

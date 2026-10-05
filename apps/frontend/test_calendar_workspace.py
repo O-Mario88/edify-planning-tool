@@ -15,7 +15,6 @@ from apps.accounts.models import (
 from apps.activities.models import Activity
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.rbac import EdifyRole
-from apps.frontend.views.extended_views import _reference_holidays_for_year
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -146,13 +145,122 @@ class CalendarWorkspaceTest(TestCase):
         self.assertEqual(markup.count('class="calendar-day calendar-day--outside"'), 7)
         self.assertContains(response, "Saturday, January 31, 2026, outside this month")
 
-    def test_reference_holidays_omit_presidential_inauguration(self):
-        holiday_titles = {
-            holiday["title"] for holiday in _reference_holidays_for_year(2026)
-        }
+    def _holidays_on(self, response, day):
+        """Titles of the holiday events the page draws on one day."""
+        cell = next(
+            cell
+            for week in response.context["calendar_weeks"]
+            for cell in week
+            if cell["date"] == day
+        )
+        return [
+            event["title"] for event in cell["events"] if event["kind"] == "holiday"
+        ]
 
-        self.assertIn("Christmas Day", holiday_titles)
-        self.assertNotIn("Presidential Inauguration", holiday_titles)
+    def test_independence_day_is_drawn_on_the_ninth_of_october(self):
+        """Owner, 2026-10-05: "Uganda independence day is on 9th october but
+        it is showing 10th october." The Calendar drew a fixed list that was
+        a day late on every line."""
+        response = self.client.get("/calendar?year=2026&month=10")
+
+        self.assertEqual(
+            self._holidays_on(response, date(2026, 10, 9)), ["Independence Day"]
+        )
+        self.assertEqual(self._holidays_on(response, date(2026, 10, 10)), [])
+
+    def test_december_holidays_sit_on_their_own_days(self):
+        response = self.client.get("/calendar?year=2026&month=12")
+
+        self.assertEqual(
+            self._holidays_on(response, date(2026, 12, 25)), ["Christmas Day"]
+        )
+        self.assertEqual(
+            self._holidays_on(response, date(2026, 12, 26)), ["Boxing Day"]
+        )
+        self.assertEqual(self._holidays_on(response, date(2026, 12, 27)), [])
+
+    def test_easter_and_the_eids_follow_the_year(self):
+        april = self.client.get("/calendar?year=2026&month=4")
+        march_2027 = self.client.get("/calendar?year=2027&month=3")
+
+        self.assertEqual(self._holidays_on(april, date(2026, 4, 3)), ["Good Friday"])
+        self.assertEqual(self._holidays_on(april, date(2026, 4, 5)), ["Easter Sunday"])
+        self.assertEqual(
+            self._holidays_on(march_2027, date(2027, 3, 26)), ["Good Friday"]
+        )
+        self.assertEqual(
+            self._holidays_on(march_2027, date(2027, 3, 9)),
+            ["Eid al-Fitr (expected date)"],
+        )
+
+    def test_a_declared_day_is_drawn_in_its_own_year_only(self):
+        """The 2026 inauguration was a public holiday that year; it is not a
+        yearly one."""
+        this_year = self.client.get("/calendar?year=2026&month=5")
+        next_year = self.client.get("/calendar?year=2027&month=5")
+
+        self.assertEqual(
+            self._holidays_on(this_year, date(2026, 5, 12)),
+            ["Presidential Inauguration Day"],
+        )
+        self.assertNotContains(next_year, "Presidential Inauguration")
+
+    def test_planned_work_on_a_holiday_or_leave_day_is_marked(self):
+        """Owner, 2026-10-05: "mark all activities planned on public holidays
+        and days staff set for leave red and alert the staff to reschedule"."""
+
+        def visit(day, status="scheduled"):
+            return Activity.objects.create(
+                activity_type="school_visit",
+                school=self.school,
+                fy=get_operational_fy(day),
+                quarter=get_quarter_for_date(day),
+                planned_date=day,
+                responsible_staff_id=self.staff.id,
+                status=status,
+            )
+
+        on_holiday = visit(date(2026, 10, 9))
+        on_leave = visit(date(2026, 10, 6))
+        visit(date(2026, 10, 8))
+        visit(date(2026, 10, 9), status="completed")
+        Leave.objects.create(
+            staff=self.staff,
+            type="personal_time_off",
+            start_date="2026-10-06",
+            end_date="2026-10-06",
+            days=1,
+            status="approved",
+        )
+
+        response = self.client.get("/calendar?year=2026&month=10")
+
+        self.assertEqual(
+            [row["id"] for row in response.context["day_off_rows"]],
+            [on_leave.id, on_holiday.id],
+        )
+        self.assertContains(response, "Reschedule 2 activities in October")
+        self.assertContains(
+            response, "Fri 9 Oct is a public holiday (Independence Day)."
+        )
+        self.assertContains(response, f'href="/my-plan/{on_holiday.id}"')
+        markup = response.content.decode()
+        # One chip per view of the month: the grid, its compact agenda and the
+        # phone agenda. Only the two marked activities carry the class.
+        self.assertEqual(markup.count("calendar-event--dayoff"), 2 * 3)
+        marked_days = [
+            cell["date"]
+            for week in response.context["calendar_weeks"]
+            for cell in week
+            if cell["has_day_off"]
+        ]
+        self.assertEqual(marked_days, [date(2026, 10, 6), date(2026, 10, 9)])
+
+    def test_a_month_with_nothing_to_move_shows_no_reschedule_list(self):
+        response = self.client.get("/calendar?year=2026&month=10")
+
+        self.assertEqual(response.context["day_off_rows"], [])
+        self.assertNotContains(response, "calendar-dayoff__list")
 
     def test_mobile_calendar_places_connected_event_tabs_below_filters(self):
         response = self.client.get(

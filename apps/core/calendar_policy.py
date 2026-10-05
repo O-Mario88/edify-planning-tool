@@ -10,8 +10,9 @@ What it works out (each a warning, not a refusal, while
 ``CALENDAR_BLOCKS_REFUSE`` is off — see the owner's note below):
 - Sunday is always blocked.
 - Saturday is never blocked by this policy (existing org policy permits it).
-- A public holiday blocks — PublicHoliday and CalendarBlock(PUBLIC_HOLIDAY)
-  are two independent sources; both are checked here.
+- A public holiday blocks — the national calendar, PublicHoliday rows and
+  CalendarBlock(PUBLIC_HOLIDAY) rows, read as one through
+  apps.core.public_holidays.
 - An organizational blackout date (CalendarBlock BLACKOUT_DATE) blocks.
 - Approved leave blocks scheduling for the affected staff member; pending
   leave and high weekly workload only warn.
@@ -43,11 +44,11 @@ from django.utils import timezone
 from apps.accounts.models import (
     CalendarBlock,
     Leave,
-    PublicHoliday,
     StaffGeographyAssignment,
     StaffProfile,
     User,
 )
+from apps.core.public_holidays import public_holiday_name
 
 
 #: Whether a Sunday, a public holiday, a blackout date, a blocking calendar
@@ -163,9 +164,11 @@ class SchedulingPolicyService:
         if d.weekday() == 6:
             blockers.append("This date is a Sunday.")
 
-        public_holiday = PublicHoliday.objects.filter(date=d).first()
+        # The national calendar and the days recorded under Holidays &
+        # Blackouts, as every other page reads them.
+        public_holiday = public_holiday_name(d)
         if public_holiday:
-            blockers.append(f"This date is a public holiday: {public_holiday.name}.")
+            blockers.append(f"This date is a public holiday: {public_holiday}.")
 
         sp = _live_profile(user)
 
@@ -174,7 +177,8 @@ class SchedulingPolicyService:
         )
         for b in h_blocks:
             if b.block_type == "PUBLIC_HOLIDAY":
-                blockers.append(f"This date is a public holiday: {b.title}.")
+                if b.title != public_holiday:
+                    blockers.append(f"This date is a public holiday: {b.title}.")
             elif b.block_type == "BLACKOUT_DATE":
                 blockers.append(
                     f"This date is an organizational blackout date: {b.title}."

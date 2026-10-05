@@ -2842,7 +2842,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1369,
+      "bytes": 1578,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar"
@@ -9530,7 +9530,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11151,
+      "bytes": 9350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9550,7 +9550,7 @@
         "selected",
         "open"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/my_plan/activity_detail_drawer.html",
       "variants": [
         "danger"
@@ -9607,14 +9607,14 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9222,
+      "bytes": 12545,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Attention",
       "purpose": "Reusable attention interface primitive",
@@ -9622,9 +9622,35 @@
       "states": [
         "default"
       ],
-      "tables": 3,
+      "tables": 4,
       "template": "partials/my_plan/attention.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4581,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>",
+        "/my-plan/<str:activity_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Budget Breakdown",
+      "purpose": "Reusable budget breakdown interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/budget_breakdown.html",
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9655,7 +9681,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5186,
+      "bytes": 5289,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9702,7 +9728,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7613,
+      "bytes": 7716,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9777,7 +9803,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6383,
+      "bytes": 6486,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9798,7 +9824,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6305,
+      "bytes": 6408,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9816,6 +9842,29 @@
       "tables": 1,
       "template": "partials/my_plan/core_school_visits.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 377,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Day Off Flag",
+      "purpose": "Reusable day off flag interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/day_off_flag.html",
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9948,7 +9997,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5382,
+      "bytes": 5485,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10069,7 +10118,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4349,
+      "bytes": 4452,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10092,7 +10141,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1232,
+      "bytes": 1335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10181,7 +10230,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5172,
+      "bytes": 5275,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -15261,7 +15310,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7148,
+      "bytes": 7453,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -15280,7 +15329,9 @@
       ],
       "tables": 1,
       "template": "partials/work_plan/detail_tables.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -19355,8 +19406,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -59257,7 +59308,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_policies_view",
       "card_count": 0,
@@ -59312,7 +59363,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -59341,7 +59392,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_policies_view",
       "card_count": 0,
@@ -59396,7 +59447,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -63315,8 +63366,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -94765,6 +94816,21 @@
         "retryable": true
       },
       {
+        "cron": "daily 06:40 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 6,
+          "minute": 40
+        },
+        "description": "Tells each person which of their coming activities are planned on a public holiday or on their own approved leave day, so they reschedule them; closes the notice once the day is clear.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "Keyed per person per day off (context_id dayoff-<date>); a re-run with the same list sends nothing, even to someone who archived theirs.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "day_off_alerts",
+        "retryable": true
+      },
+      {
         "cron": "every 30 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/30"
@@ -115372,7 +115438,7 @@
     "activity_states": 24,
     "all_routes": 1360,
     "api_routes": 360,
-    "component_templates": 610,
+    "component_templates": 612,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 280,
@@ -115392,7 +115458,7 @@
     "permission_keys": 127,
     "roles": 15,
     "routed_surfaces": 888,
-    "scheduled_jobs": 34,
+    "scheduled_jobs": 35,
     "severity_counts": {
       "critical": 0,
       "high": 0,

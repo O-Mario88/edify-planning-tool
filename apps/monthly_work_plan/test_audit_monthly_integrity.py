@@ -211,9 +211,8 @@ class AmendmentDraftRequestResyncTest(TestCase):
     NEW_WEEK = date(2026, 8, 10)  # its Monday
 
     def setUp(self):
-        from apps.accounts.models import StaffProfile
+        from apps.accounts.models import CalendarBlock, PublicHoliday, StaffProfile
         from apps.activities.models import Activity, ActivityScheduleCostLine
-        from apps.core.calendar_policy import CalendarBlock, PublicHoliday
         from apps.geography.models import District, Region
         from apps.schools.models import School
 

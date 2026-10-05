@@ -1,0 +1,4 @@
+{% comment %}Beside a row's planned date when the day is a public holiday or
+the responsible person's leave day (expects `row`; owner, 2026-10-05;
+apps.activities.day_off). The row takes its tint from this mark.{% endcomment %}
+{% if row.day_off %}<span class="mp-dayoff" data-tone="danger" title="{{ row.day_off.advice }}">{{ row.day_off.label }}: reschedule</span>{% endif %}

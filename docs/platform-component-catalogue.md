@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **610**
+Components and application partials: **612**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -393,7 +393,8 @@ Components and application partials: **610**
 | `partials/my_plan/activity_detail_drawer.html` | application-partial | Reusable activity detail drawer interface primitive | danger; default, error, disabled, selected, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id><br>/my-plan/<str:activity_id> | 0 |
 | `partials/my_plan/activity_row.html` | application-partial | Reusable activity row interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /my-plan | 0 |
 | `partials/my_plan/attendance_drawer.html` | application-partial | Reusable attendance drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/attendance | 0 |
-| `partials/my_plan/attention.html` | application-partial | Reusable attention interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/attention.html` | application-partial | Reusable attention interface primitive | danger; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/budget_breakdown.html` | application-partial | Reusable budget breakdown interface primitive | warning; default | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id><br>/my-plan/<str:activity_id> | 0 |
 | `partials/my_plan/cancel_drawer.html` | application-partial | Reusable cancel drawer interface primitive | warning; default | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/cancel-drawer | 0 |
 | `partials/my_plan/cluster_meetings.html` | application-partial | Reusable cluster meetings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/cluster_planning_status.html` | application-partial | Reusable cluster planning status interface primitive | {{ row.meeting.tone }}, {{ row.training.tone }}; default | inherits containing page contract | accessible name and label | /my-plan | 0 |
@@ -402,6 +403,7 @@ Components and application partials: **610**
 | `partials/my_plan/confirm_reimbursement_receipt_drawer.html` | application-partial | Reusable confirm reimbursement receipt drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | 0 |
 | `partials/my_plan/core_school_trainings.html` | application-partial | Reusable core school trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/core_school_visits.html` | application-partial | Reusable core school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/day_off_flag.html` | application-partial | Reusable day off flag interface primitive | danger; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/edit_activity_drawer.html` | application-partial | Reusable edit activity drawer interface primitive | info; default, empty, disabled, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/edit-drawer | 0 |
 | `partials/my_plan/evidence_drawer.html` | application-partial | Reusable evidence drawer interface primitive | success, warning; default, empty, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/evidence | 0 |
 | `partials/my_plan/facilitated_clusters.html` | application-partial | Reusable facilitated clusters interface primitive | canonical; default | inherits containing page contract | accessible name and label | /my-plan | 0 |
@@ -612,7 +614,7 @@ Components and application partials: **610**
 | `partials/vendor/apexcharts.html` | application-partial | Reusable apexcharts interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /analytics<br>/analytics/<br>/analytics/closure-quality<br>/analytics/country-director<br>/analytics/people<br>/analytics/program-lead<br>/analytics/publishing<br>/analytics/publishing/ | 0 |
 | `partials/vendor/dashboard_map.html` | application-partial | Reusable dashboard map interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /country-map/<br>/dashboard<br>/ia/dashboard/ | 0 |
 | `partials/vendor/fullcalendar.html` | application-partial | Reusable fullcalendar interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /leave/calendar<br>/leave/calendar/<br>/planning | 0 |
-| `partials/work_plan/detail_tables.html` | application-partial | Reusable detail tables interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /work-plan<br>/work-plan/ | 0 |
+| `partials/work_plan/detail_tables.html` | application-partial | Reusable detail tables interface primitive | danger; default, empty | explicit responsive contract | accessible name and label | /work-plan<br>/work-plan/ | 0 |
 | `partials/work_plan/non_school_activity_drawer.html` | application-partial | Reusable non school activity drawer interface primitive | canonical; default, disabled, open | inherits containing page contract | accessible name and label, announced dynamic state | /work-plan/add | 0 |
 | `partials/work_plan/non_school_cost_preview.html` | application-partial | Reusable non school cost preview interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /work-plan/add<br>/work-plan/add/preview | 0 |
 | `partials/work_plan/plan_summary.html` | application-partial | Reusable plan summary interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /work-plan<br>/work-plan/ | 0 |

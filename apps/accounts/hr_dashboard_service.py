@@ -31,7 +31,7 @@ from statistics import median
 
 from django.db.models import Count, Q, Sum
 
-from apps.accounts.models import CalendarBlock, Leave, PublicHoliday, StaffProfile
+from apps.accounts.models import Leave, StaffProfile
 from apps.core.metrics import render_precomputed_metric_item
 from apps.core.metrics.ratio import percentage
 
@@ -1024,19 +1024,14 @@ def _leave(frame: _Frame) -> dict:
 
 
 def _holidays(today: date, countries) -> list[dict]:
-    """Upcoming public holidays from both sources, PublicHoliday rows and
-    CalendarBlock(PUBLIC_HOLIDAY) rows, which must be unioned."""
-    days = {}
-    for holiday in PublicHoliday.objects.filter(date__gte=today).order_by("date")[:20]:
-        days[holiday.date] = holiday.name
-    for block in CalendarBlock.objects.filter(
-        block_type="PUBLIC_HOLIDAY", is_active=True, end_date__gte=today
-    )[:20]:
-        day = max(block.start_date, today)
-        while day <= block.end_date:
-            days.setdefault(day, block.title)
-            day += timedelta(days=1)
-    return [{"date": d, "name": name} for d, name in sorted(days.items())[:5]]
+    """The next public holidays: the national calendar and the days recorded
+    under Holidays & Blackouts, read as one (apps.core.public_holidays)."""
+    from apps.core.public_holidays import upcoming_public_holidays
+
+    return [
+        {"date": holiday.date, "name": holiday.label}
+        for holiday in upcoming_public_holidays(today)
+    ]
 
 
 def _compensation(frame: _Frame, headcount: int) -> dict:

@@ -326,6 +326,18 @@ def _can_reschedule(activity) -> bool:
     return not is_executed(activity)
 
 
+def _budget_breakdown(user, activity, snapshot, staff_name) -> dict:
+    from apps.budget.breakdown import activity_budget_breakdown
+    from apps.core.scoping import resolve_partner_ids
+
+    return activity_budget_breakdown(
+        activity,
+        snapshot=snapshot,
+        staff_name="" if staff_name == "Unknown Staff" else staff_name,
+        partner_view=bool(resolve_partner_ids(user)),
+    )
+
+
 @require_page_permission("my_plan")
 def activity_detail_view(request, activity_id):
     a = get_object_or_404(
@@ -410,9 +422,11 @@ def activity_detail_view(request, activity_id):
     # capacity never enter this context.
     from apps.budget.models import ActivityCostSnapshot, ActivityCostStatus
 
-    cost_snapshot = ActivityCostSnapshot.objects.filter(
-        activity=a, is_current=True
-    ).first()
+    cost_snapshot = (
+        ActivityCostSnapshot.objects.filter(activity=a, is_current=True)
+        .select_related("operational_rate_card")
+        .first()
+    )
     if cost_snapshot and cost_snapshot.cost_status in (
         ActivityCostStatus.ACCOUNTED,
         ActivityCostStatus.CLOSED,
@@ -445,6 +459,17 @@ def activity_detail_view(request, activity_id):
             "amount_disbursed": 0,
         }
 
+    budget = _budget_breakdown(request.user, a, cost_snapshot, staff_name)
+    if budget["captured_elsewhere"] and activity_cost["amount"] is None:
+        # The UGX 0 half of an in-school Training / School Visit pair is
+        # priced, at nothing, by design (owner, 2026-10-05: keep it at UGX 0
+        # and say where the cost is): never "not configured".
+        activity_cost = {
+            **activity_cost,
+            "amount": 0,
+            "note": budget["captured_elsewhere"].strip("()").capitalize(),
+        }
+
     context = {
         "act": a,
         # The monitoring staff member — and Impact Assessment — record the
@@ -463,6 +488,10 @@ def activity_detail_view(request, activity_id):
         "responsible_staff_name": staff_name,
         "timeline": timeline,
         "activity_cost": activity_cost,
+        # Every cost item, how it was worked out and who shares the day
+        # (owner, 2026-10-05: "for the team to make sure it is the right
+        # cost"). A partner reads what it is paid, not the staff day.
+        "budget": budget,
         "can_complete_partner_ssa_support": (
             RolePermissionService.can_complete_partner_ssa_support(request.user, a)
             and a.status == "awaiting_ia_verification"

@@ -35,6 +35,7 @@ from apps.frontend.work_plan_tables import (
     detail_fields,
     work_plan_action,
 )
+from apps.activities.day_off import day_off_marks
 from apps.activities.models import Activity
 from apps.activities.pair_costing import (
     CAPTURED_IN_TRAINING_NOTE,
@@ -573,6 +574,10 @@ def build_work_plan_context(user, params) -> dict:
     # in the visible detail table, including its drill-down filters.
     summary_buckets: dict[str, dict[str, dict]] = {"school": {}, "non_school": {}}
 
+    # Planned work on a public holiday or on its owner's leave day (owner,
+    # 2026-10-05; apps.activities.day_off).
+    day_off_by_activity = day_off_marks(activities)
+
     for a in activities:
         anchor = a.planned_date or (
             local_day(a.scheduled_date) if a.scheduled_date else None
@@ -743,6 +748,7 @@ def build_work_plan_context(user, params) -> dict:
             {
                 "id": a.id,
                 "date_label": _date_label(anchor, a.end_date),
+                "day_off": day_off_by_activity.get(a.id),
                 "band_month": band_month,
                 **detail_fields(
                     a,

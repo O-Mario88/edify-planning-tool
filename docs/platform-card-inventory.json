@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 667,
+  "titled_cards": 668,
   "templates": 249,
-  "distinct_titles": 633,
+  "distinct_titles": 634,
   "with_card_key": 13,
   "untitled_surfaces": 592,
-  "untitled_chrome": 154,
-  "untitled_nested": 190,
+  "untitled_chrome": 153,
+  "untitled_nested": 191,
   "untitled_headless": 248,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
@@ -2100,7 +2100,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 80,
+   "line": 90,
    "title": "Organizational Blackout Dates",
    "heading_level": 3,
    "has_card_key": false,
@@ -2109,7 +2109,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 112,
+   "line": 122,
    "title": "Staff Conference Weeks",
    "heading_level": 3,
    "has_card_key": false,
@@ -2118,7 +2118,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 144,
+   "line": 154,
    "title": "Regional Events & Custom Blocks",
    "heading_level": 3,
    "has_card_key": false,
@@ -2127,7 +2127,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 193,
+   "line": 203,
    "title": "Add Calendar Block",
    "heading_level": 3,
    "has_card_key": false,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 190,
+   "line": 197,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 226,
+   "line": 233,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -6216,8 +6216,8 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 6,
-   "title": "Returned \u2014 Needs Correction",
+   "line": 8,
+   "title": "Reschedule \u2014 On a Public Holiday or Leave Day",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden border-rose-200",
@@ -6230,28 +6230,42 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 71,
-   "title": "Waiting on Approval",
+   "line": 78,
+   "title": "Returned \u2014 Needs Correction",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "card overflow-hidden",
+   "classes": "card overflow-hidden border-rose-200",
    "branch_path": [
     [
-     4,
+     5,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 132,
+   "line": 143,
+   "title": "Waiting on Approval",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": [
+    [
+     9,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/my_plan/attention.html",
+   "line": 204,
    "title": "Finance / Accountability Pending",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     8,
+     13,
      0
     ]
    ]

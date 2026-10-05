@@ -42,12 +42,12 @@ from apps.hr.leave_services import (
     LeaveImpactAnalysisService,
     CalendarBlockService,
     LeaveConflictDetectionService,
-    PlanningAvailabilityService,
     LeaveImpactPreviewService,
     TeamAvailabilityService,
     LeaveNotificationService,
 )
 from apps.core.navigation import get_user_role_slug
+from apps.core.public_holidays import holidays_between, upcoming_public_holidays
 
 logger = logging.getLogger(__name__)
 
@@ -234,33 +234,40 @@ def personal_time_off_view(request):
         is_active=True, end_date__gte=date.today()
     ).order_by("start_date")[:5]
 
-    # 2. Auto-Blocked Conflicts (for the user's activities)
-    user_activities = (
+    # 2. The reader's planned work that sits on a public holiday or on their
+    # own approved leave day (apps.activities.day_off). This asked the policy
+    # about every activity one at a time, and matched activities by User id
+    # alone, so work filed under the StaffProfile id was never listed.
+    from apps.activities.day_off import AWAITING_DELIVERY, day_off_marks
+    from apps.core.calendar_policy import activity_owner_ids
+
+    user_activities = list(
         Activity.objects.filter(
-            responsible_staff_id=user.id, scheduled_date__isnull=False
+            responsible_staff_id__in=activity_owner_ids(user),
+            status__in=AWAITING_DELIVERY,
+            deleted_at__isnull=True,
+        )
+        .filter(
+            Q(planned_date__gte=date.today())
+            | Q(planned_date__isnull=True, scheduled_date__date__gte=date.today())
         )
         .select_related("school", "cluster")
-        .exclude(status__in=["cancelled", "completed"])
     )
-    my_conflicts = []
-    for act in user_activities:
-        avail = PlanningAvailabilityService.check(user, act.scheduled_date)
-        # The calendar facts, whether or not they refuse a date any more
-        # (calendar_policy.CALENDAR_BLOCKS_REFUSE): work on a leave day or a
-        # holiday is still worth listing here.
-        if avail["calendarConflicts"]:
-            my_conflicts.append(
-                {
-                    "id": act.id,
-                    "type": act.activity_type.replace("_", " ").title(),
-                    "school_id": act.school_id,
-                    "school": act.school.name
-                    if act.school
-                    else (act.cluster.name if act.cluster else "General"),
-                    "date": local_day(act.scheduled_date).isoformat(),
-                    "blockers": avail["calendarConflicts"],
-                }
-            )
+    day_off_by_activity = day_off_marks(user_activities)
+    my_conflicts = [
+        {
+            "id": act.id,
+            "type": act.activity_type.replace("_", " ").title(),
+            "school_id": act.school_id,
+            "school": act.school.name
+            if act.school
+            else (act.cluster.name if act.cluster else "General"),
+            "date": (act.planned_date or local_day(act.scheduled_date)).isoformat(),
+            "blockers": [day.sentence for day in day_off_by_activity[act.id].days],
+        }
+        for act in user_activities
+        if act.id in day_off_by_activity
+    ]
 
     # Stats variables
     pending_requests_count = sum(leave["status"] == "pending" for leave in leaves_data)
@@ -933,7 +940,7 @@ def _leave_approvals_page(request):
             pass
 
     # Upcoming holidays & blackouts
-    holidays = PublicHoliday.objects.all().order_by("date")[:5]
+    holidays = upcoming_public_holidays(date.today())
     blackouts = CalendarBlock.objects.filter(
         block_type="BLACKOUT_DATE", is_active=True
     ).order_by("start_date")[:5]
@@ -1322,6 +1329,25 @@ def leave_calendar_view(request):
     # The page is "who is away and what is scheduled", but it only ever carried
     # the first half.
     month_start, _ = _calendar_month_window(request)
+
+    # The national public holidays (apps.core.public_holidays). A recorded
+    # day is already here as its block.
+    for holiday in holidays_between(
+        date(month_start.year - 1, 12, 1), date(month_start.year + 1, 1, 31)
+    ):
+        if not holiday.is_public or holiday.recorded:
+            continue
+        events.append(
+            {
+                "title": f"{holiday.label} [Public Holiday]",
+                "start": holiday.date.isoformat(),
+                "end": (holiday.date + timedelta(days=1)).isoformat(),
+                "color": CALENDAR_COLOURS["holiday"],
+                "textColor": "#ffffff",
+                "extendedProps": {"type": "PUBLIC_HOLIDAY", "description": ""},
+            }
+        )
+
     activity_events, activity_days = _calendar_activities(request, month_start)
     events.extend(activity_events)
 
@@ -1502,6 +1528,20 @@ def _audit_leave_policy(request, action: str, subject, before: dict) -> None:
     )
 
 
+def _refresh_day_off_alerts() -> None:
+    """After a holiday is recorded or removed: tell the people with work
+    planned on it, and close the notices a removed day leaves behind (owner,
+    2026-10-05; apps.activities.day_off). Never fails the change itself."""
+    from apps.activities.day_off import send_day_off_alerts
+    from apps.core import public_holidays
+
+    public_holidays.forget()
+    try:
+        send_day_off_alerts()
+    except Exception:  # noqa: BLE001
+        logger.exception("day-off notices not refreshed")
+
+
 def _add_public_holiday(request):
     """POST-only. Adding and deleting public holidays ran on bare GET query
     parameters — `href="?delete_holiday=<id>"` — so a link prefetcher, a
@@ -1521,6 +1561,7 @@ def _add_public_holiday(request):
         )
         if created:
             _audit_leave_policy(request, "hr.public_holiday_added", holiday, {})
+            _refresh_day_off_alerts()
             messages.success(request, f"Public holiday '{name}' added.")
         else:
             messages.info(request, f"A holiday already exists on {date_val}.")
@@ -1542,6 +1583,7 @@ def _delete_public_holiday(request):
         {"name": holiday.name, "date": str(holiday.date)},
     )
     holiday.delete()
+    _refresh_day_off_alerts()
     messages.success(request, "Public holiday removed.")
     return redirect("frontend:leave_policies")
 
@@ -1599,6 +1641,12 @@ def leave_policies_view(request):
     context = {
         "policies": policies,
         "holidays": holidays,
+        # The national calendar is built in; these rows are read-only.
+        "national_holidays": [
+            holiday
+            for holiday in upcoming_public_holidays(date.today(), limit=40)
+            if not holiday.recorded
+        ],
         "approver_roles": [
             "Program Lead",
             "CountryDirector",
@@ -1636,27 +1684,26 @@ def public_holidays_view(request):
                 messages.success(request, "Calendar Block added successfully.")
             except Exception as e:
                 messages.error(request, f"Failed to create block: {e}")
+            else:
+                if data["block_type"] == "PUBLIC_HOLIDAY":
+                    _refresh_day_off_alerts()
         elif action == "delete":
             block_id = request.POST.get("block_id")
+            was_holiday = CalendarBlock.objects.filter(
+                id=block_id, block_type="PUBLIC_HOLIDAY"
+            ).exists()
             CalendarBlock.objects.filter(id=block_id).delete()
+            if was_holiday:
+                _refresh_day_off_alerts()
             messages.success(request, "Calendar Block removed.")
         return redirect("frontend:public_holidays")
 
     # Handle Seeding Action
     if request.GET.get("action") == "seed" and is_editor:
-        # Seed standard Uganda holidays
+        # The national public holidays are built in
+        # (apps.core.public_holidays); seeding them as blocks listed every
+        # one twice, under two spellings.
         holidays_data = [
-            ("New Year's Day", "2026-01-01", "PUBLIC_HOLIDAY"),
-            ("Archbishop Janani Luwum Day", "2026-02-16", "PUBLIC_HOLIDAY"),
-            ("Women's Day", "2026-03-08", "PUBLIC_HOLIDAY"),
-            ("Good Friday", "2026-04-03", "PUBLIC_HOLIDAY"),
-            ("Easter Monday", "2026-04-06", "PUBLIC_HOLIDAY"),
-            ("Labor Day", "2026-05-01", "PUBLIC_HOLIDAY"),
-            ("Martyrs' Day", "2026-06-03", "PUBLIC_HOLIDAY"),
-            ("Heroes' Day", "2026-06-09", "PUBLIC_HOLIDAY"),
-            ("Independence Day", "2026-10-09", "PUBLIC_HOLIDAY"),
-            ("Christmas Day", "2026-12-25", "PUBLIC_HOLIDAY"),
-            ("Boxing Day", "2026-12-26", "PUBLIC_HOLIDAY"),
             ("Staff Conference Week", "2026-07-20", "STAFF_CONFERENCE", "2026-07-24"),
             ("Q3 Planning Blackout", "2026-09-01", "BLACKOUT_DATE", "2026-09-04"),
         ]
@@ -1673,9 +1720,7 @@ def public_holidays_view(request):
                     "created_by": user.id,
                 },
             )
-        messages.success(
-            request, "Default Uganda holidays and calendar blocks seeded successfully."
-        )
+        messages.success(request, "Default calendar blocks seeded successfully.")
         return redirect("frontend:public_holidays")
 
     # Fetch and group blocks
@@ -1684,6 +1729,13 @@ def public_holidays_view(request):
     upcoming_holidays = blocks.filter(
         block_type="PUBLIC_HOLIDAY", end_date__gte=date.today()
     )
+    # The national calendar's own days for the next twelve months, less any
+    # day a recorded block already names.
+    national_holidays = [
+        holiday
+        for holiday in upcoming_public_holidays(date.today(), limit=40)
+        if not holiday.recorded
+    ]
     blackout_dates = blocks.filter(block_type="BLACKOUT_DATE")
     conferences = blocks.filter(block_type="STAFF_CONFERENCE")
     regional_events = blocks.filter(block_type="REGIONAL_EVENT")
@@ -1691,6 +1743,7 @@ def public_holidays_view(request):
 
     context = {
         "upcoming_holidays": upcoming_holidays,
+        "national_holidays": national_holidays,
         "blackout_dates": blackout_dates,
         "conferences": conferences,
         "regional_events": regional_events,

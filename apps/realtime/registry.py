@@ -114,6 +114,26 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="day_off_alerts",
+        description=(
+            "Tells each person which of their coming activities are planned "
+            "on a public holiday or on their own approved leave day, so they "
+            "reschedule them; closes the notice once the day is clear."
+        ),
+        cron="daily 06:40 Africa/Nairobi",
+        cron_kwargs={"hour": 6, "minute": 40},
+        expected_runtime_seconds=30,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note=(
+            "Keyed per person per day off (context_id dayoff-<date>); a "
+            "re-run with the same list sends nothing, even to someone who "
+            "archived theirs."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="target_ledger_sync",
         description=(
             "Rebuilds TargetAchievementLedger for every active CCEO/PL so My "

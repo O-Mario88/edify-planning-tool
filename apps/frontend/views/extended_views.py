@@ -42,12 +42,12 @@ from datetime import date, timedelta
 from apps.ssa.models import SsaRecord
 from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
+from apps.activities.day_off import day_off_marks
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
 from apps.accounts.models import (
     CalendarBlock,
     Leave,
-    PublicHoliday,
     StaffProfile,
     User,
 )
@@ -56,54 +56,9 @@ from apps.core_schools.models import CorePlan, CoreActivitySlot
 from apps.audit.models import AuditLog
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
+from apps.core.public_holidays import holidays_between
 from apps.targets.models import TargetSetting, TargetType
 from apps.core.rbac import EdifyRole
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Calendar reference dates supplied for the Edify operations calendar. These
-# are deliberate organisation-calendar observances, not an attempt to maintain
-# the Government of Uganda's legal public-holiday register. Government-declared
-# one-off holidays (including a Presidential Inauguration) stay data-driven in
-# PublicHoliday/CalendarBlock and are shown only when an authorised user adds
-# them for the applicable year.
-_CALENDAR_REFERENCE_HOLIDAYS = (
-    (1, 2, "New Year"),
-    (1, 17, "Election Day Holiday"),
-    (1, 27, "Liberation Day"),
-    (2, 17, "Remembrance of Archbishop Janani Luwum"),
-    (2, 19, "Ramadan Start"),
-    (3, 9, "International Women's Day"),
-    (3, 21, "Eid al-Fitr"),
-    (4, 4, "Good Friday"),
-    (4, 6, "Easter Sunday"),
-    (4, 7, "Easter Monday"),
-    (5, 2, "Labour Day"),
-    (5, 11, "Mother's Day"),
-    (5, 28, "Eid al-Adha"),
-    (6, 4, "Martyrs' Day"),
-    (6, 10, "National Heroes Day"),
-    (6, 22, "Father's Day"),
-    (9, 23, "September Equinox"),
-    (10, 10, "Independence Day"),
-    (12, 22, "December Solstice"),
-    (12, 26, "Christmas Day"),
-    (12, 27, "Boxing Day"),
-)
-
-
-def _reference_holidays_for_year(year: int) -> list[dict]:
-    """Return the recurring organisation observances shown in Calendar.
-
-    A Presidential Inauguration intentionally is not in this list: it is a
-    government-declared, once-every-five-years event and must be entered in
-    PublicHoliday or CalendarBlock for the year in which it applies.
-    """
-
-    return [
-        {"date": date(year, month, day), "title": title}
-        for month, day, title in _CALENDAR_REFERENCE_HOLIDAYS
-    ]
 
 
 # Calendar visibility is intentionally narrower than country-level reporting.
@@ -420,22 +375,33 @@ def calendar_view(request):
     events_by_date: dict[date, list[dict]] = defaultdict(list)
     event_counts = {"activity": 0, "leave": 0, "holiday": 0, "event": 0}
 
+    # end_date > planned/scheduled start means the one Activity spans several
+    # days; it renders on every day of its range inside the month window but
+    # counts once.
+    spans: dict[str, tuple[date, date]] = {}
     for activity in activity_rows:
         start_date = (
             local_day(activity.scheduled_date)
             if activity.scheduled_date
             else activity.planned_date
         )
-        if not start_date:
+        if start_date:
+            spans[activity.id] = (
+                start_date,
+                activity.end_date
+                if activity.end_date and activity.end_date > start_date
+                else start_date,
+            )
+    # Planned work on a public holiday or on its owner's leave day is drawn
+    # in the holiday's own colour and listed above the month (owner,
+    # 2026-10-05; apps.activities.day_off).
+    day_off_by_activity = day_off_marks(activity_rows, spans=spans)
+    day_off_rows: list[dict] = []
+
+    for activity in activity_rows:
+        if activity.id not in spans:
             continue
-        # end_date > planned/scheduled start means the one Activity spans
-        # several days; it renders on every day of its range inside the month
-        # window but counts once.
-        end_date = (
-            activity.end_date
-            if activity.end_date and activity.end_date > start_date
-            else start_date
-        )
+        start_date, end_date = spans[activity.id]
         first_day = max(start_date, month_start)
         last_day = min(end_date, month_end)
         if first_day > last_day:
@@ -474,6 +440,18 @@ def calendar_view(request):
             if part
         )
         family = _calendar_event_family(activity.activity_type)
+        day_off = day_off_by_activity.get(activity.id)
+        if day_off:
+            tooltip = f"{tooltip} · {day_off.advice}"
+            day_off_rows.append(
+                {
+                    "id": activity.id,
+                    "date": day_off.days[0].day,
+                    "title": title,
+                    "place": place,
+                    "why": day_off.why,
+                }
+            )
 
         event_counts["activity"] += 1
         current_date = first_day
@@ -485,6 +463,8 @@ def calendar_view(request):
                 meta = f"{place} · {range_label}"
             else:
                 meta = f"{place} · Day {day_number} of {total_days}"
+            if day_off:
+                meta = f"Reschedule: {day_off.label.lower()} · {meta}"
             events_by_date[current_date].append(
                 {
                     "kind": "activity",
@@ -495,6 +475,7 @@ def calendar_view(request):
                     "status": status_label,
                     "tooltip": tooltip,
                     "continued": current_date > start_date,
+                    "day_off": bool(day_off),
                 }
             )
             current_date += timedelta(days=1)
@@ -546,44 +527,27 @@ def calendar_view(request):
             event_counts["leave"] += 1
             current_date += timedelta(days=1)
 
-    # PublicHoliday/CalendarBlock are the authoritative place for a
-    # government-declared, non-recurring date. The recurring organisation
-    # observances above fill out the planning calendar without changing the
-    # scheduling policy or manufacturing database records.
+    # One calendar for every page (apps.core.public_holidays): the national
+    # public holidays worked out for this year, the days recorded under
+    # Holidays & Blackouts, and the observances nobody is off for.
     holiday_keys: set[tuple[date, str]] = set()
-
-    def add_holiday(holiday_date: date, title: str, detail: str = "Holiday"):
-        key = (holiday_date, title.strip().casefold())
-        if key in holiday_keys or not month_start <= holiday_date <= month_end:
-            return
+    for holiday in holidays_between(month_start, month_end):
+        key = (holiday.date, holiday.name.strip().casefold())
+        if key in holiday_keys:
+            continue
         holiday_keys.add(key)
-        events_by_date[holiday_date].append(
+        detail = "Public holiday" if holiday.is_public else "Observance"
+        events_by_date[holiday.date].append(
             {
                 "kind": "holiday",
-                "title": title,
+                "title": holiday.label,
                 "meta": detail,
                 "href": "",
                 "status": "Holiday",
-                "tooltip": f"{title} · {detail}",
+                "tooltip": f"{holiday.label} · {detail}",
             }
         )
         event_counts["holiday"] += 1
-
-    for holiday in PublicHoliday.objects.filter(date__range=(month_start, month_end)):
-        add_holiday(holiday.date, holiday.name, "Public holiday")
-    for block in CalendarBlock.objects.filter(
-        is_active=True,
-        block_type="PUBLIC_HOLIDAY",
-        start_date__lte=month_end,
-        end_date__gte=month_start,
-    ):
-        current_date = max(block.start_date, month_start)
-        final_date = min(block.end_date, month_end)
-        while current_date <= final_date:
-            add_holiday(current_date, block.title, "Public holiday")
-            current_date += timedelta(days=1)
-    for holiday in _reference_holidays_for_year(year):
-        add_holiday(holiday["date"], holiday["title"], "Edify calendar holiday")
 
     # Country Director-created organization events are a distinct calendar
     # category, not activities: they consume the date and therefore block new
@@ -644,6 +608,9 @@ def calendar_view(request):
                     "kind_counts": kind_counts(events_by_date.get(day, [])),
                     "is_current_month": day.month == month,
                     "is_today": day == today,
+                    "has_day_off": any(
+                        event.get("day_off") for event in events_by_date.get(day, [])
+                    ),
                 }
                 for day in week
             ]
@@ -697,6 +664,7 @@ def calendar_view(request):
         "weekday_labels": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
         "event_counts": event_counts,
         "event_total": sum(event_counts.values()),
+        "day_off_rows": sorted(day_off_rows, key=lambda row: row["date"]),
         "project_scope": project_scope,
         "selected_project": selected_project,
         "activity_type_choices": ActivityType.choices,
