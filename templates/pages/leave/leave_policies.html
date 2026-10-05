@@ -96,9 +96,9 @@
     <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
       <div class="min-w-0">
         <h2 id="public-holidays-title" class="text-sm font-semibold">Public Holidays</h2>
-        <p class="edify-text-caption edify-text-muted">Dates planning treats as holidays for every team.</p>
+        <p class="edify-text-caption edify-text-muted">Dates planning treats as holidays for every team. Uganda's national holidays are built in; add a day only when the Government declares one or announces an Eid date.</p>
       </div>
-      <span class="edify-text-caption font-semibold whitespace-nowrap">{{ holidays|length }} holidays configured</span>
+      <span class="edify-text-caption font-semibold whitespace-nowrap">{{ holidays|length }} added · {{ national_holidays|length }} national in the next 12 months</span>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -118,8 +118,15 @@
   {% include "partials/components/confirm_action.html" with uid=h.id trigger_label="" trigger_aria_label="Remove public holiday" trigger_icon_name="trash" trigger_class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-surface transition" title="Remove this public holiday?" body="Planning stops treating the date as a holiday. Activities already scheduled on it are not moved." confirm_label="Remove holiday" %}
             </form>
           </div>
-          {% empty %}
-          <div class="p-4">{% include "components/empty_state.html" with message="No public holidays registered." compact="true" %}</div>
+          {% endfor %}
+          {% for h in national_holidays %}
+          <div class="px-4 py-2.5 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-[13px] font-semibold">{{ h.label }}</p>
+              <p class="edify-text-caption edify-text-muted">Date: {{ h.date|date:"l j F Y" }}</p>
+            </div>
+            <span class="edify-text-caption edify-text-muted whitespace-nowrap">National calendar</span>
+          </div>
           {% endfor %}
         </div>
       </div>
@@ -131,7 +138,7 @@
           <input type="hidden" name="action" value="add_holiday" />
           <label class="block">
             <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Holiday Name</span>
-            <input type="text" name="holiday_name" placeholder="e.g. Independence Day" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)] focus:outline-none edify-primary-focus" required />
+            <input type="text" name="holiday_name" placeholder="e.g. Eid al-Fitr" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)] focus:outline-none edify-primary-focus" required />
           </label>
           <label class="block">
             <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Holiday Date</span>

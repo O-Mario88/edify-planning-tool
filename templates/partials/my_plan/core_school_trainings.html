@@ -57,7 +57,7 @@ Core School Trainings Planned for {% if period == 'week' %}This Week{% elif peri
 </thead>
 <tbody>
 {% for row in core_school_trainings_pager.rows %}
-<tr>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.school_id %}
@@ -69,7 +69,7 @@ Core School Trainings Planned for {% if period == 'week' %}This Week{% elif peri
 </td>
 <td class="font-bold text-slate-700" data-label="Package">{% if row.training_number %}<span class="core-seq__mark" data-state="{% if row.status_tone == 'green' %}done{% else %}planned{% endif %}" title="{{ row.training_number }} {% if row.status_tone == 'green' %}completed{% else %}planned{% endif %}" data-core-number>{{ row.training_number }}</span>{% else %}—{% endif %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.core_progress }}</span></td>
 <td class="font-semibold text-slate-500" data-label="District">{% if row.school_district and row.school_district != "—" %}<a href="/schools?q={{ row.school_district|urlencode }}" class="hover:underline edify-primary-text-hover">{{ row.school_district }}</a>{% else %}—{% endif %}</td>
-<td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td data-label="Intervention">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
 {{ row.focus_intervention }}

@@ -502,6 +502,21 @@ def daily_plan_notifications_job():
     run_tracked_job("daily_plan_notifications", _do_daily_plan_notifications)
 
 
+def _do_day_off_alerts() -> int:
+    """Tell each person which of their coming activities sit on a public
+    holiday or on their own leave day, so they reschedule them (owner,
+    2026-10-05; apps.activities.day_off.send_day_off_alerts)."""
+    from apps.activities.day_off import send_day_off_alerts
+
+    return send_day_off_alerts()
+
+
+def day_off_alerts_job():
+    if not _enabled():
+        return
+    run_tracked_job("day_off_alerts", _do_day_off_alerts)
+
+
 def _do_activity_reminders() -> int:
     """§33 — 'Activity starts tomorrow' for every responsible person.
 

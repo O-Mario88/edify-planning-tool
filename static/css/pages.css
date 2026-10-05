@@ -4459,6 +4459,23 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .mp-badge--blue { background: var(--edify-accent-light); color: var(--edify-accent-text); }
 .mp-badge--slate { background: var(--edify-surface-muted); color: var(--edify-text-muted); }
 
+/* Planned on a public holiday or on the responsible person's leave day
+   (owner, 2026-10-05; apps.activities.day_off): the mark sits beside the
+   planned date in the holiday's ink, and its row takes the holiday's tint.
+   The tint goes through the table surface's own variable, which the plain
+   table rule in consistency.css reads. */
+.mp-dayoff {
+  margin-inline-start: 0.4rem;
+  color: var(--edify-danger-text);
+  font-size: var(--edify-text-caption-size);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mp-dayoff-row {
+  --edify-table-row-tint: var(--edify-danger-light);
+}
+
 /* Nothing in a My Plan row wraps to a second line — but "no wrapping" alone
    just pushes the table past the viewport and hides the Status and Actions
    columns off the right edge. Long text truncates instead, so the row stays

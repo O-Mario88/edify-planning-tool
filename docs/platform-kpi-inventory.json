@@ -87,7 +87,7 @@
    "audit_id": "KPI-SOURCE-004",
    "kind": "breakdown-row",
    "module": "apps/accounts/hr_dashboard_service.py",
-   "line": 1324,
+   "line": 1319,
    "label": null,
    "keys": [
     "count",
@@ -3847,7 +3847,7 @@
    "audit_id": "KPI-SOURCE-203",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2146,
+   "line": 2114,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3867,7 +3867,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3716,
+   "line": 3684,
    "label": null,
    "keys": [
     "label",
@@ -3884,7 +3884,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4528,
+   "line": 4496,
    "label": null,
    "keys": [
     "count",
@@ -3903,7 +3903,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1188,
+   "line": 1156,
    "label": null,
    "keys": [
     "achieved",
@@ -3924,7 +3924,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1295,
+   "line": 1263,
    "label": null,
    "keys": [
     "label",
@@ -3941,7 +3941,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3622,
+   "line": 3590,
    "label": "About",
    "keys": [
     "label",
@@ -3958,7 +3958,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3623,
+   "line": 3591,
    "label": "Raised by",
    "keys": [
     "label",
@@ -3975,7 +3975,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3624,
+   "line": 3592,
    "label": "Flag",
    "keys": [
     "label",
@@ -3992,7 +3992,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3625,
+   "line": 3593,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8285,7 +8285,7 @@
    "audit_id": "KPI-SOURCE-458",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 1124,
+   "line": 1131,
    "label": "Search coverage by the staff member covered or covering",
    "keys": [
     "action",
@@ -9739,7 +9739,7 @@
    "audit_id": "KPI-SOURCE-540",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 541,
+   "line": 542,
    "label": "Undated",
    "keys": [
     "at_risk",
@@ -9761,7 +9761,7 @@
    "audit_id": "KPI-SOURCE-541",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 532,
+   "line": 533,
    "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
@@ -9783,7 +9783,7 @@
    "audit_id": "KPI-SOURCE-542",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 665,
+   "line": 670,
    "label": null,
    "keys": [
     "cost",
@@ -9803,7 +9803,7 @@
    "audit_id": "KPI-SOURCE-543",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 811,
+   "line": 817,
    "label": null,
    "keys": [
     "amount",
@@ -42157,7 +42157,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3175,
+   "line": 3143,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42179,7 +42179,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3920,
+   "line": 3888,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -42232,7 +42232,7 @@
   {
    "audit_id": "KPI-PAYLOAD-016",
    "module": "apps/frontend/views/leave_views.py",
-   "line": 821,
+   "line": 828,
    "function": "_leave_approvals_page",
    "target": "leave_kpi_items",
    "source_item_count": 6,

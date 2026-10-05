@@ -102,10 +102,12 @@ class WorkingDayMemoFreshnessTest(TestCase):
         from apps.accounts.models import PublicHoliday
         from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
 
-        start, end = date(2026, 10, 5), date(2026, 10, 10)  # Mon–Fri
+        # A week with no national holiday in it: the one before holds
+        # Independence Day (apps.core.public_holidays).
+        start, end = date(2026, 10, 12), date(2026, 10, 17)  # Mon–Fri
         self.assertEqual(Cal.working_days(start, end), 5)
 
-        PublicHoliday.objects.create(name="Test Day", date=date(2026, 10, 7))
+        PublicHoliday.objects.create(name="Test Day", date=date(2026, 10, 14))
         self.assertEqual(
             Cal.working_days(start, end),
             4,

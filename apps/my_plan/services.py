@@ -1220,6 +1220,13 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     minimum_amounts = planned_minimum_amounts(activities)
 
+    # Planned work on a public holiday or on its owner's leave day (owner,
+    # 2026-10-05): marked on its row and listed first, to be rescheduled.
+    from apps.activities.day_off import day_off_marks
+
+    day_off_by_activity = day_off_marks(activities)
+    day_off_list = []
+
     # An in-school Training is done during its School Visit and stays at
     # UGX 0: the visit carries the day's cost (owner, 2026-09-28). Its row
     # says so (owner, 2026-10-05) unless the visit has no price either.
@@ -1668,7 +1675,10 @@ def get_frontend_context(principal, query: dict) -> dict:
             "status_tone": plan_row_tone(
                 a, status_label, status_class, is_core=bool(is_core)
             ),
+            "day_off": day_off_by_activity.get(a.id),
         }
+        if activity_data["day_off"]:
+            day_off_list.append(activity_data)
 
         # Legacy lists for compatibility
         if a.planning_source == "manual_work_plan" or (
@@ -2266,6 +2276,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         "priority_count": len(waiting_on_me_list) + len(due_today_list),
         "partner_monitoring": partner_monitoring_list,
         "returned_needs_correction": returned_needs_correction_list,
+        "day_off_work": day_off_list,
         "waiting_on_approval": waiting_on_approval_list,
         "upcoming": upcoming_list,
         "finance_pending": finance_pending_list,
