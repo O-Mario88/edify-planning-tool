@@ -1,4 +1,4 @@
-{% load school_identity table_pagination %}
+{% load school_identity table_pagination frontend_filters %}
 <!-- Attention Region: Returned / Waiting on Approval / Partner Monitoring / Finance Pending -->
 
 {% comment %}Planned work on a public holiday or on the responsible person's
@@ -21,9 +21,14 @@ Reschedule — On a Public Holiday or Leave Day
 
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate day_off_work "day_off_page" as day_off_pager %}
+{% comment %}Tick the ones to move and reschedule them together from the bar
+that appears (owner, 2026-10-05): a holiday usually moves a day's work, not
+one activity.{% endcomment %}
+{% with selectable=day_off_pager.rows|any_attr:"can_pick" %}
 <table class="edify-record-table edify-data-table mp-table whitespace-nowrap">
 <thead>
 <tr>
+{% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th>School ID</th>
 <th>School / Cluster</th>
 <th>Type</th>
@@ -37,6 +42,7 @@ date column and a sentence beside it the table was wider than a 1280px
 workspace and its cells wrapped (e2e/responsive-contract.spec.js).{% endcomment %}
 {% for row in day_off_pager.rows %}
 <tr class="mp-dayoff-row">
+{% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}
@@ -67,6 +73,7 @@ Reschedule
 {% endfor %}
 </tbody>
 </table>
+{% endwith %}
 {% include "components/table_pager.html" with pager=day_off_pager param="day_off_page" %}
 </div>
 

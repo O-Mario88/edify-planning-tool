@@ -23,7 +23,7 @@ and verified. The country for the CD and IA, a Lead's own team for the PL.
     {% include "partials/oversight/_lens_tabs.html" %}
   </div>
 
-  <div id="oversight-workspace">
+  <div id="oversight-workspace" data-live-region>
     {% if active_oversight_view == "execution" %}
       {% include "partials/oversight/execution_workspace.html" %}
     {% else %}

@@ -208,7 +208,7 @@ gate keeps from a partner has no box.{% endcomment %}
 <caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, visit and training planning status, and planning readiness.</caption>
 <thead>
 <tr class="bg-slate-50/80 border-b border-[var(--edify-border)] text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
-{% if can_tick %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
+{% if can_tick %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-cluster-pick]" aria-label="Select every school on this page that can go to a partner"></label></th>{% endif %}
 <th scope="col" class="px-4 py-2.5">School ID</th>
 <th scope="col" class="px-4 py-2.5">School Name</th>
 <th scope="col" class="px-4 py-2.5">SSA Average</th>

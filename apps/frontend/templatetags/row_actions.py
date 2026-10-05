@@ -54,3 +54,17 @@ def row_actions(parser, token):
     nodelist = parser.parse(("endrow_actions",))
     parser.delete_first_token()
     return RowActionsNode(nodelist, name)
+
+
+@register.simple_tag(takes_context=True)
+def school_list_actions(context, schools, fy):
+    """`{% school_list_actions pager.rows fy as tickable %}`: put on each
+    school of a drill-down list what its Actions menu offers this reader
+    (apps.planning.list_actions; owner, 2026-10-05) and say whether any row
+    has something to tick. Asked of the page's rows only, after paging."""
+    from apps.planning.list_actions import offer
+
+    request = context.get("request")
+    if request is None:
+        return False
+    return offer(schools, request.user, str(fy or ""))

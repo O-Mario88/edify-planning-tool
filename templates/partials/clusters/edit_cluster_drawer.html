@@ -98,6 +98,7 @@
       <legend class="edify-text-caption font-semibold text-slate-600">
         Sub-counties covered (<span x-text="selectedSubCounties.length">0</span> selected)
       </legend>
+      {% include "partials/components/select_all.html" with boxes="input[name=sub_county_ids]" %}
       <div class="border border-slate-200 rounded-surface max-h-48 overflow-y-auto divide-y divide-slate-100 edify-surface">
         <template x-for="sc in subCounties.filter(sc => sc.district_id === selectedDistrictId)" :key="sc.id">
           <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-700">
@@ -155,6 +156,7 @@
       </legend>
       <p id="edit-cluster-members-help" class="edify-text-caption text-slate-500">Untick a school added by mistake. It leaves the cluster when you save.</p>
       <input type="hidden" name="manage_members" value="1">
+      {% if member_schools %}{% include "partials/components/select_all.html" with boxes="input[name=member_school_ids]" %}{% endif %}
       <div class="border border-slate-200 rounded-surface max-h-56 overflow-y-auto divide-y divide-slate-100 edify-surface" role="group" aria-label="Schools in this cluster">
         {% for s in member_schools %}
         <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-700">

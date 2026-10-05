@@ -226,6 +226,20 @@ def throttle_by_ip(request, *, name: str, limit: int, window_ms: int = 60_000) -
     return _hit(f"{name}:{throttle_ident(request)}", window_ms=window_ms, limit=limit)
 
 
+def throttle_by_account(
+    user_id, *, name: str, limit: int, window_ms: int = 60_000
+) -> bool:
+    """Per (name + account) window, for a door only a signed-in person
+    reaches. True = allowed.
+
+    An office shares one address, so a limit meant to stop one account's
+    reconnect loop refuses the colleagues beside it when it is counted by
+    address alone (the realtime stream, 2026-10-05). The same window backing
+    as `throttle_by_ip`, under a key of its own.
+    """
+    return _hit(f"{name}:account:{user_id}", window_ms=window_ms, limit=limit)
+
+
 def reset_throttle_state(keys: Iterable[str] = ()) -> None:
     """Test helper: clear the window (all keys, or a subset).
 

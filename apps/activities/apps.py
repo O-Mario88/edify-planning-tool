@@ -10,3 +10,8 @@ class ActivitiesConfig(AppConfig):
     def ready(self):
         # Every move of a plan's day, recorded as it is saved.
         from . import schedule_trail  # noqa: F401
+
+        # Every change of the plan, told to the pages that show it.
+        from . import live
+
+        live.connect()

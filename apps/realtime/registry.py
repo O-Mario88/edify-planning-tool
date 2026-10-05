@@ -231,6 +231,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=0,
     ),
     JobSpec(
+        name="cost_reprice_sweep",
+        description=(
+            "Re-prices planned, unpaid activities whose saved cost lines carry "
+            "a rate the Cost Catalogue has since changed or removed, and "
+            "rebuilds their draft weekly and monthly requests."
+        ),
+        cron="every 10 min",
+        cron_kwargs={"minute": "*/10"},
+        expected_runtime_seconds=60,
+        max_interval_minutes=45,
+        idempotent=True,
+        idempotency_note=(
+            "A plan re-priced against the active catalogue is no longer found; "
+            "a second run finds only what the first did not reach."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
+    JobSpec(
         name="execution_period_snapshots",
         description=(
             "Locks the Country Execution & Completion Oversight figures of each "

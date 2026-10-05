@@ -78,6 +78,7 @@ class Command(BaseCommand):
             "school_action_sweep": jobs.school_action_sweep_job,
             "planning_followup_sweep": jobs.planning_followup_sweep_job,
             "planning_oversight_warm": jobs.planning_oversight_warm_job,
+            "cost_reprice_sweep": jobs.cost_reprice_sweep_job,
             "execution_period_snapshots": jobs.execution_period_snapshots_job,
             "performance_readiness": jobs.performance_readiness_job,
             "fiscal_year_rollover": jobs.fiscal_year_rollover_job,

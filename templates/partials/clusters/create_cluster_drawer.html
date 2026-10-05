@@ -107,6 +107,7 @@
             </span>
           </legend>
 
+          {% include "partials/components/select_all.html" with boxes="input[name=sub_county_ids]" %}
           <div
             class="cluster-create-checklist"
             x-ref="subCountyChecklist"

@@ -4,10 +4,10 @@
   "templates": 249,
   "distinct_titles": 634,
   "with_card_key": 13,
-  "untitled_surfaces": 592,
+  "untitled_surfaces": 593,
   "untitled_chrome": 153,
   "untitled_nested": 191,
-  "untitled_headless": 248,
+  "untitled_headless": 249,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -403,7 +403,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 197,
+   "line": 198,
    "title": "People Managed",
    "heading_level": 2,
    "has_card_key": false,
@@ -417,7 +417,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 275,
+   "line": 277,
    "title": "Account Lifecycle",
    "heading_level": 3,
    "has_card_key": false,
@@ -426,7 +426,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 352,
+   "line": 354,
    "title": "Password Management",
    "heading_level": 3,
    "has_card_key": false,
@@ -435,7 +435,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 399,
+   "line": 401,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 197,
+   "line": 208,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 233,
+   "line": 244,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2331,7 +2331,7 @@
   },
   {
    "template": "templates/pages/partner/activity_workroom.html",
-   "line": 181,
+   "line": 182,
    "title": "School visit feedback",
    "heading_level": 3,
    "has_card_key": false,
@@ -2385,7 +2385,7 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 109,
+   "line": 111,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
@@ -2645,7 +2645,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 182,
+   "line": 183,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 268,
+   "line": 269,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 287,
+   "line": 288,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -5318,7 +5318,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 276,
+   "line": 284,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5332,7 +5332,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 443,
+   "line": 455,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -6230,42 +6230,42 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 78,
+   "line": 85,
    "title": "Returned \u2014 Needs Correction",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden border-rose-200",
    "branch_path": [
     [
-     5,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 143,
+   "line": 150,
    "title": "Waiting on Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     9,
+     12,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 204,
+   "line": 211,
    "title": "Finance / Accountability Pending",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     13,
+     16,
      0
     ]
    ]

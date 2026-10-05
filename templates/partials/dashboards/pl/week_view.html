@@ -29,7 +29,7 @@
   {% comment %}The week itself. Its own tabs and arrows swap this panel alone
   (HX-Target pl-week-panel), so the monitor above and the lists below stay
   where they are.{% endcomment %}
-  <section id="pl-week-panel" class="plwk" aria-label="This week" data-pl-week-panel>
+  <section id="pl-week-panel" class="plwk" aria-label="This week" data-live-region data-pl-week-panel>
     {% include "partials/dashboards/pl/week_panel.html" %}
   </section>
 
@@ -42,9 +42,13 @@
       <span class="plwk-backlog__count">{{ past_due_total_count }}</span>
     </summary>
     <div class="plwk-backlog__body">
-      {% include "partials/dashboards/what_needs_you_now.html" %}
+      {% include "partials/dashboards/what_needs_you_now.html" with selection_bar_elsewhere=True %}
     </div>
   </details>
+  {% comment %}Reschedule or cancel the ticked activities together (owner,
+  2026-10-05). Out here, not in the folded backlog: a closed fold draws
+  nothing inside it, and the lead's own rows in the week tables tick too.{% endcomment %}
+  {% include "partials/activities/selection_bar.html" with bar_schools=True %}
 
   {% comment %}The Staff Activity Log, the team's use of the platform (owner,
   2026-09-29: moved here from the sidebar with the Planning Monitor). It

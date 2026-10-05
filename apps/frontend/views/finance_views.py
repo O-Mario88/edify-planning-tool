@@ -1134,7 +1134,7 @@ def cost_setting_row_view(request, key):
         reason = request.POST.get("reason", "").strip()
         try:
             new_cost = int(new_cost_str.replace(",", ""))
-            budget_services.upsert_cost_setting(
+            saved = budget_services.upsert_cost_setting(
                 {
                     "key": setting.key,
                     "label": setting.label,
@@ -1146,6 +1146,18 @@ def cost_setting_row_view(request, key):
                     "fy": setting.fy,
                 },
                 request.user,
+            )
+            # The plans already made were re-priced with it (owner,
+            # 2026-10-05); say how many, and which were kept.
+            from django.contrib import messages
+
+            from apps.budget.repricing import summary as repricing_summary
+
+            messages.success(
+                request,
+                f"{setting.label} saved. {repricing_summary(saved['repricing'])}",
+                # A notice, never the reason a saved rate reads as failed.
+                fail_silently=True,
             )
             catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
@@ -1255,7 +1267,14 @@ def add_linked_cost_view(request):
     except BadRequest as exc:
         messages.error(request, str(exc.detail))
         return redirect("/cost-settings?add=1")
-    messages.success(request, f"{result['label']} added to the Cost Catalogue.")
+    from apps.budget.repricing import summary as repricing_summary
+
+    messages.success(
+        request,
+        f"{result['label']} added to the Cost Catalogue. "
+        f"{repricing_summary(result['repricing'])}",
+        fail_silently=True,
+    )
     return redirect(f"/cost-settings#cost-setting-row-{result['key']}")
 
 

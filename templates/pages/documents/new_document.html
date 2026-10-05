@@ -49,6 +49,7 @@
       <fieldset>
         <legend class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Who is this for?</legend>
         <p class="mb-2 edify-text-caption edify-text-muted">A document with no audience reaches nobody — it is not published to everyone by default.</p>
+        <div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=target_roles]" %}</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
           {% for value, label in roles %}
           <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]">

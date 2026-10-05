@@ -82,7 +82,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261002tabs15">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261002tabs15">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261002tokens2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260927mobile4">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261005bar2">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20261002tokens2">
 <link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20261002tabs15">
 {% comment %}
@@ -259,6 +259,22 @@ with the strip back at its first tab, which is the Programme Lead's own rows
 registers the parameter this carries.
 {% endcomment %}
 <script defer src="{% static 'js/table-pagination.js' %}?v=20260922pagerstate1"></script>
+
+{% comment %}
+Tick boxes that act on a group (owner, 2026-10-05): a "Select all" box ticks
+every box in its table or list, on a page or in a drawer swapped into one, and
+a ticked planned activity shows the bar that reschedules or cancels the ticked
+ones together.
+{% endcomment %}
+<script defer src="{% static 'js/group-select.js' %}?v=20261005group3"></script>
+
+{% comment %}
+Pages that keep up with the plan (owner, 2026-10-05: "This should happen in
+real time"): a region marked data-live-region is read again when an activity
+on it is rescheduled or cancelled by anyone, a Program Lead's or a partner's
+open page included. It listens only on a page that has such a region.
+{% endcomment %}
+<script defer src="{% static 'js/live-regions.js' %}?v=20261005live4"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own

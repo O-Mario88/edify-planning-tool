@@ -4,24 +4,14 @@
   <div x-show="activeView === 'calendar'" style="display: none;" class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
     <div id="planning-calendar-view" class="w-full"></div>
   </div>
+  {% comment %}Reschedule or cancel the ticked calendar entries together
+  (owner, 2026-10-05).{% endcomment %}
+  {% include "partials/activities/selection_bar.html" %}
 
-  <script id="calendar-events-data" type="application/json">
-    [
-      {% for a in scheduled_activities %}
-        {
-          "id": "{{ a.id }}",
-          "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
-          "start": "{{ a.planned_date|date:'Y-m-d' }}",
-          "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
-          "extendedProps": {
-            "status": "{{ a.status }}",
-            "school": "{{ a.school.name|default:'' }}",
-            "activity_type": "{{ a.activity_type|title }}"
-          }
-        }{% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ]
-  </script>
+  {% comment %}The reader's own dated work in the year
+  (apps.activities.calendar_scope.planning_events), through json_script: a
+  school's name reaches the page through a JSON encoder.{% endcomment %}
+  {{ planning_calendar_events|json_script:"calendar-events-data" }}
 
   <script>
     (function () {
@@ -35,6 +25,15 @@
           try { window._planningCalendar.destroy(); } catch (e) { /* stale */ }
         }
         const eventsData = JSON.parse(dataEl.textContent);
+        const ticked = new Set();
+        calendarEl.addEventListener('change', function (event) {
+          const box = event.target;
+          if (!box.matches || !box.matches('input[data-activity-pick]')) return;
+          if (box.checked) ticked.add(box.value); else ticked.delete(box.value);
+        });
+        document.addEventListener('click', function (event) {
+          if (event.target.closest && event.target.closest('[data-activity-clear]')) ticked.clear();
+        });
         window._planningCalendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
           headerToolbar: {
@@ -45,8 +44,36 @@
           events: eventsData,
           themeSystem: 'standard',
           height: 'auto',
+          // A planned activity the reader may move or cancel carries a tick
+          // box (owner, 2026-10-05); the ticked ones are rescheduled or
+          // cancelled together from the bar. The calendar redraws its entries
+          // when the month or the view changes, so the ticks are kept here.
+          eventContent: function (arg) {
+            const row = document.createElement('span');
+            row.className = 'planning-calendar-entry';
+            if (arg.event.extendedProps.pick) {
+              const box = document.createElement('input');
+              box.type = 'checkbox';
+              box.value = arg.event.id;
+              box.setAttribute('data-activity-pick', '');
+              box.setAttribute('aria-label', 'Select ' + arg.event.title);
+              box.checked = ticked.has(arg.event.id);
+              row.appendChild(box);
+            }
+            const name = document.createElement('span');
+            name.textContent = arg.event.title;
+            row.appendChild(name);
+            return { domNodes: [row] };
+          },
+          eventDidMount: function () { window.EdifyGroupSelect && window.EdifyGroupSelect.settle(); },
           eventClick: function (info) {
-            htmx.ajax('GET', `/my-plan/${info.event.id}/reschedule-drawer`, {target: '#drawer-container', swap: 'innerHTML'});
+            // Ticking an entry is not opening it.
+            if (info.jsEvent.target.closest('input[data-activity-pick]')) return;
+            // Staff work that is still only a plan opens its Reschedule
+            // drawer; a partner's delivery or work already carried out
+            // opens its own record.
+            const door = info.event.extendedProps.reschedule ? '/reschedule-drawer' : '';
+            htmx.ajax('GET', `/my-plan/${info.event.id}${door}`, {target: '#drawer-container', swap: 'innerHTML'});
           }
         });
         window._planningCalendar.render();

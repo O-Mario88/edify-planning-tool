@@ -1102,27 +1102,17 @@ def planning_dashboard_view(request):
         int(filters["page"]) * int(filters["per_page"]), data["total_count"]
     )
 
-    # Query scheduled activities if tab is scheduled for FullCalendar.js representation
-    scheduled_activities = []
+    # The Calendar View of the Scheduled tab: the reader's own dated work in
+    # the year, as the Calendar page scopes it (apps.activities.calendar_scope).
+    # This used to narrow a CCEO to their own work and write the whole
+    # country's year into the page for every other role, list six statuses by
+    # hand (a rescheduled activity vanished) and title each entry with its
+    # raw type code.
+    planning_calendar_events = []
     if filters["tab"] == "scheduled":
-        from apps.activities.models import Activity
+        from apps.activities.calendar_scope import planning_events
 
-        scheduled_activities = Activity.objects.filter(
-            deleted_at__isnull=True,
-            status__in=[
-                "planned",
-                "scheduled",
-                "partner_scheduled",
-                "in_progress",
-                "completed",
-                "ia_verified",
-            ],
-            fy=fy,
-        ).select_related("school")
-        if request.user.active_role == "CCEO":
-            scheduled_activities = scheduled_activities.filter(
-                responsible_staff_id=request.user.id
-            )
+        planning_calendar_events = planning_events(request.user, fy)
 
     # Distinguishes "your filters match nothing" from "nothing is clustered
     # yet", which look identical on screen and need opposite responses. Scoped
@@ -1151,7 +1141,7 @@ def planning_dashboard_view(request):
         "kpis": data["kpis"],
         "kpi_strip_items": data.get("kpi_strip_items", []),
         "total_count": data["total_count"],
-        "scheduled_activities": scheduled_activities,
+        "planning_calendar_events": planning_calendar_events,
         # Options
         "districts": districts,
         "sub_counties": sub_counties,

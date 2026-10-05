@@ -26,6 +26,7 @@ from apps.planning.country_execution import service as esvc
 from apps.planning.country_execution import snapshots
 from apps.planning.country_execution import stages as st
 from apps.planning.country_oversight import followups as fu
+from apps.planning.country_oversight import freshness
 from apps.planning.country_oversight.coverage import fy_label
 from apps.planning.country_oversight.requirements import NO_LEAD_KEY, NO_OWNER_KEY
 
@@ -168,9 +169,10 @@ def _context(request, snapshot, filters) -> dict:
 def execution_page(request):
     """The Execution & Completion tab (routed from the Country Oversight page)."""
     filters = esvc.read_filters(request)
-    refresh = request.GET.get("refresh") == "1"
+    refresh = request.GET.get("refresh") == "1" and not freshness.live_read(request)
     snapshot = esvc.snapshot_for(request.user, filters, refresh=refresh)
     context = _context(request, snapshot, filters)
+    context["settle_seconds"] = freshness.settles_in(snapshot.dataset.built_at)
     if request.headers.get("HX-Request") == "true":
         if (request.headers.get("HX-Target") or "") == "cxo-workspace":
             return render(request, "partials/country_execution/workspace.html", context)

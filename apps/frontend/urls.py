@@ -2,6 +2,7 @@ from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
     action_views,
+    activity_group_views,
     ssa_mapping_views,
     extra_work_views,
     hr_today_views,
@@ -1074,6 +1075,17 @@ urlpatterns = [
     path("today/snooze", today_views.today_snooze, name="today_snooze"),
     path("today/unsnooze", today_views.today_unsnooze, name="today_unsnooze"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
+    # The ticked activities, moved or cancelled together (owner, 2026-10-05).
+    path(
+        "activity-selection/reschedule",
+        activity_group_views.group_reschedule_view,
+        name="activity_group_reschedule",
+    ),
+    path(
+        "activity-selection/cancel",
+        activity_group_views.group_cancel_view,
+        name="activity_group_cancel",
+    ),
     path(
         "my-plan/day-package",
         my_plan_views.day_package_view,

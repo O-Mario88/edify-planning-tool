@@ -8,16 +8,24 @@ The rows and their figures are the ones the summary above is added up from.
 {% endcomment %}
 <section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs overflow-hidden" aria-labelledby="work-plan-detail-title">
   {% paginate detail_rows detail_page_param as detail_pager %}
+  {% comment %}A tick box on the reader's own open work, and one in the header
+  for all of it: the ticked activities are rescheduled or cancelled together
+  from the bar that appears (owner, 2026-10-05). It is not one of the fifteen
+  columns, and a reader with nothing of their own on the page has no tick
+  column at all.{% endcomment %}
+  {% with selectable=detail_pager.rows|any_attr:"can_pick" %}
   <div class="overflow-x-auto">
     <table class="edify-record-table edify-data-table work-plan-table work-plan-table--plan w-full text-[12px]" data-mobile-table="scroll" data-table-fit="scroll">
       <caption class="sr-only">Detailed Activity Plan — {{ period_label }}</caption>
       <thead><tr>
+        {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
         <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">School ID</th><th scope="col">School Name</th><th scope="col">District</th><th scope="col">Cluster Name</th><th scope="col">Activity Purpose</th><th scope="col">SSA Intervention</th><th scope="col">Previous SSA Score</th><th scope="col">Delivery Mode</th><th scope="col">Person Responsible</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
       </tr></thead>
       <tbody>
       {% for r in detail_pager.rows %}
         {# A row planned on a public holiday or its owner's leave day (owner, 2026-10-05; apps.activities.day_off). #}
         <tr class="align-top{% if r.day_off %} mp-dayoff-row{% endif %}">
+          {% if selectable %}{% if r.can_pick %}{% firstof r.school_name r.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=r.id pick_kind=r.activity_word pick_name=pick_place %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="whitespace-nowrap">{{ r.date_label }}{% if r.day_off %}<span class="mp-dayoff" data-tone="danger" title="{{ r.day_off.advice }}">{{ r.day_off.label }}: reschedule</span>{% endif %}</td>
           <td class="whitespace-nowrap">{{ r.activity_word }}</td>
           <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"—" }}</td>
@@ -78,5 +86,6 @@ The rows and their figures are the ones the summary above is added up from.
       </tbody>
     </table>
   </div>
+  {% endwith %}
   {% include "components/table_pager.html" with pager=detail_pager param=detail_page_param %}
 </section>
