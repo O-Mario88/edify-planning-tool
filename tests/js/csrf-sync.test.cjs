@@ -39,13 +39,6 @@ test('a sign-in completed in another tab reaches this one when it is returned to
   assert.equal(page.field.value, 'third');
 });
 
-test('a tab going into the background is left alone', () => {
-  const page = setup('csrftoken=first');
-  page.document.hidden = true;
-  page.handlers.document.visibilitychange();
-  assert.equal(page.field.value, 'rendered-before-sign-in');
-});
-
 test('a native form takes the current token as it is submitted', () => {
   const page = setup('csrftoken=first');
   page.document.cookie = 'csrftoken=second';

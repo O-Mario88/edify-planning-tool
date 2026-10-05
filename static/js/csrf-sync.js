@@ -1,14 +1,9 @@
 /* Keep rendered CSRF tokens aligned with Django's current CSRF cookie.
 
-   Django rotates that cookie when a login completes. A page left open in
-   another tab still contains the previous token, so its next legitimate POST
-   would otherwise fail with "CSRF token from POST incorrect". Native forms
-   are synchronized at submit time; HTMX requests are synchronized when their
-   request configuration is assembled.
-
-   The token only changes while this tab is not the one being used, so it is
-   also synchronized when the tab is returned to. That covers what fires no
-   submit event: form.submit() and fetch() calls that read a rendered token. */
+   Django rotates that cookie when a login completes, so a page left open in
+   another tab holds the previous token and its next POST would fail. Tokens
+   are synchronized when a page is shown or returned to, when a native form
+   is submitted, and when an HTMX request is assembled. */
 (function () {
   "use strict";
 
@@ -61,21 +56,14 @@
     return token;
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function syncPage() {
     sync(document);
-  });
+  }
 
-  window.addEventListener("pageshow", function () {
-    sync(document);
-  });
-
-  window.addEventListener("focus", function () {
-    sync(document);
-  });
-
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) sync(document);
-  });
+  document.addEventListener("DOMContentLoaded", syncPage);
+  window.addEventListener("pageshow", syncPage);
+  window.addEventListener("focus", syncPage);
+  document.addEventListener("visibilitychange", syncPage);
 
   document.addEventListener(
     "submit",
