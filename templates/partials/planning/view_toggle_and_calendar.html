@@ -8,24 +8,10 @@
   (owner, 2026-10-05).{% endcomment %}
   {% include "partials/activities/selection_bar.html" %}
 
-  <script id="calendar-events-data" type="application/json">
-    [
-      {% for a in scheduled_activities %}
-        {
-          "id": "{{ a.id }}",
-          "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
-          "start": "{{ a.planned_date|date:'Y-m-d' }}",
-          "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
-          "extendedProps": {
-            "pick": {% if a.can_pick %}true{% else %}false{% endif %},
-            "status": "{{ a.status }}",
-            "school": "{{ a.school.name|default:'' }}",
-            "activity_type": "{{ a.activity_type|title }}"
-          }
-        }{% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ]
-  </script>
+  {% comment %}The reader's own dated work in the year
+  (apps.activities.calendar_scope.planning_events), through json_script: a
+  school's name reaches the page through a JSON encoder.{% endcomment %}
+  {{ planning_calendar_events|json_script:"calendar-events-data" }}
 
   <script>
     (function () {
@@ -83,7 +69,11 @@
           eventClick: function (info) {
             // Ticking an entry is not opening it.
             if (info.jsEvent.target.closest('input[data-activity-pick]')) return;
-            htmx.ajax('GET', `/my-plan/${info.event.id}/reschedule-drawer`, {target: '#drawer-container', swap: 'innerHTML'});
+            // Staff work that is still only a plan opens its Reschedule
+            // drawer; a partner's delivery or work already carried out
+            // opens its own record.
+            const door = info.event.extendedProps.reschedule ? '/reschedule-drawer' : '';
+            htmx.ajax('GET', `/my-plan/${info.event.id}${door}`, {target: '#drawer-container', swap: 'innerHTML'});
           }
         });
         window._planningCalendar.render();

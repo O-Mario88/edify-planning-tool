@@ -351,21 +351,12 @@ def calendar_view(request):
         # responsible staff and is only reachable through monitored_by_staff_id.
         activity_owner_ids = None
     if activity_owner_ids is not None:
-        from apps.core.scoping import resolve_partner_ids
+        # The one rule both calendars read: a partner's plan is their
+        # organisation's work, a staff member's is their own and the partner
+        # work they monitor (apps.activities.calendar_scope).
+        from apps.activities.calendar_scope import personal_plan
 
-        partner_ids = resolve_partner_ids(user)
-        if partner_ids:
-            # A partner's plan is the work they scheduled for their own
-            # organisation — ownership hangs off assigned_partner_id.
-            activities = activities.filter(assigned_partner_id__in=partner_ids)
-        else:
-            activities = activities.filter(
-                Q(responsible_staff_id__in=activity_owner_ids)
-                | Q(
-                    monitored_by_staff_id__in=activity_owner_ids,
-                    delivery_type="partner",
-                )
-            )
+        activities = personal_plan(activities, user)
 
     # One evaluation for the event loop and the name batch; the queryset
     # itself stays in context (scoping tests inspect it as a queryset).
