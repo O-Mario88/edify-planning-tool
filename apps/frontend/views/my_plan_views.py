@@ -115,6 +115,29 @@ def _partner_ssa_completion_context(a: Activity) -> dict:
     }
 
 
+def _readiness_list(request, context) -> dict | None:
+    """The schools behind a figure of the planner's own Planned and remaining
+    (owner, 2026-10-05: "All those numbers should be link to the actual
+    tables where those schools are located"): ``?list=<key>`` names it."""
+    key = (request.GET.get("list") or "").strip()
+    if not key or not context.get("readiness"):
+        return None
+    from apps.planning.planning_monitor import GAP_LABELS, list_schools, own_monitor
+
+    if key not in GAP_LABELS:
+        return None
+    officer = own_monitor(request.user, str(context.get("fy") or ""))
+    if officer is None:
+        return None
+    for school in (*officer.schools, *officer.outreach_schools):
+        school.officer_name = officer.name
+    return {
+        "key": key,
+        "label": GAP_LABELS[key],
+        "schools": list_schools([officer], key),
+    }
+
+
 @require_page_permission("my_plan")
 def my_plan_view(request):
     """The planning dashboard main view."""
@@ -139,6 +162,7 @@ def my_plan_view(request):
     }
 
     context = get_my_plan(request.user, query)
+    context["plan_list"] = _readiness_list(request, context)
     context["topbar_search"] = {
         "placeholder": "Search my plan…",
         "label": "Search my plan by school, School ID, cluster, district or purpose",

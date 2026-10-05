@@ -1,0 +1,9 @@
+{% load frontend_filters %}{% comment %}
+A count that opens the schools behind it (owner, 2026-10-05: "All those
+numbers should be link to the actual tables where those schools are
+located"). `key` names the list (a gap, or one of
+apps.planning.planning_monitor.LISTS); `row` scopes it to a person, a team or
+everyone; `school_type` narrows it on Schools by type. `tone` keeps the
+count's colour and `muted` draws it as the target it is. A zero is not a
+link: there is no school behind it.
+{% endcomment %}{% if count %}<a href="{{ monitor_url }}&gap={{ key }}{{ row.list_scope }}{% if selected_program_lead and "program_lead" not in row.list_scope %}&program_lead={{ selected_program_lead }}{% endif %}{% if school_type %}&school_type={{ school_type }}{% endif %}#monitor-list" hx-get="{{ monitor_url }}&gap={{ key }}{{ row.list_scope }}{% if selected_program_lead and "program_lead" not in row.list_scope %}&program_lead={{ selected_program_lead }}{% endif %}{% if school_type %}&school_type={{ school_type }}{% endif %}" hx-target="#oversight-workspace" hx-push-url="true" hx-swap="innerHTML show:#monitor-list:top" class="hover:underline{% if tone %} edify-status-text{% endif %}{% if muted %} edify-text-muted{% endif %}"{% if tone %} data-edify-tone="{{ tone }}"{% endif %} data-monitor-count="{{ key }}">{{ count|intcomma }}{{ suffix }}</a>{% else %}<span class="edify-text-muted">0{{ suffix }}</span>{% endif %}

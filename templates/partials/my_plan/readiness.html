@@ -25,12 +25,13 @@ Partner's queue. Shown to the two roles that plan visits only.
         </tr>
       </thead>
       <tbody>
-        {% include "partials/my_plan/_readiness_row.html" with label="Your visits" line=readiness.staff_visits %}
-        {% include "partials/my_plan/_readiness_row.html" with label="Schools in training" line=readiness.staff_trainings note="in-school and group trainings" %}
-        {% include "partials/my_plan/_readiness_row.html" with label="Partner visits" line=readiness.partner_visits note="dated by Partners" %}
-        {% include "partials/my_plan/_readiness_row.html" with label="Core partner trainings" line=readiness.partner_trainings %}
-        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a Partner" line=readiness.partner_assignment %}
-        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a project" line=readiness.project_assignment %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Your visits" line=readiness.staff_visits planned_key="staff_scheduled" target_key="staff_queue" left_key="staff_visits_left" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools in training" line=readiness.staff_trainings planned_key="training" target_key="training_due" left_key="no_training" note="in-school and group trainings" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Partner visits" line=readiness.partner_visits planned_key="partner_dated" target_key="partner_queue" left_key="partner_visits_left" note="dated by Partners" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Core partner trainings" line=readiness.partner_trainings planned_key="core_partner_trainings" target_key="core" left_key="core_partner_trainings_left" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a Partner" line=readiness.partner_assignment planned_key="with_partner" target_key="partner_queue" left_key="partner_left" %}
+        {% include "partials/my_plan/_readiness_row.html" with label="Schools assigned to a project" line=readiness.project_assignment planned_key="in_project" target_key="all" left_key="not_in_project" %}
       </tbody>
 {% enddata_table %}
+{% include "partials/my_plan/readiness_list.html" %}
 {% endif %}

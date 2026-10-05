@@ -95,6 +95,8 @@ and every gap count opens the list of the schools behind it.
 
   {% if monitor_gap %}
   {% paginate monitor.gap_schools "gap_page" as gap_pager %}
+  {# Where a count lands: the schools behind it (owner, 2026-10-05; _monitor_count.html). #}
+  <div id="monitor-list" class="scroll-mt-24" data-monitor-list="{{ monitor_gap }}">
   {% data_table name="monitor-list" %}
     {% slot title %}{{ monitor_gap_label }}{% endslot %}
     {% slot summary %}{{ gap_pager.total|intcomma }} school{{ gap_pager.total|pluralize }}{% endslot %}
@@ -152,6 +154,7 @@ and every gap count opens the list of the schools behind it.
           {% endfor %}
         </tbody>
   {% enddata_table %}
+  </div>
   {% endif %}
   </div>
 </section>

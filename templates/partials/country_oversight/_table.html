@@ -78,7 +78,7 @@ is a column total of the table under it.
             </button>
             <span>{{ header.country }} (Total)</span>
           </th>
-          {% include "partials/country_oversight/_cells.html" with cells=country_cells followups=country_followups %}
+          {% include "partials/country_oversight/_cells.html" with cells=country_cells followups=country_followups scope="all=1" people="" %}
           <td class="cpo-actcell"><span class="cpo-none" aria-label="No action">—</span></td>
         </tr>
       </tbody>
@@ -109,7 +109,7 @@ is a column total of the table under it.
             {% endif %}
             {% if row.cells.over_cap_people %}<span class="cpo-flagged" title="People on this team whose planned visits pass the ceiling of their role. Nothing was refused: the visits past it are the Partner's share"><span>{{ row.cells.over_cap_people }} over the ceiling by {{ row.cells.over_cap_text }}</span></span>{% endif %}{% if row.cells.core_only_people %}<span class="cpo-flagged" title="People on this team whose Core schools take the whole ceiling at two visits each, so every other school they hold is the Partner's"><span>{{ row.cells.core_only_people }} with Core schools taking the whole ceiling</span></span>{% endif %}
           </th>
-          {% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups %}
+          {% with team="program_lead="|add:row.key %}{% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups scope=team people=team %}{% endwith %}
           <td class="cpo-actcell">
             <div class="cpo-acts">
               {% if may_follow_up and not row.is_no_lead %}
