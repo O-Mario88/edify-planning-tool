@@ -2022,9 +2022,7 @@ def quarterly_budget(query: dict) -> dict:
     # Admin items are monthly; approximate the quarter as the union of its months.
     quarter_months = _quarter_months(quarter)
     admin_totals = _admin_lines_totals_by_month(fy)
-    admin_total = sum(
-        admin_totals.get(_month_key(fy, m), 0) for m in quarter_months
-    )
+    admin_total = sum(admin_totals.get(_month_key(fy, m), 0) for m in quarter_months)
     rollup = get_budget_rollup(fy, quarter=quarter)
     return {
         "fy": fy,

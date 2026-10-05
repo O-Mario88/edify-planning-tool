@@ -510,27 +510,19 @@ class SpecialProjectsOversightTest(OversightPageFixture):
         # 1. Project Monitoring page has export buttons for coordinator
         monitoring_resp = client.get("/projects/monitoring")
         self.assertEqual(monitoring_resp.status_code, 200)
-        self.assertContains(
-            monitoring_resp, f'data-project-export="{project.id}"'
-        )
+        self.assertContains(monitoring_resp, f'data-project-export="{project.id}"')
         self.assertContains(monitoring_resp, "data-monitoring-filter-export")
-        self.assertContains(
-            monitoring_resp, "data-project-monitoring-export-top"
-        )
+        self.assertContains(monitoring_resp, "data-project-monitoring-export-top")
 
         # 2. Projects list page has export button
         projects_resp = client.get("/projects")
         self.assertEqual(projects_resp.status_code, 200)
-        self.assertContains(
-            projects_resp, f'data-project-export="{project.id}"'
-        )
+        self.assertContains(projects_resp, f'data-project-export="{project.id}"')
 
         # 3. Project detail page has export button
         detail_resp = client.get(f"/projects/{project.id}")
         self.assertEqual(detail_resp.status_code, 200)
-        self.assertContains(
-            detail_resp, f'data-project-export="{project.id}"'
-        )
+        self.assertContains(detail_resp, f'data-project-export="{project.id}"')
 
         # 4. Coordinator can export single project (Excel)
         single_export = client.get(f"/projects/{project.id}/export")
@@ -550,9 +542,7 @@ class SpecialProjectsOversightTest(OversightPageFixture):
         # 6. Coordinator can export all their scoped projects
         all_export = client.get("/projects/export")
         self.assertEqual(all_export.status_code, 200)
-        self.assertIn(
-            "special-projects-schools", all_export["Content-Disposition"]
-        )
+        self.assertIn("special-projects-schools", all_export["Content-Disposition"])
 
         # 7. Coordinator cannot export projects outside their scope (e.g. unmanaged project)
         other_project = Project.objects.create(

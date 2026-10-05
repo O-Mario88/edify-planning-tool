@@ -2221,10 +2221,7 @@ class CDAnalyticsService:
             "salesforce_id_required",
             "awaiting_ia_verification",
         }
-        lead_teams = [
-            (pl, teams.get(pl.id, []))
-            for pl in pls
-        ]
+        lead_teams = [(pl, teams.get(pl.id, [])) for pl in pls]
         every_team_school = set()
         for _pl, members in lead_teams:
             for c in members:

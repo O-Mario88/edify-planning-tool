@@ -2839,7 +2839,6 @@ def special_project_export_view(request, project_id: str = "all"):
     return table_download(request, stem, sheets)
 
 
-
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")
 def oversight_detail_view(request):
     """One item's full Planning-to-Closure lineage, read-only.

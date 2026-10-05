@@ -2280,9 +2280,7 @@ def _projects_context(request):
         row for row in portfolio if str(row["id"]) == open_project
     ]
     context["project_tab_query"] = f"{kept.urlencode()}&" if kept else ""
-    context["can_export"] = RolePermissionService.can_export(
-        request.user, request.path
-    )
+    context["can_export"] = RolePermissionService.can_export(request.user, request.path)
     return context
 
 
@@ -3281,9 +3279,7 @@ def project_detail_view(request, project_id):
         # may read the page (owner, 2026-09-16).
         "can_edit_project": can_edit_project,
         "delete_block": delete_block,
-        "can_export": RolePermissionService.can_export(
-            request.user, request.path
-        ),
+        "can_export": RolePermissionService.can_export(request.user, request.path),
     }
     # Planned and completed project work with its actions (owner, 2026-09-28).
     from apps.activities import profile_activities as profile_acts
