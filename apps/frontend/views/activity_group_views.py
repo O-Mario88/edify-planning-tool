@@ -95,7 +95,7 @@ def _audit(request, action: str, outcome, payload: dict) -> None:
         )
 
 
-def _drawer(request, template: str, *, action: str, extra=None):
+def _drawer(request, template: str, *, action: str, also=None):
     try:
         picks = group_actions.selection(_ticked(request), request.user, action=action)
     except BadRequest as exc:
@@ -108,8 +108,8 @@ def _drawer(request, template: str, *, action: str, extra=None):
         "joined": any(p.joined for p in ready),
         "drawer_size": "md",
     }
-    if extra:
-        context.update(extra(picks))
+    if also:
+        context.update(also(picks))
     return render(request, template, context)
 
 
@@ -150,7 +150,7 @@ def group_cancel_view(request):
             request,
             template,
             action=group_actions.CANCEL,
-            extra=lambda picks: {
+            also=lambda picks: {
                 "money_moved": len(group_actions.money_moved_ids(picks)),
                 "tells_partner": any(
                     p.activity.assigned_partner_id for p in picks if not p.refusal
