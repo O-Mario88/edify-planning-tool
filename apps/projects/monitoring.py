@@ -194,6 +194,18 @@ STAGE_FILTERS = (
     (EXEC_VERIFIED, "Delivered and verified"),
 )
 
+#: The page's other filters over the school rows (owner, 2026-10-05: "add all
+#: other relevant filters like district"). Each reads one column of the table
+#: and offers the values the reader's own rows hold, so no choice comes up
+#: empty: ``(query key, label, the "all" choice, row attribute)``.
+ROW_FILTERS = (
+    ("district", "District", "All districts", "district"),
+    ("partner", "Partner", "All partners", "partner_name"),
+    ("training", "Training", "All trainings", "training_name"),
+    ("purpose", "Purpose", "All purposes", "purpose_label"),
+    ("activity", "Activity status", "All activity statuses", "activity_state_label"),
+)
+
 
 #: The table's Status column (owner, 2026-09-24), read like Partner
 #: Monitoring's: the school waits on the Project Coordinator until they plan
@@ -366,6 +378,11 @@ class ProjectSchoolRow:
     #: Filled in for the coordinator only; empty means no control is drawn.
     schedule_url: str = ""
     partner_url: str = ""
+    #: Whether a partner may be handed work here at all: a closed school
+    #: takes no new work, and a Champion school is delivered by staff unless
+    #: project hand-overs go past that rule (`partners.handover_policy`).
+    #: A school a partner may not take has no tick box.
+    takes_partner_work: bool = True
 
     #: The table's columns (owner, 2026-09-24): Training, Purpose of
     #: Assignment, SSA Intervention, Status and Activity date, read from the
@@ -506,8 +523,19 @@ class ProjectSchoolRow:
     def has_delivery(self) -> bool:
         return self.execution in (EXEC_DELIVERED, EXEC_VERIFIED)
 
-    def matches(self, stage: str) -> bool:
-        """Whether this row belongs under one of the page's stage filters."""
+    @property
+    def can_tick(self) -> bool:
+        """Whether the coordinator may tick this school for a bulk hand-over
+        to a partner: the row offers Assign, and a partner may take it."""
+        return bool(self.partner_url) and self.takes_partner_work
+
+    def matches(self, stage: str, picks: dict | None = None) -> bool:
+        """Whether this row belongs under the page's filters: one of the
+        stage filters, and every column value picked (ROW_FILTERS)."""
+        for key, _label, _all, attribute in ROW_FILTERS:
+            wanted = (picks or {}).get(key)
+            if wanted and getattr(self, attribute) != wanted:
+                return False
         if not stage:
             return True
         if stage in EXEC_LABELS:
@@ -580,6 +608,12 @@ class ProjectMonitoringRow:
     @property
     def schools_delivered(self) -> int:
         return sum(1 for row in self.all_school_rows if row.has_delivery)
+
+    @property
+    def selectable(self) -> bool:
+        """Whether the table carries tick boxes: some school in it may be
+        handed to a partner by this reader."""
+        return any(row.can_tick for row in self.school_rows)
 
 
 @dataclass
@@ -702,12 +736,18 @@ def _lens_note(*, whole: bool, controls: bool) -> str:
 
 
 def project_monitoring(
-    principal, *, fy: str | None = None, project_id: str = "", stage: str = ""
+    principal,
+    *,
+    fy: str | None = None,
+    project_id: str = "",
+    stage: str = "",
+    picks: dict | None = None,
 ) -> ProjectMonitoring:
     """What the coordinator and their partners have done, for this reader.
 
-    ``stage`` narrows each project's school rows to one of STAGE_FILTERS; the
-    project figures stay whole, so a filter never changes what a project did.
+    ``stage`` narrows each project's school rows to one of STAGE_FILTERS and
+    ``picks`` to the column values chosen (ROW_FILTERS); the project figures
+    stay whole, so a filter never changes what a project did.
     """
     from apps.core.enums import SsaIntervention
     from apps.core.fy import get_operational_fy
@@ -810,7 +850,7 @@ def project_monitoring(
                         "remaining": own.remaining,
                         "own": True,
                     }
-        rows = [row for row in everyone if row.matches(stage)]
+        rows = [row for row in everyone if row.matches(stage, picks)]
         row = ProjectMonitoringRow(
             id=project.id,
             code=project.code or "",
@@ -846,6 +886,40 @@ def project_monitoring(
         )
         result.rows.append(row)
     return result
+
+
+def row_picks(query) -> dict[str, str]:
+    """The column values a request asks the school rows to be narrowed to."""
+    return {
+        key: value
+        for key, _label, _all, _attribute in ROW_FILTERS
+        if (value := (query.get(key) or "").strip())
+    }
+
+
+def row_filter_options(result: ProjectMonitoring, picks: dict | None = None) -> list:
+    """Each of ROW_FILTERS with the values this reader's schools hold, across
+    every project in view, so a filter keeps its choices from tab to tab. A
+    value asked for that no school holds stays listed: the table is then
+    empty and the filter says why."""
+    picks = picks or {}
+    rows = [row for entry in result.rows for row in entry.all_school_rows]
+    out = []
+    for key, label, all_label, attribute in ROW_FILTERS:
+        values = {getattr(row, attribute) for row in rows}
+        values.add(picks.get(key, ""))
+        out.append(
+            {
+                "key": key,
+                "label": label,
+                "selected": picks.get(key, ""),
+                "options": [
+                    ("", all_label),
+                    *((v, v) for v in sorted(filter(None, values), key=str.casefold)),
+                ],
+            }
+        )
+    return out
 
 
 def watched_projects(principal) -> list:
@@ -991,9 +1065,14 @@ def _school_rows(
         NEEDS_REPLANNING_STATUSES,
         VERIFIED_STATUSES,
     )
+    from apps.partners.handover_policy import past_school_rules
+    from apps.planning.visit_gate import OUTREACH_ONLY_SCHOOL_TYPES
 
     if not assignments:
         return {}
+    # Every row here is a project's, so its hand-over goes past the Champion
+    # rule while the owner's lift holds (2026-10-05).
+    champions_too = past_school_rules(project_id="any")
     project_by_id = {project.id: project for project in projects}
     project_ids = list(project_by_id)
     school_ids = {assignment.school_id for assignment in assignments}
@@ -1127,6 +1206,8 @@ def _school_rows(
             detail_url=(
                 f"/projects/monitoring/school?{urlencode({'enrolment': assignment.id})}"
             ),
+            takes_partner_work=not school.is_closed
+            and (champions_too or school.school_type not in OUTREACH_ONLY_SCHOOL_TYPES),
         )
 
         # Execution first: it decides which of the plan's facts still matter.

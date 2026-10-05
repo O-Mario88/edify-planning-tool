@@ -30,6 +30,13 @@ What the cells say:
 Nineteen columns scroll sideways as one table; none is frozen (owner,
 2026-10-02, of the consolidated tables).
 
+The coordinator's table opens with a tick column (owner, 2026-10-05: "use
+checkboxes on the left to check all the project schools to be assigned to the
+partner"): the box in the heading ticks every school on the page, and the
+page's Assign bar comes up once one is ticked. A school no partner may take —
+a Champion school, a closed one — has no box. The page holds what is ticked
+(`selected`, Project Monitoring's root).
+
 The school's name opens the row's details: who added it, the impact engine's
 verdict and its focus SSA readings. View opens the school's project work in a
 drawer. Everyone but the Project Coordinator reads; the coordinator's doors
@@ -42,9 +49,10 @@ View alone (Planning Oversight's Special Projects tab).
   {% with page_key="schools_page-"|add:row.id %}
   {% paginate row.school_rows page_key as school_pager %}
   <div class="school-plan-table-scroll">
-    <table class="school-plan-table partner-plan-table" aria-label="Schools in {{ row.name }}" data-project-schools data-table-fit="scroll" data-columns="unfrozen" x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
+    <table class="school-plan-table partner-plan-table" aria-label="Schools in {{ row.name }}" data-project-schools data-table-fit="scroll" data-columns="unfrozen" x-data="{ openRowId: null{% if row.selectable and not view_only %}, pagePicks() { return [...this.$root.querySelectorAll('[data-project-pick]')].map(box => box.value); }{% endif %} }" @keydown.escape.window="openRowId = null">
       <caption class="sr-only">Schools in {{ row.name }}: the work planned at each, its SSA intervention and scores, where it stands, who planned it, and its cost once scheduled</caption>
       <thead><tr>
+        {% if row.selectable and not view_only %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select" for="project-pick-all-{{ row.id }}"><input type="checkbox" id="project-pick-all-{{ row.id }}" data-project-pick-all :checked="pagePicks().length > 0 && pagePicks().every(id => selected.includes(id))" @change="const ids = pagePicks(); selected = $event.target.checked ? [...new Set([...selected, ...ids])] : selected.filter(id => !ids.includes(id))"><span class="sr-only">Select every school on this page</span></label></th>{% endif %}
         <th scope="col">Project Name</th>
         <th scope="col">School ID</th>
         <th scope="col">School Name</th>
@@ -71,6 +79,7 @@ View alone (Planning Oversight's Special Projects tab).
         <tr class="partner-plan-row" data-project-school="{{ school.school_pk }}" data-plan-stage="{{ school.plan_stage }}" data-execution="{{ school.execution }}" data-status="{{ school.status_key }}" data-activity-state="{{ school.activity_state }}"
             @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
             :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
+          {% if row.selectable and not view_only %}<td class="school-plan-table__select">{% if school.can_tick %}<label class="school-record-row__select" for="project-pick-{{ school.assignment_id }}"><input type="checkbox" id="project-pick-{{ school.assignment_id }}" value="{{ school.assignment_id }}" x-model="selected" data-project-pick><span class="sr-only">Select {{ school.school_name }}</span></label>{% endif %}</td>{% endif %}
           <td data-label="Project Name">{{ school.project_name }}</td>
           <td data-label="School ID"><span class="partner-plan-table__code">{{ school.school_code }}</span></td>
           <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
@@ -149,7 +158,7 @@ View alone (Planning Oversight's Special Projects tab).
           </td>
         </tr>
         <tr id="project-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
-          <td colspan="19">
+          <td colspan="{% if row.selectable and not view_only %}20{% else %}19{% endif %}">
             <dl class="school-record-row__metadata">
               <div><dt>Added by:</dt><dd>{{ school.added_by }}</dd></div>
               <div><dt>Improvement:</dt><dd>{{ school.impact_label }}</dd></div>
@@ -163,7 +172,7 @@ View alone (Planning Oversight's Special Projects tab).
         </tr>
         {% endwith %}
         {% empty %}
-        <tr><td colspan="19" class="partner-plan-table__empty">{% if selected_stage %}No school in this project is at that stage.{% else %}No school in this project yet.{% endif %}</td></tr>
+        <tr><td colspan="{% if row.selectable and not view_only %}20{% else %}19{% endif %}" class="partner-plan-table__empty">{% if filter_query %}No school in this project matches these filters.{% elif selected_stage %}No school in this project is at that stage.{% else %}No school in this project yet.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

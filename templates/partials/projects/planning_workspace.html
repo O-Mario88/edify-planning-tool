@@ -12,7 +12,7 @@
 </section>
 {% else %}
 {% include "partials/projects/workspace_nav.html" with workspace_active="plan" %}
-<form id="spp-filters" class="spp-filter-panel" method="get" action="/projects/planning" hx-get="/projects/planning" hx-target="#spp-workspace" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#spp-updating" @htmx:before-request="selected = []">
+<form id="spp-filters" class="spp-filter-panel" method="get" action="/projects/planning" hx-get="/projects/planning" hx-target="#spp-workspace" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change, submit, planning-saved from:body" hx-indicator="#spp-updating" @htmx:before-request="selected = []">
   <input id="spp-tab" type="hidden" name="tab" value="{{ selected.tab }}">
   {% comment %}One project a tab (owner, 2026-10-02: "all projects should be
   organized in tabs ... It should be easy for the users to toggle between
