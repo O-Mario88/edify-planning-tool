@@ -879,6 +879,44 @@ _MONITOR_TEMPLATES = {
 }
 
 
+def _narrow_project_schools(result, project_status: str) -> None:
+    """Keep the school rows the Project status filter asks for: the schools a
+    Partner holds, or the schools with an activity scheduled. The page and
+    its export narrow the same rows the same way."""
+    from apps.projects import monitoring
+
+    if project_status == "partner":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.partner_name
+                or getattr(s, "has_partner", False)
+                or s.plan_stage
+                in (
+                    monitoring.PLAN_PARTNER_AWAITING,
+                    monitoring.PLAN_PARTNER_SCHEDULED,
+                    monitoring.PLAN_PARTNER_RETURNED,
+                )
+            ]
+    elif project_status == "scheduled":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.activity_date
+                or s.next_date
+                or s.status_key
+                in (
+                    monitoring.STATUS_SCHEDULED,
+                    monitoring.STATUS_IN_PROGRESS,
+                    monitoring.STATUS_AWAITING_VERIFICATION,
+                    monitoring.STATUS_COMPLETED,
+                )
+                or s.execution != monitoring.EXEC_NONE
+            ]
+
+
 def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     """Special Projects oversight (owner, 2026-10-03): every live project and
     the schools assigned to them, with their planning and delivery status."""
@@ -905,37 +943,7 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     ):
         selected_project = ""
 
-    # Filter school rows if Project status is narrowed
-    if selected_project_status == "partner":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.partner_name
-                or getattr(s, "has_partner", False)
-                or s.plan_stage
-                in (
-                    monitoring.PLAN_PARTNER_AWAITING,
-                    monitoring.PLAN_PARTNER_SCHEDULED,
-                    monitoring.PLAN_PARTNER_RETURNED,
-                )
-            ]
-    elif selected_project_status == "scheduled":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.activity_date
-                or s.next_date
-                or s.status_key
-                in (
-                    monitoring.STATUS_SCHEDULED,
-                    monitoring.STATUS_IN_PROGRESS,
-                    monitoring.STATUS_AWAITING_VERIFICATION,
-                    monitoring.STATUS_COMPLETED,
-                )
-                or s.execution != monitoring.EXEC_NONE
-            ]
+    _narrow_project_schools(result, selected_project_status)
 
     project_tabs = [
         {
@@ -2606,17 +2614,24 @@ def country_planning_export_view(request):
 )
 @require_export_permission
 def special_project_export_view(request, project_id: str = "all"):
-    """Export a special project and all attached schools (or all projects) to Excel.
+    """The project table as a workbook: every project the reader follows in
+    one file, or the one project asked for.
 
     Owner, 2026-10-04: "Add the button for export on project so the IA can
-    export the project and all the schools attached to it."
+    export the project and all the schools attached to it." And 2026-10-05:
+    "The IA, project coordinator or CD needs to export either all projects in
+    1 file or select a project to export", with the table's columns.
+
+    The rows are the page's own (``apps.projects.monitoring``, through the
+    reader's lens and the page's filters) and the columns are the table's
+    (``apps.projects.school_table``), so the file is the screen.
     """
     from django.http import Http404
 
     from apps.core.excel import table_download
     from apps.core.fy import get_operational_fy
     from apps.core.permissions import render_access_denied
-    from apps.projects import monitoring
+    from apps.projects import monitoring, school_table
 
     # Require oversight, project_monitoring or projects access
     can_view = (
@@ -2636,207 +2651,25 @@ def special_project_export_view(request, project_id: str = "all"):
     stages = dict(monitoring.STAGE_FILTERS)
     requested_stage = (request.GET.get("stage") or "").strip()
     selected_stage = requested_stage if requested_stage in stages else ""
-    selected_project_status = (request.GET.get("project_status") or "schools").strip()
 
     result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
-
-    # Filter school rows if Project status is narrowed
-    if selected_project_status == "partner":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.partner_name
-                or getattr(s, "has_partner", False)
-                or s.plan_stage
-                in (
-                    monitoring.PLAN_PARTNER_AWAITING,
-                    monitoring.PLAN_PARTNER_SCHEDULED,
-                    monitoring.PLAN_PARTNER_RETURNED,
-                )
-            ]
-    elif selected_project_status == "scheduled":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.activity_date
-                or s.next_date
-                or s.status_key
-                in (
-                    monitoring.STATUS_SCHEDULED,
-                    monitoring.STATUS_IN_PROGRESS,
-                    monitoring.STATUS_AWAITING_VERIFICATION,
-                    monitoring.STATUS_COMPLETED,
-                )
-                or s.execution != monitoring.EXEC_NONE
-            ]
+    _narrow_project_schools(
+        result, (request.GET.get("project_status") or "schools").strip()
+    )
 
     project_id = (project_id or "all").strip()
-    if project_id and project_id not in ("all", "export"):
-        matching = [r for r in result.rows if r.id == project_id]
-        if not matching:
+    single = bool(project_id) and project_id not in ("all", "export")
+    projects = result.rows
+    if single:
+        projects = [row for row in result.rows if row.id == project_id]
+        if not projects:
             raise Http404("Special project not found or not in scope.")
-        target_rows = matching
-        single = True
-        project_obj = matching[0]
-        stem = f"project-{(project_obj.code or project_obj.id).lower()}-schools-FY{fy}"
-    else:
-        target_rows = result.rows
-        single = False
-        stem = f"special-projects-schools-FY{fy}"
 
-    # Build Sheet 1: Project Schools
-    school_headers = []
-    if not single:
-        school_headers.extend(["Project Code", "Project Name"])
-    school_headers.extend(
-        [
-            "School ID",
-            "School Name",
-            "District",
-            "Staff Name",
-            "Training",
-            "Purpose of Assignment",
-            "SSA Intervention",
-            "Status",
-            "Activity Date",
-            "Enrolled On",
-            "Planning Stage",
-            "Planned By",
-            "Execution",
-            "Activities Planned",
-            "Activities Delivered",
-            "Activities Verified",
-            "Last Delivered",
-            "Improvement",
-            "Focus Interventions",
-        ]
+    return table_download(
+        request,
+        school_table.filename_stem(projects, fy, single=single),
+        school_table.sheets(projects),
     )
-
-    school_data_rows = []
-    for prow in target_rows:
-        for s in prow.school_rows:
-            row_vals = []
-            if not single:
-                row_vals.extend([prow.code or "", prow.name])
-            focus_summary = ", ".join(
-                f"{f.abbreviation or f.label}: {f.baseline if f.baseline is not None else '–'} -> {f.latest if f.latest is not None else '–'}"
-                + (
-                    f" ({'+' if f.direction == 'up' else ''}{f.change})"
-                    if f.change is not None
-                    else ""
-                )
-                for f in s.focus
-                if f.latest is not None or f.baseline is not None
-            )
-            who = s.partner_name or s.planned_by or ""
-            plan_str = s.plan_label
-            if who and not s.planned_by_coordinator:
-                plan_str = f"{plan_str} · {who}"
-            exec_str = s.execution_label
-            if s.planned:
-                exec_str = f"{exec_str} · {s.delivered}/{s.planned} done"
-
-            act_date = ""
-            if s.activity_date:
-                act_date = s.activity_date.isoformat()
-            elif s.awaiting_date:
-                act_date = "Awaiting scheduling"
-
-            row_vals.extend(
-                [
-                    s.school_code or "",
-                    s.school_name or "",
-                    s.district or "",
-                    s.added_by or "",
-                    s.training_name or "",
-                    s.purpose_label or "",
-                    s.intervention_label or "",
-                    s.status_label or "",
-                    act_date,
-                    s.enrolled_on.isoformat() if s.enrolled_on else "",
-                    plan_str,
-                    who,
-                    exec_str,
-                    s.planned,
-                    s.delivered,
-                    s.verified,
-                    s.last_delivered_on.isoformat() if s.last_delivered_on else "",
-                    s.impact_label or "",
-                    focus_summary,
-                ]
-            )
-            school_data_rows.append(row_vals)
-
-    # Build Sheet 2: Project Summary
-    summary_headers = [
-        "Project ID",
-        "Project Code",
-        "Project Name",
-        "Coordinator",
-        "Status",
-        "Partners",
-        "Total Schools",
-        "Schools Planned",
-        "Schools Awaiting Partner",
-        "Schools Delivered",
-        "Trainings Scheduled",
-        "Trainings Completed",
-        "Visits Scheduled",
-        "Visits Completed",
-        "Other Scheduled",
-        "Other Completed",
-        "Staff Delivered",
-        "Partner Delivered",
-    ]
-    summary_data_rows = []
-    for prow in target_rows:
-        summary_data_rows.append(
-            [
-                prow.id,
-                prow.code or "",
-                prow.name,
-                prow.coordinator,
-                prow.status_label,
-                ", ".join(prow.partners) if prow.partners else "None",
-                prow.schools,
-                prow.schools_planned,
-                prow.schools_awaiting_partner,
-                prow.schools_delivered,
-                prow.trainings_scheduled,
-                prow.trainings_completed,
-                prow.visits_scheduled,
-                prow.visits_completed,
-                prow.other_scheduled,
-                prow.other_completed,
-                prow.staff_delivered,
-                prow.partner_delivered,
-            ]
-        )
-
-    sheet_title = (
-        "Project Schools"
-        if not single
-        else f"Schools - {target_rows[0].code or target_rows[0].name}"[:31]
-    )
-    for char in "[]:*?/\\":
-        sheet_title = sheet_title.replace(char, "")
-
-    sheets = [
-        {
-            "title": sheet_title or "Project Schools",
-            "headers": school_headers,
-            "rows": school_data_rows,
-        },
-        {
-            "title": "Project Summary",
-            "headers": summary_headers,
-            "rows": summary_data_rows,
-        },
-    ]
-
-    return table_download(request, stem, sheets)
 
 
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")

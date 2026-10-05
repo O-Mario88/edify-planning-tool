@@ -8662,7 +8662,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1343,
+   "line": 1351,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8681,7 +8681,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1353,
+   "line": 1361,
    "label": "My Work",
    "keys": [
     "count",
@@ -8700,7 +8700,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3185,
+   "line": 3018,
    "label": null,
    "keys": [
     "count",
@@ -8718,7 +8718,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 941,
+   "line": 949,
    "label": "All Projects",
    "keys": [
     "count",
@@ -8737,7 +8737,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 948,
+   "line": 956,
    "label": null,
    "keys": [
     "count",
@@ -8756,7 +8756,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1362,
+   "line": 1370,
    "label": null,
    "keys": [
     "count",
@@ -8775,7 +8775,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1413,
+   "line": 1421,
    "label": null,
    "keys": [
     "count",
@@ -8794,7 +8794,7 @@
    "audit_id": "KPI-SOURCE-486",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1453,
+   "line": 1461,
    "label": null,
    "keys": [
     "count",
@@ -8813,7 +8813,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3216,
+   "line": 3049,
    "label": "All team members",
    "keys": [
     "count",
@@ -8831,7 +8831,7 @@
    "audit_id": "KPI-SOURCE-488",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3222,
+   "line": 3055,
    "label": null,
    "keys": [
     "count",
@@ -8849,7 +8849,7 @@
    "audit_id": "KPI-SOURCE-489",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1438,
+   "line": 1446,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -14032,7 +14032,7 @@
   {
    "audit_id": "KPI-SURFACE-054",
    "template": "templates/pages/projects/index.html",
-   "line": 119,
+   "line": 122,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -14061,7 +14061,7 @@
   {
    "audit_id": "KPI-SURFACE-055",
    "template": "templates/pages/projects/index.html",
-   "line": 143,
+   "line": 146,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -14090,7 +14090,7 @@
   {
    "audit_id": "KPI-SURFACE-056",
    "template": "templates/pages/projects/monitoring.html",
-   "line": 60,
+   "line": 74,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",

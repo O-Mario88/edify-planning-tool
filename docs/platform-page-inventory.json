@@ -4761,7 +4761,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2886,
+      "bytes": 3563,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/records/<str:key>",
@@ -4781,7 +4781,8 @@
       "template": "partials/country_oversight/_consolidated_table.html",
       "variants": [
         "danger",
-        "warning"
+        "warning",
+        "{% if value > 0 %}success{% elif value < 0 %}danger{% else %}neutral{% endif %}"
       ]
     },
     {
@@ -11667,7 +11668,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15811,
+      "bytes": 7469,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11676,22 +11677,17 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Special Projects Workspace",
       "purpose": "Reusable special projects workspace interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty",
-        "open"
+        "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/special_projects_workspace.html",
-      "variants": [
-        "danger",
-        "{{ school.status_tone }}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -13305,7 +13301,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5836,
+      "bytes": 6003,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/monitoring/school"
@@ -13323,6 +13319,40 @@
       "tables": 0,
       "template": "partials/projects/monitoring_school_drawer.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 13560,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/projects/monitoring",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 7,
+      "kind": "application-partial",
+      "name": "Monitoring School Table",
+      "purpose": "Reusable monitoring school table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "disabled",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/projects/monitoring_school_table.html",
+      "variants": [
+        "danger",
+        "{{ school.activity_state_tone }}",
+        "{{ school.ssa_improvement_tone }}",
+        "{{ school.status_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -79343,7 +79373,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -80517,7 +80547,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -80803,7 +80833,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_monitoring_view",
       "card_count": 0,
@@ -80819,14 +80849,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "shared-page-header-component",
-      "htmx_endpoints": [
-        "GET {{ school.detail_url }}&amp;fy={{ fy }}",
-        "GET {{ school.resolve_url }}",
-        "GET {{ school.withdraw_url }}",
-        "GET {{ school.schedule_url }}",
-        "GET {{ school.partner_url }}",
-        "GET /projects/capacity/withdraw?enrolment={{ school.assignment_id }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -80891,7 +80914,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": true,
         "error": false,
         "loading": false
@@ -90777,7 +90800,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -90865,7 +90888,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -115384,7 +115407,7 @@
     "activity_states": 24,
     "all_routes": 1360,
     "api_routes": 360,
-    "component_templates": 610,
+    "component_templates": 611,
     "full_pages": 263,
     "mobile_contract_pass": 574,
     "nonvisual_actions": 280,

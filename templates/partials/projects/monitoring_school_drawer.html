@@ -63,7 +63,7 @@ coordinator alone and checked again by each route and service.
       {% endfor %}
     </ul>
     {% else %}
-    <p class="text-sm">Nothing planned here yet — awaiting the Project Coordinator.</p>
+    <p class="text-sm">{% if row.activity_state == "cancelled" %}The work planned here was cancelled and has not been planned again — awaiting the Project Coordinator.{% else %}Nothing planned here yet — awaiting the Project Coordinator.{% endif %}</p>
     {% if row.purpose_label or row.intervention_label %}
     <p class="edify-text-caption edify-text-muted">Added for {% if row.purpose_label %}{{ row.purpose_label }}{% endif %}{% if row.purpose_label and row.intervention_label %} · {% endif %}{{ row.intervention_label }}.</p>
     {% endif %}

@@ -66,18 +66,6 @@
         <option value="scheduled"{% if selected_project_status == 'scheduled' %} selected{% endif %}>Activity scheduled</option>
       </select>
     </label>
-    {% if can_export %}
-    <div class="ml-auto flex items-end">
-      <a href="{% url 'frontend:special_project_export' selected_project|default:'all' %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-         class="edify-action-button secondary h-9 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control"
-         title="Export project and all attached schools to Excel"
-         aria-label="Export to Excel"
-         data-special-projects-export>
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>Export</span>
-      </a>
-    </div>
-    {% endif %}
   {% endfilter_bar %}
 
   {% if rows %}
@@ -110,16 +98,6 @@
         <span class="pill pill-info">{{ row.schools_planned }} planned</span>
         {% if row.schools_awaiting_partner %}<span class="pill pill-warn">{{ row.schools_awaiting_partner }} awaiting partner</span>{% endif %}
         <span class="pill pill-success">{{ row.schools_delivered }} delivered</span>
-        {% if can_export %}
-        <a href="{% url 'frontend:special_project_export' row.id %}?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}"
-           class="edify-action-button secondary h-8 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-control"
-           title="Export {{ row.name }} and attached schools to Excel"
-           aria-label="Export {{ row.name }} to Excel"
-           data-project-export="{{ row.id }}">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          <span>Export</span>
-        </a>
-        {% endif %}
       </div>
     </div>
 
@@ -146,90 +124,8 @@
       </div>
     </div>
 
-    <div class="border-t edify-border">
-      {% with page_key="schools_page-"|add:row.id %}
-      {% paginate row.school_rows page_key as school_pager %}
-      <div class="school-plan-table-scroll">
-        <table class="school-plan-table partner-plan-table" aria-label="Schools in {{ row.name }}" data-project-schools x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
-          <caption class="sr-only">Schools in {{ row.name }}: the training and purpose of the work planned there, its SSA intervention, where it stands and its date</caption>
-          <thead><tr>
-            <th scope="col">School ID</th>
-            <th scope="col">School Name</th>
-            <th scope="col">District</th>
-            <th scope="col">Staff Name</th>
-            <th scope="col">Training</th>
-            <th scope="col">Purpose of Assignment</th>
-            <th scope="col">SSA Intervention</th>
-            <th scope="col">Status</th>
-            <th scope="col">Activity date</th>
-            <th scope="col" class="school-plan-table__actions">Actions</th>
-          </tr></thead>
-          <tbody>
-            {% for school in school_pager.rows %}
-            {% with row_id="s-"|add:school.assignment_id %}
-            <tr class="partner-plan-row" data-project-school="{{ school.school_pk }}" data-plan-stage="{{ school.plan_stage }}" data-execution="{{ school.execution }}" data-status="{{ school.status_key }}"
-                @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
-                :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
-              <td data-label="School ID"><span class="partner-plan-table__code">{{ school.school_code }}</span></td>
-              <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
-                <button type="button" class="school-plan-table__name-toggle"
-                        @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
-                        :aria-expanded="(openRowId === '{{ row_id }}').toString()"
-                        aria-controls="project-row-details-{{ row_id }}"
-                        aria-label="Details for {{ school.school_name }}">{{ school.school_name }}</button>
-              </span></td>
-              <td data-label="District">{{ school.district|default:"—" }}</td>
-              <td data-label="Staff Name">{{ school.added_by }}</td>
-              <td data-label="Training">{{ school.training_name|default:"—" }}</td>
-              <td data-label="Purpose of Assignment">{{ school.purpose_label|default:"—" }}</td>
-              <td data-label="SSA Intervention">{{ school.intervention_label|default:"—" }}</td>
-              <td data-label="Status"><span class="partner-plan-table__status">
-                <span class="partner-status-chip" data-tone="{{ school.status_tone }}">{{ school.status_label }}</span>
-                {% if school.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
-              </span></td>
-              <td data-label="Activity date" data-activity-date>{% if school.activity_date %}{{ school.activity_date|date:"j M Y" }}{% elif school.awaiting_date %}Awaiting scheduling{% else %}—{% endif %}</td>
-              <td data-label="Actions" class="school-plan-table__actions" @click.stop>
-                <div class="school-record-row__actions">
-                  <button type="button" class="school-record-action school-record-action--assign"
-                          hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                          aria-label="View {{ school.school_name }}'s project work">
-                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
-                    <span>View</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr id="project-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
-              <td aria-hidden="true"></td>
-              <td colspan="9">
-                <dl class="school-record-row__metadata">
-                  {% if school.enrolled_on %}<div><dt>Added:</dt><dd>{{ school.enrolled_on|date:"j M Y" }}</dd></div>{% endif %}
-                  {% if school.district %}<div><dt>District:</dt><dd>{{ school.district }}</dd></div>{% endif %}
-                  {% firstof school.partner_name school.planned_by "" as who %}
-                  <div><dt>Planning:</dt><dd>{{ school.plan_label }}{% if who and not school.planned_by_coordinator %} · {{ who }}{% endif %}</dd></div>
-                  <div><dt>Execution:</dt><dd>{{ school.execution_label }}{% if school.planned %} · {{ school.delivered }}/{{ school.planned }} done{% if school.last_delivered_on %}, last {{ school.last_delivered_on|date:"j M Y" }}{% endif %}{% endif %}</dd></div>
-                  <div><dt>Improvement:</dt><dd>{{ school.impact_label }}</dd></div>
-                  {% for focus in school.focus %}
-                  <div><dt>{% firstof focus.abbreviation focus.label %}:</dt><dd title="{{ focus.label }}: confirmed score at enrolment{% if focus.latest is not None %}, then on {{ focus.latest_on|date:'j M Y' }}{% endif %}">{% if focus.baseline is not None %}{{ focus.baseline }}{% else %}–{% endif %}{% if focus.latest is not None %} → {{ focus.latest }}{% if focus.change is not None %} ({% if focus.direction == "up" %}+{% endif %}{{ focus.change }}){% endif %}{% endif %}</dd></div>
-                  {% endfor %}
-                  {% if school.work|length > 1 %}<div><dt>Project work here:</dt><dd>{{ school.work|length }} pieces — View lists each</dd></div>{% endif %}
-                </dl>
-              </td>
-            </tr>
-            {% endwith %}
-            {% empty %}
-            <tr><td colspan="10" class="partner-plan-table__empty">{% if selected_stage %}No school in this project is at that stage.{% else %}No school in this project yet.{% endif %}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% if school_pager.has_other_pages %}
-      <div class="px-5 py-3 border-t edify-border flex items-center justify-between">
-        {% include "components/table_pager.html" with pager=school_pager param="schools_page" pagination_label="Project schools" %}
-      </div>
-      {% endif %}
-      {% endwith %}
-    </div>
+    {# The project table, read only here: the owner's eighteen columns, then View (2026-10-05). #}
+    {% include "partials/projects/monitoring_school_table.html" with view_only=True %}
   </section>
   {% endfor %}
 

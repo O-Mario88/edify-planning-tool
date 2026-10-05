@@ -25,13 +25,16 @@
 
   <!-- Header controls contain page actions only; filters live on the canvas below. -->
   <div class="edify-page-header__controls">
+    {% comment %}Every project in one file (owner, 2026-10-05: "export either
+    all projects in 1 file or select a project to export"); one project on its
+    own is Export to Excel in that project's Actions menu.{% endcomment %}
     {% if can_export and open_project %}
-    <a href="{% url 'frontend:special_project_export' open_project %}"
+    <a href="/projects/export"
        class="inline-flex items-center gap-1.5 h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-slate-700 text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap"
-       title="Export project and attached schools to Excel"
-       data-project-export="{{ open_project }}">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-      Export
+       title="Export every project and its schools to one Excel file"
+       data-project-export-all>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export all projects
     </a>
     {% endif %}
     {% if can_create_projects %}

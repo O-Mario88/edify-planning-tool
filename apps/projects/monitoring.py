@@ -234,6 +234,39 @@ STATUS_TONES = {
 }
 
 
+#: The table's Activity Status column (owner, 2026-10-05: "Activity Status
+#: (Scheduled, Completed, Canceled, rescheduled)"): where the row's own
+#: activity stands, in one of four words. Work with no day on it yet — a
+#: school waiting on the coordinator, a handover its partner has not dated —
+#: has no activity status.
+ACTIVITY_SCHEDULED = "scheduled"
+ACTIVITY_RESCHEDULED = "rescheduled"
+ACTIVITY_COMPLETED = "completed"
+ACTIVITY_CANCELLED = "cancelled"
+
+ACTIVITY_STATE_LABELS = {
+    ACTIVITY_SCHEDULED: "Scheduled",
+    ACTIVITY_RESCHEDULED: "Rescheduled",
+    ACTIVITY_COMPLETED: "Completed",
+    ACTIVITY_CANCELLED: "Cancelled",
+}
+ACTIVITY_STATE_TONES = {
+    ACTIVITY_SCHEDULED: TONE_WARNING,
+    ACTIVITY_RESCHEDULED: TONE_WARNING,
+    ACTIVITY_COMPLETED: TONE_SUCCESS,
+    ACTIVITY_CANCELLED: TONE_DANGER,
+}
+#: An activity is priced when it is scheduled, so the Activity Cost column
+#: reads a cost only for work that has its day (owner, 2026-10-05: "Only
+#: fetch if scheduled"). Cancelled work, and work nobody has dated, has none.
+COSTED_ACTIVITY_STATES = frozenset(
+    {ACTIVITY_SCHEDULED, ACTIVITY_RESCHEDULED, ACTIVITY_COMPLETED}
+)
+
+#: The SSA Intervention of a project no SSA intervention measures (Alumni).
+GENERAL = "General"
+
+
 @dataclass
 class ProjectWorkLine:
     """One piece of project work at a school — a dated activity, or a partner
@@ -245,7 +278,14 @@ class ProjectWorkLine:
     training_name: str = ""
     purpose_label: str = ""
     intervention_label: str = ""
+    #: The SSA intervention the work names, as its code, for the scores.
+    intervention_code: str = ""
     status_key: str = STATUS_SCHEDULED
+    #: One of ACTIVITY_STATE_LABELS, or nothing while the work has no day.
+    activity_state: str = ""
+    #: The activities whose cost lines are this work's cost: itself, and the
+    #: other half of an in-school Training / School Visit pair.
+    cost_activity_ids: tuple = ()
     delivered_by: str = ""
     by_partner: bool = False
     activity_date: date | None = None
@@ -303,6 +343,7 @@ class ProjectSchoolRow:
     district: str
     added_by: str
     enrolled_on: date | None
+    project_name: str = ""
 
     plan_stage: str = PLAN_NOT_PLANNED
     partner_name: str = ""
@@ -337,6 +378,18 @@ class ProjectSchoolRow:
     intervention_label: str = ""
     status_key: str = STATUS_AWAITING_COORDINATOR
     activity_date: date | None = None
+    #: The scores beside the SSA Intervention (owner, 2026-10-05: "Previous
+    #: SSA Score, Current SSA Score, SSA Improvement"): the school's confirmed
+    #: score in that intervention when it joined the project, and its latest
+    #: confirmed score since. Empty for General, and until an SSA says.
+    intervention_code: str = ""
+    previous_score: float | None = None
+    current_score: float | None = None
+    #: The row's own activity in four words (ACTIVITY_STATE_LABELS), and its
+    #: planned cost in UGX once it is scheduled.
+    activity_state: str = ""
+    activity_cost: int | None = None
+    cost_activity_ids: tuple = ()
     #: Every piece of project work at the school, for the row's details and
     #: its View drawer: nothing the Status sums up is hidden.
     work: list[ProjectWorkLine] = field(default_factory=list)
@@ -370,6 +423,57 @@ class ProjectSchoolRow:
         if self.plan_stage == PLAN_STAFF_PLANNED and not self.planned_by_coordinator:
             return "Staff planned"
         return PLAN_LABELS[self.plan_stage]
+
+    @property
+    def planning_stage(self) -> str:
+        """The Planning Stage column (owner, 2026-10-05: "Awaiting {Partner
+        Name}"): work a Partner holds names the Partner it waits on."""
+        if self.partner_name and self.plan_stage == PLAN_PARTNER_AWAITING:
+            return f"Awaiting {self.partner_name}"
+        if self.partner_name and self.plan_stage == PLAN_PARTNER_RETURNED:
+            return f"Returned by {self.partner_name}"
+        return self.plan_label
+
+    @property
+    def planned_by_name(self) -> str:
+        """The Planned By column: the Partner once the Partner has scheduled
+        the work, the staff member who planned it otherwise. Nobody has
+        planned work that is still waiting on its Partner or the coordinator."""
+        if self.plan_stage == PLAN_PARTNER_SCHEDULED:
+            return self.partner_name
+        if self.plan_stage == PLAN_STAFF_PLANNED:
+            return self.planned_by
+        return ""
+
+    @property
+    def ssa_improvement(self) -> float | None:
+        """Current SSA score less the previous one; nothing until both exist."""
+        if self.previous_score is None or self.current_score is None:
+            return None
+        return round(self.current_score - self.previous_score, 2)
+
+    @property
+    def ssa_improvement_tone(self) -> str:
+        """Green for a score that rose, red for one that fell, neutral for
+        no change (owner, 2026-10-05)."""
+        change = self.ssa_improvement
+        if not change:
+            return TONE_NEUTRAL
+        return TONE_SUCCESS if change > 0 else TONE_DANGER
+
+    @property
+    def execution_summary(self) -> str:
+        if not self.planned:
+            return self.execution_label
+        return f"{self.execution_label} · {self.delivered}/{self.planned} done"
+
+    @property
+    def activity_state_label(self) -> str:
+        return ACTIVITY_STATE_LABELS.get(self.activity_state, "")
+
+    @property
+    def activity_state_tone(self) -> str:
+        return ACTIVITY_STATE_TONES.get(self.activity_state, TONE_NEUTRAL)
 
     @property
     def is_overdue(self) -> bool:
@@ -920,6 +1024,9 @@ def _school_rows(
             "activity_name_snapshot",
             "evidence_status",
             "payment_status",
+            # The Activity Status and Activity Cost columns.
+            "reschedule_count",
+            "paired_school_visit",
             "training_course",
             "training_course__display_name",
             "training_course__source_name",
@@ -929,6 +1036,7 @@ def _school_rows(
         activities.setdefault((activity.project_id, activity.school_id), []).append(
             activity
         )
+    called_off = _cancelled_activities(project_ids, school_ids, fys)
 
     # Every project handover at these schools, in one query: the ones the
     # partner has not scheduled and the ones handed back to staff and not yet
@@ -981,7 +1089,19 @@ def _school_rows(
         }
     )
     partner_names = _partner_lookup(partner_ids)
-    readings = _focus_readings(projects, school_ids)
+    # The scores of every intervention a row may name: the projects' targets,
+    # and whatever the work at a school or its enrolment names besides.
+    named = {
+        code
+        for rows in (*activities.values(), *called_off.values())
+        for activity in rows
+        for code in (activity.focus_intervention, activity.purpose_intervention)
+    }
+    named.update(h.focus_intervention for rows in handovers.values() for h in rows)
+    named.update(h.focus_intervention for h in by_activity.values())
+    for assignment in assignments:
+        named.update((assignment.matched_intervention, assignment.support_area))
+    readings = _focus_readings(projects, school_ids, also=named)
     coordinator_ids = _coordinator_ids(projects)
 
     out: dict[str, list[ProjectSchoolRow]] = {}
@@ -1003,6 +1123,7 @@ def _school_rows(
             district=getattr(school.district, "name", "") or "",
             added_by=names.get(assignment.assigned_by, "") or "—",
             enrolled_on=enrolled_on,
+            project_name=project.name,
             detail_url=(
                 f"/projects/monitoring/school?{urlencode({'enrolment': assignment.id})}"
             ),
@@ -1091,10 +1212,14 @@ def _school_rows(
             ahead=ahead,
             awaiting=awaiting,
             handed_back=handed_back,
+            called_off=called_off.get(key, []),
             by_activity=by_activity,
             partner_names=partner_names,
             names=names,
             controls=controls,
+        )
+        _attach_scores(
+            row, assignment, readings.get(school.id, {}), intervention_labels
         )
 
         if controls and project.accepts_new_work:
@@ -1106,7 +1231,75 @@ def _school_rows(
             row.schedule_url = f"/planning/schedule-modal?{query}"
             row.partner_url = f"/projects/planning/bulk-partner?{urlencode({'assignments': assignment.id})}"
         out.setdefault(project.id, []).append(row)
+    _attach_costs([row for rows in out.values() for row in rows])
     return out
+
+
+def _cancelled_activities(project_ids, school_ids, fys) -> dict[tuple, list]:
+    """Project work that was called off, by (project, school), oldest first.
+
+    Cancelled work is nobody's plan and stays out of every count on the page
+    (``_live_project_activities``). It is read for one thing: a school whose
+    work was cancelled and not planned again says so in its Activity Status,
+    rather than reading as a school nothing was ever planned for.
+    """
+    from apps.activities.models import Activity
+
+    out: dict[tuple, list] = {}
+    for activity in (
+        Activity.objects.filter(
+            project_id__in=project_ids,
+            school_id__in=school_ids,
+            fy__in=tuple(fys),
+            deleted_at__isnull=True,
+            status="cancelled",
+        )
+        .select_related("training_course")
+        .only(
+            "id",
+            "project_id",
+            "school_id",
+            "status",
+            "planned_date",
+            "activity_type",
+            "purpose_type",
+            "focus_intervention",
+            "purpose_intervention",
+            "activity_name_snapshot",
+            "training_course",
+            "training_course__display_name",
+            "training_course__source_name",
+        )
+        .order_by("planned_date", "updated_at")
+    ):
+        out.setdefault((activity.project_id, activity.school_id), []).append(activity)
+    return out
+
+
+def _attach_costs(rows) -> None:
+    """Each row's Activity Cost, in one query for the page.
+
+    Read from the activity's cost lines, which scheduling writes and the fund
+    request and the budget are built from, so the table cannot disagree with
+    them. An activity with no line has no recorded cost, which is not a cost
+    of nothing.
+    """
+    from apps.planning.oversight_service import _cost_by_activity
+
+    wanted = {
+        activity_id
+        for row in rows
+        if row.activity_state in COSTED_ACTIVITY_STATES
+        for activity_id in row.cost_activity_ids
+    }
+    if not wanted:
+        return
+    costs = _cost_by_activity(sorted(wanted))
+    for row in rows:
+        if row.activity_state not in COSTED_ACTIVITY_STATES:
+            continue
+        priced = [costs[i] for i in row.cost_activity_ids if i in costs]
+        row.activity_cost = sum(priced) if priced else None
 
 
 def _activity_status_key(activity, *, by_partner: bool) -> str:
@@ -1133,7 +1326,40 @@ def _activity_status_key(activity, *, by_partner: bool) -> str:
     return STATUS_SCHEDULED
 
 
-def _activity_line(activity, handover, *, partner_names, names) -> ProjectWorkLine:
+def _activity_state(activity, status_key: str, day) -> str:
+    """The Activity Status of one live activity: Completed once it has been
+    carried out, Scheduled while it has a day ahead of it — Rescheduled if
+    that day has been moved. Work its Partner has not dated, and work sent
+    back to be planned again, is in none of the four."""
+    if status_key in (STATUS_AWAITING_VERIFICATION, STATUS_COMPLETED):
+        return ACTIVITY_COMPLETED
+    if status_key == STATUS_IN_PROGRESS:
+        return ACTIVITY_SCHEDULED
+    if status_key != STATUS_SCHEDULED or day is None:
+        return ""
+    moved = activity.status == "rescheduled" or (activity.reschedule_count or 0) > 0
+    return ACTIVITY_RESCHEDULED if moved else ACTIVITY_SCHEDULED
+
+
+def _pair_ids(activity, work) -> tuple:
+    """The activities whose cost lines are this activity's cost.
+
+    An in-school Training and its School Visit are one day's work with one
+    cost, carried by the visit (apps.activities.pair_costing). One row speaks
+    for the school, so whichever half it shows reads the cost of both.
+    """
+    ids = [activity.id]
+    if activity.paired_school_visit_id:
+        ids.append(activity.paired_school_visit_id)
+    ids.extend(
+        other.id for other in work if other.paired_school_visit_id == activity.id
+    )
+    return tuple(dict.fromkeys(ids))
+
+
+def _activity_line(
+    activity, handover, *, partner_names, names, work=()
+) -> ProjectWorkLine:
     from apps.planning.partner_oversight_service import activity_day, describe_work
 
     by_partner = activity.delivery_type == "partner" or bool(
@@ -1170,7 +1396,15 @@ def _activity_line(activity, handover, *, partner_names, names) -> ProjectWorkLi
         training_name=training,
         purpose_label=purpose,
         intervention_label=intervention,
+        intervention_code=(
+            getattr(handover, "focus_intervention", "")
+            or activity.focus_intervention
+            or activity.purpose_intervention
+            or ""
+        ),
         status_key=status_key,
+        activity_state=_activity_state(activity, status_key, day),
+        cost_activity_ids=_pair_ids(activity, work),
         delivered_by=(
             partner_names.get(activity.assigned_partner_id, "")
             if by_partner
@@ -1199,6 +1433,7 @@ def _handover_line(handover, status_key: str) -> ProjectWorkLine:
         training_name=training,
         purpose_label=purpose,
         intervention_label=intervention,
+        intervention_code=handover.focus_intervention or "",
         status_key=status_key,
         delivered_by=getattr(handover.partner, "name", "") or "",
         by_partner=True,
@@ -1253,20 +1488,25 @@ def _attach_work(
     partner_names,
     names,
     controls: bool,
+    called_off=(),
 ) -> None:
     """Fill the row's Training, Purpose of Assignment, SSA Intervention,
-    Status and Activity date, and the list of every piece of work behind them.
+    Status, Activity date, Activity Status and whose cost it reads, and the
+    list of every piece of work behind them.
 
     One piece of work speaks for the school: the next thing planned, else a
     handover still with its partner, else one handed back, else the latest
     work done. With none, the school is waiting on the Project Coordinator —
-    and then Purpose and SSA Intervention say what the school was added for.
+    and then Purpose and SSA Intervention say what the school was added for,
+    or, where its work was cancelled and not planned again, what was called
+    off.
     """
+    measured = project.measured_by_ssa
     lines: dict[str, ProjectWorkLine] = {}
     for activity in work:
         handover = by_activity.get(activity.id)
         line = _activity_line(
-            activity, handover, partner_names=partner_names, names=names
+            activity, handover, partner_names=partner_names, names=names, work=work
         )
         if controls:
             _attach_doors(line, handover, activity)
@@ -1296,22 +1536,50 @@ def _attach_work(
         )
         focus = lines[f"a:{last.id}"]
 
+    if not measured:
+        # No SSA intervention measures this project (Alumni): its work is
+        # General, whatever a record happens to name (owner, 2026-10-05).
+        for line in lines.values():
+            line.intervention_label, line.intervention_code = GENERAL, ""
     row.work = sorted(
         lines.values(),
         key=lambda line: (line.activity_date is None, line.activity_date or date.min),
     )
+    enrolled_for = _enrolment_intervention(assignment, project)
+    enrolled_code = _enrolment_code(assignment, project)
     if focus is None:
         row.status_key = STATUS_AWAITING_COORDINATOR
         row.purpose_label = assignment.participation_type or ""
-        row.intervention_label = _enrolment_intervention(assignment, project)
+        row.intervention_label = enrolled_for
+        row.intervention_code = enrolled_code
+        if called_off:
+            # The school is the coordinator's to plan again; the row says
+            # what was called off, and carries no date and no cost for it.
+            from apps.planning.partner_oversight_service import describe_work
+
+            last = called_off[-1]
+            training, purpose, intervention = describe_work(activity=last)
+            row.activity_state = ACTIVITY_CANCELLED
+            row.training_name = training
+            row.purpose_label = purpose or row.purpose_label
+            if measured and intervention:
+                row.intervention_label = intervention
+                row.intervention_code = (
+                    last.focus_intervention or last.purpose_intervention or ""
+                )
         return
     row.training_name = focus.training_name
     row.purpose_label = focus.purpose_label
-    row.intervention_label = focus.intervention_label or _enrolment_intervention(
-        assignment, project
-    )
+    if focus.intervention_label:
+        row.intervention_label = focus.intervention_label
+        row.intervention_code = focus.intervention_code
+    else:
+        row.intervention_label = enrolled_for
+        row.intervention_code = enrolled_code
     row.status_key = focus.status_key
     row.activity_date = focus.activity_date
+    row.activity_state = focus.activity_state
+    row.cost_activity_ids = focus.cost_activity_ids
     row.withdraw_label = focus.withdraw_label
     row.withdraw_url = focus.withdraw_url
     row.resolve_url = focus.resolve_url
@@ -1327,10 +1595,66 @@ def _enrolment_intervention(assignment, project) -> str:
     if not project.measured_by_ssa:
         # No SSA intervention measures this project (Alumni): it is General,
         # whatever need the school happened to show when it joined.
-        return "General"
+        return GENERAL
+    return choice_label(_enrolment_code(assignment, project), SsaIntervention)
+
+
+def _enrolment_code(assignment, project) -> str:
+    """``_enrolment_intervention`` as a code; nothing for General."""
+    if not project.measured_by_ssa:
+        return ""
     primary, _supporting = project.intervention_plan()
-    code = assignment.matched_intervention or assignment.support_area or primary or ""
-    return choice_label(code, SsaIntervention)
+    return assignment.matched_intervention or assignment.support_area or primary or ""
+
+
+def _reading(
+    code, assignment, *, entered, history, matched, labels
+) -> InterventionReading:
+    """One intervention at one school: the confirmed score it entered the
+    project with, and the latest confirmed score since."""
+    from apps.core.interventions import INTERVENTION_ABBREVIATIONS
+
+    before = [r for r in history if entered is None or r[0] <= entered]
+    baseline = before[-1] if before else None
+    baseline_score = baseline[1] if baseline else None
+    if code == matched and assignment.baseline_score is not None:
+        # The snapshot taken at enrolment is the project's baseline and is
+        # never recomputed (ProjectSchoolAssignment.baseline_score).
+        baseline_score = assignment.baseline_score
+    since = [r for r in history if baseline is None or r[0] > baseline[0]]
+    latest = since[-1] if since else None
+    return InterventionReading(
+        code=code,
+        label=labels.get(code, code.replace("_", " ").title()),
+        abbreviation=INTERVENTION_ABBREVIATIONS.get(code, ""),
+        baseline=baseline_score,
+        latest=latest[1] if latest else None,
+        latest_on=latest[0] if latest else None,
+    )
+
+
+def _attach_scores(row, assignment, school_readings, intervention_labels) -> None:
+    """Previous and Current SSA Score for the row's SSA Intervention.
+
+    The same reading the row's focus interventions take (``_reading``): the
+    school's confirmed score in that intervention when it joined the project,
+    and its latest confirmed score since. A school with no confirmed SSA
+    since it joined has no current score yet, and so no improvement — an
+    empty cell, never a nought.
+    """
+    code = row.intervention_code
+    if not code:
+        return
+    reading = next((r for r in row.focus if r.code == code), None) or _reading(
+        code,
+        assignment,
+        entered=row.enrolled_on,
+        history=school_readings.get(code, []),
+        matched=assignment.matched_intervention,
+        labels=intervention_labels,
+    )
+    row.previous_score = reading.baseline
+    row.current_score = reading.latest
 
 
 def _attach_ssa(row, assignment, project, readings, intervention_labels) -> None:
@@ -1342,32 +1666,19 @@ def _attach_ssa(row, assignment, project, readings, intervention_labels) -> None
     confirmed score the school entered with and the latest confirmed score
     since, per focus intervention.
     """
-    from apps.core.interventions import INTERVENTION_ABBREVIATIONS
-
     primary, supporting = project.intervention_plan()
     matched = assignment.matched_intervention or primary
     codes = list(dict.fromkeys([c for c in [matched, primary, *supporting] if c]))
     school_readings = readings.get(assignment.school_id, {})
-    entered = row.enrolled_on
     for code in codes:
-        history = school_readings.get(code, [])
-        before = [r for r in history if entered is None or r[0] <= entered]
-        baseline = before[-1] if before else None
-        baseline_score = baseline[1] if baseline else None
-        if code == matched and assignment.baseline_score is not None:
-            # The snapshot taken at enrolment is the project's baseline and is
-            # never recomputed (ProjectSchoolAssignment.baseline_score).
-            baseline_score = assignment.baseline_score
-        since = [r for r in history if baseline is None or r[0] > baseline[0]]
-        latest = since[-1] if since else None
         row.focus.append(
-            InterventionReading(
-                code=code,
-                label=intervention_labels.get(code, code.replace("_", " ").title()),
-                abbreviation=INTERVENTION_ABBREVIATIONS.get(code, ""),
-                baseline=baseline_score,
-                latest=latest[1] if latest else None,
-                latest_on=latest[0] if latest else None,
+            _reading(
+                code,
+                assignment,
+                entered=row.enrolled_on,
+                history=school_readings.get(code, []),
+                matched=matched,
+                labels=intervention_labels,
             )
         )
 
@@ -1386,13 +1697,15 @@ def _attach_ssa(row, assignment, project, readings, intervention_labels) -> None
         row.impact_label, row.impact_tone = "Awaiting follow-up", TONE_INFO
 
 
-def _focus_readings(projects, school_ids) -> dict[str, dict[str, list]]:
+def _focus_readings(projects, school_ids, *, also=()) -> dict[str, dict[str, list]]:
     """Confirmed scores per school and focus intervention, oldest first.
 
     One query for the page. Only IA-confirmed assessments count, and a score
     outside the scale is not evidence — the same rules as
-    ``ssa_impact._readings``.
+    ``ssa_impact._readings``. ``also`` adds the interventions the work at a
+    school names beyond its project's targets.
     """
+    from apps.core.enums import SsaIntervention
     from apps.projects.ssa_impact import CONFIRMED, _valid
     from apps.ssa.models import SsaScore
 
@@ -1402,6 +1715,7 @@ def _focus_readings(projects, school_ids) -> dict[str, dict[str, list]]:
         for code in project.target_intervention_list()
         if code
     }
+    codes.update(code for code in also if code in SsaIntervention.values)
     if not codes or not school_ids:
         return {}
     out: dict[str, dict[str, list]] = {}

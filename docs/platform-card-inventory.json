@@ -2672,7 +2672,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 135,
+   "line": 138,
    "title": "Budget & Execution",
    "heading_level": 2,
    "has_card_key": false,
@@ -2686,7 +2686,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 165,
+   "line": 168,
    "title": "Delivery by Intervention",
    "heading_level": 2,
    "has_card_key": false,
@@ -2700,7 +2700,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 198,
+   "line": 201,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -2718,7 +2718,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 256,
+   "line": 259,
    "title": "Upcoming Follow-Ups",
    "heading_level": 2,
    "has_card_key": false,
@@ -2732,7 +2732,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 285,
+   "line": 288,
    "title": "Partner Delivery",
    "heading_level": 2,
    "has_card_key": false,
@@ -2750,7 +2750,7 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 101,
+   "line": 115,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
