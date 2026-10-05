@@ -246,7 +246,17 @@ def _scheduled_without_cost(item, today: date) -> PlanningRisk | None:
     """
     if item.is_awaiting_partner_schedule or not item.activity_id:
         return None
-    if not (item.cost_missing or item.planned_cost <= 0):
+    # An in-school training's planned cost reads 0 on these pages by design.
+    # The Training of a pair has none to carry -- its School Visit is the
+    # journey and is checked on its own row -- and one with no visit is
+    # judged on the lines it holds (its budget).
+    carried = (
+        item.budget
+        if getattr(item, "is_in_school_training", False)
+        else item.planned_cost
+    )
+    priced = getattr(item, "cost_on_school_visit", False) or carried > 0
+    if not item.cost_missing and priced:
         return None
     return PlanningRisk(
         key="scheduled_without_cost",

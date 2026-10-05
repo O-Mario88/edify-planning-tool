@@ -153,6 +153,8 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     """Compute the cost of an activity from the rate card.
 
     `a` keys: activityType, deliveryType, districtType ('primary'|'secondary'),
+    accommodationKey (the traveller's accommodation rate, by their role),
+    returnDay (the day a traveller comes home from a secondary district),
     costingKind ('core' | 'onetest' | 'tot' | 'student_conference' |
     'proprietor_conference', from the catalogue item's costing profile),
     teachersAttended, leadersAttended, otherParticipants, expectedParticipants,
@@ -162,7 +164,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
 
     * A staff school mission is a visit day — transport by district and
       lunch; a secondary district adds breakfast, dinner and a night's
-      accommodation — and that day is shared across every school planned
+      accommodation, at the CCEO's rate or the one set for every other
+      member of staff (owner, 2026-10-05); the last of a run of such days is
+      the day home and has no night and no dinner — and that day is shared
+      across every school planned
       for it (apps/daily_visit_batches). The visit itself has no rate: the
       owner retired Client/Core Staff Visit on 2026-09-12 ("we are adding
       transport + lunch then divide by the number of schools planned for
@@ -235,21 +240,44 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         accommodation.
 
         `nights` exists because a visit day charges accommodation per NIGHT
-        (one by default, the activity may say otherwise) while a multi-day
-        trip carries the full per-diem set per day.
+        (one by default, the activity may say otherwise).
+
+        The night is paid at the traveller's accommodation rate (owner,
+        2026-10-05): `accommodationKey` names it, and without one the night
+        is the CCEO's.
+
+        The day the traveller comes home has no night and no dinner (owner,
+        2026-10-05: "the fifth day they travel back and sleep and eat dinner
+        from home. But transport, breakfast and lunch remains"). A trip of
+        several days ends on that day, so it carries a night and a dinner
+        for every day but its last; a single day marked `returnDay` is the
+        last of a run of day visits (apps.daily_visit_batches.return_day).
+        One day away on its own keeps its night and its dinner.
         """
         from apps.daily_visit_batches.pricing import (
+            ACCOMMODATION_KEYS,
+            DINNER_KEY,
             KEY_LABELS,
             OPTIONAL_KEYS,
-            REQUIRED_KEYS,
+            day_keys,
         )
 
         profile = "secondary" if is_secondary else "primary"
-        nights = days if nights is None else nights
-        for key in REQUIRED_KEYS[profile] + OPTIONAL_KEYS[profile]:
+        nights_away = days - 1 if days > 1 else days
+        nights = nights_away if nights is None else nights
+        return_day = days == 1 and bool(a.get("returnDay"))
+        for key in (
+            day_keys(profile, a.get("accommodationKey"), return_day=return_day)
+            + OPTIONAL_KEYS[profile]
+        ):
             if key in OPTIONAL_KEYS[profile] and key not in rates:
                 continue
-            qty = nights if key == "secondary_accommodation_per_night" else days
+            if key in ACCOMMODATION_KEYS:
+                qty = nights
+            elif key == DINNER_KEY:
+                qty = nights_away
+            else:
+                qty = days
             if qty <= 0:
                 continue
             add(KEY_LABELS[key], key, qty)
@@ -361,8 +389,9 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
 
     if activity_type == "field_event":
         # Attendee-side field work — district meetings, boot camps, workshops.
-        # Every day away carries the full per-diem set, accommodation included
-        # in a secondary district (owner rule, 2026-08-19).
+        # Every day away carries the full per-diem set in a secondary
+        # district (owner rule, 2026-08-19), bar the night and the dinner of
+        # the last day, when the traveller comes home (owner, 2026-10-05).
         add_staff_visit_day(_days_of(a))
 
     elif activity_type == "programme_event":
@@ -503,14 +532,15 @@ def cluster_meeting_rate_keys() -> frozenset[str]:
     recipe itself.
 
     Each meeting type is priced on a card that carries every canonical rate,
-    staff-run and partner-run, in a primary and a secondary district, with
-    people in the room and handouts printed and copied; the keys of the lines
-    are the answer. Whatever needs to know which costs belong on a meeting
-    (System Health, the data repair) asks here rather than keeping a list of
-    its own: the health check kept one, and reported the room every meeting
-    is charged for as a wrong cost.
+    staff-run and partner-run, in a primary and a secondary district, at
+    either accommodation rate, with people in the room and handouts printed
+    and copied; the keys of the lines are the answer. Whatever needs to know
+    which costs belong on a meeting (System Health, the data repair) asks
+    here rather than keeping a list of its own: the health check kept one,
+    and reported the room every meeting is charged for as a wrong cost.
     """
     from apps.budget.reference import CANONICAL_RATE_KEYS
+    from apps.daily_visit_batches.pricing import ACCOMMODATION_KEYS
 
     card = dict.fromkeys(CANONICAL_RATE_KEYS, 1)
     stated = {
@@ -524,12 +554,14 @@ def cluster_meeting_rate_keys() -> frozenset[str]:
         for activity_type in CLUSTER_MEETING_TYPES
         for delivery in ("staff", "partner")
         for district in ("primary", "secondary")
+        for accommodation in sorted(ACCOMMODATION_KEYS)
         for line in cost_for_activity(
             {
                 **stated,
                 "activityType": activity_type,
                 "deliveryType": delivery,
                 "districtType": district,
+                "accommodationKey": accommodation,
             },
             card,
         ).lines

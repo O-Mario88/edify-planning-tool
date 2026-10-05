@@ -1220,6 +1220,13 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     minimum_amounts = planned_minimum_amounts(activities)
 
+    # An in-school Training is done during its School Visit and stays at
+    # UGX 0: the visit carries the day's cost (owner, 2026-09-28). Its row
+    # says so (owner, 2026-10-05) unless the visit has no price either.
+    from apps.activities.pair_costing import pair_cost_notes
+
+    pair_notes = pair_cost_notes(activities)
+
     # Core-school sequence numbers (V1..V8 / T1..T8) and the "n/8 Completed"
     # progress used to be three per-row COUNT queries inside the loop below.
     # That made /my-plan O(number of core activities): the scaling gate
@@ -1365,6 +1372,16 @@ def get_frontend_context(principal, query: dict) -> dict:
                 badges.append(("Budget Created", "blue"))
                 budget_status = "Budget Created"
                 budget_status_color = "blue"
+        elif a.id in pair_notes:
+            # The UGX 0 half of an in-school pair: its budget is the other
+            # half's, the School Visit's unless the pair predates 2026-09-28.
+            budget_status = (
+                "In School Visit"
+                if a.activity_type == "in_school_training"
+                else "In Training"
+            )
+            budget_status_color = "blue"
+            badges.append((budget_status, budget_status_color))
         else:
             badges.append(("No Budget", "slate"))
             budget_status = "No Budget"
@@ -1632,6 +1649,8 @@ def get_frontend_context(principal, query: dict) -> dict:
             ),
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
             "budget_total": budget_total,
+            # Written beside the UGX 0 half of an in-school pair.
+            "cost_note": pair_notes.get(a.id, ""),
             "salesforce_activity_id": a.salesforce_activity_id,
             "evidence_status": a.evidence_status,
             "ia_verification_status": a.ia_verification_status,

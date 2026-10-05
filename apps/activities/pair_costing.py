@@ -53,6 +53,92 @@ def is_uncosted_pair_training(activity) -> bool:
     )
 
 
+#: What a page writes beside the UGX 0 of a pair's Training (owner,
+#: 2026-10-05: "since in-school training is done during school visit, it is
+#: ok to keep it at UGX 0 just add (captured in the school visit cost)").
+CAPTURED_IN_VISIT_NOTE = "(captured in the school visit cost)"
+#: A pair scheduled before 2026-09-28 whose money had already moved is the
+#: other way round: its Training carries the cost and its visit is at 0.
+CAPTURED_IN_TRAINING_NOTE = "(captured in the in-school training cost)"
+
+
+def pair_cost_notes(activities) -> dict[str, str]:
+    """The note to write beside the UGX 0 half of each in-school Training /
+    School Visit pair among ``activities``, by activity id.
+
+    One half of a pair carries the day's cost and the other carries none, by
+    design, so a page that looks for work nobody has priced asks here before
+    calling the empty half uncosted (the Work Plan read every pair Training
+    as "Cost setup required"). A half with no cost lines that is missing
+    from the result has no priced other half either: that pair is unpriced.
+
+    ``activities`` are read with ``schedule_cost_lines`` prefetched, as the
+    Work Plan and My Plan load them. Nothing is queried unless a pair's
+    other half is outside the list, or a School Visit in it has no lines.
+    """
+    from django.db.models import Exists, OuterRef
+
+    from apps.activities.models import Activity, ActivityScheduleCostLine
+
+    activities = list(activities)
+    by_id = {activity.id: activity for activity in activities}
+
+    def has_lines(activity) -> bool:
+        return bool(list(activity.schedule_cost_lines.all()))
+
+    # (training id, visit id) for every pair with a half in the list.
+    pairs = {
+        (activity.id, activity.paired_school_visit_id)
+        for activity in activities
+        if is_uncosted_pair_training(activity)
+    }
+    paired_visits = {visit_id for _training_id, visit_id in pairs}
+    bare_visits = [
+        activity.id
+        for activity in activities
+        if activity.activity_type == "school_visit"
+        and activity.id not in paired_visits
+        and not has_lines(activity)
+    ]
+    if bare_visits:
+        pairs.update(
+            (training_id, visit_id)
+            for visit_id, training_id in Activity.objects.filter(
+                paired_school_visit_id__in=bare_visits,
+                activity_type="in_school_training",
+                deleted_at__isnull=True,
+            ).values_list("paired_school_visit_id", "id")
+        )
+    if not pairs:
+        return {}
+
+    priced = {
+        activity.id
+        for activity in activities
+        if not activity.cost_missing and has_lines(activity)
+    }
+    outside = {half for pair in pairs for half in pair} - set(by_id)
+    if outside:
+        priced.update(
+            Activity.objects.filter(
+                Exists(
+                    ActivityScheduleCostLine.objects.filter(activity_id=OuterRef("pk"))
+                ),
+                id__in=outside,
+                cost_missing=False,
+            ).values_list("id", flat=True)
+        )
+
+    notes: dict[str, str] = {}
+    for training_id, visit_id in pairs:
+        training, visit = by_id.get(training_id), by_id.get(visit_id)
+        if training is not None and not has_lines(training) and visit_id in priced:
+            notes[training_id] = CAPTURED_IN_VISIT_NOTE
+        elif visit is not None and not has_lines(visit) and training_id in priced:
+            notes[visit_id] = CAPTURED_IN_TRAINING_NOTE
+    return notes
+
+
 def find_pair_trainings_carrying_cost(apps=None) -> list[str]:
     """Ids of undelivered pair Trainings that still carry cost lines.
 
