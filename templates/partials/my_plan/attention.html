@@ -27,12 +27,14 @@ Reschedule — On a Public Holiday or Leave Day
 <th>School ID</th>
 <th>School / Cluster</th>
 <th>Type</th>
-<th>Planned Date</th>
-<th>Why</th>
+<th>Day Off</th>
 <th class="text-right">Action</th>
 </tr>
 </thead>
 <tbody>
+{% comment %}One short "Day Off" cell, the whole reason in its title: with a
+date column and a sentence beside it the table was wider than a 1280px
+workspace and its cells wrapped (e2e/responsive-contract.spec.js).{% endcomment %}
 {% for row in day_off_pager.rows %}
 <tr class="mp-dayoff-row">
 <td class="text-slate-600 font-semibold tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
@@ -46,8 +48,7 @@ Reschedule — On a Public Holiday or Leave Day
 {% elif row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline font-semibold text-slate-800 edify-primary-text-hover">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name|default:"General" }}{% endif %}
 </td>
 <td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
-<td class="font-bold tabular-nums" data-label="Planned Date"><span data-tone="danger">{{ row.planned_date|date:"D j M Y"|default:"Unscheduled" }}</span></td>
-<td class="font-semibold mp-cell-wrap" data-label="Why"><span data-tone="danger">{{ row.day_off.why }}</span></td>
+<td class="font-bold tabular-nums" data-label="Day Off"><span data-tone="danger" title="{{ row.day_off.why }}">{{ row.day_off.summary }}</span></td>
 <td class="text-right" data-record-action>
 {% if row.execution_role != 'Partner' or viewer_is_partner %}
 <button

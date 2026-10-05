@@ -111,6 +111,7 @@ class DayOffMarksTest(DayOffFixture):
         self.assertEqual(list(marks), [on_holiday.id])
         mark = marks[on_holiday.id]
         self.assertEqual(mark.label, "Public holiday")
+        self.assertEqual(mark.summary, "Fri 9 Oct · Public holiday")
         self.assertEqual(mark.days[0].kind, HOLIDAY)
         self.assertEqual(
             mark.advice,
@@ -177,6 +178,8 @@ class DayOffMarksTest(DayOffFixture):
 
         self.assertEqual(mark.label, "Holiday and leave")
         self.assertEqual({day.kind for day in mark.days}, {HOLIDAY, LEAVE})
+        # One line for a table cell, however many days there are.
+        self.assertEqual(mark.summary, "Fri 9 Oct · Public holiday +1 more")
 
     def test_a_scheduled_instant_is_read_on_its_local_day(self):
         """A day chosen in a drawer is saved at local midnight, which is the
@@ -347,7 +350,12 @@ class DayOffPagesTest(DayOffFixture):
         )
         body = response.content.decode()
         self.assertIn('data-card="day-off-work"', body)
-        self.assertIn("Fri 9 Oct is a public holiday (Independence Day).", body)
+        # The cell is short so the card never wraps; the reason is its title.
+        self.assertIn(
+            'title="Fri 9 Oct is a public holiday (Independence Day).">'
+            "Fri 9 Oct · Public holiday</span>",
+            body,
+        )
         self.assertIn(f'hx-get="/my-plan/{self.on_holiday.id}/reschedule-drawer"', body)
         # The card's row and the row in the School Visits table.
         self.assertEqual(body.count('class="mp-dayoff-row"'), 2)

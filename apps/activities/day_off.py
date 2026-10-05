@@ -61,6 +61,12 @@ class DayOff:
     cover: str = ""
 
     @property
+    def short(self) -> str:
+        """The day and what it is, short enough for a table cell."""
+        what = "Public holiday" if self.kind == HOLIDAY else "On leave"
+        return f"{self.day:%a %-d %b} · {what}"
+
+    @property
     def sentence(self) -> str:
         day = f"{self.day:%a %-d %b}"
         if self.kind == HOLIDAY:
@@ -88,6 +94,13 @@ class DayOffMark:
         if self.kinds == {LEAVE}:
             return "On leave"
         return "Holiday and leave"
+
+    @property
+    def summary(self) -> str:
+        """The first day off, and how many more: one line whatever the
+        activity's length, for a column that must not wrap."""
+        more = len(self.days) - 1
+        return self.days[0].short + (f" +{more} more" if more else "")
 
     @property
     def why(self) -> str:
