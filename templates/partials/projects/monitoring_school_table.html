@@ -1,0 +1,173 @@
+{% load frontend_filters table_pagination row_actions %}
+{% comment %}
+The project table (owner, 2026-10-05): one row per enrolled school the reader
+may see, with the owner's columns in the owner's order — Project Name, School
+ID, School Name, District, Training, Purpose of Assignment, SSA Intervention,
+Previous SSA Score, Current SSA Score, SSA Improvement, Status, Activity Date,
+Enrolled On, Planning Stage, Planned By, Execution, Activity Status, Activity
+Cost — then Actions. The workbook carries the same columns from the same rows
+(apps.projects.school_table), so the file is the screen.
+
+One piece of work speaks for the school — the next thing planned, else a
+handover still with its partner, else one handed back, else the latest work
+done — and with none the school is Awaiting Project Coordinator Action.
+
+What the cells say:
+  SSA Intervention   General for a project no SSA intervention measures
+                     (Alumni).
+  Previous / Current the school's confirmed score in that intervention when
+                     it joined the project, and its latest confirmed score
+                     since. Improvement is Current less Previous, and is
+                     empty until both exist: green where the score rose, red
+                     where it fell, neutral where it did not move.
+  Planning Stage     "Awaiting {Partner Name}" while a Partner holds the work
+                     undated.
+  Planned By         the Partner once the Partner has scheduled it; the staff
+                     member who planned it otherwise.
+  Activity Status    Scheduled, Rescheduled, Completed or Cancelled.
+  Activity Cost      the activity's planned cost, once it is scheduled.
+
+Nineteen columns scroll sideways as one table; none is frozen (owner,
+2026-10-02, of the consolidated tables).
+
+The school's name opens the row's details: who added it, the impact engine's
+verdict and its focus SSA readings. View opens the school's project work in a
+drawer. Everyone but the Project Coordinator reads; the coordinator's doors
+(Schedule, Assign to a partner, Withdraw/Reassign, Resolve) are drawn for them
+alone on Project Monitoring, in the row's Actions menu beside View, and checked
+again by each drawer's route and by the service behind it. `view_only` draws
+View alone (Planning Oversight's Special Projects tab).
+{% endcomment %}
+<div class="border-t edify-border">
+  {% with page_key="schools_page-"|add:row.id %}
+  {% paginate row.school_rows page_key as school_pager %}
+  <div class="school-plan-table-scroll">
+    <table class="school-plan-table partner-plan-table" aria-label="Schools in {{ row.name }}" data-project-schools data-table-fit="scroll" data-columns="unfrozen" x-data="{ openRowId: null }" @keydown.escape.window="openRowId = null">
+      <caption class="sr-only">Schools in {{ row.name }}: the work planned at each, its SSA intervention and scores, where it stands, who planned it, and its cost once scheduled</caption>
+      <thead><tr>
+        <th scope="col">Project Name</th>
+        <th scope="col">School ID</th>
+        <th scope="col">School Name</th>
+        <th scope="col">District</th>
+        <th scope="col">Training</th>
+        <th scope="col">Purpose of<br>Assignment</th>
+        <th scope="col">SSA<br>Intervention</th>
+        <th scope="col">Previous<br>SSA Score</th>
+        <th scope="col">Current<br>SSA Score</th>
+        <th scope="col">SSA<br>Improvement</th>
+        <th scope="col">Status</th>
+        <th scope="col">Activity<br>Date</th>
+        <th scope="col">Enrolled<br>On</th>
+        <th scope="col">Planning<br>Stage</th>
+        <th scope="col">Planned By</th>
+        <th scope="col">Execution</th>
+        <th scope="col">Activity<br>Status</th>
+        <th scope="col">Activity<br>Cost</th>
+        <th scope="col" class="school-plan-table__actions">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for school in school_pager.rows %}
+        {% with row_id="s-"|add:school.assignment_id %}
+        <tr class="partner-plan-row" data-project-school="{{ school.school_pk }}" data-plan-stage="{{ school.plan_stage }}" data-execution="{{ school.execution }}" data-status="{{ school.status_key }}" data-activity-state="{{ school.activity_state }}"
+            @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+            :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
+          <td data-label="Project Name">{{ school.project_name }}</td>
+          <td data-label="School ID"><span class="partner-plan-table__code">{{ school.school_code }}</span></td>
+          <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
+            <button type="button" class="school-plan-table__name-toggle"
+                    @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
+                    :aria-expanded="(openRowId === '{{ row_id }}').toString()"
+                    aria-controls="project-row-details-{{ row_id }}"
+                    aria-label="Details for {{ school.school_name }}">{{ school.school_name }}</button>
+          </span></td>
+          <td data-label="District">{{ school.district|default:"—" }}</td>
+          <td data-label="Training">{{ school.training_name|default:"—" }}</td>
+          <td data-label="Purpose of Assignment">{{ school.purpose_label|default:"—" }}</td>
+          <td data-label="SSA Intervention">{{ school.intervention_label|default:"—" }}</td>
+          <td data-label="Previous SSA Score" class="tabular-nums" data-previous-score>{% if school.previous_score is not None %}{{ school.previous_score }}{% else %}—{% endif %}</td>
+          <td data-label="Current SSA Score" class="tabular-nums" data-current-score>{% if school.current_score is not None %}{{ school.current_score }}{% else %}—{% endif %}</td>
+          <td data-label="SSA Improvement" class="tabular-nums" data-ssa-improvement>{% if school.ssa_improvement is not None %}<span class="partner-status-chip" data-tone="{{ school.ssa_improvement_tone }}">{% if school.ssa_improvement > 0 %}+{% endif %}{{ school.ssa_improvement }}</span>{% else %}—{% endif %}</td>
+          <td data-label="Status"><span class="partner-plan-table__status">
+            <span class="partner-status-chip" data-tone="{{ school.status_tone }}">{{ school.status_label }}</span>
+            {% if school.is_overdue %}<span class="partner-status-chip" data-tone="danger">Overdue</span>{% endif %}
+          </span></td>
+          <td data-label="Activity Date" data-activity-date>{% if school.activity_date %}{{ school.activity_date|date:"j M Y" }}{% elif school.awaiting_date %}Awaiting scheduling{% else %}—{% endif %}</td>
+          <td data-label="Enrolled On" data-enrolled-on>{% if school.enrolled_on %}{{ school.enrolled_on|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td data-label="Planning Stage" data-planning-stage>{{ school.planning_stage }}</td>
+          <td data-label="Planned By" data-planned-by>{{ school.planned_by_name|default:"—" }}</td>
+          <td data-label="Execution" data-execution-summary>{{ school.execution_summary }}</td>
+          <td data-label="Activity Status" data-activity-status>{% if school.activity_state %}<span class="partner-status-chip" data-tone="{{ school.activity_state_tone }}">{{ school.activity_state_label }}</span>{% else %}—{% endif %}</td>
+          <td data-label="Activity Cost" class="tabular-nums" data-activity-cost>{% if school.activity_cost is not None %}UGX {{ school.activity_cost|intcomma }}{% else %}—{% endif %}</td>
+          <td data-label="Actions" class="school-plan-table__actions"{% if view_only %} @click.stop{% endif %}>
+            {% comment %}
+            The coordinator's doors sit in one Actions menu with View
+            rather than as a row of buttons, which wrapped on a tablet
+            (owner, 2026-09-26). A reader with View alone — everyone but
+            the coordinator, or the coordinator on a paused project with
+            no partner decision waiting — keeps it as its own button.
+            {% endcomment %}
+            {% if not view_only and result.controls and school.resolve_url or not view_only and result.controls and school.withdraw_url or not view_only and result.controls and school.schedule_url or not view_only and school.leave_url %}
+            {% row_actions school.school_name %}
+            <button type="button" class="row-menu__item" role="menuitem"
+                    hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                    aria-label="View {{ school.school_name }}'s project work">View</button>
+            {% if school.resolve_url %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.resolve_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Resolve the work {{ school.school_name }}'s partner returned">Resolve</button>
+            {% endif %}
+            {% if school.withdraw_url %}
+            <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="{{ school.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ school.withdraw_label }} at {{ school.school_name }}, or reassign it" data-project-withdraw>Withdraw / Reassign</button>
+            {% endif %}
+            {% if result.controls %}
+            {% if school.schedule_url %}
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule project work at {{ school.school_name }}">Schedule</button>
+            <button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.school_name }} to a partner">Assign</button>
+            {% else %}
+            <p class="row-menu__note" role="none">Paused — takes no new work</p>
+            {% endif %}
+            {% endif %}
+            {% if school.leave_url %}
+            {% if school.leave_block %}
+            <button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" data-enrolment-withdraw="blocked">Withdraw from project<span class="row-menu__reason">{{ school.leave_block }}</span></button>
+            {% else %}
+            <button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="/projects/capacity/withdraw?enrolment={{ school.assignment_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Withdraw {{ school.school_name }} from {{ row.name }}" data-enrolment-withdraw="open">Withdraw from project</button>
+            {% endif %}
+            {% endif %}
+            {% endrow_actions %}
+            {% else %}
+            <div class="school-record-row__actions">
+            <button type="button" class="school-record-action school-record-action--assign"
+                    hx-get="{{ school.detail_url }}&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                    aria-label="View {{ school.school_name }}'s project work">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg>
+              <span>View</span>
+            </button>
+            {% if result.controls and not view_only %}
+            <span class="edify-text-caption edify-text-muted" title="A paused project takes no new work">Paused</span>
+            {% endif %}
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        <tr id="project-row-details-{{ row_id }}" class="school-plan-table__details" x-show="openRowId === '{{ row_id }}'" x-cloak>
+          <td colspan="19">
+            <dl class="school-record-row__metadata">
+              <div><dt>Added by:</dt><dd>{{ school.added_by }}</dd></div>
+              <div><dt>Improvement:</dt><dd>{{ school.impact_label }}</dd></div>
+              {% for focus in school.focus %}
+              <div><dt>{% firstof focus.abbreviation focus.label %}:</dt><dd title="{{ focus.label }}: confirmed score at enrolment{% if focus.latest is not None %}, then on {{ focus.latest_on|date:'j M Y' }}{% endif %}">{% if focus.baseline is not None %}{{ focus.baseline }}{% else %}–{% endif %}{% if focus.latest is not None %} → {{ focus.latest }}{% if focus.change is not None %} ({% if focus.direction == "up" %}+{% endif %}{{ focus.change }}){% endif %}{% endif %}</dd></div>
+              {% endfor %}
+              {% if school.last_delivered_on %}<div><dt>Last delivered:</dt><dd>{{ school.last_delivered_on|date:"j M Y" }}</dd></div>{% endif %}
+              {% if school.work|length > 1 %}<div><dt>Project work here:</dt><dd>{{ school.work|length }} pieces — View lists each</dd></div>{% endif %}
+            </dl>
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="19" class="partner-plan-table__empty">{% if selected_stage %}No school in this project is at that stage.{% else %}No school in this project yet.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=school_pager param=page_key pagination_label="Schools in "|add:row.name %}
+  {% endwith %}
+</div>

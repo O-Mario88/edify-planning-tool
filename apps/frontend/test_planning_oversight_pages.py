@@ -431,10 +431,15 @@ class SpecialProjectsOversightTest(OversightPageFixture):
             assigned_by=self.james.id,
         )
         client = self.as_user(self.ia_user)
+        # Two exports in the page's heading (owner, 2026-10-05): every
+        # project in one file, and the project whose tab is open.
         response = client.get(PL_URL, {"view": "projects"})
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-project-export-all")
+        response = client.get(PL_URL, {"view": "projects", "project": project.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-project-export-all")
         self.assertContains(response, f'data-project-export="{project.id}"')
-        self.assertContains(response, "data-special-projects-export")
 
         # Export single project
         export_url = f"/team-planning-oversight/projects/{project.id}/export"
@@ -511,13 +516,13 @@ class SpecialProjectsOversightTest(OversightPageFixture):
         monitoring_resp = client.get("/projects/monitoring")
         self.assertEqual(monitoring_resp.status_code, 200)
         self.assertContains(monitoring_resp, f'data-project-export="{project.id}"')
-        self.assertContains(monitoring_resp, "data-monitoring-filter-export")
-        self.assertContains(monitoring_resp, "data-project-monitoring-export-top")
+        self.assertContains(monitoring_resp, "data-project-export-all")
 
         # 2. Projects list page has export button
         projects_resp = client.get("/projects")
         self.assertEqual(projects_resp.status_code, 200)
         self.assertContains(projects_resp, f'data-project-export="{project.id}"')
+        self.assertContains(projects_resp, "data-project-export-all")
 
         # 3. Project detail page has export button
         detail_resp = client.get(f"/projects/{project.id}")
