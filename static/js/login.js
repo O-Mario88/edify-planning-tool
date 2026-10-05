@@ -118,10 +118,25 @@
     });
   }
 
+  // "That was not sent" (pages/auth/request_not_sent.html). Going back through
+  // history returns to the form with what was typed still in it, and
+  // csrf-sync.js gives it the current token as the page is shown again. The
+  // link's own address is the fallback when there is no page to go back to.
+  function initGoBack() {
+    var back = document.querySelector("[data-go-back]");
+    if (!back) return;
+    back.addEventListener("click", function (event) {
+      if (window.history.length < 2) return;
+      event.preventDefault();
+      window.history.back();
+    });
+  }
+
   function init() {
     initPasswordToggles();
     initLogin();
     initResetPassword();
+    initGoBack();
   }
 
   if (document.readyState === "loading") {

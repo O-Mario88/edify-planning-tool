@@ -4,7 +4,11 @@
    another tab still contains the previous token, so its next legitimate POST
    would otherwise fail with "CSRF token from POST incorrect". Native forms
    are synchronized at submit time; HTMX requests are synchronized when their
-   request configuration is assembled. */
+   request configuration is assembled.
+
+   The token only changes while this tab is not the one being used, so it is
+   also synchronized when the tab is returned to. That covers what fires no
+   submit event: form.submit() and fetch() calls that read a rendered token. */
 (function () {
   "use strict";
 
@@ -63,6 +67,14 @@
 
   window.addEventListener("pageshow", function () {
     sync(document);
+  });
+
+  window.addEventListener("focus", function () {
+    sync(document);
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) sync(document);
   });
 
   document.addEventListener(
