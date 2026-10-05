@@ -9717,7 +9717,7 @@
    "audit_id": "KPI-SOURCE-539",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 495,
+   "line": 541,
    "label": "Undated",
    "keys": [
     "at_risk",
@@ -9739,7 +9739,7 @@
    "audit_id": "KPI-SOURCE-540",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 486,
+   "line": 532,
    "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
@@ -9761,7 +9761,7 @@
    "audit_id": "KPI-SOURCE-541",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 619,
+   "line": 665,
    "label": null,
    "keys": [
     "cost",
@@ -9781,7 +9781,7 @@
    "audit_id": "KPI-SOURCE-542",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 741,
+   "line": 811,
    "label": null,
    "keys": [
     "amount",
