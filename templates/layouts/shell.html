@@ -130,6 +130,12 @@ without making an icon-only submit silently send an empty query.
 {% endcomment %}
 <search
   class="edify-topbar__search max-w-md w-full min-w-0 relative block"
+  {% comment %}Whether a search button is written below, said here for the
+  stylesheets (components.css, mobile-shell.css): asked of this element with
+  :has(), the answer was looked for again whenever a page changed. The
+  condition is the one the three forms below share; micro-ux.js keeps the
+  attribute true afterwards.{% endcomment %}
+  {% if not topbar_search.hide %}data-edify-has-submit{% endif %}
   x-data="{ searchOpen: false, compactSearch: window.matchMedia('(max-width: 64rem)').matches }"
   :class="{ 'is-open': searchOpen }"
   @resize.window="compactSearch = window.matchMedia('(max-width: 64rem)').matches; if (!compactSearch) searchOpen = false"

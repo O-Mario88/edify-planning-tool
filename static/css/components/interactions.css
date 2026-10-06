@@ -1169,13 +1169,19 @@ main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
 }
 /* The rail's last segment takes the end curve — unless tabs have folded into
    "More", which is then the rail's end: a selected tab curved on the side
-   that More sits on read as a pill beside a button. */
-main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
-  .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs,
-  .tt-segmented, .oversight-entity-tabs, .edify-section-nav__clusters,
-  .edify-section-nav__inner):not(:has(> .edify-rail-more:not([hidden]))) > :nth-last-child(1 of :is(a, button, [role="tab"], [data-edify-tab])) {
-  border-start-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
-  border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+   that More sits on read as a pill beside a button. "No More in this rail"
+   is asked of the segment — no visible More before it or after it — rather
+   than of the rail with `:has()`: the same segments, at the same weight,
+   without making every rail something a browser restyles the links and
+   buttons under whenever the page changes (audit, 2026-10-05). */
+@supports selector(:has(*)) {
+  main :is([role="tablist"], .edify-tab-container, [data-edify-tablist],
+    .messages-inbox-tabs, .pto-tabs, .sp-period-tabs, .spp-tabs,
+    .tt-segmented, .oversight-entity-tabs, .edify-section-nav__clusters,
+    .edify-section-nav__inner) > :nth-last-child(1 of :is(a, button, [role="tab"], [data-edify-tab])):not(:is(.edify-rail-more:not([hidden]), .edify-rail-more:not([hidden]) ~ *, :has(~ .edify-rail-more:not([hidden])))) {
+    border-start-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+    border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  }
 }
 
 /* Short rails fit their contents at every viewport width. */
@@ -1514,24 +1520,37 @@ main .edify-filter-row > label.edify-filter-row__field {
      this FY is wrapped with a dead space on the right and the counter further
      wrapped"). A title with its icon and count — no action, no paragraph —
      reads as one run of text: the count follows the title's last word and
-     wraps with it, and a two-line title leaves no empty column beside it. */
-  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) {
-    display: block !important;
-    min-inline-size: 0 !important;
-  }
+     wraps with it, and a two-line title leaves no empty column beside it.
 
-  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > .edify-head-row__title {
-    display: inline !important;
-  }
+     "No paragraph" is kept on the row as `data-edify-head-run`: micro-ux.js
+     writes it where it marks the row (markHeadRow) — no <p>, <div>, <ul>,
+     <dl> or <form> among its children, the question these rules used to put
+     with `:not(:has())` — and again whenever the row's children change. Put
+     with `:has()` and answered for any child, it made a browser restyle
+     everything under every element a `:has()` rule hangs on whenever
+     anything was added to the page (audit, 2026-10-05). `:where()` and
+     `:is(*, _)` keep the selectors at the weight they had, and
+     `@supports selector(:has(*))` keeps them from a browser that dropped
+     the `:has()` rules they replace. */
+  @supports selector(:has(*)) {
+    main .edify-head-row.edify-head-row:not(.edify-head-row--action):where([data-edify-head-run]):is(*, _) {
+      display: block !important;
+      min-inline-size: 0 !important;
+    }
 
-  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > :not(.edify-head-row__title) {
-    display: inline-flex !important;
-    vertical-align: middle;
-    margin-inline: 0.375rem 0 !important;
-  }
+    main .edify-head-row.edify-head-row:not(.edify-head-row--action):where([data-edify-head-run]):is(*, _) > .edify-head-row__title {
+      display: inline !important;
+    }
 
-  main .edify-head-row.edify-head-row:not(.edify-head-row--action):not(:has(> :is(p, div, ul, dl, form))) > :not(.edify-head-row__title):first-child {
-    margin-inline: 0 0.375rem !important;
+    main .edify-head-row.edify-head-row:not(.edify-head-row--action):where([data-edify-head-run]):is(*, _) > :not(.edify-head-row__title) {
+      display: inline-flex !important;
+      vertical-align: middle;
+      margin-inline: 0.375rem 0 !important;
+    }
+
+    main .edify-head-row.edify-head-row:not(.edify-head-row--action):where([data-edify-head-run]):is(*, _) > :not(.edify-head-row__title):first-child {
+      margin-inline: 0 0.375rem !important;
+    }
   }
 
   /* A title beside one action keeps the row: the action at its own width on
@@ -1542,9 +1561,18 @@ main .edify-filter-row > label.edify-filter-row__field {
     column-gap: 0.625rem !important;
   }
 
-  main .edify-head-row--action.edify-head-row--action:has(> :nth-child(2):last-child) > .edify-head-row__title.edify-head-row__title {
-    flex: 1 1 0 !important;
-    max-inline-size: none !important;
+  /* "The row has exactly two children", asked of the title: it is the first
+     of two or the second of two. The same elements and weight as
+     `:has(> :nth-child(2):last-child) > .edify-head-row__title`, and no
+     heading row has to be asked anything when the page changes (audit,
+     2026-10-05; e2e/has-rewrites.spec.js). */
+  @supports selector(:has(*)) {
+    /* Only where `:has()` is understood, as before: a browser without it
+       dropped the rule this replaces, and still gets none. */
+    main .edify-head-row--action.edify-head-row--action > .edify-head-row__title.edify-head-row__title:is(:first-child:nth-last-child(2), :nth-child(2):last-child) {
+      flex: 1 1 0 !important;
+      max-inline-size: none !important;
+    }
   }
 
   /* A heading row's buttons are compact on a phone (owner, 2026-09-27:
@@ -1691,8 +1719,17 @@ main .edify-filter-row > label.edify-filter-row__field {
     text-overflow: ellipsis !important;
   }
 
-  :root main .school-record-row .school-record-row__actions:has(> :nth-child(4)) > * svg {
-    display: none !important;
+  /* "The actions have four children or more", asked of each child: the
+     first child is at least fourth from the end, and the rest follow it. The
+     same elements as `:has(> :nth-child(4)) > * svg`; `:is(*, ._)` matches
+     everything and weighs the one class `:has()` weighed. Asked with
+     `:has()`, this rule made every svg on a page something to restyle when
+     anything was added to it (audit, 2026-10-05; e2e/has-rewrites.spec.js). */
+  @supports selector(:has(*)) {
+    /* Only where `:has()` is understood, as before. */
+    :root main .school-record-row .school-record-row__actions > :where(:first-child:nth-last-child(n+4), :first-child:nth-last-child(n+4) ~ *):is(*, ._) svg {
+      display: none !important;
+    }
   }
 
   /* One Actions menu (every school row since 2026-09-26) is a single
@@ -1908,7 +1945,15 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
    A tab rail with one action beside it (My Plan's period tabs and its
    calendar) shares the line the same way, the tabs taking what is left.
    Tablets too (owner, 2026-09-27: "move export button on the same row as
-   the school directory header"). */
+   the school directory header").
+
+   The lead's children are named in the one rule that styles all of them:
+   the header only qualifies when its lead holds nothing but an eyebrow, a
+   title, a description and hidden elements, so the list is every child the
+   lead can have here — and, unlike `> *`, it does not tell a browser to
+   restyle everything under every element a `:has()` rule hangs on each time
+   the page changes (audit, 2026-10-05). `:where()` keeps it weightless, as
+   `*` was. */
 @media (max-width: 63.999rem) {
   /* A wrapping row rather than a two-column grid: the title keeps its one-line
      width and the actions take the rest of its line when they fit, and move
@@ -1927,7 +1972,7 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
     display: contents !important;
   }
 
-  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead > * {
+  main .edify-page-header.edify-page-header:has(> .edify-page-header__lead > :is(h1, .edify-page-title)):has(> .edify-page-header__controls > *):not(:has(> .edify-page-header__controls > :nth-child(3))):not(:has(> :nth-child(3))):not(:has(> .edify-page-header__lead > :not(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]))) > .edify-page-header__lead > :where(.edify-page-eyebrow, .edify-page-header__eyebrow, h1, .edify-page-title, .edify-page-header__description, .edify-page-subtitle, [hidden]) {
     flex: 1 1 100% !important;
     order: 3 !important;
     margin-block-start: 0 !important;
@@ -1953,15 +1998,25 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
   }
 }
 
+/* "An action sits beside this rail" is kept on the rail as
+   `data-edify-beside-link`: the template writes it where the two are
+   always neighbours (My Plan), and micro-ux.js writes it for every rail
+   (markRail) — the next element is `a.btn`, what `:has(+ a.btn)` asked —
+   and again whenever the rail's siblings change. Asked with `:has()` and
+   answered for any child of the rail, it made a browser restyle everything
+   under every element a `:has()` rule hangs on whenever a phone's page
+   changed (audit, 2026-10-05). `:is(*, _)` keeps the weight `:has()` had. */
 @media (max-width: 47.999rem) {
-  main .edify-view-toolbar > [data-edify-tablist]:has(+ a.btn) {
-    flex: 1 1 0 !important;
-    min-inline-size: 0 !important;
-    inline-size: auto !important;
-  }
+  @supports selector(:has(*)) {
+    main .edify-view-toolbar > [data-edify-tablist][data-edify-beside-link]:is(*, _) {
+      flex: 1 1 0 !important;
+      min-inline-size: 0 !important;
+      inline-size: auto !important;
+    }
 
-  main .edify-view-toolbar > [data-edify-tablist]:has(+ a.btn) > * {
-    flex-grow: 1 !important;
+    main .edify-view-toolbar > [data-edify-tablist][data-edify-beside-link]:is(*, _) > * {
+      flex-grow: 1 !important;
+    }
   }
 }
 

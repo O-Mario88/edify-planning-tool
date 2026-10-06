@@ -37,10 +37,14 @@
     block-size: 44px;
   }
 
-  .edify-topbar__search:has(.edify-search-submit) form {
-    position: relative;
-    inline-size: 100%;
-    block-size: 100%;
+  /* The attribute is `:has(.edify-search-submit)` (components.css), read
+     only where `:has()` is understood, as the rule it replaces was. */
+  @supports selector(:has(*)) {
+    .edify-topbar__search[data-edify-has-submit] form {
+      position: relative;
+      inline-size: 100%;
+      block-size: 100%;
+    }
   }
 
   .edify-topbar__search:not(.is-open) input[type="search"] {
@@ -79,8 +83,10 @@
     min-block-size: 44px;
   }
 
-  .edify-topbar__search.is-open:has(.edify-search-submit) input[type="search"] {
-    padding-inline-end: 3rem;
+  @supports selector(:has(*)) {
+    .edify-topbar__search.is-open[data-edify-has-submit] input[type="search"] {
+      padding-inline-end: 3rem;
+    }
   }
 }
 

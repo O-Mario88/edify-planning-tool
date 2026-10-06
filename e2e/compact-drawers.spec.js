@@ -25,6 +25,10 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
   await page.mouse.move(0,0);
   for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
    await page.setViewportSize({width,height});
+   // The drawer is carried to its new place by a transform that the rule above does not outrank.
+   // The page used to be busy for two seconds after a resize, so a measurement taken at once came
+   // after the move; it now answers inside it (audit, 2026-10-06). Measure where it comes to rest.
+   await surface.evaluate(el=>Promise.all(el.getAnimations().map(moving=>moving.finished.catch(()=>{}))));
    const r=await surface.boundingBox();
    // A phone gets a sheet from the bottom edge (2026-09-23); every wider
    // screen keeps the centred card. The nested Core visit drawer is a

@@ -10,8 +10,12 @@ Loading all of them everywhere is the whole fix: each one binds a single
 delegated listener on `document` and looks its elements up when it needs
 them, so a view it is not looking at costs nothing and finds nothing.
 {% endcomment %}
-{% load static %}
-<script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>
+{% comment %}
+The one script here that is a file, static/js/target-distribution.js, is
+deferred, so it is loaded from the page's head
+(partials/priorities/_workspace_head_scripts.html): a deferred script in the
+body lets the page be drawn before its startup scripts have run (base.html).
+{% endcomment %}
 <script>
 (() => {
   /* The view panel is focusable (tabindex="0") so a keyboard reader can land

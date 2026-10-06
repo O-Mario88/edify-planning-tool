@@ -7,6 +7,8 @@
 {% include "partials/priorities/_workspace_css.html" %}
 {% endblock %}
 
+{% block feature_head_js %}{% include "partials/priorities/_workspace_head_scripts.html" %}{% endblock %}
+
 {% block shell_content %}
 <div class="edify-page-canvas space-y-5" data-mobile-family="performance">
   {% comment %}Priorities is one page with two tabs — Priority Setting and

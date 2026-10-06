@@ -2,7 +2,10 @@
 {% load static frontend_filters %}
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
-{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}
+<script defer src="{% static 'js/dashboard-embed.js' %}?v=20260929embed1"></script>
+<script defer src="{% static 'js/staff-activity.js' %}?v=20260929sal3"></script>
+{% endblock %}
 {% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20261002tabs15">{% comment %}The Planning Monitor and the Staff Activity Log ride on This Week (owner, 2026-09-29).{% endcomment %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15"><link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20261002tokens2">{% comment %}The page's order: one head row per section, strips on one row (owner, 2026-09-30).{% endcomment %}<link rel="stylesheet" href="{% static 'css/components/pl-dashboard.css' %}?v=20260930layout6">{% endblock %}
 
 {% block shell_content %}
@@ -57,6 +60,4 @@ The dashboard is a read — every control opens the page where the work is done.
     {% include "partials/dashboards/pl/body.html" %}
   </div>
 </div>
-<script defer src="{% static 'js/dashboard-embed.js' %}?v=20260929embed1"></script>
-<script defer src="{% static 'js/staff-activity.js' %}?v=20260929sal3"></script>
 {% endblock %}

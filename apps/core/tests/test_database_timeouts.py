@@ -177,6 +177,251 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
         self.assertIn("cannot be combined", result.stderr)
 
 
+class PerProcessPoolTest(SimpleTestCase):
+    """DB_APP_POOL: connections kept open by the process, lent to requests.
+
+    Each request used to open a TLS connection to the pool and authenticate
+    before its first query, 40-50 ms in production (audit 2026-10-05, F6).
+    The pool is opt-in, honoured only behind PgBouncer, and sized from the
+    admission bound of the settings module that boots.
+    """
+
+    POOLED = {
+        "DATABASE_URL": "postgresql://runtime:secret@db.example:25061/edify?sslmode=require",
+        "DB_USE_PGBOUNCER": "true",
+        "DB_POOL_NAME": "edify_web",
+        "DB_POOL_PORT": "25061",
+    }
+
+    def _run(self, extra_env, module="config.settings.loadtest"):
+        env = os.environ.copy()
+        for name in list(env):
+            if name.startswith(
+                ("DB_APP_POOL", "DB_USE_PGBOUNCER", "DB_POOL_", "DB_CONN_MAX_AGE")
+            ):
+                env.pop(name)
+        env.pop("WEB_MAX_CONCURRENT_REQUESTS", None)
+        env.update({"DJANGO_SETTINGS_MODULE": module, **extra_env})
+        return subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import json; from django.conf import settings; "
+                "d=settings.DATABASES['default']; "
+                "print(json.dumps({'pool': d['OPTIONS'].get('pool'), "
+                "'conn_max_age': d['CONN_MAX_AGE'], "
+                "'prepare': d['OPTIONS'].get('prepare_threshold', 'unset'), "
+                "'on': settings.DB_APP_POOL, 'ignored': settings.DB_APP_POOL_IGNORED, "
+                "'limit': settings.WEB_MAX_CONCURRENT_REQUESTS}))",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+    def _resolve(self, extra_env, module="config.settings.loadtest"):
+        result = self._run(extra_env, module)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout.strip().splitlines()[-1])
+
+    def test_it_is_off_unless_asked_for(self):
+        resolved = self._resolve(self.POOLED)
+        self.assertIsNone(resolved["pool"])
+        self.assertFalse(resolved["on"])
+        self.assertFalse(resolved["ignored"])
+
+    def test_it_is_ignored_on_a_direct_connection(self):
+        """Held open against the cluster itself, the connections of four
+        processes are the cluster's own slots: the 2026-09-12 outage."""
+        resolved = self._resolve({"DB_APP_POOL": "true"})
+        self.assertIsNone(resolved["pool"])
+        self.assertFalse(resolved["on"])
+        self.assertTrue(resolved["ignored"])
+
+    def test_it_is_sized_from_the_admission_bound(self):
+        resolved = self._resolve(
+            {**self.POOLED, "DB_APP_POOL": "true", "WEB_MAX_CONCURRENT_REQUESTS": "10"}
+        )
+        self.assertTrue(resolved["on"])
+        self.assertEqual(resolved["limit"], 10)
+        pool = resolved["pool"]
+        # Ten requests past the guard, and room for what it exempts.
+        self.assertEqual(pool["max_size"], 12)
+        self.assertEqual(pool["min_size"], 2)
+        self.assertEqual(pool["timeout"], 5)
+        # Still nothing kept by a request thread, and nothing a transaction
+        # pool cannot carry from one statement to the next.
+        self.assertEqual(resolved["conn_max_age"], 0)
+        self.assertIsNone(resolved["prepare"])
+
+    def test_the_bound_the_settings_module_settles_on_is_the_one_used(self):
+        """prod.py and loadtest.py default the bound after base.py is read."""
+        resolved = self._resolve({**self.POOLED, "DB_APP_POOL": "true"})
+        self.assertEqual(resolved["limit"], 6)
+        self.assertEqual(resolved["pool"]["max_size"], 8)
+
+    def test_its_size_can_be_set(self):
+        resolved = self._resolve(
+            {
+                **self.POOLED,
+                "DB_APP_POOL": "true",
+                "WEB_MAX_CONCURRENT_REQUESTS": "4",
+                "DB_APP_POOL_HEADROOM": "3",
+                "DB_APP_POOL_MIN_SIZE": "20",
+                "DB_APP_POOL_TIMEOUT_S": "9",
+            }
+        )
+        self.assertEqual(resolved["pool"]["max_size"], 7)
+        # Never more kept open than the pool may hold.
+        self.assertEqual(resolved["pool"]["min_size"], 7)
+        self.assertEqual(resolved["pool"]["timeout"], 9)
+
+    def test_it_refuses_a_connection_lifetime(self):
+        result = self._run(
+            {**self.POOLED, "DB_APP_POOL": "true", "DB_CONN_MAX_AGE": "60"}
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("cannot be combined with DB_CONN_MAX_AGE", result.stderr)
+
+    def test_it_refuses_a_process_with_no_admission_bound(self):
+        result = self._run(
+            {**self.POOLED, "DB_APP_POOL": "true", "WEB_MAX_CONCURRENT_REQUESTS": "0"}
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("needs WEB_MAX_CONCURRENT_REQUESTS", result.stderr)
+
+    def test_the_boot_gate_reports_an_ignored_pool(self):
+        from unittest import mock
+
+        from apps.core import boot_gates
+
+        with mock.patch.object(settings, "DB_APP_POOL_IGNORED", True, create=True):
+            self.assertEqual(len(boot_gates._check_app_pool_ignored()), 1)
+        with mock.patch.object(settings, "DB_APP_POOL_IGNORED", False, create=True):
+            self.assertEqual(boot_gates._check_app_pool_ignored(), [])
+
+    def test_the_driver_it_needs_is_a_pinned_requirement(self):
+        import psycopg_pool
+
+        pinned = (ROOT / "requirements/base.txt").read_text()
+        self.assertIn(f"psycopg-pool=={psycopg_pool.__version__}", pinned)
+
+
+class PooledConnectionsAreLentNotKeptTest(TestCase):
+    """The pool itself, against this test database.
+
+    Under ASGI each request has its own thread and its own Django connection
+    wrapper; the wrappers of one process share one pool. So "two requests" is
+    two threads here, each with a wrapper of its own.
+    """
+
+    ALIAS = "edify-pool-under-test"
+
+    def setUp(self):
+        import copy
+
+        from django.db.backends.postgresql.base import DatabaseWrapper
+
+        self.settings_dict = copy.deepcopy(connection.settings_dict)
+        self.settings_dict["CONN_MAX_AGE"] = 0
+        self.settings_dict["CONN_HEALTH_CHECKS"] = True
+        self.settings_dict["OPTIONS"]["pool"] = {
+            "name": "edify-test",
+            "min_size": 1,
+            "max_size": 1,
+            "timeout": 0.5,
+        }
+        self.wrapper = lambda: DatabaseWrapper(self.settings_dict, self.ALIAS)
+        self.addCleanup(lambda: self.wrapper().close_pool())
+
+    def _in_a_request(self, work):
+        """Run ``work(wrapper)`` on a thread of its own, as a request is."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def request():
+            wrapper = self.wrapper()
+            try:
+                return work(wrapper)
+            finally:
+                # What request_finished does: with CONN_MAX_AGE=0 the wrapper
+                # gives its connection up, which here means back to the pool.
+                wrapper.close_if_unusable_or_obsolete()
+
+        with ThreadPoolExecutor(max_workers=1) as thread:
+            return thread.submit(request).result(timeout=20)
+
+    @staticmethod
+    def _backend(wrapper):
+        with wrapper.cursor() as cursor:
+            cursor.execute("SELECT pg_backend_pid()")
+            return cursor.fetchone()[0]
+
+    def test_the_next_request_is_served_by_the_connection_the_last_one_returned(self):
+        first = self._in_a_request(self._backend)
+        second = self._in_a_request(self._backend)
+        third = self._in_a_request(self._backend)
+        self.assertEqual({first, second, third}, {first})
+        stats = self.wrapper().pool.get_stats()
+        self.assertEqual(stats["pool_size"], 1)
+        self.assertEqual(stats["pool_available"], 1)
+
+    def test_a_request_keeps_nothing_once_it_has_ended(self):
+        def work(wrapper):
+            self._backend(wrapper)
+            wrapper.close_if_unusable_or_obsolete()
+            return wrapper.connection
+
+        self.assertIsNone(self._in_a_request(work))
+
+    def test_the_pool_is_a_bound_and_waiting_for_it_is_bounded(self):
+        import threading
+        import time
+
+        holding = threading.Event()
+        release = threading.Event()
+
+        def hold(wrapper):
+            pid = self._backend(wrapper)
+            holding.set()
+            release.wait(timeout=20)
+            return pid
+
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=1) as other:
+
+            def held_request():
+                wrapper = self.wrapper()
+                try:
+                    return hold(wrapper)
+                finally:
+                    wrapper.close_if_unusable_or_obsolete()
+
+            held = other.submit(held_request)
+            self.assertTrue(holding.wait(timeout=20))
+            started = time.monotonic()
+            with self.assertRaises(OperationalError):
+                self._in_a_request(self._backend)
+            waited = time.monotonic() - started
+            # The pool's timeout (0.5 s here), not for ever.
+            self.assertGreaterEqual(waited, 0.4)
+            self.assertLess(waited, 5)
+            release.set()
+            first = held.result(timeout=20)
+        # Returned, it serves the next request.
+        self.assertEqual(self._in_a_request(self._backend), first)
+
+    def test_a_connection_the_server_dropped_is_replaced_before_it_is_lent(self):
+        first = self._in_a_request(self._backend)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_terminate_backend(%s)", [first])
+        second = self._in_a_request(self._backend)
+        self.assertNotEqual(second, first)
+
+
 def _setting(name: str) -> str:
     with connection.cursor() as cursor:
         cursor.execute(f"SHOW {name}")

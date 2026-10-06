@@ -229,8 +229,14 @@ main :where(
   .pto-recommendation div > span, .pto-coverage-card > div:first-child > span,
   .rounded-surface :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
   .card :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
-  .rounded-surface:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase,
-  .rounded-control:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase
+  /* "The surface has a caption with a paragraph or heading straight after
+     it", asked of the caption that is styled: it is that caption, or one
+     comes after it, or one came before it. Asked of the surface, every
+     caption under any place a `:has()` answer could change was restyled for
+     one element added anywhere: 227 of the 282 elements a phone's Work Plan
+     restyled (audit, 2026-10-05; e2e/has-rewrites.spec.js). */
+  .rounded-surface > .edify-text-caption.uppercase:is(:has(+ :is(p, h3, h4)), :has(~ .edify-text-caption + :is(p, h3, h4)), .edify-text-caption:has(+ :is(p, h3, h4)) ~ *),
+  .rounded-control > .edify-text-caption.uppercase:is(:has(+ :is(p, h3, h4)), :has(~ .edify-text-caption + :is(p, h3, h4)), .edify-text-caption:has(+ :is(p, h3, h4)) ~ *)
 ) {
   font-weight: var(--edify-kpi-label-weight) !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
@@ -474,7 +480,20 @@ main > div > :where(header, div):has(h1):not([class*="rounded"]):not([class*="bg
   min-inline-size: 0;
 }
 
-main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+/* Asked of the last child itself: "the block I close holds an h1" is "I hold
+   one, or a sibling before me is one or holds one" — the same elements and
+   the same weight as `main > div > :where(header, div):has(h1) >
+   :where(div, nav):last-child`. Asked of the block, every div on a page
+   that ends in a div was a place the answer could change, and what a
+   browser then restyled beneath each such place was every div and nav it
+   holds (163 divs of a phone's My Plan, for one element added anywhere).
+   Asked this way a phone opens a page with 6-8 % less work (audit,
+   2026-10-05; e2e/has-rewrites.spec.js).
+
+   For a day this form was kept below 1280px only: from there it cost a
+   desktop page more than the original, because of one pinned-column rule
+   that has since stopped asking with `:has()` (responsive-system.css). */
+main > div > :where(header, div) > :where(div, nav):last-child:is(:has(h1), :is(h1, :has(h1)) ~ *) {
   flex-wrap: wrap;
 }
 
@@ -1948,7 +1967,8 @@ main .platform-responsive-table [data-priority="low"] {
     align-items: stretch !important;
   }
 
-  main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+  /* The same question as above, asked of the last child. */
+  main > div > :where(header, div) > :where(div, nav):last-child:is(:has(h1), :is(h1, :has(h1)) ~ *) {
     inline-size: 100%;
   }
 
