@@ -42,7 +42,7 @@ from apps.accounts.models import StaffGeographyAssignment, StaffProfile, User
 from apps.audit.models import AuditLog
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_fy_date_range, get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.impact import redaction
@@ -756,12 +756,20 @@ class ReportPageTests(ReportFixture):
 
     def test_the_live_annex_applies_its_period_and_names_who_generated_it(self):
         self.client.force_login(self.ida)
+        # A period inside the report's year that leaves out the ten-day-old
+        # follow-ups. Usually it starts five days ago; in October's first days
+        # that is past the year's end, so it starts on the year's last day —
+        # and on the one day the follow-ups fall on that last day, it ends the
+        # day before them instead.
+        evidence = timezone.localdate() - timedelta(days=10)
+        last_day = (get_fy_date_range(self.fy)[1] - timedelta(days=1)).date()
+        if evidence < last_day:
+            period = {"period_start": min(evidence + timedelta(days=5), last_day)}
+        else:
+            period = {"period_end": evidence - timedelta(days=1)}
         response = self.client.post(
             "/ia/impact-report/download",
-            {
-                "fy": self.fy,
-                "period_start": (timezone.localdate() - timedelta(days=5)).isoformat(),
-            },
+            {"fy": self.fy, **{k: v.isoformat() for k, v in period.items()}},
         )
         content = response.content.decode()
         self.assertNotIn(self.schools[0].id, content)
