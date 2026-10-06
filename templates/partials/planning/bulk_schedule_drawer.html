@@ -1,0 +1,72 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Schedule the same dated work at the schools ticked on a list (owner,
+2026-10-06: the Core school list and a cluster's roster, "just like these
+other schools"). The coordinator's project bulk Schedule, for a list that
+names no project: the planner says what is scheduled — the purpose and, for
+an In-school Training, the training — and one date. Each school gets its own
+costed activity on the planner's plan; a visit at a Core School takes its
+package slot; a school the scheduling rules refuse is named and left out.
+{% endcomment %}
+
+{% block drawer_title %}Schedule {{ schools|length }} school{{ schools|length|pluralize }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+<form hx-post="/planning/bulk-schedule" hx-target="#bulk-schedule-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700"
+      x-data="{
+        purposeOfVisit: '',
+        trainingCourseId: '',
+        trainingCourses: {{ training_courses_json|default:'[]' }},
+        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
+      }"
+      data-school-bulk-schedule>
+  {% csrf_token %}
+  {% for school in schools %}<input type="hidden" name="school_ids" value="{{ school.school_id }}">{% endfor %}
+  <div id="bulk-schedule-errors"></div>
+  <div class="space-y-1">
+    <p class="edify-text-caption font-semibold text-slate-600">Selected schools</p>
+    <ul class="max-h-28 overflow-auto space-y-1 edify-text-caption text-slate-600">{% for school in schools %}<li>{{ school.name }} <span class="text-slate-400">{{ school.school_id }}</span></li>{% endfor %}</ul>
+    {% if outside_scope %}<p class="edify-text-caption text-amber-700">{{ outside_scope }} selected school{{ outside_scope|pluralize }} {% if outside_scope == 1 %}is{% else %}are{% endif %} outside your planning portfolio and left out.</p>{% endif %}
+  </div>
+  {% if schools %}
+  <div class="space-y-1">
+    <label for="bulk-schedule-purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose of visit <span class="text-rose-500">*</span></label>
+    <select id="bulk-schedule-purpose" aria-label="Purpose of visit" name="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select purpose…</option>{% for value, label in visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+    {% if follow_up_named_per_school %}<p class="edify-text-caption text-slate-500">A Training Follow Up names the training it follows, so it is scheduled from each school's own Schedule.</p>{% endif %}
+  </div>
+  <template x-if="isTraining">
+    <div class="space-y-1">
+      <label for="bulk-schedule-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+      <select id="bulk-schedule-training" name="training_course_id" required x-model="trainingCourseId" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+        <option value="">Select a training…</option>
+        <template x-for="course in trainingCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+      </select>
+    </div>
+  </template>
+  <div class="space-y-1">
+    <label for="bulk-schedule-date" class="block edify-text-caption font-semibold text-slate-600">Delivery date <span class="text-rose-500">*</span></label>
+    <input type="date" name="scheduled_date" id="bulk-schedule-date" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+    <span id="bulk-schedule-date-error" class="hidden block edify-text-caption text-red-600 font-semibold">Sundays are blocked for scheduling — choose another date.</span>
+  </div>
+  <script>
+    (function() {
+      var input = document.getElementById('bulk-schedule-date');
+      var err = document.getElementById('bulk-schedule-date-error');
+      if (!input) return;
+      input.addEventListener('change', function() {
+        var isSunday = input.value && new Date(input.value + 'T00:00:00').getDay() === 0;
+        err.classList.toggle('hidden', !isSunday);
+        input.setCustomValidity(isSunday ? 'Sundays are blocked for scheduling.' : '');
+      });
+    })();
+  </script>
+  <p class="edify-note edify-text-caption font-medium" data-tone="warning">Each school gets its own costed activity on your plan; a visit at a Core School takes its package slot. A school the scheduling rules refuse is named and left out.</p>
+  {% endif %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if schools %}<button type="submit" class="btn btn-primary h-8">Schedule {{ schools|length }} school{{ schools|length|pluralize }}</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

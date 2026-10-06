@@ -2,6 +2,7 @@ from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
     action_views,
+    activity_group_views,
     ssa_mapping_views,
     extra_work_views,
     hr_today_views,
@@ -419,6 +420,13 @@ urlpatterns = [
         "schools/bulk-assign-project",
         school_views.bulk_assign_project_view,
         name="bulk_assign_project",
+    ),
+    # The same save, opened from a list that ticks by school code (Core
+    # Schools, a cluster's roster; owner, 2026-10-06).
+    path(
+        "schools/bulk-assign-project-drawer",
+        school_views.bulk_assign_project_drawer_view,
+        name="bulk_assign_project_drawer",
     ),
     path(
         "schools/bulk-match-staff",
@@ -954,6 +962,17 @@ urlpatterns = [
         planning_views.bulk_assign_partner_drawer_view,
         name="planning_bulk_assign_partner_drawer",
     ),
+    # Schedule the ticked schools of a list in one go (owner, 2026-10-06).
+    path(
+        "planning/bulk-schedule-drawer",
+        planning_views.bulk_schedule_drawer_view,
+        name="planning_bulk_schedule_drawer",
+    ),
+    path(
+        "planning/bulk-schedule",
+        planning_views.bulk_schedule_action_view,
+        name="planning_bulk_schedule",
+    ),
     path(
         "planning/assign-partner-action",
         planning_views.assign_partner_action_view,
@@ -1074,6 +1093,17 @@ urlpatterns = [
     path("today/snooze", today_views.today_snooze, name="today_snooze"),
     path("today/unsnooze", today_views.today_unsnooze, name="today_unsnooze"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
+    # The ticked activities, moved or cancelled together (owner, 2026-10-05).
+    path(
+        "activity-selection/reschedule",
+        activity_group_views.group_reschedule_view,
+        name="activity_group_reschedule",
+    ),
+    path(
+        "activity-selection/cancel",
+        activity_group_views.group_cancel_view,
+        name="activity_group_cancel",
+    ),
     path(
         "my-plan/day-package",
         my_plan_views.day_package_view,

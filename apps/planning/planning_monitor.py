@@ -116,7 +116,154 @@ GAPS = (
     ("staff_scheduled", "Scheduled for a visit by staff"),
     ("staff_and_partner", "Scheduled by staff and also with a Partner"),
 )
-GAP_LABELS = dict(GAPS)
+#: The schools behind every count on the monitor and on My Plan (owner,
+#: 2026-10-05: "All those numbers should be link to the actual tables where
+#: those schools are located"). Not gaps, so they are not offered in the gap
+#: filter and no follow-up is sent from them; `in_list` says which schools
+#: each one holds.
+LISTS = (
+    ("all", "Schools held"),
+    ("core", "Core schools"),
+    ("client", "Client, Core Trained and Core Graduate schools"),
+    ("visited", "With a visit planned"),
+    (
+        "staff_queue",
+        "The staff queue: Core schools, and schools not in a Partner's hands",
+    ),
+    ("staff_visits_left", "Still owed a staff visit"),
+    ("core_staff_visits", "Core schools with a staff visit planned"),
+    ("core_staff_visits_left", "Core schools short of two staff visits"),
+    ("client_staff_visits", "Client schools with a staff visit planned"),
+    ("client_staff_visits_left", "Client schools with no staff visit planned"),
+    ("core_staff_trainings", "Core schools with a staff training in their package"),
+    ("core_staff_trainings_left", "Core schools short of two staff trainings"),
+    ("training", "In a group or in-school training"),
+    ("training_due", "Schools that take a training"),
+    ("with_partner", "In a Partner's hands"),
+    (
+        "partner_queue",
+        "The Partner's queue: Core schools, and schools staff have not scheduled",
+    ),
+    ("partner_left", "Not yet handed to a Partner"),
+    ("partner_dated", "With a Partner visit dated"),
+    ("partner_waiting", "Awaiting the Partner's date"),
+    ("partner_visits_left", "Still owed a Partner visit"),
+    ("core_partner_visits", "Core schools with a Partner visit in their package"),
+    ("core_partner_visits_left", "Core schools short of two Partner visits"),
+    ("core_partner_trainings", "Core schools with a Partner training in their package"),
+    ("core_partner_trainings_left", "Core schools short of two Partner trainings"),
+    ("in_project", "In a project"),
+    ("not_in_project", "Not in a project"),
+    ("fully_planned", "Fully planned"),
+    ("partly_planned", "Partly planned"),
+    ("not_yet_planned", "Not yet planned"),
+    ("duplicates", "Booked more than once"),
+    ("core_no_partner_half", "Core schools without their Partner half"),
+)
+LIST_KEYS = frozenset(key for key, _label in LISTS)
+GAP_LABELS = {**dict(GAPS), **dict(LISTS)}
+
+
+def in_list(school, key: str) -> bool:
+    """Whether `school` (a SchoolState) is one of the schools behind `key`:
+    a gap, or one of `LISTS`."""
+    if key not in LIST_KEYS:
+        return school.has_gap(key)
+    core = school.is_core
+    if key == "all":
+        return True
+    if key == "core":
+        return core
+    if key == "client":
+        return not core
+    if key == "visited":
+        return school.has_visit
+    if key == "staff_queue":
+        return core or not (school.has_partner and not school.staff_visits)
+    if key == "staff_visits_left":
+        if core:
+            return school.staff_visits < CORE_STAFF_VISITS_PER_SCHOOL
+        return not school.staff_visits and not school.has_partner
+    if key == "core_staff_visits":
+        return core and school.staff_visits > 0
+    if key == "core_staff_visits_left":
+        return core and school.staff_visits < CORE_STAFF_VISITS_PER_SCHOOL
+    if key == "client_staff_visits":
+        return not core and school.staff_visits > 0
+    if key == "client_staff_visits_left":
+        return not core and not school.staff_visits
+    if key == "core_staff_trainings":
+        return school.core_staff_trainings > 0
+    if key == "core_staff_trainings_left":
+        return core and school.core_staff_trainings < CORE_STAFF_VISITS_PER_SCHOOL
+    if key == "training":
+        return school.has_training
+    if key == "training_due":
+        return school.needs_training
+    if key == "with_partner":
+        return bool(
+            school.has_partner
+            or school.core_partner_visits
+            or school.core_partner_trainings
+        )
+    if key == "partner_queue":
+        return core or not school.staff_visits
+    if key == "partner_left":
+        if core:
+            return not (
+                school.has_partner
+                or school.core_partner_visits
+                or school.core_partner_trainings
+            )
+        return not school.staff_visits and not school.has_partner
+    if key == "partner_dated":
+        return school.partner_visits > 0
+    if key == "partner_waiting":
+        return school.partner_pending > 0
+    if key == "partner_visits_left":
+        if core:
+            return school.partner_visits < CORE_PARTNER_PER_SCHOOL
+        return not school.partner_visits and not school.staff_visits
+    if key == "core_partner_visits":
+        return school.core_partner_visits > 0
+    if key == "core_partner_visits_left":
+        return core and school.core_partner_visits < CORE_PARTNER_PER_SCHOOL
+    if key == "core_partner_trainings":
+        return school.core_partner_trainings > 0
+    if key == "core_partner_trainings_left":
+        return core and school.core_partner_trainings < CORE_PARTNER_PER_SCHOOL
+    if key == "in_project":
+        return school.in_project
+    if key == "not_in_project":
+        return not school.in_project
+    from apps.planning import readiness
+
+    if key in ("fully_planned", "partly_planned", "not_yet_planned"):
+        return readiness.school_state(school) == key.replace("_planned", "")
+    if key == "duplicates":
+        return readiness.is_duplicate(school)
+    if key == "core_no_partner_half":
+        return readiness.core_missing_partner_half(school)
+    return False
+
+
+def list_schools(officers, key: str, *, school_type: str = "") -> list:
+    """The schools behind `key` for these people, by holder then name. A list
+    reads the outreach-only schools a person holds as well: they are held,
+    typed and in or out of a project like any other."""
+    found = []
+    for officer in officers:
+        held = officer.schools
+        if key in LIST_KEYS:
+            held = [*officer.schools, *officer.outreach_schools]
+        for school in held:
+            if school_type and (school.school_type or "") != school_type:
+                continue
+            if in_list(school, key):
+                found.append(school)
+    found.sort(key=lambda s: (s.officer_name.casefold(), s.name.casefold()))
+    return found
+
 
 #: The gap columns of the monitor's table, each with the tone its count reads.
 GAP_COLUMNS = (
@@ -279,6 +426,12 @@ class OfficerMonitor:
     partner_scheduled: int = 0
     partner_delivered: int = 0
     partner_awaiting: int = 0
+
+    @property
+    def list_scope(self) -> str:
+        """What a count on this person's row adds to the monitor's address
+        to open the schools behind it."""
+        return f"&officer={self.key}"
 
     @property
     def is_lead(self) -> bool:
@@ -556,6 +709,12 @@ class LeadMonitor:
         raise AttributeError(attr)
 
     @property
+    def list_scope(self) -> str:
+        """A team's counts open its own people's schools; the total's open
+        everyone's."""
+        return "" if self.key == "all" else f"&program_lead={self.key}"
+
+    @property
     def visit_progress(self) -> int | None:
         return percentage(self.staff_visits, self.visits_target)
 
@@ -619,6 +778,7 @@ def planning_monitor(
     program_lead_id: str | None = None,
     gap: str | None = None,
     officer_id: str | None = None,
+    school_type: str = "",
 ) -> dict:
     """The monitor for this reader and year.
 
@@ -685,12 +845,16 @@ def planning_monitor(
     ]
     gap_schools = []
     if gap in GAP_LABELS:
-        for lead in shown:
-            for officer in lead.officers:
-                if officer_id and officer.key != officer_id:
-                    continue
-                gap_schools.extend(s for s in officer.schools if s.has_gap(gap))
-        gap_schools.sort(key=lambda s: (s.officer_name.casefold(), s.name.casefold()))
+        gap_schools = list_schools(
+            (
+                officer
+                for lead in shown
+                for officer in lead.officers
+                if not officer_id or officer.key == officer_id
+            ),
+            gap,
+            school_type=school_type,
+        )
 
     return {
         "fy": fy,

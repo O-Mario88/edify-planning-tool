@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **888**
-- All registered routes: **1360**
+- Routed product surfaces: **893**
+- All registered routes: **1365**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **34**
+- Scheduled jobs: **36**
 - Activity states: **24**
-- Shared component templates: **610**
+- Shared component templates: **633**
 - Full pages: **263**
-- Partials and drawers: **308**
-- Permission-gated surfaces: **872**
-- Referenced by automated tests: **781**
+- Partials and drawers: **310**
+- Permission-gated surfaces: **877**
+- Referenced by automated tests: **786**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -99,6 +99,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-90CD8CB5FA | /activities/closure/ | Activity Closure Center - Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-066BC4C799 | /activities/closure/blocked | Blocked Closures - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-773AE497F1 | /activities/closure/blocked/ | Blocked Closures - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0192399382 | /activity-selection/cancel | Activity Group Cancel | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4AD166CCBA | /activity-selection/reschedule | Activity Group Reschedule | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D963B414A9 | /admin-ops/incidents | System Incidents | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-06180AB33B | /admin-ops/incidents/<str:incident_id> | Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-B2C9E9652D | /admin-ops/incidents/<str:incident_id>/acknowledge | Admin Acknowledge Incident | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
@@ -700,6 +702,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6451C59992 | /planning/bulk-assign-partner-drawer | Planning Bulk Assign Partner Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C755A4B12F | /planning/bulk-schedule | Planning Bulk Schedule | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-8183CD299B | /planning/bulk-schedule-drawer | Planning Bulk Schedule Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C5319ED208 | /planning/fiscal-years | Fiscal Year Planning | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-91F811FE66 | /planning/recent-changes | Planning Recent Changes | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-70E52CFA17 | /planning/route-preview | Planning Route Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -816,6 +820,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-755C340D69 | /schools/add-school | Add School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-326063C770 | /schools/bulk-assign-cluster | Bulk Assign Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3B0EF3899D | /schools/bulk-assign-project | Bulk Assign Project | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-99B161BD88 | /schools/bulk-assign-project-drawer | Bulk Assign Project Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B0CF01F2F7 | /schools/bulk-match-staff | Bulk Match Staff | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9BA2BF3781 | /schools/bulk-transfer-owner | Bulk School Owner Transfer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-ADDF2AFAA1 | /schools/closed | Closed Schools · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

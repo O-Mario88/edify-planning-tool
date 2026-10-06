@@ -24,9 +24,15 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
 <div class="overflow-x-auto edify-record-table-wrap">
 {% paginate cluster_trainings "cluster_trainings_page" as cluster_trainings_pager %}
 {% if cluster_trainings %}
+{% comment %}A tick box on each activity still live, and one in the header for
+all of them: the ticked ones are rescheduled or cancelled together from the
+bar that appears (owner, 2026-10-05). No tick column on a page with nothing
+to tick.{% endcomment %}
+{% with selectable=cluster_trainings_pager.rows|any_attr:"can_pick" %}
 <table class="edify-data-table mp-table edify-record-table whitespace-nowrap" data-pinned-actions>
 <thead>
 <tr>
+{% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th class="min-w-[90px]">School ID</th>
 <th class="min-w-[240px]">School / Cluster</th>
 <th class="min-w-[160px]">Cluster Planned From</th>
@@ -47,7 +53,8 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
 </thead>
 <tbody>
 {% for row in cluster_trainings_pager.rows %}
-<tr>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
+{% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="font-mono text-xs text-slate-500">{{ row.school_id|default:"—" }}</td>
 <td class="font-semibold text-slate-800 text-[14px] min-w-[240px]" data-record-title>
   {% if row.place_url %}
@@ -74,7 +81,7 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
 </td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="font-medium text-slate-800" data-label="Training Name">{{ row.activity_type_label|default:"Training" }}</td>
-<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}</td>
+<td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td data-label="Intervention">
 {% if row.focus_intervention and row.focus_intervention != "—" %}
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border">
@@ -90,12 +97,13 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
     {% if row.delivery_type == 'in-school' or 'in_school' in row.activity_type %}in-school{% else %}group{% endif %}
   </span>
 </td>
+{% comment %}
+An in-school Training is done during its School Visit, so it stays at UGX 0
+and says where its cost is (owner, 2026-10-05). A partner facilitator's fee
+is the Training's own, and one scheduled with no visit carries the day itself.
+{% endcomment %}
 <td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Cost">
-  {% if row.delivery_type == "in-school" or "in_school" in row.activity_type %}
-  UGX 0
-  {% else %}
-  UGX {{ row.budget_total|default:0|intcomma }}
-  {% endif %}
+  UGX {{ row.budget_total|default:0|intcomma }}{% if row.cost_note %} <span class="font-normal edify-text-muted" data-cost-note>{{ row.cost_note }}</span>{% endif %}
 </td>
 <td data-label="Budget status" class="whitespace-nowrap">
   <span class="mp-badge mp-badge--{{ row.budget_status_color|default:'slate' }}">{{ row.budget_status|default:'—' }}</span>
@@ -113,6 +121,7 @@ Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month
 {% endfor %}
 </tbody>
 </table>
+{% endwith %}
 {% include "components/table_pager.html" with pager=cluster_trainings_pager param="cluster_trainings_page" pagination_label="Training pages" %}
 {% else %}
 {% comment %}The platform empty state, inside the card's padded body so its outline

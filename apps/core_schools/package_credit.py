@@ -635,6 +635,11 @@ def release_assignment_slot(assignment, *, replacement=None):
     """
     from apps.core_schools.services import resync_plan_completion
 
+    if getattr(assignment, "scheduled_activity_id", None):
+        # Dated work holds its slot through its activity. Looking for one the
+        # handover holds by itself could only find the slot of another
+        # handover the same partner has at this school, and reopen that.
+        return None
     slot = slot_held_by_assignment(assignment)
     if slot is None or slot.activity_id:
         return None

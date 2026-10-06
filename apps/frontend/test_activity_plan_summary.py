@@ -275,9 +275,12 @@ class ActivityPlanSummaryTest(TestCase):
         self.assertEqual(body.count("Number of Activities"), 2)
         self.assertIn("School Activities subtotal", body)
         self.assertIn("Non-School Activities subtotal", body)
-        self.assertIn('<th scope="col">Visit Date</th>', body)
-        self.assertIn("School visits", body)
-        self.assertIn("Non-school activities", body)
+        # One Detailed Activity Plan table, its fifteen columns drawn even
+        # when nothing is planned (owner, 2026-10-05).
+        self.assertIn('<th scope="col">Activity Date</th>', body)
+        self.assertIn('<th scope="col">Activity Purpose</th>', body)
+        self.assertEqual(body.count("work-plan-table--plan"), 1)
+        self.assertIn("No activities planned", body)
         self.assertNotIn("No activities in this period", body)
 
     def test_export_uses_the_same_scope_totals_and_detail_groups(self):
@@ -296,7 +299,8 @@ class ActivityPlanSummaryTest(TestCase):
                 ("Grand total", count, None, total),
             )
             self.assertEqual(workbook["Work Plan"].max_row, count + 1)
-            self.assertEqual(workbook["Work Plan"]["A2"].value, "School Activities")
+            self.assertEqual(workbook["Work Plan"]["A1"].value, "Activity Date")
+            self.assertEqual(workbook["Work Plan"]["B1"].value, "Activity")
 
     def test_rows_that_tie_on_date_and_creation_keep_one_order(self):
         """Two activities written in one bulk insert tie on date and creation

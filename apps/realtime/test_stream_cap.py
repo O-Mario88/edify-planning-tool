@@ -39,7 +39,27 @@ class StreamCapTests(SimpleTestCase):
         self.assertEqual(response["Content-Type"], "text/event-stream")
 
     @override_settings(REALTIME_STREAM_OPENS_PER_MINUTE=2)
-    def test_an_address_opening_streams_in_a_loop_is_rate_limited(self):
+    def test_an_account_opening_streams_in_a_loop_is_rate_limited(self):
         with patch("apps.realtime.views.bus.subscription_count", return_value=0):
             codes = [stream(_request(addr="10.0.0.7")).status_code for _ in range(3)]
         self.assertEqual(codes, [200, 200, 429])
+
+    @override_settings(REALTIME_STREAM_OPENS_PER_MINUTE=2)
+    def test_colleagues_behind_one_address_are_not_refused_for_each_other(self):
+        """An office shares an address, and every page that shows a plan opens
+        a stream (2026-10-05): each account has the rate to itself."""
+        with patch("apps.realtime.views.bus.subscription_count", return_value=0):
+            codes = [
+                stream(_request(user_id=f"office-{n}", addr="10.0.0.8")).status_code
+                for n in range(5)
+            ]
+        self.assertEqual(codes, [200] * 5)
+
+    @override_settings(REALTIME_STREAM_OPENS_PER_MINUTE=2)
+    def test_one_address_is_still_bounded_at_ten_times_the_account_rate(self):
+        with patch("apps.realtime.views.bus.subscription_count", return_value=0):
+            codes = [
+                stream(_request(user_id=f"flood-{n}", addr="10.0.0.6")).status_code
+                for n in range(21)
+            ]
+        self.assertEqual(codes, [200] * 20 + [429])

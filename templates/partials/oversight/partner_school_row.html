@@ -70,7 +70,6 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
   <td colspan="{% if selectable %}11{% else %}10{% endif %}">
     <dl class="school-record-row__metadata">
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
-      {% if item.stage == "awaiting_schedule" and item.schedule_by_date %}<div><dt>Schedule by:</dt><dd>{{ item.schedule_by_date|date:"j M Y" }}</dd></div>{% endif %}
       {% if item.field_officer %}<div><dt>Partner officer:</dt><dd>{{ item.field_officer }}</dd></div>{% endif %}
       {% if item.district %}<div><dt>District:</dt><dd>{{ item.district }}</dd></div>{% endif %}
       {% if item.school_cluster_name %}<div><dt>Cluster:</dt><dd>{{ item.school_cluster_name }}</dd></div>{% endif %}

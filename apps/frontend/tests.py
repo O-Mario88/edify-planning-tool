@@ -2102,6 +2102,9 @@ class FrontendViewsTestCase(TestCase):
         for school in (self.school, second_school):
             pa = PartnerAssignment.objects.get(school=school, partner=partner)
             self.assertEqual(pa.status, "pending_scheduling")
+            # A date staff post with the hand-over is not the partner's
+            # schedule (owner, 2026-10-05): none is stored.
+            self.assertIsNone(pa.scheduled_date)
             partner_schedule(pa.id, {"scheduledDate": "2026-07-21"}, partner_user)
             pa.refresh_from_db()
             self.assertEqual(pa.status, "partner_scheduled")
@@ -2445,6 +2448,11 @@ class FrontendViewsTestCase(TestCase):
         self.assertIn('name="purpose_of_visit"', html)
         self.assertIn("In-school Training", html)
         self.assertIn('name="training_course_id"', html)
+        # The hand-over's date is the day it is made, shown and not asked
+        # for (owner, 2026-10-05): staff do not schedule for the partner.
+        self.assertIn("Assigned date", html)
+        self.assertNotIn("Target date", html)
+        self.assertNotIn('name="scheduled_date"', html)
         courses = json.loads(response.context["training_courses_json"])
         self.assertEqual(
             len(courses),

@@ -1733,8 +1733,45 @@ def school_detail_view(request, school_id):
         # Admin and Impact Assessment reassign portfolio ownership.
         "can_transfer_owner": may_transfer_school(request.user),
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
+        **_profile_planning_controls(request.user, school),
     }
     return render(request, "pages/schools/detail.html", context)
+
+
+def _profile_planning_controls(user, school) -> dict:
+    """Schedule and Assign to partner on the school's own profile (owner,
+    2026-10-06), each the door its row on a list opens: a Core School's
+    package chooser and hand-over on Core Schools, every other school's
+    Planning drawers. Whoever those doors open for; hidden on a closed
+    school, which takes no new work. A door the school's visit gate would
+    refuse stays, greyed, with the reason (owner, 2026-09-27: role-blocked
+    controls are hidden, rule-blocked ones say why).
+    """
+    from apps.planning.visit_gate import visit_gate
+
+    if school.is_closed:
+        return {
+            "can_schedule": False,
+            "can_assign_partner": False,
+            "profile_core_routes": False,
+            "schedule_block": "",
+            "assign_block": "",
+        }
+    core_routes = school.school_type == "core" and RolePermissionService.can_view_page(
+        user, "core_schools"
+    )
+    gate = visit_gate(school)
+    return {
+        "can_schedule": RolePermissionService.can_open_schedule_drawer(user),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(user),
+        "profile_core_routes": core_routes,
+        # The Core chooser greys the half that is used itself, so its door
+        # is always open; a client school's one staff visit greys the door.
+        "schedule_block": ""
+        if core_routes or gate.staff_can_schedule
+        else gate.staff_reason,
+        "assign_block": "" if gate.can_assign_partner else gate.assign_reason,
+    }
 
 
 def _core_package_marks(school, fy: str) -> dict | None:
@@ -1830,6 +1867,72 @@ def bulk_assign_cluster_view(request):
     return redirect("/schools")
 
 
+def _bulk_return_url(request, fallback: str = "/schools") -> str:
+    """Where a bulk Add to project returns the planner: the list they ticked
+    on (``next``, same host only), else the School Directory."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    candidate = (request.POST.get("next") or request.GET.get("next") or "").strip()
+    if candidate and url_has_allowed_host_and_scheme(
+        candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return candidate
+    return fallback
+
+
+def _ticked_school_codes(source) -> list[str]:
+    """The school codes (or primary keys) a list's tick boxes posted, as
+    repeated ``school_ids`` values or one comma-joined value."""
+    codes = [
+        code.strip()
+        for value in source.getlist("school_ids")
+        for code in str(value or "").split(",")
+        if code.strip()
+    ]
+    return list(dict.fromkeys(codes))
+
+
+@require_page_permission("school_directory")
+def bulk_assign_project_drawer_view(request):
+    """Add the schools ticked on a list to one project (owner, 2026-10-06:
+    the Core school list and a cluster's roster get the School Directory's
+    bulk Add to project). The same project list and the same save as the
+    directory's modal; ``next`` brings the planner back to the list.
+    """
+    if not has_permission(request.user, "project.assignSchool"):
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {"error": "You do not have permission to assign projects."},
+        )
+    from apps.projects.capacity import annotate_allocations
+
+    codes = _ticked_school_codes(request.GET)
+    schools = enrollable_schools(request.user)
+    if schools is None:
+        schools = School.objects.none()
+    schools = list(
+        schools.filter(Q(school_id__in=codes) | Q(id__in=codes)).order_by("name")
+    )
+    projects = annotate_allocations(
+        annotate_coordinator_names(assignable_projects(request.user)), request.user
+    )
+    return render(
+        request,
+        "partials/schools/bulk_assign_project_drawer.html",
+        {
+            "schools": schools,
+            "school_ids": ",".join(school.id for school in schools),
+            "outside_scope": len(codes) - len(schools),
+            "projects": projects,
+            "next": _bulk_return_url(request, fallback=""),
+            "drawer_size": "sm",
+        },
+    )
+
+
 @require_page_permission("school_directory")
 def bulk_assign_project_view(request):
     # The single-school drawer's gate: the assignSchool permission. Each school
@@ -1841,8 +1944,11 @@ def bulk_assign_project_view(request):
         messages.error(request, "You do not have permission to assign projects.")
         return redirect("/schools")
 
+    # Back to the list the schools were ticked on (Core Schools, a cluster's
+    # profile), else the directory this view was built for.
+    return_url = _bulk_return_url(request)
     if request.method == "POST":
-        school_ids = [s for s in request.POST.get("school_ids", "").split(",") if s]
+        school_ids = _ticked_school_codes(request.POST)
         project_id = request.POST.get("project_id", "").strip()
         override_reason = (request.POST.get("override_reason") or "").strip()
         if school_ids and project_id:
@@ -1853,7 +1959,7 @@ def bulk_assign_project_view(request):
                     f"'{project.name}' is {project.status_label.lower()} — no new "
                     "schools can be assigned to it.",
                 )
-                return redirect("/schools")
+                return redirect(return_url)
             # Scope-constrained, like every bulk path here — but on the
             # project one the reachable set is `enrollable_schools`: own
             # portfolio and supervised team. A Programme Lead holds no school
@@ -1864,7 +1970,12 @@ def bulk_assign_project_view(request):
             schools = enrollable_schools(request.user)
             if schools is None:
                 schools = School.objects.none()
-            schools = schools.filter(id__in=school_ids, deleted_at__isnull=True)
+            # Primary keys from the directory's modal; business codes from
+            # the lists that tick by school code.
+            schools = schools.filter(
+                Q(id__in=school_ids) | Q(school_id__in=school_ids),
+                deleted_at__isnull=True,
+            )
 
             from apps.projects.capacity import assert_batch_fits, consuming_staff_id
             from apps.projects.services import assign_school as assign_project_school
@@ -1882,7 +1993,7 @@ def bulk_assign_project_view(request):
                 assert_batch_fits(project, consuming_staff_id(request.user), new_count)
             except BadRequest as exc:
                 messages.error(request, str(exc))
-                return redirect("/schools")
+                return redirect(return_url)
 
             count = 0
             duplicates = 0
@@ -1954,7 +2065,7 @@ def bulk_assign_project_view(request):
                 messages.error(request, "No new project assignments were made.")
         else:
             messages.error(request, "Failed to perform assignment: missing fields.")
-    return redirect("/schools")
+    return redirect(return_url)
 
 
 @require_page_permission("school_directory")

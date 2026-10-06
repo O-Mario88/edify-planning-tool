@@ -16,6 +16,7 @@ from apps.core.permissions import (
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
+from django.utils.html import format_html
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from urllib.parse import urlencode
@@ -349,49 +350,196 @@ def _scoped_project_assignments(request, raw_ids):
     )
 
 
-def _common_project_recommendations(assignments, *, principal, executor_type):
-    """Only Activities eligible for every selected project-school pair."""
-    from apps.activity_catalogue.services import recommend_activities
+def _project_own_activities(assignments) -> list:
+    """The Catalogue Activities the selected projects approve, by name."""
+    from apps.activity_catalogue.services import effective_items
 
-    by_assignment = {}
-    common_ids = None
-    representative = {}
-    for assignment in assignments:
-        result = recommend_activities(
-            school=assignment.school,
-            principal=principal,
-            project=assignment.project,
-            executor_type=executor_type,
-            limit=100,
+    return list(
+        effective_items()
+        .filter(
+            project_mappings__project_id__in={a.project_id for a in assignments},
+            project_mappings__active=True,
         )
-        rows = result["primary"]
-        keyed = {row["catalogueItemId"]: row for row in rows}
-        by_assignment[assignment.id] = keyed
-        representative.update(keyed)
-        common_ids = (
-            set(keyed) if common_ids is None else common_ids.intersection(keyed)
-        )
-    common = [
-        {
-            **representative[item_id],
-            "recommendationReason": (
-                f"Eligible for all {len(assignments)} selected Project School(s)."
-            ),
-        }
-        for item_id in sorted(
-            common_ids or set(),
-            key=lambda item_id: (
-                representative[item_id]["rank"],
-                representative[item_id]["displayName"].casefold(),
-            ),
-        )
+        .distinct()
+        .order_by("display_name")
+    )
+
+
+def _delivered_as_itself(item, by: str = "partner") -> bool:
+    """A project's own training that is not one of the governed courses
+    (CC-SEL), delivered at a school as the Catalogue Activity it is — by a
+    partner, or (``by="staff"``) by staff. Visits are said by the purpose, and
+    a group training is a governed course the standard In-school Training
+    workflow delivers."""
+    from apps.activity_catalogue.models import CatalogueActivityType
+
+    may_deliver = (
+        item.staff_delivery_allowed if by == "staff" else item.partner_delivery_allowed
+    )
+    return (
+        not item.is_training_course
+        and may_deliver
+        and item.individual_school_allowed
+        and not item.standard_support
+        and item.activity_type
+        not in (CatalogueActivityType.SCHOOL_VISIT, CatalogueActivityType.ADMIN)
+    )
+
+
+def _project_training_courses(assignments, by: str = "partner") -> list[dict]:
+    """The trainings project work may name: every governed course its
+    deliverer may deliver — a partner, or (``by="staff"``) staff — the
+    selected projects' own first.
+
+    The project's approved activities used to be the only choice, and only
+    those a single school may receive and every selected school's SSA called
+    for; a project approving none, or approving group trainings (Leadership),
+    could be neither handed over nor scheduled in bulk (owner, 2026-10-05).
+    They now say which trainings lead the list.
+    """
+    from apps.activity_catalogue.availability import (
+        in_school_training_course_options,
+    )
+
+    own = _project_own_activities(assignments)
+    own_ids = {item.id for item in own}
+    offered = (
+        in_school_training_course_options()
+        if by == "staff"
+        else _partner_training_course_options()
+    )
+    courses = [
+        {**course, "projectCourse": course["id"] in own_ids, "projectActivity": False}
+        for course in offered
     ]
-    return common, by_assignment
+    listed = {course["id"] for course in courses}
+    courses.extend(
+        {
+            "id": item.id,
+            "label": item.display_name,
+            "stableCode": item.stable_code,
+            "projectCourse": True,
+            "projectActivity": True,
+        }
+        for item in own
+        if item.id not in listed and _delivered_as_itself(item, by)
+    )
+    return sorted(
+        courses,
+        key=lambda course: (not course["projectCourse"], course["label"].casefold()),
+    )
+
+
+def _project_focus(focus, purpose: str, project):
+    """The intervention project work records at one school: the training's
+    own, else the project's primary target. SSA collection and relationship
+    visits move none, and neither does the work of a project no SSA
+    intervention measures (Alumni)."""
+    from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
+    if not project.measured_by_ssa:
+        return None
+    if not focus and purpose not in INTERVENTION_FREE_PURPOSES:
+        focus = project.intervention_plan()[0]
+    return focus or None
+
+
+def _project_staff_schedule(request, assignments) -> dict:
+    """What the coordinator's bulk schedule plans at every selected school.
+
+    The single Schedule drawer's choice, once for the selection: the purpose
+    and, for an In-school Training, the training. ``pair`` is a governed
+    course, scheduled as the Training and its School Visit together; a
+    project's own training outside the courses (``as_itself``) is scheduled
+    as the Catalogue Activity it is, as it always was; any other purpose is
+    costed by the one Catalogue Activity that costs it.
+    """
+    return _staff_schedule_plan(
+        request, own={item.id: item for item in _project_own_activities(assignments)}
+    )
+
+
+def _staff_schedule_plan(request, own=None) -> dict:
+    """The one plan a bulk Schedule applies at every ticked school.
+
+    Shared by the coordinator's project bulk Schedule and the bulk Schedule
+    on a list of schools (Core Schools, a cluster's roster; owner,
+    2026-10-06). ``own`` is a project's own Catalogue Activities, keyed by
+    id, which the project door may schedule as themselves; a list of
+    schools has none.
+    """
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        resolve_item_for_workflow_kind,
+    )
+
+    own = own or {}
+    raw = request.POST.get("purpose_of_visit", "").strip()
+    if not raw:
+        raise BadRequest("Select the purpose of the visit before scheduling.")
+    purpose = normalise_visit_purpose(raw, for_partner=False)
+    plan = {
+        "purpose": purpose,
+        "activity_type": purpose_activity_type(purpose),
+        "pair": False,
+        "as_itself": False,
+        "focus": None,
+        "reason": f"{visit_purpose_label(purpose)} selected by the planner.",
+    }
+    if purpose == "in_school_training":
+        chosen = request.POST.get("training_course_id", "").strip()
+        if not chosen:
+            raise BadRequest("Select the Training to deliver.")
+        if chosen in own and _delivered_as_itself(own[chosen], "staff"):
+            item = get_selectable_item(chosen)
+            mapped = sorted(
+                (m for m in item.intervention_mappings.all() if m.active),
+                key=lambda m: (not m.is_primary, m.priority, m.intervention or ""),
+            )
+            return {
+                **plan,
+                "as_itself": True,
+                "catalogue_item_id": item.id,
+                "focus": next((m.intervention for m in mapped if m.intervention), None),
+                "reason": "Approved for this Project.",
+            }
+        selected = validate_in_school_training_course_selection(chosen)
+        return {
+            **plan,
+            "pair": True,
+            "catalogue_item_id": chosen,
+            "focus": selected["ssaIntervention"] or None,
+        }
+    if purpose == "training_follow_up" and _follow_up_requires_training():
+        raise BadRequest(
+            "A Training Follow Up names the training it follows, which differs "
+            "from school to school. Schedule it from each school's own Schedule."
+        )
+    resolved = resolve_item_for_workflow_kind(plan["activity_type"])
+    if resolved is None:
+        raise BadRequest(
+            f"No single approved Catalogue Activity costs "
+            f"\u201c{visit_purpose_label(purpose)}\u201d. Ask the Country Director "
+            "to define one costing for it before scheduling this purpose."
+        )
+    return {**plan, "catalogue_item_id": resolved.id}
 
 
 @require_page_permission("projects")
 def special_projects_bulk_schedule_view(request):
-    """Schedule the same dated visit for selected project-school pairs."""
+    """Schedule the same dated work, by the coordinator, at selected project
+    schools.
+
+    What is scheduled is the planner's choice, as on the single Schedule
+    drawer: the purpose and, for an In-school Training, the training. Until
+    2026-10-05 it had to be a Catalogue Activity the project approved and
+    every selected school's SSA called for, and a project with none could not
+    be scheduled in bulk. The owner lifted that for the partner hand-over and
+    then here: "apply to the staff (project coordinator)".
+    """
     if not RolePermissionService.can_schedule_activity(request.user):
         return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
@@ -405,25 +553,29 @@ def special_projects_bulk_schedule_view(request):
         return HttpResponse("No in-scope project schools were selected.", status=400)
 
     if request.method == "GET":
-        catalogue_items, _ = _common_project_recommendations(
-            assignments,
-            principal=request.user,
-            executor_type="staff",
-        )
+        follow_up_named = _follow_up_requires_training()
         return render(
             request,
             "partials/projects/bulk_schedule_drawer.html",
             {
                 "assignments": assignments,
                 "assignment_ids": ",".join(item.id for item in assignments),
-                "interventions": SsaIntervention.choices,
+                # One purpose for the whole selection. A Training Follow Up
+                # names the training it follows, school by school, so where
+                # the year requires one it is left to each school's Schedule.
+                "visit_purposes": [
+                    (value, label)
+                    for value, label in STAFF_VISIT_PURPOSES
+                    if not (value == "training_follow_up" and follow_up_named)
+                ],
+                "training_courses_json": json.dumps(
+                    _project_training_courses(assignments, by="staff")
+                ),
                 "drawer_size": "md",
-                "catalogue_items": catalogue_items,
             },
         )
 
     scheduled_date = request.POST.get("scheduled_date", "").strip()
-    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     if not scheduled_date:
         return HttpResponse(
             '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a delivery date.</div>',
@@ -431,44 +583,49 @@ def special_projects_bulk_schedule_view(request):
         )
 
     try:
-        common, by_assignment = _common_project_recommendations(
-            assignments,
-            principal=request.user,
-            executor_type="staff",
-        )
-        if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
-            raise BadRequest(
-                "Select a Catalogue Activity eligible for every selected Project School."
-            )
+        plan = _project_staff_schedule(request, assignments)
         scheduled = 0
         refused: list[str] = []
         with transaction.atomic():
             for assignment in assignments:
-                recommendation = by_assignment[assignment.id][catalogue_item_id]
+                project = assignment.project
                 payload = {
                     "schoolId": assignment.school.school_id,
                     "projectId": assignment.project_id,
                     "scheduledDate": scheduled_date,
                     "deliveryType": "staff",
-                    "catalogueItemId": catalogue_item_id,
+                    "catalogueItemId": plan["catalogue_item_id"],
                     "requireCatalogue": True,
-                    "focusIntervention": recommendation["targetIntervention"],
-                    "recommendationReason": recommendation["recommendationReason"],
-                    "activityPurposeText": f"Special project support: {assignment.project.name}",
+                    "recommendationReason": plan["reason"],
+                    "activityPurposeText": f"Special project support: {project.name}",
                     "expectedOutcome": "Complete the planned project support and record evidence.",
                 }
+                focus = _project_focus(plan["focus"], plan["purpose"], project)
+                if focus:
+                    payload["focusIntervention"] = focus
+                if not plan["as_itself"]:
+                    payload["activityType"] = plan["activity_type"]
+                    payload["purposeType"] = plan["purpose"]
+                    payload["ssaCollectionExpected"] = (
+                        plan["activity_type"] == "school_visit_ssa_collection"
+                    )
                 try:
                     # A savepoint per school: one the scheduling rules refuse
                     # (a Core package whose staff half is taken, a client
                     # school's used support visit) is named and left out, and
                     # the rest of the selection is still scheduled.
                     with transaction.atomic():
-                        schedule_school_visit(payload, request.user)
+                        if plan["pair"]:
+                            schedule_in_school_training_pair(payload, request.user)
+                        else:
+                            schedule_school_visit(payload, request.user)
                 except (BadRequest, ConflictError) as exc:
                     refused.append(f"{assignment.school.name}: {exc}")
                     continue
                 scheduled += 1
-        message = f"Scheduled {scheduled} project school activities."
+        message = (
+            f"Scheduled {scheduled} project school" f"{'s' if scheduled != 1 else ''}."
+        )
         if refused:
             message += " Not scheduled: " + "; ".join(refused)
         if not scheduled:
@@ -503,70 +660,175 @@ def _project_partner_ids(assignments) -> set[str] | None:
     return set.intersection(*rosters.values())
 
 
+def _never_to_a_partner(school, project=None) -> str:
+    """Why no partner may be handed this school, whichever partner it is: a
+    closed school takes no new work, and a Champion school is delivered by
+    staff unless a project's hand-over goes past that rule
+    (``partners.handover_policy``). Empty when a partner may. The creation
+    door refuses the same schools (``partners.services.create_assignment``);
+    this says so before the save.
+    """
+    from apps.partners.handover_policy import past_school_rules
+    from apps.planning.visit_gate import (
+        OUTREACH_ONLY_SCHOOL_TYPES,
+        programme_school_partner_refusal,
+    )
+    from apps.schools.lifecycle_service import assert_operating
+
+    try:
+        assert_operating(school)
+    except BadRequest as exc:
+        return str(exc)
+    if past_school_rules(project):
+        return ""
+    if school.school_type in OUTREACH_ONLY_SCHOOL_TYPES:
+        return programme_school_partner_refusal(school.name, school.school_type)
+    return ""
+
+
+def _project_partner_handover(request, assignments) -> dict:
+    """What a project hand-over delivers at every selected school.
+
+    Any bulk hand-over's choice (``_bulk_partner_handover``): the purpose and,
+    for an In-school Training, one of the governed courses. A project's own
+    training that is not one of those is handed over as itself, as it was
+    before the courses were offered here.
+    """
+    from apps.activity_catalogue.services import get_selectable_item
+
+    chosen = request.POST.get("training_course_id", "").strip()
+    if request.POST.get("purpose_of_visit", "").strip() == "in_school_training":
+        own = {item.id: item for item in _project_own_activities(assignments)}
+        if chosen in own and _delivered_as_itself(own[chosen]):
+            item = get_selectable_item(chosen)
+            mapped = sorted(
+                (m for m in item.intervention_mappings.all() if m.active),
+                key=lambda m: (not m.is_primary, m.priority, m.intervention or ""),
+            )
+            return {
+                "purpose_of_visit": "in_school_training",
+                "item": item,
+                "training_course": None,
+                "focus": next((m.intervention for m in mapped if m.intervention), None),
+                "reason": "Approved for this Project.",
+                "label": item.display_name,
+            }
+    return _bulk_partner_handover(request)
+
+
+def _project_handover_focus(handover: dict, project):
+    """The intervention a project hand-over records at one school
+    (``_project_focus``), as its Catalogue Activity takes it."""
+    from apps.activity_catalogue.services import resolve_activity_intervention
+
+    return resolve_activity_intervention(
+        handover["item"],
+        requested_intervention=_project_focus(
+            handover["focus"], handover["purpose_of_visit"], project
+        ),
+        source_activity=None,
+    )
+
+
 @require_page_permission("projects")
 def special_projects_bulk_partner_view(request):
-    """Create traceable partner activities for selected project-school pairs."""
+    """Hand project schools to a partner, who schedules them: one school
+    from its row's Actions menu, or the schools ticked on Project Monitoring
+    or Special Projects Planning.
+
+    What is handed over is the planner's choice, as on every other partner
+    drawer: the purpose and, for an In-school Training, the training. Until
+    2026-10-05 it had to be a Catalogue Activity the project approved, that a
+    partner may deliver and that every selected school's SSA called for; a
+    project with none was refused ("Select a Catalogue Activity eligible for
+    every selected Project School"). The owner lifted that: "all projects
+    schools added to a project can be assigned to any partner".
+    """
     if not RolePermissionService.can_assign_to_partner(request.user):
         return HttpResponseForbidden(
             "You do not have permission to assign to a partner."
         )
 
-    assignments = _scoped_project_assignments(
-        request,
-        request.POST.get("assignments")
-        if request.method == "POST"
-        else request.GET.get("assignments"),
-    )
-    if not assignments:
+    source = request.POST if request.method == "POST" else request.GET
+    selected = _scoped_project_assignments(request, source.get("assignments"))
+    if not selected:
         return HttpResponse("No in-scope project schools were selected.", status=400)
+    # A school no partner may take is named in the drawer and left out, rather
+    # than refused after the save.
+    rows = [
+        {
+            "assignment": item,
+            "reason": _never_to_a_partner(item.school, item.project),
+        }
+        for item in selected
+    ]
+    assignments = [row["assignment"] for row in rows if not row["reason"]]
+    if not assignments:
+        nothing = (
+            rows[0]["reason"]
+            if len(rows) == 1
+            else "None of the selected schools can be assigned to a partner: "
+            "each is a Champion school, which staff deliver themselves, or is "
+            "closed."
+        )
+        if request.method == "POST":
+            return error_fragment(BadRequest(nothing), status=400)
+        return render(request, "partials/schools/drawer_error.html", {"error": nothing})
+
+    from apps.partners.handover_policy import past_school_rules
 
     partners = assignable_partners()
-    # The projects' own partners first; anyone else needs a reason
-    # (`projects.services.assert_partner_on_project`).
+    # The projects' own partners first. Anyone else needs a reason
+    # (`projects.services.assert_partner_on_project`), and a partner is
+    # offered the trainings it is recorded as delivering — unless project
+    # hand-overs go past those rules (owner, 2026-10-05: "any partner").
     project_partner_ids = _project_partner_ids(assignments)
+    any_partner = past_school_rules(project_id="any")
+    needs_reason = project_partner_ids is not None and not any_partner
     if request.method == "GET":
-        catalogue_items, _ = _common_project_recommendations(
-            assignments,
-            principal=request.user,
-            executor_type="partner",
-        )
+        follow_up_named = _follow_up_requires_training()
+        partner_list = list(partners)
         return render(
             request,
             "partials/projects/bulk_partner_drawer.html",
             {
+                "rows": rows,
                 "assignments": assignments,
                 "assignment_ids": ",".join(item.id for item in assignments),
-                "partners": partners,
+                "partners": partner_list,
                 "project_partner_ids": project_partner_ids,
                 "keeps_partner_list": project_partner_ids is not None,
+                "needs_reason": needs_reason,
                 "project_partners": [
-                    p for p in partners if p.id in (project_partner_ids or set())
+                    p for p in partner_list if p.id in (project_partner_ids or set())
                 ],
                 "other_partners": [
                     p
-                    for p in partners
+                    for p in partner_list
                     if project_partner_ids is not None
                     and p.id not in project_partner_ids
                 ],
-                "interventions": SsaIntervention.choices,
-                "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
+                # One purpose for the whole selection. A Training Follow Up
+                # names the training it follows, school by school, so where
+                # the year requires one it is left to each school's own Assign.
+                "partner_visit_purposes": [
+                    (value, label)
+                    for value, label in PARTNER_VISIT_PURPOSES
+                    if not (value == "training_follow_up" and follow_up_named)
+                ],
+                "training_courses_json": json.dumps(
+                    _project_training_courses(assignments)
+                ),
+                "partner_courses_json": (
+                    "{}" if any_partner else _partner_courses_json(partner_list)
+                ),
                 "drawer_size": "md",
-                "catalogue_items": catalogue_items,
             },
         )
 
-    from datetime import date
-
     partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
-    scheduled_date = request.POST.get("scheduled_date", "").strip()
-    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
-    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     override_reason = request.POST.get("override_reason", "").strip()
-    if (
-        project_partner_ids is not None
-        and partner.id not in project_partner_ids
-        and not override_reason
-    ):
+    if needs_reason and partner.id not in project_partner_ids and not override_reason:
         return error_fragment(
             BadRequest(
                 f"{partner.name} is not one of the selected projects' partners. "
@@ -574,46 +836,21 @@ def special_projects_bulk_partner_view(request):
             ),
             status=400,
         )
-    if not scheduled_date:
-        return HttpResponse(
-            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a partner delivery date.</div>',
-            status=400,
-        )
+    # The partner schedules the work, so the hand-over takes no date: it
+    # carries the day it is made (owner, 2026-10-05).
     try:
-        parsed_date = date.fromisoformat(scheduled_date)
-    except ValueError:
-        return HttpResponse(
-            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a valid delivery date.</div>',
-            status=400,
-        )
-
-    try:
-        common, by_assignment = _common_project_recommendations(
-            assignments,
-            principal=request.user,
-            executor_type="partner",
-        )
-        if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
-            raise BadRequest(
-                "Select a Catalogue Activity eligible for every selected Project School."
-            )
-        from apps.activity_catalogue.services import get_selectable_item
         from apps.ssa.services import latest_applicable_record
 
-        catalogue_item = get_selectable_item(catalogue_item_id)
-        # The purpose fallback is the catalogue item's workflow kind, so it
-        # can only be normalised once the item is resolved.
-        purpose_of_visit = normalise_visit_purpose(
-            purpose_of_visit,
-            for_partner=True,
-            fallback_activity_type=catalogue_item.workflow_kind,
+        handover = _project_partner_handover(request, assignments)
+        item = handover["item"]
+        staff_id = (
+            request.user.staff_profile_id or request.user.user_id or request.user.id
         )
         created = []
         skipped = 0
         refused: list[str] = []
         with transaction.atomic():
             for assignment in assignments:
-                recommendation = by_assignment[assignment.id][catalogue_item_id]
                 # A school the partner already has waiting is not handed to
                 # it again, from this project or any other (owner,
                 # 2026-09-24). Skipped rather than refused, so one such school
@@ -637,38 +874,39 @@ def special_projects_bulk_partner_view(request):
                     # partner at one school) is reported and left out, and
                     # the rest of the selection is still handed over.
                     with transaction.atomic():
-                        handover = partner_services.create_assignment(
+                        made = partner_services.create_assignment(
                             school=assignment.school,
                             partner=partner,
-                            assigning_staff_id=(
-                                request.user.staff_profile_id
-                                or request.user.user_id
-                                or request.user.id
-                            ),
+                            assigning_staff_id=staff_id,
                             assignment_mode="specific_activity",
-                            catalogue_item=catalogue_item,
+                            catalogue_item=item,
+                            training_course=handover["training_course"],
                             project=assignment.project,
                             source_ssa=latest_applicable_record(assignment.school),
-                            recommendation_reason=recommendation[
-                                "recommendationReason"
-                            ],
-                            catalogue_snapshot=catalogue_item.snapshot(),
+                            recommendation_reason=handover["reason"],
+                            catalogue_snapshot=item.snapshot(),
                             purpose=(
                                 f"Special project support: {assignment.project.name}"
                             ),
-                            purpose_of_visit=purpose_of_visit,
-                            focus_intervention=recommendation["targetIntervention"],
-                            expected_activity_type=catalogue_item.workflow_kind,
-                            scheduled_date=parsed_date,
+                            purpose_of_visit=handover["purpose_of_visit"],
+                            focus_intervention=_project_handover_focus(
+                                handover, assignment.project
+                            ),
+                            expected_activity_type=item.workflow_kind,
                             notes=f"Project: {assignment.project.name}",
                             override_reason=override_reason,
                         )
                 except (BadRequest, ConflictError) as exc:
                     refused.append(f"{assignment.school.name}: {exc}")
                     continue
-                created.append(handover.id)
+                created.append(made.id)
+        count = len(created)
         message = (
-            f"Assigned {len(created)} project school activities to {partner.name}."
+            f"Assigned {count} project school{'s' if count != 1 else ''} to "
+            f"{partner.name}. The partner schedules "
+            f"{'them' if count != 1 else 'it'} from here."
+            if count
+            else f"No school was assigned to {partner.name}."
         )
         if skipped:
             message += (
@@ -879,27 +1117,17 @@ def planning_dashboard_view(request):
         int(filters["page"]) * int(filters["per_page"]), data["total_count"]
     )
 
-    # Query scheduled activities if tab is scheduled for FullCalendar.js representation
-    scheduled_activities = []
+    # The Calendar View of the Scheduled tab: the reader's own dated work in
+    # the year, as the Calendar page scopes it (apps.activities.calendar_scope).
+    # This used to narrow a CCEO to their own work and write the whole
+    # country's year into the page for every other role, list six statuses by
+    # hand (a rescheduled activity vanished) and title each entry with its
+    # raw type code.
+    planning_calendar_events = []
     if filters["tab"] == "scheduled":
-        from apps.activities.models import Activity
+        from apps.activities.calendar_scope import planning_events
 
-        scheduled_activities = Activity.objects.filter(
-            deleted_at__isnull=True,
-            status__in=[
-                "planned",
-                "scheduled",
-                "partner_scheduled",
-                "in_progress",
-                "completed",
-                "ia_verified",
-            ],
-            fy=fy,
-        ).select_related("school")
-        if request.user.active_role == "CCEO":
-            scheduled_activities = scheduled_activities.filter(
-                responsible_staff_id=request.user.id
-            )
+        planning_calendar_events = planning_events(request.user, fy)
 
     # Distinguishes "your filters match nothing" from "nothing is clustered
     # yet", which look identical on screen and need opposite responses. Scoped
@@ -928,7 +1156,7 @@ def planning_dashboard_view(request):
         "kpis": data["kpis"],
         "kpi_strip_items": data.get("kpi_strip_items", []),
         "total_count": data["total_count"],
-        "scheduled_activities": scheduled_activities,
+        "planning_calendar_events": planning_calendar_events,
         # Options
         "districts": districts,
         "sub_counties": sub_counties,
@@ -2126,6 +2354,194 @@ def schedule_action_view(request):
         return error_fragment(e, status=400)
 
 
+#: How many ticked schools one bulk Schedule takes: the same ceiling the
+#: project bulk doors keep (``_scoped_project_assignments``).
+BULK_SCHEDULE_MAXIMUM_SCHOOLS = 50
+
+
+def _ticked_schools(request):
+    """The schools a list's tick boxes name, in the planner's own portfolio.
+
+    Returns ``(codes, schools)``: the distinct codes posted (business ids,
+    or primary keys from an older list) and the operating schools among them
+    this person plans for — the Planning page's own bulk scope
+    (``bulk_action_view``), so a supervisor's read-only team schools are
+    counted as outside it rather than acted on.
+    """
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    source = request.POST if request.method == "POST" else request.GET
+    raw = source.getlist("school_ids")
+    codes = [
+        code.strip()
+        for value in raw
+        for code in str(value or "").split(",")
+        if code.strip()
+    ]
+    codes = list(dict.fromkeys(codes))[:BULK_SCHEDULE_MAXIMUM_SCHOOLS]
+    if not codes:
+        return [], []
+    schools = list(
+        school_queryset(resolve_user_scope(request.user), direct_only=True)
+        .filter(deleted_at__isnull=True)
+        .filter(Q(school_id__in=codes) | Q(id__in=codes))
+        .select_related("district")
+        .order_by("name")
+    )
+    return codes, schools
+
+
+def _bulk_schedule_focus(plan: dict, school):
+    """The intervention one school's bulk-scheduled work records: the
+    training's own, else the school's first-ranked SSA need for a purpose
+    that moves one (as the single Schedule and the bulk hand-over read it);
+    none for SSA collection and the outreach visits."""
+    from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
+    if plan["focus"] or plan["purpose"] in INTERVENTION_FREE_PURPOSES:
+        return plan["focus"]
+    from apps.ssa.plan_alignment import school_need
+
+    need = school_need(school)
+    return need.priorities[0] if need.priorities else None
+
+
+@require_page_permission("planning")
+def bulk_schedule_drawer_view(request):
+    """Schedule the same dated work at the schools ticked on a list (owner,
+    2026-10-06: the Core school list, a cluster's roster — "select many and
+    assign or schedule or add to project", as the project tables already
+    do). The planner's one choice for the selection, as on the coordinator's
+    bulk Schedule: the purpose and, for an In-school Training, the training;
+    each school gets its own costed activity, and one the scheduling rules
+    refuse is named and left out.
+    """
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
+    from apps.activity_catalogue.availability import (
+        in_school_training_course_options,
+    )
+
+    codes, schools = _ticked_schools(request)
+    follow_up_named = _follow_up_requires_training()
+    # Trainings are the owner's programme; the portfolio-less country roles
+    # schedule visits only, as the single drawer offers.
+    visits_only = RolePermissionService.schedules_visits_only(request.user)
+    return render(
+        request,
+        "partials/planning/bulk_schedule_drawer.html",
+        {
+            "schools": schools,
+            "outside_scope": len(codes) - len(schools),
+            "visit_purposes": [
+                (value, label)
+                for value, label in STAFF_VISIT_PURPOSES
+                if not (value == "training_follow_up" and follow_up_named)
+                and not (visits_only and value == "in_school_training")
+            ],
+            "follow_up_named_per_school": follow_up_named,
+            "training_courses_json": json.dumps(in_school_training_course_options()),
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("planning")
+def bulk_schedule_action_view(request):
+    """Save the bulk Schedule: one activity per ticked school, through the
+    same services a single Schedule uses (a visit at a Core School takes
+    its package slot; an In-school Training is the Training and its School
+    Visit together). A savepoint per school, so one the rules refuse is
+    named and the rest of the selection still goes."""
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
+
+    codes, schools = _ticked_schools(request)
+    if not schools:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">'
+            "No schools in your planning portfolio were selected.</div>",
+            status=400,
+        )
+    scheduled_date = request.POST.get("scheduled_date", "").strip()
+    if not scheduled_date:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a delivery date.</div>',
+            status=400,
+        )
+
+    try:
+        plan = _staff_schedule_plan(request)
+        purpose_label = visit_purpose_label(plan["purpose"])
+        scheduled = 0
+        refused: list[str] = []
+        with transaction.atomic():
+            for school in schools:
+                payload = {
+                    "schoolId": school.school_id,
+                    "scheduledDate": scheduled_date,
+                    "deliveryType": "staff",
+                    "catalogueItemId": plan["catalogue_item_id"],
+                    "requireCatalogue": True,
+                    "recommendationReason": plan["reason"],
+                    "activityPurposeText": f"{purpose_label} at {school.name}",
+                    "expectedOutcome": (
+                        "Complete the planned support and record evidence."
+                    ),
+                    "activityType": plan["activity_type"],
+                    "purposeType": plan["purpose"],
+                    "ssaCollectionExpected": (
+                        plan["activity_type"] == "school_visit_ssa_collection"
+                    ),
+                }
+                focus = _bulk_schedule_focus(plan, school)
+                if focus:
+                    payload["focusIntervention"] = focus
+                try:
+                    with transaction.atomic():
+                        if plan["pair"]:
+                            schedule_in_school_training_pair(payload, request.user)
+                        else:
+                            schedule_school_visit(payload, request.user)
+                except (BadRequest, ConflictError) as exc:
+                    refused.append(f"{school.name}: {exc}")
+                    continue
+                scheduled += 1
+        message = f"Scheduled {scheduled} school{'s' if scheduled != 1 else ''}."
+        if len(codes) > len(schools):
+            outside = len(codes) - len(schools)
+            message += (
+                f" {outside} selected school{'s' if outside != 1 else ''} "
+                f"{'are' if outside != 1 else 'is'} outside your planning "
+                "portfolio and left out."
+            )
+        if refused:
+            message += " Not scheduled: " + "; ".join(refused)
+        if not scheduled:
+            # Rendered straight into the fragment, escaped, rather than
+            # raised as an API exception: the refusals are the scheduling
+            # rules' own sentences, and an exception built from exception
+            # text reads as a leak to a scanner.
+            from apps.core.htmx_errors import FRAGMENT
+
+            return HttpResponse(
+                format_html(FRAGMENT, f"Could not schedule the selection: {message}"),
+                status=400,
+            )
+        return _saved_without_leaving(
+            message,
+            plan_url=_my_plan_url_for_scheduled_date(scheduled_date),
+            plan_link_label="Open My Plan",
+            notice=_ceiling_notice(request, scheduled_date),
+        )
+    except Exception as exc:
+        return error_fragment(
+            exc, action="Could not schedule the selection", status=400
+        )
+
+
 @require_page_permission("planning")
 def bulk_assign_partner_drawer_view(request):
     """Assign the schools ticked on a cluster's school list to one partner
@@ -2437,7 +2853,7 @@ def _bulk_handover_focus(handover: dict, school):
     )
 
 
-def _assert_bulk_handover_allowed(handover: dict, school, partner, bulk_date) -> None:
+def _assert_bulk_handover_allowed(handover: dict, school, partner) -> None:
     """The single Assign's own school rules, so a school its drawer would
     refuse is left out of a bulk hand-over too."""
     from apps.activity_catalogue.services import validate_context
@@ -2456,7 +2872,7 @@ def _assert_bulk_handover_allowed(handover: dict, school, partner, bulk_date) ->
         partner.id,
         school.id,
         item.workflow_kind,
-        get_operational_fy(bulk_date) if bulk_date else get_operational_fy(),
+        get_operational_fy(),
     )
     if is_gated_visit(rule_for(school.school_type), item.workflow_kind, item):
         assert_may_assign_partner_visit(school)
@@ -2943,7 +3359,6 @@ def bulk_action_view(request):
             )
         # Only a partner who may take new work: active, and not on hold.
         partner = get_object_or_404(assignable_partners(), id=partner_id)
-        from datetime import date as _date
         from apps.ssa.services import latest_applicable_record
 
         # What the selection is handed over for: the planner's choice, the
@@ -2955,14 +3370,6 @@ def bulk_action_view(request):
             handover = _bulk_partner_handover(request)
         except Exception as exc:
             return error_fragment(exc, status=400)
-
-        bulk_date_raw = request.POST.get("scheduled_date", "").strip()
-        bulk_date = None
-        if bulk_date_raw:
-            try:
-                bulk_date = _date.fromisoformat(bulk_date_raw)
-            except ValueError:
-                pass
 
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
@@ -2993,9 +3400,7 @@ def bulk_action_view(request):
                         # this year) is left out and named, and the rest of
                         # the selection still goes.
                         with transaction.atomic():
-                            _assert_bulk_handover_allowed(
-                                handover, s, partner, bulk_date
-                            )
+                            _assert_bulk_handover_allowed(handover, s, partner)
                             created = partner_services.create_assignment(
                                 school=s,
                                 partner=partner,
@@ -3011,7 +3416,6 @@ def bulk_action_view(request):
                                 purpose_of_visit=handover["purpose_of_visit"],
                                 focus_intervention=_bulk_handover_focus(handover, s),
                                 expected_activity_type=item.workflow_kind,
-                                scheduled_date=bulk_date,
                                 notes=(
                                     "Bulk Partner Assignment · final schedule "
                                     "and cost pending"

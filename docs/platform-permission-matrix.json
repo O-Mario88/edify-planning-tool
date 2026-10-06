@@ -1115,6 +1115,44 @@
    "view": "apps.frontend.views.closure_views.blocked_closure_view"
   },
   {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/activity-selection/cancel",
+   "route_name": "activity_group_cancel",
+   "view": "apps.frontend.views.activity_group_views.group_cancel_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/activity-selection/reschedule",
+   "route_name": "activity_group_reschedule",
+   "view": "apps.frontend.views.activity_group_views.group_reschedule_view"
+  },
+  {
    "page_permission": "admin_incidents",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15821,6 +15859,40 @@
    "view": "apps.frontend.views.planning_views.bulk_assign_partner_drawer_view"
   },
   {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/bulk-schedule",
+   "route_name": "planning_bulk_schedule",
+   "view": "apps.frontend.views.planning_views.bulk_schedule_action_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/bulk-schedule-drawer",
+   "route_name": "planning_bulk_schedule_drawer",
+   "view": "apps.frontend.views.planning_views.bulk_schedule_drawer_view"
+  },
+  {
    "page_permission": "fy_planning_policy",
    "required_permissions": [],
    "role_exclusive": false,
@@ -17550,6 +17622,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/schools/bulk-assign-project-drawer",
+   "route_name": "bulk_assign_project_drawer",
+   "view": "apps.frontend.views.school_views.bulk_assign_project_drawer_view"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/schools/bulk-match-staff",
    "route_name": "bulk_match_staff",
    "view": "apps.frontend.views.school_views.bulk_match_staff_view"
@@ -19016,27 +19105,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 432,
-  "Admin": 1069,
+  "Accountant": 436,
+  "Admin": 1074,
   "BusinessTransformationOfficer": 238,
-  "CCEO": 557,
-  "CountryDirector": 822,
+  "CCEO": 562,
+  "CountryDirector": 827,
   "HumanResources": 336,
-  "ImpactAssessment": 680,
+  "ImpactAssessment": 685,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
-  "PartnerAdmin": 228,
-  "PartnerFieldOfficer": 228,
-  "Program Lead": 656,
-  "ProjectCoordinator": 470,
-  "RegionalProgramLead": 336,
+  "PartnerAdmin": 230,
+  "PartnerFieldOfficer": 230,
+  "Program Lead": 661,
+  "ProjectCoordinator": 475,
+  "RegionalProgramLead": 337,
   "RegionalVicePresident": 409
  },
  "summary": {
   "page_keys_declared": 183,
   "page_keys_in_navigation": 200,
-  "routes_guarded": 1166,
-  "routes_total": 1360,
+  "routes_guarded": 1171,
+  "routes_total": 1365,
   "routes_unguarded": 194,
   "surfaces_no_role_can_reach": 0
  },

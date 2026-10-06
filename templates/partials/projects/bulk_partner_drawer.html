@@ -1,39 +1,88 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Hand project schools to a partner, who schedules them: a row's own school, or
+the schools ticked on Project Monitoring or Special Projects Planning (owner,
+2026-10-05: "use checkboxes on the left to check all the project schools to
+be assigned to the partner").
+
+The planner says what is handed over, as on every other partner drawer: the
+purpose and, for an In-school Training, the training. It used to ask for a
+Catalogue Activity the project approved and every selected school was eligible
+for, and a project with none could not be handed over (owner, 2026-10-05:
+"lift the restriction"). The project's own trainings now lead the list.
+{% endcomment %}
 
 {% block drawer_title %}Assign {{ assignments|length }} project school{{ assignments|length|pluralize }} to a partner{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
-<form hx-post="/projects/planning/bulk-partner" hx-target="#bulk-partner-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700" x-data="{ partnerId: '', projectPartners: [{% for partner in project_partners %}'{{ partner.id|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}], keepsList: {{ keeps_partner_list|yesno:'true,false' }}, get outsideList() { return this.keepsList && this.partnerId !== '' && !this.projectPartners.includes(this.partnerId); } }">
-  {% csrf_token %}<input type="hidden" name="assignments" value="{{ assignment_ids }}">
+<form hx-post="/projects/planning/bulk-partner" hx-target="#bulk-partner-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700"
+      x-data="{
+        partnerId: '',
+        purposeOfVisit: '',
+        trainingCourseId: '',
+        projectPartners: [{% for partner in project_partners %}'{{ partner.id|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        keepsList: {{ needs_reason|yesno:'true,false' }},
+        trainingCourses: {{ training_courses_json|default:'[]' }},
+        partnerCourses: {{ partner_courses_json|default:'{}' }},
+        get outsideList() { return this.keepsList && this.partnerId !== '' && !this.projectPartners.includes(this.partnerId); },
+        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get coursesForPartner() {
+          const codes = this.partnerCourses[this.partnerId];
+          return codes ? this.trainingCourses.filter(course => course.projectActivity || codes.includes(course.stableCode)) : this.trainingCourses;
+        },
+        get projectCourses() { return this.coursesForPartner.filter(course => course.projectCourse); },
+        get otherCourses() { return this.coursesForPartner.filter(course => !course.projectCourse); },
+        get selectedCourse() { return this.coursesForPartner.find(course => course.id === this.trainingCourseId) || null; },
+        onPartnerChange() { if (!this.selectedCourse) { this.trainingCourseId = ''; } },
+        onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
+      }"
+      data-project-partner-handover>
+  {% csrf_token %}
+  <input type="hidden" name="assignments" value="{{ assignment_ids }}">
   <div id="bulk-partner-errors"></div>
   <div class="space-y-1">
     <p class="edify-text-caption font-semibold text-slate-600">Selected project schools</p>
-    <ul class="max-h-28 overflow-auto space-y-1 edify-text-caption text-slate-600">{% for item in assignments %}<li>{{ item.school.name }} · {{ item.project.name }}</li>{% endfor %}</ul>
+    <ul class="max-h-28 overflow-auto space-y-1 edify-text-caption text-slate-600" data-handover-schools>{% for row in rows %}<li>{{ row.assignment.school.name }} · {{ row.assignment.project.name }}{% if row.reason %}<span class="block text-amber-700" data-handover-not-included>Not included: {{ row.reason }}</span>{% endif %}</li>{% endfor %}</ul>
   </div>
   <div class="space-y-1">
     <label for="bulk-partner-partner" class="block edify-text-caption font-semibold text-slate-600">Partner organization <span class="text-rose-500">*</span></label>
-    <select id="bulk-partner-partner" aria-label="Partner ID" name="partner_id" required x-model="partnerId" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select partner…</option>{% if not keeps_partner_list %}{% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}{% else %}<optgroup label="This project's partners">{% for partner in project_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% empty %}<option value="" disabled>None of the projects' partners can take new work</option>{% endfor %}</optgroup>{% if other_partners %}<optgroup label="Other partners (reason required)">{% for partner in other_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}</optgroup>{% endif %}{% endif %}</select>
+    <select id="bulk-partner-partner" aria-label="Partner ID" name="partner_id" required x-model="partnerId" @change="onPartnerChange()" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select partner…</option>{% if not keeps_partner_list %}{% for partner in partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}{% else %}<optgroup label="This project's partners">{% for partner in project_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% empty %}<option value="" disabled>None of the projects' partners can take new work</option>{% endfor %}</optgroup>{% if other_partners %}<optgroup label="Other partners{% if needs_reason %} (reason required){% endif %}">{% for partner in other_partners %}<option value="{{ partner.id }}">{{ partner.name }}</option>{% endfor %}</optgroup>{% endif %}{% endif %}</select>
   </div>
   {% comment %}A partner outside the project's own list needs a reason, which the hand-over keeps.{% endcomment %}
   <div class="space-y-1" x-show="outsideList" style="display: none;" data-outside-project-partners>
     <label for="bulk-partner-reason" class="block edify-text-caption font-semibold text-slate-600">Why this partner <span class="text-rose-500">*</span></label>
     <textarea id="bulk-partner-reason" name="override_reason" rows="2" :required="outsideList" class="w-full rounded-control border border-slate-200 p-3" placeholder="They are not one of this project's partners"></textarea>
   </div>
-  <fieldset class="space-y-2"><legend class="block edify-text-caption font-semibold text-slate-600">Project-approved partner activity <span class="text-rose-500">*</span></legend>{% for item in catalogue_items %}<label class="flex items-start gap-3 rounded-control border border-slate-200 p-3"><input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %}><span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span></label>{% empty %}<p class="edify-note edify-text-caption font-semibold" data-tone="warning">No single Partner-deliverable Catalogue Activity is eligible for every selected Project School.</p>{% endfor %}</fieldset>
   <div class="space-y-1">
-    <label for="bulk-partner-purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose of visit <span class="text-rose-500">*</span></label>
-    <select id="bulk-partner-purpose" aria-label="Purpose of visit" name="purpose_of_visit" required aria-describedby="bulk-partner-purpose-help" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select purpose…</option>{% for value, label in partner_visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
-    <p id="bulk-partner-purpose-help" class="edify-text-caption text-slate-500">Partners may be assigned only these three forms of support.</p>
+    <label for="bulk-partner-purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose of assignment <span class="text-rose-500">*</span></label>
+    <select id="bulk-partner-purpose" aria-label="Purpose of assignment" name="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select purpose…</option>{% for value, label in partner_visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
   </div>
-  <div class="space-y-1">
-    <label for="bulk-partner-date" class="block edify-text-caption font-semibold text-slate-600">Partner delivery date <span class="text-rose-500">*</span></label>
-    <input id="bulk-partner-date" aria-label="Scheduled date" type="date" name="scheduled_date" required class="w-full rounded-control border border-slate-200 px-3 py-2">
-  </div>
-  <p class="edify-text-caption text-slate-500">Creates assignment records only. The activity, final cost and budget lines are created when the partner confirms the delivery schedule.</p>
+  <template x-if="isTraining">
+    <div class="space-y-1">
+      <label for="bulk-partner-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+      <select id="bulk-partner-training" name="training_course_id" required x-model="trainingCourseId" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+        <option value="">Select a training…</option>
+        <template x-if="projectCourses.length">
+          <optgroup label="This project's trainings">
+            <template x-for="course in projectCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+          </optgroup>
+        </template>
+        <template x-if="projectCourses.length">
+          <optgroup label="Other trainings">
+            <template x-for="course in otherCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+          </optgroup>
+        </template>
+        <template x-for="course in (projectCourses.length ? [] : otherCourses)" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+      </select>
+      <p x-show="partnerCourses[partnerId]" style="display:none" class="edify-text-caption text-slate-500" data-partner-courses>Showing the trainings this partner is recorded as delivering.</p>
+    </div>
+  </template>
+  {% include "partials/partners/_assigned_date.html" %}
+  <p class="edify-text-caption text-slate-500">Every school listed is handed over for this purpose. The activity, final cost and budget lines are created when the partner schedules it.</p>
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">Assign {{ assignments|length }} activit{{ assignments|length|pluralize:"y,ies" }}</button>
+    {% if assignments %}<button type="submit" class="btn btn-primary h-8">Assign {{ assignments|length }} school{{ assignments|length|pluralize }}</button>{% endif %}
   </div>
 </form>
 {% endblock %}

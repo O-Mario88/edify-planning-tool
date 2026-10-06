@@ -26,10 +26,13 @@ anything else. Every figure arrives formatted; the page divides nothing.
         <div class="cpo-motto-text">Stronger<br>Schools<br>Brighter {{ header.country }}</div>
       </div>
       <div class="cpo-stamp">
-        <div class="cpo-stamp-copy">
+        {% comment %}Live (owner, 2026-10-05): the stamp is read again with
+        the figures it describes.{% endcomment %}
+        <div class="cpo-stamp-copy" id="cpo-stamp" data-live-region>
           <div class="cpo-stamp-label">Last updated</div>
           <div class="cpo-stamp-time"><time datetime="{{ header.built_at|date:'Y-m-d\TH:i' }}">{{ header.built_at|date:"j M Y, g:i A" }}</time></div>
           <div class="cpo-stamp-asof">Portfolio as of {{ header.as_of|date:"j M Y" }}</div>
+          {% include "partials/country_oversight/_settle.html" %}
         </div>
         <a class="cpo-refresh" href="/country-planning-oversight/?{{ query }}&amp;refresh=1"
            aria-label="Read the planning data again" title="Read the planning data again">

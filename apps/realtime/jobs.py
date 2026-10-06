@@ -502,6 +502,21 @@ def daily_plan_notifications_job():
     run_tracked_job("daily_plan_notifications", _do_daily_plan_notifications)
 
 
+def _do_day_off_alerts() -> int:
+    """Tell each person which of their coming activities sit on a public
+    holiday or on their own leave day, so they reschedule them (owner,
+    2026-10-05; apps.activities.day_off.send_day_off_alerts)."""
+    from apps.activities.day_off import send_day_off_alerts
+
+    return send_day_off_alerts()
+
+
+def day_off_alerts_job():
+    if not _enabled():
+        return
+    run_tracked_job("day_off_alerts", _do_day_off_alerts)
+
+
 def _do_activity_reminders() -> int:
     """§33 — 'Activity starts tomorrow' for every responsible person.
 
@@ -787,7 +802,11 @@ def daily_debrief_reminders_job():
                 body="You had scheduled activities but no debrief yet. "
                 "It takes two to three minutes.",
                 context_type="daily_debrief_due",
-                context_id=f"{user.user_id}:{target}",
+                # The day alone: a notification is already kept per person,
+                # and with the person's id in front this was 32 characters in
+                # a column of 30, so every run that had someone to remind
+                # failed and nobody was reminded (production, 2026-10-05).
+                context_id=str(target),
                 recipients=[user.user_id],
             )
             reminded += 1
@@ -931,6 +950,28 @@ def planning_oversight_warm_job():
     if not _enabled():
         return
     run_tracked_job("planning_oversight_warm", _do_planning_oversight_warm)
+
+
+def _do_cost_reprice_sweep() -> int:
+    """Re-price the open plans a rate change did not reach in its own request
+    (owner, 2026-10-05: a changed or removed cost was still being fetched;
+    apps.budget.repricing). Stops starting new plans after a minute, so a
+    country's worth of plans is worked through over a few runs."""
+    import time
+
+    from apps.budget.repricing import reprice_stale_plans
+
+    result = reprice_stale_plans(deadline=time.monotonic() + 60, skip_refused=True)
+    report = {outcome: len(plans) for outcome, plans in result.items()}
+    if any(report.values()):
+        logger.info("Cost re-price sweep: %s", report)
+    return report["repriced"]
+
+
+def cost_reprice_sweep_job():
+    if not _enabled():
+        return
+    run_tracked_job("cost_reprice_sweep", _do_cost_reprice_sweep)
 
 
 def _do_execution_period_snapshots() -> int:

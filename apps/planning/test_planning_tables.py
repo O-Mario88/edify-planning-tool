@@ -91,12 +91,28 @@ class TableRulesTest(TableWorld):
                     self.shown(key)[5:8], ["School ID", "School Name", "School Type"]
                 )
         self.assertEqual(self.shown("partners")[5:7], ["Partner", "School ID"])
-        self.assertEqual(self.shown("projects")[5:7], ["Project", "School ID"])
+        self.assertEqual(self.shown("projects")[5:7], ["Project Name", "School ID"])
         # The activity planned and its SSA intervention are on the page.
-        for key in ("visits", "all-visits", "partners", "projects", "plans"):
+        for key in ("visits", "all-visits", "partners", "plans"):
             with self.subTest(table=key):
                 self.assertIn("SSA Intervention", self.shown(key))
                 self.assertIn("Planned Date", self.shown(key))
+
+    def test_project_schools_carries_the_project_table_s_columns(self):
+        """Owner, 2026-10-05: "make the consolidated Project Schools table
+        match too" — after where the school sits, the project table's own
+        columns in its order, on the page and in the workbook. District is
+        one of the place columns, so it is not drawn twice."""
+        from apps.projects import school_table
+
+        place = ["Programme Lead", "Sub-region", "District", "CCEO / PL", "Cluster"]
+        matched = [label for label in school_table.COLUMNS if label != "District"]
+        self.assertEqual(self.shown("projects"), [*place, *matched])
+        spec = tables.SPECS["projects"]
+        self.assertEqual(spec.export_only, ())
+        self.assertEqual(
+            tables.sheet(self.table("projects"))["headers"], [*place, *matched]
+        )
 
 
 class PeopleTablesTest(TableWorld):
@@ -797,42 +813,63 @@ class ImpactAssessmentTablesTest(TableWorld):
                 self.assertEqual(
                     set(rows), {s.school_id for s in (waiting, planned, handed)}
                 )
+                # The project table's cells (owner, 2026-10-05), under where
+                # the school sits.
                 row = rows[waiting.school_id]
                 self.assertEqual(table.place_of(row), PLACE)
                 self.assertEqual(row["project"], "Rule Project")
                 self.assertEqual(
                     (row["date"], row["date_note"], row["status"]),
+                    (None, "", "Awaiting Project Coordinator Action"),
+                )
+                self.assertEqual(
+                    (row["stage"], row["by_name"], row["execution"]),
+                    ("Not planned", "", "No activity"),
+                )
+                self.assertEqual((row["activity_status"], row["cost"]), ("", None))
+                row = rows[planned.school_id]
+                self.assertEqual(
+                    (row["lead"], row["holder"], row["stage"], row["by_name"]),
                     (
-                        None,
-                        "Awaiting Project Coordinator",
-                        "Awaiting Project Coordinator Action",
+                        "Lead B",
+                        "Officer Three",
+                        "Coordinator planned",
+                        "Coordinator Cee",
                     ),
                 )
                 self.assertEqual(
-                    (row["coordinator"], row["added_by"]),
-                    ("Coordinator Cee", "Officer One"),
+                    (row["date"], row["intervention"], row["activity_status"]),
+                    (day(20), "Leadership", "Scheduled"),
                 )
-                row = rows[planned.school_id]
-                self.assertEqual(
-                    (row["lead"], row["holder"], row["channel"], row["by_name"]),
-                    ("Lead B", "Officer Three", "Staff", "Coordinator Cee"),
-                )
-                self.assertEqual(
-                    (row["date"], row["intervention"]), (day(20), "Leadership")
-                )
+                self.assertEqual(row["execution"], "Not yet delivered · 0/1 done")
                 row = rows[handed.school_id]
                 self.assertEqual(
-                    (row["date"], row["date_note"], row["channel"], row["by_name"]),
-                    (None, "Awaiting partner schedule", "Partner", "Partner Alpha"),
+                    (row["date"], row["date_note"], row["stage"], row["by_name"]),
+                    (None, "Awaiting scheduling", "Awaiting Partner Alpha", ""),
                 )
                 self.assertEqual(
                     table.summary,
                     "3 schools in 1 project · 2 planned · 1 awaiting a plan",
                 )
         self.assertEqual(
-            self.cells(self.table("projects"), handed)["Planned Date"],
-            "Awaiting partner schedule",
+            self.cells(self.table("projects"), handed)["Activity Date"],
+            "Awaiting scheduling",
         )
+        # A row here says what the project table says of the same school.
+        from apps.projects import monitoring, school_table
+
+        theirs = {
+            row.school_code: school_table.values(row)
+            for _project, _coordinator, row in monitoring.enrolled_schools(
+                self.ia_user, fy=FY
+            )
+        }
+        ours = {row["school_id"]: row for row in self.table("projects").rows}
+        for code, said in theirs.items():
+            for key in ("project", "course", "purpose", "intervention", "status"):
+                self.assertEqual(ours[code][key], said[key], (code, key))
+            for key in ("previous_score", "current_score", "improvement", "cost"):
+                self.assertEqual(ours[code][key], said[key], (code, key))
         # The coordinator's work says its project wherever it is listed, and
         # a table can be narrowed to one project.
         activities = self.table("plans")

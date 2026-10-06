@@ -70,8 +70,18 @@
           </form>
           {% endif %}
         </div>
-        {% empty %}
-        {% include "components/empty_state.html" with title="No public holidays recorded" message="Holidays added here are excluded from leave-day calculations." compact="true" %}
+        {% endfor %}
+        {% comment %}Uganda's national holidays are built in
+        (apps.core.public_holidays): read-only here, and a block added above
+        for the same day, or for an announced Eid, takes its place.{% endcomment %}
+        {% for holiday in national_holidays %}
+        <div class="flex items-center justify-between p-3 bg-rose-50/20 border border-rose-100/50 rounded-surface">
+          <div>
+            <span class="font-bold text-slate-900 text-[13px] block">{{ holiday.label }}</span>
+            <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ holiday.date|date:"l j F Y" }}</span>
+          </div>
+          <span class="edify-text-caption text-slate-400 font-semibold">National calendar</span>
+        </div>
         {% endfor %}
       </div>
     </div>

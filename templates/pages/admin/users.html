@@ -507,6 +507,7 @@ aria-describedby="new-user-managed-people-hint"
 <legend class="px-1 text-[12px] font-bold uppercase tracking-wider text-slate-600">People this user will manage</legend>
 <p id="new-user-managed-people-hint" class="mt-1 edify-text-caption font-medium text-slate-500" x-text="newUserRole === 'CountryDirector' ? 'Country Directors automatically manage all PLs, IAs, Accountants, and CCEOs in Uganda.' : newUserRole === 'Program Lead' ? 'Select the CCEOs who will report to this Program Lead.' : 'Select the Uganda staff members this user will manage. Their direct reporting lines stay unchanged.'"></p>
 
+{% if management_candidates %}<div x-show="newUserRole !== 'CountryDirector'" class="mt-3">{% include "partials/components/select_all.html" with boxes="input[name=managed_staff_ids]" %}</div>{% endif %}
 <div x-show="newUserRole !== 'CountryDirector'" class="mt-3 max-h-56 space-y-1.5 overflow-y-auto rounded-control border border-slate-200 bg-[var(--edify-surface-muted)] p-2">
 {% for person in management_candidates %}
 <label
@@ -537,6 +538,7 @@ class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-p
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Secondary District Assignments</label>
 <p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
+<div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=additional_districts]" %}</div>
 <div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">

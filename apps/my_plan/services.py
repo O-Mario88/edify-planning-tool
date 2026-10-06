@@ -17,6 +17,7 @@ from apps.core.activity_types import (
 import calendar
 from datetime import date, timedelta
 from django.db.models import Count, Q
+from apps.activities.group_actions import may_tick
 from apps.activities.models import Activity
 from apps.activities.facilitation import (
     FACILITATOR_EDITABLE_STATUSES,
@@ -1220,6 +1221,20 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     minimum_amounts = planned_minimum_amounts(activities)
 
+    # Planned work on a public holiday or on its owner's leave day (owner,
+    # 2026-10-05): marked on its row and listed first, to be rescheduled.
+    from apps.activities.day_off import day_off_marks
+
+    day_off_by_activity = day_off_marks(activities)
+    day_off_list = []
+
+    # An in-school Training is done during its School Visit and stays at
+    # UGX 0: the visit carries the day's cost (owner, 2026-09-28). Its row
+    # says so (owner, 2026-10-05) unless the visit has no price either.
+    from apps.activities.pair_costing import pair_cost_notes
+
+    pair_notes = pair_cost_notes(activities)
+
     # Core-school sequence numbers (V1..V8 / T1..T8) and the "n/8 Completed"
     # progress used to be three per-row COUNT queries inside the loop below.
     # That made /my-plan O(number of core activities): the scaling gate
@@ -1365,6 +1380,16 @@ def get_frontend_context(principal, query: dict) -> dict:
                 badges.append(("Budget Created", "blue"))
                 budget_status = "Budget Created"
                 budget_status_color = "blue"
+        elif a.id in pair_notes:
+            # The UGX 0 half of an in-school pair: its budget is the other
+            # half's, the School Visit's unless the pair predates 2026-09-28.
+            budget_status = (
+                "In School Visit"
+                if a.activity_type == "in_school_training"
+                else "In Training"
+            )
+            budget_status_color = "blue"
+            badges.append((budget_status, budget_status_color))
         else:
             badges.append(("No Budget", "slate"))
             budget_status = "No Budget"
@@ -1632,6 +1657,8 @@ def get_frontend_context(principal, query: dict) -> dict:
             ),
             "is_partner_ssa_support": is_partner_ssa_support_activity(a),
             "budget_total": budget_total,
+            # Written beside the UGX 0 half of an in-school pair.
+            "cost_note": pair_notes.get(a.id, ""),
             "salesforce_activity_id": a.salesforce_activity_id,
             "evidence_status": a.evidence_status,
             "ia_verification_status": a.ia_verification_status,
@@ -1649,7 +1676,10 @@ def get_frontend_context(principal, query: dict) -> dict:
             "status_tone": plan_row_tone(
                 a, status_label, status_class, is_core=bool(is_core)
             ),
+            "day_off": day_off_by_activity.get(a.id),
         }
+        if activity_data["day_off"]:
+            day_off_list.append(activity_data)
 
         # Legacy lists for compatibility
         if a.planning_source == "manual_work_plan" or (
@@ -2138,6 +2168,9 @@ def get_frontend_context(principal, query: dict) -> dict:
                 row["status_label"] = row["completion_gap"]
                 row["status_class"] = "bg-amber-50 text-amber-700 border-amber-200"
                 row["status_tone"] = "amber"
+            # A row still live carries a tick box for the group Reschedule
+            # and Cancel (owner, 2026-10-05); finished work has neither.
+            row["can_pick"] = may_tick(row["status"]) and not row["shows_complete"]
         rows.sort(
             key=lambda row: completed_last_key(row["is_complete"], row["planned_date"])
         )
@@ -2247,6 +2280,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         "priority_count": len(waiting_on_me_list) + len(due_today_list),
         "partner_monitoring": partner_monitoring_list,
         "returned_needs_correction": returned_needs_correction_list,
+        "day_off_work": day_off_list,
         "waiting_on_approval": waiting_on_approval_list,
         "upcoming": upcoming_list,
         "finance_pending": finance_pending_list,

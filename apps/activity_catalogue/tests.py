@@ -11,7 +11,7 @@ from apps.activities.models import Activity
 from apps.activities.models import ActivityScheduleCostLine
 from apps.analytics.activity_catalogue import activity_catalogue_metrics
 from apps.budget.models import CostCatalogue, CostSetting
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -607,15 +607,28 @@ class PartnerCatalogueWorkflowTests(TestCase):
         )
         from apps.partners.services import schedule_activity
 
-        activity_payload = schedule_activity(
-            result["id"],
-            {
-                "scheduledDate": scheduled_date.isoformat(),
-                "catalogueItemId": self.item.id,
-                "requireCatalogue": True,
-            },
-            self.user,
+        # The partner dates what was handed to them (owner, 2026-10-05):
+        # staff, the Country Director included, no longer schedule for them.
+        partner_user = User.objects.create_user(
+            email="catalogue-partner@example.test",
+            name="Catalogue Partner Officer",
+            roles=[EdifyRole.PARTNER_FIELD_OFFICER.value],
+            active_role=EdifyRole.PARTNER_FIELD_OFFICER.value,
+            password="test-password",
+            is_active=True,
         )
+        self.partner.user = partner_user
+        self.partner.save(update_fields=["user"])
+        payload = {
+            "scheduledDate": scheduled_date.isoformat(),
+            "catalogueItemId": self.item.id,
+            "requireCatalogue": True,
+        }
+        with self.assertRaises(Forbidden):
+            schedule_activity(result["id"], payload, self.user)
+        self.assertEqual(Activity.objects.count(), 0)
+
+        activity_payload = schedule_activity(result["id"], payload, partner_user)
         activity = Activity.objects.get(id=activity_payload["id"])
         self.assertEqual(activity.catalogue_item, self.item)
         self.assertEqual(activity.activity_name_snapshot, self.item.display_name)
@@ -625,15 +638,7 @@ class PartnerCatalogueWorkflowTests(TestCase):
         self.assertEqual(line.amount, 125000)
         self.assertEqual(line.activity_catalogue_item_id, self.item.id)
         with self.assertRaises(BadRequest):
-            schedule_activity(
-                result["id"],
-                {
-                    "scheduledDate": scheduled_date.isoformat(),
-                    "catalogueItemId": self.item.id,
-                    "requireCatalogue": True,
-                },
-                self.user,
-            )
+            schedule_activity(result["id"], payload, partner_user)
         self.assertEqual(Activity.objects.count(), 1)
 
 

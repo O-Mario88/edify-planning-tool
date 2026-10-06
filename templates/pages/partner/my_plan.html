@@ -17,6 +17,8 @@
       </button>
   {% endpage_header %}
 
+  {# Read again when the plan changes: work handed over, withdrawn, moved or cancelled by staff (owner, 2026-10-05; static/js/live-regions.js). #}
+  <div id="partner-plan" class="space-y-5" data-live-region>
   {% for title, blurb, rows, tone in plan_sections %}
   {% if rows or tone == "danger" %}
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
@@ -110,6 +112,8 @@
     <p class="text-[13px] font-semibold text-slate-500">Nothing on your plan yet — schedule assigned work from <a href="/partner/assigned-schools" class="font-bold edify-primary-text">Assigned Schools</a> or <a href="/partner/assigned-activities" class="font-bold edify-primary-text">Assigned Activities</a>.</p>
   </div>
   {% endif %}
+
+  </div>
 
   {% if partner_invoice_tracker %}
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">

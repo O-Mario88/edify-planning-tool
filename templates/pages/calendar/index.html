@@ -4,13 +4,16 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261002tabs15">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261005pick1">
 {% endblock %}
 
 {% block shell_content %}
+{# Read again when an activity on it is rescheduled or cancelled by anyone (owner, 2026-10-05; static/js/live-regions.js). #}
 <section
+  id="calendar-workspace"
   class="calendar-workspace edify-page-canvas"
   data-mobile-family="workday"
+  data-live-region
   x-data="{
     eventFilter: '{{ selected_event_kind|escapejs }}',
     selectedDate: '{% if year == today.year and month == today.month %}{{ today|date:"Y-m-d" }}{% endif %}',
@@ -85,6 +88,27 @@
   </header>
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}
+
+  {% comment %}Planned work on a public holiday or on its owner's leave day
+  (owner, 2026-10-05; apps.activities.day_off). The same activities are the
+  marked ones in the month below.{% endcomment %}
+  {% if day_off_rows %}
+  <section class="calendar-dayoff" aria-labelledby="calendar-dayoff-heading">
+    <svg class="calendar-dayoff__mark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /></svg>
+    <div class="calendar-dayoff__copy">
+      <h2 id="calendar-dayoff-heading">Reschedule {{ day_off_rows|length }} activit{{ day_off_rows|length|pluralize:"y,ies" }} in {{ month_name }}</h2>
+      <p>{{ day_off_rows|length|pluralize:"It is,They are" }} planned on a public holiday or on a day the responsible person is on leave. Open an activity and choose Reschedule.</p>
+      <ul class="calendar-dayoff__list">
+        {% for row in day_off_rows %}
+        <li>
+          <a href="/my-plan/{{ row.id }}">{{ row.title }}{% if row.place %} · {{ row.place }}{% endif %}</a>
+          <span>{{ row.why }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
 
   {% if can_add_calendar_event %}
   <details class="calendar-event-composer">
@@ -178,7 +202,10 @@
   </div>
   <p class="sr-only" aria-live="polite" x-text="filterAnnouncement()"></p>
 
-  <div id="calendar-event-surfaces" role="tabpanel">
+  {% comment %}Tick the activities to move, then Reschedule or Cancel in the bar
+  that appears (owner, 2026-10-05). "Select all" ticks every activity shown
+  that the reader may move; a day with several has a box of its own.{% endcomment %}
+  <div id="calendar-event-surfaces" role="tabpanel" data-select-scope>
 
   <section class="calendar-mobile" aria-labelledby="calendar-mobile-heading">
     <header class="calendar-mobile__header">
@@ -214,11 +241,11 @@
         {% else %}
         <button
           type="button"
-          class="calendar-mobile__day{% if day.is_today %} calendar-mobile__day--today{% endif %}"
+          class="calendar-mobile__day{% if day.is_today %} calendar-mobile__day--today{% endif %}{% if day.has_day_off %} calendar-mobile__day--dayoff{% endif %}"
           @click="selectDate('{{ day.date|date:"Y-m-d" }}')"
           :aria-pressed="selectedDate === '{{ day.date|date:"Y-m-d" }}'"
           :class="selectedDate === '{{ day.date|date:"Y-m-d" }}' ? 'is-selected' : ''"
-          aria-label="{{ day.date|date:'l, F j, Y' }}{% if day.kind_counts.all %}, {{ day.kind_counts.all }} events{% endif %}"
+          aria-label="{{ day.date|date:'l, F j, Y' }}{% if day.kind_counts.all %}, {{ day.kind_counts.all }} events{% endif %}{% if day.has_day_off %}, activities to reschedule{% endif %}"
           role="gridcell"
         >
           <span class="calendar-mobile__day-number">{{ day.date|date:"j" }}</span>
@@ -241,6 +268,7 @@
           <p x-text="selectedDate ? 'Selected day' : 'Month agenda'"></p>
           <h2 x-text="selectedDate ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) : '{{ month_name|escapejs }} agenda'"></h2>
         </div>
+        {% if pickable_total %}<label class="calendar-day__pick"><input type="checkbox" data-select-all="input[data-activity-pick]"><span>Select all</span></label>{% endif %}
         <button type="button" x-show="selectedDate" x-cloak @click="selectedDate = ''">All month</button>
       </header>
       <div class="calendar-agenda calendar-agenda--mobile">
@@ -271,6 +299,7 @@
         </div>
       </div>
 
+      {% if pickable_total %}<label class="calendar-day__pick calendar-month__pick-all"><input type="checkbox" data-select-all="input[data-activity-pick]"><span>Select all</span></label>{% endif %}
       <nav class="calendar-month__controls" aria-label="Calendar date controls">
         <a class="btn btn-secondary calendar-month__icon-control" :href="withEventFilter('{{ prev_qs|escapejs }}')" aria-label="Previous month">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg>
@@ -321,10 +350,11 @@
             (owner, 2026-10-02: "some months have more days like feb").{% endcomment %}
             <div class="calendar-day calendar-day--outside" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}, outside this month"></div>
             {% else %}
-            <article class="calendar-day{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
+            <article class="calendar-day{% if day.is_today %} calendar-day--today{% endif %}{% if day.has_day_off %} calendar-day--dayoff{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}{% if day.has_day_off %}, activities to reschedule{% endif %}" data-select-scope>
               <div class="calendar-day__topline">
                 <time datetime="{{ day.date|date:'Y-m-d' }}" class="calendar-day__number">{{ day.date|date:"j" }}</time>
                 {% if day.is_today %}<span class="calendar-day__today-label">Today</span>{% endif %}
+                {% if day.kind_counts.pick > 1 %}<label class="calendar-day__pick" title="Select every activity on {{ day.date|date:'j F' }}"><input type="checkbox" data-select-all="input[data-activity-pick]" aria-label="Select every activity on {{ day.date|date:'l j F' }}"></label>{% endif %}
               </div>
               <div class="calendar-day__events">
                 {% for event in day.events %}{% include "partials/calendar/event.html" %}{% endfor %}
@@ -354,9 +384,11 @@
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--leave"></i> Leave</span>
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--holiday"></i> Holidays</span>
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--event"></i> Other events</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--dayoff"></i> On a holiday or leave day: reschedule</span>
       <p>Leave, holidays, and organization events are overlays and never count as activities. Organization events block new visits and trainings.</p>
     </footer>
   </section>
   </div>
+  {% if pickable_total %}{% include "partials/activities/selection_bar.html" %}{% endif %}
 </section>
 {% endblock %}

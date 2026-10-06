@@ -29,17 +29,29 @@ from apps.projects.test_project_monitoring_schools import _Fixture
 
 # District joined them on 2026-10-02 (owner: "Add the district column on the
 # project tables so that the users can know which district the schools
-# assigned belongs").
+# assigned belongs"). On 2026-10-05 the owner listed the table's columns
+# afresh (apps.projects.school_table): Staff Name left the table for the
+# row's details, and the scores, the planning, the execution and the
+# activity's status and cost joined it.
 COLUMNS = [
+    "Project Name",
     "School ID",
     "School Name",
     "District",
-    "Staff Name",
     "Training",
     "Purpose of Assignment",
     "SSA Intervention",
+    "Previous SSA Score",
+    "Current SSA Score",
+    "SSA Improvement",
     "Status",
-    "Activity date",
+    "Activity Date",
+    "Enrolled On",
+    "Planning Stage",
+    "Planned By",
+    "Execution",
+    "Activity Status",
+    "Activity Cost",
     "Actions",
 ]
 
@@ -66,14 +78,23 @@ class _TableFixture(_Fixture):
         return response.content.decode()
 
 
-class TheNineColumnsTest(_TableFixture):
+class TheOwnersColumnsTest(_TableFixture):
     def test_every_reader_gets_the_owners_columns_in_order(self):
         for user in (self.lead_user, self.ia_user, self.coord_user):
             with self.subTest(role=user.active_role):
                 body = self.page(user)
                 start = body.index("data-project-schools")
-                table = body[start : body.index("</table>", start)]
-                headers = re.findall(r'<th scope="col"[^>]*>([^<]+)</th>', table)
+                table = body[start : body.index("</thead>", start)]
+                # A long heading is written on two lines. The coordinator's
+                # tick column is a control, not one of the owner's columns.
+                headers = [
+                    re.sub(r"\s*<br>\s*", " ", heading)
+                    for heading in re.findall(
+                        r'<th scope="col"(?! class="school-plan-table__select")'
+                        r"[^>]*>(.+?)</th>",
+                        table,
+                    )
+                ]
                 self.assertEqual(headers, COLUMNS)
 
 

@@ -4226,13 +4226,17 @@ main textarea,
    Programme Lead's schools, a cluster's members — is not content on the
    surface, it is where a section of the table starts, and flattening it
    to the table surface left a grouped card reading as one undivided list
-   (owner, 2026-09-16). Its own treatment is in components.css. */
+   (owner, 2026-09-16). Its own treatment is in components.css.
+
+   A row may tint its own surface through --edify-table-row-tint: planned
+   work on a public holiday or a leave day is marked red as a row (owner,
+   2026-10-05; .mp-dayoff-row in pages.css). */
 :root :is(main, .drawer-body, [role="dialog"])
   table.edify-plain-table.edify-plain-table.edify-plain-table
   :is(thead, tbody, tfoot, tr, th, td):not(.edify-group-head, .edify-group-head > th, .budget-ledger-band, .budget-ledger-band > th, .budget-ledger-band > td, .budget-ledger-subtotal, .budget-ledger-subtotal > th, .budget-ledger-subtotal > td) {
   border: 0 !important;
   box-shadow: none !important;
-  background-color: var(--edify-surface-raised) !important;
+  background-color: var(--edify-table-row-tint, var(--edify-surface-raised)) !important;
   background-image: none !important;
 }
 /* The group heading's own chips are part of the heading, not content inside

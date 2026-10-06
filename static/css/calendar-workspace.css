@@ -55,6 +55,64 @@
   height: var(--edify-action-button-icon-size);
 }
 
+/* Activities to move off a public holiday or a leave day. */
+.calendar-dayoff {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-block-end: 1rem;
+  padding: 0.8rem var(--edify-card-inset, 1rem);
+  border: 1px solid color-mix(in oklab, var(--edify-danger) 40%, transparent);
+  border-radius: var(--edify-radius-surface);
+  color: var(--edify-danger-text);
+  background: var(--edify-danger-light);
+}
+
+.calendar-dayoff__mark {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.1rem;
+}
+
+.calendar-dayoff__copy {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.calendar-dayoff__copy h2 {
+  margin: 0;
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+}
+
+.calendar-dayoff__copy p {
+  margin: 0;
+  font-size: var(--edify-text-caption-size);
+}
+
+.calendar-dayoff__list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--edify-text-caption-size);
+}
+
+.calendar-dayoff__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+}
+
+.calendar-dayoff__list a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .calendar-event-composer {
   margin-block: -0.4rem 1rem;
 }
@@ -449,6 +507,14 @@
   background: var(--brand-primary);
 }
 
+.calendar-day--dayoff {
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--edify-danger) 55%, transparent);
+}
+
+.calendar-day--dayoff:not(.calendar-day--today) .calendar-day__number {
+  color: var(--edify-danger-text);
+}
+
 .calendar-day__today-label {
   color: var(--brand-primary-text);
   font-size: var(--edify-text-micro-size);
@@ -564,6 +630,81 @@ a.calendar-event:focus-visible {
   border-end-start-radius: 0;
 }
 
+/* Planned work on a public holiday or on its owner's leave day (owner,
+   2026-10-05): the holiday's own colour whatever the programme family, with
+   a solid edge so it does not read as the holiday itself. */
+.calendar-event.calendar-event--dayoff {
+  border-color: var(--edify-danger);
+  color: var(--edify-danger-text);
+  background: var(--edify-danger-light);
+}
+
+.calendar-event.calendar-event--dayoff .calendar-event__dot {
+  background: var(--edify-danger);
+}
+
+/* A planned activity the reader may move or cancel: a tick box where the dot
+   was, the link beside it (owner, 2026-10-05). The chip lifts on hover as a
+   linked chip does. */
+.calendar-event--pick {
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+.calendar-event--pick:hover,
+.calendar-event--pick:focus-within {
+  border-color: currentColor;
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.calendar-event__pick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.calendar-event__pick input,
+.calendar-day__pick input {
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  margin: 0;
+  accent-color: var(--brand-primary);
+  cursor: pointer;
+}
+
+.calendar-event__pick input {
+  margin-top: 0.12rem;
+}
+
+a.calendar-event__copy {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.calendar-event__copy:hover strong,
+a.calendar-event__copy:focus-visible strong {
+  text-decoration: underline;
+}
+
+/* One box for a whole day, and one for everything shown. */
+.calendar-day__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  margin-inline-start: auto;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-caption-size);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.calendar-month__pick-all {
+  margin-inline-end: 0.75rem;
+}
+
 .calendar-event__dot {
   flex: 0 0 auto;
   width: 0.38rem;
@@ -644,6 +785,10 @@ a.calendar-event:focus-visible {
 .calendar-month__legend-dot--leave { background: var(--edify-warning); }
 .calendar-month__legend-dot--holiday { background: var(--edify-danger); }
 .calendar-month__legend-dot--event { background: var(--edify-purple); }
+.calendar-month__legend-dot--dayoff {
+  border: 2px solid var(--edify-danger);
+  background: var(--edify-danger-light);
+}
 
 /* Agenda list — the chronological rendering of the same month. */
 .calendar-agenda__days {
@@ -957,6 +1102,12 @@ a.calendar-event:focus-visible {
     color: var(--brand-primary-text);
   }
 
+  .calendar-mobile__day--dayoff:not(.is-selected) .calendar-mobile__day-number {
+    border-color: var(--edify-danger);
+    color: var(--edify-danger-text);
+    background: var(--edify-danger-light);
+  }
+
   .calendar-mobile__day--outside {
     background: transparent !important;
     color: var(--edify-text-disabled);
@@ -1078,6 +1229,24 @@ a.calendar-event:focus-visible {
     border-radius: var(--edify-radius-pill);
     background: currentColor;
     content: '';
+  }
+
+  /* The tick box takes the tile's place and its finger-sized square. */
+  .calendar-agenda--mobile .calendar-event__pick {
+    inline-size: 2.1rem;
+    block-size: 2.1rem;
+  }
+
+  .calendar-agenda--mobile .calendar-event__pick input {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    margin: 0;
+  }
+
+  .calendar-agenda--mobile .calendar-event--pick:hover,
+  .calendar-agenda--mobile .calendar-event--pick:focus-within {
+    border-color: var(--edify-border);
+    box-shadow: none;
   }
 
   .calendar-agenda--mobile .calendar-event__copy strong {

@@ -13,7 +13,7 @@ work to on a click on their name, like a cluster accordion (owner,
     </button>{% endif %}{{ row.name }}</span>{% if row.kind == "pl_personal" %}<span class="cpo-hint"><span>own plan</span></span>{% elif row.kind == "other" %}<span class="cpo-hint"><span>not a Programme Lead or CCEO</span></span>{% endif %}
     {% if row.cells.over_cap %}<span class="cpo-flagged" title="Visits planned past the {{ row.cells.target }} this role plans in a year. Nothing was refused: the visits past the ceiling are the Partner's share"><span>{{ row.cells.over_cap_text }} over the {{ row.cells.target }} ceiling</span></span>{% endif %}{% if row.cells.shortfall %}<span class="cpo-flagged" title="The schools this person holds allow fewer visits than their target: 2 per Core school and 1 per Client, Core Trained and Core Graduate school"><span>schools short by {{ row.cells.shortfall }}</span></span>{% endif %}{% if row.cells.deficit %}<span class="cpo-flagged" title="Core staff slots beyond the annual staff ceiling"><span>{{ row.cells.deficit }} over capacity</span></span>{% elif row.cells.core_only_people %}<span class="cpo-flagged" title="The Core schools held take the whole ceiling at two visits each, so every other school held is the Partner's"><span>Core schools take the whole ceiling</span></span>{% endif %}
   </th>
-  {% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups %}
+  {% with person="cceo="|add:row.key officer="officer="|add:row.key %}{% include "partials/country_oversight/_cells.html" with cells=row.cells followups=row.followups scope=person people=officer %}{% endwith %}
   <td class="cpo-actcell">
     <div class="cpo-acts">
       <button type="button" class="cpo-view"

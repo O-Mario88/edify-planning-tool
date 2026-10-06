@@ -1,0 +1,44 @@
+{% extends "layouts/login.html" %}
+{% comment %}
+Shown when a request's security token is refused
+(apps.frontend.views.csrf_views.csrf_failure), in place of Django's bare
+"CSRF verification failed. Request aborted." The usual cause is a page that
+was open before the person last signed in. Rendering this page leaves the
+browser holding a current token, so the same form is accepted the next time.
+{% endcomment %}
+
+{% block title %}That was not sent | Edify Planning &amp; Monitoring{% endblock %}
+{% block shell_variant %}focus{% endblock %}
+
+{% block auth_content %}
+<header class="login-heading">
+  <h1 id="not-sent-title" class="edify-page-title">That was not sent</h1>
+  <p>Nothing was changed. This page had been open since before you last signed in, so its security check was out of date.</p>
+</header>
+
+<div class="login-alert login-alert--info" role="status">
+  <svg class="login-alert__icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 17h.01"></path></svg>
+  <span>Go back and send it again. It will go through this time.</span>
+</div>
+
+{% comment %}
+login.js turns the first link into a step back through history, which returns
+to the form with what was typed still in it. Its address is where it goes when
+there is no page to go back to.
+{% endcomment %}
+{% if signed_in %}
+<a class="login-submit" href="/dashboard" data-go-back>
+  <span>Go back and try again</span>
+</a>
+<div class="login-options">
+  <a class="forgot-button" href="/dashboard">Open the dashboard</a>
+</div>
+{% else %}
+<a class="login-submit" href="/login" data-go-back>
+  <span>Go back and try again</span>
+</a>
+<div class="login-options">
+  <a class="forgot-button" href="/login">Sign in</a>
+</div>
+{% endif %}
+{% endblock %}

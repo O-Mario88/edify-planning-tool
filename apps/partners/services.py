@@ -1110,18 +1110,31 @@ def create_assignment(**fields):
     only thing that moves it. Audit + partner notification ride on the
     post_save signal (apps/partners/signals.py), which covers every creation
     path by construction.
+
+    Nor do callers date it (owner, 2026-10-05: "the date on the partner
+    assignment drawer should change from target date to assigned date so that
+    the staff cannot schedule for the partner"). A hand-over carries the day
+    it was made, which is ``created_at``; ``scheduled_date`` is written when
+    the partner schedules the work and by nothing before that.
     """
     from apps.schools.lifecycle_service import assert_operating
 
     from .models import PartnerAssignment
 
+    from .handover_policy import past_school_rules
+
     fields.pop("status", None)
+    fields.pop("scheduled_date", None)
     school = fields.get("school")
     assert_operating(school)
-    _assert_school_takes_partner_work(school)
-    _assert_partner_half_open(school, fields)
-    _assert_project_partner(fields)
-    _assert_partner_delivers(fields)
+    # A project's hand-over goes past the school rules below for now (owner,
+    # 2026-10-05; `handover_policy`). A closed school takes no new work either
+    # way.
+    if not past_school_rules(fields.get("project"), fields.get("project_id")):
+        _assert_school_takes_partner_work(school)
+        _assert_partner_half_open(school, fields)
+        _assert_project_partner(fields)
+        _assert_partner_delivers(fields)
     try:
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.

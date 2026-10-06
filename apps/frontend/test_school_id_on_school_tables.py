@@ -103,7 +103,9 @@ class SchoolTablesShowTheSchoolIdTest(SimpleTestCase):
         belongs"."""
         root = Path(settings.BASE_DIR) / "templates"
         for name in (
-            "pages/projects/monitoring.html",
+            # Project Monitoring's table, and Planning Oversight's Special
+            # Projects tab, which draws the same one.
+            "partials/projects/monitoring_school_table.html",
             "pages/projects/detail.html",
             "partials/projects/project_schools_table.html",
             "partials/projects/planning_workspace.html",

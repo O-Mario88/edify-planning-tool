@@ -1,0 +1,17 @@
+{% load row_actions %}{% comment %}
+What a school on a drill-down list offers its holder (owner, 2026-10-05:
+"the list should have the action buttons with schedule or assign ... and for
+schools that need rescheduling should be in the action button. double
+schedule (staff and partner) list should have option for the staff to
+cancel"). `school.acts` is apps.planning.list_actions.RowActions: Schedule
+and Assign by the Planning page's own gate, greyed with its reason;
+Reschedule and Cancel for the staff work already planned there; Withdraw
+where a Partner still holds it. A school that is not the reader's has none.
+{% endcomment %}{% if school.acts.any %}{% row_actions school.name %}
+  {% if school.acts.schedule_url %}<button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.acts.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule activity for {{ school.name }}">Schedule</button>{% elif school.acts.schedule_reason %}<button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" disabled aria-label="Schedule unavailable: {{ school.acts.schedule_reason }}">Schedule<span class="row-menu__reason">{{ school.acts.schedule_reason }}</span></button>{% endif %}
+  {% if school.acts.assign_url %}<button type="button" class="row-menu__item" role="menuitem" hx-get="{{ school.acts.assign_url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.name }} to a partner">Assign to partner</button>{% elif school.acts.assign_reason %}<button type="button" class="row-menu__item" role="menuitem" aria-disabled="true" disabled aria-label="Assign unavailable: {{ school.acts.assign_reason }}">Assign to partner<span class="row-menu__reason">{{ school.acts.assign_reason }}</span></button>{% endif %}
+  {% if school.acts.reschedule_url %}<button type="button" class="row-menu__item" role="menuitem" data-reschedule-trigger hx-get="{{ school.acts.reschedule_url }}" hx-trigger="click consume" hx-target="#drawer-container" hx-swap="innerHTML">Reschedule{% if school.acts.activities|length > 1 %} {{ school.acts.activities|length }} activities{% endif %}</button>{% endif %}
+  {% if school.acts.cancel_url %}<button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" data-cancel-trigger hx-get="{{ school.acts.cancel_url }}" hx-trigger="click consume" hx-target="#drawer-container" hx-swap="innerHTML">Cancel {% if school.acts.activities|length > 1 %}{{ school.acts.activities|length }} staff activities{% else %}staff activity{% endif %}</button>{% endif %}
+  {% if school.acts.withdraw_url %}<button type="button" class="row-menu__item row-menu__item--danger" role="menuitem" hx-get="{{ school.acts.withdraw_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Withdraw from Partner</button>{% endif %}
+  <a class="row-menu__item" role="menuitem" href="{{ school.url }}">Open school</a>
+{% endrow_actions %}{% else %}<span class="edify-text-muted" aria-hidden="true">—</span><span class="sr-only">No action available</span>{% endif %}

@@ -24,7 +24,11 @@ person who planned it; a school's coverage for whoever holds the school
   </p>
   {% endif %}
 
-  <section class="cpo-metrics" aria-label="Country planning summary">
+  {% comment %}The cards, the two tables and the charts are each read again
+  when the plan changes (owner, 2026-10-05: "Every event should update ... in
+  real time"; docs/ui-components.md, "Live regions"). The filters above them
+  are not: a reader's half-made selection is never redrawn under them.{% endcomment %}
+  <section class="cpo-metrics" id="cpo-summary" data-live-region aria-label="Country planning summary">
     {% for card in kpis %}
     {% comment %}Every card is a link to the consolidated table of what it
     counts, grouped by Programme Lead (owner, 2026-10-01).{% endcomment %}

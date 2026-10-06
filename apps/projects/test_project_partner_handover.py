@@ -13,6 +13,7 @@ its delivery. Both controls now open the project handover
 from __future__ import annotations
 
 from datetime import timedelta
+from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
@@ -27,6 +28,13 @@ from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.projects.planning_service import get_planning
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+
+#: The school rules a project hand-over goes past for now (owner, 2026-10-05;
+#: apps.partners.handover_policy), switched back on for the tests that hold
+#: them for the day they return.
+KEEP_SCHOOL_RULES = mock.patch(
+    "apps.partners.handover_policy.PROJECT_HANDOVERS_KEEP_SCHOOL_RULES", True
+)
 
 
 class ProjectPartnerHandoverTest(TestCase):
@@ -133,8 +141,7 @@ class ProjectPartnerHandoverTest(TestCase):
         self.client.force_login(self.coord_user)
         drawer = self.client.get(self._row()["partner_url"])
         self.assertEqual(drawer.status_code, 200)
-        items = drawer.context["catalogue_items"]
-        self.assertTrue(items, "the seeded catalogue offers partner work here")
+        self.assertEqual(drawer.context["assignments"], [self.enrolment])
 
         response = self.client.post(
             "/projects/planning/bulk-partner",
@@ -144,7 +151,7 @@ class ProjectPartnerHandoverTest(TestCase):
                 "scheduled_date": (
                     timezone.localdate() + timedelta(days=7)
                 ).isoformat(),
-                "catalogue_item_id": items[0]["catalogueItemId"],
+                "purpose_of_visit": "ssa_support",
             },
         )
         self.assertEqual(response.status_code, 200, response.content[:400])
@@ -206,11 +213,13 @@ class ProjectPartnerHandoverTest(TestCase):
         """Owner, 2026-09-24: a school is assigned to the partner once. The
         drawer used to skip only an exact catalogue-item repeat, so choosing
         a different activity handed the same school over again."""
-        self.client.force_login(self.coord_user)
-        items = self.client.get(self._row()["partner_url"]).context["catalogue_items"]
-        self.assertGreater(len(items), 1, "two activities to choose between")
+        import json
 
-        def hand_over(item):
+        self.client.force_login(self.coord_user)
+        drawer = self.client.get(self._row()["partner_url"])
+        first, second = json.loads(drawer.context["training_courses_json"])[:2]
+
+        def hand_over(course):
             return self.client.post(
                 "/projects/planning/bulk-partner",
                 {
@@ -219,12 +228,13 @@ class ProjectPartnerHandoverTest(TestCase):
                     "scheduled_date": (
                         timezone.localdate() + timedelta(days=7)
                     ).isoformat(),
-                    "catalogue_item_id": item["catalogueItemId"],
+                    "purpose_of_visit": "in_school_training",
+                    "training_course_id": course["id"],
                 },
             )
 
-        self.assertEqual(hand_over(items[0]).status_code, 200)
-        again = hand_over(items[1])
+        self.assertEqual(hand_over(first).status_code, 200)
+        again = hand_over(second)
         self.assertEqual(again.status_code, 200, again.content[:400])
         self.assertContains(again, "already assigned to PPH Partner")
         self.assertEqual(
@@ -237,7 +247,6 @@ class ProjectPartnerHandoverTest(TestCase):
     # ── The project's own partners (audit follow-up, 2026-10-01) ──────────
     def _post_handover(self, partner, **extra):
         self.client.force_login(self.coord_user)
-        items = self.client.get(self._row()["partner_url"]).context["catalogue_items"]
         return self.client.post(
             "/projects/planning/bulk-partner",
             {
@@ -246,11 +255,12 @@ class ProjectPartnerHandoverTest(TestCase):
                 "scheduled_date": (
                     timezone.localdate() + timedelta(days=7)
                 ).isoformat(),
-                "catalogue_item_id": items[0]["catalogueItemId"],
+                "purpose_of_visit": "ssa_support",
                 **extra,
             },
         )
 
+    @KEEP_SCHOOL_RULES
     def test_the_project_s_partners_come_first_and_others_need_a_reason(self):
         from apps.projects.models import ProjectPartnerAssignment
 
@@ -282,6 +292,29 @@ class ProjectPartnerHandoverTest(TestCase):
             handover.override_reason, "Only partner working in the district"
         )
 
+    def test_for_now_a_partner_outside_the_list_needs_no_reason(self):
+        """Owner, 2026-10-05: "all projects schools added to a project can be
+        assigned to any partner", and of the reason asked of a partner outside
+        the project's list: "yes for now"."""
+        from apps.projects.models import ProjectPartnerAssignment
+
+        ProjectPartnerAssignment.objects.create(
+            project=self.project, partner=self.partner
+        )
+        outsider = Partner.objects.create(name="PPH Outsider", active_status=True)
+        self.client.force_login(self.coord_user)
+        drawer = self.client.get(self._row()["partner_url"])
+        # The project's own partners still lead the list.
+        self.assertEqual(
+            [p.id for p in drawer.context["project_partners"]], [self.partner.id]
+        )
+        self.assertContains(drawer, 'label="Other partners"')
+        self.assertNotContains(drawer, "reason required")
+
+        accepted = self._post_handover(outsider)
+        self.assertEqual(accepted.status_code, 200, accepted.content[:400])
+        self.assertTrue(PartnerAssignment.objects.filter(partner=outsider))
+
     def test_a_project_with_no_partner_list_takes_any_partner(self):
         outsider = Partner.objects.create(name="PPH Any", active_status=True)
         response = self._post_handover(outsider)
@@ -291,8 +324,6 @@ class ProjectPartnerHandoverTest(TestCase):
     def test_bulk_schedule_skips_a_refused_school_and_names_it(self):
         """One school the scheduling rules refuse no longer costs the
         coordinator the rest of the selection (audit follow-up, 2026-10-01)."""
-        from unittest import mock
-
         from apps.core.exceptions import BadRequest
 
         second_school = School.objects.create(
@@ -316,26 +347,9 @@ class ProjectPartnerHandoverTest(TestCase):
             return {"id": "x"}
 
         self.client.force_login(self.coord_user)
-        with (
-            mock.patch(
-                "apps.frontend.views.planning_views._common_project_recommendations",
-                return_value=(
-                    [{"catalogueItemId": "item-1"}],
-                    {
-                        a: {
-                            "item-1": {
-                                "targetIntervention": None,
-                                "recommendationReason": "",
-                            }
-                        }
-                        for a in (self.enrolment.id, second.id)
-                    },
-                ),
-            ),
-            mock.patch(
-                "apps.frontend.views.planning_views.schedule_school_visit",
-                side_effect=schedule,
-            ),
+        with mock.patch(
+            "apps.frontend.views.planning_views.schedule_school_visit",
+            side_effect=schedule,
         ):
             response = self.client.post(
                 "/projects/planning/bulk-schedule",
@@ -344,10 +358,10 @@ class ProjectPartnerHandoverTest(TestCase):
                     "scheduled_date": (
                         timezone.localdate() + timedelta(days=7)
                     ).isoformat(),
-                    "catalogue_item_id": "item-1",
+                    "purpose_of_visit": "ssa_support",
                 },
             )
         self.assertEqual(response.status_code, 200, response.content[:400])
         self.assertEqual(sorted(calls), ["PPH-1", "PPH-2"])
-        self.assertContains(response, "Scheduled 1 project school activities.")
+        self.assertContains(response, "Scheduled 1 project school.")
         self.assertContains(response, "Second Handover Primary has had its visit.")

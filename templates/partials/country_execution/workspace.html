@@ -23,7 +23,12 @@ do (owner, 2026-10-02); they can still be folded away.
     {% endif %}
   </p>
 
-  <section class="cpo-metrics cxo-metrics" aria-label="Execution summary">
+  {% comment %}The cards, the charts, the readings, the type table and the two
+  lists are each read again when the plan changes (owner, 2026-10-05). The
+  table of Leads, CCEOs, Partners, schools and activities is not: which of the
+  five it shows is not in the address, so a redraw would put the reader back
+  on the first.{% endcomment %}
+  <section class="cpo-metrics cxo-metrics" id="cxo-summary" data-live-region aria-label="Execution summary">
     {% for card in kpis %}
     {% comment %}Every card is a link to the consolidated table of the records
     it counts (owner, 2026-10-02).{% endcomment %}
@@ -39,6 +44,7 @@ do (owner, 2026-10-02); they can still be folded away.
       {% endif %}
     </a>
     {% endfor %}
+    {% include "partials/country_oversight/_settle.html" %}
   </section>
 
   {% if targets.status == "ok" %}
@@ -54,7 +60,7 @@ do (owner, 2026-10-02); they can still be folded away.
   <p class="cpo-info" role="note"><strong>Targets</strong> are held by people, not by region, delivery channel, Partner or activity type, so they are not shown for this filter. Clear it, or choose a Programme Lead or CCEO, to read planned output against validated actual.</p>
   {% endif %}
 
-  <section class="cxo-charts" aria-label="Execution charts">
+  <section class="cxo-charts" id="cxo-charts" data-live-region aria-label="Execution charts">
     <figure class="cpo-chart cxo-chart" x-data="cpxChart('cxo-funnel-data', 'funnel')" data-no-titlebar aria-labelledby="cxo-funnel-name">
       <h2 class="cpo-chart-name" id="cxo-funnel-name" data-no-titlebar>Execution Funnel
         <span class="cxo-hint" title="Partner work goes straight to IA: it has no PL review stage.">Staff and Partner</span></h2>
@@ -123,7 +129,7 @@ do (owner, 2026-10-02); they can still be folded away.
     {% endfor %}
   </section>
 
-  <section class="cxo-readings" aria-label="On-time, backlog, age and forecast">
+  <section class="cxo-readings" id="cxo-readings" data-live-region aria-label="On-time, backlog, age and forecast">
     <figure class="cpo-chart cxo-reading" x-data="cpxChart('cxo-ontime-data', 'donut')" data-no-titlebar aria-labelledby="cxo-ontime-name">
       <h2 class="cpo-chart-name" id="cxo-ontime-name" data-no-titlebar>On-Time Execution</h2>
       {{ charts.on_time|json_script:"cxo-ontime-data" }}
@@ -181,7 +187,7 @@ do (owner, 2026-10-02); they can still be folded away.
   {% include "partials/country_execution/_table.html" %}
 
   <section class="cxo-lower" aria-label="Issues, recent activity and follow-ups">
-    <section class="cpo-chart cxo-list" data-no-titlebar aria-labelledby="cxo-issues-name">
+    <section class="cpo-chart cxo-list" id="cxo-issues" data-live-region data-no-titlebar aria-labelledby="cxo-issues-name">
       <h2 class="cpo-chart-name" id="cxo-issues-name" data-no-titlebar>Top Execution Issues</h2>
       {% if issues %}
       {% paginate issues "issues_page" as issues_pager %}
@@ -198,7 +204,7 @@ do (owner, 2026-10-02); they can still be folded away.
       <p class="cpo-muted">Nothing past its date is open in this selection.</p>
       {% endif %}
     </section>
-    <section class="cpo-chart cxo-list" data-no-titlebar aria-labelledby="cxo-recent-name">
+    <section class="cpo-chart cxo-list" id="cxo-recent" data-live-region data-no-titlebar aria-labelledby="cxo-recent-name">
       <h2 class="cpo-chart-name" id="cxo-recent-name" data-no-titlebar>Recent Activity</h2>
       {% if recent %}
       {% paginate recent "recent_page" as recent_pager %}

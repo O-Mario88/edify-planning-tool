@@ -194,6 +194,10 @@ _KEY_LABEL = {
     "secondary_transport_per_day": "Secondary district daily transport pool",
     "secondary_lunch_per_day": "Secondary district daily lunch pool",
     "secondary_accommodation_per_night": "Secondary district accommodation per night",
+    "management_accommodation_per_night": (
+        "Accommodation per night for staff other than a CCEO (Program Lead, "
+        "Country Director, Impact Assessment, Accountant and other staff)"
+    ),
     "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
     "secondary_breakfast_per_day": "Breakfast",
     "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
@@ -442,15 +446,84 @@ def minimum_cost(input: dict, catalogue: CostCatalogue | None) -> ActivityCost:
     )
 
 
+def minimum_share(line: dict, setting) -> int | None:
+    """One stored cost component at the CD's minimum viable rate.
+
+    ``line`` is a row of a cost snapshot's ``operational_breakdown`` and
+    ``setting`` the rate it was priced from, on the snapshot's own card. None
+    when the component cannot be re-priced: no minimum is set, or the line
+    was priced with its rate missing.
+
+    A component priced from a rate that has since been retired (budget 0023
+    and its predecessors delete the row) has no minimum left to re-price
+    against. It keeps the amount it was priced at, as its
+    ActivityScheduleCostLine does, rather than blanking the whole estimate --
+    which the plan tables read as UGX 0 (owner, 2026-10-04: "Group Trainings
+    Planned for This FY does not show cost").
+    """
+    from decimal import Decimal, ROUND_HALF_UP
+
+    if (
+        setting is None
+        and line.get("key") in RETIRED_COST_SETTING_KEYS
+        and not line.get("missing")
+    ):
+        return int(line.get("amount") or 0)
+    rate = setting.approved_minimum if setting else None
+    unit = line.get("unit")
+    if rate is None or unit is None or line.get("missing"):
+        return None
+    allocation = line.get("dailyAllocation")
+    if allocation:
+        from apps.daily_visit_batches.pricing import allocate_component
+
+        return allocate_component(rate, allocation["count"])[allocation["index"]]
+    # Older snapshots stored the allocated share as their unit. Use the
+    # catalogue's daily rate to preserve that historical fraction; new
+    # snapshots store exact allocation provenance.
+    if unit and "(shared," in line.get("label", ""):
+        unit = setting.unit_cost
+    if not unit:
+        return 0 if rate == 0 else None
+    return int(
+        (Decimal(line["amount"]) * Decimal(rate) / Decimal(unit)).quantize(
+            Decimal("1"), rounding=ROUND_HALF_UP
+        )
+    )
+
+
+def setting_for_line(rates: dict, rate_card_id, key):
+    """The rate a stored component was priced from: ``rates`` is keyed by
+    (catalogue id, key). A card from before a rate was renamed or split
+    carries the row under its old key (the second accommodation rate was
+    split off the first on 2026-10-05)."""
+    from apps.budget.reference import RATE_ALIASES
+
+    setting = rates.get((rate_card_id, key))
+    if setting is None:
+        setting = next(
+            (
+                rates[(rate_card_id, old)]
+                for old in RATE_ALIASES.get(key, ())
+                if (rate_card_id, old) in rates
+            ),
+            None,
+        )
+    return setting
+
+
 def planned_minimum_amounts(activities) -> dict:
     """Staff estimates from frozen cost components, including shared-day splits.
 
     Re-price each stored component's actual share instead of re-running a whole
     visit-day recipe for every school. Two bulk reads avoid per-activity queries.
     Missing minimum rates or provenance never fall back to operational amounts.
-    """
-    from decimal import Decimal, ROUND_HALF_UP
 
+    A component priced from a rate that has since been retired is the
+    exception: it has no minimum to re-price at, and counts at what it was
+    priced (``minimum_share``, which the activity page's budget breakdown
+    reads line by line so its lines add up to this figure).
+    """
     # Only the five columns the estimate reads. A whole snapshot carries five
     # JSON documents, and decoding them for every activity in a field
     # officer's year was half the cost of My Plan (2026-09-24 audit).
@@ -487,49 +560,13 @@ def planned_minimum_amounts(activities) -> dict:
             or bool(missing_configuration)
         )
         for line in breakdown:
-            setting = rates.get((rate_card_id, line.get("key")))
-            if (
-                setting is None
-                and line.get("key") in RETIRED_COST_SETTING_KEYS
-                and not line.get("missing")
-            ):
-                # A rate retired after this line was priced (budget 0023 and
-                # its predecessors delete the row) has no minimum left to
-                # re-price against. The line keeps the amount it was priced
-                # at, as its ActivityScheduleCostLine does, rather than
-                # blanking the whole estimate -- which the plan tables read
-                # as UGX 0 (owner, 2026-10-04: "Group Trainings Planned for
-                # This FY does not show cost").
-                total += int(line.get("amount") or 0)
-                continue
-            rate = setting.approved_minimum if setting else None
-            unit = line.get("unit")
-            if rate is None or unit is None or line.get("missing"):
+            share = minimum_share(
+                line, setting_for_line(rates, rate_card_id, line.get("key"))
+            )
+            if share is None:
                 missing = True
                 break
-            allocation = line.get("dailyAllocation")
-            if allocation:
-                from apps.daily_visit_batches.pricing import allocate_component
-
-                total += allocate_component(rate, allocation["count"])[
-                    allocation["index"]
-                ]
-            elif unit:
-                # Older snapshots stored the allocated share as their unit.
-                # Use the catalogue's daily rate to preserve that historical
-                # fraction; new snapshots store exact allocation provenance.
-                if "(shared," in line.get("label", ""):
-                    unit = setting.unit_cost
-                if not unit:
-                    missing = missing or rate != 0
-                    continue
-                total += int(
-                    (Decimal(line["amount"]) * Decimal(rate) / Decimal(unit)).quantize(
-                        Decimal("1"), rounding=ROUND_HALF_UP
-                    )
-                )
-            elif rate != 0:
-                missing = True
+            total += share
         amounts[activity_id] = None if missing else total
     return amounts
 
@@ -572,6 +609,12 @@ def _planning_day_context(
     )
 
     input = dict(_profiled_input(input))
+    if responsible_user_id:
+        # The night away is paid at the traveller's accommodation rate
+        # (owner, 2026-10-05), whether or not the day is chosen yet.
+        from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+        input["accommodationKey"] = accommodation_key_for_staff(responsible_user_id)
     raw_date = input.get("plannedDate") or input.get("date")
     if not raw_date or not responsible_user_id:
         return input, 1
@@ -621,6 +664,12 @@ def _planning_day_context(
         or _days_of(input) > 1
     ):
         return input, 1
+    if input.get("districtType") == "secondary":
+        # The last of a run of days in a secondary district is the day the
+        # traveller comes home: no night, no dinner (owner, 2026-10-05).
+        from apps.daily_visit_batches.return_day import is_return_day
+
+        input["returnDay"] = is_return_day(responsible_user_id, day)
     batch = DailyVisitBatch.objects.filter(
         responsible_user=responsible_user_id,
         visit_date=day,
@@ -834,7 +883,10 @@ def _line_item_type(key: str) -> str:
         return "transport"
     if key in ("primary_lunch_per_day", "secondary_lunch_per_day", "lunch_per_day"):
         return "lunch"
-    if key == "secondary_accommodation_per_night":
+    if key in (
+        "secondary_accommodation_per_night",
+        "management_accommodation_per_night",
+    ):
         return "accommodation"
     if key == "secondary_overnight_dinner_per_day":
         return "dinner"
@@ -933,6 +985,7 @@ def _programme_period_specs(cost, activity, planned_date):
         "secondary_transport_per_day",
         "secondary_lunch_per_day",
         "secondary_accommodation_per_night",
+        "management_accommodation_per_night",
         "secondary_overnight_dinner_per_day",
         "secondary_breakfast_per_day",
         "secondary_incidentals_per_day",
@@ -1200,6 +1253,12 @@ def apply_to_activity(
                 activity=activity, vendor_paid=True
             ).values_list("cost_setting_key", flat=True)
         )
+        # The night is one booking under either accommodation rate: a line
+        # re-priced from the CCEO's rate onto its traveller's keeps it.
+        from apps.daily_visit_batches.pricing import ACCOMMODATION_KEYS
+
+        if vendor_paid_keys & ACCOMMODATION_KEYS:
+            vendor_paid_keys |= ACCOMMODATION_KEYS
         ActivityScheduleCostLine.objects.filter(activity=activity).delete()
 
         # Tag Core activity budget lines

@@ -1,0 +1,12 @@
+{% comment %}A group reschedule or cancel that changed nothing (owner,
+2026-10-05): the drawer stays open with each activity's reason. One that
+changed anything closes and reloads the page with the summary instead
+(apps.frontend.views.activity_group_views._finish).{% endcomment %}
+<div class="edify-note space-y-2" data-tone="danger" role="alert" data-drawer-stay-open data-group-outcome>
+  <p class="edify-note__title">Nothing was {{ verb }}.</p>
+  <ul class="space-y-1 text-sm">
+    {% for pick in refused %}
+    <li><strong>{{ pick.title }} · {{ pick.where }}</strong>: {{ pick.refusal }}</li>
+    {% endfor %}
+  </ul>
+</div>

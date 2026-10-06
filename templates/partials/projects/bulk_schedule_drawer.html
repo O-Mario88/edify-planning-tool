@@ -1,17 +1,60 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+The coordinator schedules the same dated work at the project schools ticked
+on Project Monitoring or Special Projects Planning.
 
-{% block drawer_title %}Schedule visits for {{ assignments|length }} project school{{ assignments|length|pluralize }}{% endblock %}
+The planner says what is scheduled, as on the single Schedule drawer: the
+purpose and, for an In-school Training, the training. It used to ask for a
+Catalogue Activity the project approved and every selected school was eligible
+for, and a project with none could not be scheduled in bulk (owner,
+2026-10-05: "apply to the staff (project coordinator)"). The project's own
+trainings lead the list.
+{% endcomment %}
+
+{% block drawer_title %}Schedule {{ assignments|length }} project school{{ assignments|length|pluralize }}{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
-<form hx-post="/projects/planning/bulk-schedule" hx-target="#bulk-schedule-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700">
+<form hx-post="/projects/planning/bulk-schedule" hx-target="#bulk-schedule-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-[13px] text-slate-700"
+      x-data="{
+        purposeOfVisit: '',
+        trainingCourseId: '',
+        trainingCourses: {{ training_courses_json|default:'[]' }},
+        get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get projectCourses() { return this.trainingCourses.filter(course => course.projectCourse); },
+        get otherCourses() { return this.trainingCourses.filter(course => !course.projectCourse); },
+        onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
+      }"
+      data-project-staff-schedule>
   {% csrf_token %}<input type="hidden" name="assignments" value="{{ assignment_ids }}">
   <div id="bulk-schedule-errors"></div>
   <div class="space-y-1">
     <p class="edify-text-caption font-semibold text-slate-600">Selected project schools</p>
     <ul class="max-h-28 overflow-auto space-y-1 edify-text-caption text-slate-600">{% for item in assignments %}<li>{{ item.school.name }} · {{ item.project.name }}</li>{% endfor %}</ul>
   </div>
-  <fieldset class="space-y-2"><legend class="block edify-text-caption font-semibold text-slate-600">Project-approved activity <span class="text-rose-500">*</span></legend>{% for item in catalogue_items %}<label class="flex items-start gap-3 rounded-control border border-slate-200 p-3"><input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %}><span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span></label>{% empty %}<p class="edify-note edify-text-caption font-semibold" data-tone="warning">No single Catalogue Activity is eligible for every selected Project School. Schedule smaller compatible selections or configure Project Allowed Activities.</p>{% endfor %}</fieldset>
+  <div class="space-y-1">
+    <label for="bulk-schedule-purpose" class="block edify-text-caption font-semibold text-slate-600">Purpose of visit <span class="text-rose-500">*</span></label>
+    <select id="bulk-schedule-purpose" aria-label="Purpose of visit" name="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]"><option value="">Select purpose…</option>{% for value, label in visit_purposes %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+  </div>
+  <template x-if="isTraining">
+    <div class="space-y-1">
+      <label for="bulk-schedule-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+      <select id="bulk-schedule-training" name="training_course_id" required x-model="trainingCourseId" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+        <option value="">Select a training…</option>
+        <template x-if="projectCourses.length">
+          <optgroup label="This project's trainings">
+            <template x-for="course in projectCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+          </optgroup>
+        </template>
+        <template x-if="projectCourses.length">
+          <optgroup label="Other trainings">
+            <template x-for="course in otherCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+          </optgroup>
+        </template>
+        <template x-for="course in (projectCourses.length ? [] : otherCourses)" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
+      </select>
+    </div>
+  </template>
   <div class="space-y-1">
     <label for="bulk-schedule-date" class="block edify-text-caption font-semibold text-slate-600">Delivery date <span class="text-rose-500">*</span></label>
     <input type="date" name="scheduled_date" id="bulk-schedule-date" required class="w-full rounded-control border border-slate-200 px-3 py-2">
@@ -29,10 +72,10 @@
       });
     })();
   </script>
-  <p class="edify-note edify-text-caption font-medium" data-tone="warning">Each school gets its own costed activity under its project. If any activity cannot be costed, the whole selection is left unchanged.</p>
+  <p class="edify-note edify-text-caption font-medium" data-tone="warning">Each school gets its own costed activity under its project, on your plan. A school the scheduling rules refuse is named and left out.</p>
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    <button type="submit" class="btn btn-primary h-8">Schedule {{ assignments|length }} activit{{ assignments|length|pluralize:"y,ies" }}</button>
+    <button type="submit" class="btn btn-primary h-8">Schedule {{ assignments|length }} school{{ assignments|length|pluralize }}</button>
   </div>
 </form>
 {% endblock %}

@@ -65,6 +65,46 @@ def overtaken(built_at) -> bool:
     return changed > built and timezone.now().timestamp() - built >= SETTLE_SECONDS
 
 
+#: The soonest a page served figures the plan has overtaken asks again.
+RECHECK_FLOOR_SECONDS = 5
+
+
+def settles_in(built_at) -> int:
+    """Seconds until a reader of this snapshot would be given newer figures;
+    0 when the plan has not changed since it was built.
+
+    A page that follows the plan live (static/js/live-regions.js) reads
+    itself again the moment something changes, and inside the settle window
+    that read is served the figures as they were. This is how long it waits
+    before asking once more, so the last change of a busy minute is not the
+    one that never shows (owner, 2026-10-05: "Every event should update ...
+    in real time").
+    """
+    if not _enabled() or built_at is None:
+        return 0
+    from django.core.cache import cache
+
+    try:
+        changed = cache.get(CHANGED_KEY)
+    except Exception:  # noqa: BLE001 - served as it was, and not asked again
+        return 0
+    built = built_at.timestamp()
+    if not changed or changed <= built:
+        return 0
+    left = SETTLE_SECONDS - (timezone.now().timestamp() - built)
+    return max(RECHECK_FLOOR_SECONDS, int(left) + 1)
+
+
+def live_read(request) -> bool:
+    """Is this the page reading itself again because the plan changed?
+
+    Such a read is never a forced rebuild, whatever the address says: a
+    reader who pressed "read again" keeps ``refresh=1`` in the address, and
+    every change in the country would otherwise rebuild the whole fold.
+    """
+    return request.headers.get("X-Requested-With") == "EdifyLive"
+
+
 def claim(name: str) -> bool:
     """One reader at a time rebuilds a country's facts; the others are served
     what there is until it is done."""

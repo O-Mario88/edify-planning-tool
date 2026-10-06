@@ -186,21 +186,14 @@ cannot be used when too few schools are open, so the button stays.{% endcomment 
 </div>
 {% comment %}Tick the schools, then Assign to partner (owner, 2026-09-29: "On
 Cluster School list, add checkbox on the first column so that the staff can be
-able to select the schools they want to assign to partners"). A school its
-gate keeps from a partner has no box.{% endcomment %}
-{% if can_assign_partner and schools|any_attr:"canAssignPartner" %}{% firstof "1" as can_tick %}{% endif %}
-<div{% if can_tick %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable{% endif %}>
+able to select the schools they want to assign to partners"), Schedule or Add
+to project (owner, 2026-10-06). Every school has a box: the hand-over drawer
+names a school its gate keeps from a partner and leaves it out, while the
+other two doors take it.{% endcomment %}
+{% if can_assign_partner or can_bulk_schedule or can_assign_project %}{% firstof "1" as can_tick %}{% endif %}
+<div{% if can_tick %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable data-select-scope{% endif %}>
 {% if can_tick %}
-<div class="school-directory-listbar px-4" x-cloak x-show="selectedSchools.length > 0">
-  <div class="school-directory-listbar__bulk" aria-live="polite">
-    <strong><span x-text="selectedSchools.length"></span> selected</strong>
-    <form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
-      <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
-      <button type="submit" data-cluster-assign-selected>Assign to partner</button>
-    </form>
-    <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
-  </div>
-</div>
+{% include "partials/schools/bulk_bar.html" with with_select_all=False bar_inset=True bar_next="/clusters/"|add:cluster.id %}
 {% endif %}
 <div class="overflow-x-auto">
 {% paginate schools "schools_page" as schools_pager %}
@@ -208,7 +201,7 @@ gate keeps from a partner has no box.{% endcomment %}
 <caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, visit and training planning status, and planning readiness.</caption>
 <thead>
 <tr class="bg-slate-50/80 border-b border-[var(--edify-border)] text-xs font-bold text-slate-500 uppercase tracking-wider text-left">
-{% if can_tick %}<th scope="col" class="school-plan-table__select"><span class="sr-only">Select</span></th>{% endif %}
+{% if can_tick %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-cluster-pick]" aria-label="Select every school on this page"></label></th>{% endif %}
 <th scope="col" class="px-4 py-2.5">School ID</th>
 <th scope="col" class="px-4 py-2.5">School Name</th>
 <th scope="col" class="px-4 py-2.5">SSA Average</th>
@@ -227,7 +220,7 @@ gate keeps from a partner has no box.{% endcomment %}
 {% if schools %}
 {% for s in schools_pager.rows %}
 <tr class="hover:bg-slate-50/60 transition-colors">
-{% if can_tick %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
+{% if can_tick %}<td class="school-plan-table__select"><label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label></td>{% endif %}
 <td class="px-4 py-3 font-bold text-[var(--edify-accent)]" data-record-title>{{ s.schoolId }}</td>
 <td class="px-4 py-3" data-label="School Name">
 <a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>

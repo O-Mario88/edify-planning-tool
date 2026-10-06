@@ -112,6 +112,12 @@ class ProfileActivityRow:
     def has_owner_actions(self) -> bool:
         return self.may_complete or self.may_reschedule or self.may_cancel
 
+    @property
+    def can_pick(self) -> bool:
+        """Whether the row carries a tick box for the group Reschedule and
+        Cancel (owner, 2026-10-05): work this reader may move or call off."""
+        return self.may_reschedule or self.may_cancel
+
 
 @dataclass
 class ProfileActivities:

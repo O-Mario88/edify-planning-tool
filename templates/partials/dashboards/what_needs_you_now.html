@@ -11,7 +11,7 @@ in the initial state (activeCategory 'all'), so the server's render is already
 what Alpine settles on. Cloaking them held the list back until the scripts
 ran and then pushed the dashboard below it down (layout shift 0.15 on the
 CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
-<section id="what-needs-you-now" class="space-y-4 scroll-mt-20" data-section="what-needs-you-now"
+<section id="what-needs-you-now" class="space-y-4 scroll-mt-20" data-section="what-needs-you-now" data-live-region
          x-data="{
            activeScope: 'all',
            activeCategory: 'all',
@@ -124,9 +124,15 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
 
       <div class="overflow-x-auto edify-record-table-wrap">
         {% paginate past_due_school_visits "wnyn_visits_page" as past_due_school_visits_pager %}
+        {% comment %}A tick box on the reader's own past-due work, and one in the
+        header for all of it: the ticked activities are rescheduled or cancelled
+        together from the bar that appears (owner, 2026-10-05). A page of only
+        the team's rows has no tick column.{% endcomment %}
+        {% with selectable=past_due_school_visits_pager.rows|any_attr:"is_own" %}
         <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
+              {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
               <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
               <th scope="col" class="px-3 py-2.5">School Name</th>
               <th scope="col" class="px-3 py-2.5">Activity</th>
@@ -145,6 +151,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% for row in past_due_school_visits_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
               <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
                 {% if row.school_id %}
@@ -266,6 +273,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% endfor %}
           </tbody>
         </table>
+        {% endwith %}
         {% include "components/table_pager.html" with pager=past_due_school_visits_pager param="wnyn_visits_page" pagination_label="Past-due school visits" %}
       </div>
     </div>
@@ -289,9 +297,11 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
 
       <div class="overflow-x-auto edify-record-table-wrap">
         {% paginate past_due_cluster_trainings "wnyn_trainings_page" as past_due_cluster_trainings_pager %}
+        {% with selectable=past_due_cluster_trainings_pager.rows|any_attr:"is_own" %}
         <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
+              {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
               <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
               <th scope="col" class="px-3 py-2.5">School / Cluster</th>
               <th scope="col" class="px-3 py-2.5">Cluster Planned From</th>
@@ -311,6 +321,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% for row in past_due_cluster_trainings_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
               <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
                 {% if row.place_url %}
@@ -433,6 +444,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% endfor %}
           </tbody>
         </table>
+        {% endwith %}
         {% include "components/table_pager.html" with pager=past_due_cluster_trainings_pager param="wnyn_trainings_page" pagination_label="Past-due cluster trainings" %}
       </div>
     </div>
@@ -456,9 +468,11 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
 
       <div class="overflow-x-auto edify-record-table-wrap">
         {% paginate past_due_cluster_meetings "wnyn_meetings_page" as past_due_cluster_meetings_pager %}
+        {% with selectable=past_due_cluster_meetings_pager.rows|any_attr:"is_own" %}
         <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table">
           <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
             <tr>
+              {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
               <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
               <th scope="col" class="px-3 py-2.5">District</th>
               <th scope="col" class="px-3 py-2.5">Planned Date</th>
@@ -477,6 +491,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% for row in past_due_cluster_meetings_pager.rows %}
             <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
+              {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
                 {% if row.cluster_id %}
                 <a href="/clusters/{{ row.cluster_id }}" class="hover:underline edify-primary-text-hover">{{ row.cluster_name }}</a>
@@ -598,10 +613,15 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
             {% endfor %}
           </tbody>
         </table>
+        {% endwith %}
         {% include "components/table_pager.html" with pager=past_due_cluster_meetings_pager param="wnyn_meetings_page" pagination_label="Past-due cluster meetings" %}
       </div>
     </div>
   </div>
   {% endif %}
 
+  {% comment %}Reschedule or cancel the ticked activities together (owner,
+  2026-10-05): the past-due rows above, and a Program Lead's own rows in the
+  week tables under this section.{% endcomment %}
+  {% if not selection_bar_elsewhere %}{% include "partials/activities/selection_bar.html" %}{% endif %}
 </section>

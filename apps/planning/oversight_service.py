@@ -39,6 +39,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.activities.pair_costing import is_uncosted_pair_training
 from apps.partners.purposes import visit_purpose_label
 from apps.projects.models import intervention_or_general
 
@@ -121,6 +122,9 @@ class PlanningOversightItem:
     cluster_planned_from: str = ""
     budget: int = 0
     is_in_school_training: bool = False
+    # The Training of an in-school Training / School Visit pair: it costs
+    # nothing of its own, its visit carries the day (owner, 2026-09-28).
+    cost_on_school_visit: bool = False
 
     # Ownership and attribution — four different people, never collapsed.
     planned_by_id: str | None = None
@@ -1240,6 +1244,7 @@ def _activity_item(
         cluster_planned_from=cluster_planned_from,
         budget=budget,
         is_in_school_training=is_in_school,
+        cost_on_school_visit=is_uncosted_pair_training(activity),
         planned_by_id=activity.responsible_staff_id or activity.monitored_by_staff_id,
         planned_by_name=directory.name(
             activity.responsible_staff_id or activity.monitored_by_staff_id
@@ -1352,7 +1357,6 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         partner_id=assignment.partner_id,
         partner_name=getattr(assignment.partner, "name", "") or "",
         assigned_date=assignment.created_at.date() if assignment.created_at else None,
-        schedule_by_date=assignment.scheduled_date,
         assignment_status=assignment.status,
         planned_cost=0,
         next_action_owner_id=assignment.partner_id,

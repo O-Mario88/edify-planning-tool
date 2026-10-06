@@ -442,10 +442,15 @@ class PartnerAssignment(TimeStampedModel):
                     assert_school_accepts_another_partner,
                 )
 
+                from apps.partners.handover_policy import past_school_rules
+
                 # Data collection is not a school's support, so it neither
                 # counts as a Partner holding the school nor is held by that
-                # rule (owner, 2026-10-02).
-                if not self.is_data_collection:
+                # rule (owner, 2026-10-02). A project's hand-over goes past it
+                # for now (owner, 2026-10-05).
+                if not self.is_data_collection and not past_school_rules(
+                    project_id=self.project_id
+                ):
                     assert_school_accepts_another_partner(self.school, self.partner_id)
             if self.school_id and self.status in self.UNSCHEDULED_STATUSES:
                 # The same rule as uniq_open_partner_school_assignment, said

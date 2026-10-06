@@ -437,6 +437,12 @@ def core_schools_view(request):
         # school — projects_open_for_enrolment excludes client-only projects
         # for one — so the whole of what was missing was the way in.
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
+        # Tick boxes on the list (owner, 2026-10-06: "select many and assign
+        # or schedule or add to project", as the other school lists do).
+        # Each bar button is the door its row action opens, for whoever it
+        # opens for; the read-only oversight lens has no boxes.
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
         "selected_region": filters["region"],
         "selected_district": filters["district"],
         "selected_staff": filters["staff"],
@@ -493,6 +499,12 @@ def core_schools_view(request):
             "hx_include": "#core-filters-form",
         },
     }
+
+    context["can_tick"] = lens != "oversight" and (
+        context["can_assign_partner"]
+        or context["can_bulk_schedule"]
+        or context["can_assign_project"]
+    )
 
     if (
         request.headers.get("HX-Target") == "core-schools-table-container"
@@ -597,6 +609,21 @@ def _locked_core_plan(school, scheduled_for=None):
     """
     fy = get_operational_fy(scheduled_for) if scheduled_for else get_operational_fy()
     return ensure_core_plan(school, fy, lock=True)
+
+
+def _refuse_dating_partner_work(partner_id):
+    """A Partner dates their own work (owner, 2026-10-05).
+
+    The Schedule drawers no longer offer "Partner agency"; this answers a
+    stale tab or a typed POST that still names one, with where the work goes
+    instead. None when no Partner was named.
+    """
+    if not (partner_id or "").strip():
+        return None
+    from apps.core.exceptions import Forbidden
+    from apps.partners.dating_policy import partner_name_for, refusal
+
+    return error_fragment(Forbidden(refusal(partner_name_for(partner_id))), status=400)
 
 
 def _core_visit_payload_base(request, school_id, scheduled_date, partner_id):
@@ -769,6 +796,9 @@ def core_schedule_visit_action(request):
     # (apps.planning.visit_requests); anyone scheduling at a school outside
     # their own portfolio is likewise the one going, rather than filing a core
     # visit onto the holder's My Plan and fund request.
+    refused = _refuse_dating_partner_work(partner_id)
+    if refused is not None:
+        return refused
     visit_request = _core_visit_request_context(school, request.user)
     visit_request_owner_id = visit_request["visit_request_owner_id"]
     visit_justification = request.POST.get("visit_justification", "").strip()
@@ -1206,6 +1236,9 @@ def core_schedule_training_action(request):
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+    refused = _refuse_dating_partner_work(partner_id)
+    if refused is not None:
+        return refused
     facilitating_partner_id = request.POST.get("facilitating_partner_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     focus_intervention = request.POST.get("focus_intervention", "").strip()

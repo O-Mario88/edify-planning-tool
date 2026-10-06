@@ -148,6 +148,9 @@ class ClusterMeetingCostLinesFollowTheRecipeTest(TestCase):
                 "secondary_breakfast_per_day",
                 "secondary_overnight_dinner_per_day",
                 "secondary_accommodation_per_night",
+                # A Program Lead's, Country Director's, Impact Assessment's
+                # or Accountant's night away (owner, 2026-10-05).
+                "management_accommodation_per_night",
             },
         )
 

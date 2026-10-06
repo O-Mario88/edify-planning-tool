@@ -170,6 +170,22 @@ class NotificationLinkResolver:
             )
         if event_type == "daily_plan_today":
             return "/dashboard?view=today", "Open Today"
+        # Planned work on a public holiday or a leave day (owner, 2026-10-05;
+        # apps.activities.day_off). My Plan lists it first for the month, each
+        # row with its Reschedule control. The key is "dayoff-<ISO date>".
+        if event_type == "activity_on_day_off":
+            try:
+                from datetime import date as _date
+
+                from apps.core.fy import get_operational_fy
+
+                day = _date.fromisoformat((context_id or "")[len("dayoff-") :])
+                return (
+                    f"/my-plan?fy={get_operational_fy(day)}&month={day.month}",
+                    "Reschedule in My Plan",
+                )
+            except ValueError:
+                return "/my-plan", "Reschedule in My Plan"
         if event_type == "pl_team_daily_monitor":
             return "/team-planning-oversight/", "Monitor Team Plans"
         if event_type == "field_debrief_reviewed":

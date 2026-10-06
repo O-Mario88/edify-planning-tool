@@ -63,11 +63,15 @@ week would push it down the page for nothing. With none, one line says so.
   {% if table.count %}
   <div class="overflow-x-auto edify-record-table-wrap">
     {% paginate table.rows table.page_param week.rows_per_page as table_pager %}
+    {% comment %}A tick box on the lead's own open work (owner, 2026-10-05); a
+    table of only the team's rows has no tick column.{% endcomment %}
+    {% with selectable=table_pager.rows|any_attr:"can_pick" %}
     {% if table.key == "visits" %}
     <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
       <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
+          {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
           <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
           <th scope="col" class="px-3 py-2.5">School Name</th>
           <th scope="col" class="px-3 py-2.5">Activity</th>
@@ -85,6 +89,7 @@ week would push it down the page for nothing. With none, one line says so.
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+          {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
             {% if row.place_url %}
@@ -113,6 +118,7 @@ week would push it down the page for nothing. With none, one line says so.
       <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
+          {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
           <th scope="col" class="ps-5 pe-3 py-2.5">School ID</th>
           <th scope="col" class="px-3 py-2.5">School / Cluster</th>
           <th scope="col" class="px-3 py-2.5">Cluster Planned From</th>
@@ -131,6 +137,7 @@ week would push it down the page for nothing. With none, one line says so.
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+          {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
             {% if row.place_url %}
@@ -160,6 +167,7 @@ week would push it down the page for nothing. With none, one line says so.
       <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
+          {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
           <th scope="col" class="ps-5 pe-3 py-2.5">Cluster Name</th>
           <th scope="col" class="px-3 py-2.5">District</th>
           <th scope="col" class="px-3 py-2.5">Planned Date</th>
@@ -177,6 +185,7 @@ week would push it down the page for nothing. With none, one line says so.
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+          {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
             {% if row.cluster_id %}
             <a href="/clusters/{{ row.cluster_id }}" class="hover:underline edify-primary-text-hover">{{ row.cluster_name }}</a>
@@ -201,6 +210,7 @@ week would push it down the page for nothing. With none, one line says so.
       </tbody>
     </table>
     {% endif %}
+    {% endwith %}
     {% include "components/table_pager.html" with pager=table_pager param=table.page_param %}
   </div>
   {% endif %}

@@ -1,63 +1,73 @@
 {% load frontend_filters table_pagination row_actions %}
-{% for section in detail_tables %}
-<section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs overflow-hidden" aria-labelledby="work-plan-{{ section.key }}-title">
-  <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
-    <h3 id="work-plan-{{ section.key }}-title" class="text-[13px] font-bold text-slate-800 dark:text-slate-200">{{ section.title }}</h3>
-    <span class="edify-text-caption font-semibold text-slate-500">{{ section.rows|length }} activit{{ section.rows|length|pluralize:"y,ies" }}</span>
-  </div>
-  {% paginate section.rows section.page_param as section_pager %}
+{% comment %}
+Detailed Activity Plan: one table for every planned activity, with one set of
+columns (owner, 2026-10-05). Each column reads a short list of plain words —
+Activity is a Visit, a Training or what else was planned; Activity Purpose is
+why; Delivery Mode is how — and a column a row has nothing for shows a dash.
+The rows and their figures are the ones the summary above is added up from.
+{% endcomment %}
+<section class="work-plan-detail-group rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs overflow-hidden" aria-labelledby="work-plan-detail-title">
+  {% paginate detail_rows detail_page_param as detail_pager %}
+  {% comment %}A tick box on the reader's own open work, and one in the header
+  for all of it: the ticked activities are rescheduled or cancelled together
+  from the bar that appears (owner, 2026-10-05). It is not one of the fifteen
+  columns, and a reader with nothing of their own on the page has no tick
+  column at all.{% endcomment %}
+  {% with selectable=detail_pager.rows|any_attr:"can_pick" %}
   <div class="overflow-x-auto">
-    <table class="edify-record-table edify-data-table work-plan-table work-plan-table--{{ section.key }} w-full text-[12px]" data-mobile-table="scroll" data-table-fit="scroll">
-      <caption class="sr-only">{{ section.title }} — {{ period_label }}</caption>
+    <table class="edify-record-table edify-data-table work-plan-table work-plan-table--plan w-full text-[12px]" data-mobile-table="scroll" data-table-fit="scroll">
+      <caption class="sr-only">Detailed Activity Plan — {{ period_label }}</caption>
       <thead><tr>
-      {% if section.key == 'school' %}
-        <th scope="col">Visit Date</th><th scope="col">School ID</th><th scope="col">School Name</th><th scope="col">Visit Purpose</th><th scope="col">SSA Intervention</th><th scope="col">Delivery Mode</th><th scope="col">Responsible Person</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
-      {% elif section.key == 'cluster' %}
-        <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">Cluster Name</th><th scope="col"># Schools Invited</th><th scope="col"># Teachers</th><th scope="col"># School Leaders</th><th scope="col"># Others</th><th scope="col">Venue</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
-      {% else %}
-        <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">Venue</th><th scope="col">Cost</th><th scope="col">Status</th><th scope="col">Action</th>
-      {% endif %}
+        {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
+        <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">School ID</th><th scope="col">School Name</th><th scope="col">District</th><th scope="col">Cluster Name</th><th scope="col">Activity Purpose</th><th scope="col">SSA Intervention</th><th scope="col">Previous SSA Score</th><th scope="col">Delivery Mode</th><th scope="col">Person Responsible</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
       </tr></thead>
       <tbody>
-      {% for r in section_pager.rows %}
-        <tr class="align-top">
-          <td class="whitespace-nowrap">{{ r.date_label }}</td>
-          {% if section.key == 'school' %}
-          <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"Not recorded" }}</td>
-          <th scope="row" data-record-title>{{ r.school_name }}</th>
-          <td><strong>{{ r.name }}</strong>{% if r.purpose %}<small class="block edify-text-muted">{{ r.purpose }}</small>{% endif %}</td>
+      {% for r in detail_pager.rows %}
+        {# A row planned on a public holiday or its owner's leave day (owner, 2026-10-05; apps.activities.day_off). #}
+        <tr class="align-top{% if r.day_off %} mp-dayoff-row{% endif %}">
+          {% if selectable %}{% if r.can_pick %}{% firstof r.school_name r.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=r.id pick_kind=r.activity_word pick_name=pick_place %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
+          <td class="whitespace-nowrap">{{ r.date_label }}{% if r.day_off %}<span class="mp-dayoff" data-tone="danger" title="{{ r.day_off.advice }}">{{ r.day_off.label }}: reschedule</span>{% endif %}</td>
+          <td class="whitespace-nowrap">{{ r.activity_word }}</td>
+          <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"—" }}</td>
+          <th scope="row" data-record-title>{{ r.school_name|default:"—" }}</th>
+          <td>{{ r.district_name|default:"—" }}</td>
+          <td>{{ r.cluster_name|default:"—" }}</td>
+          <td>{{ r.activity_purpose }}</td>
           <td>{{ r.focus_intervention|default:"Not linked" }}{% include "partials/ssa/plan_verdict.html" with verdict=r.ssa_verdict compact=True %}</td>
-          <td>{% firstof r.programme_delivery_mode r.responsibility_type %}</td>
-          <td>{% firstof r.responsible_person r.responsible %}{% if r.partner_name %}<small class="block edify-text-muted">{{ r.partner_name }}</small>{% endif %}</td>
-          {% elif section.key == 'cluster' %}
-          <th scope="row" data-record-title>{{ r.programme_activity_type }}{% if r.name != r.programme_activity_type %}<small class="block edify-text-muted">{{ r.name }}</small>{% endif %}{% include "partials/ssa/plan_verdict.html" with verdict=r.ssa_verdict compact=True %}</th>
-          <td>{{ r.cluster_name }}</td>
-          <td class="tabular-nums">{{ r.schools_invited|default_if_none:"Not recorded" }}</td>
-          <td class="tabular-nums">{{ r.teachers_invited|default_if_none:"Not recorded" }}</td>
-          <td class="tabular-nums">{{ r.leaders_invited|default_if_none:"Not recorded" }}</td>
-          <td class="tabular-nums">{{ r.others_invited|default_if_none:"Not recorded" }}</td>
-          <td>{{ r.detail_venue|default:"Not recorded" }}</td>
-          {% else %}
-          <th scope="row" data-record-title>{{ r.name }}</th>
-          <td>{{ r.detail_venue|default:"Not recorded" }}</td>
-          {% endif %}
-          <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% endif %}
+          <td class="whitespace-nowrap tabular-nums">{{ r.previous_ssa_score|default:"—" }}</td>
+          <td>{{ r.delivery_mode }}</td>
+          <td>{{ r.responsible }}</td>
+          {% comment %}
+          An in-school Training is done during its School Visit, so it stays
+          at UGX 0 and says where its cost is (owner, 2026-10-05); the money
+          is on the visit's row, which is what the weekly request fetches.
+          {% endcomment %}
+          <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% if r.cost_note %} <span class="edify-text-muted" data-cost-note>{{ r.cost_note }}</span>{% endif %}{% endif %}
             {% if r.cost_lines %}<details name="work-plan-cost-breakdown"><summary class="edify-text-caption edify-primary-text">Breakdown</summary><ul>{% for line in r.cost_lines %}<li>{{ line.label }}: UGX {{ line.amount|intcomma }}</li>{% endfor %}</ul></details>{% endif %}
           </td>
-          {% if section.key != 'non_school' %}<td>{{ r.planned_period }}</td>{% endif %}
-          <td>{% include "components/badge.html" with tone=r.delivery_status_tone label=r.delivery_status %}<small class="block edify-text-muted">{{ r.status_label }}</small></td>
+          <td class="whitespace-nowrap">{{ r.planned_period }}</td>
+          <td>{% include "components/badge.html" with tone=r.delivery_status_tone label=r.delivery_status %}</td>
           <td data-record-action>
             {% comment %}
             Each control only for a reader its page admits: the RVP and HR read
             the Work Plan but cannot open activity records under /my-plan/.
-            A reader offered both gets one Actions menu rather than a button
-            with a link under it (owner, 2026-09-26); one offered a single
-            control keeps it as it was. A row whose action already opens the
-            record (View) offers it once, not twice under two names.
+            A reader offered more than one gets one Actions menu rather than a
+            button with a link under it (owner, 2026-09-26); one offered a
+            single control keeps it as it was. A row whose action already opens
+            the record (View) offers it once, not twice under two names.
+            The planner's own work is Complete, Reschedule and Cancel, the
+            drawers My Plan opens (owner, 2026-10-05).
             {% endcomment %}
             {% with details_url="/my-plan/"|add:r.id %}{% with can_act=request.user|can_open:r.table_action.url can_view=request.user|can_open:details_url %}
-            {% if can_act and can_view and r.table_action.url != details_url %}
-            {% if section.key == 'school' %}{% firstof r.school_name as record_name %}{% else %}{% firstof r.name as record_name %}{% endif %}
+            {% firstof r.school_name r.cluster_name r.activity_purpose r.name as record_name %}
+            {% if can_act and r.table_action.own %}
+            {% row_actions record_name %}
+              {% if r.table_action.complete %}<a class="row-menu__item" role="menuitem" href="/my-plan/{{ r.id }}/complete-drawer" hx-get="/my-plan/{{ r.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML" title="Upload the evidence and complete this activity">Complete</a>{% endif %}
+              <a class="row-menu__item" role="menuitem" href="/my-plan/{{ r.id }}/reschedule-drawer" hx-get="/my-plan/{{ r.id }}/reschedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" title="{{ r.table_action.description }}">{{ r.table_action.text }}</a>
+              <a class="row-menu__item row-menu__item--danger" role="menuitem" href="/my-plan/{{ r.id }}/cancel-drawer" hx-get="/my-plan/{{ r.id }}/cancel-drawer" hx-target="#drawer-container" hx-swap="innerHTML" title="Cancel this activity">Cancel</a>
+              {% if can_view %}<a class="row-menu__item" role="menuitem" href="{{ details_url }}">View details</a>{% endif %}
+            {% endrow_actions %}
+            {% elif can_act and can_view and r.table_action.url != details_url %}
             {% row_actions record_name %}
               <a class="row-menu__item" role="menuitem" href="{{ r.table_action.url }}" {% if r.table_action.drawer %}hx-get="{{ r.table_action.url }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %} title="{{ r.table_action.description }}">{{ r.table_action.text }}</a>
               <a class="row-menu__item" role="menuitem" href="{{ details_url }}">View details</a>
@@ -71,12 +81,11 @@
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="{% if section.key == 'school' %}11{% elif section.key == 'cluster' %}12{% else %}6{% endif %}">{% include "components/empty_state.html" with title="No activities in this group" message="No matching activities are planned in the selected period." compact="true" %}</td></tr>
+        <tr><td colspan="15">{% include "components/empty_state.html" with title="No activities planned" message="No matching activities are planned in the selected period." compact="true" %}</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
-  {% include "components/table_pager.html" with pager=section_pager param=section.page_param %}
-  {% if section.key == 'cluster' %}<p class="px-5 py-2.5 border-t border-slate-100 dark:border-slate-800/60 edify-text-caption text-slate-500">Participant columns show planned invitations, not attendance. Missing historical counts are marked “Not recorded”.</p>{% endif %}
+  {% endwith %}
+  {% include "components/table_pager.html" with pager=detail_pager param=detail_page_param %}
 </section>
-{% endfor %}

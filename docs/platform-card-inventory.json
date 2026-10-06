@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 667,
+  "titled_cards": 668,
   "templates": 249,
-  "distinct_titles": 633,
+  "distinct_titles": 634,
   "with_card_key": 13,
-  "untitled_surfaces": 592,
-  "untitled_chrome": 154,
-  "untitled_nested": 190,
-  "untitled_headless": 248,
+  "untitled_surfaces": 593,
+  "untitled_chrome": 153,
+  "untitled_nested": 191,
+  "untitled_headless": 249,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -139,7 +139,7 @@
  "cards": [
   {
    "template": "templates/layouts/login.html",
-   "line": 123,
+   "line": 132,
    "title": "Built for impact. Designed for results.",
    "heading_level": 2,
    "has_card_key": false,
@@ -148,7 +148,7 @@
   },
   {
    "template": "templates/layouts/login.html",
-   "line": 169,
+   "line": 178,
    "title": "Secure access",
    "heading_level": 2,
    "has_card_key": false,
@@ -403,7 +403,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 197,
+   "line": 198,
    "title": "People Managed",
    "heading_level": 2,
    "has_card_key": false,
@@ -417,7 +417,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 275,
+   "line": 277,
    "title": "Account Lifecycle",
    "heading_level": 3,
    "has_card_key": false,
@@ -426,7 +426,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 352,
+   "line": 354,
    "title": "Password Management",
    "heading_level": 3,
    "has_card_key": false,
@@ -435,7 +435,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 399,
+   "line": 401,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 345,
+   "line": 338,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 380,
+   "line": 373,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 403,
+   "line": 396,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -2100,7 +2100,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 80,
+   "line": 90,
    "title": "Organizational Blackout Dates",
    "heading_level": 3,
    "has_card_key": false,
@@ -2109,7 +2109,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 112,
+   "line": 122,
    "title": "Staff Conference Weeks",
    "heading_level": 3,
    "has_card_key": false,
@@ -2118,7 +2118,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 144,
+   "line": 154,
    "title": "Regional Events & Custom Blocks",
    "heading_level": 3,
    "has_card_key": false,
@@ -2127,7 +2127,7 @@
   },
   {
    "template": "templates/pages/leave/public_holidays.html",
-   "line": 193,
+   "line": 203,
    "title": "Add Calendar Block",
    "heading_level": 3,
    "has_card_key": false,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 190,
+   "line": 208,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 226,
+   "line": 244,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2331,7 +2331,7 @@
   },
   {
    "template": "templates/pages/partner/activity_workroom.html",
-   "line": 181,
+   "line": 182,
    "title": "School visit feedback",
    "heading_level": 3,
    "has_card_key": false,
@@ -2385,7 +2385,7 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 109,
+   "line": 111,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
@@ -2535,7 +2535,7 @@
   },
   {
    "template": "templates/pages/planning/schedule.html",
-   "line": 234,
+   "line": 213,
    "title": "Live Costing Breakdown",
    "heading_level": 3,
    "has_card_key": false,
@@ -2645,7 +2645,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 182,
+   "line": 183,
    "title": "Participating Schools",
    "heading_level": 2,
    "has_card_key": false,
@@ -2654,7 +2654,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 268,
+   "line": 269,
    "title": "Assigned Staff Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2663,7 +2663,7 @@
   },
   {
    "template": "templates/pages/projects/detail.html",
-   "line": 287,
+   "line": 288,
    "title": "Project Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -2672,7 +2672,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 135,
+   "line": 138,
    "title": "Budget & Execution",
    "heading_level": 2,
    "has_card_key": false,
@@ -2686,7 +2686,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 165,
+   "line": 168,
    "title": "Delivery by Intervention",
    "heading_level": 2,
    "has_card_key": false,
@@ -2700,7 +2700,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 198,
+   "line": 201,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -2718,7 +2718,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 256,
+   "line": 259,
    "title": "Upcoming Follow-Ups",
    "heading_level": 2,
    "has_card_key": false,
@@ -2732,7 +2732,7 @@
   },
   {
    "template": "templates/pages/projects/index.html",
-   "line": 285,
+   "line": 288,
    "title": "Partner Delivery",
    "heading_level": 2,
    "has_card_key": false,
@@ -2750,14 +2750,14 @@
   },
   {
    "template": "templates/pages/projects/monitoring.html",
-   "line": 101,
+   "line": 181,
    "title": "My project allocations",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     7,
+     12,
      0
     ]
    ]
@@ -2787,7 +2787,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 129,
+   "line": 154,
    "title": "School Demographics &amp; Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2796,7 +2796,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 256,
+   "line": 281,
    "title": "SSA change between confirmed assessments",
    "heading_level": 3,
    "has_card_key": false,
@@ -2805,7 +2805,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 263,
+   "line": 288,
    "title": "FY vs FY",
    "heading_level": 4,
    "has_card_key": false,
@@ -2814,22 +2814,8 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 290,
+   "line": 315,
    "title": "School Visit Feedback",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": [
-    [
-     34,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 339,
-   "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
@@ -2842,7 +2828,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 377,
+   "line": 364,
+   "title": "Partner Support",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     42,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/schools/detail.html",
+   "line": 402,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2851,7 +2851,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 417,
+   "line": 442,
    "title": "Current confirmed SSA",
    "heading_level": 3,
    "has_card_key": false,
@@ -2860,42 +2860,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 448,
+   "line": 473,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     52,
+     56,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 470,
+   "line": 495,
    "title": "SSA history",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     55,
+     59,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 490,
+   "line": 515,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     58,
+     62,
      0
     ]
    ]
@@ -4286,7 +4286,7 @@
   },
   {
    "template": "templates/partials/core_schools/programme_table.html",
-   "line": 3,
+   "line": 6,
    "title": "Schools ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -5318,7 +5318,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 276,
+   "line": 284,
    "title": "Trainings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -5332,7 +5332,7 @@
   },
   {
    "template": "templates/partials/dashboards/what_needs_you_now.html",
-   "line": 443,
+   "line": 455,
    "title": "Cluster Meetings (Past Due)",
    "heading_level": 3,
    "has_card_key": false,
@@ -6216,8 +6216,8 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 6,
-   "title": "Returned \u2014 Needs Correction",
+   "line": 8,
+   "title": "Reschedule \u2014 On a Public Holiday or Leave Day",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden border-rose-200",
@@ -6230,28 +6230,42 @@
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 71,
-   "title": "Waiting on Approval",
+   "line": 85,
+   "title": "Returned \u2014 Needs Correction",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "card overflow-hidden",
+   "classes": "card overflow-hidden border-rose-200",
    "branch_path": [
     [
-     4,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/my_plan/attention.html",
-   "line": 132,
+   "line": 150,
+   "title": "Waiting on Approval",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": [
+    [
+     12,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/my_plan/attention.html",
+   "line": 211,
    "title": "Finance / Accountability Pending",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     8,
+     16,
      0
     ]
    ]

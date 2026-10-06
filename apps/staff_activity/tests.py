@@ -172,6 +172,15 @@ class ActiveTimeIsMeasuredTest(Team):
         self.mina.refresh_from_db()
         self.assertIsNotNone(self.mina.last_seen_at)
 
+    def test_a_page_keeping_up_with_the_plan_is_not_activity(self):
+        """Owner, 2026-10-05: every page that shows the plan reads itself
+        again when a colleague changes it (static/js/live-regions.js). That
+        is their work arriving, not this person working."""
+        self.client.force_login(self.mina)
+        self.client.get("/my-plan", HTTP_X_REQUESTED_WITH="EdifyLive")
+        self.mina.refresh_from_db()
+        self.assertIsNone(self.mina.last_seen_at)
+
     def test_the_heartbeat_names_its_page_and_keeps_an_open_drawer(self):
         self.client.force_login(self.mina)
         response = self.client.post("/staff-activity/beat", {"page": "/planning?x=1"})

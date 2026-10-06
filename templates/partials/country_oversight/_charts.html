@@ -11,7 +11,7 @@ the platform's long-text wrapping (data-table-wrap="off"): a table too wide
 for its half of the page scrolls in its box rather than breaking a heading a
 third time.
 {% endcomment %}
-<section class="cpo-charts" aria-label="Planning charts by Programme Lead">
+<section class="cpo-charts" id="cpo-charts" data-live-region aria-label="Planning charts by Programme Lead">
   {% for chart in charts %}
   <figure class="cpo-chart" x-data="cpoChart('{{ chart.data_id }}')" aria-labelledby="{{ chart.id }}-name">
     <h2 class="cpo-chart-name" id="{{ chart.id }}-name" data-no-titlebar>{{ chart.title }}</h2>

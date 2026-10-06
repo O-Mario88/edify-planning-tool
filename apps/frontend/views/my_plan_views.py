@@ -20,9 +20,12 @@ from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
 
 from apps.my_plan.services import get_frontend_context as get_my_plan
+
+# The single Reschedule door: an in-school Training and its School Visit
+# move together (apps.activities.pairs).
+from apps.activities.pairs import reschedule as reschedule_activity
 from apps.activities.services import (
     get_activity,
-    reschedule as reschedule_activity,
     start_completion,
     start_in_school_training_pair,
     complete as complete_activity,
@@ -115,6 +118,29 @@ def _partner_ssa_completion_context(a: Activity) -> dict:
     }
 
 
+def _readiness_list(request, context) -> dict | None:
+    """The schools behind a figure of the planner's own Planned and remaining
+    (owner, 2026-10-05: "All those numbers should be link to the actual
+    tables where those schools are located"): ``?list=<key>`` names it."""
+    key = (request.GET.get("list") or "").strip()
+    if not key or not context.get("readiness"):
+        return None
+    from apps.planning.planning_monitor import GAP_LABELS, list_schools, own_monitor
+
+    if key not in GAP_LABELS:
+        return None
+    officer = own_monitor(request.user, str(context.get("fy") or ""))
+    if officer is None:
+        return None
+    for school in (*officer.schools, *officer.outreach_schools):
+        school.officer_name = officer.name
+    return {
+        "key": key,
+        "label": GAP_LABELS[key],
+        "schools": list_schools([officer], key),
+    }
+
+
 @require_page_permission("my_plan")
 def my_plan_view(request):
     """The planning dashboard main view."""
@@ -139,6 +165,7 @@ def my_plan_view(request):
     }
 
     context = get_my_plan(request.user, query)
+    context["plan_list"] = _readiness_list(request, context)
     context["topbar_search"] = {
         "placeholder": "Search my plan…",
         "label": "Search my plan by school, School ID, cluster, district or purpose",
@@ -318,12 +345,42 @@ def _edit_state(activity, user) -> str:
     return edit_state(activity, user)
 
 
-def _can_reschedule(activity) -> bool:
+def _can_reschedule(activity, user) -> bool:
     """Whether Reschedule is offered: never on work already carried out,
-    which `services.reschedule` refuses (owner, 2026-10-02)."""
+    which `services.reschedule` refuses (owner, 2026-10-02), and on a
+    partner's work only to the partner, who dates it (owner, 2026-10-05;
+    apps.partners.dating_policy). The plan's rows already say "The partner
+    reschedules"."""
     from apps.activities.editing import is_executed
+    from apps.partners.dating_policy import acts_for_partner, is_agency_booking
 
-    return not is_executed(activity)
+    if is_executed(activity):
+        return False
+    if activity.delivery_type == "partner" and not is_agency_booking(activity):
+        return acts_for_partner(user)
+    return True
+
+
+def _can_cancel(activity, user) -> bool:
+    """Whether Cancel is offered on the activity's own page (owner,
+    2026-10-05): work still live, for a reader who passes the checks
+    `services.cancel` makes. A supervisor reads it and is offered nothing."""
+    from apps.activities.group_actions import may_tick
+    from apps.activities.profile_activities import _may_run
+
+    return may_tick(activity.status) and _may_run(activity, user)
+
+
+def _budget_breakdown(user, activity, snapshot, staff_name) -> dict:
+    from apps.budget.breakdown import activity_budget_breakdown
+    from apps.core.scoping import resolve_partner_ids
+
+    return activity_budget_breakdown(
+        activity,
+        snapshot=snapshot,
+        staff_name="" if staff_name == "Unknown Staff" else staff_name,
+        partner_view=bool(resolve_partner_ids(user)),
+    )
 
 
 @require_page_permission("my_plan")
@@ -410,9 +467,11 @@ def activity_detail_view(request, activity_id):
     # capacity never enter this context.
     from apps.budget.models import ActivityCostSnapshot, ActivityCostStatus
 
-    cost_snapshot = ActivityCostSnapshot.objects.filter(
-        activity=a, is_current=True
-    ).first()
+    cost_snapshot = (
+        ActivityCostSnapshot.objects.filter(activity=a, is_current=True)
+        .select_related("operational_rate_card")
+        .first()
+    )
     if cost_snapshot and cost_snapshot.cost_status in (
         ActivityCostStatus.ACCOUNTED,
         ActivityCostStatus.CLOSED,
@@ -445,6 +504,17 @@ def activity_detail_view(request, activity_id):
             "amount_disbursed": 0,
         }
 
+    budget = _budget_breakdown(request.user, a, cost_snapshot, staff_name)
+    if budget["captured_elsewhere"] and activity_cost["amount"] is None:
+        # The UGX 0 half of an in-school Training / School Visit pair is
+        # priced, at nothing, by design (owner, 2026-10-05: keep it at UGX 0
+        # and say where the cost is): never "not configured".
+        activity_cost = {
+            **activity_cost,
+            "amount": 0,
+            "note": budget["captured_elsewhere"].strip("()").capitalize(),
+        }
+
     context = {
         "act": a,
         # The monitoring staff member — and Impact Assessment — record the
@@ -463,6 +533,10 @@ def activity_detail_view(request, activity_id):
         "responsible_staff_name": staff_name,
         "timeline": timeline,
         "activity_cost": activity_cost,
+        # Every cost item, how it was worked out and who shares the day
+        # (owner, 2026-10-05: "for the team to make sure it is the right
+        # cost"). A partner reads what it is paid, not the staff day.
+        "budget": budget,
         "can_complete_partner_ssa_support": (
             RolePermissionService.can_complete_partner_ssa_support(request.user, a)
             and a.status == "awaiting_ia_verification"
@@ -472,7 +546,8 @@ def activity_detail_view(request, activity_id):
         # "locked" (greyed) once it has been carried out, "" when it is not
         # this reader's to edit. Reschedule follows the same line.
         "edit_state": _edit_state(a, request.user),
-        "can_reschedule": _can_reschedule(a),
+        "can_reschedule": _can_reschedule(a, request.user),
+        "can_cancel": _can_cancel(a, request.user),
         **_return_context(a),
         **_facilitator_context(request.user, a),
     }
@@ -1013,9 +1088,14 @@ def reschedule_drawer_view(request, activity_id):
             ).first()
             if staff_user:
                 assigning_staff_name = staff_user.name
+    from apps.activities import pairs
+
     context = {
         "reschedule_mode": True,
         "reschedule_activity": a,
+        # Said before the date is saved: the other half of an in-school
+        # Training pair moves with it.
+        "pair_joins": pairs.joins(a, action=pairs.RESCHEDULE),
         "reschedule_action_url": f"/my-plan/{a.id}/reschedule",
         "schedule_subject_name": subject_name,
         "recommended_activity_type": a.activity_type,
@@ -1059,17 +1139,28 @@ def reschedule_activity_action(request, activity_id):
             except ValueError:
                 pass
 
+        from apps.activities import pairs
+
+        joined = pairs.joins(a, action=pairs.RESCHEDULE)
         try:
             reschedule_activity(activity_id, payload, request.user)
-            audit_log(
-                action="reschedule_activity",
-                subject_kind="Activity",
-                subject_id=str(a.id),
-                actor_id=str(request.user.id),
-                actor_role=request.user.active_role,
-                success=True,
-                payload={"new_date": new_date_str, "reason": reason},
-            )
+            # Each record that moved has its own line in the audit trail.
+            for moved in (a, joined):
+                if moved is None:
+                    continue
+                audit_log(
+                    action="reschedule_activity",
+                    subject_kind="Activity",
+                    subject_id=str(moved.id),
+                    actor_id=str(request.user.id),
+                    actor_role=request.user.active_role,
+                    success=True,
+                    payload={
+                        "new_date": new_date_str,
+                        "reason": reason,
+                        **({"moved_with": str(a.id)} if moved is not a else {}),
+                    },
+                )
             if request.headers.get("HX-Request") == "true":
                 response = HttpResponse("<script>window.location.reload();</script>")
                 response["HX-Trigger"] = "close-drawer"
@@ -2086,14 +2177,25 @@ def cancel_activity_drawer_view(request, activity_id):
     # What the person needs to know before they confirm is that the money does
     # not go away with the activity: it still has to be accounted for and the
     # remainder returned. Told up front rather than discovered afterwards.
+    # The other half of an in-school Training pair is cancelled with it, and
+    # it is the visit that carries the pair's money.
+    from apps.activities import pairs
+
+    joined = pairs.joins(a, action=pairs.CANCEL)
     money_moved = AdvanceRequest.objects.filter(
-        activity=a, status__in=MONEY_MOVED_ADVANCE_STATUSES
+        activity_id__in=[a.id, *([joined.id] if joined else [])],
+        status__in=MONEY_MOVED_ADVANCE_STATUSES,
     ).exists()
 
     return render(
         request,
         "partials/my_plan/cancel_drawer.html",
-        {"act": a, "money_moved": money_moved, "drawer_size": "sm"},
+        {
+            "act": a,
+            "money_moved": money_moved,
+            "pair_joins": joined,
+            "drawer_size": "sm",
+        },
     )
 
 
@@ -2116,8 +2218,10 @@ def cancel_activity_action(request, activity_id):
 
     if request.method == "POST":
         reason = request.POST.get("reason", "").strip()
-        from apps.activities.services import cancel as cancel_activity
+        from apps.activities import pairs
+        from apps.activities.pairs import cancel as cancel_activity
 
+        joined = pairs.joins(a, action=pairs.CANCEL)
         try:
             cancel_activity(activity_id, {"reason": reason}, request.user)
         except Exception as exc:
@@ -2132,16 +2236,23 @@ def cancel_activity_action(request, activity_id):
             )
             return error_fragment(exc, action="Cancellation Error", status=400)
 
-        audit_log(
-            action="cancel_activity",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=True,
-            reason="Activity cancelled",
-            payload={"reason": reason},
-        )
+        # Each record that was called off has its own line in the trail.
+        for stopped in (a, joined):
+            if stopped is None:
+                continue
+            audit_log(
+                action="cancel_activity",
+                subject_kind="Activity",
+                subject_id=str(stopped.id),
+                actor_id=str(request.user.id),
+                actor_role=request.user.active_role,
+                success=True,
+                reason="Activity cancelled",
+                payload={
+                    "reason": reason,
+                    **({"cancelled_with": str(a.id)} if stopped is not a else {}),
+                },
+            )
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")

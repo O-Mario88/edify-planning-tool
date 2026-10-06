@@ -1,0 +1,63 @@
+{% load components frontend_filters %}
+{% comment %}
+The budget of one activity, item by item (owner, 2026-10-05: "make sure the
+activity profile shows the budget breakdown for that activity for the team to
+make sure it is the right cost"). Each row is a stored budget line: what it
+is, its amount, the rate and what it was multiplied or divided by, and where
+its funding stands; the rows add up to the total in the title band. The
+amount sits beside the item so that it shows without scrolling in the drawer,
+where the table is wider than its sheet. Under
+the table: who shares the day's transport and meals, and the rate card the
+rows were priced from (apps.budget.breakdown). Drawn on the activity page and
+in the Finance tab of its drawer; `budget_name` keeps the two apart.
+{% endcomment %}
+{% data_table name=budget_name|default:"activity-budget" %}
+  {% slot title %}Budget breakdown{% endslot %}
+  {% slot summary %}{% if budget.rows %}Total {{ budget.total|ugx }}{% endif %}{% endslot %}
+  {% slot caption %}Each cost item of this activity: its amount, how it is worked out and where its funding stands.{% endslot %}
+  {% slot empty %}
+  <p class="px-4 py-4 edify-text-caption edify-text-muted" data-budget-empty>{{ budget.empty_note }}{% if budget.empty_link %} <a class="font-semibold edify-primary-text hover:underline" href="/activities/{{ budget.empty_link.id }}">{{ budget.empty_link.label }}</a>{% endif %}</p>
+  {% endslot %}
+  {% slot footer %}
+  <div class="px-4 py-2.5 space-y-1 edify-text-caption edify-text-muted" data-budget-notes>
+    {% if budget.missing_note %}<p data-budget-missing><span class="edify-status-text" data-edify-tone="warning">{{ budget.missing_note }}</span></p>{% endif %}
+    {% if budget.day %}
+    <p data-budget-day>{{ budget.day.sentence }}{% if budget.day.others %} Shared with: {% for other in budget.day.others %}<a class="font-semibold edify-primary-text hover:underline" href="/activities/{{ other.id }}">{{ other.name }}{% if other.place %} at {{ other.place }}{% endif %}</a>{% if not forloop.last %}; {% endif %}{% endfor %}{% endif %}</p>
+    {% endif %}
+    {% for note in budget.notes %}<p>{{ note }}</p>{% endfor %}
+    {% if budget.show_minimum %}<p>Minimum viable is the same items at the Country Director's minimum rates; funding is requested at the amounts in the Amount column.</p>{% endif %}
+    {% if budget.source %}<p>{{ budget.source }}{% if budget.calculated_at %} Worked out on {{ budget.calculated_at|date:"j M Y" }}.{% endif %}</p>{% endif %}
+  </div>
+  {% endslot %}
+  {% if budget.rows %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Cost item</th>
+          <th scope="col" class="px-3 py-2 text-right">Amount</th>
+          {% if budget.show_minimum %}<th scope="col" class="px-3 py-2 text-right">Minimum viable</th>{% endif %}
+          <th scope="col" class="px-3 py-2">How it is worked out</th>
+          <th scope="col" class="px-3 py-2">Funding status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in budget.rows %}
+        <tr data-budget-line="{{ row.key }}">
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}</th>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Amount">{% if row.missing %}<span class="edify-text-muted">Not set</span>{% else %}{{ row.amount|ugx }}{% endif %}</td>
+          {% if budget.show_minimum %}<td class="px-3 py-2 text-right tabular-nums" data-label="Minimum viable">{{ row.minimum|ugx }}</td>{% endif %}
+          <td class="px-3 py-2" data-label="How it is worked out">{% if row.missing %}<span class="edify-status-text" data-edify-tone="warning">{{ row.basis }}</span>{% else %}{{ row.basis }}{% endif %}</td>
+          <td class="px-3 py-2" data-label="Funding status">{{ row.status }}</td>
+        </tr>
+        {% endfor %}
+        {% comment %}The total is the last row of the body, not a foot row: a
+        foot row misses the card's content line and sits 4px left of the
+        rows it adds up.{% endcomment %}
+        <tr data-budget-total>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title><strong>Total</strong></th>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Amount"><strong>{{ budget.total|ugx }}</strong></td>
+          {% if budget.show_minimum %}<td class="px-3 py-2 text-right tabular-nums" data-label="Minimum viable"><strong>{{ budget.minimum_total|ugx }}</strong></td>{% endif %}
+          <td class="px-3 py-2" colspan="2"></td>
+        </tr>
+      </tbody>
+  {% endif %}
+{% enddata_table %}

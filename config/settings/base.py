@@ -948,6 +948,17 @@ REALTIME_STREAM_OPENS_PER_MINUTE = _as_int(
     os.environ.get("REALTIME_STREAM_OPENS_PER_MINUTE"), 30
 )
 
+# Open pages hear when the plan changes and read themselves again
+# (apps.activities.live; owner, 2026-10-05). Off under the test runner: the
+# announcement works out who to tell after each commit, and those queries
+# would be counted against every query budget in the suite. Its own tests
+# turn it on. LIVE_UPDATES_ENABLED=false switches it off in production
+# without a deploy.
+LIVE_UPDATES_ENABLED = (
+    os.environ.get("LIVE_UPDATES_ENABLED", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
 # How long a role dashboard's computed payload is reused before it is rebuilt.
 # The Country Director dashboard is ~96 queries and over a second even warm
 # (2026-09-12); five minutes of reuse turn the second and later loads into one
@@ -1130,6 +1141,10 @@ SESSION_COOKIE_HTTPONLY = True
 # legitimate POST from an older page is rejected as "token from POST
 # incorrect" even though the user is still signed in.
 CSRF_COOKIE_HTTPONLY = False
+# A refused token is answered in the product's own words, with a way to send
+# the request again, instead of Django's bare "CSRF verification failed".
+# The check itself is untouched — see apps/frontend/views/csrf_views.py.
+CSRF_FAILURE_VIEW = "apps.frontend.views.csrf_views.csrf_failure"
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
 

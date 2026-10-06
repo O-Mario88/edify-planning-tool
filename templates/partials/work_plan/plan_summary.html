@@ -8,7 +8,7 @@ Scoping upstream makes the same section serve every role: CD/Admin see the
 country, the RVP their region, a PL themselves plus their team, a CCEO their
 own plan.
 {% endcomment %}
-<section id="work-plan-summary" aria-labelledby="plan-summary-title" tabindex="-1" class="card p-4 space-y-4 scroll-mt-24">
+<section id="work-plan-summary" data-live-region aria-labelledby="plan-summary-title" tabindex="-1" class="card p-4 space-y-4 scroll-mt-24">
 <div class="flex flex-wrap items-center justify-between gap-2">
 <div class="min-w-0">
 <h2 id="plan-summary-title" class="text-[13px] font-extrabold text-slate-800">Activity Plan Summary — {{ period_label }}</h2>
@@ -46,7 +46,7 @@ See Details
 <tr class="edify-data-row">
 <th scope="row" class="text-left font-semibold text-slate-700">{{ row.label }}</th>
 <td class="text-right tabular-nums font-semibold text-slate-700">{{ row.count|intcomma }}</td>
-<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}</td>
+<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}{% if row.unit_cost_note %} <span class="font-normal edify-text-muted" data-cost-note>{{ row.unit_cost_note }}</span>{% endif %}</td>
 <td class="text-right tabular-nums font-bold text-slate-800">{{ row.cost|intcomma }}</td>
 </tr>
 {% empty %}

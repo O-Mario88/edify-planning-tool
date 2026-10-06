@@ -673,12 +673,17 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
     gap = (request.GET.get("gap") or "").strip()
     gap = gap if gap in GAP_LABELS else ""
     officer = (request.GET.get("officer") or "").strip()
+    # A count on Schools by type opens the schools of that type behind it.
+    from apps.planning.country_oversight import rules as _rules
+
+    school_type = (request.GET.get("school_type") or "").strip()
     monitor = planning_monitor(
         request.user,
         fy=fy,
         program_lead_id=selected_lead or None,
         gap=gap or None,
         officer_id=officer or None,
+        school_type=school_type,
     )
     _mark_gap_follow_ups(request.user, monitor["gap_schools"], gap=gap, fy=fy)
     monitor_url = f"{base_url}?view=monitor&fy={fy}"
@@ -715,9 +720,13 @@ def _monitor_context(request, period: dict, *, base_url: str) -> dict:
         "monitor_tab": tab,
         "monitor_url": monitor_url,
         "monitor_gaps": GAPS,
-        "monitor_can_send": bool(gap) and may_delegate(request.user, country=False),
+        # A follow-up is sent from a gap, never from the list behind a count.
+        "monitor_can_send": gap in dict(GAPS)
+        and may_delegate(request.user, country=False),
         "monitor_gap": gap,
-        "monitor_gap_label": GAP_LABELS.get(gap, ""),
+        "monitor_gap_label": GAP_LABELS.get(gap, "")
+        + (f" · {_rules.type_label(school_type)}" if gap and school_type else ""),
+        "monitor_school_type": school_type,
         "monitor_officer": officer,
         "selected_program_lead": selected_lead,
         "default_visits_target": DEFAULT_VISITS_TARGET,
@@ -879,6 +888,44 @@ _MONITOR_TEMPLATES = {
 }
 
 
+def _narrow_project_schools(result, project_status: str) -> None:
+    """Keep the school rows the Project status filter asks for: the schools a
+    Partner holds, or the schools with an activity scheduled. The page and
+    its export narrow the same rows the same way."""
+    from apps.projects import monitoring
+
+    if project_status == "partner":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.partner_name
+                or getattr(s, "has_partner", False)
+                or s.plan_stage
+                in (
+                    monitoring.PLAN_PARTNER_AWAITING,
+                    monitoring.PLAN_PARTNER_SCHEDULED,
+                    monitoring.PLAN_PARTNER_RETURNED,
+                )
+            ]
+    elif project_status == "scheduled":
+        for row in result.rows:
+            row.school_rows = [
+                s
+                for s in row.school_rows
+                if s.activity_date
+                or s.next_date
+                or s.status_key
+                in (
+                    monitoring.STATUS_SCHEDULED,
+                    monitoring.STATUS_IN_PROGRESS,
+                    monitoring.STATUS_AWAITING_VERIFICATION,
+                    monitoring.STATUS_COMPLETED,
+                )
+                or s.execution != monitoring.EXEC_NONE
+            ]
+
+
 def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     """Special Projects oversight (owner, 2026-10-03): every live project and
     the schools assigned to them, with their planning and delivery status."""
@@ -905,37 +952,7 @@ def _special_projects_context(request, period: dict, *, base_url: str) -> dict:
     ):
         selected_project = ""
 
-    # Filter school rows if Project status is narrowed
-    if selected_project_status == "partner":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.partner_name
-                or getattr(s, "has_partner", False)
-                or s.plan_stage
-                in (
-                    monitoring.PLAN_PARTNER_AWAITING,
-                    monitoring.PLAN_PARTNER_SCHEDULED,
-                    monitoring.PLAN_PARTNER_RETURNED,
-                )
-            ]
-    elif selected_project_status == "scheduled":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.activity_date
-                or s.next_date
-                or s.status_key
-                in (
-                    monitoring.STATUS_SCHEDULED,
-                    monitoring.STATUS_IN_PROGRESS,
-                    monitoring.STATUS_AWAITING_VERIFICATION,
-                    monitoring.STATUS_COMPLETED,
-                )
-                or s.execution != monitoring.EXEC_NONE
-            ]
+    _narrow_project_schools(result, selected_project_status)
 
     project_tabs = [
         {
@@ -2606,17 +2623,24 @@ def country_planning_export_view(request):
 )
 @require_export_permission
 def special_project_export_view(request, project_id: str = "all"):
-    """Export a special project and all attached schools (or all projects) to Excel.
+    """The project table as a workbook: every project the reader follows in
+    one file, or the one project asked for.
 
     Owner, 2026-10-04: "Add the button for export on project so the IA can
-    export the project and all the schools attached to it."
+    export the project and all the schools attached to it." And 2026-10-05:
+    "The IA, project coordinator or CD needs to export either all projects in
+    1 file or select a project to export", with the table's columns.
+
+    The rows are the page's own (``apps.projects.monitoring``, through the
+    reader's lens and the page's filters) and the columns are the table's
+    (``apps.projects.school_table``), so the file is the screen.
     """
     from django.http import Http404
 
     from apps.core.excel import table_download
     from apps.core.fy import get_operational_fy
     from apps.core.permissions import render_access_denied
-    from apps.projects import monitoring
+    from apps.projects import monitoring, school_table
 
     # Require oversight, project_monitoring or projects access
     can_view = (
@@ -2636,207 +2660,30 @@ def special_project_export_view(request, project_id: str = "all"):
     stages = dict(monitoring.STAGE_FILTERS)
     requested_stage = (request.GET.get("stage") or "").strip()
     selected_stage = requested_stage if requested_stage in stages else ""
-    selected_project_status = (request.GET.get("project_status") or "schools").strip()
 
-    result = monitoring.project_monitoring(request.user, fy=fy, stage=selected_stage)
-
-    # Filter school rows if Project status is narrowed
-    if selected_project_status == "partner":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.partner_name
-                or getattr(s, "has_partner", False)
-                or s.plan_stage
-                in (
-                    monitoring.PLAN_PARTNER_AWAITING,
-                    monitoring.PLAN_PARTNER_SCHEDULED,
-                    monitoring.PLAN_PARTNER_RETURNED,
-                )
-            ]
-    elif selected_project_status == "scheduled":
-        for row in result.rows:
-            row.school_rows = [
-                s
-                for s in row.school_rows
-                if s.activity_date
-                or s.next_date
-                or s.status_key
-                in (
-                    monitoring.STATUS_SCHEDULED,
-                    monitoring.STATUS_IN_PROGRESS,
-                    monitoring.STATUS_AWAITING_VERIFICATION,
-                    monitoring.STATUS_COMPLETED,
-                )
-                or s.execution != monitoring.EXEC_NONE
-            ]
+    result = monitoring.project_monitoring(
+        request.user,
+        fy=fy,
+        stage=selected_stage,
+        picks=monitoring.row_picks(request.GET),
+    )
+    _narrow_project_schools(
+        result, (request.GET.get("project_status") or "schools").strip()
+    )
 
     project_id = (project_id or "all").strip()
-    if project_id and project_id not in ("all", "export"):
-        matching = [r for r in result.rows if r.id == project_id]
-        if not matching:
+    single = bool(project_id) and project_id not in ("all", "export")
+    projects = result.rows
+    if single:
+        projects = [row for row in result.rows if row.id == project_id]
+        if not projects:
             raise Http404("Special project not found or not in scope.")
-        target_rows = matching
-        single = True
-        project_obj = matching[0]
-        stem = f"project-{(project_obj.code or project_obj.id).lower()}-schools-FY{fy}"
-    else:
-        target_rows = result.rows
-        single = False
-        stem = f"special-projects-schools-FY{fy}"
 
-    # Build Sheet 1: Project Schools
-    school_headers = []
-    if not single:
-        school_headers.extend(["Project Code", "Project Name"])
-    school_headers.extend(
-        [
-            "School ID",
-            "School Name",
-            "District",
-            "Staff Name",
-            "Training",
-            "Purpose of Assignment",
-            "SSA Intervention",
-            "Status",
-            "Activity Date",
-            "Enrolled On",
-            "Planning Stage",
-            "Planned By",
-            "Execution",
-            "Activities Planned",
-            "Activities Delivered",
-            "Activities Verified",
-            "Last Delivered",
-            "Improvement",
-            "Focus Interventions",
-        ]
+    return table_download(
+        request,
+        school_table.filename_stem(projects, fy, single=single),
+        school_table.sheets(projects),
     )
-
-    school_data_rows = []
-    for prow in target_rows:
-        for s in prow.school_rows:
-            row_vals = []
-            if not single:
-                row_vals.extend([prow.code or "", prow.name])
-            focus_summary = ", ".join(
-                f"{f.abbreviation or f.label}: {f.baseline if f.baseline is not None else '–'} -> {f.latest if f.latest is not None else '–'}"
-                + (
-                    f" ({'+' if f.direction == 'up' else ''}{f.change})"
-                    if f.change is not None
-                    else ""
-                )
-                for f in s.focus
-                if f.latest is not None or f.baseline is not None
-            )
-            who = s.partner_name or s.planned_by or ""
-            plan_str = s.plan_label
-            if who and not s.planned_by_coordinator:
-                plan_str = f"{plan_str} · {who}"
-            exec_str = s.execution_label
-            if s.planned:
-                exec_str = f"{exec_str} · {s.delivered}/{s.planned} done"
-
-            act_date = ""
-            if s.activity_date:
-                act_date = s.activity_date.isoformat()
-            elif s.awaiting_date:
-                act_date = "Awaiting scheduling"
-
-            row_vals.extend(
-                [
-                    s.school_code or "",
-                    s.school_name or "",
-                    s.district or "",
-                    s.added_by or "",
-                    s.training_name or "",
-                    s.purpose_label or "",
-                    s.intervention_label or "",
-                    s.status_label or "",
-                    act_date,
-                    s.enrolled_on.isoformat() if s.enrolled_on else "",
-                    plan_str,
-                    who,
-                    exec_str,
-                    s.planned,
-                    s.delivered,
-                    s.verified,
-                    s.last_delivered_on.isoformat() if s.last_delivered_on else "",
-                    s.impact_label or "",
-                    focus_summary,
-                ]
-            )
-            school_data_rows.append(row_vals)
-
-    # Build Sheet 2: Project Summary
-    summary_headers = [
-        "Project ID",
-        "Project Code",
-        "Project Name",
-        "Coordinator",
-        "Status",
-        "Partners",
-        "Total Schools",
-        "Schools Planned",
-        "Schools Awaiting Partner",
-        "Schools Delivered",
-        "Trainings Scheduled",
-        "Trainings Completed",
-        "Visits Scheduled",
-        "Visits Completed",
-        "Other Scheduled",
-        "Other Completed",
-        "Staff Delivered",
-        "Partner Delivered",
-    ]
-    summary_data_rows = []
-    for prow in target_rows:
-        summary_data_rows.append(
-            [
-                prow.id,
-                prow.code or "",
-                prow.name,
-                prow.coordinator,
-                prow.status_label,
-                ", ".join(prow.partners) if prow.partners else "None",
-                prow.schools,
-                prow.schools_planned,
-                prow.schools_awaiting_partner,
-                prow.schools_delivered,
-                prow.trainings_scheduled,
-                prow.trainings_completed,
-                prow.visits_scheduled,
-                prow.visits_completed,
-                prow.other_scheduled,
-                prow.other_completed,
-                prow.staff_delivered,
-                prow.partner_delivered,
-            ]
-        )
-
-    sheet_title = (
-        "Project Schools"
-        if not single
-        else f"Schools - {target_rows[0].code or target_rows[0].name}"[:31]
-    )
-    for char in "[]:*?/\\":
-        sheet_title = sheet_title.replace(char, "")
-
-    sheets = [
-        {
-            "title": sheet_title or "Project Schools",
-            "headers": school_headers,
-            "rows": school_data_rows,
-        },
-        {
-            "title": "Project Summary",
-            "headers": summary_headers,
-            "rows": summary_data_rows,
-        },
-    ]
-
-    return table_download(request, stem, sheets)
 
 
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")
@@ -3422,9 +3269,14 @@ def _prepare_core_actions(user, items) -> None:
       who may never confirm it, it is not shown.
     * Withdraw school — only while the Partner has not scheduled it, and only
       to a role that may withdraw partner work (the service refuses the rest).
+      A day a staff member put on the work is not the Partner's scheduling
+      (owner, 2026-10-05: "A user scheduled for a partner and he cant
+      withdraw the school from the partner. It has only view in the action
+      button").
     """
     from apps.activities.models import Activity
     from apps.core.permissions import has_permission
+    from apps.partners.withdrawal_models import WithdrawalKind
     from apps.planning import partner_oversight_service as partner_oversight
     from apps.planning.partner_oversight_service import STAGE_AWAITING_SCHEDULE
 
@@ -3447,11 +3299,19 @@ def _prepare_core_actions(user, items) -> None:
         if RolePermissionService.can_confirm_partner_activity(user, activity)
     }
     for item in core:
+        # Until the Partner schedules it: a handover nobody has dated, and
+        # one that carries only a day staff chose (owner, 2026-10-05).
         item.can_withdraw_school = bool(
             may_withdraw
-            and item.stage == STAGE_AWAITING_SCHEDULE
             and item.withdrawal_label
             and not item.project_locked
+            and (
+                item.stage == STAGE_AWAITING_SCHEDULE
+                or (
+                    item.withdrawal_kind == WithdrawalKind.RECALL_SCHEDULED
+                    and not item.partner_has_dated
+                )
+            )
         )
         if not item.evidence_ok:
             continue
@@ -3629,6 +3489,39 @@ def _partner_item_in_scope(user, assignment_id: str):
     return item
 
 
+def _partner_work_in_scope(user, source):
+    """The row a withdrawal acts on: a handover, or Partner work that was
+    made without one (owner, 2026-10-05). None when the reader's lens does
+    not read it."""
+    from apps.partners.models import PartnerAssignment
+    from apps.planning import partner_oversight_service as partner_oversight
+
+    assignment_id = (source.get("assignment_id") or "").strip()
+    if assignment_id:
+        return _partner_item_in_scope(user, assignment_id)
+    activity_id = (source.get("activity_id") or "").strip()
+    if not activity_id:
+        return None
+    paired = (
+        PartnerAssignment.objects.filter(scheduled_activity_id=activity_id)
+        .values_list("id", flat=True)
+        .first()
+    )
+    if paired:
+        return _partner_item_in_scope(user, paired)
+    return partner_oversight.build_item_by_activity(user, activity_id)
+
+
+def _withdrawal_preview(user, item) -> dict:
+    """The preview of the record the row is: its handover's, or the Partner
+    activity's own when it has none."""
+    from apps.partners import withdrawal_service
+
+    if item.partner_assignment_id:
+        return withdrawal_service.preview(user, item.partner_assignment_id)
+    return withdrawal_service.preview_activity(user, item.partner_activity_id)
+
+
 def _partner_lineage(item) -> dict:
     """The canonical records behind one handover, each read from its source."""
     from apps.activities.models import ActivityScheduleCostLine
@@ -3773,11 +3666,7 @@ def partner_withdrawal_preview_view(request):
     does; this asks the same functions the service asks, so the number shown
     is the number that will move.
     """
-    from apps.partners import withdrawal_service
-
-    item = _partner_item_in_scope(
-        request.user, (request.GET.get("assignment_id") or "").strip()
-    )
+    item = _partner_work_in_scope(request.user, request.GET)
     if item is None:
         return render(
             request,
@@ -3788,7 +3677,7 @@ def partner_withdrawal_preview_view(request):
 
     from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
 
-    preview = withdrawal_service.preview(request.user, item.partner_assignment_id)
+    preview = _withdrawal_preview(request.user, item)
     _lock_project_work(request.user, [item])
     return render(
         request,
@@ -3986,9 +3875,16 @@ def _must_request(user, item, preview) -> bool:
     from apps.partners.withdrawal_models import WithdrawalKind
 
     role = getattr(user, "active_role", "") or ""
-    return (
-        role == EdifyRole.CCEO.value
-        and preview["kind"] != WithdrawalKind.WITHDRAW_UNSCHEDULED
+    if role != EdifyRole.CCEO.value:
+        return False
+    if preview["kind"] == WithdrawalKind.WITHDRAW_UNSCHEDULED:
+        return False
+    # A day staff put on the work is not the Partner's commitment (owner,
+    # 2026-10-05): until the Partner dates it or starts it, the CCEO takes it
+    # back themselves, as they do a handover nobody has dated.
+    return not (
+        preview["kind"] == WithdrawalKind.RECALL_SCHEDULED
+        and not preview.get("partner_has_dated", True)
     )
 
 
@@ -3999,9 +3895,7 @@ def partner_withdrawal_submit_view(request):
     from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
     from apps.partners import withdrawal_service
 
-    item = _partner_item_in_scope(
-        request.user, (request.POST.get("assignment_id") or "").strip()
-    )
+    item = _partner_work_in_scope(request.user, request.POST)
     if item is None:
         return _action_response(
             request,
@@ -4018,18 +3912,32 @@ def partner_withdrawal_submit_view(request):
         "replacement_partner_id": request.POST.get("replacement_partner_id"),
     }
     requesting = (request.POST.get("intent") or "") == "request"
+    # Partner work made without a handover record gets one as it is taken
+    # back (withdrawal_service.withdraw_activity).
+    handover_id, activity_id = item.partner_assignment_id, item.partner_activity_id
 
     try:
+        # What the drawer called the decision, read before it is carried out
+        # (a cancelled activity no longer says whose date it carried).
+        label = (
+            "" if requesting else _withdrawal_preview(request.user, item)["kind_label"]
+        )
         if requesting:
-            withdrawal_service.request_withdrawal(
-                item.partner_assignment_id, data, request.user
-            )
+            if handover_id:
+                withdrawal_service.request_withdrawal(handover_id, data, request.user)
+            else:
+                withdrawal_service.request_activity_withdrawal(
+                    activity_id, data, request.user
+                )
             message = "Sent to your Program Lead for a decision."
         else:
-            result = withdrawal_service.withdraw(
-                item.partner_assignment_id, data, request.user
-            )
-            message = f"{result.get_kind_display()} — {result.get_state_display()}."
+            if handover_id:
+                result = withdrawal_service.withdraw(handover_id, data, request.user)
+            else:
+                result = withdrawal_service.withdraw_activity(
+                    activity_id, data, request.user
+                )
+            message = f"{label} — {result.get_state_display()}."
     except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
         return _action_response(
             request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH

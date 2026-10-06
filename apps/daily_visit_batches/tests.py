@@ -420,19 +420,25 @@ class DailyVisitBatchTestCase(TestCase):
 
     # ── 10. Partner-conducted visits are entirely unaffected ────────────────
     def test_partner_visit_not_batched(self):
+        from unittest.mock import patch
+
         from apps.activities.services import create as create_activity
 
-        result = create_activity(
-            {
-                "activityType": "school_visit",
-                "deliveryType": "partner",
-                "schoolId": "BATCH-P-1",
-                "scheduledDate": "2026-08-13T09:00:00+03:00",
-                "activityPurposeText": "Partner visit",
-                "focusIntervention": "leadership",
-            },
-            self.principal,
-        )
+        # Dated as the partner's own user would date it: staff no longer put
+        # a day on a partner's visit (owner, 2026-10-05;
+        # apps.partners.dating_policy). What is held here is the batching.
+        with patch("apps.partners.dating_policy.acts_for_partner", return_value=True):
+            result = create_activity(
+                {
+                    "activityType": "school_visit",
+                    "deliveryType": "partner",
+                    "schoolId": "BATCH-P-1",
+                    "scheduledDate": "2026-08-13T09:00:00+03:00",
+                    "activityPurposeText": "Partner visit",
+                    "focusIntervention": "leadership",
+                },
+                self.principal,
+            )
         act = Activity.objects.get(id=result["id"])
         self.assertIsNone(act.daily_visit_batch_id)
 

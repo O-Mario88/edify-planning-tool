@@ -52,7 +52,9 @@ somebody to try.
       hx-swap="innerHTML"
       class="space-y-4 pr-1 edify-drawer-scroll">
   {% csrf_token %}
-  <input type="hidden" name="assignment_id" value="{{ preview.assignment_id }}">
+  {% comment %}Partner work made without a handover record posts its
+  activity; confirming writes the record (owner, 2026-10-05).{% endcomment %}
+  {% if preview.assignment_id %}<input type="hidden" name="assignment_id" value="{{ preview.assignment_id }}">{% else %}<input type="hidden" name="activity_id" value="{{ preview.activity_id }}">{% endif %}
   {% if must_request %}<input type="hidden" name="intent" value="request">{% endif %}
 
   {% if must_request %}
@@ -71,7 +73,7 @@ somebody to try.
       <div><dt class="edify-text-caption edify-text-subtle">Activity</dt>
         <dd>{{ preview.activity_type|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Scheduled for</dt>
-        <dd>{% if preview.scheduled_date %}{{ preview.scheduled_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
+        <dd>{% if preview.scheduled_date %}{{ preview.scheduled_date|date:"j M Y" }}{% if not preview.partner_has_dated %} <span class="edify-text-muted" data-staff-dated>(a date staff set; the partner has not scheduled it)</span>{% endif %}{% else %}Not scheduled{% endif %}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Current state</dt>
         {% comment %}
         firstof, not `default:`. A dotted filter argument is resolved eagerly
@@ -97,7 +99,7 @@ somebody to try.
       </li>
       {% if preview.activity_will_be_cancelled %}
       <li class="edify-text-caption edify-text-muted">
-        The partner's scheduled activity is cancelled, not deleted. Its cost
+        {% if preview.partner_has_dated %}The partner's scheduled activity{% else %}The activity dated for the partner{% endif %} is cancelled, not deleted. Its cost
         lines stay as the record of what was planned; every total excludes them.
       </li>
       {% endif %}

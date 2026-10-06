@@ -1,0 +1,60 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Add the schools ticked on a list to one project (owner, 2026-10-06: the Core
+school list and a cluster's roster). The School Directory's bulk Add to
+project, as a drawer: the same project list, the same save
+(/schools/bulk-assign-project, a page post), and `next` brings the planner
+back to the list they ticked on. The allocation on each option comes from the
+server (apps.projects.capacity); the drawer only compares it with the count,
+so the button is never live for a selection the service will refuse.
+{% endcomment %}
+
+{% block drawer_title %}Add {{ schools|length }} school{{ schools|length|pluralize }} to a project{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-4 text-[13px] text-slate-700">
+  <div class="space-y-1">
+    <p class="edify-text-caption font-semibold text-slate-600">Selected schools</p>
+    <ul class="max-h-28 overflow-auto space-y-1 edify-text-caption text-slate-600">{% for school in schools %}<li>{{ school.name }} <span class="text-slate-400">{{ school.school_id }}</span></li>{% endfor %}</ul>
+    {% if outside_scope %}<p class="edify-text-caption text-amber-700">{{ outside_scope }} selected school{{ outside_scope|pluralize }} {% if outside_scope == 1 %}is{% else %}are{% endif %} outside your reach and left out.</p>{% endif %}
+  </div>
+
+  {% if not schools %}
+  <p class="edify-note" data-tone="info">None of the selected schools can be added to a project from here.</p>
+  <div class="drawer-footer"><button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button></div>
+  {% elif not projects %}
+  <p class="edify-note" data-tone="info">No active projects available. Create a project before assigning schools.</p>
+  <div class="drawer-footer"><button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button><a href="/projects" class="btn btn-primary h-8">Create project</a></div>
+  {% else %}
+  <form action="/schools/bulk-assign-project" method="post" class="space-y-4" x-data="{ capLeft: null, capBlock: '' }" data-school-bulk-project>
+    {% csrf_token %}
+    <input type="hidden" name="school_ids" value="{{ school_ids }}">
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <div class="space-y-1">
+      <label for="bulk-project-id" class="block edify-text-caption font-semibold text-slate-600">Project <span class="text-rose-500">*</span></label>
+      <select id="bulk-project-id" aria-label="Project ID" name="project_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none"
+        @change="const o = $el.selectedOptions[0]; capLeft = o && o.dataset.remaining !== undefined && o.dataset.remaining !== '' ? Number(o.dataset.remaining) : null; capBlock = (o && o.dataset.block) || ''">
+        <option value="">Select a project</option>
+        {% for p in projects %}
+        <option value="{{ p.id }}" data-remaining="{% if p.capacity_remaining is not None %}{{ p.capacity_remaining }}{% endif %}" data-block="{{ p.capacity_block }}">{{ p.name }}{% if p.coordinator_name %} &middot; {{ p.coordinator_name }}{% endif %}{% if p.allocation %} &middot; {{ p.allocation.remaining }} of {{ p.allocation.maximum }} left{% elif p.capacity_block %} &middot; no allocation{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <p class="edify-text-caption text-slate-500">Adds the {{ schools|length }} selected school{{ schools|length|pluralize }}. Schools already in the project are skipped.</p>
+    <div x-show="capBlock" x-cloak class="edify-note" data-tone="danger" role="alert" data-capacity-reached>
+      <p class="edify-note__title">Project capacity reached</p>
+      <p class="edify-note__body" x-text="capBlock"></p>
+    </div>
+    <div x-show="!capBlock && capLeft !== null && {{ schools|length }} > capLeft" x-cloak class="edify-note" data-tone="warning" role="alert" data-capacity-exceeded>
+      <p class="edify-note__title">Capacity exceeded</p>
+      <p class="edify-note__body">You can add a maximum of <span x-text="capLeft"></span> more school<span x-show="capLeft !== 1">s</span> to this project.</p>
+    </div>
+    <div class="drawer-footer">
+      <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+      <button type="submit" class="btn btn-primary h-8" :disabled="!!capBlock || (capLeft !== null && {{ schools|length }} > capLeft)">Add to project</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -651,7 +651,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 935,
+      "bytes": 1033,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -921,6 +921,97 @@
       ],
       "tables": 0,
       "template": "partials/activities/facilitated_by_field.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 645,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Pick Cell",
+      "purpose": "Reusable pick cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/pick_cell.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 450,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/projects/<str:project_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Pick Head",
+      "purpose": "Reusable pick head interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/pick_head.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3843,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/calendar",
+        "/clusters/<str:cluster_id>",
+        "/country-planning-oversight/",
+        "/dashboard",
+        "/districts/<str:district_id>",
+        "/my-plan",
+        "/partners/<str:partner_id>",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Selection Bar",
+      "purpose": "Reusable selection bar interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/activities/selection_bar.html",
       "variants": []
     },
     {
@@ -1435,7 +1526,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3164,
+      "bytes": 3259,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/customize-dashboard"
@@ -2421,7 +2512,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 2860,
+      "bytes": 2952,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/schedule-report"
@@ -2819,8 +2910,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1523,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1823,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar"
@@ -2841,8 +2934,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1369,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2747,
       "deprecated_alternatives": [],
       "example_pages": [
         "/calendar"
@@ -2920,7 +3015,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6266,
+      "bytes": 5863,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/bulk-assign-partner-drawer"
@@ -3171,7 +3266,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8401,
+      "bytes": 8503,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/create-drawer"
@@ -3197,7 +3292,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8971,
+      "bytes": 9204,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/edit-drawer"
@@ -3507,7 +3602,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3114,
+      "bytes": 3433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3536,7 +3631,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4767,
+      "bytes": 5480,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -3590,6 +3685,36 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 888,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/attendance",
+        "/activities/<str:activity_id>/complete",
+        "/admin-panel/users",
+        "/admin-panel/users/<str:user_id>",
+        "/analytics/customize-dashboard",
+        "/analytics/schedule-report",
+        "/clusters/<str:cluster_id>/edit-drawer",
+        "/clusters/create-drawer"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Select All",
+      "purpose": "Reusable select all interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/components/select_all.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "announced dynamic state"
       ],
       "bytes": 702,
@@ -3624,7 +3749,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10199,
+      "bytes": 10254,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -3772,7 +3897,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8521,
+      "bytes": 8943,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3866,7 +3991,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3038,
+      "bytes": 4304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools",
@@ -3939,7 +4064,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7857,
+      "bytes": 7396,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -3968,7 +4093,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13195,
+      "bytes": 12709,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3997,7 +4122,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11664,
+      "bytes": 12207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4311,7 +4436,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8090,
+      "bytes": 8192,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4652,7 +4777,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16919,
+      "bytes": 17489,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4702,7 +4827,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5080,
+      "bytes": 7080,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4738,7 +4863,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2269,
+      "bytes": 2302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4761,7 +4886,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2886,
+      "bytes": 3563,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/execution/records/<str:key>",
@@ -4781,7 +4906,8 @@
       "template": "partials/country_oversight/_consolidated_table.html",
       "variants": [
         "danger",
-        "warning"
+        "warning",
+        "{% if value > 0 %}success{% elif value < 0 %}danger{% else %}neutral{% endif %}"
       ]
     },
     {
@@ -4805,6 +4931,28 @@
       ],
       "tables": 0,
       "template": "partials/country_oversight/_drawer_pager.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1138,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/country-planning-oversight/rows"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Figure Link",
+      "purpose": "Reusable  figure link interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_figure_link.html",
       "variants": []
     },
     {
@@ -4917,10 +5065,31 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 713,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Settle",
+      "purpose": "Reusable  settle interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/country_oversight/_settle.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14087,
+      "bytes": 14978,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -4945,7 +5114,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16661,
+      "bytes": 19185,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5232,7 +5401,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10315,
+      "bytes": 10539,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5256,7 +5425,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3349,
+      "bytes": 3458,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/rows"
@@ -5354,7 +5523,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3473,
+      "bytes": 3825,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5609,7 +5778,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1266,
+      "bytes": 1283,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6200,7 +6369,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 16088,
+      "bytes": 17671,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6616,7 +6785,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4915,
+      "bytes": 5282,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7121,7 +7290,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 38802,
+      "bytes": 40954,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -8724,7 +8893,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10294,
+      "bytes": 10392,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/ssa-mapping/<str:item_id>/drawer"
@@ -9477,7 +9646,30 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1024,
+      "bytes": 661,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Readiness Count",
+      "purpose": "Reusable  readiness count interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/_readiness_count.html",
+      "variants": [
+        "{{ tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1308,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9529,7 +9721,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11151,
+      "bytes": 10140,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9537,7 +9729,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 5,
+      "htmx_controls": 6,
       "kind": "application-partial",
       "name": "Activity Detail Drawer",
       "purpose": "Reusable activity detail drawer interface primitive",
@@ -9549,7 +9741,7 @@
         "selected",
         "open"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/my_plan/activity_detail_drawer.html",
       "variants": [
         "danger"
@@ -9584,7 +9776,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7987,
+      "bytes": 8116,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -9606,14 +9798,14 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9222,
+      "bytes": 13196,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Attention",
       "purpose": "Reusable attention interface primitive",
@@ -9621,9 +9813,35 @@
       "states": [
         "default"
       ],
-      "tables": 3,
+      "tables": 4,
       "template": "partials/my_plan/attention.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4581,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>",
+        "/my-plan/<str:activity_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Budget Breakdown",
+      "purpose": "Reusable budget breakdown interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/budget_breakdown.html",
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -9631,7 +9849,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 1801,
+      "bytes": 2201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/cancel-drawer"
@@ -9649,12 +9867,13 @@
       "tables": 0,
       "template": "partials/my_plan/cancel_drawer.html",
       "variants": [
+        "info",
         "warning"
       ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5186,
+      "bytes": 6006,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9701,7 +9920,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7348,
+      "bytes": 8434,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9726,7 +9945,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24211,
+      "bytes": 24374,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -9776,7 +9995,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6383,
+      "bytes": 7224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9797,7 +10016,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6187,
+      "bytes": 7126,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9817,12 +10036,35 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 377,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Day Off Flag",
+      "purpose": "Reusable day off flag interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/day_off_flag.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12446,
+      "bytes": 12606,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -9946,8 +10188,105 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 3137,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Group Cancel Drawer",
+      "purpose": "Reusable group cancel drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_cancel_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 631,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Group Outcome",
+      "purpose": "Reusable group outcome interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_outcome.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1710,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Group Picks",
+      "purpose": "Reusable group picks interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_picks.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 2943,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Group Reschedule Drawer",
+      "purpose": "Reusable group reschedule drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/group_reschedule_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 5382,
+      "bytes": 6201,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10068,7 +10407,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4349,
+      "bytes": 5189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10091,7 +10430,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1232,
+      "bytes": 1335,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10112,7 +10451,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3658,
+      "bytes": 4193,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10130,6 +10469,35 @@
       "tables": 0,
       "template": "partials/my_plan/readiness.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5230,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Readiness List",
+      "purpose": "Reusable readiness list interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/readiness_list.html",
+      "variants": [
+        "danger",
+        "info",
+        "success",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -10180,7 +10548,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5054,
+      "bytes": 5988,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10611,6 +10979,33 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 1434,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Monitor Count",
+      "purpose": "Reusable  monitor count interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_monitor_count.html",
+      "variants": [
+        "{{ tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -10639,7 +11034,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9552,
+      "bytes": 10855,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10692,7 +11087,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7368,
+      "bytes": 8229,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10703,7 +11098,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": " Monitor Row",
       "purpose": "Reusable  monitor row interface primitive",
@@ -10716,10 +11111,6 @@
       "variants": [
         "danger",
         "{% if row.over_ceiling %}danger{% else %}{{ row.readiness.staff_visits.tone }}{% endif %}",
-        "{{ gap.tone }}",
-        "{{ row.core_partner_trainings_tone }}",
-        "{{ row.core_partner_visits_tone }}",
-        "{{ row.core_staff_trainings_tone }}",
         "{{ row.partner_tone }}"
       ]
     },
@@ -10747,6 +11138,27 @@
       ],
       "tables": 4,
       "template": "partials/oversight/_officer_panel_body.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 894,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partner-oversight/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Partner Activity Items",
+      "purpose": "Reusable  partner activity items interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/_partner_activity_items.html",
       "variants": []
     },
     {
@@ -10793,7 +11205,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 991,
+      "bytes": 1350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -10815,13 +11227,12 @@
       "tables": 0,
       "template": "partials/oversight/_readiness_cell.html",
       "variants": [
-        "warning",
-        "{{ line.tone }}"
+        "warning"
       ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3809,
+      "bytes": 3673,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11136,7 +11547,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10025,
+      "bytes": 9830,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -11211,7 +11622,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11355,
+      "bytes": 12527,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11246,7 +11657,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8663,
+      "bytes": 8496,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11343,7 +11754,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7086,
+      "bytes": 6919,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11423,7 +11834,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7036,
+      "bytes": 7138,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -11642,7 +12053,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15811,
+      "bytes": 7469,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11651,22 +12062,17 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Special Projects Workspace",
       "purpose": "Reusable special projects workspace interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty",
-        "open"
+        "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/oversight/special_projects_workspace.html",
-      "variants": [
-        "danger",
-        "{{ school.status_tone }}"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -11701,7 +12107,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10702,
+      "bytes": 11220,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/withdraw",
@@ -11753,11 +12159,35 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 729,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/core-schools/assign-partner",
+        "/planning/assign-partner-modal",
+        "/planning/bulk-assign-partner-drawer",
+        "/projects/planning/bulk-partner"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Assigned Date",
+      "purpose": "Reusable  assigned date interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/partners/_assigned_date.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4251,
+      "bytes": 4366,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer",
@@ -11809,7 +12239,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1562,
+      "bytes": 1674,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/<str:partner_id>/edit-drawer",
@@ -12035,6 +12465,63 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 729,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/my-plan",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " List Pick Cell",
+      "purpose": "Reusable  list pick cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/_list_pick_cell.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 3066,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/country-planning-oversight/",
+        "/my-plan",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 5,
+      "kind": "application-partial",
+      "name": " List Row Actions",
+      "purpose": "Reusable  list row actions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/planning/_list_row_actions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "announced dynamic state"
       ],
       "bytes": 1773,
@@ -12066,7 +12553,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9744,
+      "bytes": 9801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -12085,6 +12572,33 @@
       ],
       "tables": 0,
       "template": "partials/planning/assign_partner_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5097,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning/bulk-schedule-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Bulk Schedule Drawer",
+      "purpose": "Reusable bulk schedule drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/planning/bulk_schedule_drawer.html",
       "variants": [
         "warning"
       ]
@@ -12214,7 +12728,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 33619,
+      "bytes": 34024,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -12293,7 +12807,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 10118,
+      "bytes": 10135,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -12477,8 +12991,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3227,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5018,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -13113,7 +13629,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5285,
+      "bytes": 7496,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -13133,15 +13649,13 @@
       ],
       "tables": 0,
       "template": "partials/projects/bulk_partner_drawer.html",
-      "variants": [
-        "warning"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3254,
+      "bytes": 5323,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-schedule"
@@ -13152,10 +13666,9 @@
       "kind": "application-partial",
       "name": "Bulk Schedule Drawer",
       "purpose": "Reusable bulk schedule drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty",
         "error",
         "disabled"
       ],
@@ -13231,7 +13744,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5707,
+      "bytes": 5945,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/create"
@@ -13257,7 +13770,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5820,
+      "bytes": 5967,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/<str:project_id>/edit"
@@ -13305,7 +13818,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5836,
+      "bytes": 6003,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/monitoring/school"
@@ -13323,6 +13836,40 @@
       "tables": 0,
       "template": "partials/projects/monitoring_school_drawer.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 15351,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/projects/monitoring",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 7,
+      "kind": "application-partial",
+      "name": "Monitoring School Table",
+      "purpose": "Reusable monitoring school table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "disabled",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/projects/monitoring_school_table.html",
+      "variants": [
+        "danger",
+        "{{ school.activity_state_tone }}",
+        "{{ school.ssa_improvement_tone }}",
+        "{{ school.status_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -13425,7 +13972,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 19500,
+      "bytes": 19526,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -13705,6 +14252,65 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 4616,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/bulk-assign-project-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Bulk Assign Project Drawer",
+      "purpose": "Reusable bulk assign project drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/schools/bulk_assign_project_drawer.html",
+      "variants": [
+        "danger",
+        "info",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3165,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/core-schools",
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Bulk Bar",
+      "purpose": "Reusable bulk bar interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/schools/bulk_bar.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 7228,
@@ -13845,8 +14451,10 @@
         "/planning/assign-partner-modal",
         "/planning/schedule-modal",
         "/projects/<str:project_id>/schools/bulk-assign-drawer",
+        "/projects/planning/bulk-partner",
         "/schools/<str:school_id>/add-to-cluster",
-        "/schools/<str:school_id>/assign-to-project"
+        "/schools/<str:school_id>/assign-to-project",
+        "/schools/bulk-assign-project-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -15258,7 +15866,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7704,
+      "bytes": 8279,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -15266,7 +15874,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Detail Tables",
       "purpose": "Reusable detail tables interface primitive",
@@ -15277,7 +15885,9 @@
       ],
       "tables": 1,
       "template": "partials/work_plan/detail_tables.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -15334,7 +15944,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4272,
+      "bytes": 4417,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -19283,6 +19893,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/facilitator",
+        "GET /my-plan/{{ act.id }}/cancel-drawer",
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/edit-drawer",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
@@ -19352,8 +19963,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -22144,6 +22755,164 @@
         "text-[12px]",
         "text-[14px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.activity_group_views",
+      "backend_view": "apps.frontend.views.activity_group_views.group_cancel_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0192399382",
+      "page_title": "Activity Group Cancel",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Activity Group Cancel",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Cancel the ticked activities, with one reason.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activity-selection/cancel",
+      "route_name": "activity_group_cancel",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.activity_group_views",
+      "backend_view": "apps.frontend.views.activity_group_views.group_reschedule_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4AD166CCBA",
+      "page_title": "Activity Group Reschedule",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Activity Group Reschedule",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Move the ticked activities to one date.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activity-selection/reschedule",
+      "route_name": "activity_group_reschedule",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -30051,7 +30820,6 @@
         "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
         "GET /clusters/{{ cluster.id }}/bulk-schedule-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
-        "GET /planning/bulk-assign-partner-drawer",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
@@ -59254,7 +60022,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_policies_view",
       "card_count": 0,
@@ -59309,7 +60077,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -59338,7 +60106,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_policies_view",
       "card_count": 0,
@@ -59393,7 +60161,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -63243,6 +64011,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/facilitator",
+        "GET /my-plan/{{ act.id }}/cancel-drawer",
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/edit-drawer",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
@@ -63312,8 +64081,8 @@
         "loading": false
       },
       "surface_kind": "drawer",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -75252,6 +76021,198 @@
       ]
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.bulk_schedule_action_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C755A4B12F",
+      "page_title": "Planning Bulk Schedule",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Planning Bulk Schedule",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Save the bulk Schedule: one activity per ticked school, through the same services a single Schedule uses (a visit at a Core School takes its package slot; an In-school Training is the Training and its School Visit together). A savepoint per school, so one the rules refuse is named and the rest of the selection still goes.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/bulk-schedule",
+      "route_name": "planning_bulk_schedule",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.bulk_schedule_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/planning/bulk_schedule_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /planning/bulk-schedule"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8183CD299B",
+      "page_title": "Planning Bulk Schedule Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Schedule school",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Schedule the same dated work at the schools ticked on a list (owner, 2026-10-06: the Core school list, a cluster's roster \u2014 \"select many and assign or schedule or add to project\", as the project tables already do). The planner's one choice for the selection, as on the coordinator's bulk Schedule: the purpose and, for an In-school Training, the training; each school gets its own costed activity, and one the scheduling rules refuse is named and left out.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/bulk-schedule-drawer",
+      "route_name": "planning_bulk_schedule_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning/bulk-schedule"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/planning/bulk_schedule_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -79341,7 +80302,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -80515,7 +81476,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -80801,7 +81762,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.project_monitoring_view",
       "card_count": 0,
@@ -80815,15 +81776,12 @@
       "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "shared-page-header-component",
       "htmx_endpoints": [
-        "GET {{ school.detail_url }}&amp;fy={{ fy }}",
-        "GET {{ school.resolve_url }}",
-        "GET {{ school.withdraw_url }}",
-        "GET {{ school.schedule_url }}",
-        "GET {{ school.partner_url }}",
-        "GET /projects/capacity/withdraw?enrolment={{ school.assignment_id }}"
+        "GET /projects/monitoring?project={{ selected_project }}&amp;stage={{ selected_stage }}&amp;fy={{ fy }}{% if filter_query %}&amp;{{ filter_query }}{% endif %}",
+        "GET /projects/planning/bulk-partner",
+        "GET /projects/planning/bulk-schedule"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -80889,7 +81847,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": true,
         "error": false,
         "loading": false
@@ -80910,6 +81868,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
+        "text-[12px]",
         "text-[13px]",
         "text-[15px]",
         "text-[18px]"
@@ -81704,11 +82663,12 @@
       "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/schools/drawer_error.html",
         "template:partials/projects/bulk_partner_drawer.html",
         "test:referenced-by-automated-test",
         "permission:projects"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -81728,9 +82688,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Assign activit",
+      "primary_action": "Assign school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Create traceable partner activities for selected project-school pairs.",
+      "purpose": "Hand project schools to a partner, who schedules them: one school from its row's Actions menu, or the schools ticked on Project Monitoring or Special Projects Planning.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -81781,6 +82741,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/projects/bulk_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -81797,7 +82758,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.planning_views",
       "backend_view": "apps.frontend.views.planning_views.special_projects_bulk_schedule_view",
       "card_count": 0,
@@ -81808,7 +82769,7 @@
         "test:referenced-by-automated-test",
         "permission:projects"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -81828,9 +82789,9 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "projects",
-      "primary_action": "Schedule activit",
+      "primary_action": "Schedule school",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Schedule the same dated visit for selected project-school pairs.",
+      "purpose": "Schedule the same dated work, by the coordinator, at selected project schools.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
@@ -81868,7 +82829,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -81888,7 +82849,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[13px]"
+        "text-[13px]",
+        "text-[16px]"
       ]
     },
     {
@@ -84497,7 +85459,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_detail_view",
       "card_count": 0,
@@ -84516,6 +85478,10 @@
       "htmx_endpoints": [
         "POST /schools/{{ school.school_id }}/reopen",
         "GET /schools/{{ school.id }}/edit-drawer",
+        "GET /core-schools/schedule-activity?school_id={{ school.school_id }}",
+        "GET /planning/schedule-modal?school_id={{ school.school_id }}",
+        "GET /core-schools/assign-partner?school_id={{ school.school_id }}",
+        "GET /planning/assign-partner-modal?school_id={{ school.school_id }}",
         "GET /schools/{{ school.id }}/assign-to-project",
         "GET /schools/{{ school.school_id }}/transfer-owner",
         "GET /schools/{{ school.school_id }}/close-drawer"
@@ -84524,7 +85490,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-DBD42E0288",
@@ -84576,7 +85542,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -85754,6 +86720,108 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.bulk_assign_project_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/schools/drawer_error.html",
+        "template:partials/schools/bulk_assign_project_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-99B161BD88",
+      "page_title": "Bulk Assign Project Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "Create project",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Add the schools ticked on a list to one project (owner, 2026-10-06: the Core school list and a cluster's roster get the School Directory's bulk Add to project). The same project list and the same save as the directory's modal; ``next`` brings the planner back to the list.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/bulk-assign-project-drawer",
+      "route_name": "bulk_assign_project_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/schools/bulk-assign-project"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/drawer_error.html",
+        "partials/schools/bulk_assign_project_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -90775,7 +91843,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -90863,7 +91931,7 @@
       "permission_key": "team_planning_oversight",
       "primary_action": "Review or export report",
       "primary_user_decision": "What evidence should be reviewed or exported?",
-      "purpose": "Export a special project and all attached schools (or all projects) to Excel.",
+      "purpose": "The project table as a workbook: every project the reader follows in one file, or the one project asked for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -94761,6 +95829,21 @@
         "retryable": true
       },
       {
+        "cron": "daily 06:40 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 6,
+          "minute": 40
+        },
+        "description": "Tells each person which of their coming activities are planned on a public holiday or on their own approved leave day, so they reschedule them; closes the notice once the day is clear.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "Keyed per person per day off (context_id dayoff-<date>); a re-run with the same list sends nothing, even to someone who archived theirs.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "day_off_alerts",
+        "retryable": true
+      },
+      {
         "cron": "every 30 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/30"
@@ -94845,6 +95928,20 @@
         "max_retries": 0,
         "name": "planning_oversight_warm",
         "retryable": false
+      },
+      {
+        "cron": "every 10 min",
+        "cron_kwargs": {
+          "minute": "*/10"
+        },
+        "description": "Re-prices planned, unpaid activities whose saved cost lines carry a rate the Cost Catalogue has since changed or removed, and rebuilds their draft weekly and monthly requests.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "A plan re-priced against the active catalogue is no longer found; a second run finds only what the first did not reach.",
+        "idempotent": true,
+        "max_interval_minutes": 45,
+        "max_retries": 1,
+        "name": "cost_reprice_sweep",
+        "retryable": true
       },
       {
         "cron": "daily 00:20 Africa/Nairobi",
@@ -96210,6 +97307,30 @@
       "templates": [
         "pages/closure/blocked_closure.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.activity_group_views.group_cancel_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activity-selection/cancel",
+      "route_name": "activity_group_cancel",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.activity_group_views.group_reschedule_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activity-selection/reschedule",
+      "route_name": "activity_group_reschedule",
+      "templates": []
     },
     {
       "callback": "apps.admin_ops.views.incidents_view",
@@ -112268,6 +113389,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.planning_views.bulk_schedule_action_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/bulk-schedule",
+      "route_name": "planning_bulk_schedule",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.planning_views.bulk_schedule_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/bulk-schedule-drawer",
+      "route_name": "planning_bulk_schedule_drawer",
+      "templates": [
+        "partials/planning/bulk_schedule_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view",
       "kind": "page",
       "methods": [
@@ -113231,6 +114378,7 @@
       "route": "/projects/planning/bulk-partner",
       "route_name": "special_projects_bulk_partner",
       "templates": [
+        "partials/schools/drawer_error.html",
         "partials/projects/bulk_partner_drawer.html"
       ]
     },
@@ -113845,6 +114993,21 @@
       "route": "/schools/bulk-assign-project",
       "route_name": "bulk_assign_project",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.school_views.bulk_assign_project_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/bulk-assign-project-drawer",
+      "route_name": "bulk_assign_project_drawer",
+      "templates": [
+        "partials/schools/drawer_error.html",
+        "partials/schools/bulk_assign_project_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.school_views.bulk_match_staff_view",
@@ -115363,39 +116526,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 574,
+    "accessibility_contract_pass": 576,
     "activity_states": 24,
-    "all_routes": 1360,
+    "all_routes": 1365,
     "api_routes": 360,
-    "component_templates": 610,
+    "component_templates": 633,
     "full_pages": 263,
-    "mobile_contract_pass": 574,
-    "nonvisual_actions": 280,
+    "mobile_contract_pass": 576,
+    "nonvisual_actions": 283,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 588,
+      "interaction-fragment": 593,
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
       "report": 45
     },
-    "partials_and_drawers": 308,
-    "permission_gated": 872,
+    "partials_and_drawers": 310,
+    "permission_gated": 877,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 888,
-    "scheduled_jobs": 34,
+    "routed_surfaces": 893,
+    "scheduled_jobs": 36,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 574,
-    "test_referenced": 781,
-    "theme_contract_pass": 574
+    "tablet_contract_pass": 576,
+    "test_referenced": 786,
+    "theme_contract_pass": 576
   }
 }

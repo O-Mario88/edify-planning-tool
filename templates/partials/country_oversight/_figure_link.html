@@ -1,0 +1,10 @@
+{% comment %}
+A figure of a Country Planning Oversight row that opens the table behind it
+(owner, 2026-10-05: "add links to the actual table on every number ... on the
+country oversight tables"). `table` names one of the consolidated tables
+(apps.planning.country_oversight.tables); `list`, instead, one of the Planning
+Monitor's school lists (apps.planning.planning_monitor.LISTS). `scope` narrows
+a table to the row's person or team and `people` narrows a list; a row drawn
+without them (a Partner under a person) keeps its plain figure. A zero is not
+a link.
+{% endcomment %}{% if scope and text != "0" and text != 0 %}{% if list %}<a class="cpo-link" href="/country-planning-oversight/?{{ query }}&amp;view=monitor&amp;gap={{ list }}{% if people %}&amp;{{ people }}{% endif %}{% if kind %}&amp;school_type={{ kind }}{% endif %}#monitor-list" data-cpo-figure="{{ list }}">{{ text }}</a>{% else %}<a class="cpo-link" href="/country-planning-oversight/table/{{ table }}?{{ query }}&amp;{{ scope }}{% if kind %}&amp;school_type={{ kind }}{% endif %}" data-cpo-figure="{{ table }}">{{ text }}</a>{% endif %}{% else %}{{ text }}{% endif %}

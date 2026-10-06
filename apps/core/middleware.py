@@ -566,6 +566,23 @@ class SlidingSessionMiddleware:
         # 3.3% worst-case early expiry whatever the window is set to.
         self.refresh_interval = max(1, settings.SESSION_COOKIE_AGE // 30)
 
+    #: The stream a page listens on to keep up with the plan
+    #: (static/js/live-regions.js); its re-reads name themselves in
+    #: ``X-Requested-With``.
+    LIVE_STREAM_PATH = "/api/realtime/stream"
+
+    def _keeping_up(self, request: HttpRequest) -> bool:
+        """Is this the page following the plan on its own (owner, 2026-10-05:
+        "Every event should update ... in real time")? It is other people's
+        work arriving, not this person working, so it never marks them as
+        present. Like any poll it still slides the session: a reader is not
+        signed out of the page they are watching.
+        """
+        return (
+            request.headers.get("X-Requested-With") == "EdifyLive"
+            or request.path == self.LIVE_STREAM_PATH
+        )
+
     def __call__(self, request: HttpRequest) -> HttpResponse:
         response = self.get_response(request)
         slid = self._slide(getattr(request, "session", None))
@@ -579,8 +596,10 @@ class SlidingSessionMiddleware:
         # nobody has touched within the idle threshold — says nothing about
         # the person working (Staff Activity Log, 2026-09-29). The activity
         # script marks those (static/js/staff-activity-beat.js).
-        background = request.headers.get("X-Edify-Background") == "1" or getattr(
-            request, "_edify_presence_touched", False
+        background = (
+            self._keeping_up(request)
+            or request.headers.get("X-Edify-Background") == "1"
+            or getattr(request, "_edify_presence_touched", False)
         )
         if not background and (slid or self._is_action(request)):
             user = getattr(request, "user", None)

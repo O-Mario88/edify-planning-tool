@@ -173,6 +173,13 @@ school has, staff or Partner, is in the existing-plan note below.{% endcomment %
 <p class="edify-note" data-tone="warning" role="status" data-visit-request-notice>This school is in {{ visit_request_owner_name }}&rsquo;s portfolio. {{ visit_request_owner_name }} approves this visit before it lands on your plan and budget.</p>
 {% endif %}
 
+{% if reschedule_mode and pair_joins %}
+{% comment %}An in-school Training and its School Visit are one mission on one
+day (owner, 2026-09-28): moving either moves both
+(apps.activities.pairs).{% endcomment %}
+<p class="edify-note" data-tone="info" role="status" data-pair-joins>The {{ pair_joins.get_activity_type_display }} on the same day moves with it: the two are one piece of work.</p>
+{% endif %}
+
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>
 

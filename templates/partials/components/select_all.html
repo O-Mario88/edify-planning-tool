@@ -1,0 +1,15 @@
+{% comment %}
+"Select all" for a list of tick boxes (owner, 2026-10-05: "all the places with
+checkboxes can you add Select All Checkbox"). It ticks every enabled box that
+can be seen in its scope: the nearest [data-select-scope], else the table,
+fieldset or form it sits in (static/js/group-select.js). Each box gets its own
+change event, so a list bound to Alpine keeps up, and the box reads back
+ticked, part-ticked or clear as the list changes.
+
+`boxes`: a selector that names the boxes, where the scope holds other lists
+too. `label`: the words, "Select all" by default.
+{% endcomment %}
+<label class="flex items-center gap-2 cursor-pointer select-none edify-text-caption font-semibold text-slate-600" data-select-all-label>
+<input type="checkbox" data-select-all{% if boxes %}="{{ boxes }}"{% endif %} class="h-4 w-4 shrink-0">
+<span>{{ label|default:"Select all" }}</span>
+</label>

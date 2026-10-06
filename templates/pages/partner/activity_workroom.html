@@ -151,6 +151,7 @@
       {% if member_schools %}
       <div>
         <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools represented</p>
+        <div class="mt-2">{% include "partials/components/select_all.html" with boxes="input[name=attended_school_ids]" %}</div>
         <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
           {% for s in member_schools %}
           <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-600">

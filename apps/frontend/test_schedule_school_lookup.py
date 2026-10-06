@@ -43,7 +43,10 @@ class ScheduleSchoolLookupTest(TestCase):
         response = self.client.get("/planning/schedule?action=visit")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.count(b"<option"), 12)
+        # Three fewer than before 2026-10-05: the delivery choice and its
+        # partner picker are gone (staff do not schedule for a partner).
+        self.assertEqual(response.content.count(b"<option"), 9)
+        self.assertNotContains(response, 'name="assigned_partner_id"')
         self.assertContains(response, 'hx-get="/planning/schedule/schools"')
 
     def test_schedule_school_lookup_is_bounded(self):

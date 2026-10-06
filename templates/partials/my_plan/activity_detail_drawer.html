@@ -1,5 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load kpi_metrics table_pagination %}
+{% load kpi_metrics %}
 {% load frontend_filters %}
 {% comment %}
 Activity detail drawer. Background state (inert siblings + scroll lock) is
@@ -106,62 +106,36 @@ Evidence &amp; SF ID ({{ evidence_list|length }})
 {% endif %}
 </dl>
 </div>
+{% comment %}Cancel (owner, 2026-10-05: "add cancel activity from the activity
+profile"): the drawer My Plan's row menu opens, for work still live that this
+reader may run. Here rather than in the footer, whose one row already holds
+Close, Edit, Reschedule and Complete.{% endcomment %}
+{% if can_cancel %}
+<div class="flex items-center justify-between gap-3" data-cancel-activity>
+<p class="edify-text-caption text-slate-500">Not going ahead? It stays on the record as Cancelled and its cost is withdrawn.</p>
+<button
+type="button"
+data-cancel-trigger
+hx-get="/my-plan/{{ act.id }}/cancel-drawer"
+hx-trigger="click consume"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="edify-action-button edify-destructive-outline h-8 shrink-0"
+>
+Cancel activity
+</button>
+</div>
+{% endif %}
 </div>
 
 <!-- Tab: finance -->
 <div id="activity-detail-panel-finance" role="tabpanel" aria-labelledby="activity-detail-tab-finance" x-show="activeTab === 'finance'" class="space-y-4">
 {% kpi_strip %}{% kpi_metric %}{% kpi_label %}{{ activity_cost.label }}{% endkpi_label %}{% if activity_cost.amount is None %}Not configured{% else %}{{ activity_cost.amount|ugx }}{% endif %}{% kpi_helper %}{{ activity_cost.note }}{% if activity_cost.amount_disbursed %} · Amount disbursed: {{ activity_cost.amount_disbursed|ugx }}{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
 
-<div class="space-y-2">
-<h4 class="edify-text-caption font-semibold text-slate-600">Budget lines</h4>
-<div class="rounded-surface overflow-hidden">
-{# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
-<div class="overflow-x-auto">
-{% paginate act.schedule_cost_lines.all "act_schedule_cost_lines_all_page" as act_schedule_cost_lines_all_pager %}
-<table class="edify-record-table w-full text-left text-[12px] font-medium">
-<thead>
-<tr class="bg-slate-50 edify-text-caption font-semibold text-slate-600 border-b">
-<th class="px-4 py-2.5">Item</th>
-<th class="px-4 py-2.5 text-center">Qty / rate</th>
-<th class="px-4 py-2.5 text-center">Status</th>
-<th class="px-4 py-2.5 text-right">Value (UGX)</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% if act.schedule_cost_lines.all %}
-{% for line in act_schedule_cost_lines_all_pager.rows %}
-<tr>
-<td class="px-4 py-2.5 font-semibold text-slate-800" data-record-title>
-{{ line.label }}
-{% if line.description %}
-<span class="block edify-text-caption text-slate-500 font-medium mt-0.5">{{ line.description }}</span>
-{% endif %}
-</td>
-<td class="px-4 py-2.5 text-center text-slate-600" data-label="Qty / Rate">
-{{ line.quantity }} &times; {{ line.unit_cost|ugx }}
-</td>
-<td class="px-4 py-2.5 text-center" data-label="Status">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold edify-primary-soft-alpha-50 edify-primary-text border /40">
-{{ line.finance_status }}
-</span>
-</td>
-<td class="px-4 py-2.5 text-right font-semibold text-slate-800" data-label="Value (UGX)">
-{{ line.amount|ugx }}
-</td>
-</tr>
-{% endfor %}
-{% else %}
-<tr>
-<td colspan="4" class="px-4 py-8 text-center text-slate-500 font-medium">
-No budget lines created.
-</td>
-</tr>
-{% endif %}
-</tbody>
-</table>
-{% include "components/table_pager.html" with pager=act_schedule_cost_lines_all_pager param="act_schedule_cost_lines_all_page" %}
-</div>
-</div>
+{% comment %}Every cost item, how it was worked out and who shares the day
+(owner, 2026-10-05); the same table as the activity page.{% endcomment %}
+<div data-activity-budget>
+{% include "partials/my_plan/budget_breakdown.html" with budget_name="activity-budget-finance" %}
 </div>
 </div>
 
@@ -200,6 +174,7 @@ No budget lines created.
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+
 
 {% if can_complete_partner_ssa_support %}
 <button

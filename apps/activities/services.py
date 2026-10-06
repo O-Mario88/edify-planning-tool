@@ -128,6 +128,19 @@ def _resolve_overdue_reminder(a) -> None:
     transaction.on_commit(resolve)
 
 
+def _settle_day_off_notices(a) -> None:
+    """Bring the owner's "reschedule: planned on a holiday or leave day"
+    notices up to date once the plan moves or is released (owner, 2026-10-05;
+    apps.activities.day_off). After commit; the helper never raises."""
+
+    def settle():
+        from apps.activities.day_off import settle_day_off_alerts
+
+        settle_day_off_alerts(a)
+
+    transaction.on_commit(settle)
+
+
 # Statuses from which a field worker may (re)enter completion: work in progress,
 # plus anything a reviewer returned for correction.
 COMPLETABLE_STATUSES = (
@@ -454,6 +467,20 @@ def _assert_may_schedule(activity: Activity, principal) -> None:
             "Your role reviews and pays for this work rather than scheduling "
             "it. Ask the staff member who owns the activity to move it."
         )
+
+
+def _assert_partner_dates_own_work(activity: Activity, principal) -> None:
+    """Only the partner dates, or moves, work an assigned partner delivers.
+
+    Owner, 2026-10-05 (apps.partners.dating_policy). Work Edify booked a
+    Certified Partner Agency onto is the exception: that day was staff's to
+    choose, so it is staff's to move.
+    """
+    from apps.partners.dating_policy import assert_partner_dates_it, is_agency_booking
+
+    if activity.delivery_type != "partner" or is_agency_booking(activity):
+        return
+    assert_partner_dates_it(principal, activity.assigned_partner_id)
 
 
 def _assert_not_awaiting_owner(activity: Activity) -> None:
@@ -825,6 +852,13 @@ def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
     }
 
 
+def _accommodation_key_for(responsible_staff_id) -> str:
+    """The accommodation rate the responsible person's night away fetches."""
+    from apps.daily_visit_batches.districts import accommodation_key_for_staff
+
+    return accommodation_key_for_staff(responsible_staff_id)
+
+
 def _field_event_district_type(activity: Activity) -> str:
     """MOU travel profile for a field event: destination vs home district.
 
@@ -917,6 +951,10 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "photocopyPages": value("photocopyPages", activity.photocopy_pages),
         "photocopyCopies": value("photocopyCopies", activity.photocopy_copies),
         "districtType": district_type,
+        # The night away is paid at the traveller's accommodation rate
+        # (owner, 2026-10-05): the CCEO's, or the one set for every other
+        # member of staff.
+        "accommodationKey": _accommodation_key_for(activity.responsible_staff_id),
         "nights": data.get("nights"),
         "projectId": activity.project_id,
         "fy": activity.fy,
@@ -2275,6 +2313,15 @@ def _create(
     executor_type = _resolved_executor_type(data)
     is_partner = executor_type in PARTNER_EXECUTOR_TYPES
     is_certified_agency_booking = executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY
+    if executor_type == ExecutorType.PARTNER and scheduled_date is not None:
+        # An assigned partner's work is dated by the partner (owner,
+        # 2026-10-05: "Block any potential scheduling for the partner
+        # visit"). Staff hand the school over; this door used to let a
+        # schedule drawer name a partner and a day, which put the partner's
+        # work on a date the partner never chose.
+        from apps.partners.dating_policy import assert_partner_dates_it
+
+        assert_partner_dates_it(principal, data.get("assignedPartnerId"))
     certified_agency = None
     if is_certified_agency_booking:
         certified_agency = _assert_bookable_certified_agency(
@@ -2755,6 +2802,7 @@ def _create(
                 "catalogueItemId": catalogue_item.id if catalogue_item else None,
                 "deliveryType": "partner" if is_partner else "staff",
                 "districtType": data.get("districtType"),
+                "accommodationKey": _accommodation_key_for(responsible_staff_id),
                 "teachersAttended": data.get("teachersAttended"),
                 "leadersAttended": data.get("leadersAttended"),
                 "otherParticipants": data.get("otherParticipants"),
@@ -4701,6 +4749,7 @@ def _notify_ia_return(a, reason: str) -> None:
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     _assert_may_schedule(a, principal)
+    _assert_partner_dates_own_work(a, principal)
     from apps.schools.lifecycle_service import assert_operating
 
     assert_operating(a.school)
@@ -4936,6 +4985,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 ),
             )
     _resolve_overdue_reminder(a)
+    _settle_day_off_notices(a)
     return _serialize(a)
 
 
@@ -4990,6 +5040,19 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
             if data.get("facilitatingPartnerId"):
                 _assert_active_facilitator(data.get("facilitatingPartnerId"))
             a.facilitating_partner_id = data.get("facilitatingPartnerId") or None
+        if (
+            delivery == "partner"
+            and not was_partner
+            and (a.scheduled_date or a.planned_date)
+        ):
+            # A visit staff have dated does not become the partner's on that
+            # day (owner, 2026-10-05): the school is handed over and the
+            # partner chooses when.
+            from apps.partners.dating_policy import assert_partner_dates_it
+
+            assert_partner_dates_it(
+                principal, data.get("assignedPartnerId") or a.assigned_partner_id
+            )
         a.delivery_type = delivery
         # Only overwrite the partner link when the caller actually sent one —
         # a payload that omits the key used to null the partner while
@@ -5162,6 +5225,12 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         from apps.schools.lifecycle_service import assert_operating
 
         assert_operating(pa.school)
+        # The partner dates what was handed to them (owner, 2026-10-05):
+        # staff who can see the hand-over could date it here on the
+        # partner's behalf.
+        from apps.partners.dating_policy import assert_partner_dates_it
+
+        assert_partner_dates_it(principal, pa.partner_id)
         scope = resolve_user_scope(principal)
         if scope.active_role not in COUNTRY_SCHEDULING_ROLES:
             if scope.country_scope:
@@ -5310,7 +5379,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 _gated_type = (
                     "school_visit"  # a school handover with no type is a visit
                 )
-            if is_gated_visit(_rule, _gated_type, catalogue_item):
+            # A project's hand-over goes past the school rules for now
+            # (owner, 2026-10-05; `partners.handover_policy`) — here as where
+            # it was made, so the partner is not refused work it was handed:
+            # the gate's one partner refusal (a Champion school), and the
+            # Core package's partner half below.
+            from apps.partners.handover_policy import past_school_rules
+
+            _past_rules = past_school_rules(project_id=pa.project_id)
+            if not _past_rules and is_gated_visit(_rule, _gated_type, catalogue_item):
                 assert_partner_may_schedule_visit(
                     pa.school, fy, exclude_activity_id=pa.scheduled_activity_id
                 )
@@ -5320,14 +5397,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             from apps.core_schools.package_credit import package_kind_for
             from apps.core_schools.package_split import PARTNER, assert_side_open
 
-            assert_side_open(
-                pa.school,
-                package_kind_for(_sched_activity_type, pa.purpose_of_visit),
-                PARTNER,
-                fy=fy,
-                exclude_activity_id=pa.scheduled_activity_id,
-                exclude_assignment_id=pa.id,
-            )
+            if not _past_rules:
+                assert_side_open(
+                    pa.school,
+                    package_kind_for(_sched_activity_type, pa.purpose_of_visit),
+                    PARTNER,
+                    fy=fy,
+                    exclude_activity_id=pa.scheduled_activity_id,
+                    exclude_assignment_id=pa.id,
+                )
         if pa.school_id:
             from apps.activities.duplicate_visits import (
                 assert_not_duplicate_client_visit,
@@ -5660,6 +5738,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
     with transaction.atomic():
         a = _get_in_scope(activity_id, principal)
         _assert_may_schedule(a, principal)
+        _assert_partner_dates_own_work(a, principal)
         new_date = _parse_date(data["scheduledDate"])
         from apps.planning.fy_policy import assert_date_plannable
 
@@ -5975,6 +6054,7 @@ def _cancel_or_defer(
             ),
         )
     _resolve_overdue_reminder(a)
+    _settle_day_off_notices(a)
     return _serialize(a)
 
 

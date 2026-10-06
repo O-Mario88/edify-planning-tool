@@ -3606,6 +3606,21 @@ main [data-mobile-family="directory"] .school-filter-clear {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* A ticked Core row (owner, 2026-10-06): the box has a column of its own and
+   sits in the middle of the row, beside the facts rather than over the school
+   ID. The one-column rule above collapsed the shared selectable grid's first
+   track to nothing, which drew the box on top of the ID pill. */
+.core-school-row .school-record-row__summary--selectable {
+  grid-template-columns: 2rem minmax(0, 1fr);
+  column-gap: 0.5rem;
+}
+
+.core-school-row .school-record-row__summary--selectable > .school-record-row__select {
+  align-self: center;
+  block-size: auto;
+  min-block-size: 2.75rem;
+}
+
 .core-school-row__headline {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -5459,41 +5474,11 @@ main table thead .edify-frozen-cell { z-index: 2; }
   white-space: nowrap;
 }
 
-/* Lifecycle tables use the full content width and wrap long names and plans. */
-main table.core-lifecycle-table.edify-record-table {
-  table-layout: fixed !important;
-  inline-size: 100% !important;
-  min-inline-size: 0 !important;
-  width: 100%;
-}
-main table.core-lifecycle-table.edify-record-table :is(th, td),
-main table.core-lifecycle-table.edify-record-table :is(th, td) * {
-  min-width: 0;
-  white-space: normal !important;
-  overflow-wrap: anywhere;
-}
-.core-lifecycle-table th:nth-child(1) { width: 8%; }
-.core-lifecycle-table th:nth-child(2) { width: 22%; }
-.core-lifecycle-table th:nth-child(3) { width: 10%; }
-.core-lifecycle-table th:nth-child(4),
-.core-lifecycle-table th:nth-child(5) { width: 13%; }
-.core-lifecycle-table th:nth-child(6) { width: 24%; }
-.core-lifecycle-table th:nth-child(7) { width: 10%; }
-.core-lifecycle-table .school-planning-badge {
-  white-space: normal;
-  max-width: 100%;
-}
-/* On a phone the seven fixed columns would squeeze to ~50px each and break
-   words mid-letter; keep a readable width and scroll inside the table's
-   overflow-x wrapper instead, wrapping at word boundaries (a word breaks only
-   when it cannot fit its column at all). */
-@media (max-width: 47.99rem) {
-  main table.core-lifecycle-table.edify-record-table {
-    min-inline-size: 48rem !important;
-  }
-  main table.core-lifecycle-table.edify-record-table :is(th, td),
-  main table.core-lifecycle-table.edify-record-table :is(th, td) * {
-    overflow-wrap: break-word;
-    word-break: normal;
-  }
-}
+/* Lifecycle tables (Core Trained, Core Graduate and Champion schools on Core
+   Schools) are ordinary platform tables: each column is as wide as what it
+   holds and the table scrolls sideways when that is wider than its card.
+   They used to fix seven columns by percentage and wrap what did not fit;
+   every table has since been held to one line (consistency.css, EVERY TABLE
+   STAYS ON ONE LINE), so a long school name could neither wrap nor widen its
+   column and ran across the District and status columns beside it (owner,
+   2026-10-05: "make sure the columns are not overlapping into each other"). */

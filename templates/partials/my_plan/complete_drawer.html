@@ -359,6 +359,7 @@ if (openDropdown) $nextTick(() => positionDropdown());
 "
 class="attendance-checklist-popover divide-y divide-slate-100"
 >
+{% if cluster_schools %}<div class="px-4 py-2.5">{% include "partials/components/select_all.html" with boxes="input[name=attended_school_ids]" %}</div>{% endif %}
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
 <input
