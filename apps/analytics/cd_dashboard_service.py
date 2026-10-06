@@ -330,12 +330,25 @@ class CDDashboardService:
                 f"{prior_fy}:{cd.month or ''}:{cd.country or ''}:"
                 f"{_version['n']}:{int(_version['latest'].timestamp()) if _version['latest'] else 0}"
             )
-            prior = _cache.get(_prior_key)
+            # Unreadable or unwritable, the tiles are computed and shown: the
+            # dashboard does not wait on a cache (the idiom of
+            # apps.core.cache_utils, which this predates).
+            try:
+                prior = _cache.get(_prior_key)
+            except Exception:  # noqa: BLE001 - cache loss degrades to computation
+                prior = None
             if prior is None:
                 prior = CDDashboardService._tile_numbers(
                     prior_cd, prior_acts, prior_fy, user
                 )
-                _cache.set(_prior_key, prior, 600)
+                try:
+                    _cache.set(_prior_key, prior, 600)
+                except Exception:  # noqa: BLE001 - the computed tiles are still valid
+                    import logging
+
+                    logging.getLogger(__name__).warning(
+                        "Prior-year tiles not cached", exc_info=True
+                    )
         vs = f"vs FY{prior_fy}" if prior_fy else ""
         trend = CDDashboardService._trend
 

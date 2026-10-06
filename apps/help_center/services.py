@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import functools
+import logging
+import time
 
 from datetime import timedelta
 from types import SimpleNamespace
@@ -1069,16 +1071,42 @@ def _route_context_sync_key() -> str:
     )
 
 
+#: When this process last synced, by marker key. Read only when the cache
+#: cannot be: without it a cache outage would bring back the re-sync on every
+#: request that the marker exists to stop.
+_synced_here: dict[str, float] = {}
+
+
 def _route_contexts_stale() -> bool:
     from django.core.cache import cache
 
-    return not cache.get(_route_context_sync_key())
+    key = _route_context_sync_key()
+    try:
+        return not cache.get(key)
+    except Exception:  # noqa: BLE001 - the Help panel does not wait on a cache
+        logging.getLogger(__name__).warning(
+            "Help route marker unreadable; using this process's own",
+            exc_info=True,
+        )
+        synced = _synced_here.get(key)
+        return synced is None or (
+            time.monotonic() - synced >= ROUTE_CONTEXT_SYNC_SECONDS
+        )
 
 
 def _mark_route_contexts_synced() -> None:
     from django.core.cache import cache
 
-    cache.set(_route_context_sync_key(), True, ROUTE_CONTEXT_SYNC_SECONDS)
+    key = _route_context_sync_key()
+    # The key changes with the catalogue, so one entry is all there is to keep.
+    _synced_here.clear()
+    _synced_here[key] = time.monotonic()
+    try:
+        cache.set(key, True, ROUTE_CONTEXT_SYNC_SECONDS)
+    except Exception:  # noqa: BLE001 - the sync itself is done
+        logging.getLogger(__name__).warning(
+            "Help route marker not written", exc_info=True
+        )
 
 
 def contextual_article(
