@@ -38,6 +38,7 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
+        "apps/accounts/presence_labels.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
@@ -92,6 +93,7 @@
         "apps/daily_visit_batches/districts.py",
         "apps/daily_visit_batches/exceptions.py",
         "apps/daily_visit_batches/pricing.py",
+        "apps/daily_visit_batches/return_day.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
@@ -538,6 +540,7 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
+        "apps/accounts/presence_labels.py",
         "apps/activities/closure_services.py",
         "apps/activities/duplicate_visits.py",
         "apps/activities/facilitation.py",
@@ -651,6 +654,7 @@
         "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
+        "accounts.PresenceTime",
         "accounts.StaffProfile",
         "accounts.StaffSchoolAssignment",
         "accounts.StaffSupervisorAssignment",
@@ -897,7 +901,11 @@
       "untracedBecause": "",
       "roles": [
         "Admin",
-        "CountryDirector"
+        "CCEO",
+        "CountryDirector",
+        "ImpactAssessment",
+        "Program Lead",
+        "ProjectCoordinator"
       ],
       "routes": [
         "GET /clusters/{id}"
@@ -995,7 +1003,8 @@
         "sessions.Session"
       ],
       "permissions": [
-        "cluster.catchmentManage"
+        "cluster.catchmentManage",
+        "project.assignSchool"
       ],
       "pages": [
         "analytics",
@@ -4717,9 +4726,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "703fdd0c6e61b9597879a6564cd985dfdabdb48a02170d13bdf8c4740a02a67d",
-    "sources": "0ef5bef4affe0964e77d83f4714644b4cea299f5c39b4f1bccc2024f729a3a38",
-    "sourceCount": 242,
+    "payload": "684b3f4bd123d1e8dc750645600338cb55497c123b0a550582cd6615976a3a5c",
+    "sources": "2ff55e5f6a67f1d32ddc0a0b7b8ef9fbe31746affab5717ae69f429022d26db5",
+    "sourceCount": 244,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

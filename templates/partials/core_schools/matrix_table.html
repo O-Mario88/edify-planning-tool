@@ -22,6 +22,13 @@ than what the filters and the query actually matched.
   </span>
 </div>
 
+{% if can_tick and matrix_rows %}
+{% comment %}Tick boxes, then Assign to partner, Schedule or Add to project
+for the ticked set (owner, 2026-10-06), the way the other school lists do
+it. The boxes are on each row (school_row.html).{% endcomment %}
+{% include "partials/schools/bulk_bar.html" with boxes="input[data-core-pick]" select_label="Select every core school on this page" bar_next="/core-schools" %}
+{% endif %}
+
 <div class="core-school-matrix__body" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
   {% if matrix_rows %}
     <ul class="core-school-list school-record-list" role="list">

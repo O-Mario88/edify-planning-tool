@@ -1,14 +1,21 @@
 {% load table_pagination %}
 {% paginate section.rows section.param section.page.paginator.per_page|default:50 as lifecycle_pager %}
-<section class="card overflow-hidden my-4">
+{% comment %}Each lifecycle table ticks on its own (owner, 2026-10-06): its
+bar acts on the schools ticked in this table, by business id, through the
+same three doors as the Core school list above.{% endcomment %}
+<section class="card overflow-hidden my-4"{% if can_tick and lifecycle_pager.rows %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-select-scope{% endif %}>
   <h2 class="edify-section-heading px-4 py-3">{{ section.label }} Schools <span class="edify-text-caption">({% if section.page %}{{ section.page.paginator.count }}{% else %}{{ section.rows|length }}{% endif %})</span></h2>
   <p class="edify-text-caption edify-text-muted px-4 pb-3">{% if section.outreach_only %}Donor Visits and Content/Story Collection visits only. No training or assessment.{% else %}Visits and trainings planned as needed. No 4-visit / 4-training package.{% endif %}</p>
+  {% if can_tick and lifecycle_pager.rows %}
+  {% include "partials/schools/bulk_bar.html" with boxes="input[data-lifecycle-pick]" select_label="Select every school in this table" bar_next="/core-schools" with_select_all=False bar_inset=True %}
+  {% endif %}
   <div class="overflow-x-auto">
     <table class="edify-record-table core-lifecycle-table w-full text-left" aria-label="{{ section.label }} schools">
-      <thead><tr><th>School ID</th><th>School name</th><th>District</th><th>Visit plan status</th>{% if not section.outreach_only %}<th>Training plan status</th>{% endif %}<th>Planned activities</th><th>Actions</th></tr></thead>
+      <thead><tr>{% if can_tick and lifecycle_pager.rows %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-lifecycle-pick]" aria-label="Select every {{ section.label|lower }} school in this table"></label></th>{% endif %}<th>School ID</th><th>School name</th><th>District</th><th>Visit plan status</th>{% if not section.outreach_only %}<th>Training plan status</th>{% endif %}<th>Planned activities</th><th>Actions</th></tr></thead>
       <tbody>
       {% for row in lifecycle_pager.rows %}
         <tr>
+          {% if can_tick %}<td class="school-plan-table__select"><label class="school-record-row__select" for="lifecycle-pick-{{ row.id }}"><input type="checkbox" id="lifecycle-pick-{{ row.id }}" value="{{ row.school_id }}" x-model="selectedSchools" data-lifecycle-pick><span class="sr-only">Select {{ row.name }}</span></label></td>{% endif %}
           <td>{{ row.school_id }}</td>
           <td><a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline">{{ row.name }}</a></td>
           <td>{{ row.district|default:"—" }}</td>

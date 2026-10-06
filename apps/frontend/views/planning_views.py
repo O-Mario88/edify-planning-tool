@@ -453,6 +453,20 @@ def _project_staff_schedule(request, assignments) -> dict:
     as the Catalogue Activity it is, as it always was; any other purpose is
     costed by the one Catalogue Activity that costs it.
     """
+    return _staff_schedule_plan(
+        request, own={item.id: item for item in _project_own_activities(assignments)}
+    )
+
+
+def _staff_schedule_plan(request, own=None) -> dict:
+    """The one plan a bulk Schedule applies at every ticked school.
+
+    Shared by the coordinator's project bulk Schedule and the bulk Schedule
+    on a list of schools (Core Schools, a cluster's roster; owner,
+    2026-10-06). ``own`` is a project's own Catalogue Activities, keyed by
+    id, which the project door may schedule as themselves; a list of
+    schools has none.
+    """
     from apps.activity_catalogue.availability import (
         validate_in_school_training_course_selection,
     )
@@ -461,6 +475,7 @@ def _project_staff_schedule(request, assignments) -> dict:
         resolve_item_for_workflow_kind,
     )
 
+    own = own or {}
     raw = request.POST.get("purpose_of_visit", "").strip()
     if not raw:
         raise BadRequest("Select the purpose of the visit before scheduling.")
@@ -477,7 +492,6 @@ def _project_staff_schedule(request, assignments) -> dict:
         chosen = request.POST.get("training_course_id", "").strip()
         if not chosen:
             raise BadRequest("Select the Training to deliver.")
-        own = {item.id: item for item in _project_own_activities(assignments)}
         if chosen in own and _delivered_as_itself(own[chosen], "staff"):
             item = get_selectable_item(chosen)
             mapped = sorted(
@@ -2337,6 +2351,185 @@ def schedule_action_view(request):
         )
     except Exception as e:
         return error_fragment(e, status=400)
+
+
+#: How many ticked schools one bulk Schedule takes: the same ceiling the
+#: project bulk doors keep (``_scoped_project_assignments``).
+BULK_SCHEDULE_MAXIMUM_SCHOOLS = 50
+
+
+def _ticked_schools(request):
+    """The schools a list's tick boxes name, in the planner's own portfolio.
+
+    Returns ``(codes, schools)``: the distinct codes posted (business ids,
+    or primary keys from an older list) and the operating schools among them
+    this person plans for — the Planning page's own bulk scope
+    (``bulk_action_view``), so a supervisor's read-only team schools are
+    counted as outside it rather than acted on.
+    """
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    source = request.POST if request.method == "POST" else request.GET
+    raw = source.getlist("school_ids")
+    codes = [
+        code.strip()
+        for value in raw
+        for code in str(value or "").split(",")
+        if code.strip()
+    ]
+    codes = list(dict.fromkeys(codes))[:BULK_SCHEDULE_MAXIMUM_SCHOOLS]
+    if not codes:
+        return [], []
+    schools = list(
+        school_queryset(resolve_user_scope(request.user), direct_only=True)
+        .filter(deleted_at__isnull=True)
+        .filter(Q(school_id__in=codes) | Q(id__in=codes))
+        .select_related("district")
+        .order_by("name")
+    )
+    return codes, schools
+
+
+def _bulk_schedule_focus(plan: dict, school):
+    """The intervention one school's bulk-scheduled work records: the
+    training's own, else the school's first-ranked SSA need for a purpose
+    that moves one (as the single Schedule and the bulk hand-over read it);
+    none for SSA collection and the outreach visits."""
+    from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
+    if plan["focus"] or plan["purpose"] in INTERVENTION_FREE_PURPOSES:
+        return plan["focus"]
+    from apps.ssa.plan_alignment import school_need
+
+    need = school_need(school)
+    return need.priorities[0] if need.priorities else None
+
+
+@require_page_permission("planning")
+def bulk_schedule_drawer_view(request):
+    """Schedule the same dated work at the schools ticked on a list (owner,
+    2026-10-06: the Core school list, a cluster's roster — "select many and
+    assign or schedule or add to project", as the project tables already
+    do). The planner's one choice for the selection, as on the coordinator's
+    bulk Schedule: the purpose and, for an In-school Training, the training;
+    each school gets its own costed activity, and one the scheduling rules
+    refuse is named and left out.
+    """
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
+    from apps.activity_catalogue.availability import (
+        in_school_training_course_options,
+    )
+
+    codes, schools = _ticked_schools(request)
+    follow_up_named = _follow_up_requires_training()
+    # Trainings are the owner's programme; the portfolio-less country roles
+    # schedule visits only, as the single drawer offers.
+    visits_only = RolePermissionService.schedules_visits_only(request.user)
+    return render(
+        request,
+        "partials/planning/bulk_schedule_drawer.html",
+        {
+            "schools": schools,
+            "outside_scope": len(codes) - len(schools),
+            "visit_purposes": [
+                (value, label)
+                for value, label in STAFF_VISIT_PURPOSES
+                if not (value == "training_follow_up" and follow_up_named)
+                and not (visits_only and value == "in_school_training")
+            ],
+            "follow_up_named_per_school": follow_up_named,
+            "training_courses_json": json.dumps(in_school_training_course_options()),
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("planning")
+def bulk_schedule_action_view(request):
+    """Save the bulk Schedule: one activity per ticked school, through the
+    same services a single Schedule uses (a visit at a Core School takes
+    its package slot; an In-school Training is the Training and its School
+    Visit together). A savepoint per school, so one the rules refuse is
+    named and the rest of the selection still goes."""
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
+
+    codes, schools = _ticked_schools(request)
+    if not schools:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">'
+            "No schools in your planning portfolio were selected.</div>",
+            status=400,
+        )
+    scheduled_date = request.POST.get("scheduled_date", "").strip()
+    if not scheduled_date:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a delivery date.</div>',
+            status=400,
+        )
+
+    try:
+        plan = _staff_schedule_plan(request)
+        purpose_label = visit_purpose_label(plan["purpose"])
+        scheduled = 0
+        refused: list[str] = []
+        with transaction.atomic():
+            for school in schools:
+                payload = {
+                    "schoolId": school.school_id,
+                    "scheduledDate": scheduled_date,
+                    "deliveryType": "staff",
+                    "catalogueItemId": plan["catalogue_item_id"],
+                    "requireCatalogue": True,
+                    "recommendationReason": plan["reason"],
+                    "activityPurposeText": f"{purpose_label} at {school.name}",
+                    "expectedOutcome": (
+                        "Complete the planned support and record evidence."
+                    ),
+                    "activityType": plan["activity_type"],
+                    "purposeType": plan["purpose"],
+                    "ssaCollectionExpected": (
+                        plan["activity_type"] == "school_visit_ssa_collection"
+                    ),
+                }
+                focus = _bulk_schedule_focus(plan, school)
+                if focus:
+                    payload["focusIntervention"] = focus
+                try:
+                    with transaction.atomic():
+                        if plan["pair"]:
+                            schedule_in_school_training_pair(payload, request.user)
+                        else:
+                            schedule_school_visit(payload, request.user)
+                except (BadRequest, ConflictError) as exc:
+                    refused.append(f"{school.name}: {exc}")
+                    continue
+                scheduled += 1
+        message = f"Scheduled {scheduled} school{'s' if scheduled != 1 else ''}."
+        if len(codes) > len(schools):
+            outside = len(codes) - len(schools)
+            message += (
+                f" {outside} selected school{'s' if outside != 1 else ''} "
+                f"{'are' if outside != 1 else 'is'} outside your planning "
+                "portfolio and left out."
+            )
+        if refused:
+            message += " Not scheduled: " + "; ".join(refused)
+        if not scheduled:
+            raise BadRequest(message)
+        return _saved_without_leaving(
+            message,
+            plan_url=_my_plan_url_for_scheduled_date(scheduled_date),
+            plan_link_label="Open My Plan",
+            notice=_ceiling_notice(request, scheduled_date),
+        )
+    except Exception as exc:
+        return error_fragment(
+            exc, action="Could not schedule the selection", status=400
+        )
 
 
 @require_page_permission("planning")

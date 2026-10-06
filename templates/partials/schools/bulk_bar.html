@@ -1,0 +1,52 @@
+{% comment %}
+The bar over a list of schools with tick boxes (owner, 2026-10-06: the Core
+school list and a cluster's roster get "the bulk assign, schedule, bulk add
+to project just like these other schools" — tick boxes, and the buttons pop
+up for the ticked set, never a page-header button).
+
+It sits inside the list's `x-data="{ selectedSchools: [] }"`. Each row's box
+is `x-model="selectedSchools"` with the school's business id as its value;
+the Select-all box ticks every box `boxes` names inside the nearest
+[data-select-scope] (static/js/group-select.js), and each box's own change
+event keeps the Alpine list current.
+
+Three doors, each the one the single row action opens, for the whole tick:
+Assign to partner is the Planning page's bulk hand-over, Schedule the bulk
+Schedule, Add to project the directory's bulk project save. `bar_next` is
+the page Add to project returns the planner to after the save.
+
+`with_select_all` false: the list's table head carries the Select-all box,
+so the bar shows only once a school is ticked (the cluster profile).
+{% endcomment %}
+<div class="school-directory-listbar{% if bar_inset %} px-4{% endif %}" data-school-bulk-bar{% if with_select_all == False %} x-cloak x-show="selectedSchools.length > 0"{% endif %}>
+  {% if with_select_all != False %}
+  <label class="school-directory-listbar__select">
+    <input type="checkbox" data-select-all="{{ boxes }}" aria-label="{{ select_label|default:'Select every school on this page' }}">
+    <span>Select all</span>
+  </label>
+  {% endif %}
+  <div class="school-directory-listbar__bulk" x-cloak x-show="selectedSchools.length > 0" aria-live="polite">
+    <strong><span x-text="selectedSchools.length"></span> selected</strong>
+    {% if can_assign_partner %}
+    <form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+      <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+      <button type="submit" data-school-assign-selected>Assign to partner</button>
+    </form>
+    {% endif %}
+    {% if can_bulk_schedule %}
+    <form hx-get="/planning/bulk-schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+      <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+      <button type="submit" data-school-schedule-selected>Schedule</button>
+    </form>
+    {% endif %}
+    {% if can_assign_project %}
+    <form hx-get="/schools/bulk-assign-project-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+      <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+      {% if bar_next %}<input type="hidden" name="next" value="{{ bar_next }}">{% endif %}
+      <button type="submit" data-school-project-selected>Add to project</button>
+    </form>
+    {% endif %}
+    <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
+  </div>
+  {% if bar_count %}<span class="school-directory-listbar__count">{{ bar_count }}</span>{% endif %}
+</div>
