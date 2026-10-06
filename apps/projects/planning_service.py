@@ -467,9 +467,11 @@ def get_planning(principal, filters=None) -> dict:
                 "school_pk": school.id,
                 "school_id": school.school_id,
                 "school_name": school.name,
-                "district": school.district.name,
+                # A school uploaded with an unmatched district has neither
+                # a district nor a region on record.
+                "district": school.district.name if school.district_id else "—",
                 "district_id": school.district_id,
-                "region": school.region.name,
+                "region": school.region.name if school.region_id else "—",
                 "region_id": school.region_id,
                 "project_id": project.id,
                 "project_name": project.name,
