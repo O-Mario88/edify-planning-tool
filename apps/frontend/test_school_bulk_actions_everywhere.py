@@ -78,9 +78,7 @@ class _Portfolio(TestCase):
         cls.fy = get_operational_fy()
         cls.region = Region.objects.create(name="SBE Region")
         cls.district = District.objects.create(name="SBE District", region=cls.region)
-        cls.sub_county = SubCounty.objects.create(
-            name="SBE Sub", district=cls.district
-        )
+        cls.sub_county = SubCounty.objects.create(name="SBE Sub", district=cls.district)
 
         cls.cceo = User.objects.create(
             id="sbe-cceo",
@@ -408,7 +406,9 @@ class TheSchoolProfileButtonsTest(_Portfolio):
         self.assertContains(
             response, 'hx-get="/core-schools/assign-partner?school_id=SBE-CORE"'
         )
-        self.assertContains(response, f'hx-get="/schools/{self.core.id}/assign-to-project"')
+        self.assertContains(
+            response, f'hx-get="/schools/{self.core.id}/assign-to-project"'
+        )
 
     def test_a_client_school_opens_the_planning_drawers(self):
         response = self.client.get("/schools/SBE-CLIENT")

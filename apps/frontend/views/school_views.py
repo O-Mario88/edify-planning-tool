@@ -1767,7 +1767,9 @@ def _profile_planning_controls(user, school) -> dict:
         "profile_core_routes": core_routes,
         # The Core chooser greys the half that is used itself, so its door
         # is always open; a client school's one staff visit greys the door.
-        "schedule_block": "" if core_routes or gate.staff_can_schedule else gate.staff_reason,
+        "schedule_block": ""
+        if core_routes or gate.staff_can_schedule
+        else gate.staff_reason,
         "assign_block": "" if gate.can_assign_partner else gate.assign_reason,
     }
 

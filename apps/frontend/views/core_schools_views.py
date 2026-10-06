@@ -441,12 +441,8 @@ def core_schools_view(request):
         # or schedule or add to project", as the other school lists do).
         # Each bar button is the door its row action opens, for whoever it
         # opens for; the read-only oversight lens has no boxes.
-        "can_assign_partner": RolePermissionService.can_assign_to_partner(
-            request.user
-        ),
-        "can_bulk_schedule": RolePermissionService.can_schedule_activity(
-            request.user
-        ),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
         "selected_region": filters["region"],
         "selected_district": filters["district"],
         "selected_staff": filters["staff"],
