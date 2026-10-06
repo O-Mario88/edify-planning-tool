@@ -25,13 +25,13 @@ from apps.activities.facilitation import (
     takes_facilitator,
 )
 from apps.activities.services import is_partner_ssa_support_activity
+from apps.activities import training_names
 from apps.geography.models import District
 from apps.accounts.models import User
 from apps.partners.models import Partner
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
-from apps.planning import training_ceilings
 from apps.partners.purposes import visit_purpose_label
 
 # A visit request that the school owner has not yet approved is not on the
@@ -1204,9 +1204,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             "school__sub_county",
             "cluster",
             "cluster__district",
-            # The Trainings card names each training by its catalogue course
-            # (owner, 2026-10-06): the course beside an in-school delivery or
-            # a training meeting, else the catalogue item of a group training.
+            # The training cards name each training by its catalogue course
+            # (owner, 2026-10-06): the course beside an in-school delivery,
+            # else the catalogue item of a group training.
             "training_course",
             "catalogue_item",
         )
@@ -1552,8 +1552,8 @@ def get_frontend_context(principal, query: dict) -> dict:
             # from the training catalogue ... Mode of delivery should be
             # Cluster Group training or In-School training"). Blank on a
             # training nobody has named yet; the Edit drawer names it.
-            "training_name": training_ceilings.course_name_of(a),
-            "training_mode": training_ceilings.mode_of_delivery(a),
+            "training_name": training_names.course_name_of(a),
+            "training_mode": training_names.mode_of_delivery(a),
             # What a cluster meeting is for (owner, 2026-10-06): a training
             # delivered at it, a meeting only, or a cluster leaders' meeting;
             # blank on a meeting planned before the types existed.

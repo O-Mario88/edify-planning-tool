@@ -28,7 +28,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-11` | Professional Development | ✓ | 1 | 45 | 8 | 1 | 9 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 41 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 42 | 7 | 0 | 0 | 0 | 3 | 1 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 62 | 14 | 1 | 9 | 2 | 3 | 25 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 63 | 14 | 1 | 9 | 2 | 3 | 25 |
 | `journey-15` | Financial Health | ✓ | 1 | 57 | 17 | 2 | 4 | 1 | 6 | 29 |
 | `journey-16` | Government Requirements | ✓ | 1 | 56 | 17 | 2 | 4 | 1 | 5 | 29 |
 | `journey-17` | Loan | ✓ | 1 | 48 | 25 | 11 | 7 | 3 | 17 | 37 |
@@ -313,7 +313,7 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Permissions checked | `data.export` |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+35 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+52 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+53 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |

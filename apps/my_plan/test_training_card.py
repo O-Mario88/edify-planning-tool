@@ -92,13 +92,11 @@ class TrainingCardTest(TestCase):
         self.assertNotIn("Unknown Cluster", html)
         self.assertNotIn("Cluster Trainings Planned", html)
 
-    def test_the_training_is_named_by_its_catalogue_course(self):
-        """The Training Name column is the course from the Training
-        Catalogue — Literacy, TAM — not the workflow (owner, 2026-10-06)."""
+    def _course(self):
+        """A course the seeded Training Catalogue holds, as the Edit drawer
+        would name it."""
         from apps.activity_catalogue.models import ActivityCatalogueItem
 
-        # A course the seeded Training Catalogue holds, as the Edit drawer
-        # would name it.
         course = (
             ActivityCatalogueItem.objects.filter(
                 is_training_course=True, status="active"
@@ -107,6 +105,12 @@ class TrainingCardTest(TestCase):
             .first()
         )
         self.assertIsNotNone(course)
+        return course
+
+    def test_the_training_is_named_by_its_catalogue_course(self):
+        """The Training Name column is the course from the Training
+        Catalogue — Literacy, TAM — not the workflow (owner, 2026-10-06)."""
+        course = self._course()
         self.training.training_course = course
         self.training.save(update_fields=["training_course"])
 
@@ -114,6 +118,38 @@ class TrainingCardTest(TestCase):
 
         self.assertIn(course.display_name, trainings)
         self.assertNotIn("Not yet named", trainings)
+
+    def test_a_group_training_is_named_by_its_course_and_delivered_to_a_cluster(self):
+        """A cluster training's catalogue item is the course itself; its
+        mode of delivery is Cluster Group Training."""
+        from apps.clusters.models import Cluster
+
+        course = self._course()
+        cluster = Cluster.objects.create(
+            name="TC Cluster",
+            region=self.school.region,
+            district=self.school.district,
+            cluster_type="mixed",
+            status="active",
+        )
+        today = date.today()
+        Activity.objects.create(
+            activity_type="cluster_training",
+            cluster=cluster,
+            catalogue_item=course,
+            activity_name_snapshot=course.display_name,
+            responsible_staff_id=self.profile.id,
+            delivery_type="staff",
+            status="scheduled",
+            planned_date=today,
+            fy=get_operational_fy(),
+            quarter=get_quarter_for_date(today),
+        )
+
+        _html, _visits, trainings = self._cards()
+
+        self.assertIn(course.display_name, trainings)
+        self.assertIn("Cluster Group Training", trainings)
 
     def test_both_cards_carry_the_pair_without_being_asked_for_a_week(self):
         """The year is the resting state: today's work shows with no filtering."""

@@ -43,6 +43,7 @@ from dataclasses import dataclass
 from django.db.models import Case, CharField, Count, F, Q, When
 from django.db.models.functions import Coalesce
 
+from apps.activities.training_names import MODE_OF_DELIVERY as _MODE_OF_DELIVERY
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
 from apps.core.enums import MeetingKind
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -57,8 +58,6 @@ __all__ = [
     "flag_counts",
     "summary_totals",
     "summary_sections",
-    "course_name_of",
-    "mode_of_delivery",
     "capacity",
     "course_id_of",
     "delivery_of",
@@ -94,8 +93,10 @@ IN_SCHOOL = "in_school"
 #: The two ways a training is delivered. There is no third.
 DELIVERY_LABELS = {GROUP: "Group Training", IN_SCHOOL: "In-School Training"}
 #: The same two, as My Plan's Mode of Delivery column says them (owner,
-#: 2026-10-06: "Cluster Group training or In-School training").
-MODE_OF_DELIVERY = {GROUP: "Cluster Group Training", IN_SCHOOL: "In-School Training"}
+#: 2026-10-06: "Cluster Group training or In-School training"): the one
+#: definition, My Plan's (apps.activities.training_names).
+MODE_OF_DELIVERY = dict(_MODE_OF_DELIVERY)
+assert set(MODE_OF_DELIVERY) == {GROUP, IN_SCHOOL}
 
 #: A plan in one of these no longer holds its schools' places.
 RELEASED_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
@@ -143,35 +144,6 @@ def course_id_of(activity) -> str | None:
     if item is not None and item.is_training_course:
         return item.id
     return None
-
-
-def course_name_of(activity) -> str:
-    """The training's name as the Training Catalogue gives it — Literacy,
-    TAM, Leadership — read from the rows `course_id_of` reads, so a page
-    that has them in memory pays no query; blank for a training nobody has
-    named yet and for anything that is not a training.
-
-    A training delivered at a cluster meeting keeps its course's name in
-    the meeting's recommendation_source when the course itself was not
-    linked, so that is the last place looked."""
-    if not is_training(activity):
-        return ""
-    if activity.training_course_id:
-        return activity.training_course.display_name or ""
-    item = activity.catalogue_item
-    if item is not None and item.is_training_course:
-        return item.display_name or ""
-    if activity.meeting_kind == MeetingKind.TRAINING:
-        return (activity.recommendation_source or {}).get(
-            "trainingCourseName", ""
-        ) or ""
-    return ""
-
-
-def mode_of_delivery(activity) -> str:
-    """ "Cluster Group Training" or "In-School Training"; blank for anything
-    that is not a training (`delivery_of`)."""
-    return MODE_OF_DELIVERY.get(delivery_of(activity), "")
 
 
 def _training_q(prefix: str = "") -> Q:

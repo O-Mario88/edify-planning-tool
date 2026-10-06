@@ -37,8 +37,9 @@ import uuid
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.core.cache.backends.base import BaseCache
 from django.db import OperationalError
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from apps.core.rbac import EdifyRole
@@ -169,6 +170,114 @@ class CacheOutageTest(TestCase):
         ):
             response = Client().get("/login")
         self.assertEqual(response.status_code, 200)
+
+
+class RefusingCache(BaseCache):
+    """A cache whose server has gone: every operation is refused, as a managed
+    cache refuses while its one node restarts."""
+
+    def __init__(self, location, params):
+        super().__init__(params)
+
+    def _refuse(self, *args, **kwargs):
+        raise ConnectionError("Error 61 connecting to the cache. Connection refused.")
+
+    add = get = set = touch = delete = _refuse
+    get_many = set_many = delete_many = has_key = _refuse
+    incr = decr = clear = get_or_set = _refuse
+
+
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "apps.core.tests.test_failure_injection.RefusingCache",
+            "LOCATION": "",
+        }
+    }
+)
+class CacheOutageOnEveryPageTest(TestCase):
+    """Every argument-free page, as every role, with the cache refusing every
+    operation.
+
+    The two pages above were the whole of this check until the shared cache
+    was rehearsed against a real server (2026-10-06): stopped while the app
+    ran, it took the Country Director's Analytics page down with it, through
+    one unguarded read of a revision key. On a per-process cache that cannot
+    happen, so nothing had ever shown it. A shared cache is one more machine
+    that can restart; a page may be slower while it does, never a 500."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.frontend.test_route_crawl import _zero_argument_routes
+
+        cls.routes = _zero_argument_routes()
+        cls.users = {
+            role: _user(f"outage-{n}@edify.test", role)
+            for n, role in enumerate(EdifyRole.values())
+        }
+
+    def test_no_page_is_a_500_for_any_role(self):
+        for role, user in self.users.items():
+            with self.subTest(role=role):
+                client = Client(raise_request_exception=False)
+                client.force_login(user)
+                failures = []
+                for url in self.routes:
+                    try:
+                        status = client.get(url).status_code
+                    except Exception as exc:  # noqa: BLE001 - the crawl reports
+                        failures.append(f"{url} raised {type(exc).__name__}")
+                        continue
+                    if status >= 500:
+                        failures.append(f"{url} → {status}")
+                self.assertEqual(
+                    failures,
+                    [],
+                    f"{len(failures)} page(s) fail for {role} with the cache "
+                    "down: " + "; ".join(failures[:20]),
+                )
+
+
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "apps.core.tests.test_failure_injection.RefusingCache",
+            "LOCATION": "",
+        }
+    }
+)
+class CacheOutageFallbacksTest(TestCase):
+    """What each repaired place does instead of raising."""
+
+    def test_a_committed_save_is_not_answered_with_an_error(self):
+        """Every activity save advances the analytics revision after it
+        commits. Refused there, the save had happened and the planner was
+        shown a failure."""
+        from apps.hr import accountability_cache
+
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            accountability_cache.changed(using="default")
+        self.assertEqual(len(callbacks), 1)
+
+    def test_an_unreadable_revision_matches_no_stored_answer(self):
+        from apps.hr.accountability_cache import revision
+
+        first, second = revision(), revision()
+        self.assertNotEqual(first, "0")
+        self.assertNotEqual(first, second)
+
+    def test_the_help_routes_sync_once_not_on_every_request(self):
+        """The hourly marker lives in the cache. Unreadable, each process
+        keeps its own, or a path with no article re-syncs the whole route
+        inventory on every request (2,200 queries, 2026-09-06)."""
+        from apps.help_center import services
+
+        services._synced_here.clear()
+        self.assertTrue(services._route_contexts_stale())
+        services._mark_route_contexts_synced()
+        self.assertFalse(services._route_contexts_stale())
+        with mock.patch.object(services, "ROUTE_CONTEXT_SYNC_SECONDS", 0):
+            self.assertTrue(services._route_contexts_stale())
 
 
 class MailOutageDuringSignInTest(TestCase):

@@ -88,14 +88,8 @@ COUNTRY_READER_ROLES = frozenset(
 SUMMARY_ROLES = COUNTRY_READER_ROLES | {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
 
 #: "Cluster Group Training" and "In-School Training": the two modes, in the
-#: words My Plan's Mode of Delivery column uses (training_ceilings).
-MODE_LABELS = dict(
-    getattr(
-        training_ceilings,
-        "MODE_OF_DELIVERY",
-        {GROUP: "Cluster Group Training", IN_SCHOOL: "In-School Training"},
-    )
-)
+#: words My Plan's Mode of Delivery column uses.
+MODE_LABELS = dict(training_ceilings.MODE_OF_DELIVERY)
 #: How a catalogue entry says it is delivered, in the summary's two modes.
 _CATALOGUE_MODES = {
     "in_school_training": MODE_LABELS[IN_SCHOOL],

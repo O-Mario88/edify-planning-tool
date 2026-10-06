@@ -80,6 +80,9 @@ to tick.{% endcomment %}
   {% endif %}
 </td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
+{% comment %}The training's name from the Training Catalogue — Literacy, TAM,
+Leadership — never the workflow (owner, 2026-10-06); a training nobody has
+named yet says so.{% endcomment %}
 <td class="font-medium text-slate-800" data-label="Training Name">{% if row.training_name %}{{ row.training_name }}{% else %}<span class="text-slate-400" title="Name the training from its Edit drawer">Not yet named</span>{% endif %}</td>
 <td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td data-label="Intervention">
@@ -95,7 +98,7 @@ to tick.{% endcomment %}
 <td data-label="Mode of Delivery">
   {% comment %}Cluster Group Training or In-School Training (owner,
   2026-10-06), decided by what the plan is attached to
-  (apps.planning.training_ceilings.mode_of_delivery).{% endcomment %}
+  (apps.activities.training_names.mode_of_delivery).{% endcomment %}
   {% if row.training_mode %}
   <span class="pill {% if row.training_mode == 'In-School Training' %}pill-neutral{% else %}pill-info{% endif %} text-xs font-semibold">{{ row.training_mode }}</span>
   {% else %}
