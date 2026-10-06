@@ -173,6 +173,29 @@ It is on My Plan, the Work Plan, the Dashboard's past-due tables, a Program
 Lead's week tables, the Planned table of every profile, the Calendar and
 Planning's Calendar View.
 
+**Ticked schools.** A list of schools ticks by business id into an Alpine
+`selectedSchools` list, and `partials/schools/bulk_bar.html` is the bar over
+it (owner, 2026-10-06: the Core school list and a cluster's roster "get the
+bulk assign, schedule, bulk add to project just like these other schools"):
+
+```django
+<div x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-select-scope>
+  {% include "partials/schools/bulk_bar.html" with boxes="input[data-core-pick]" bar_next="/core-schools" %}
+  … <input type="checkbox" value="{{ school.school_id }}" x-model="selectedSchools" data-core-pick> …
+</div>
+```
+
+Its three buttons are the doors the single row action opens, for the ticked
+set: Assign to partner (`/planning/bulk-assign-partner-drawer`), Schedule
+(`/planning/bulk-schedule-drawer`, one purpose and date, each school its own
+costed activity, refusals named) and Add to project
+(`/schools/bulk-assign-project-drawer`, the directory's save, `next` bringing
+the planner back). Each shows only for a role its door opens for; a school a
+door refuses is named in the drawer and left out, so every school has a box.
+Pass `with_select_all=False` where the table head already carries the
+Select-all box. On the school's own profile the same three are page-header
+buttons, since there is one school to act on.
+
 ## Live regions
 
 Owner, 2026-10-05: "Every event should update (schedules, school withdrawal

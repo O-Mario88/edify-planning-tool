@@ -3897,7 +3897,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8521,
+      "bytes": 8943,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3991,7 +3991,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3038,
+      "bytes": 4304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools",
@@ -4122,7 +4122,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11664,
+      "bytes": 12207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -12577,6 +12577,33 @@
       ]
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5097,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning/bulk-schedule-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Bulk Schedule Drawer",
+      "purpose": "Reusable bulk schedule drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/planning/bulk_schedule_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 769,
       "deprecated_alternatives": [],
@@ -14200,6 +14227,65 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 4616,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/bulk-assign-project-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Bulk Assign Project Drawer",
+      "purpose": "Reusable bulk assign project drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/schools/bulk_assign_project_drawer.html",
+      "variants": [
+        "danger",
+        "info",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 3165,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/core-schools",
+        "/core-schools-oversight/"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Bulk Bar",
+      "purpose": "Reusable bulk bar interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/schools/bulk_bar.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 7228,
@@ -14342,7 +14428,8 @@
         "/projects/<str:project_id>/schools/bulk-assign-drawer",
         "/projects/planning/bulk-partner",
         "/schools/<str:school_id>/add-to-cluster",
-        "/schools/<str:school_id>/assign-to-project"
+        "/schools/<str:school_id>/assign-to-project",
+        "/schools/bulk-assign-project-drawer"
       ],
       "findings": [],
       "forms": 0,
@@ -30708,7 +30795,6 @@
         "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
         "GET /clusters/{{ cluster.id }}/bulk-schedule-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
-        "GET /planning/bulk-assign-partner-drawer",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
@@ -75910,6 +75996,198 @@
       ]
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.bulk_schedule_action_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C755A4B12F",
+      "page_title": "Planning Bulk Schedule",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Planning Bulk Schedule",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Save the bulk Schedule: one activity per ticked school, through the same services a single Schedule uses (a visit at a Core School takes its package slot; an In-school Training is the Training and its School Visit together). A savepoint per school, so one the rules refuse is named and the rest of the selection still goes.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/bulk-schedule",
+      "route_name": "planning_bulk_schedule",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.bulk_schedule_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/planning/bulk_schedule_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /planning/bulk-schedule"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8183CD299B",
+      "page_title": "Planning Bulk Schedule Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Schedule school",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Schedule the same dated work at the schools ticked on a list (owner, 2026-10-06: the Core school list, a cluster's roster \u2014 \"select many and assign or schedule or add to project\", as the project tables already do). The planner's one choice for the selection, as on the coordinator's bulk Schedule: the purpose and, for an In-school Training, the training; each school gets its own costed activity, and one the scheduling rules refuse is named and left out.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/bulk-schedule-drawer",
+      "route_name": "planning_bulk_schedule_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning/bulk-schedule"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/planning/bulk_schedule_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]",
+        "text-[16px]"
+      ]
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
@@ -85156,7 +85434,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_detail_view",
       "card_count": 0,
@@ -85175,6 +85453,10 @@
       "htmx_endpoints": [
         "POST /schools/{{ school.school_id }}/reopen",
         "GET /schools/{{ school.id }}/edit-drawer",
+        "GET /core-schools/schedule-activity?school_id={{ school.school_id }}",
+        "GET /planning/schedule-modal?school_id={{ school.school_id }}",
+        "GET /core-schools/assign-partner?school_id={{ school.school_id }}",
+        "GET /planning/assign-partner-modal?school_id={{ school.school_id }}",
         "GET /schools/{{ school.id }}/assign-to-project",
         "GET /schools/{{ school.school_id }}/transfer-owner",
         "GET /schools/{{ school.school_id }}/close-drawer"
@@ -85183,7 +85465,7 @@
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": false,
+      "modals": true,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-DBD42E0288",
@@ -85235,7 +85517,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -86413,6 +86695,108 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.bulk_assign_project_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/schools/drawer_error.html",
+        "template:partials/schools/bulk_assign_project_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-99B161BD88",
+      "page_title": "Bulk Assign Project Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "Create project",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Add the schools ticked on a list to one project (owner, 2026-10-06: the Core school list and a cluster's roster get the School Directory's bulk Add to project). The same project list and the same save as the directory's modal; ``next`` brings the planner back to the list.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/bulk-assign-project-drawer",
+      "route_name": "bulk_assign_project_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/schools/bulk-assign-project"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/schools/drawer_error.html",
+        "partials/schools/bulk_assign_project_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -112980,6 +113364,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.planning_views.bulk_schedule_action_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/bulk-schedule",
+      "route_name": "planning_bulk_schedule",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.planning_views.bulk_schedule_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/bulk-schedule-drawer",
+      "route_name": "planning_bulk_schedule_drawer",
+      "templates": [
+        "partials/planning/bulk_schedule_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.fy_planning_views.fiscal_year_planning_view",
       "kind": "page",
       "methods": [
@@ -114560,6 +114970,21 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.school_views.bulk_assign_project_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/bulk-assign-project-drawer",
+      "route_name": "bulk_assign_project_drawer",
+      "templates": [
+        "partials/schools/drawer_error.html",
+        "partials/schools/bulk_assign_project_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.school_views.bulk_match_staff_view",
       "kind": "action",
       "methods": [
@@ -116076,30 +116501,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 574,
+    "accessibility_contract_pass": 576,
     "activity_states": 24,
-    "all_routes": 1362,
+    "all_routes": 1365,
     "api_routes": 360,
-    "component_templates": 629,
+    "component_templates": 632,
     "full_pages": 263,
-    "mobile_contract_pass": 574,
-    "nonvisual_actions": 282,
+    "mobile_contract_pass": 576,
+    "nonvisual_actions": 283,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 590,
+      "interaction-fragment": 593,
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
       "report": 45
     },
-    "partials_and_drawers": 308,
-    "permission_gated": 874,
+    "partials_and_drawers": 310,
+    "permission_gated": 877,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 890,
+    "routed_surfaces": 893,
     "scheduled_jobs": 36,
     "severity_counts": {
       "critical": 0,
@@ -116107,8 +116532,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 574,
-    "test_referenced": 783,
-    "theme_contract_pass": 574
+    "tablet_contract_pass": 576,
+    "test_referenced": 786,
+    "theme_contract_pass": 576
   }
 }

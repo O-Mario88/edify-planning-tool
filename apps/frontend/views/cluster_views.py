@@ -950,6 +950,9 @@ def cluster_detail_view(request, cluster_id):
         # 2026-09-21): one press writes activities at five or more schools,
         # and a visit request is decided one school at a time.
         "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
+        # Ticked schools go to a project too (owner, 2026-10-06), through
+        # the directory's bulk Add to project and its gate.
+        "can_assign_project": has_permission(request.user, "project.assignSchool"),
         # Responsible (Staff or Partner), Visit and Training / Cluster columns
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
