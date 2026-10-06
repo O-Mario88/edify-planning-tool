@@ -10,20 +10,25 @@ period.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
-from apps.core.fy import get_quarter_for_date
+from apps.core.fy import get_fy_date_range, get_operational_fy, get_quarter_for_date
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
 User = get_user_model()
 
-FY = "2027"
+# From tomorrow, spread over what is left of its year: a visit dated before
+# today is no longer drawn (the first one, dated 5 October, went missing on the
+# sixth), and one dated past 30 September belongs to the next year's plan.
+FIRST = timezone.localdate() + timedelta(days=1)
+FY = get_operational_fy(FIRST)
 VISITS = 55
 PAGE_SIZE = 50
 
@@ -51,9 +56,10 @@ class MyPlanPagesItsTablesAtFiftyTest(TestCase):
             district=district,
             account_owner_id=profile.id,
         )
-        first = date(2026, 10, 5)
+        last = (get_fy_date_range(FY)[1] - timedelta(days=1)).date()
+        step = max(1, (last - FIRST).days // VISITS)
         for n in range(VISITS):
-            planned = first + timedelta(days=6 * n)
+            planned = FIRST + timedelta(days=step * n)
             Activity.objects.create(
                 activity_type="school_visit",
                 activity_purpose_text=f"Paged visit {n + 1:02d}",

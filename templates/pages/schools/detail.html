@@ -86,6 +86,31 @@ A labelled lifecycle action, deliberately not a trash icon and deliberately
 not in the Danger Zone beside Delete. Closure preserves everything; borrowing
 deletion's affordance would tell the reader the opposite of what it does.
 {% endcomment %}
+{% comment %}
+Schedule and Assign to partner from the school's own profile (owner,
+2026-10-06), each the door its row on a list opens: a Core School's package
+chooser and hand-over on Core Schools, any other school's Planning drawers.
+Shown to whoever those doors open for and never on a closed school; a door
+the school's visit gate would refuse stays, greyed, with the reason.
+{% endcomment %}
+{% if can_schedule %}
+{% if schedule_block %}
+<button type="button" disabled aria-disabled="true" data-visit-locked="true" title="{{ schedule_block }}" aria-label="Schedule support for {{ school.name }} unavailable: {{ schedule_block }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm opacity-60">Schedule</button>
+{% elif profile_core_routes %}
+<button type="button" hx-get="/core-schools/schedule-activity?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule an activity for {{ school.name }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-schedule>Schedule</button>
+{% else %}
+<button type="button" hx-get="/planning/schedule-modal?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ school.name }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-schedule>Schedule</button>
+{% endif %}
+{% endif %}
+{% if can_assign_partner %}
+{% if assign_block %}
+<button type="button" disabled aria-disabled="true" data-assign-locked="true" title="{{ assign_block }}" aria-label="Assign {{ school.name }} to a partner unavailable: {{ assign_block }}" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm opacity-60">Assign to Partner</button>
+{% elif profile_core_routes %}
+<button type="button" hx-get="/core-schools/assign-partner?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign core support for {{ school.name }} to a partner" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-assign>Assign to Partner</button>
+{% else %}
+<button type="button" hx-get="/planning/assign-partner-modal?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign {{ school.name }} to a partner" class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none" data-profile-assign>Assign to Partner</button>
+{% endif %}
+{% endif %}
 {% if can_assign_project %}
 {% comment %}Add to Project from the school's own profile, the second entry point the brief names.{% endcomment %}
 <button

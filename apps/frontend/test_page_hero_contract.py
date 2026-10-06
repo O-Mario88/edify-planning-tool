@@ -49,6 +49,9 @@ HEADERLESS_H1_TEMPLATES = {
     "templates/pages/auth/login.html": "auth card heading",
     "templates/pages/auth/mfa_verify.html": "auth card heading",
     "templates/pages/auth/reset_password.html": "auth card heading",
+    # The same card, shown when a request's security token is refused
+    # (apps.frontend.views.csrf_views). Not a page inside the app shell.
+    "templates/pages/auth/request_not_sent.html": "auth card heading",
     # A shareable document rendered for people outside the app; it carries the
     # document's own masthead, not the platform's page chrome.
     "templates/pages/documents/canonical_document.html": "public document masthead",
