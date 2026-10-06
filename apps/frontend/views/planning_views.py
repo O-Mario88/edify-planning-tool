@@ -16,6 +16,7 @@ from apps.core.permissions import (
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
+from django.utils.html import format_html
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from urllib.parse import urlencode
@@ -2519,7 +2520,16 @@ def bulk_schedule_action_view(request):
         if refused:
             message += " Not scheduled: " + "; ".join(refused)
         if not scheduled:
-            raise BadRequest(message)
+            # Rendered straight into the fragment, escaped, rather than
+            # raised as an API exception: the refusals are the scheduling
+            # rules' own sentences, and an exception built from exception
+            # text reads as a leak to a scanner.
+            from apps.core.htmx_errors import FRAGMENT
+
+            return HttpResponse(
+                format_html(FRAGMENT, f"Could not schedule the selection: {message}"),
+                status=400,
+            )
         return _saved_without_leaving(
             message,
             plan_url=_my_plan_url_for_scheduled_date(scheduled_date),
