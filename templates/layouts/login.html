@@ -82,7 +82,16 @@
   <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260912focus1">
   <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261002tokens2">
-  <script defer src="{% static 'js/login.js' %}?v=20260909loginpolish3"></script>
+  {% comment %}
+    The same synchronizer the application shell loads. Django replaces the
+    CSRF token whenever a sign-in completes, and the "Session paused" dialog
+    opens sign-in in a new tab — so a second sign-in tab, or this page restored
+    from history, holds a token the server no longer accepts. Without this the
+    form could only be refused (production, 2026-10-05). Ahead of login.js,
+    which reads the token for the forgotten-password request.
+  {% endcomment %}
+  <script defer src="{% static 'js/csrf-sync.js' %}?v=20261005focus1"></script>
+  <script defer src="{% static 'js/login.js' %}?v=20261005back1"></script>
   <script defer src="{% static 'js/platform-status.js' %}?v=20260913busy1"></script>
 </head>
 <body class="login-page">

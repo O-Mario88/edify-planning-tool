@@ -437,6 +437,12 @@ def core_schools_view(request):
         # school — projects_open_for_enrolment excludes client-only projects
         # for one — so the whole of what was missing was the way in.
         "can_assign_project": has_permission(request.user, "project.assignSchool"),
+        # Tick boxes on the list (owner, 2026-10-06: "select many and assign
+        # or schedule or add to project", as the other school lists do).
+        # Each bar button is the door its row action opens, for whoever it
+        # opens for; the read-only oversight lens has no boxes.
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
         "selected_region": filters["region"],
         "selected_district": filters["district"],
         "selected_staff": filters["staff"],
@@ -493,6 +499,12 @@ def core_schools_view(request):
             "hx_include": "#core-filters-form",
         },
     }
+
+    context["can_tick"] = lens != "oversight" and (
+        context["can_assign_partner"]
+        or context["can_bulk_schedule"]
+        or context["can_assign_project"]
+    )
 
     if (
         request.headers.get("HX-Target") == "core-schools-table-container"

@@ -1070,6 +1070,10 @@ SESSION_COOKIE_HTTPONLY = True
 # legitimate POST from an older page is rejected as "token from POST
 # incorrect" even though the user is still signed in.
 CSRF_COOKIE_HTTPONLY = False
+# A refused token is answered in the product's own words, with a way to send
+# the request again, instead of Django's bare "CSRF verification failed".
+# The check itself is untouched — see apps/frontend/views/csrf_views.py.
+CSRF_FAILURE_VIEW = "apps.frontend.views.csrf_views.csrf_failure"
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
 

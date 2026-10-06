@@ -421,6 +421,13 @@ urlpatterns = [
         school_views.bulk_assign_project_view,
         name="bulk_assign_project",
     ),
+    # The same save, opened from a list that ticks by school code (Core
+    # Schools, a cluster's roster; owner, 2026-10-06).
+    path(
+        "schools/bulk-assign-project-drawer",
+        school_views.bulk_assign_project_drawer_view,
+        name="bulk_assign_project_drawer",
+    ),
     path(
         "schools/bulk-match-staff",
         school_views.bulk_match_staff_view,
@@ -954,6 +961,17 @@ urlpatterns = [
         "planning/bulk-assign-partner-drawer",
         planning_views.bulk_assign_partner_drawer_view,
         name="planning_bulk_assign_partner_drawer",
+    ),
+    # Schedule the ticked schools of a list in one go (owner, 2026-10-06).
+    path(
+        "planning/bulk-schedule-drawer",
+        planning_views.bulk_schedule_drawer_view,
+        name="planning_bulk_schedule_drawer",
+    ),
+    path(
+        "planning/bulk-schedule",
+        planning_views.bulk_schedule_action_view,
+        name="planning_bulk_schedule",
     ),
     path(
         "planning/assign-partner-action",

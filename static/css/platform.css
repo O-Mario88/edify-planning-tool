@@ -3547,6 +3547,21 @@ main [data-mobile-family="directory"] .school-filter-clear {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* A ticked Core row (owner, 2026-10-06): the box has a column of its own and
+   sits in the middle of the row, beside the facts rather than over the school
+   ID. The one-column rule above collapsed the shared selectable grid's first
+   track to nothing, which drew the box on top of the ID pill. */
+.core-school-row .school-record-row__summary--selectable {
+  grid-template-columns: 2rem minmax(0, 1fr);
+  column-gap: 0.5rem;
+}
+
+.core-school-row .school-record-row__summary--selectable > .school-record-row__select {
+  align-self: center;
+  block-size: auto;
+  min-block-size: 2.75rem;
+}
+
 .core-school-row__headline {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
