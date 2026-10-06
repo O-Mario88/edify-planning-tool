@@ -25,6 +25,7 @@ from apps.activities.facilitation import (
     takes_facilitator,
 )
 from apps.activities.services import is_partner_ssa_support_activity
+from apps.activities import training_names
 from apps.geography.models import District
 from apps.accounts.models import User
 from apps.partners.models import Partner
@@ -1203,6 +1204,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             "school__sub_county",
             "cluster",
             "cluster__district",
+            # The training cards name each training by its catalogue course
+            # (owner, 2026-10-06): the course beside an in-school delivery,
+            # else the catalogue item of a group training.
+            "training_course",
+            "catalogue_item",
         )
         .prefetch_related(
             "schedule_cost_lines",
@@ -1540,6 +1546,14 @@ def get_frontend_context(principal, query: dict) -> dict:
             # The governed course or item planned — the Group Trainings card
             # names the training by it.
             "activity_name": a.activity_name_snapshot or "",
+            # The training's name from the Training Catalogue — Literacy,
+            # TAM, Leadership — and how it is delivered (owner, 2026-10-06:
+            # "the training Name should be the actual training name fetched
+            # from the training catalogue ... Mode of delivery should be
+            # Cluster Group training or In-School training"). Blank on a
+            # training nobody has named yet.
+            "training_name": training_names.course_name_of(a),
+            "training_mode": training_names.mode_of_delivery(a),
             "status": a.status,
             "planned_date": a.planned_date,
             "quarter": a.quarter,
