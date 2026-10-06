@@ -1,7 +1,7 @@
 from functools import wraps
 
 from django.db import transaction
-from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -180,6 +180,82 @@ def activity_catalogue_create_action(request):
         return redirect("/settings/activity-catalogue/?new=1")
     messages.success(request, f"{item.display_name} added to the Activity Catalogue.")
     return redirect(f"/settings/activity-catalogue/?status=active#item-{item.id}")
+
+
+@require_http_methods(["GET", "POST"])
+@_catalogue_permission(Permission.ACTIVITY_CATALOGUE_MANAGE.value)
+def activity_catalogue_edit_action(request, item_id):
+    """Edit a training from its own record (owner, 2026-10-06).
+
+    GET serves the drawer the training's Edit button opens; POST saves through
+    ``authoring.update_training``, which writes a new catalogue version and
+    leaves every training already scheduled as it was. The SSA intervention is
+    shown and not edited: Impact Assessment sets it through a reviewed rule.
+    """
+    from django.http import HttpResponse
+    from django.utils.html import escape
+
+    from apps.activity_catalogue.authoring import update_training
+    from apps.activity_catalogue.training_intervention import intervention_for
+    from apps.core.exceptions import BadRequest
+
+    item = get_object_or_404(ActivityCatalogueItem, id=item_id, is_training_course=True)
+    posted = request.method == "POST"
+    values = {
+        "name": request.POST.get("name", item.display_name),
+        "description": request.POST.get("description", item.description),
+        "training_category": request.POST.get(
+            "training_category", item.training_category
+        ),
+        "ssa_indicator_label": request.POST.get(
+            "ssa_indicator_label", item.ssa_indicator_label
+        ),
+        "target_audience": request.POST.get("target_audience", item.target_audience),
+        "reason": request.POST.get("reason", ""),
+    }
+    intervention = intervention_for(training_course_id=item.id)
+    context = {
+        "item": item,
+        "values": values,
+        "intervention_label": dict(SsaIntervention.choices).get(intervention, ""),
+        "can_open_mapping": has_permission(
+            request.user, Permission.SSA_ACTIVITY_MAPPING_VIEW.value
+        ),
+        "scheduled_use_count": Activity.objects.filter(
+            Q(catalogue_item=item) | Q(training_course=item)
+        ).count(),
+        "drawer_size": "md",
+    }
+    if posted:
+        try:
+            item = update_training(
+                item.id,
+                {
+                    "name": values["name"],
+                    "description": values["description"],
+                    "trainingCategory": values["training_category"],
+                    "ssaIndicatorLabel": values["ssa_indicator_label"],
+                    "targetAudience": values["target_audience"],
+                    "reason": values["reason"],
+                },
+                actor_id=getattr(request.user, "user_id", None) or str(request.user.id),
+            )
+        except BadRequest as exc:
+            context["validation_error"] = str(exc.detail)
+            return render(
+                request, "partials/catalogue/edit_training_drawer.html", context
+            )
+        from django.contrib import messages
+
+        messages.success(request, f"{item.display_name} updated.")
+        response = HttpResponse(
+            f'<p class="pill pill-success" role="status">'
+            f"{escape(item.display_name)} updated.</p>"
+        )
+        response["HX-Trigger"] = "close-drawer"
+        response["HX-Redirect"] = f"/settings/activity-catalogue/#item-{item.id}"
+        return response
+    return render(request, "partials/catalogue/edit_training_drawer.html", context)
 
 
 @require_http_methods(["POST"])

@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 668,
-  "templates": 249,
-  "distinct_titles": 634,
+  "titled_cards": 670,
+  "templates": 251,
+  "distinct_titles": 636,
   "with_card_key": 13,
-  "untitled_surfaces": 593,
-  "untitled_chrome": 153,
+  "untitled_surfaces": 594,
+  "untitled_chrome": 154,
   "untitled_nested": 191,
   "untitled_headless": 249,
   "templates_with_same_title_twice": 0,
@@ -2213,7 +2213,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 108,
+   "line": 124,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 208,
+   "line": 224,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 244,
+   "line": 260,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -7450,6 +7450,29 @@
      0
     ]
    ]
+  },
+  {
+   "template": "templates/partials/trainings/my_summary.html",
+   "line": 20,
+   "title": "My training summary FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/trainings/team_summary.html",
+   "line": 25,
+   "title": "Training summary",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
   },
   {
    "template": "templates/partials/upload_result.html",

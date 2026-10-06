@@ -1058,20 +1058,22 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         return Activity.objects.get(catalogue_item=self.tam_cluster_training)
 
-    def test_selected_training_post_keeps_the_planners_intervention_and_total(self):
-        """The planner names the need; the course does not overrule them.
+    def test_selected_training_post_takes_the_trainings_intervention_and_total(self):
+        """The training's own SSA intervention is the one scheduled.
 
-        TAM I is mapped to Exposure to God's Word. A planner delivering it
-        against a confirmed Teaching Environment weakness used to have that
-        choice silently replaced by the mapping — and, on the paths that
-        checked it, refused outright. The posted intervention is what is
-        stored.
+        Owner, 2026-10-06: "The SSA intervention relationship must be
+        authoritative … Do not allow Training = School Improvement Trainings,
+        SSA Intervention = Financial Health." TAM I is linked to Exposure to
+        God's Word, so a post naming Teaching Environment is saved under
+        Exposure to God's Word. This reverses the rule of 2026-09-30, under
+        which the posted intervention was kept and which this test pinned
+        until then.
         """
         activity = self._post_cluster_training(
             focus_intervention=SsaIntervention.TEACHING_ENVIRONMENT,
         )
         self.assertEqual(
-            activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
+            activity.focus_intervention, SsaIntervention.EXPOSURE_TO_WORD_OF_GOD
         )
         self.assertIsNone(activity.project_id)
         self.assertEqual(activity.schools_invited, 2)

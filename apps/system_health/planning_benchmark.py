@@ -61,6 +61,7 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
             "date",
             "executor (staff or partner)",
             "approved activity or training",
+            "what a cluster meeting is for (training, meeting only, leaders)",
             "completed session being followed up, when applicable",
             "partner visitor name",
             "why you need to visit, when the school is somebody else's",
@@ -164,6 +165,23 @@ PLATFORM_DERIVED: tuple[Derived, ...] = (
     Derived("SSA collector provenance", "actor role on governed completion"),
     Derived("enrolment history row", "partner SSA completion transaction"),
     Derived("school SSA readiness status", "apps.ssa.services._recompute_readiness"),
+    # Owner, 2026-10-06. A training is scheduled under the SSA intervention
+    # the Training Catalogue links it to: the planner chooses the training
+    # and no longer chooses an intervention for it.
+    Derived(
+        "a training's SSA intervention",
+        "apps.activity_catalogue.training_intervention.intervention_for",
+    ),
+    # Nobody keys in what is scheduled under a ceiling, or what is left: both
+    # are counted from the plans, for an officer and for the country.
+    Derived(
+        "schools scheduled under a training ceiling",
+        "apps.planning.training_ceilings.scheduled_count",
+    ),
+    Derived(
+        "training planned and remaining for the country",
+        "apps.planning.training_ceilings.country_scheduled",
+    ),
 )
 
 
@@ -277,6 +295,16 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         # priority-backed Activity and, only for Training Follow Up, the
         # completed attended session whose lineage must continue.
         "catalogue_item_id",
+        # What a cluster meeting is for: a training delivered at it, a meeting
+        # only, or a cluster leaders' meeting (owner, 2026-10-06: "the user
+        # must be able to specify"). It opens on Only Meeting, so the common
+        # case costs no click; only the organiser knows which it is, and a
+        # Training meeting counts its schools under a training ceiling.
+        "meeting_kind",
+        # The training a Training meeting delivers: the same governed choice
+        # as catalogue_item_id, asked only when the meeting is a training and
+        # named apart because the meeting keeps its own catalogue item.
+        "training_course_id",
         "source_activity_id",
         "delivery_contact_name",
         # Observed SSA results entered from the completed assessment. The

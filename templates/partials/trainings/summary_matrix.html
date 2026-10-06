@@ -1,0 +1,58 @@
+{% load components frontend_filters %}
+{% comment %}
+Staff and the summary of all their planned trainings (owner, 2026-10-06). One
+row per training that has a school planned for it in the year — a training
+nobody has planned is not listed — with its mode of delivery, then the
+country's three columns and one column per staff member:
+
+    Country Ceiling | Planned | Remaining | # Schools (staff) …
+
+Country Ceiling is set by Admin or Impact Assessment, who open it from the
+cell; Planned is every school the country has planned for the training, group
+and in-school together; Remaining is the ceiling less that. A staff column is
+the schools that person has planned beside the ceiling their Programme Lead
+set, red above it, amber below, green at it; the cell opens the schools it
+counts. A project training is fetched from Special Projects: Planned is the
+schools on the project and a cell the schools that person added, beside the
+capacity its coordinator set. Figures: apps.planning.training_summary.
+
+`summary` is a training_summary.Summary; `table_name` and `table_title` name
+the card.
+{% endcomment %}
+{% data_table name=table_name %}
+  {% slot title %}{{ table_title }}{% endslot %}
+  {% slot summary %}{% if summary.any_flag %}{{ summary.flags.above }} above · {{ summary.flags.below }} below · {{ summary.flags.reached }} at the number set · {% endif %}FY {{ summary.fy }}{% endslot %}
+  {% slot caption %}Each training with a school planned for it: its mode of delivery, the Country Ceiling, the schools the country has planned and how many remain, and the number of schools each staff member has planned against the ceiling set for them.{% endslot %}
+  {% slot empty %}{% if not summary.columns %}{% include "components/empty_state.html" with message="No officer is in this table yet." hint="Officers appear here once HR records who supervises them." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No training has been planned yet this year." hint="A training appears here once a school is planned for it as a group training, an in-school training or a cluster meeting that is a training." compact="true" %}{% endif %}{% endslot %}
+  {% slot footer %}
+  <p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-training-summary-note>A training is listed once a school is planned for it. Planned is every school invited to its group trainings and cluster meetings, and every in-school training, across the country; Remaining is the Country Ceiling less Planned. Each staff column is that person&rsquo;s schools beside the ceiling their Programme Lead set: red is above it, amber below it and green at it. A project training&rsquo;s numbers are the schools added to the project.</p>
+  {% endslot %}
+  {% if summary.columns and summary.rows %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">Training Name</th>
+          <th scope="col" class="px-3 py-2">Mode of delivery</th>
+          <th scope="col" class="px-3 py-2 text-right">Country<br>Ceiling</th>
+          <th scope="col" class="px-3 py-2 text-right">Planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Remaining</th>
+          {% for column in summary.columns %}
+          <th scope="col" class="px-3 py-2 text-right" data-summary-staff="{{ column.id }}"># Schools<br>({{ column.name }})</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary.rows %}
+        <tr data-summary-row="{{ row.kind }}" data-country-state="{{ row.country_state }}">
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.name }}</th>
+          <td class="px-3 py-2" data-label="Mode of delivery">{{ row.mode }}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Country Ceiling" data-country-ceiling>{% include "partials/trainings/_country_ceiling_cell.html" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Planned" data-country-planned><span{% if row.country_tone %} class="edify-status-text" data-edify-tone="{{ row.country_tone }}"{% endif %} title="{% if row.kind == "project" %}Schools added to {{ row.project_name }}{% else %}{{ row.country_flag }}{% endif %}">{{ row.planned|intcomma }}</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining" data-country-remaining>{% if row.remaining is None %}<span class="edify-text-muted" title="{% if row.kind == "project" %}A project's schools are set by its coordinator{% else %}No Country Ceiling set{% endif %}">—</span>{% else %}{{ row.remaining|intcomma }}{% endif %}</td>
+          {% for cell in row.cells %}
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{% include "partials/trainings/_summary_cell.html" %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+  {% endif %}
+{% enddata_table %}

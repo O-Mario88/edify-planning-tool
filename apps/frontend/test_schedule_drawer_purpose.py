@@ -90,38 +90,45 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertNotIn('id="training_project_id"', source)
         self.assertIn("purposeOfVisit === 'in_school_training'", source)
 
-    def test_the_training_suggests_its_intervention_and_does_not_impose_it(self):
-        """The training and its intervention are allowed to disagree.
+    def test_the_training_brings_its_own_intervention(self):
+        """The training decides its SSA intervention (owner, 2026-10-06).
 
-        They used not to be. The manual select was defined as mutually
-        exclusive with the training picker, so choosing a governed course
-        removed the planner's only way to name a target and DERIVED one from
-        the course instead; the server then refused a posted intervention the
-        course was not mapped to ("not approved for that SSA intervention").
-        Between them a planner could not deliver a governed training against
-        the weakness they had actually confirmed at the school — and the same
-        course legitimately moves different scores at different schools.
+        "The scheduler must NOT manually select a separate SSA intervention
+        for the training if the intervention is already defined on the
+        training … make the automatically populated intervention read-only."
+        This reverses the rule of 2026-09-30, under which the catalogue link
+        was a suggestion the planner could change, and which this test pinned
+        until then.
 
-        The catalogue mapping is a recommendation now. So the assertions run
-        the other way: the select must be reachable beside the picker, the
-        course must still pre-fill it, and the pre-fill must not quietly undo
-        a choice the planner already made.
+        So: for an In-school Training the intervention is a read-only field
+        filled from the chosen training, and nothing is posted for it — the
+        save reads the catalogue, so a request cannot name another; the list
+        of interventions is drawn only for a training the catalogue leaves
+        open to any of them; and every other purpose keeps the planner's
+        select as it was.
         """
         source = _drawer_source()
 
         self.assertIn(
             "get showManualIntervention() { return !this.showSsaDataGathering",
             source,
-            "the intervention select is hidden beside the training picker "
-            "again — the course would be deciding the target",
         )
-        # The picker still drives the suggestion.
+        self.assertIn("&& !this.showLinkedIntervention; }", source)
+        self.assertIn(
+            "get showLinkedIntervention() { return this.showTrainingActivityPicker "
+            "&& !(this.selectedTrainingActivity "
+            "&& this.selectedTrainingActivity.plannerChooses); }",
+            source,
+        )
+        self.assertNotIn('type="hidden" name="focus_intervention"', source)
+        self.assertIn("readonly data-linked-intervention", source)
+        # The picker still fills the intervention from the training chosen.
         self.assertIn('@change="onTrainingActivityChange()"', source)
         self.assertIn(
-            "if (!keepChoice || !this.focusIntervention) "
+            "if (suggested || !keepChoice || !this.focusIntervention) "
             "{ this.focusIntervention = suggested; }",
             source,
-            "the chosen training no longer suggests its mapped intervention",
+            "the chosen training no longer brings its linked intervention",
         )
         # Init and purpose changes re-run the handler, and must not wipe a
         # deliberate choice when they do.

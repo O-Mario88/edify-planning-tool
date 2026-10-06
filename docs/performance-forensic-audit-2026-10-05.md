@@ -730,7 +730,7 @@ DigitalOcean; what was changed there, and by whom, is in §21.
 | 5 | The rule that cuts a pinned name asks its question of the name, not of the cell | `static/css/components/responsive-system.css` (one selector) | F15 |
 | 6 | A phone's page is fitted once, not twice | `static/js/micro-ux.js` | F17 (new, §15) |
 | 6a | Three questions the stylesheets asked of a table, a heading row or a tab rail with `:has()` are answered once and kept on that element as an attribute; four more are asked of the styled element instead | `static/js/micro-ux.js`, `static/css/components/responsive-system.css`, `interactions.css`, `components.css`, `pl-dashboard.css`, `templates/partials/my_plan/filters.html` | F18 (new, §15) — the owner's choice of 5 October, "2" |
-| 7 | Index on `core_activity_slot.activity_id` | `apps/core_schools/models.py`, migration `0011` | F12 |
+| 7 | Index on `core_activity_slot.activity_id` | `apps/core_schools/models.py`, migration `0012` (written as `0011`; §22.5) | F12 |
 | 8 | Index on `fund_request_item.activity_schedule_cost_line_id` | `apps/fund_requests/models.py`, migration `0019` | F12 |
 | 9 | Pooled sessions run with `jit = off` (a role default in this database; a notice, not a failure, where the role may not set it) | `apps/system_health/migrations/0003_pooled_sessions_jit_off.py` | F5 |
 | 10 | Five more rules ask their question of the element they style, count that element's siblings, or read an attribute the shell template writes for the search box; two of them only below 1280 pixels, with the original kept for wider windows | `static/css/platform.css`, `components/interactions.css`, `components.css`, `components/mobile-shell.css`, `templates/layouts/shell.html`, `static/js/micro-ux.js` | F19 (new, §15) — the owner's request of 5 October |
@@ -911,7 +911,7 @@ merge with main the stylesheet weighs 246.19 KB and the shell's scripts
 
 | Query | Problem | Root cause | Change | Before | After | Plan | Integrity |
 |---|---|---|---|---|---|---|---|
-| `SELECT … FROM core_activity_slot WHERE activity_id = %s` | 343 s + 59 s of total time in production's statistics; runs on every activity save | `activity_id` is a plain character column, not a foreign key, and had no index | `Index(fields=["activity_id"])`, migration `core_schools/0011` | Seq Scan, 2.4–3.1 ms (local, production-sized) | Index Scan, 0.3–1.2 ms | `Index Cond: ((activity_id)::text = …)` asserted by `test_slot_activity_lookup_index.py` | An index changes no row; the model's uniqueness rules are untouched |
+| `SELECT … FROM core_activity_slot WHERE activity_id = %s` | 343 s + 59 s of total time in production's statistics; runs on every activity save | `activity_id` is a plain character column, not a foreign key, and had no index | `Index(fields=["activity_id"])`, migration `core_schools/0012` (written as `0011`; §22.5) | Seq Scan, 2.4–3.1 ms (local, production-sized) | Index Scan, 0.3–1.2 ms | `Index Cond: ((activity_id)::text = …)` asserted by `test_slot_activity_lookup_index.py` | An index changes no row; the model's uniqueness rules are untouched |
 | `SELECT … FROM fund_request_item WHERE activity_schedule_cost_line_id IN (…)` | 88 s of total time; runs when a week's request is regenerated | the same: a plain column with no index | `Index(fields=["activity_schedule_cost_line_id"])`, migration `fund_requests/0019` | Seq Scan, 12.9 ms | Index Scan, 0.6 ms | catalogue test: an index leads with the column | as above |
 | Every statement of a pooled session | PostgreSQL plans with JIT for a workload of thousands of 1–5 ms statements | the database default is `jit = on`; `doadmin` is the only role | `ALTER ROLE … IN DATABASE … SET jit = off` in migration `system_health/0003` (tolerates a role that may not) | readiness: `db_jit: on` | `off` for new sessions | — | a planner setting; no data touched |
 
@@ -2091,3 +2091,37 @@ the same afternoon, and the three branches with main merged in name 244, 243
 and 242 files, the three branches agreeing with one another. A presence
 write lands under whichever journey is running when its interval comes
 round. That is the tracer's, and is reported to the owner as its own task.
+
+### 22.5 Main kept moving: three more merges, and a migration renumbered (6 October, evening)
+
+Three pull requests reached main while this one was open after §22.4, and
+each made it conflict:
+
+- **#226** (the day priced once, §21.3) and **#225** before it each rebuilt
+  the traceability matrix on their own tree, so the fingerprint conflicted;
+  it was rebuilt on the merged tree each time. Where the two changes meet,
+  in the bulk save, the day-priced-once proof was run on this branch's code:
+  its statement ceilings and its whole-database comparison hold.
+- **#228** (My Plan's training names) merged without a conflict.
+- **#229** (training ceilings) conflicted on five generated files, all
+  rebuilt on the merged tree in the documented order, and brought the one
+  real clash: its `core_schools` migration and this branch's index were both
+  numbered `0011`, which Django refuses as two heads. As §20 said it would
+  be, the index is renumbered, to `0012`, behind main's. Main's `0011` moves
+  data and reaches production when main deploys, which is before this branch
+  can; an index does not mind the order it is built in. Applied in that
+  order to the 16,700-school copy, main's refile gave back 0 slots and the
+  index was built.
+
+Two of the browser suite's own tests also had to learn to wait (§22.4 found
+the gate that counted htmx; this is the other side of the same coin). After
+making the viewport a phone's, `form-refinement` read a field's font size at
+once and `compact-drawers` measured a drawer's box at once. Both values
+arrive by a transition, and both tests only ever read after it because the
+page was busy: with main's scripts and styles the page first answers 2,263
+to 2,319 ms after a resize, on this branch 121 to 169 ms, so the read now
+lands inside the move (14px to 15.8px where 16px is expected; a sheet 5.8px
+from the edge). Each now reads where the value comes to rest and asserts
+what it asserted before. The suite's `reducedMotion` setting, which would
+have hidden this, is written where the test runner does not read it, on main
+as well; that is reported to the owner separately and not changed here.

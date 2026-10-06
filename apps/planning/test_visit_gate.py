@@ -613,14 +613,26 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('name="purpose_of_visit"', html)
-        # The year the support visit was spent in is carried for its two
-        # purposes; SSA Support and every other purpose stay open.
+        # The year the support visit was spent in is carried for the Training
+        # Follow Up; SSA Support and every other purpose stay open.
         locks = json.loads(response.context["visit_locks_json"])
-        self.assertEqual(set(locks), {"training_follow_up", "in_school_training"})
+        self.assertEqual(set(locks), {"training_follow_up"})
         self.assertIn(self.fy, locks["training_follow_up"])
         self.assertRegex(
-            html, r'value="in_school_training"[^>]*data-visit-locked="true"'
+            html, r'value="training_follow_up"[^>]*data-visit-locked="true"'
         )
+        # In-school Training stays open (owner, 2026-10-06): a universal
+        # training is on top of the school's own, so the purpose is not
+        # greyed. The year is carried for the Training list instead, which
+        # greys every training but the universal one; the save refuses the
+        # rest (apps.planning.test_training_entitlement).
+        self.assertNotRegex(html, r'value="in_school_training"[^>]*data-visit-locked')
+        self.assertNotRegex(html, r'value="in_school_training"[^>]*disabled')
+        training_locks = json.loads(response.context["training_locks_json"])
+        self.assertEqual(list(training_locks), [self.fy])
+        self.assertIn("has had its staff support visit", training_locks[self.fy])
+        self.assertIn("data-training-entitlement-used", html)
+        self.assertIn(':disabled="isTrainingHeld(activity)"', html)
         self.assertNotRegex(html, r'value="ssa_support"[^>]*data-visit-locked')
         self.assertNotRegex(html, r'value="donor_visit"[^>]*disabled')
         # And the assign drawer likewise.

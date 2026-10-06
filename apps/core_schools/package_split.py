@@ -178,6 +178,7 @@ def package_splits(
     from apps.core_schools import package_year
     from apps.core_schools.models import CoreActivitySlot
     from apps.partners.models import PartnerAssignment
+    from apps.planning.training_entitlement import not_universal_q
 
     operational_fy = str(get_operational_fy())
     fy = str(fy or operational_fy)
@@ -217,11 +218,14 @@ def package_splits(
             else:
                 split.staff_trainings += 1
 
-    # 1. The visits and trainings at these schools dated in the year.
+    # 1. The visits and trainings at these schools dated in the year. A
+    #    universal training is on top of the package (owner, 2026-10-06):
+    #    neither it nor the visit written beside it is on a half.
     work = (
         Activity.objects.filter(school_id__in=packaged, fy=fy, deleted_at__isnull=True)
         .filter(package_work_q())
         .filter(not_outside_package_q())
+        .filter(not_universal_q())
         .exclude(status__in=UNCREDITED_STATUSES)
         .values("id", "school_id", "activity_type", "purpose_type", "delivery_type")
     )
@@ -256,6 +260,7 @@ def package_splits(
                 deleted_at__isnull=True,
             )
             .filter(not_outside_package_q())
+            .filter(not_universal_q())
             .exclude(status__in=UNCREDITED_STATUSES)
             .values_list("id", "delivery_type")
         )
@@ -278,6 +283,7 @@ def package_splits(
             "training_number",
             "expected_activity_type",
             "purpose_of_visit",
+            "training_course_id",
         ):
             if handover.id == exclude_assignment_id:
                 continue

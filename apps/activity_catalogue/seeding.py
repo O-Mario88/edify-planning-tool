@@ -50,8 +50,12 @@ def install_item(
         outcome["created"] += 1
     else:
         changed = []
-        # Lifecycle is governance-owned after the initial insert.
+        # Lifecycle is governance-owned after the initial insert, and so is
+        # any field a person edited on the item's own record.
+        kept = set(item.edited_fields or [])
         for field, value in row.items():
+            if field in kept:
+                continue
             if getattr(item, field) != value:
                 setattr(item, field, value)
                 changed.append(field)

@@ -6046,6 +6046,19 @@ table[data-pinned-actions] :is(thead, tbody) > tr > :is(th, td):last-child:not([
   gap: 0.75rem;
 }
 
+/* A record table drawn smaller than the platform's 0.875rem/1rem cells: the
+   training summary in its Project Capacity shape (owner, 2026-10-06: "use
+   project capacity table format, but more compact"). Same type sizes, half
+   the vertical padding, so a person's few rows read as one glance. */
+.edify-data-table.edify-data-table--compact th,
+.edify-data-table.edify-data-table--compact td {
+  padding: 0.5rem 0.75rem;
+}
+
+.edify-data-table.edify-data-table--compact td {
+  line-height: 1.35;
+}
+
 /* Identical To-Dos in the Today table are one entry (owner, 2026-09-30:
    "group identical to-dos"): the group's heading row opens to its rows.
    templates/partials/today/waiting_table.html, apps.command_center.todo_groups. */

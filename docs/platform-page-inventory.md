@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **893**
-- All registered routes: **1365**
+- Routed product surfaces: **902**
+- All registered routes: **1374**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **36**
 - Activity states: **24**
-- Shared component templates: **633**
+- Shared component templates: **643**
 - Full pages: **263**
-- Partials and drawers: **310**
-- Permission-gated surfaces: **877**
-- Referenced by automated tests: **786**
+- Partials and drawers: **317**
+- Permission-gated surfaces: **885**
+- Referenced by automated tests: **794**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -711,6 +711,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-CB5D63ABE3 | /planning/schedule-action | Planning Schedule Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2AF2FF5ECA | /planning/schedule-modal | Planning Schedule Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C597B8F97C | /planning/schedule/schools | Planning Schedule School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B476CEB13A | /planning/training-capacity | Training Capacity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-17DF3D301E | /planning/undo | Planning Undo | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4F8B7694FF | /planning/visit-requests | Visit Requests - Edify Planning Tool | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C8A20A3C2A | /planning/visit-requests/<str:activity_id>/<str:decision> | Visit Request Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -835,6 +836,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-92FF10FD40 | /search | Search | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-100A4132EB | /settings | Settings · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2F5DDB9EA2 | /settings/activity-catalogue/ | Activity Catalogue · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-F80D491FDF | /settings/activity-catalogue/<str:item_id>/edit | Activity Catalogue Edit | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-99CE4E6D5D | /settings/activity-catalogue/new | Activity Catalogue Create | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-C9AF5B9B1E | /settings/two-step/app | Authenticator app · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4A86903104 | /ssa | SSA Performance | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -907,6 +909,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D10DA56BF1 | /today/snooze | Today Snooze | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-839833901F | /today/unsnooze | Today Unsnooze | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1678B2AEB5 | /todos | To-Do | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4E05AF754C | /training-ceilings/<str:ceiling_id>/edit | Training Ceiling Edit | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-7467D165E9 | /training-ceilings/<str:ceiling_id>/remove | Training Ceiling Remove | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8F869EF697 | /training-ceilings/country/<str:ceiling_id>/edit | Training Country Ceiling Edit | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E88A1334C8 | /training-ceilings/country/<str:ceiling_id>/remove | Training Country Ceiling Remove | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D1EB52056C | /training-ceilings/country/set | Training Country Ceiling Set | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C8BCFC16E3 | /training-ceilings/set | Training Ceiling Set | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9C9EA8284F | /training-summary/schools | Training Summary Schools | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-AB418DCFC9 | /trainings | Trainings Log | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0612DD46E0 | /uploads | Upload Center | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FC00D85DDC | /uploads/new | New Training Resource New Policy or Manual | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

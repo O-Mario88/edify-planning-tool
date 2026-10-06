@@ -16019,6 +16019,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/planning/training-capacity",
+   "route_name": "training_capacity",
+   "view": "apps.frontend.views.training_ceiling_views.training_capacity_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/planning/undo",
    "route_name": "planning_undo",
    "view": "apps.frontend.views.undo_views.undo_change_view"
@@ -18955,6 +18972,127 @@
    "view": "apps.frontend.views.extended_views.todos_view"
   },
   {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/<str:ceiling_id>/edit",
+   "route_name": "training_ceiling_edit",
+   "view": "apps.frontend.views.training_ceiling_views.training_ceiling_edit_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/<str:ceiling_id>/remove",
+   "route_name": "training_ceiling_remove",
+   "view": "apps.frontend.views.training_ceiling_views.training_ceiling_remove_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/country/<str:ceiling_id>/edit",
+   "route_name": "training_country_ceiling_edit",
+   "view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_edit_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/country/<str:ceiling_id>/remove",
+   "route_name": "training_country_ceiling_remove",
+   "view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_remove_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/country/set",
+   "route_name": "training_country_ceiling_set",
+   "view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_set_view"
+  },
+  {
+   "page_permission": "team_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/training-ceilings/set",
+   "route_name": "training_ceiling_set",
+   "view": "apps.frontend.views.training_ceiling_views.training_ceiling_set_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/training-summary/schools",
+   "route_name": "training_summary_schools",
+   "view": "apps.frontend.views.training_ceiling_views.training_summary_schools_drawer"
+  },
+  {
    "page_permission": "my_plan",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19105,28 +19243,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 436,
-  "Admin": 1074,
+  "Accountant": 444,
+  "Admin": 1082,
   "BusinessTransformationOfficer": 238,
-  "CCEO": 562,
-  "CountryDirector": 827,
+  "CCEO": 564,
+  "CountryDirector": 835,
   "HumanResources": 336,
-  "ImpactAssessment": 685,
+  "ImpactAssessment": 693,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
-  "PartnerAdmin": 230,
-  "PartnerFieldOfficer": 230,
-  "Program Lead": 661,
-  "ProjectCoordinator": 475,
-  "RegionalProgramLead": 337,
-  "RegionalVicePresident": 409
+  "PartnerAdmin": 231,
+  "PartnerFieldOfficer": 231,
+  "Program Lead": 669,
+  "ProjectCoordinator": 477,
+  "RegionalProgramLead": 343,
+  "RegionalVicePresident": 415
  },
  "summary": {
   "page_keys_declared": 183,
   "page_keys_in_navigation": 200,
-  "routes_guarded": 1171,
-  "routes_total": 1365,
-  "routes_unguarded": 194,
+  "routes_guarded": 1179,
+  "routes_total": 1374,
+  "routes_unguarded": 195,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -20347,6 +20485,13 @@
    "route": "/settings/activity-catalogue/",
    "route_name": "activity_catalogue",
    "view": "apps.frontend.views.catalogue_views.activity_catalogue_page"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/settings/activity-catalogue/<str:item_id>/edit",
+   "route_name": "activity_catalogue_edit",
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_edit_action"
   },
   {
    "page_permission": "",
