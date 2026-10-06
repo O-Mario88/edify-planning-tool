@@ -92,8 +92,12 @@ def _everything() -> dict[str, tuple[list[str], str | None, dict, list[tuple]]]:
                 for field in meta.concrete_fields
                 if field.is_relation and field.related_model is not None
             }
+            # nosec B608 - every name is a table or a column of a model this
+            # project registers, quoted by the database backend; none of it is
+            # typed by anyone. Read as stored, so that no manager or field can
+            # stand between this comparison and the rows.
             cursor.execute(
-                "SELECT %s FROM %s"
+                "SELECT %s FROM %s"  # nosec B608
                 % (
                     ", ".join(connection.ops.quote_name(c) for c in columns),
                     connection.ops.quote_name(meta.db_table),
@@ -209,7 +213,12 @@ class _Compared:
                     sort_keys=True,
                     default=str,
                 )
-                name = f"<{table}:{hashlib.sha1(text.encode()).hexdigest()[:12]}>"
+                # A label for a row inside this comparison, not a security
+                # primitive: nothing trusts it to be hard to forge, and
+                # `usedforsecurity=False` says so (B324; a FIPS build would
+                # otherwise refuse SHA-1). The digest itself is unchanged.
+                digest = hashlib.sha1(text.encode(), usedforsecurity=False)
+                name = f"<{table}:{digest.hexdigest()[:12]}>"
                 names[found] = name
                 if isinstance(made_up, str) and _LONG_ID.fullmatch(made_up):
                     quoted[made_up] = name
