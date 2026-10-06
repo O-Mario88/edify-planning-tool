@@ -42,6 +42,7 @@ LOGIN_LAYOUT_TEMPLATES = [
     TEMPLATES / "pages" / "auth" / "login.html",
     TEMPLATES / "pages" / "auth" / "reset_password.html",
     TEMPLATES / "pages" / "auth" / "change_password.html",
+    TEMPLATES / "pages" / "auth" / "request_not_sent.html",
 ]
 
 RADIUS_TOKENS = (
@@ -193,7 +194,7 @@ class LoginBundleTests(SimpleTestCase):
         self.assertIn('dataset.edifyInputModality = "pointer"', behavior)
         self.assertIn('dataset.edifyInputModality = "keyboard"', behavior)
         self.assertIn("login.css' %}?v=20260912focus1", markup)
-        self.assertIn("login.js' %}?v=20260909loginpolish3", markup)
+        self.assertIn("login.js' %}?v=20261005back1", markup)
 
 
 class LoginHeroImageTests(SimpleTestCase):

@@ -6,19 +6,19 @@
    "browser-rendered": 830,
    "none": 297,
    "page-tested": 1458,
-   "request-tested": 1248
+   "request-tested": 1252
   },
   "by_kind": {
    "button": 1329,
    "disclosure": 75,
    "field": 1311,
-   "link": 1051,
+   "link": 1055,
    "tab": 67
   },
-  "controls": 3833,
+  "controls": 3837,
   "high_consequence": 201,
   "state_changing": 447,
-  "templates_scanned": 645,
+  "templates_scanned": 646,
   "unresolved_destinations": 0,
   "untested": 297,
   "untested_state_changing": 23
@@ -2635,6 +2635,10 @@
    "pages": [
     "/login/verify"
    ],
+   "roles": []
+  },
+  "pages/auth/request_not_sent.html": {
+   "pages": [],
    "roles": []
   },
   "pages/auth/reset_password.html": {
@@ -11154,6 +11158,10 @@
   {"accessible_name": "Verify and continue", "destination": "                               ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-E9C45FAD5D8C", "kind": "button", "line": 69, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/auth/mfa_verify.html"},
   {"accessible_name": "Send a new code", "destination": "                               ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-0E557EA1EF81", "kind": "button", "line": 85, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/auth/mfa_verify.html"},
   {"accessible_name": "Start again", "destination": "                          ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-62E7146A7F69", "kind": "link", "line": 92, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/mfa_verify.html"},
+  {"accessible_name": "Go back and try again", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-134398AD21FF", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/request_not_sent.html"},
+  {"accessible_name": "Open the dashboard", "destination": "/dashboard", "destination_route": "/dashboard", "evidence": "request-tested", "high_consequence": false, "id": "INT-E5D5D65EF1B0", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/request_not_sent.html"},
+  {"accessible_name": "Go back and try again", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-1CDBF0BB7658", "kind": "link", "line": 37, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/request_not_sent.html"},
+  {"accessible_name": "Sign in", "destination": "/login", "destination_route": "/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-C9C103AE1BE4", "kind": "link", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/request_not_sent.html"},
   {"accessible_name": "Return to sign in", "destination": "                          ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E55EA2B2DEA6", "kind": "link", "line": 16, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/auth/reset_password.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-31ABB1D6F349", "kind": "field", "line": 26, "method": "", "selector": "#new-password", "state_changing": false, "tag": "input", "template": "pages/auth/reset_password.html"},
   {"accessible_name": "Show new password", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-8F85479EBC8E", "kind": "button", "line": 27, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/auth/reset_password.html"},

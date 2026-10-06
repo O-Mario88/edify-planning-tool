@@ -12537,7 +12537,7 @@
   {
    "audit_id": "KPI-SURFACE-001",
    "template": "templates/layouts/login.html",
-   "line": 164,
+   "line": 173,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
