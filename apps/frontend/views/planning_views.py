@@ -3337,7 +3337,7 @@ def bulk_action_view(request):
                 [
                     s.school_id,
                     s.name,
-                    s.district.name,
+                    s.district.name if s.district_id else "—",
                     s.cluster_id or "—",
                     s.planning_readiness,
                 ]

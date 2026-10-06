@@ -1574,8 +1574,13 @@ def get_frontend_context(principal, query: dict) -> dict:
                 )
                 else (a.cluster.name if a.cluster else "Unknown School")
             ),
+            # A school that entered the register with a district name the
+            # upload could not match has no district on record
+            # (schools.upload_service keeps the typed text and leaves the
+            # link empty). `a.school.district.name` 500'd the whole My Plan
+            # page for its owner the moment such a school was scheduled.
             "school_district": (
-                a.school.district.name
+                (a.school.district.name if a.school.district_id else "Unknown")
                 if a.school
                 else a.event_district.name
                 if a.event_district_id
@@ -2041,7 +2046,9 @@ def get_frontend_context(principal, query: dict) -> dict:
                     )
                     or a.get_activity_type_display()
                 ),
-                "district": a.school.district.name
+                "district": (
+                    a.school.district.name if a.school.district_id else "Unknown"
+                )
                 if a.school
                 else (
                     a.cluster.district.name
