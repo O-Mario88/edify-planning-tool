@@ -1,0 +1,7 @@
+{% comment %}
+The deferred script every Priorities view needs, for the head of each page
+that can host the tab rail (`feature_head_js`). Its inline companions are in
+_workspace_scripts.html, in the body, where the elements they bind exist.
+{% endcomment %}
+{% load static %}
+<script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>

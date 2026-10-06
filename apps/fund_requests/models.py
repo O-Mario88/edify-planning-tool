@@ -154,7 +154,14 @@ class FundRequestItem(TimeStampedModel):
                 name="fund_request_item_amount_non_negative",
             ),
         ]
-        indexes = [models.Index(fields=["activity_id"])]
+        indexes = [
+            models.Index(fields=["activity_id"]),
+            # Re-costing an activity asks which requests hold its cost lines.
+            # The unique constraint above leads with fund_request, so it
+            # cannot answer that, and the question read every item: 7.6 ms a
+            # call in production (audit, 2026-10-05).
+            models.Index(fields=["activity_schedule_cost_line_id"]),
+        ]
 
 
 class AdvanceRequestStatus(models.TextChoices):

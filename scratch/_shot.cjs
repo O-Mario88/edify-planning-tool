@@ -1,0 +1,8 @@
+const { chromium } = require('@playwright/test');
+(async () => { const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+  const errs = []; p.on('pageerror', (e) => errs.push(String(e).slice(0, 160))); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 160)); });
+  await p.goto('http://127.0.0.1:8376/login'); await p.fill('input[name=email]', 'cd@edify.org'); await p.fill('input[name=password]', 'edify'); await Promise.all([p.waitForNavigation(), p.press('input[name=password]', 'Enter')]);
+  await p.goto('http://127.0.0.1:8376/strategic-priorities', { waitUntil: 'load', timeout: 120000 }); await p.waitForTimeout(1500);
+  const opened = await p.evaluate(async () => { const d = document.querySelector('input[data-edify-datepick-field]'); const chain = []; for (let n = d.parentElement; n; n = n.parentElement) if (n.tagName === 'DETAILS') chain.unshift(n); for (const n of chain) n.open = true; await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); d.scrollIntoView({ block: 'center' }); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); return { size: d.size, width: Math.round(d.getBoundingClientRect().width), visible: d.checkVisibility(), expect: !!document.querySelector('link[rel=expect]') }; });
+  await p.locator('input[data-edify-datepick-field]').first().click(); await p.waitForTimeout(400);
+  await p.screenshot({ path: process.argv[2] }); console.log(JSON.stringify(opened), 'console errors:', errs.length, errs.slice(0, 3)); await b.close(); })();

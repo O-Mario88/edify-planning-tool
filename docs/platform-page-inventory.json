@@ -10203,7 +10203,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9364,
+      "bytes": 9553,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -13101,10 +13101,35 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 366,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities/guidance",
+        "/priorities/master",
+        "/strategic-priorities",
+        "/target-distribution",
+        "/target-distribution/team"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Workspace Head Scripts",
+      "purpose": "Reusable  workspace head scripts interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/priorities/_workspace_head_scripts.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 10594,
+      "bytes": 10790,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/guidance",
@@ -117721,7 +117746,7 @@
     "activity_states": 24,
     "all_routes": 1374,
     "api_routes": 360,
-    "component_templates": 642,
+    "component_templates": 643,
     "full_pages": 263,
     "mobile_contract_pass": 583,
     "nonvisual_actions": 285,

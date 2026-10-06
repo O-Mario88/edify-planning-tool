@@ -7,6 +7,8 @@
 {% include "partials/priorities/_workspace_css.html" %}
 {% endblock %}
 
+{% block feature_head_js %}{% include "partials/priorities/_workspace_head_scripts.html" %}{% endblock %}
+
 {% block shell_content %}
 <div class="edify-page-canvas px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
   {% comment %}One page, two tabs — Priority Setting and Target

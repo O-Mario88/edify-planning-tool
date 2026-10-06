@@ -149,6 +149,70 @@ class ConcurrencyGuardTest(SimpleTestCase):
             release.set()
             thread.join(5)
 
+    def _guard_seeing(self, connection, response):
+        """Run one request through the guard with ``connection`` as the only
+        connection this thread has opened."""
+        from unittest import mock
+
+        guard = DatabaseConcurrencyGuardMiddleware(lambda request: response)
+        with mock.patch("apps.core.concurrency.connections") as registry:
+            registry.all.return_value = [connection]
+            guard(self.factory.get("/my-plan"))
+        return connection
+
+    def _open_connection(self, *, in_atomic_block=False, closed=False):
+        from unittest import mock
+
+        return mock.Mock(
+            connection=None if closed else object(), in_atomic_block=in_atomic_block
+        )
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2, DB_APP_POOL=True)
+    def test_with_a_process_pool_a_request_returns_its_connection_with_its_slot(self):
+        """Django returns it only after the response has been sent, by which
+        time the slot is someone else's (rehearsal, 2026-10-05)."""
+        connection = self._guard_seeing(self._open_connection(), HttpResponse("page"))
+        connection.close.assert_called_once_with()
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2, DB_APP_POOL=True)
+    def test_a_prefetch_returns_its_connection_too(self):
+        from unittest import mock
+
+        connection = self._open_connection()
+        guard = DatabaseConcurrencyGuardMiddleware(lambda request: HttpResponse("page"))
+        with mock.patch("apps.core.concurrency.connections") as registry:
+            registry.all.return_value = [connection]
+            guard(self.factory.get("/my-plan", HTTP_SEC_PURPOSE="prefetch"))
+        connection.close.assert_called_once_with()
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2, DB_APP_POOL=True)
+    def test_a_stream_keeps_its_connection_until_it_has_been_sent(self):
+        from django.http import StreamingHttpResponse
+
+        connection = self._guard_seeing(
+            self._open_connection(), StreamingHttpResponse(iter([b"row"]))
+        )
+        connection.close.assert_not_called()
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2, DB_APP_POOL=True)
+    def test_a_transaction_opened_around_the_request_is_left_alone(self):
+        connection = self._guard_seeing(
+            self._open_connection(in_atomic_block=True), HttpResponse("page")
+        )
+        connection.close.assert_not_called()
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2, DB_APP_POOL=True)
+    def test_a_connection_already_given_up_is_not_closed_again(self):
+        connection = self._guard_seeing(
+            self._open_connection(closed=True), HttpResponse("page")
+        )
+        connection.close.assert_not_called()
+
+    @override_settings(WEB_MAX_CONCURRENT_REQUESTS=2)
+    def test_without_a_process_pool_nothing_changes(self):
+        connection = self._guard_seeing(self._open_connection(), HttpResponse("page"))
+        connection.close.assert_not_called()
+
     def test_production_bounds_it_by_default_and_it_sits_before_the_session(self):
         middleware = settings.MIDDLEWARE
         self.assertIn(

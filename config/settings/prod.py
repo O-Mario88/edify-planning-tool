@@ -36,6 +36,12 @@ WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30
 WEB_MAX_CONCURRENT_REQUESTS = _as_int(
     os.environ.get("WEB_MAX_CONCURRENT_REQUESTS"), 12 if DB_USE_PGBOUNCER else 6
 )
+# The per-process connection pool is sized from the bound as settled here
+# (base.py, DB_APP_POOL), and refuses to boot without one.
+if DB_APP_POOL:
+    DATABASES["default"]["OPTIONS"]["pool"] = database_pool_options(
+        WEB_MAX_CONCURRENT_REQUESTS
+    )
 
 # Under prod settings the process identity IS production — never trust the
 # env var to say otherwise (a missing ENVIRONMENT must not weaken the stamp

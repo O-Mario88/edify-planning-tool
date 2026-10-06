@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **642**
+Components and application partials: **643**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -530,6 +530,7 @@ Components and application partials: **642**
 | `partials/planning/view_controls.html` | application-partial | Reusable view controls interface primitive | canonical; default | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/planning/view_toggle_and_calendar.html` | application-partial | Reusable view toggle and calendar interface primitive | canonical; default, loading, open | inherits containing page contract | accessible name and label | /planning | 0 |
 | `partials/priorities/_workspace_css.html` | application-partial | Reusable  workspace css interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /priorities/guidance<br>/priorities/master<br>/strategic-priorities<br>/target-distribution<br>/target-distribution/team | 0 |
+| `partials/priorities/_workspace_head_scripts.html` | application-partial | Reusable  workspace head scripts interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /priorities/guidance<br>/priorities/master<br>/strategic-priorities<br>/target-distribution<br>/target-distribution/team | 0 |
 | `partials/priorities/_workspace_scripts.html` | application-partial | Reusable  workspace scripts interface primitive | canonical; default, loading, error, disabled | inherits containing page contract | keyboard focus visibility | /priorities/guidance<br>/priorities/master<br>/strategic-priorities<br>/target-distribution<br>/target-distribution/team | 0 |
 | `partials/priorities/distribution_view.html` | application-partial | Reusable distribution view interface primitive | {% if message.tags == , {% if row.displayStatus == , {% if row.progress.quartersAchieved %}success{% else %}neutral{% endif %}, {{ next_confirmation.milestone.id }}, {{ next_distribution.milestone.id }}, {{ row.milestone.id }}, {{ row.progress.classification.tone|default:, {{ row.statusTone }}; default, empty, error, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /target-distribution | 0 |
 | `partials/priorities/guidance_inbox.html` | application-partial | Reusable guidance inbox interface primitive | {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | /priorities/guidance/inbox | 0 |

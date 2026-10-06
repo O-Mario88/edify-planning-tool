@@ -16,7 +16,10 @@ test('outlined drawer fields and reference trend render on desktop and mobile',a
  expect(await field.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
  await page.screenshot({path:'test-results/refined-drawer-desktop.png'});
  await page.setViewportSize({width:390,height:844});
- expect(await field.evaluate(el=>getComputedStyle(el).fontSize)).toBe('16px');
+ // A field moves to its new size over 0.15s (`transition: all`; this suite does not run with
+ // motion reduced). The page used to be busy for two seconds after a resize, so a read taken at
+ // once came after the move; it now answers inside it (audit, 2026-10-06). Read where it arrives.
+ await expect(field).toHaveCSS('font-size','16px');
  await page.screenshot({path:'test-results/refined-drawer-mobile.png'});
  await page.evaluate(()=>{
   document.getElementById('drawer-container').replaceChildren();

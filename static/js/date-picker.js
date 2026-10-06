@@ -269,9 +269,21 @@
     this.refit();
   }
 
+  /* Fields built in one scan are measured after all of them are in the page,
+     and only those drawn: asking a hidden field for its width lays its whole
+     row out (ten seconds on Strategic Priorities, 2026-10-05). The rest are
+     measured when they appear. */
+  var building = null;
+
   Field.prototype.refit = function () {
     this.fitted = false;
-    if (!this.fit() && sizeWatch) sizeWatch.observe(this.wrapper);
+    if (building) building.push(this);
+    else if (!this.fit() && sizeWatch) sizeWatch.observe(this.wrapper);
+  };
+
+  Field.prototype.rendered = function () {
+    var d = this.display;
+    return !d.checkVisibility || d.checkVisibility({ contentVisibilityAuto: true });
   };
 
   /* The new field takes the date field's natural width. A date field with no
@@ -289,7 +301,7 @@
     var display = this.display;
     var wrapper = this.wrapper;
     if (this.fitted) return true;
-    if (!display.offsetWidth) return false;
+    if (!this.rendered() || !display.offsetWidth) return false;
     wrapper.style.setProperty("display", "none", "important");
     native.classList.remove("edify-datepick__native");
     var actual = native.offsetWidth;
@@ -669,8 +681,20 @@
 
   function scan(node) {
     if (!node || node.nodeType !== 1) return;
-    if (node.matches('input[type="date"]')) enhance(node);
-    node.querySelectorAll('input[type="date"]').forEach(enhance);
+    var batch = building ? null : (building = []);
+    try {
+      if (node.matches('input[type="date"]')) enhance(node);
+      node.querySelectorAll('input[type="date"]').forEach(enhance);
+    } finally {
+      if (batch) building = null;
+    }
+    if (!batch) return;
+    // Reads for every field before any is measured: measuring writes.
+    var drawn = batch.map(function (f) { return f.rendered(); });
+    batch.forEach(function (f, i) {
+      if (drawn[i]) f.refit();
+      else if (sizeWatch) sizeWatch.observe(f.wrapper);
+    });
   }
 
   function start(doc) {
