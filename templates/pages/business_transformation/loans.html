@@ -4,6 +4,7 @@
 {% load frontend_filters static table_pagination %}
 
 {% block title %}Loans — Edify{% endblock %}
+{% block feature_head_js %}<script src="{% static 'js/loan-dashboard.js' %}" defer></script>{% endblock %}
 
 {% block shell_content %}
 <div class="edify-page-canvas space-y-6" data-mobile-family="directory">
@@ -384,5 +385,4 @@
     {% include "components/table_pager.html" with pager=loans_pager param="loans_page" %}
   </section>
 </div>
-<script src="{% static 'js/loan-dashboard.js' %}" defer></script>
 {% endblock %}

@@ -21,6 +21,11 @@ ALLOWED_HOSTS = ["*"]
 
 # Production's admission control. prod.py sets 6 per process without a pool.
 WEB_MAX_CONCURRENT_REQUESTS = _as_int(os.environ.get("WEB_MAX_CONCURRENT_REQUESTS"), 6)
+# As prod.py: the per-process connection pool follows the bound settled here.
+if DB_APP_POOL:  # noqa: F405
+    DATABASES["default"]["OPTIONS"]["pool"] = database_pool_options(  # noqa: F405
+        WEB_MAX_CONCURRENT_REQUESTS
+    )
 
 # Serve application static files straight from the source tree, the way the
 # browser harnesses need them, without a collectstatic step.

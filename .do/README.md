@@ -110,6 +110,144 @@ resolve the separate per-process cache limitation.
 - **The apex is canonical.** `CANONICAL_HOST=edifyplanning.app` redirects the
   `www` alias while preserving the path and query string.
 
+## Prepared on 2026-10-05, not applied
+
+From the performance audit (`docs/performance-forensic-audit-2026-10-05.md`,
+F6, F7, F13 and the open-database finding). Read from the control panel that
+day; nothing was changed there. Each step stands alone and has its own way
+back. Do one at a time, in a quiet hour, and after each look at
+`https://edifyplanning.app/api/health/ready` and the Runtime Logs before the
+next. Steps 1 and 2 can be done in either order, provided step 2 adds both
+of its entries at once: with the app alone in the list, moving it onto the
+private network afterwards would lock it out; with the private range alone,
+the app as it connects today would be locked out at once.
+
+What the control panel showed:
+
+- the app is in no VPC (Networking > Private Network offers "Connect to a
+  VPC"); app-level `DATABASE_URL` is `${db.DATABASE_URL}`, the public address,
+  and the web, scheduler and migrate components all read it;
+- the database cluster is in VPC `default-fra1` (10.114.0.0/20, FRA1), whose
+  only resource is the cluster itself;
+- Network Access on the cluster: "your database is open to all incoming
+  connections";
+- the web component carries `DB_USE_PGBOUNCER=true`, `DB_POOL_NAME=edify_web`,
+  `DB_POOL_PORT=25061`, `DB_CONN_MAX_AGE=0`, `WEB_CONCURRENCY=4`,
+  `WEB_MAX_CONCURRENT_REQUESTS=10`.
+
+### 1. Database traffic on the private network (F13)
+
+About 2 ms of every statement is the public round trip: 140 ms on a
+68-statement page, 0.9 s on a reschedule.
+
+**State on 2026-10-06:** sub-steps 1 and 2 are done. The app was connected
+to `default-fra1` at 03:36 (private IP 10.114.0.2) and is healthy. Sub-step
+3, the variable, is what is left.
+
+1. Apps > edify-production > Networking > Private Network > **Edit network** >
+   Connect app to VPC network > `default-fra1` > Save. The app redeploys. It
+   still uses the public address, so nothing else has changed yet.
+2. Check the site and readiness.
+3. Settings > App-Level Environment Variables > Edit: change `DATABASE_URL`
+   from `${db.DATABASE_URL}` to `${db.DATABASE_PRIVATE_URL}` > Save. The app
+   redeploys. The web component's pool overrides keep working: they change
+   only the database name and the port.
+4. Check: readiness answers `"db": "up"`; the `edify.perf` lines in the
+   Runtime Logs show well under 1 ms of database time per statement on small
+   pages (about 2 ms before); the scheduler's next job runs; the next deploy's
+   migrate job connects.
+
+Way back: put `${db.DATABASE_URL}` back in step 3. Edit network > disconnect
+undoes step 1. `DATABASE_PRIVATE_URL` exists only while the app and the
+cluster are in the same VPC, so undo step 3 before step 1. A deploy that
+cannot reach its database fails its health check and is not put in service:
+the version that was running keeps running.
+
+### 2. Only the app may connect to the database (trusted sources)
+
+1. Databases > edify-production-db > Network Access > **Add Trusted Sources**.
+   In the one dialog add both of these before pressing Add:
+   - the app: Quick select > Apps > `edify-production` (how it connects
+     today, over the public address);
+   - the private network: `10.114.0.0/20` (how it connects once step 1 is
+     done. DigitalOcean: an app connecting through a VPC must have its VPC
+     address among the trusted sources. The whole range, so a redeploy that
+     moves the app's private address cannot lock it out; nothing else lives
+     in that VPC).
+   Add your own address (My current IP address) only if you connect to the
+   database from your own machine, and remove it when you no longer do.
+2. At once: readiness answers `"db": "up"`, a page opens, the scheduler's log
+   shows its next job.
+
+Way back: remove every trusted source; the cluster is open again immediately.
+From here nothing outside the list can open a connection to the database,
+whatever password it holds.
+
+### 3. A pool of open connections in each web process (F6)
+
+Each request opens a TLS connection to the `edify_web` pool and signs in
+before its first query: 40-50 ms of every request. `DB_APP_POOL` keeps a
+bounded set open in each process instead (`config/settings/base.py`).
+Rehearsed on 2026-10-05 behind a local PgBouncer in transaction mode, four
+workers of ten: 100 users with 3-12 s between clicks and then with 0.2-1 s,
+no errors, no request waiting for a connection, at most 11 connections out
+in one process, PgBouncer's client connections down from 53 to 44.
+
+1. Deploy a build that has it (it needs `psycopg-pool`, in
+   `requirements/base.txt`).
+2. On the **web component only**: add `DB_APP_POOL=true`. Leave
+   `DB_CONN_MAX_AGE=0` and `WEB_MAX_CONCURRENT_REQUESTS=10` as they are: the
+   pool is sized from that bound (10 + 2 a process) and refuses to boot with a
+   lifetime or without a bound. The scheduler and the migrate job keep their
+   direct connections.
+3. Check: readiness now carries `"db_pool": {"open": …, "idle": …, "max": 12,
+   "waiting": 0}`; `waiting` stays 0. Expected, not yet measured in
+   production: `/api/health/ready` answers within about 10 ms of
+   `/api/health/live`, where they are 40-50 ms apart today.
+
+Way back: remove `DB_APP_POOL` from the web component and redeploy. On a
+direct connection the variable is ignored and a boot warning says so.
+
+### 4. One cache for the four web processes (F7)
+
+Not provisioned: it is a budget decision. A single-node managed Valkey
+(Redis-compatible) starts at $15.00 a month, which would make the recurring
+total $135.90. The code already uses it when `REDIS_URL` is set, and the
+`redis` client is installed.
+
+Rehearsed on 2026-10-06 against a local Valkey 9.1: the cache, session,
+throttle and health tests pass against the real server, four workers report
+`"cache": "up"`, all 61 audited pages are clean, and a full crawl leaves
+6.5 MB in it. **Deploy `fix/pages-survive-cache-outage` first.** Without it,
+whenever the cache is unreachable the Country Director's dashboard and
+Analytics answer 500 and a schedule save is answered with an error after it
+has saved (audit report, section 21.2). A single node has no standby, so it
+will be unreachable now and then.
+
+What changes once it is on, by design: the four web processes share cached
+figures; sessions are read from the cache first; and the sign-in limit of
+ten a minute from one address becomes ten, where each process counts its
+own ten today (`RATE_LIMIT_LOGIN_PER_MIN` raises it for an office behind
+one address).
+
+1. Create a Valkey cluster in FRA1, in VPC `default-fra1`, 1 GiB single
+   node. Set its eviction policy to `allkeys-lru`: it is a cache, and one
+   that refuses writes when full is worse than one that forgets.
+2. Attach it to the app and set `REDIS_URL` at app level to its private
+   connection string (`${<component>.DATABASE_PRIVATE_URL}` once it is a
+   component of the app), so the web service and the scheduler both read
+   it: the scheduler's jobs rebuild snapshots that the web processes
+   serve, and can only hand them over through a cache both can see.
+3. Give the cache cluster the same two trusted sources as the database: it
+   has a list of its own.
+4. Check: readiness answers `"cache": "up"` and `"status": "ok"`. If it
+   still says `"unshared"`, the boot log's "Cache unavailable (…)" line names
+   the reason (a TLS or address problem); the app keeps working on its
+   per-process cache meanwhile.
+
+Way back: remove `REDIS_URL`; each process falls back to its own cache, as
+now, and says so in the log.
+
 ## Authenticated production smoke
 
 The authenticated route crawl is GET-only after login, but login itself updates

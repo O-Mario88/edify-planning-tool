@@ -107,6 +107,12 @@ class CoreActivitySlot(TimeStampedModel):
         indexes = [
             models.Index(fields=["core_plan"]),
             models.Index(fields=["school_id"]),
+            # Every Activity.save() asks which slots mirror it, and the
+            # package-credit rules ask whether any does. activity_id is a
+            # plain column, not a foreign key, so nothing indexed it and each
+            # question read the whole table: 5-7 ms a call, 60,000 calls, a
+            # quarter of production's database time (audit, 2026-10-05).
+            models.Index(fields=["activity_id"]),
         ]
 
 

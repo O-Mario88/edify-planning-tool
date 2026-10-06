@@ -228,13 +228,45 @@ main :where(
   .pl-funding-donut__label, .pto-availability-ring > span,
   .pto-recommendation div > span, .pto-coverage-card > div:first-child > span,
   .rounded-surface :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
-  .card :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
-  .rounded-surface:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase,
-  .rounded-control:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase
+  .card :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums)
 ) {
   font-weight: var(--edify-kpi-label-weight) !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
   text-transform: none !important;
+}
+
+/* Two more of the same list, kept apart because the question is put two
+   ways: the caption of a surface that has a caption with a paragraph or
+   heading straight after it. Below 1280px it is asked of the caption that is
+   styled — it is that caption, or one comes after it, or one came before it —
+   because asked of the surface, every caption under any place a `:has()`
+   answer could change was restyled for one element added anywhere (227 of
+   the 282 elements a phone's Work Plan restyled). From 1280px it is asked of
+   the surface, as it always was: there the question put the new way cost a
+   desktop dashboard 81 ms more to open (the page-header rule further down
+   says why). Exact complements, the same elements, the same three
+   declarations as the list above (audit, 2026-10-05;
+   e2e/has-rewrites.spec.js). */
+@media not all and (min-width: 80rem) {
+  main :where(
+    .rounded-surface > .edify-text-caption.uppercase:is(:has(+ :is(p, h3, h4)), :has(~ .edify-text-caption + :is(p, h3, h4)), .edify-text-caption:has(+ :is(p, h3, h4)) ~ *),
+    .rounded-control > .edify-text-caption.uppercase:is(:has(+ :is(p, h3, h4)), :has(~ .edify-text-caption + :is(p, h3, h4)), .edify-text-caption:has(+ :is(p, h3, h4)) ~ *)
+  ) {
+    font-weight: var(--edify-kpi-label-weight) !important;
+    letter-spacing: var(--edify-kpi-label-tracking) !important;
+    text-transform: none !important;
+  }
+}
+
+@media (min-width: 80rem) {
+  main :where(
+    .rounded-surface:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase,
+    .rounded-control:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase
+  ) {
+    font-weight: var(--edify-kpi-label-weight) !important;
+    letter-spacing: var(--edify-kpi-label-tracking) !important;
+    text-transform: none !important;
+  }
 }
 
 /* ── Surface hierarchy: one contract for every workspace card and panel. ── */
@@ -474,8 +506,34 @@ main > div > :where(header, div):has(h1):not([class*="rounded"]):not([class*="bg
   min-inline-size: 0;
 }
 
-main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
-  flex-wrap: wrap;
+/* Below 1280px this is asked of the last child itself: "the block I close
+   holds an h1" is "I hold one, or a sibling before me is one or holds one" —
+   the same elements and the same weight as the rule beneath it. Asked of the
+   block, every div on a page that ends in a div was a place the answer could
+   change, and what a browser then restyled beneath each such place was every
+   div and nav it holds (163 divs of a phone's My Plan, for one element added
+   anywhere). Asked this way a phone opens a page with 6-8 % less work
+   (audit, 2026-10-05; e2e/has-rewrites.spec.js).
+
+   From 1280px it is asked of the block, as it always was. There one rule of
+   the pinned table columns (responsive-system.css: the name in the cell
+   after a selection box, `:has(> box) + * > :first-child`) makes a browser
+   restyle whole neighbouring subtrees for any `:has()` that looks at a
+   sibling, and the question put the new way looks at siblings: measured, a
+   desktop dashboard took 9-45 % more work to open with it, and 1-7 % less
+   in a trial with that one rule taken out. The two queries are exact
+   complements, so every width gets one of two selectors that pick the same
+   elements; the last test of that spec holds the pair together. */
+@media not all and (min-width: 80rem) {
+  main > div > :where(header, div) > :where(div, nav):last-child:is(:has(h1), :is(h1, :has(h1)) ~ *) {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 80rem) {
+  main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+    flex-wrap: wrap;
+  }
 }
 
 /* ── Buttons: confident, quiet, consistent. ────────────────────────────── */
@@ -1948,7 +2006,8 @@ main .platform-responsive-table [data-priority="low"] {
     align-items: stretch !important;
   }
 
-  main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+  /* The same question as above, asked of the last child. */
+  main > div > :where(header, div) > :where(div, nav):last-child:is(:has(h1), :is(h1, :has(h1)) ~ *) {
     inline-size: 100%;
   }
 

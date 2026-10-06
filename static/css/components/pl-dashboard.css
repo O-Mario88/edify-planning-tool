@@ -106,14 +106,20 @@
     inline-size: 100%;
     min-inline-size: 0;
   }
-  /* Any other select's own first line names it ("Choose a gap to list"). */
-  [data-pl-dashboard] [data-pl-section-tools] .edify-page-header-control:not(:has(> select[name="fy"])) > span {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  /* Any other select's own first line names it ("Choose a gap to list").
+     "No year select in this control" is asked of the span — none before it,
+     none after it — not of the control with :has(): the same spans at the
+     same weight, without <span> joining what a browser restyles under every
+     element a :has() rule hangs on (audit, 2026-10-05). */
+  @supports selector(:has(*)) {
+    [data-pl-dashboard] [data-pl-section-tools] .edify-page-header-control > span:not(:is(select[name="fy"] ~ *, :has(~ select[name="fy"]))) {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
   }
 }
 

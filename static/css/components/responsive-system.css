@@ -143,124 +143,144 @@
     min-inline-size: 0;
   }
 
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > :is(thead, tbody, tfoot) > tr > :first-child,
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :is(:first-child, :first-child + *) {
-    position: sticky;
-    inset-inline-start: 0;
-    z-index: var(--edify-layer-sticky-cell);
-    background-color: var(--edify-frozen-surface);
-  }
+  /* Only where `:has()` is understood, as before: a browser without it
+     dropped every one of these rules, and still does. */
+  @supports selector(:has(*)) {
+    /* Whether a table's rows start with a selection box is kept on the table,
+       as `data-edify-select-column`. micro-ux.js writes it (markTable) with the
+       selector these rules used to carry in `:has()` — a body row whose first
+       cell holds a checkbox, a radio or .edify-table-choice, bare or inside its
+       label — and writes it again whenever the table's contents change.
 
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]) {
-    /* Not a group heading's one wide cell (Project Planning's "CCSEL · Pilot
-       · 5 schools"): centred across the whole table it sat ~800px to the
-       right of a phone's screen and the row read as blank (2026-09-30). */
-    inline-size: var(--edify-table-select-size);
-    min-inline-size: var(--edify-table-select-size);
-    max-inline-size: var(--edify-table-select-size);
-    padding-inline: 0 !important;
-    text-align: center;
-  }
+       Asked with `:has()` on the table and answered for any cell beneath, the
+       question made a browser restyle everything inside the table, and inside
+       every other element a `:has()` rule hangs on, each time anything was
+       added to the page: one <span> appended to a cell restyled all 2,046
+       elements of a phone's My Plan (audit, 2026-10-05).
 
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :first-child > label {
-    margin-inline: auto;
-    /* The label is the box's width, not the 2.75rem workspace minimum: that
-       made Staff's pinned tick column 68px. The 44px finger square stays
-       (micro-ux.js, invisible). */
-    min-inline-size: 0;
-  }
+       `:is(*, _ _ _ _ ._)` matches every element. It gives each selector the
+       weight its `:has()` had — one class and four types — so no rule here
+       gains or loses precedence. */
 
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :first-child + * {
-    inset-inline-start: var(--edify-table-select-size);
-  }
-
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > thead > tr > :first-child,
-  .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > thead > tr > :is(:first-child, :first-child + *) {
-    z-index: var(--edify-layer-sticky-header);
-    background-color: var(--edify-frozen-surface-muted);
-  }
-
-  /* The hairline edge and the name cap below belong to a pinned identity,
-     which only laptops keep (64rem up); mobile mode unpins every column
-     (the rule at the end of this section). */
-  @media (min-width: 64rem) {
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > :is(thead, tbody, tfoot) > tr > :first-child,
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > :is(thead, tbody, tfoot) > tr > :first-child + * {
-      box-shadow: inset -1px 0 0 var(--edify-border-strong);
-    }
-  }
-
-  @media (min-width: 64rem) {
-    /* A pinned identity must not cover what it introduces. School and person
-       names can be most of a phone's width, so the name inside the pinned cell
-       stops at the identity measure and ends in an ellipsis; micro-ux.js gives
-       the cut name its full text as a title. `max-width` on a table cell is
-       ignored by the table algorithm, which is why the cap is on the name. The
-       doubled region class outranks the plain-content rule that lifted the cap
-       (a 376px project name pinned over the whole of a 360px table). */
     .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > tbody > tr > :first-child > :first-child:not(input, button, .edify-table-choice),
+      > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child,
     .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > tbody > tr > :first-child + * > :first-child:not(input, button, .edify-table-choice) {
-      display: inline-block;
-      max-inline-size: var(--edify-table-identity-measure) !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      vertical-align: bottom;
-    }
-
-    /* A pinned identity's own lines — a name, then the unit, key, role or date
-       written under it (the `.block` lines micro-ux.js marks .edify-cell-line) —
-       stay one under another, each within the identity measure, rather than
-       flattened onto one line as wide as the phone. Flattened, HR Today's
-       pinned matter was 733px on a 310px table and Cost Settings' name covered
-       every column after it, Edit included (2026-09-27 sweep). A cell of one
-       line (Planning's school) is untouched. data-pinned-stack opts a cell in
-       whose lines are not marked. The never-matching id outranks the rule that
-       runs every cell span inline. */
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > tbody > tr > :first-child:not([colspan]) > .edify-cell-line:not(#edify-pinned-none),
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > tbody > tr > :first-child + *:not([colspan]) > .edify-cell-line:not(#edify-pinned-none),
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table > tbody > tr > [data-pinned-stack][data-pinned-stack] > *:not(#edify-pinned-none) {
-      display: block !important;
-      max-inline-size: var(--edify-table-identity-measure) !important;
-      margin-inline-start: 0 !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      white-space: nowrap !important;
+      > table[data-edify-select-column]:is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :is(:first-child, :first-child + *) {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: var(--edify-layer-sticky-cell);
+      background-color: var(--edify-frozen-surface);
     }
 
     .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > tbody > tr > :first-child:not([colspan]) > .edify-cell-line:not(#edify-pinned-none)::before,
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > tbody > tr > :first-child + *:not([colspan]) > .edify-cell-line:not(#edify-pinned-none)::before,
-    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-      > table > tbody > tr > [data-pinned-stack][data-pinned-stack] > *:not(#edify-pinned-none)::before {
-      content: none !important;
+      > table[data-edify-select-column]:is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]) {
+      /* Not a group heading's one wide cell (Project Planning's "CCSEL · Pilot
+         · 5 schools"): centred across the whole table it sat ~800px to the
+         right of a phone's screen and the row read as blank (2026-09-30). */
+      inline-size: var(--edify-table-select-size);
+      min-inline-size: var(--edify-table-select-size);
+      max-inline-size: var(--edify-table-select-size);
+      padding-inline: 0 !important;
+      text-align: center;
     }
 
-    /* On a phone or a tablet the cap holds even where a table rule sets the
-       name `display: inline !important` (an inline box ignores the cap): a
-       376px project name was pinned over the whole of a 360px table, and a
-       306px school name over most of a tablet's (Partner Completed, 2026-09-27
-       sweep). Desktop keeps the names it had. */
+    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table[data-edify-select-column]:is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child > label {
+      margin-inline: auto;
+      /* The label is the box's width, not the 2.75rem workspace minimum: that
+         made Staff's pinned tick column 68px. The 44px finger square stays
+         (micro-ux.js, invisible). */
+      min-inline-size: 0;
+    }
+
+    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table[data-edify-select-column]:is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child + * {
+      inset-inline-start: var(--edify-table-select-size);
+    }
+
+    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > thead > tr > :first-child,
+    .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table[data-edify-select-column]:is(*, _ _ _ _ ._) > thead > tr > :is(:first-child, :first-child + *) {
+      z-index: var(--edify-layer-sticky-header);
+      background-color: var(--edify-frozen-surface-muted);
+    }
+
+    /* The hairline edge and the name cap below belong to a pinned identity,
+       which only laptops keep (64rem up); mobile mode unpins every column
+       (the rule at the end of this section). */
     @media (min-width: 64rem) {
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
+        > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child,
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
+        > table[data-edify-select-column]:is(*, _ _ _ _ ._) > :is(thead, tbody, tfoot) > tr > :first-child + * {
+        box-shadow: inset -1px 0 0 var(--edify-border-strong);
+      }
+    }
+
+    @media (min-width: 64rem) {
+      /* A pinned identity must not cover what it introduces. School and person
+         names can be most of a phone's width, so the name inside the pinned cell
+         stops at the identity measure and ends in an ellipsis; micro-ux.js gives
+         the cut name its full text as a title. `max-width` on a table cell is
+         ignored by the table algorithm, which is why the cap is on the name. The
+         doubled region class outranks the plain-content rule that lifted the cap
+         (a 376px project name pinned over the whole of a 360px table). */
       .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-        > table:not(:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"]))) > tbody > tr > :first-child > :first-child:not(input, button, .edify-table-choice),
+        > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > tbody > tr > :first-child > :first-child:not(input, button, .edify-table-choice),
       .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-        > table:has(> tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])) > tbody > tr > :first-child + * > :first-child:not(input, button, .edify-table-choice) {
-        display: inline-block !important;
+        > table[data-edify-select-column]:is(*, _ _ _ _ ._) > tbody > tr > :first-child + * > :first-child:not(input, button, .edify-table-choice) {
+        display: inline-block;
+        max-inline-size: var(--edify-table-identity-measure) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        vertical-align: bottom;
+      }
+
+      /* A pinned identity's own lines — a name, then the unit, key, role or date
+         written under it (the `.block` lines micro-ux.js marks .edify-cell-line) —
+         stay one under another, each within the identity measure, rather than
+         flattened onto one line as wide as the phone. Flattened, HR Today's
+         pinned matter was 733px on a 310px table and Cost Settings' name covered
+         every column after it, Edit included (2026-09-27 sweep). A cell of one
+         line (Planning's school) is untouched. data-pinned-stack opts a cell in
+         whose lines are not marked. The never-matching id outranks the rule that
+         runs every cell span inline. */
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > tbody > tr > :first-child:not([colspan]) > .edify-cell-line:not(#edify-pinned-none),
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table[data-edify-select-column]:is(*, _ _ _ _ ._) > tbody > tr > :first-child + *:not([colspan]) > .edify-cell-line:not(#edify-pinned-none),
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table > tbody > tr > [data-pinned-stack][data-pinned-stack] > *:not(#edify-pinned-none) {
+        display: block !important;
+        max-inline-size: var(--edify-table-identity-measure) !important;
+        margin-inline-start: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > tbody > tr > :first-child:not([colspan]) > .edify-cell-line:not(#edify-pinned-none)::before,
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table[data-edify-select-column]:is(*, _ _ _ _ ._) > tbody > tr > :first-child + *:not([colspan]) > .edify-cell-line:not(#edify-pinned-none)::before,
+      .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+        > table > tbody > tr > [data-pinned-stack][data-pinned-stack] > *:not(#edify-pinned-none)::before {
+        content: none !important;
+      }
+
+      /* On a phone or a tablet the cap holds even where a table rule sets the
+         name `display: inline !important` (an inline box ignores the cap): a
+         376px project name was pinned over the whole of a 360px table, and a
+         306px school name over most of a tablet's (Partner Completed, 2026-09-27
+         sweep). Desktop keeps the names it had. */
+      @media (min-width: 64rem) {
+        .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+          > table:not([data-edify-select-column]):is(*, _ _ _ _ ._) > tbody > tr > :first-child > :first-child:not(input, button, .edify-table-choice),
+        .edify-table-scroll-region.edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+          > table[data-edify-select-column]:is(*, _ _ _ _ ._) > tbody > tr > :first-child + * > :first-child:not(input, button, .edify-table-choice) {
+          display: inline-block !important;
+        }
       }
     }
   }
@@ -306,13 +326,24 @@
      names can be most of a phone's width, so the name inside the pinned cell
      stops at the identity measure and ends in an ellipsis; micro-ux.js gives
      the cut name its full text as a title. `max-width` on a table cell is
-     ignored by the table algorithm, which is why the cap is on the name. */
+     ignored by the table algorithm, which is why the cap is on the name.
+
+     Whether the first cell holds a selection box is asked of the name, not
+     of the cell: the name is the cell's first child and is not a box itself,
+     so "no box among the cell's children" is "no box after the name". Asked
+     of the cell (`:first-child:not(:has(> box)) > name`), a browser tests
+     every first child on the page that has a first child of its own, and
+     from then on restyles what is inside each of them whenever anything is
+     added beneath it: one element appended to a table cell restyled 1,801
+     of a dashboard's 3,464 elements, 1,000 with the question put this way
+     (audit, 2026-10-05). Same elements, same weight. */
   .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
     > table > tbody > tr
-    > :is(
-      :first-child:not(:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
-      :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
-    )
+    > :first-child
+    > :first-child:not(input, button, .edify-table-choice):not(:has(~ :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
+  .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+    > table > tbody > tr
+    > :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
     > :first-child:not(input, button, .edify-table-choice) {
     display: inline-block;
     max-inline-size: var(--edify-table-identity-measure) !important;

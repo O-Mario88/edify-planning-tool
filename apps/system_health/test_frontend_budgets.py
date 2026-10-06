@@ -125,7 +125,30 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: on one row are 1.06 KB. They add one `!important` between them: the
     #: rest hand existing rules a variable. The script that marks the cards
     #: fitted inside the JavaScript ceiling with its comments cut.
-    CSS_GZIP_KB = 206
+    #:
+    #: Raised to 246 on 2026-10-05 (205.8 to 245.8 KB) for one thing: the
+    #: build now writes each long `:is()` list out as one selector per
+    #: alternative (scripts/split_selector_lists.cjs). They are the same
+    #: rules, matching the same elements at the same weight — 365 page states
+    #: compared value by value — and 40 KB heavier gzipped, downloaded once
+    #: and then served from the cache. In exchange a browser files each rule
+    #: under its class instead of trying the whole list against every
+    #: element: 49-64 % less style recalculation on every page load, at every
+    #: width (docs/performance-forensic-audit-2026-10-05.md, F16). This is
+    #: the one case where the ceiling is the wrong measure of the cost; it
+    #: stays a ratchet for everything else.
+    #:
+    #: Raised to 246.5 the same day (245.8 to 246.22 KB) for one more: five
+    #: rules ask their question of the element they style instead of an
+    #: ancestor with `:has()` — a hand-written page header's last child, a
+    #: school row's icons, a title beside one action, a KPI caption — or read
+    #: an attribute the template writes (the search box). The header and the
+    #: caption are written both ways, the new one below 1280px and the old
+    #: one from there, where the new one costs a desktop more than it saves.
+    #: The selectors are 0.4 KB longer; below 1280px one element added to a
+    #: page restyles 18-75 of its elements instead of 400-500 (the same
+    #: report, F19).
+    CSS_GZIP_KB = 246.5
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -171,7 +194,37 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: when that makes it fit its card, instead of scrolling sideways (owner:
     #: Work Plan and My Plan still scrolled on a 2560px monitor). Its
     #: rationale lives in interactions.css, which is minified.
-    JS_GZIP_KB = 140
+    #:
+    #: Raised to 140.5 on 2026-10-05 (139.98 to 140.30 KB, +0.2%) for
+    #: date-picker.js measuring the fields of one scan together, and only
+    #: those that are drawn. A field in a closed row has no box, and asking
+    #: for its width made the browser lay that row out: on Strategic
+    #: Priorities (98 date fields in closed rows) that was 10 of the page's
+    #: 11.4 seconds of main-thread time, and it is 1.3 seconds now
+    #: (docs/performance-forensic-audit-2026-10-05.md, F1). 0.32 KB after its
+    #: comments were cut; half a kilobyte, not a whole one.
+    #:
+    #: Raised to 141.5 the same day (140.30 to 141.17 KB, +0.6%) for two things
+    #: in micro-ux.js, 0.87 KB between them with their comments cut:
+    #:
+    #: - A phone's page is fitted once. A phone reports the viewport it
+    #:   settled on as a resize event with its first frame, and every rail
+    #:   and table was measured and fitted again 150ms later: three of the
+    #:   ten whole-page style and layout passes of opening My Plan on a
+    #:   phone. When no resize has arrived since the page was fitted, that
+    #:   one re-measures nothing (the same report, F17).
+    #: - Three facts are kept as attributes — a table's rows start with a
+    #:   selection box, a heading row holds no block, an action sits beside
+    #:   a tab rail — which the stylesheets used to ask of the table, row or
+    #:   rail with `:has()`. Asked that way they made a browser restyle a
+    #:   whole phone page whenever anything was added to it: 2,201 elements
+    #:   for one <span>, 506 now, and a third less main-thread work on a
+    #:   phone again (F18). e2e/maintained-facts.spec.js holds each attribute
+    #:   to the selector it replaced while the page changes under it.
+    #: - A fourth fact, the search box holding its submit button, which the
+    #:   shell template writes and this keeps true (F19): 141.17 to 141.31 KB,
+    #:   inside the ceiling as it stood.
+    JS_GZIP_KB = 141.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod

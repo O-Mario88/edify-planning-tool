@@ -31,7 +31,7 @@ const body = `
   </form>
 </main>`;
 
-async function open(page) {
+async function open(page, extra = '') {
   await page.clock.setFixedTime(new Date(2026, 9, 1, 9, 0, 0));
   await page.route('http://dates.test/**', (route) => {
     const file = path.join(root, new URL(route.request().url()).pathname);
@@ -40,11 +40,12 @@ async function open(page) {
       contentType: 'text/html',
       body: `<html class="light"><head>${sheets.map((s) => `<link rel="stylesheet" href="/static/css/${s}">`).join('')}
         <script defer src="/static/js/vendor/alpine-3.14.0.min.js"></script>
-        <script defer src="/static/js/date-picker.js"></script></head><body>${body}</body></html>`,
+        <script defer src="/static/js/date-picker.js"></script></head><body>${body}${extra}</body></html>`,
     });
   });
   await page.goto('http://dates.test/');
-  await page.waitForFunction(() => window.Alpine && document.querySelectorAll('.edify-datepick').length === 4);
+  const fields = 4 + (extra.match(/type="date"/g) || []).length;
+  await page.waitForFunction((n) => window.Alpine && document.querySelectorAll('.edify-datepick').length === n, fields);
 }
 
 const fieldOf = (page, id) => page.locator(`#${id} + .edify-datepick .edify-datepick__field`);
@@ -204,4 +205,39 @@ test('the calendar brings no div into the form', async ({ page }) => {
   await fieldOf(page, 'visit').click();
   await expect(calendar(page)).toBeVisible();
   expect(await page.locator('.edify-datepick div').count()).toBe(0);
+});
+
+test('a field in a closed row is measured when the row opens, not before', async ({ page }) => {
+  // Asking a field that is not drawn for its width makes the browser lay its
+  // row out there and then. Strategic Priorities has a hundred closed rows
+  // with a date field in each: ten seconds of every visit (audit, 2026-10-05).
+  await page.addInitScript(() => {
+    window.__widthReads = 0;
+    const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get() {
+        if (this.closest && this.closest('#closed-row')) window.__widthReads += 1;
+        return width.get.call(this);
+      },
+    });
+  });
+  const row = (id, field, state) => `<details id="${id}" ${state} style="content-visibility: auto">
+    <summary>A row</summary>
+    <label for="${field}">A date</label>
+    <input type="date" id="${field}" name="${field}" value="2026-10-10">
+  </details>`;
+  await open(page, row('open-row', 'early', 'open') + row('closed-row', 'late', ''));
+  expect(await page.evaluate(() => window.__widthReads)).toBe(0);
+
+  await page.locator('#closed-row > summary').click();
+  await expect(fieldOf(page, 'late')).toBeVisible();
+  // Once on show it is the field it would have been: `early` is the same
+  // markup in the same place, drawn from the start.
+  const sized = (id) => page.evaluate((id) => {
+    const field = document.querySelector(`#${id} + .edify-datepick .edify-datepick__field`);
+    return [field.size, field.style.width, field.value];
+  }, id);
+  await expect.poll(() => sized('late')).toEqual(await sized('early'));
+  expect(await page.evaluate(() => window.__widthReads)).toBeGreaterThan(0);
 });

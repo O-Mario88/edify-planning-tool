@@ -70,6 +70,37 @@ class ReadinessTest(TestCase):
         self.assertEqual(self.client.get("/api/health").status_code, 200)
 
 
+class PerProcessPoolReadinessTest(TestCase):
+    """DB_APP_POOL: readiness says what the process's pool holds, so turning
+    it on can be seen from outside (audit 2026-10-05, F6)."""
+
+    def test_it_says_nothing_of_a_pool_that_is_not_there(self):
+        self.assertNotIn("db_pool", self.client.get("/api/health/ready").json())
+
+    def test_it_reports_the_pool_this_process_holds(self):
+        from django.db import connections
+
+        pool = mock.Mock()
+        pool.get_stats.return_value = {
+            "pool_min": 2,
+            "pool_max": 12,
+            "pool_size": 3,
+            "pool_available": 2,
+            "requests_waiting": 0,
+        }
+        with mock.patch.object(
+            type(connections["default"]),
+            "pool",
+            new_callable=mock.PropertyMock,
+            return_value=pool,
+        ):
+            response = self.client.get("/api/health/ready")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["db_pool"], {"open": 3, "idle": 2, "max": 12, "waiting": 0}
+        )
+
+
 class PooledReadinessTest(TestCase):
     @mock.patch.object(settings, "DB_USE_PGBOUNCER", True, create=True)
     def test_it_rejects_a_runtime_role_with_disabled_timeouts(self):
@@ -116,6 +147,33 @@ class PooledReadinessTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["db_jit"], "on")
         self.assertEqual(response.json()["status"], "degraded")
+
+
+class PooledSessionsJitDefaultTest(TestCase):
+    """The role's default is what a pooled session gets, so it is set.
+
+    A test connection is direct and sends ``-c jit=off`` itself, which would
+    hide a missing default; the catalogue is asked instead (migration
+    system_health.0003, audit 2026-10-05).
+    """
+
+    def test_the_migrating_role_defaults_to_jit_off_in_this_database(self):
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT s.setconfig
+                FROM pg_db_role_setting s
+                JOIN pg_roles r ON r.oid = s.setrole
+                JOIN pg_database d ON d.oid = s.setdatabase
+                WHERE r.rolname = current_user AND d.datname = current_database()
+                """
+            )
+            row = cursor.fetchone()
+
+        self.assertIsNotNone(row, "no role default recorded for this database")
+        self.assertIn("jit=off", row[0])
 
 
 class ReadinessNamesADegradedCacheTest(TestCase):

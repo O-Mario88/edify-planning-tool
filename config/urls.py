@@ -169,15 +169,26 @@ def _readiness(request: HttpRequest) -> JsonResponse:
         cache_state == "unshared" and getattr(settings, "IS_PRODUCTION", False)
     )
     healthy = db == "up" and not degraded_cache and not jit_degraded
-    return JsonResponse(
-        {
-            "status": "ok" if healthy else "degraded",
-            "db": db,
-            "cache": cache_state,
-            "db_jit": "on" if jit_degraded else "off",
-        },
-        status=200 if db == "up" else 503,
-    )
+    body = {
+        "status": "ok" if healthy else "degraded",
+        "db": db,
+        "cache": cache_state,
+        "db_jit": "on" if jit_degraded else "off",
+    }
+    # Present only where the per-process connection pool is on (DB_APP_POOL):
+    # how many connections this process holds, how many are idle, and whether
+    # a request is waiting for one — which, sized past the admission bound, it
+    # should never be.
+    pool = getattr(connections["default"], "pool", None)
+    if pool is not None:
+        stats = pool.get_stats()
+        body["db_pool"] = {
+            "open": stats.get("pool_size", 0),
+            "idle": stats.get("pool_available", 0),
+            "max": stats.get("pool_max", 0),
+            "waiting": stats.get("requests_waiting", 0),
+        }
+    return JsonResponse(body, status=200 if db == "up" else 503)
 
 
 def _postgres_timeout_is_zero(value: object) -> bool:
