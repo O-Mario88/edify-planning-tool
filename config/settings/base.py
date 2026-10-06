@@ -888,6 +888,16 @@ LIVE_UPDATES_ENABLED = (
     not in ("0", "false", "no", "off")
 ) and not IS_TESTING
 
+# A save that adds several visits to one day prices that day once, when the
+# last of them has joined it, rather than again after each
+# (apps.daily_visit_batches.services.each_day_priced_once; owner, 2026-10-06).
+# The figures are the same; fewer cost-snapshot versions and audit entries are
+# written on the way. PRICE_A_DAY_ONCE_PER_SAVE=false prices after every visit
+# again, without a deploy.
+PRICE_A_DAY_ONCE_PER_SAVE = os.environ.get(
+    "PRICE_A_DAY_ONCE_PER_SAVE", "true"
+).strip().lower() not in ("0", "false", "no", "off")
+
 # How long a role dashboard's computed payload is reused before it is rebuilt.
 # The Country Director dashboard is ~96 queries and over a second even warm
 # (2026-09-12); five minutes of reuse turn the second and later loads into one
