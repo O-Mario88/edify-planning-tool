@@ -98,14 +98,24 @@
     return elements;
   }
 
-  /* Four facts the stylesheets read as attributes instead of asking an
+  /* Five facts the stylesheets read as attributes instead of asking an
      ancestor with :has() (responsive-system.css, interactions.css): each is
      the selector the rule carried, written when the element is first seen
      and again, in the observer's own turn, when what it depends on changes. */
-  var SELECT_COLUMN = ':scope > tbody > tr > :first-child > :is(input[type="checkbox"], input[type="radio"], .edify-table-choice), ' +
+  var BOX = ':is(input[type="checkbox"], input[type="radio"], .edify-table-choice)';
+  var SELECT_COLUMN = ':scope > tbody > tr > :first-child > ' + BOX + ', ' +
     ':scope > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])';
+  var ROWS = ':scope > :is(thead, tbody, tfoot) > tr > ';
   function markTable(table) {
     table.toggleAttribute('data-edify-select-column', Boolean(table.querySelector(SELECT_COLUMN)));
+    // A row's first cell that holds a box itself: the cell after it is the
+    // pinned one (`tr > :first-child:has(> box)`, from 80rem).
+    var held = new Set();
+    table.querySelectorAll(ROWS + ':first-child > ' + BOX).forEach(function (box) { held.add(box.parentElement); });
+    table.querySelectorAll(ROWS + '[data-edify-box-cell]').forEach(function (cell) {
+      if (!held.delete(cell)) cell.removeAttribute('data-edify-box-cell');
+    });
+    held.forEach(function (cell) { cell.setAttribute('data-edify-box-cell', ''); });
   }
   function markHeadRow(row) {
     row.toggleAttribute('data-edify-head-run', !row.querySelector(':scope > :is(p, div, ul, dl, form)'));
@@ -126,11 +136,13 @@
     elementsWithin(root, SEARCH).forEach(markSearch);
   }
   function remarkFacts(mutations) {
+    // A table is read once for all that changed inside it in this turn.
+    var tables = new Set();
     mutations.forEach(function (mutation) {
       var target = mutation.target;
       if (mutation.type !== 'childList' || target.nodeType !== 1) return;
       var table = target.closest('table');
-      if (table) markTable(table);
+      if (table) tables.add(table);
       // Every search box the change is inside (one may hold another).
       for (var search = target.closest(SEARCH); search; search = search.parentElement && search.parentElement.closest(SEARCH)) markSearch(search);
       if (target.classList.contains('edify-head-row')) markHeadRow(target);
@@ -140,6 +152,7 @@
       if (before && before.hasAttribute('data-edify-tablist')) markRail(before);
       mutation.addedNodes.forEach(function (node) { if (node.nodeType === 1) markFacts(node); });
     });
+    tables.forEach(markTable);
   }
 
   /* A menu, dialog or popover that happens to live inside a table cell is not

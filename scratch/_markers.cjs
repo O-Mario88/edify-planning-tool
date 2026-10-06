@@ -1,4 +1,4 @@
-/* The four facts micro-ux.js keeps as attributes must say, at every frame,
+/* The five facts micro-ux.js keeps as attributes must say, at every frame,
  * what the :has() selectors they replaced would say. Checked on every audited
  * page from the moment the page has started up, once per animation frame for
  * a few seconds, and after the page has settled. Audit tooling.
@@ -13,6 +13,7 @@ const CHECK = `(() => {
     ['.edify-head-row', ':has(> :is(p, div, ul, dl, form))', 'data-edify-head-run', true],
     ['[data-edify-tablist]', ':has(+ a.btn)', 'data-edify-beside-link', false],
     ['search, .edify-topbar__search', ':has(.edify-search-submit)', 'data-edify-has-submit', false],
+    ['table > :is(thead, tbody, tfoot) > tr > *', ':first-child:has(> ' + BOX + ')', 'data-edify-box-cell', false],
   ];
   // The rules rewritten on 2026-10-05 (second pass): how many elements each styles on this page, whatever the width.
   const CAP = '.edify-text-caption.uppercase:is(:has(+ :is(p, h3, h4)), :has(~ .edify-text-caption + :is(p, h3, h4)), .edify-text-caption:has(+ :is(p, h3, h4)) ~ *)';
@@ -23,7 +24,7 @@ const CHECK = `(() => {
     'kpi caption': document.querySelectorAll('main :is(.rounded-surface, .rounded-control) > ' + CAP).length,
     'search box field': document.querySelectorAll('search[data-edify-has-submit] input[type="search"], .edify-topbar__search[data-edify-has-submit] form').length,
   });
-  window.__facts = { checks: 0, frames: 0, wrong: [], seen: { 'data-edify-select-column': 0, 'data-edify-head-run': 0, 'data-edify-beside-link': 0, 'data-edify-has-submit': 0 }, anchors: 0 };
+  window.__facts = { checks: 0, frames: 0, wrong: [], seen: { 'data-edify-select-column': 0, 'data-edify-head-run': 0, 'data-edify-beside-link': 0, 'data-edify-has-submit': 0, 'data-edify-box-cell': 0 }, anchors: 0 };
   const name = (e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.classList.length ? '.' + Array.from(e.classList).slice(0, 3).join('.') : '');
   window.__checkFacts = (when) => { const f = window.__facts; f.frames++; let anchors = 0;
     for (const [anchor, has, attr, inverted] of facts) for (const el of document.querySelectorAll(anchor)) { anchors++; f.checks++; const truth = el.matches(has) !== inverted; const said = el.hasAttribute(attr); if (said) f.seen[attr]++; if (truth !== said && f.wrong.length < 12) f.wrong.push(when + ': ' + name(el) + ' ' + attr + ' is ' + said + ', the selector says ' + truth); }

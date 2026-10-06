@@ -13,7 +13,7 @@ const VARIANTS = (process.env.VARIANTS || 'before,after').split(',');
 const CSS_BEFORE = process.env.CSS_BEFORE; const JS_BEFORE = JSON.parse(process.env.JS_BEFORE || '{}');
 const MOBILE = process.env.MOBILE === '1';
 const strip = (h, expect) => { let out = h.replace(/(<script\b[^>]*?) blocking="render"/g, '$1'); if (expect) out = out.replace(/<link rel="expect"[^>]*>/, ''); return out; };
-const VARIANT = { after: { html: (h) => h }, noblock: { html: (h) => strip(h, false) }, before: { html: (h) => strip(h, true), css: CSS_BEFORE, js: JS_BEFORE, extra: JSON.parse(process.env.EXTRA_BEFORE || '{}') }, alt: { html: (h) => h, css: process.env.CSS_ALT } };
+const VARIANT = { after: { html: (h) => h }, noblock: { html: (h) => strip(h, false) }, before: { html: (h) => strip(h, true), css: CSS_BEFORE, js: JS_BEFORE, extra: JSON.parse(process.env.EXTRA_BEFORE || '{}') }, alt: { html: (h) => h, css: process.env.CSS_ALT, js: JSON.parse(process.env.JS_ALT || '{}') } };
 const VP = process.env.VIEWPORT ? process.env.VIEWPORT.split('x').map(Number) : null;
 const INIT = `(() => { const w = window; w.__f = { muts: [], shifts: [], long: [] };
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) w.__f.shifts.push([e.startTime, e.value]); }).observe({ type: 'layout-shift', buffered: true });

@@ -127,16 +127,14 @@ async function restyled(browser, page, action) {
 
 // [what, viewport, share of the page's elements one inserted <span> may restyle]
 const BREADTH = [
-  // 9-19 % (12-18 % on the 700-school seed): what is left is the pinned-name
-  // rule for a row that starts with a selection box, which a desktop restyles
-  // the row for, and the two rules that are still asked of an ancestor at
-  // this width because of it (platform.css). It was 110-136 %, 43-47 % once
-  // that rule asked the name, and 11-22 % once three facts were kept as
-  // attributes.
-  ['a desktop', { viewport: { width: 1440, height: 900 } }, 0.35],
-  // 1-4 % since five more rules ask the element they style, or count its
-  // siblings, or read the search box's attribute (e2e/has-rewrites.spec.js,
-  // e2e/maintained-facts.spec.js); below 1280px it was 106-137 %, then 11-25 %.
+  // 2-4 % at every width (3-7 % on the 700-school seed, whose pages are half
+  // the size) since the rules that asked an ancestor with `:has()` ask the
+  // element they style, count its siblings, or read a fact the shell script
+  // keeps as an attribute (e2e/has-rewrites.spec.js,
+  // e2e/maintained-facts.spec.js). It was 110-136 % on a desktop and
+  // 106-137 % below 1280px; the last to go was the pinned table column, which
+  // held a desktop at 9-19 % until it read the row's box cell from the cell.
+  ['a desktop', { viewport: { width: 1440, height: 900 } }, 0.15],
   ['a small laptop', { viewport: { width: 1100, height: 800 } }, 0.15],
   ['a phone', { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, 0.15],
 ];

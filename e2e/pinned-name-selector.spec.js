@@ -3,11 +3,13 @@
 // answers that for every first child on the page, and then restyles what is
 // inside each of them whenever anything is added beneath it (audit,
 // 2026-10-05: one element appended to a table cell restyled 1,801 of a
-// dashboard's 3,464 elements). The rule now asks the name instead
-// (`name:not(:has(~ box))`). That may change how the rule is found and nothing
-// else: this holds the stylesheet's selector to the one it replaced — the same
-// elements, at the same weight — over every arrangement of a row's first two
-// cells.
+// dashboard's 3,464 elements). For a day the rule asked the name instead
+// (`name:not(:has(~ box))`); it now reads the answer from the cell, where
+// micro-ux.js keeps it as `data-edify-box-cell` (e2e/maintained-facts.spec.js
+// holds that attribute to `tr > :first-child:has(> box)`). Either may change
+// how the rule is found and nothing else: this holds the stylesheet's
+// selector to the one it first replaced — the same elements, at the same
+// weight — over every arrangement of a row's first two cells.
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
@@ -19,10 +21,15 @@ const REGION = '.edify-table-scroll-region:is([data-scroll-state="start"], [data
 // As it stood until 2026-10-05.
 const ORIGINAL = `${REGION} > table > tbody > tr > :is(:first-child:not(:has(> ${BOX})), :first-child:has(> ${BOX}) + *) > :first-child:not(input, button, .edify-table-choice)`;
 
+// The fact the rule reads, written from the selector it stands for.
+const MARK = (box) => {
+  for (const cell of document.querySelectorAll('table > :is(thead, tbody, tfoot) > tr > *')) cell.toggleAttribute('data-edify-box-cell', cell.matches(`:first-child:has(> ${box})`));
+};
+
 function shippedSelector() {
   const css = fs.readFileSync(path.join(__dirname, '..', 'static', 'css', 'components', 'responsive-system.css'), 'utf8');
   // The rule under the comment that explains it (other rules cut names too).
-  const from = css.indexOf('is asked of the name');
+  const from = css.indexOf('The name is the first child of the pinned cell');
   expect(from, 'the pinned-name rule is still in responsive-system.css').toBeGreaterThan(-1);
   const rule = css.slice(from).match(/\*\/\s*([^{}]+)\{[^{}]*max-inline-size: var\(--edify-table-identity-measure\) !important;/);
   expect(rule, 'the rule follows its comment').not.toBeNull();
@@ -77,8 +84,9 @@ function fixture() {
 
 test('the pinned-name rule matches exactly what the selector it replaced matched', async ({ page }) => {
   const shipped = shippedSelector();
-  expect(shipped, 'the rule no longer asks the cell').not.toContain(':first-child:not(:has(>');
+  expect(shipped, 'the rule no longer asks with :has()').not.toContain(':has(');
   await page.setContent(`<!doctype html><html><body>${fixture()}</body></html>`);
+  await page.evaluate(MARK, BOX);
   const result = await page.evaluate(([original, current]) => {
     const all = Array.from(document.body.querySelectorAll('*'));
     const indexes = (selector) => Array.from(document.querySelectorAll(selector)).map((el) => all.indexOf(el));
@@ -99,6 +107,7 @@ test('the pinned-name rule weighs what the selector it replaced weighed', async 
       <tr><td><span data-p>name</span></td><td><span data-p>other</span></td></tr>
       <tr><td><input type="checkbox"></td><td><span data-p>name</span></td></tr>
     </tbody></table></div></body></html>`);
+  await page.evaluate(MARK, BOX);
   const colours = (css) => page.evaluate((text) => {
     document.getElementById('s').textContent = text;
     return Array.from(document.querySelectorAll('[data-p]')).map((el) => getComputedStyle(el).color);

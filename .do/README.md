@@ -140,9 +140,23 @@ What the control panel showed:
 About 2 ms of every statement is the public round trip: 140 ms on a
 68-statement page, 0.9 s on a reschedule.
 
-**State on 2026-10-06:** sub-steps 1 and 2 are done. The app was connected
-to `default-fra1` at 03:36 (private IP 10.114.0.2) and is healthy. Sub-step
-3, the variable, is what is left.
+**Done on 2026-10-06.** The app was connected to `default-fra1` at 03:36
+(private IP 10.114.0.2) and `DATABASE_URL` was changed at 08:49. Database
+traffic is on the private network: Databases > edify-production-db > Logs &
+Queries > Current Connections shows the app arriving from 10.114.0.2, where
+it used to show a public address (the web service's own connections show
+127.0.0.1 there, before and after: they come through the pool).
+
+The first deploy with the new value failed and DigitalOcean rolled back by
+itself with no downtime; the next deploy, 29 minutes later with nothing
+changed, went through. The `migrate` job's first connection had timed out
+after the 5 seconds `DB_CONNECT_TIMEOUT_S` allows (`psycopg.errors.
+ConnectionTimeout`, raised from Django's start-up checks). Why that one
+attempt found no route is not known. If a deploy fails that way again, run
+it again; `DB_CONNECT_TIMEOUT_S=30` on the `migrate` job alone gives its
+first connection longer. While a failed deploy stands, the control panel
+says the live deployment and the app spec are out of sync, and every push
+is deployed with the spec as edited.
 
 1. Apps > edify-production > Networking > Private Network > **Edit network** >
    Connect app to VPC network > `default-fra1` > Save. The app redeploys. It

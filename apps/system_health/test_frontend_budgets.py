@@ -138,16 +138,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the one case where the ceiling is the wrong measure of the cost; it
     #: stays a ratchet for everything else.
     #:
-    #: Raised to 246.5 the same day (245.8 to 246.22 KB) for one more: five
+    #: Raised to 246.5 the same day (245.8 to 246.19 KB) for one more: five
     #: rules ask their question of the element they style instead of an
     #: ancestor with `:has()` — a hand-written page header's last child, a
     #: school row's icons, a title beside one action, a KPI caption — or read
-    #: an attribute the template writes (the search box). The header and the
-    #: caption are written both ways, the new one below 1280px and the old
-    #: one from there, where the new one costs a desktop more than it saves.
-    #: The selectors are 0.4 KB longer; below 1280px one element added to a
-    #: page restyles 18-75 of its elements instead of 400-500 (the same
-    #: report, F19).
+    #: an attribute the template writes (the search box), and the pinned
+    #: table column reads one the shell script keeps on the row's box cell.
+    #: The selectors are 0.4 KB longer; one element added to a page restyles
+    #: 2-4 % of it at every width, where it was a fifth to a quarter (the
+    #: same report, F19 and F20).
     CSS_GZIP_KB = 246.5
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
@@ -217,7 +216,7 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: the bar's Assign to partner for the ticked schools, and Reschedule and
     #: Cancel for the staff work planned at them.
     #:
-    #: Raised to 145.5 on 2026-10-06 (143.8 to 145.29 KB) when the
+    #: Raised to 146 on 2026-10-06 (143.8 to 145.50 KB) when the
     #: performance audit's branch joined these. It adds three things, in
     #: date-picker.js and micro-ux.js, with their comments cut
     #: (docs/performance-forensic-audit-2026-10-05.md):
@@ -234,16 +233,17 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #:   ten whole-page style and layout passes of opening My Plan on a
     #:   phone. When no resize has arrived since the page was fitted, that
     #:   one re-measures nothing (F17).
-    #: - Facts are kept as attributes — a table's rows start with a
-    #:   selection box, a heading row holds no block, an action sits beside
-    #:   a tab rail, the search box holds its submit button — which the
-    #:   stylesheets used to ask of the table, row, rail or box with `:has()`.
-    #:   Asked that way they made a browser restyle a whole phone page
-    #:   whenever anything was added to it: 2,201 elements for one <span>,
-    #:   about 30 now (F18, F19). e2e/maintained-facts.spec.js holds each
-    #:   attribute to the selector it replaced while the page changes under
-    #:   it.
-    JS_GZIP_KB = 145.5
+    #: - Five facts are kept as attributes — a table's rows start with a
+    #:   selection box, a row's first cell holds one, a heading row holds no
+    #:   block, an action sits beside a tab rail, the search box holds its
+    #:   submit button — which the stylesheets used to ask of the table,
+    #:   cell, row, rail or box with `:has()`. Asked that way they made a
+    #:   browser restyle a whole phone page whenever anything was added to
+    #:   it: 2,201 elements for one <span>, about 50 now, and a fifth of a
+    #:   desktop page, 2-4 % now (F18, F19, F20).
+    #:   e2e/maintained-facts.spec.js holds each attribute to the selector
+    #:   it replaced while the page changes under it.
+    JS_GZIP_KB = 146
     INLINE_SCRIPT_KB = 40
 
     @classmethod

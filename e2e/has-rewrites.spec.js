@@ -9,9 +9,7 @@
 // takes every rewritten selector from the stylesheets as shipped, rebuilds the
 // selector it replaced, and checks on one page built to exercise them all that
 // the two select the same elements and weigh the same against rival rules
-// either side of their weight. Two rules are kept in both forms, each for the
-// widths where it is the cheaper to answer; the last test holds each pair
-// together.
+// either side of their weight.
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
@@ -40,8 +38,13 @@ const KEPT = [
   ['[data-edify-tablist][data-edify-beside-link]:is(*,_)', '[data-edify-tablist]:has(+a.btn)'],
   // The search box: an attribute weighs what `:has(.class)` weighed, so nothing is added to it.
   ['[data-edify-has-submit]', ':has(.edify-search-submit)'],
+  // A row's first cell that holds a box itself (from 80rem): the pinned cell, and the name inside it. The name's own
+  // rule had already stopped asking the cell: it asked the name whether a box follows it.
+  [':is(:first-child:not([data-edify-box-cell]),[data-edify-box-cell]:first-child+*):is(*,_)', `:is(:first-child:not(:has(>${BOX})),:first-child:has(>${BOX})+*)`],
+  [':first-child:not([data-edify-box-cell])>:first-child:not(input,button,.edify-table-choice):is(*,_)', `:first-child>:first-child:not(input,button,.edify-table-choice):not(:has(~${BOX}))`],
+  ['[data-edify-box-cell]:first-child+*>:first-child:not(input,button,.edify-table-choice):is(*,_)', `:first-child:has(>${BOX})+*>:first-child:not(input,button,.edify-table-choice)`],
 ];
-const ATTRIBUTES = /data-edify-(select-column|head-run|beside-link|has-submit)/;
+const ATTRIBUTES = /data-edify-(select-column|head-run|beside-link|has-submit|box-cell)/;
 const KEPT_IN = ['components/responsive-system.css', 'components/interactions.css', 'components.css', 'components/mobile-shell.css'];
 
 // The questions now asked of the styled element: [stylesheet, as shipped, as it stood].
@@ -60,8 +63,7 @@ const ASKED = [
   ['components.css', '#filters-form :is(div>select~span:not(.sr-only),div>span:not(.sr-only):has(~select),.edify-filter-label)', '#filters-form :is(div:has(>select)>span:not(.sr-only),.edify-filter-label)'],
   ['components/pl-dashboard.css', `${TOOLS}>span:not(:is(select[name=fy]~*,:has(~select[name=fy])))`, `${TOOLS}:not(:has(>select[name=fy]))>span`],
   // The second pass (F19): the block that holds an h1, asked of its last child, and a surface's caption, asked of the
-  // caption (both below 1280px; platform.css keeps the originals for wider windows — the last test); four children
-  // or more and exactly two, asked of a child.
+  // caption; four children or more and exactly two, asked of a child.
   ['platform.css', 'main>div>:where(header,div)>:where(div,nav):last-child:is(:has(h1),:is(h1,:has(h1))~*)', 'main>div>:where(header,div):has(h1)>:where(div,nav):last-child'],
   ['components/interactions.css', ':root main .school-record-row .school-record-row__actions>:where(:first-child:nth-last-child(n+4),:first-child:nth-last-child(n+4)~*):is(*,._) svg', ':root main .school-record-row .school-record-row__actions:has(>:nth-child(4))>* svg'],
   ['components/interactions.css', 'main .edify-head-row--action.edify-head-row--action>.edify-head-row__title.edify-head-row__title:is(:first-child:nth-last-child(2),:nth-child(2):last-child)', 'main .edify-head-row--action.edify-head-row--action:has(>:nth-child(2):last-child)>.edify-head-row__title.edify-head-row__title'],
@@ -186,6 +188,7 @@ test('every rewritten selector selects and weighs what the one it replaced did',
   // The attributes, written from the selectors they stand for (maintained-facts.spec.js checks micro-ux.js does the same).
   await page.evaluate(([box]) => {
     for (const table of document.querySelectorAll('table')) table.toggleAttribute('data-edify-select-column', table.matches(`:has(> tbody > tr > :first-child > ${box}, > tbody > tr > :first-child > label > :is(input[type=checkbox], input[type=radio]))`));
+    for (const cell of document.querySelectorAll('table > :is(thead, tbody, tfoot) > tr > *')) cell.toggleAttribute('data-edify-box-cell', cell.matches(`:first-child:has(> ${box})`));
     for (const row of document.querySelectorAll('.edify-head-row')) row.toggleAttribute('data-edify-head-run', !row.matches(':has(> :is(p, div, ul, dl, form))'));
     for (const rail of document.querySelectorAll('[data-edify-tablist]')) rail.toggleAttribute('data-edify-beside-link', rail.matches(':has(+ a.btn)'));
     for (const search of document.querySelectorAll('search, .edify-topbar__search')) search.toggleAttribute('data-edify-has-submit', search.matches(':has(.edify-search-submit)'));
@@ -238,63 +241,5 @@ test('every rewritten selector selects and weighs what the one it replaced did',
     expect(result.disagreements, `${result.shipped} against ${result.rulings} rival rulings`).toBe(0);
     // The rivals straddle the weight: the rule wins some and loses some.
     if (result.rulings) { expect(result.flips).toBeGreaterThan(0); expect(result.flips).toBeLessThan(result.rulings); }
-  }
-});
-
-// Two rules of platform.css are asked the new way below 1280px and the old way from 1280px, where the new way costs
-// a desktop page more than it saves: the block that holds an h1, and a surface's caption. A width must get exactly
-// one of each pair, and the two must say the same thing.
-const NARROW = 'not all and (min-width: 80rem)';
-const WIDE = '(min-width: 80rem)';
-const KEPT_BOTH_WAYS = [
-  {
-    starts: 'main > div > :where(header, div)',
-    shipped: ASKED.find(([, , was]) => was.startsWith('main>div>:where(header,div):has(h1)>'))[1],
-    original: 'main>div>:where(header,div):has(h1)>:where(div,nav):last-child',
-    // Elsewhere: the phone's copy of the rewritten one, inside a narrower query; the original nowhere else.
-    elsewhere: { shipped: 1, original: 0 },
-    page: '<main><div><header><h1>T</h1><div id="yes">actions</div></header><header><p>T</p><div id="no">actions</div></header></div></main>',
-    property: 'flex-wrap', yes: 'wrap', no: 'nowrap',
-  },
-  {
-    starts: 'main :where(\n    .rounded-',
-    shipped: `main :where(.rounded-surface>${CAPTION},.rounded-control>${CAPTION})`,
-    original: `main :where(.rounded-surface${SURFACE},.rounded-control${SURFACE})`,
-    elsewhere: { shipped: 0, original: 0 },
-    page: `<style>.uppercase { text-transform: uppercase; }</style><main><div class="rounded-surface"><span id="yes" class="edify-text-caption uppercase">c</span><p>v</p></div>
-      <div class="rounded-surface"><span id="no" class="edify-text-caption uppercase">c</span><div>v</div></div></main>`,
-    property: 'text-transform', yes: 'none', no: 'uppercase',
-  },
-];
-
-test('a rule kept in both forms gives every width exactly one of them', async ({ page }) => {
-  const css = fs.readFileSync(path.join(CSS, 'platform.css'), 'utf8');
-  const all = selectorsOf('platform.css');
-  for (const pair of KEPT_BOTH_WAYS) {
-    const block = (query) => {
-      const at = css.indexOf(`@media ${query} {\n  ${pair.starts}`);
-      expect(at, `platform.css keeps "${pair.starts}…" under @media ${query}`).toBeGreaterThan(-1);
-      const [text, selector, body] = css.slice(at).match(/^@media [^{]+\{\s*([^{}]+?)\s*\{([^{}]*)\}\s*\}/);
-      return { text, selector: minify(selector), body: body.replace(/\s+/g, ' ').trim() };
-    };
-    const narrow = block(NARROW);
-    const wide = block(WIDE);
-    expect(narrow.selector).toBe(minify(pair.shipped));
-    expect(wide.selector).toBe(minify(pair.original));
-    expect(narrow.body).toBe(wide.body);
-    expect(narrow.body.length).toBeGreaterThan(0);
-    expect(all.filter((selector) => selector === minify(pair.shipped)), 'the new way, at other widths').toHaveLength(1 + pair.elsewhere.shipped);
-    expect(all.filter((selector) => selector === minify(pair.original)), 'the old way, at other widths').toHaveLength(1 + pair.elsewhere.original);
-
-    await page.setContent(`<!doctype html><html><head><style>${narrow.text}\n${wide.text}</style></head><body>${pair.page}</body></html>`);
-    for (const width of [320, 1279, 1280, 1281, 2560]) {
-      await page.setViewportSize({ width, height: 800 });
-      const seen = await page.evaluate(([a, b, property]) => ({
-        queries: [matchMedia(a).matches, matchMedia(b).matches],
-        yes: getComputedStyle(document.getElementById('yes')).getPropertyValue(property),
-        no: getComputedStyle(document.getElementById('no')).getPropertyValue(property),
-      }), [NARROW, WIDE, pair.property]);
-      expect(seen, `${pair.starts} at ${width}px`).toEqual({ queries: [width < 1280, width >= 1280], yes: pair.yes, no: pair.no });
-    }
   }
 });

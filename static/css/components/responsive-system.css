@@ -290,66 +290,79 @@
   /* The identity column stays in view while the rest scrolls behind it —
      opaque, so nothing shows through, with a hairline edge once it is
      covering something. When the first column is only a selection box, the
-     column after it is the identity. */
-  .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table > :is(thead, tbody, tfoot) > tr
-    > :is(
-      :first-child:not(:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
-      :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
-    ) {
-    position: sticky;
-    inset-inline-start: 0;
-    z-index: var(--edify-layer-sticky-cell);
-    background-color: var(--edify-frozen-surface);
-  }
+     column after it is the identity.
 
-  .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table > thead > tr
-    > :is(
-      :first-child:not(:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
-      :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
-    ) {
-    z-index: var(--edify-layer-sticky-header);
-    background-color: var(--edify-frozen-surface-muted);
-  }
+     Whether a row's first cell holds a selection box is read from the cell:
+     micro-ux.js writes `data-edify-box-cell` on it (markTable) with the
+     selector these rules carried, `tr > :first-child:has(> box)`, and keeps
+     it true as rows and boxes come and go. Asked with `:has()`, the last of
+     them — a name in the cell AFTER the box cell — made a browser restyle
+     whole neighbouring subtrees whenever any `:has()` answer that looks at a
+     sibling might have changed: one element added to a desktop page restyled
+     a fifth of it, and two rules elsewhere had to keep a slower form from
+     this width up (audit, 2026-10-05 and -06). Nothing arrives later than it
+     did: these rules already wait for `data-scroll-state`, which only that
+     script writes. Same elements, same weight (`:is(*, _)` matches
+     everything and weighs the one type the `:has()` argument weighed);
+     e2e/has-rewrites.spec.js and e2e/maintained-facts.spec.js hold both.
+     Inside `@supports` because a browser without `:has()` dropped these
+     rules, and still must. */
+  @supports selector(:has(*)) {
+    .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table > :is(thead, tbody, tfoot) > tr
+      > :is(
+        :first-child:not([data-edify-box-cell]),
+        [data-edify-box-cell]:first-child + *
+      ):is(*, _) {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: var(--edify-layer-sticky-cell);
+      background-color: var(--edify-frozen-surface);
+    }
 
-  .edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
-    > table > :is(thead, tbody, tfoot) > tr
-    > :is(
-      :first-child:not(:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
-      :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
-    ) {
-    box-shadow: inset -1px 0 0 var(--edify-border-strong);
-  }
+    .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table > thead > tr
+      > :is(
+        :first-child:not([data-edify-box-cell]),
+        [data-edify-box-cell]:first-child + *
+      ):is(*, _) {
+      z-index: var(--edify-layer-sticky-header);
+      background-color: var(--edify-frozen-surface-muted);
+    }
 
-  /* A pinned identity must not cover what it introduces. School and person
-     names can be most of a phone's width, so the name inside the pinned cell
-     stops at the identity measure and ends in an ellipsis; micro-ux.js gives
-     the cut name its full text as a title. `max-width` on a table cell is
-     ignored by the table algorithm, which is why the cap is on the name.
+    .edify-table-scroll-region:is([data-scroll-state="middle"], [data-scroll-state="end"])
+      > table > :is(thead, tbody, tfoot) > tr
+      > :is(
+        :first-child:not([data-edify-box-cell]),
+        [data-edify-box-cell]:first-child + *
+      ):is(*, _) {
+      box-shadow: inset -1px 0 0 var(--edify-border-strong);
+    }
 
-     Whether the first cell holds a selection box is asked of the name, not
-     of the cell: the name is the cell's first child and is not a box itself,
-     so "no box among the cell's children" is "no box after the name". Asked
-     of the cell (`:first-child:not(:has(> box)) > name`), a browser tests
-     every first child on the page that has a first child of its own, and
-     from then on restyles what is inside each of them whenever anything is
-     added beneath it: one element appended to a table cell restyled 1,801
-     of a dashboard's 3,464 elements, 1,000 with the question put this way
-     (audit, 2026-10-05). Same elements, same weight. */
-  .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table > tbody > tr
-    > :first-child
-    > :first-child:not(input, button, .edify-table-choice):not(:has(~ :is(input[type="checkbox"], input[type="radio"], .edify-table-choice))),
-  .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
-    > table > tbody > tr
-    > :first-child:has(> :is(input[type="checkbox"], input[type="radio"], .edify-table-choice)) + *
-    > :first-child:not(input, button, .edify-table-choice) {
-    display: inline-block;
-    max-inline-size: var(--edify-table-identity-measure) !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    vertical-align: bottom;
+    /* A pinned identity must not cover what it introduces. School and person
+       names can be most of a phone's width, so the name inside the pinned
+       cell stops at the identity measure and ends in an ellipsis;
+       micro-ux.js gives the cut name its full text as a title. `max-width`
+       on a table cell is ignored by the table algorithm, which is why the
+       cap is on the name.
+
+       The name is the first child of the pinned cell that is not a control:
+       of the first cell when that holds no box, of the cell after it when it
+       does. */
+    .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table > tbody > tr
+      > :first-child:not([data-edify-box-cell])
+      > :first-child:not(input, button, .edify-table-choice):is(*, _),
+    .edify-table-scroll-region:is([data-scroll-state="start"], [data-scroll-state="middle"], [data-scroll-state="end"])
+      > table > tbody > tr
+      > [data-edify-box-cell]:first-child + *
+      > :first-child:not(input, button, .edify-table-choice):is(*, _) {
+      display: inline-block;
+      max-inline-size: var(--edify-table-identity-measure) !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      vertical-align: bottom;
+    }
   }
 }
 

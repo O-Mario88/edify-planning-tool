@@ -50,15 +50,7 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: as those merge, and from then on only downwards. (`!important` fell to 3,953
 #: later that day, when the calendar's event tabs stopped being a grid forced
 #: over the rail; its ceiling keeps the same ten.)
-#:
-#: `!important` raised from 3,963 to 3,967 on 2026-10-05, to the count exactly.
-#: Nothing new is outranked: six of them are one rule's three declarations
-#: written out twice more. The KPI caption's rule in platform.css is asked one
-#: way below 1280px and another from 1280px, each the cheaper there for a
-#: browser to keep answered, and a selector cannot be given a width without
-#: its declarations being repeated (docs/performance-forensic-audit-2026-10-05.md,
-#: F19). e2e/has-rewrites.spec.js holds the two copies to each other.
-IMPORTANT_CEILING = 3967
+IMPORTANT_CEILING = 3963
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

@@ -15,6 +15,10 @@ restyling still left below 1280 pixels, the private network with a
 connection pool and a shared cache, and the open database — which are F19
 (§15), the switch and the steps of §14, and §20. Shown those decisions, the
 owner gave the word on three of them on 6 October; §21 is what was done.
+§22 is the fourth, done the same day: the pinned table column on a desktop
+(F20), with main merged into the branch first. Where §22 and an earlier
+section disagree about the pinned column, the page-header rule or the
+caption rule, §22 is the later state.
 Every number is the build's own output or production's own telemetry;
 line numbers quoted in §1–10 are those of the first baseline, `e12ce29b`.
 
@@ -732,6 +736,7 @@ DigitalOcean; what was changed there, and by whom, is in §21.
 | 10 | Five more rules ask their question of the element they style, count that element's siblings, or read an attribute the shell template writes for the search box; two of them only below 1280 pixels, with the original kept for wider windows | `static/css/platform.css`, `components/interactions.css`, `components.css`, `components/mobile-shell.css`, `templates/layouts/shell.html`, `static/js/micro-ux.js` | F19 (new, §15) — the owner's request of 5 October |
 | 11 | A pool of open database connections in each web process, behind a switch that is off (`DB_APP_POOL`); with it on, a request hands its connection back as it leaves the admission guard | `config/settings/base.py`, `prod.py`, `loadtest.py`, `apps/core/concurrency.py`, `apps/core/boot_gates.py`, `config/urls.py`, `requirements/base.txt` (`psycopg-pool`) | F6 — built and rehearsed, not switched on (§14) |
 | 12 | The DigitalOcean steps for the private network, the trusted sources, that pool and a shared cache, each with its check and its way back | `.do/README.md` | F13, F6, F7 and the open database — written, not applied (§20) |
+| 13 | The pinned table column reads from the cell whether a row starts with a selection box, a fifth fact the shell script keeps; the two rules F19 had split by width are written one way again | `static/js/micro-ux.js`, `static/css/components/responsive-system.css`, `static/css/platform.css` | F20 (new, §22) — the owner's word of 6 October |
 
 No feature, workflow, permission, calculation, query result or label was
 changed, and no code was deleted. One thing a person can see did change, as
@@ -885,7 +890,10 @@ moved for the same reason: the count of `!important` declarations in the
 source stylesheets (`test_component_adoption`), 3,963 → 3,967, to the count
 exactly. Nothing new is outranked — six of them are the caption rule's three
 declarations written out for each side of 1280 pixels, because a selector
-cannot be given a width without its declarations being repeated.
+cannot be given a width without its declarations being repeated. (F20 took
+the split out again: that ratchet is back at main's number, and after the
+merge with main the stylesheet weighs 246.19 KB and the shell's scripts
+145.50 KB under a ceiling of 146 — §22.)
 
 ### 12.7 Server and database
 
@@ -1132,6 +1140,9 @@ The three rules that no longer contain `:has()` sit inside
 `@supports selector(:has(*))`, so a browser too old for `:has()` still gets
 none of them, as before.
 
+*(The next three paragraphs and their table are how this stood for a day.
+F20, §22, removed the cause, and both rules are written one way again.)*
+
 **Two of the five are asked the new way only below 1280 pixels.** All five
 went in at every width at first, and the first write-up of F19 gave desktop
 figures that had been measured before it. Measured afterwards at 1440×900,
@@ -1205,29 +1216,13 @@ five rules rewritten in place.
 
 Measured, understood, and **not changed**:
 
-1. **A desktop still restyles 1–19 % of a page per insertion** (9–19 % on
-   the field officer's pages): the row the element is in, with everything in
-   it, the siblings of the table, and the divs under each block a `:has()`
-   rule hangs on. One selector is behind it: the pinned name of a row that
-   starts with a selection box, 1280 pixels and up
-   (`tr > :first-child:has(> box) + * > :first-child:not(…)`), which asks a
-   cell a question and styles something plain in the *next* cell. Because
-   of it the page-header and caption rules are still asked the old way at
-   this width (F19, above). The name cannot see into the cell before its
-   own, so CSS alone has no exact rewrite. A mark on the cell that holds
-   the box, kept by `micro-ux.js` as the four facts of F18 and F19 are,
-   would be one — the first report was wrong to rule it out as arriving
-   after first paint: the pinned-column rules already wait for an
-   attribute that only script writes (`data-scroll-state`), so nothing
-   would be styled later than it is now. It would let both rules be asked
-   the new way at every width; the two trial rows of F19 put its worth at
-   1–7 % of a desktop page's work to open, and with the two rules asked
-   the new way one insertion restyled 122 elements of a desktop My Plan
-   instead of 396. **It has not been done**: it is a fifth fact for the
-   script to keep true on every row of every table, 0.19 KB is left under
-   the script's size ceiling, and it is not what was asked for (§20, 2).
-   Below 1280 pixels what is left is small: the fields of filter forms and
-   the page header's own parts, 18–75 elements.
+1. ~~A desktop still restyles 1–19 % of a page per insertion.~~ **Done on
+   6 October (F20, §22):** the pinned table column reads from the cell
+   whether a row starts with a selection box, and one insertion restyles
+   2–4 % of a desktop page, as it does below 1280 pixels. What is left at
+   every width is small: the fields of filter forms, the context-metric
+   facts and the page header's own parts, 17–102 elements on the pages
+   measured.
 2. **The page's scripts write, measure, write, measure.** A phone's My Plan
    still has seven whole-page style or layout passes of 80–120 ms each
    (unthrottled): the top-layer's first look before the start-up scripts
@@ -1575,9 +1570,9 @@ workflow.
 | Gate | Holds |
 |---|---|
 | `e2e/performance-budgets.spec.js` — the first frame is the finished page | no class change to the server's markup, and no layout shift, after the first frame; nothing deferred in a page body; the first frame comes after the start-up scripts |
-| … one element added to a table cell does not restyle the page | under 35 % of the page's elements on a desktop (9–19 % now on the pages it measures, 12–18 % on the 700-school seed; it was 110–136 %), under 15 % at 1100 pixels and on a phone (1–4 % now; it was 106–137 %) |
-| `e2e/maintained-facts.spec.js` | each of the four attributes equals the `:has()` selector it replaced after every one of 26 changes to the page |
-| `e2e/has-rewrites.spec.js` | every rewritten selector in the shipped stylesheets selects, and weighs, what the selector it replaced did; the two rules written both ways give each width exactly one form, with the same declarations |
+| … one element added to a table cell does not restyle the page | under 15 % of the page's elements at 1440 pixels, at 1100 pixels and on a phone (2–4 % now, 3–7 % on the 700-school seed; it was 106–137 %). The desktop ceiling was 35 % until F20 |
+| `e2e/maintained-facts.spec.js` | each of the five attributes equals the `:has()` selector it replaced after every one of 33 changes to the page |
+| `e2e/has-rewrites.spec.js` | every rewritten selector in the shipped stylesheets (40 pairs since F20) selects, and weighs, what the selector it replaced did |
 | … a page load resolves style a bounded number of times | ceilings per page (Strategic Priorities 480; it was 1,269) |
 | … a phone fits a page once, and fits it again when it is turned | exactly one fit on load; a rotation re-fits and no rail overflows |
 | … beside a sidebar that shuts itself, a page opens fitted for the width it has | at 1100 pixels, the fields each filter row shows, the tabs each rail keeps and the width each table was fitted for are the same after the page is fitted again |
@@ -1643,12 +1638,9 @@ and on phones at full speed, **−66 % to −79 %** on a slow phone. It is not
 2. **Done, at the owner's word ("2", then "can you work on these"): the
    restyling below 1280 pixels (F18, F19).** One element added to a page
    restyles 18–75 of its elements there (161 on one page), where it was
-   400–500 after F18 and over 2,000 at the start. **Open, if you want it:
-   the same at desktop width.** There one insertion still restyles 1–19 %
-   of a page. The cause is one selector of the pinned table columns, and a
-   fix is now known — a fifth fact kept by the page's script — worth a
-   measured 1–7 % of a desktop page's work to open (§15). It was not part
-   of what you asked for and has not been started.
+   400–500 after F18 and over 2,000 at the start. **The same at desktop
+   width: done on 6 October at the owner's word ("I meant desktop follow
+   up"), §22.**
 3. **Decided — the first frame stays held (§12.5, §18).** After the first
    report it was found to change what is seen at laptop widths (1,024–1,279
    pixels, or any width with the sidebar kept shut): the sidebar no longer
@@ -1713,20 +1705,30 @@ word ("commit and push"). None is merged, so none is deployed.
 
 ### 21.1 The private network (F13)
 
-**Half done, by the owner's hand.** The first click of the change was
-refused to me by the permission layer this session runs under, which treats
-a change to live infrastructure as protected whatever was said in the chat;
-no other route to the same change was tried. The owner connected the app to
-the VPC himself at 03:36 on 6 October. Read afterwards: the app shows
-`default-fra1` and private IP 10.114.0.2, the deployment is healthy, and
-from outside the readiness check answers `"db": "up"`, liveness and the
-sign-in page 200.
+**Done, by the owner's hand.** The first click of the change was refused to
+me by the permission layer this session runs under, which treats a change to
+live infrastructure as protected whatever was said in the chat; no other
+route to the same change was tried. The owner connected the app to the VPC
+himself at 03:36 on 6 October and changed app-level `DATABASE_URL` to
+`${db.DATABASE_PRIVATE_URL}` at 08:49.
 
-The app still reaches the database over the public address. The second edit
-is what moves the traffic: app-level `DATABASE_URL` from `${db.DATABASE_URL}`
-to `${db.DATABASE_PRIVATE_URL}` (`.do/README.md`, step 1; the variable name
-was confirmed in DigitalOcean's documentation that morning, and the deployed
-settings read the address with no knowledge of its host name).
+The first deploy with the new value failed, and DigitalOcean rolled back by
+itself with no downtime. The `migrate` job's first connection had timed out
+after the five seconds the settings allow (`psycopg.errors.
+ConnectionTimeout`, raised from Django's start-up checks before a statement
+had run). The database has no trusted-source list, so nothing refused it by
+address. The next deploy, a push 29 minutes later with the setting
+unchanged, connected at once. Why the one attempt found no route is not
+known; `.do/README.md`, step 1, says what to do if it happens again.
+
+That it is in force was read from the database, not inferred: its list of
+current connections shows the application arriving from 10.114.0.2, its
+address in the private network, where §10 (F13) recorded a public address.
+From outside, readiness answers `"db": "up"`. **The gain is not yet
+measured.** F13 expected about 2 ms less on every statement; the gap
+between the readiness and liveness checks, which is mostly the cost of
+opening a connection, reads 44 ms against 40–50 before, inside its noise.
+The runtime log's database milliseconds per request are where it will show.
 
 ### 21.2 The shared cache (F7): rehearsed, and not yet safe to switch on
 
@@ -1884,3 +1886,120 @@ that one refusal does not undo the rest, and prices as it goes. Making the
 writer itself cheaper is a different change to money code and was not part
 of this decision.
 
+## 22. The desktop follow-up, with main merged in (6 October)
+
+Asked whether the doubled "3" of §21 had meant the fourth decision of §20,
+the owner answered: "I meant desktop follow up", and later "open pr when you
+are done". This section is that work. It is on `audit/perf-forensics`.
+
+### 22.1 Main merged in
+
+Main had moved eleven commits past the branch's base, to `503ea90a`: group
+reschedule and cancel with a tick box on every planned activity, live
+updates, bulk actions on the Core school list. The merge conflicted only in
+generated files — the built stylesheets and the page, interaction, component
+and traceability inventories, all rebuilt or regenerated from the merged
+sources — and in the note beside the script-weight ceiling, which both
+sides had raised: main to 144 KB for two new scripts, this branch for its
+changes to two existing ones. Together they weigh 145.50 KB and the ceiling
+is 146. The stylesheet ceiling stands (246.19 KB of 246.5). No migration
+numbers collided.
+
+Main's tick boxes are an `<input>` in every row, and one family of rules
+that was left alone in §15 still files `input` and `select` under every
+`:has()` anchor (the fields in a filter form's innermost `div`). So a page
+restyles a few more elements for one insertion than §15's table says: 53 on
+a phone's My Plan where it was 32, 77 at 1100 pixels where it was 31. It is
+still 2–4 % of the page.
+
+### 22.2 F20 — the pinned table column reads its answer from the cell
+
+**What was left.** From 1280 pixels four rules decide which cell of a row
+is the pinned identity by asking the first cell whether it holds a selection
+box, `tr > :first-child:has(> box)`, and the last of them styles the name in
+the cell *after* it. That one selector held a desktop at 9–19 % of the page
+restyled per insertion, and was why two of F19's rewrites had to keep their
+old form from 1280 pixels (§15).
+
+**What changed.**
+
+- `micro-ux.js` keeps a fifth fact: `data-edify-box-cell` on a row's first
+  cell when that cell holds a box itself. It is written with the selector
+  the rules carried, when a table is first seen and again in the observer's
+  own turn when the table changes, like the other four. A table is now read
+  once for everything that changed inside it in a turn; it was read once
+  per change.
+- The four rules read the attribute. None contains `:has()` any more, so
+  they sit inside `@supports selector(:has(*))`: a browser that dropped them
+  before still does.
+- The page-header and caption rules of F19 are written one way again, at
+  every width. The six `!important` declarations that the split had
+  duplicated are gone and that ratchet is back at main's number.
+
+Nothing is styled later than it was: these rules already wait for
+`data-scroll-state`, which only that script writes.
+
+**Measured**, the merged build without F20 against with it (1440×900,
+16,700 schools, alternated, medians of five, nothing else running):
+
+| Page | Main-thread work (ms) | Style recalculation (ms) |
+|---|---:|---:|
+| CCEO `/dashboard` | 811 → **779** (−4 %) | 575 → 545 |
+| CCEO `/my-plan` | 520 → **490** (−6 %) | 313 → 286 |
+| CCEO `/planning` | 409 → **392** (−4 %) | 201 → 185 |
+| PL `/dashboard` | 1,360 → **1,231** (−9 %) | 963 → 833 |
+| PL `/work-plan` | 578 → **545** (−6 %) | 369 → 335 |
+
+Script time did not move (129 and 129 ms on the first row, 258 and 255 on
+the fourth): keeping the mark costs nothing that shows.
+
+| One element appended to a table cell, 1440×900 | Before F20 (§15) | With it |
+|---|---:|---:|
+| CCEO My Plan | 396 of 2,034 elements | **82** of 2,074 |
+| CCEO dashboard | 239 of 2,610 | **102** of 2,791 |
+| CCEO planning | 241 of 2,176 | **43** of 2,179 |
+| CCEO Core Schools | 177 of 1,120 | **17** of 1,122 |
+
+**Proof.**
+
+| Check | Result |
+|---|---|
+| `e2e/has-rewrites.spec.js`: each of the five new selectors against the one it replaced, on the fixture | the same elements (33 to 276 of them) and the same ruling in 842 contests each; 40 pairs in all, Chromium and WebKit |
+| `e2e/pinned-name-selector.spec.js`: the name's rule against the selector it first replaced, over every arrangement of a row's first two cells | the same elements, the same weight, both browsers |
+| `e2e/maintained-facts.spec.js`: the attribute against `tr > :first-child:has(> box)` on every cell after each of 33 changes to the page (seven of them new: a cell put in front of the box cell, the box taken out, put back by a script, moved inside a plain label, a footer row) | agrees after each, both browsers |
+| The same agreement at every animation frame while a page opens, and once settled: 61 pages at 1440, 1100 and 390 pixels | 12,377,885 checks, no disagreement |
+| … and on the pages where a row really starts with a bare tick box. On the 61 audited pages none does (their tick boxes sit inside a label, which these rules never counted as the cell holding a box). Two templates do: the Staff directory and the project Planning page, where the rule is live for 25 cells. Four pages, four widths | 875,312 checks, no disagreement |
+| Every computed style of every element, this build against main's stylesheets on the same page: 65 pages (those four added) at 1440, 1100 and 390 pixels | 195 page states, 459,096 elements, 375 million values, **0 differences** |
+| … the four tick-box pages at 1280 and 1366 pixels, light and dark | 16 states, 19 million values, 0 differences |
+| Each page as it opens with F20 against without it, every element's tag, classes, state and drawn box: 25 pages at 1440 pixels, the four tick-box pages at 1280 | all identical |
+| Django: `core`, `frontend`, `system_health`, `core_schools`, `fund_requests` on the merged tree | 4,345 tests. 4,341 passed in the run. Four did not: the launcher-sensitive one of §18, and three wall-clock scale tests that were running while the machine slept with its lid closed; run again awake, their file passes (22 of 22) |
+| 65 JavaScript unit tests; `ruff`; `makemigrations --check` | pass |
+| `e2e/performance-budgets.spec.js`, with the desktop ceiling brought down from 35 % to the 15 % of the other widths | passes on the 16,700-school copy, the 700-school seed (3–7 % there) and a development-style server, with the built-against-source stylesheet spec |
+
+**Not run**, as before: the whole Django suite, the whole browser suite,
+Firefox, a real phone.
+
+### 22.3 The branch as it stands, against main as it stands
+
+One session, the owner at the machine, so the figures run a little higher
+than the quiet ones above. "Before" is main `503ea90a` in full.
+
+| Viewport, page | Main-thread work (ms) | Finished (ms) | Longest freeze (ms) |
+|---|---:|---:|---:|
+| 1440×900, CCEO `/dashboard` | 1,841 → **845** (−54 %) | 2,153 → **1,150** | 457 → 272 |
+| 1440×900, CCEO `/my-plan` | 967 → **533** (−45 %) | 1,247 → **861** | 214 → 139 |
+| 1440×900, CCEO `/planning` | 659 → **414** (−37 %) | 1,085 → **832** | 193 → 93 |
+| 1440×900, PL `/dashboard` | 4,495 → **1,318** (−71 %) | 4,844 → **1,660** | 743 → 196 |
+| 1440×900, PL `/work-plan` | 1,025 → **588** (−43 %) | 1,313 → **836** | 236 → 153 |
+| 1440×900, CD `/dashboard` | 1,006 → **597** (−41 %) | 1,146 → **718** | 269 → 99 |
+| 1440×900, CD `/strategic-priorities` | 11,520 → **906** (−92 %) | 12,159 → **1,421** | 10,208 → 360 |
+| 1100×800, CCEO `/my-plan` | 1,271 → **603** (−53 %) | 1,555 → **885** | 367 → 141 |
+| 1100×800, CCEO `/dashboard` | 1,931 → **981** (−49 %) | 2,221 → **1,318** | 508 → 277 |
+| Phone, CCEO `/my-plan` | 1,558 → **569** (−63 %) | 1,838 → **881** | 480 → 154 |
+| Phone, CCEO `/dashboard` | 2,561 → **869** (−66 %) | 2,822 → **1,135** | 1,065 → 289 |
+| Phone, PL `/dashboard` | 6,689 → **1,372** (−79 %) | 7,178 → **1,720** | 929 → 191 |
+
+Main is heavier than it was when §12 was measured: its own dashboard takes
+1,841 ms where the branch's base took 1,232, with a tick box in every row
+and two more scripts. The tables of §12 are the branch before this merge
+against its base, and were not measured again.
