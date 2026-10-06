@@ -49,6 +49,11 @@ calls — so costing, the calendar gate, the visit entitlement, the duplicate
 guard and the daily visit batch all behave exactly as they do for one visit.
 The whole selection is one transaction: a day that cannot be planned for one
 of its schools is not half-planned for the rest.
+
+One thing is done for the day rather than for each school: its price. The
+schools share one day's pool, so the day is priced when the last of them has
+joined it, not again after each (owner, 2026-10-06;
+``apps.daily_visit_batches.services.each_day_priced_once``).
 """
 
 from __future__ import annotations
@@ -314,6 +319,7 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
     written when it does.
     """
     from apps.core.fy import get_operational_fy
+    from apps.daily_visit_batches.services import each_day_priced_once
     from apps.planning.services import schedule_school_visit
 
     cluster = _cluster_for(cluster_id, principal)
@@ -366,35 +372,38 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
     # it is resolved once rather than per school.
     catalogue_item_id = _catalogue_item_id(activity_type, label)
     created: list[str] = []
-    for member in chosen:
-        payload = {
-            "schoolId": member.school_id,
-            "activityType": activity_type,
-            "purposeType": purpose,
-            "scheduledDate": when.isoformat(),
-            "plannedMonth": when.month,
-            "plannedWeek": min(5, (when.day - 1) // 7 + 1),
-            "deliveryType": "staff",
-            "requireCatalogue": True,
-            "catalogueItemId": catalogue_item_id,
-            "activityPurposeText": (
-                data.get("activityPurposeText")
-                or f"{label} for {cluster.name} cluster schools"
-            ),
-            "expectedOutcome": (
-                data.get("expectedOutcome")
-                or f"Complete the {label.lower()} and record its evidence."
-            ),
-            "recommendationReason": (
-                f"Planned with {len(chosen)} {cluster.name} cluster schools "
-                f"for {when.isoformat()}."
-            ),
-        }
-        if focus:
-            payload["focusIntervention"] = focus
-            payload["purposeIntervention"] = focus
-        result = schedule_school_visit(payload, principal)
-        created.append(result["id"])
+    # Every school below joins the same day and shares its pool: the day is
+    # priced once, when the block ends, inside this function's transaction.
+    with each_day_priced_once():
+        for member in chosen:
+            payload = {
+                "schoolId": member.school_id,
+                "activityType": activity_type,
+                "purposeType": purpose,
+                "scheduledDate": when.isoformat(),
+                "plannedMonth": when.month,
+                "plannedWeek": min(5, (when.day - 1) // 7 + 1),
+                "deliveryType": "staff",
+                "requireCatalogue": True,
+                "catalogueItemId": catalogue_item_id,
+                "activityPurposeText": (
+                    data.get("activityPurposeText")
+                    or f"{label} for {cluster.name} cluster schools"
+                ),
+                "expectedOutcome": (
+                    data.get("expectedOutcome")
+                    or f"Complete the {label.lower()} and record its evidence."
+                ),
+                "recommendationReason": (
+                    f"Planned with {len(chosen)} {cluster.name} cluster schools "
+                    f"for {when.isoformat()}."
+                ),
+            }
+            if focus:
+                payload["focusIntervention"] = focus
+                payload["purposeIntervention"] = focus
+            result = schedule_school_visit(payload, principal)
+            created.append(result["id"])
 
     return {
         "created": created,
