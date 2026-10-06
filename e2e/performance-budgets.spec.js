@@ -44,16 +44,37 @@ const RECORD_WRITES = `(() => {
   // themselves, arrive later by design and are not the page being redrawn.
   let sent = null;
   document.addEventListener('DOMContentLoaded', () => { sent = new WeakSet(document.querySelectorAll('*')); }, true);
+  // htmx names the element that is fetching: \`htmx-request\` while it waits,
+  // \`htmx-swapping\` and \`htmx-settling\` as the section goes in, and takes
+  // each name off again. That is a fetch announced on the element making it,
+  // seven writes a dashboard with two such sections cannot do without, and
+  // not the page's markup being stamped a second time. Only a write that
+  // changes nothing else is set aside.
+  const FETCHING = /^htmx-(?:request|swapping|settling|added)$/;
+  const names = (value) => new Set((value || '').split(/\\s+/).filter(Boolean));
+  const onlyAnnouncesAFetch = (before, after) => {
+    const was = names(before);
+    const now = names(after);
+    const changed = [...was].filter((name) => !now.has(name)).concat([...now].filter((name) => !was.has(name)));
+    return changed.length > 0 && changed.every((name) => FETCHING.test(name));
+  };
   new MutationObserver((records) => {
     const at = performance.now();
     let classes = 0;
-    for (const item of records) {
+    // A record carries the value it replaced. What it wrote is what the next
+    // record for the same element replaced, or what the element holds now.
+    const wrote = new Map();
+    for (let index = records.length - 1; index >= 0; index -= 1) {
+      const item = records[index];
+      const after = wrote.has(item.target) ? wrote.get(item.target) : item.target.getAttribute('class');
+      wrote.set(item.target, item.oldValue);
       if (sent && !sent.has(item.target)) continue;
       if (item.target.closest && item.target.closest('.apexcharts-canvas, .leaflet-container, svg')) continue;
+      if (onlyAnnouncesAFetch(item.oldValue, after)) continue;
       classes += 1;
     }
     if (classes) record.writes.push([at, classes]);
-  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true });
 })();`;
 
 async function settle(page) {
@@ -110,6 +131,55 @@ test('the first frame is the finished page', async ({ browser }) => {
     if (!fetchesSections) expect(result.shiftAfter, `${where}: layout shift after the first frame`).toBeLessThanOrEqual(0.05);
     await context.close();
   }
+});
+
+// The control for the count above: a recorder that set aside too much would
+// pass a page that is stamped late, so each kind of write is made here and
+// counted on its own.
+test('the recorder sets aside a fetch being announced, and nothing else', async ({ browser }) => {
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  await context.addInitScript(RECORD_WRITES);
+  const page = await context.newPage();
+  const address = 'http://recorder-control.test/';
+  await page.route(address, (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><div id="fetching" class="card"></div><div id="stamped" class="card"></div><div id="both" class="card"></div><div id="same" class="card"></div>',
+  }));
+  await page.goto(address);
+  const counted = await page.evaluate(async () => {
+    const total = () => window.__edifyPerf.writes.reduce((sum, [, count]) => sum + count, 0);
+    const counts = {};
+    const write = async (name, change) => {
+      const before = total();
+      change();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      counts[name] = total() - before;
+    };
+    const classes = (id) => document.getElementById(id).classList;
+    // What htmx does to an element that fetches a section as the page loads.
+    await write('a fetch announced', () => {
+      const list = classes('fetching');
+      list.add('htmx-request'); list.remove('htmx-request');
+      list.add('htmx-swapping'); list.remove('htmx-swapping');
+      list.add('htmx-settling'); list.remove('htmx-settling');
+    });
+    await write('a class stamped', () => { classes('stamped').add('is-ready'); });
+    await write('a class stamped in the same write as an announcement', () => { document.getElementById('both').className = 'card htmx-request is-ready'; });
+    await write('the same classes written again', () => { document.getElementById('same').className = 'card'; });
+    await write('a class stamped between two announcements', () => {
+      const list = classes('fetching');
+      list.add('htmx-request'); list.add('is-ready'); list.remove('htmx-request');
+    });
+    return counts;
+  });
+  expect(counted).toEqual({
+    'a fetch announced': 0,
+    'a class stamped': 1,
+    'a class stamped in the same write as an announcement': 1,
+    'the same classes written again': 1,
+    'a class stamped between two announcements': 1,
+  });
+  await context.close();
 });
 
 // Sum of the elements each style recalculation between two marks worked on.

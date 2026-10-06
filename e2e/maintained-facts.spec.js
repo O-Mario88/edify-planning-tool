@@ -41,8 +41,17 @@ const FACTS = `(() => {
     }
     return wrong;
   };
-  // The observer that keeps the facts runs in the same turn as the change; one turn later everything must agree.
-  window.changed = async (change) => { change(); await new Promise((resolve) => setTimeout(resolve, 0)); return window.disagreements(); };
+  // The observer that keeps the facts runs in the same turn as the change:
+  // everything must agree once that turn's microtasks have run, before any
+  // frame or timer (a later pass over the page would also put a fact right,
+  // a frame too late), and must still agree one task later.
+  window.changed = async (change) => {
+    change();
+    await Promise.resolve();
+    const atOnce = window.disagreements().map((line) => line + ' (in the turn of the change)');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return atOnce.concat(window.disagreements());
+  };
 })();`;
 
 test('the facts kept for the stylesheets follow the page', async ({ page }) => {
@@ -131,7 +140,60 @@ test('the facts kept for the stylesheets follow the page', async ({ page }) => {
     await step('an element that only borrows the class, holding the search box', () => { host.appendChild(borrowed); borrowed.appendChild(box); }, () => `${borrows()}:${submits()}`);
     await step('the button removed from inside both', () => box.querySelector('.edify-search-submit').remove(), () => `${borrows()}:${submits()}`);
 
-    table.remove(); row.remove(); toolbar.remove(); borrowed.remove();
+    // Arrivals inside an arrival, in one turn. micro-ux reads what came once,
+    // from the outermost element (e2e/ui-work-batching.spec.js counts that it
+    // does); every fact inside must be written all the same.
+    const section = document.createElement('section');
+    section.id = 'fact-section';
+    const built = () => {
+      const inner = section.querySelector('table');
+      const innerRail = section.querySelector('[data-edify-tablist]');
+      const innerSearch = section.querySelector('search');
+      return [
+        inner.hasAttribute('data-edify-select-column'), inner.rows[0].cells[0].hasAttribute('data-edify-box-cell'),
+        innerRail.hasAttribute('data-edify-beside-link'), innerSearch.hasAttribute('data-edify-has-submit'),
+      ].join(':');
+    };
+    await step('a section that arrives and is filled piece by piece in the same turn', () => {
+      host.appendChild(section);
+      const inner = document.createElement('table');
+      section.appendChild(inner);
+      const body = document.createElement('tbody');
+      inner.appendChild(body);
+      for (let index = 0; index < 3; index += 1) {
+        const tr = document.createElement('tr');
+        body.appendChild(tr);
+        const first = document.createElement('td');
+        tr.appendChild(first);
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        first.appendChild(input);
+        const second = document.createElement('td');
+        second.textContent = 'School ' + index;
+        tr.appendChild(second);
+      }
+      const bar = document.createElement('div');
+      section.appendChild(bar);
+      bar.insertAdjacentHTML('beforeend', '<nav data-edify-tablist><a data-edify-tab href="#">One</a></nav>');
+      bar.insertAdjacentHTML('beforeend', '<a class="btn" href="#">Open</a>');
+      const innerSearch = document.createElement('search');
+      section.appendChild(innerSearch);
+      innerSearch.insertAdjacentHTML('beforeend', '<form><input type="search"><button class="edify-search-submit"></button></form>');
+    }, built);
+    await step('a table that arrives and ends the turn inside another arrival', () => {
+      const late = document.createElement('table');
+      late.id = 'fact-late';
+      late.innerHTML = '<tbody><tr><td><input type="radio"></td><td>x</td></tr></tbody>';
+      host.appendChild(late);
+      const wrapper = document.createElement('div');
+      section.appendChild(wrapper);
+      wrapper.appendChild(late);
+    }, () => {
+      const late = section.querySelector('#fact-late');
+      return late.hasAttribute('data-edify-select-column') + ':' + late.rows[0].cells[0].hasAttribute('data-edify-box-cell');
+    });
+
+    table.remove(); row.remove(); toolbar.remove(); borrowed.remove(); section.remove();
     return steps;
   });
 
@@ -171,4 +233,6 @@ test('the facts kept for the stylesheets follow the page', async ({ page }) => {
   expect(attribute['the form replaced by one with the button deep inside']).toBe(true);
   expect(attribute['an element that only borrows the class, holding the search box']).toBe('true:true');
   expect(attribute['the button removed from inside both']).toBe('false:false');
+  expect(attribute['a section that arrives and is filled piece by piece in the same turn']).toBe('true:true:true:true');
+  expect(attribute['a table that arrives and ends the turn inside another arrival']).toBe('true:true');
 });

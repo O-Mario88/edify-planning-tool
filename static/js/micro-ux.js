@@ -138,6 +138,9 @@
   function remarkFacts(mutations) {
     // A table is read once for all that changed inside it in this turn.
     var tables = new Set();
+    // So is what arrived: an element that came inside another that also came
+    // (a parent and its children appended one by one) is read with it.
+    var arrived = new Set();
     mutations.forEach(function (mutation) {
       var target = mutation.target;
       if (mutation.type !== 'childList' || target.nodeType !== 1) return;
@@ -150,7 +153,13 @@
       var before = mutation.previousSibling;
       while (before && before.nodeType !== 1) before = before.previousSibling;
       if (before && before.hasAttribute('data-edify-tablist')) markRail(before);
-      mutation.addedNodes.forEach(function (node) { if (node.nodeType === 1) markFacts(node); });
+      mutation.addedNodes.forEach(function (node) { if (node.nodeType === 1) arrived.add(node); });
+    });
+    arrived.forEach(function (node) {
+      for (var parent = node.parentNode; parent; parent = parent.parentNode) {
+        if (arrived.has(parent)) return;
+      }
+      markFacts(node);
     });
     tables.forEach(markTable);
   }

@@ -1569,15 +1569,16 @@ workflow.
 
 | Gate | Holds |
 |---|---|
-| `e2e/performance-budgets.spec.js` — the first frame is the finished page | no class change to the server's markup, and no layout shift, after the first frame; nothing deferred in a page body; the first frame comes after the start-up scripts |
+| `e2e/performance-budgets.spec.js` — the first frame is the finished page | no class change to the server's markup, and no layout shift, after the first frame (a sliver is allowed: 5 writes, or a tenth of the page's; the names htmx puts on an element while it fetches a section are not counted — §22.4); nothing deferred in a page body; the first frame comes after the start-up scripts |
+| … the recorder sets aside a fetch being announced, and nothing else | the control for the count above: an announcement counts 0; a class stamped, a class stamped in the same write as an announcement, and the same classes written again each count 1 |
 | … one element added to a table cell does not restyle the page | under 15 % of the page's elements at 1440 pixels, at 1100 pixels and on a phone (2–4 % now, 3–7 % on the 700-school seed; it was 106–137 %). The desktop ceiling was 35 % until F20 |
-| `e2e/maintained-facts.spec.js` | each of the five attributes equals the `:has()` selector it replaced after every one of 33 changes to the page |
+| `e2e/maintained-facts.spec.js` | each of the five attributes equals the `:has()` selector it replaced after every one of 35 changes to the page, read within the turn of the change (33 changes, read one task later, until §22.4) |
 | `e2e/has-rewrites.spec.js` | every rewritten selector in the shipped stylesheets (40 pairs since F20) selects, and weighs, what the selector it replaced did |
 | … a page load resolves style a bounded number of times | ceilings per page (Strategic Priorities 480; it was 1,269) |
 | … a phone fits a page once, and fits it again when it is turned | exactly one fit on load; a rotation re-fits and no rail overflows |
 | … beside a sidebar that shuts itself, a page opens fitted for the width it has | at 1100 pixels, the fields each filter row shows, the tabs each rail keeps and the width each table was fitted for are the same after the page is fitted again |
 | `test_design_system_contract` | the `expect` line and its target; the last deferred script holds the frame; no deferred script in a page body; the shell writes the search box's attribute exactly when it writes the button |
-| `test_frontend_budgets` | CSS 246.5 KB and shell JavaScript 141.5 KB gzipped, each with its reason |
+| `test_frontend_budgets` | CSS 246.5 KB and shell JavaScript 146 KB gzipped, each with its reason (141.5 KB until main's two new scripts came in with the merge — §22.1) |
 | `test_slot_activity_lookup_index`, `test_item_cost_line_lookup_index`, `PooledSessionsJitDefaultTest` | the two indexes and the JIT default |
 | `PerProcessPoolTest`, `PooledConnectionsAreLentNotKeptTest`, `PerProcessPoolReadinessTest`, six tests of the admission guard | the pool is off unless asked for, ignored on a direct connection, sized from the admission bound, refuses a lifetime or an unbounded process; a real pool lends, takes back, bounds and replaces; a request returns its connection with its slot, a stream and a surrounding transaction do not |
 | `e2e/date-picker.spec.js` | a field in a closed row is not measured until the row opens |
@@ -2003,3 +2004,90 @@ Main is heavier than it was when §12 was measured: its own dashboard takes
 1,841 ms where the branch's base took 1,232, with a tick box in every row
 and two more scripts. The tables of §12 are the branch before this merge
 against its base, and were not measured again.
+
+### 22.4 What the pull request's own checks found (6 October)
+
+Opening the pull request ran, for the first time on this branch, what only
+CI runs: the whole browser suite against a freshly seeded database, the
+Django suite under the parallel runner, and the two code scanners. Every
+local run had been this branch's own specs and the Django suite in one
+process on one migrated database. CI found four things. Nothing a user sees
+changes; one is in a script that ships.
+
+**1. The script that keeps the five facts read every arrival on its own
+(ships).** When a parent and its children are appended one by one in one
+task (a table built row by row, thirty fields in a loop), `micro-ux.js` read
+each of them for tables, heading rows, rails and search boxes, where the
+page's enhancement pass has always read only the outermost.
+`e2e/ui-work-batching.spec.js` exists to count exactly that: it allows no
+scan of a nested arrival and counted thirty. What arrives in one turn is now
+reduced to its outermost elements and each is read once. The marks are the
+same: every element read before is inside an element read now, and no mark
+reads another. Held by:
+
+- the guard itself, 0 scans, Chromium and WebKit;
+- `e2e/maintained-facts.spec.js`, now 35 changes (two new: a section that
+  arrives and is filled piece by piece in the same turn, and a table that
+  arrives and ends the turn inside another arrival). Its check was also
+  moved: it used to look one task after each change, by when a later pass
+  over the page could have put a fact right a frame late. It now looks within
+  the turn of the change, and again one task later. With the reading of
+  arrivals taken out on purpose the spec fails on two changes; before the
+  move it passed;
+- `e2e/has-rewrites.spec.js` (40 pairs) and `e2e/pinned-name-selector.spec.js`
+  in both engines; the 65 script unit tests; shell JavaScript 145.59 KB of
+  146.
+
+**2. The first-frame gate counted htmx announcing a fetch (the gate, not the
+page).** The Program Lead dashboard fetches two sections after it is shown.
+htmx marks each fetching element `htmx-request`, then `htmx-swapping` and
+`htmx-settling`, and takes each name off again: seven class writes after the
+first frame, on two elements the server sent, whatever the data. The gate
+allows the larger of 5 late writes and a tenth of the page's. On the
+16,700-school database that dashboard stamps 1,855 classes and the seven
+went unnoticed; on CI's fresh seed it stamps 55, the allowance is 5.5, and
+the gate failed twice with "7 of 55". The same seven, and the same message,
+were reproduced here on a database seeded the way CI's is. The recorder now
+sets aside a class write whose only change is one of htmx's four names
+(0 of 46 on the fresh seed, 0 of 1,846 at scale; nothing else is treated
+differently), and a control test makes each kind of write and counts it: an
+announcement 0; a class stamped, a class stamped in the same write as an
+announcement, and the same classes written again, 1 each. The spec's opening
+comment says its gates read the same on a laptop and on a loaded runner.
+This one read differently on a small database, which no run of mine used.
+
+**3. A Django test looked for a row that a copy of a database does not
+carry (the test).** `manage.py test --parallel 4` gives each worker a copy
+of the migrated test database. PostgreSQL keeps a role's default for a
+database (`pg_db_role_setting`) beside the database, not in it, so a copy
+has none, and the test for migration `system_health.0003` (F5, §11 row 9:
+pooled sessions run with JIT off) found none in a worker. It now runs the
+migration's own two statements inside its transaction and reads the
+catalogue after each (reset: absent; set: `jit=off`; reset: absent), and a
+second test holds that those statements are the ones the migration applies
+and reverses. Run here under the parallel runner with two workers, the test
+as it was fails in both and the new ones pass. Outside tests it says one
+thing worth knowing: a production database that was copied rather than
+migrated would not carry the default either. `/api/health/ready` answers
+`"db_jit": "on"` and `"status": "degraded"` in that case, which is what that
+answer is for.
+
+**4. Two patterns in audit harnesses (not the application).** The code
+scanner reads `scratch/` like any other code: a regular expression in the
+style oracle with a repeat inside a repeat (now one optional tail, the same
+language: 0 of 89 million strings and 0 of the app's 85,716 selector parts
+answer differently), and a one-pass removal of script tags in the first-paint
+probe (now repeated until nothing moves; 156 of 156 real outputs identical).
+
+The two sibling branches met the same kind of thing. The cache-outage branch
+(§21.2) and the day-priced-once branch (§21.3) each moved lines that two
+checked-in records describe, and CI tests a pull request as it will be once
+merged: both now carry main and records rebuilt on that tree. The
+day-priced-once proof's test file had two lines the security linter asked
+about (a label digest marked as not for security; a query over model-registry
+names annotated with its reason). The rebuilds showed one thing no branch
+causes: main's committed traceability matrix, main's own code traced here
+the same afternoon, and the three branches with main merged in name 244, 243
+and 242 files, the three branches agreeing with one another. A presence
+write lands under whichever journey is running when its interval comes
+round. That is the tracer's, and is reported to the owner as its own task.
