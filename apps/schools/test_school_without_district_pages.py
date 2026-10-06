@@ -89,6 +89,15 @@ class SchoolWithoutDistrictTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Kyabazinga Memorial Primary")
 
+    def test_a_core_card_prints_a_dash_and_no_search_link_for_the_district(self):
+        """The Core cards link a district to a school search; a school with
+        none must read as a dash, not as a link to a search for a word."""
+        Activity.objects.filter(id=self.visit.id).update(school=self.core_school)
+        response = self._get(self.cceo, "/my-plan")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Namutumba Parents Primary")
+        self.assertNotContains(response, "/schools?q=Unknown")
+
     def test_my_plan_opens_for_every_period(self):
         for period in ("week", "month", "quarter", "year"):
             with self.subTest(period=period):
