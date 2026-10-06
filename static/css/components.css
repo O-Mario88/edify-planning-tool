@@ -3090,13 +3090,32 @@ select:not([multiple]):not(.select-native) {
   max-width: 12rem;
   flex: 0 0 auto;
 }
-:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
-  :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
-  color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-micro-size);
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
+@supports selector(:has(*)) {
+  :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+    :is(div > select ~ span:not(.sr-only), div > span:not(.sr-only):has(~ select), .edify-filter-label) {
+    /* A label span beside its select — before it or after it. Asked of the
+       span, not of the <div> with `:has(> select)`: the same spans at the same
+       weight, without every <div> that holds a span becoming something a
+       browser restyles every span under when the page changes (audit,
+       2026-10-05). */
+    color: var(--edify-text-muted) !important;
+    font-size: var(--edify-text-micro-size);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+}
+/* A browser without `:has()` read the rule this replaces as its last
+   alternative alone, and still does. */
+@supports not selector(:has(*)) {
+  :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+    .edify-filter-label {
+    color: var(--edify-text-muted) !important;
+    font-size: var(--edify-text-micro-size);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
 }
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   div:not(:has(div)) :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
@@ -3598,8 +3617,18 @@ svg[data-edify-svg-typography] text {
    padding and a button sitting on top of whatever the user typed. Keeping the
    reservation next to the button's own size is also the only way the two
    cannot drift apart. */
-search:has(.edify-search-submit) input[type="search"] {
-  padding-inline-end: 2.625rem;
+/* `data-edify-has-submit` is `:has(.edify-search-submit)`, written by the
+   template that writes the button (layouts/shell.html) and kept by
+   micro-ux.js. Asked with `:has()`, this rule made every element with a
+   `type` attribute — each button and field on the page — something to
+   restyle when anything was added anywhere (audit, 2026-10-05;
+   e2e/maintained-facts.spec.js). */
+@supports selector(:has(*)) {
+  /* Only where `:has()` is understood, as before: a browser without it
+     dropped the rule this replaces, and still gets none. */
+  search[data-edify-has-submit] input[type="search"] {
+    padding-inline-end: 2.625rem;
+  }
 }
 
 .edify-search-submit {

@@ -63,6 +63,20 @@ inset themselves — see components/mobile-shell.css.
   })();
 </script>
 
+{% comment %}
+What is on screen between two pages. Every sidebar and tab link loads a whole
+document, and a browser draws the new one as soon as it has a <body> — before
+the shell inside it has been parsed. On a slow processor that first frame was
+the bare page background for 110-290 ms: near-black in the dark theme, which
+is the "black screen between pages" (audit, 2026-10-05).
+
+So the first frame waits for the last element of the document. The browser
+keeps showing the page the reader came from until this one can be drawn
+whole, and nothing about the settled page changes. Browsers that do not know
+`rel="expect"` ignore the line and behave as before.
+{% endcomment %}
+<link rel="expect" href="#toast-container" blocking="render">
+
 <!-- Typography: Geist Sans — the platform typeface, served from this origin.
      It came from Google Fonts until the type tokens, all measured against
      Geist Sans, were rendering in ui-sans-serif whenever that request was slow or
@@ -316,6 +330,29 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
      Upgrading is a deliberate change with its own testing. Do not drop the
      version to pick up fixes. -->
 {% block feature_head_js %}{% endblock %}
+{% comment %}
+The last deferred script holds the first frame (performance audit, 2026-10-05).
+
+A browser runs the deferred scripts in order once the document is parsed and
+then DOMContentLoaded, back to back — and that is when micro-ux.js gives
+tables and filter rows the classes and the shape the design is written
+against, and kpi-strips.js pages the strips. The `rel="expect"` line above
+lets the first frame be drawn as soon as the markup has arrived, which was
+before any of that: the page appeared in the server's plain markup and was
+redrawn a moment later ("old UI, then new UI"; layout shift 0.30 on
+/planning, 0.7–1.4 s in between on a slow phone). `blocking="render"` on the
+last deferred script keeps the frame until the scripts before it and the
+DOMContentLoaded handlers behind it have run, so the first thing drawn is the
+finished page. Nothing runs in a different order.
+
+It only works while this is the LAST deferred script in the document: one
+that follows it — any deferred script in the body — runs after the hold has
+been released and lets a frame through first. Page-level deferred scripts
+therefore go in `feature_head_js`, never in a content block
+(test_design_system_contract). Browsers without `blocking` ignore it and
+behave as before.
+{% endcomment %}
+<script src="{% static 'js/analytics-workspace.js' %}?v=20260925accordion1" defer blocking="render"></script>
 <script>
   /* App-wide ordered palette for comparison charts. Semantic status charts
      (success / warning / danger) intentionally opt out so colour never lies. */
@@ -1135,8 +1172,6 @@ data-edify-field-role="{{ request.user|field_role }}"
 {% include "partials/connectivity_status.html" %}
 
 {% block content %}{% endblock %}
-
-<script src="{% static 'js/analytics-workspace.js' %}?v=20260925accordion1" defer></script>
 
 <div id="edify-live-polite" class="edify-visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="edify-live-assertive" class="edify-visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>

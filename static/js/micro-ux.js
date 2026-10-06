@@ -98,6 +98,72 @@
     return elements;
   }
 
+  /* Five facts the stylesheets read as attributes instead of asking an
+     ancestor with :has() (responsive-system.css, interactions.css): each is
+     the selector the rule carried, written when the element is first seen
+     and again, in the observer's own turn, when what it depends on changes. */
+  var BOX = ':is(input[type="checkbox"], input[type="radio"], .edify-table-choice)';
+  var SELECT_COLUMN = ':scope > tbody > tr > :first-child > ' + BOX + ', ' +
+    ':scope > tbody > tr > :first-child > label > :is(input[type="checkbox"], input[type="radio"])';
+  var ROWS = ':scope > :is(thead, tbody, tfoot) > tr > ';
+  function markTable(table) {
+    table.toggleAttribute('data-edify-select-column', Boolean(table.querySelector(SELECT_COLUMN)));
+    // A row's first cell that holds a box itself: the cell after it is the
+    // pinned one (`tr > :first-child:has(> box)`, from 80rem).
+    var held = new Set();
+    table.querySelectorAll(ROWS + ':first-child > ' + BOX).forEach(function (box) { held.add(box.parentElement); });
+    table.querySelectorAll(ROWS + '[data-edify-box-cell]').forEach(function (cell) {
+      if (!held.delete(cell)) cell.removeAttribute('data-edify-box-cell');
+    });
+    held.forEach(function (cell) { cell.setAttribute('data-edify-box-cell', ''); });
+  }
+  function markHeadRow(row) {
+    row.toggleAttribute('data-edify-head-run', !row.querySelector(':scope > :is(p, div, ul, dl, form)'));
+  }
+  function markRail(rail) {
+    var next = rail.nextElementSibling;
+    rail.toggleAttribute('data-edify-beside-link', Boolean(next && next.matches('a.btn')));
+  }
+  /* The search box: the template writes this one (layouts/shell.html). */
+  var SEARCH = 'search, .edify-topbar__search';
+  function markSearch(search) {
+    search.toggleAttribute('data-edify-has-submit', Boolean(search.querySelector('.edify-search-submit')));
+  }
+  function markFacts(root) {
+    elementsWithin(root, 'table').forEach(markTable);
+    elementsWithin(root, '.edify-head-row').forEach(markHeadRow);
+    elementsWithin(root, '[data-edify-tablist]').forEach(markRail);
+    elementsWithin(root, SEARCH).forEach(markSearch);
+  }
+  function remarkFacts(mutations) {
+    // A table is read once for all that changed inside it in this turn.
+    var tables = new Set();
+    // So is what arrived: an element that came inside another that also came
+    // (a parent and its children appended one by one) is read with it.
+    var arrived = new Set();
+    mutations.forEach(function (mutation) {
+      var target = mutation.target;
+      if (mutation.type !== 'childList' || target.nodeType !== 1) return;
+      var table = target.closest('table');
+      if (table) tables.add(table);
+      // Every search box the change is inside (one may hold another).
+      for (var search = target.closest(SEARCH); search; search = search.parentElement && search.parentElement.closest(SEARCH)) markSearch(search);
+      if (target.classList.contains('edify-head-row')) markHeadRow(target);
+      // The element before what came or went has a new neighbour.
+      var before = mutation.previousSibling;
+      while (before && before.nodeType !== 1) before = before.previousSibling;
+      if (before && before.hasAttribute('data-edify-tablist')) markRail(before);
+      mutation.addedNodes.forEach(function (node) { if (node.nodeType === 1) arrived.add(node); });
+    });
+    arrived.forEach(function (node) {
+      for (var parent = node.parentNode; parent; parent = parent.parentNode) {
+        if (arrived.has(parent)) return;
+      }
+      markFacts(node);
+    });
+    tables.forEach(markTable);
+  }
+
   /* A menu, dialog or popover that happens to live inside a table cell is not
    * table-cell content. The row-actions menu is the case that made this a
    * shared helper: its items were marked `edify-table-action` and
@@ -214,6 +280,7 @@
         title.classList.add('edify-head-row__title');
         var acts = mates.some(function (child) { return child.matches(HEAD_ACTION) || child.querySelector(HEAD_ACTION); });
         row.classList.toggle('edify-head-row--action', acts);
+        markHeadRow(row);
         if (acts) return;
       }
     });
@@ -1850,17 +1917,35 @@
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) { more.open = false; more.querySelector('summary').focus(); });
   });
+  /* The viewport the page was last fitted for, and whether a resize has
+     arrived since. A phone reports the width it settled on as a resize with
+     its first frame, just before the page is fitted at that width; fitting
+     it all again 150ms later was a third of the style and layout work of
+     opening My Plan on a phone (audit, 2026-10-05). Any resize after the
+     page was fitted, or to another viewport, fits it as before. */
+  var fittedFor = null;
+  var resizedSince = false;
+  function viewportNow() {
+    var root = document.documentElement;
+    return [window.innerWidth, window.innerHeight, root.clientWidth, root.clientHeight].join('x');
+  }
   var fitTimer = null;
   window.addEventListener('resize', function () {
+    resizedSince = true;
     window.clearTimeout(fitTimer);
     fitTimer = window.setTimeout(function () {
-      fitRails(document);
-      fitTables(document);
-      wrapLongText(document);
-      pinSelectColumns(document);
-      titleTruncatedLabels(document);
-      fillPhoneRows(document);
-      indentWrappedHeads(document);
+      var viewport = viewportNow();
+      if (fittedFor !== viewport || resizedSince) {
+        fittedFor = viewport;
+        resizedSince = false;
+        fitRails(document);
+        fitTables(document);
+        wrapLongText(document);
+        pinSelectColumns(document);
+        titleTruncatedLabels(document);
+        fillPhoneRows(document);
+        indentWrappedHeads(document);
+      }
       if (!phoneFilterRows.matches) arrangeFilterRows(document);
     }, 150);
   }, { passive: true });
@@ -2506,6 +2591,7 @@
     hideEmptyFilters(root);
     arrangeFilterRows(root);
     enhanceTabs(root);
+    markFacts(root);
   }
 
   /* Runs `callback` in the task after the next frame paints. By then the
@@ -2549,6 +2635,8 @@
        first paints (2026-09-06). */
     afterPaint(function () {
       if (root !== document && !root.isConnected) return;
+      // The whole page is fitted for this viewport from here (the resize listener).
+      if (root === document) { fittedFor = viewportNow(); resizedSince = false; }
       enhanceCustomDialogs(root);
       fitRails(root);
       fitTables(root);
@@ -2578,6 +2666,7 @@
   }
 
   function scheduleMutationScan(mutations) {
+    remarkFacts(mutations);
     mutations.forEach(function (mutation) {
       // Chart/map engines own these subtrees; rescanning every marker and SVG
       // point wastes layout work and cannot enhance application controls.

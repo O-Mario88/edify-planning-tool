@@ -12878,7 +12878,7 @@
   {
    "audit_id": "KPI-SURFACE-014",
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 68,
+   "line": 69,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",

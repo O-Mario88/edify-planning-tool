@@ -40,6 +40,7 @@ def verify_or_exit() -> None:
     # Health finding (`apps/core/health.py`), so it can never pass silently.
     warnings = _check_email_delivery_configured()
     warnings += _check_connection_lifetime_ignored()
+    warnings += _check_app_pool_ignored()
     if warnings:
         sys.stderr.write(
             "Production environment warnings (not blocking boot):\n"
@@ -120,6 +121,25 @@ def _check_connection_lifetime_ignored() -> list[str]:
         "DB_CONN_MAX_AGE is set but ignored: persistent database connections "
         "need a connection pool in front of Postgres (set DB_USE_PGBOUNCER=true "
         "with a pooled DATABASE_URL), otherwise they exhaust the database."
+    ]
+
+
+def _check_app_pool_ignored() -> list[str]:
+    """Report a DB_APP_POOL that settings refused to apply.
+
+    A set of connections kept open by every web process is only safe behind
+    the connection pool, for the reason a connection lifetime is; set on a
+    direct connection it is ignored, and said so at every boot.
+    """
+    from django.conf import settings
+
+    if not getattr(settings, "DB_APP_POOL_IGNORED", False):
+        return []
+    return [
+        "DB_APP_POOL is set but ignored: a per-process connection pool needs "
+        "the managed pool in front of Postgres (DB_USE_PGBOUNCER=true with "
+        "DB_POOL_NAME and DB_POOL_PORT), otherwise it holds the cluster's own "
+        "connection slots open."
     ]
 
 

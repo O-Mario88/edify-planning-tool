@@ -26,6 +26,11 @@ django-apscheduler==0.7.0
 
 # Postgres driver (the NestJS backend ran on Postgres via Prisma).
 psycopg[binary]==3.3.4
+# Its connection pool, for Django's OPTIONS["pool"]. Imported only where
+# DB_APP_POOL is set on a web process behind PgBouncer (config/settings/
+# base.py); pinned on its own because the psycopg[pool] extra leaves the
+# version open.
+psycopg-pool==3.3.3
 
 # Cache client for django.core.cache.backends.redis (config/settings/base.py).
 #

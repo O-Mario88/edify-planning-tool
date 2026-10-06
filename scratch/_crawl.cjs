@@ -1,0 +1,20 @@
+/* Every audited page as served: no script error, nothing deferred in the body,
+ * the last deferred script holds the first frame, and the first frame comes
+ * after the page has started up. Audit tooling.  PAGES_FILE=pages.json */
+const fs = require('node:fs'); const { chromium } = require('@playwright/test');
+const B = process.env.BASE || 'http://127.0.0.1:8376'; const PAGES = JSON.parse(fs.readFileSync(process.env.PAGES_FILE, 'utf8'));
+const MOBILE = process.env.MOBILE === '1';
+(async () => { const browser = await chromium.launch(); let bad = 0, pages = 0; const rows = [];
+  for (const [account, paths] of Object.entries(PAGES)) { const context = await browser.newContext({ viewport: process.env.VIEWPORT ? { width: Number(process.env.VIEWPORT.split('x')[0]), height: Number(process.env.VIEWPORT.split('x')[1]) } : MOBILE ? { width: 390, height: 844 } : { width: 1440, height: 900 }, isMobile: MOBILE, hasTouch: MOBILE, serviceWorkers: 'block' });
+    await context.addInitScript(`window.__sent = null; window.__after = 0; document.addEventListener('DOMContentLoaded', () => { window.__sent = new WeakSet(document.querySelectorAll('*')); }, true); new MutationObserver((rs) => { const fp = (performance.getEntriesByType('paint')[0] || {}).startTime; if (!fp) return; for (const r of rs) if (window.__sent && window.__sent.has(r.target) && !(r.target.closest && r.target.closest('.apexcharts-canvas, .leaflet-container, svg'))) window.__after++; }).observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] });`);
+    const page = await context.newPage(); const errors = []; page.on('pageerror', (e) => errors.push('pageerror: ' + String(e).slice(0, 140))); page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 140)); });
+    await page.goto(B + '/login'); await page.fill('input[name=email]', account); await page.fill('input[name=password]', 'edify'); await Promise.all([page.waitForNavigation(), page.press('input[name=password]', 'Enter')]);
+    for (const p of paths) { errors.length = 0; pages++; const response = await page.goto(B + p, { waitUntil: 'load', timeout: 240000 }); await page.waitForTimeout(2500);
+      const r = await page.evaluate(() => { const deferred = Array.from(document.querySelectorAll('script[defer][src], script[type="module"]')); const last = deferred[deferred.length - 1]; const nav = performance.getEntriesByType('navigation')[0]; const fp = (performance.getEntriesByType('paint')[0] || {}).startTime || 0;
+        return { inBody: deferred.filter((s) => !s.closest('head')).map((s) => s.getAttribute('src')), holds: Boolean(last && last.closest('head') && last.hasAttribute('blocking')), fp: Math.round(fp), started: Math.round(nav.domContentLoadedEventEnd), after: window.__after, path: location.pathname }; });
+      const problems = []; if (response.status() >= 400) problems.push('status ' + response.status()); if (/\/login/.test(r.path)) problems.push('landed on sign-in'); if (r.inBody.length) problems.push('deferred in body: ' + r.inBody.join(',')); if (!r.holds) problems.push('last deferred script does not hold the frame'); if (r.fp && r.fp < r.started) problems.push(`first frame ${r.fp} before start-up ${r.started}`); if (errors.length) problems.push(errors.slice(0, 2).join(' | '));
+      rows.push({ account, p, ...r }); if (problems.length) { bad++; console.log(`PROBLEM ${account.split('@')[0].padEnd(22)} ${p.padEnd(30)} ${problems.join('; ').slice(0, 260)}`); } }
+    await context.close(); }
+  const late = rows.filter((r) => r.after > 100).map((r) => `${r.account.split('@')[0]} ${r.p} (${r.after})`);
+  console.log(`${pages} pages${MOBILE ? ' (phone)' : ''}: ${pages - bad} clean, ${bad} with a problem. Class changes to the server's markup after the first frame: ${rows.filter((r) => r.after === 0).length} pages with none, ${rows.filter((r) => r.after > 0 && r.after <= 100).length} with 1-100, ${late.length} with more${late.length ? ': ' + late.join('; ') : ''}`);
+  await browser.close(); process.exit(bad ? 1 : 0); })().catch((e) => { console.error(e); process.exit(2); });

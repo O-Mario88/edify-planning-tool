@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Scanner } = require('@tailwindcss/oxide');
 const { transform } = require('lightningcss');
+const { splitLongList } = require('./split_selector_lists.cjs');
 
 const root = path.resolve(__dirname, '..');
 const directory = path.join(root, 'static/css');
@@ -149,6 +150,7 @@ for (const position of ['top', 'right', 'bottom', 'left']) {
 
 const names = [...candidates].sort();
 const matches = new Map();
+
 const output = path.join(root, 'static/build/css');
 fs.mkdirSync(output, { recursive: true });
 
@@ -169,7 +171,7 @@ for (const file of files) {
         };
       },
       Selector(selector) {
-        return walk(selector, node => {
+        return splitLongList(walk(selector, node => {
           const op = node.operation;
           if (
             node.type === 'attribute' &&
@@ -201,7 +203,7 @@ for (const file of files) {
             kind: 'is',
             selectors: values.map(name => [{ type: 'class', name }])
           };
-        });
+        }));
       }
     }
   });

@@ -385,6 +385,77 @@ WEB_MAX_CONCURRENT_REQUESTS = _as_int(os.environ.get("WEB_MAX_CONCURRENT_REQUEST
 WEB_MAX_QUEUED_REQUESTS = _as_int(os.environ.get("WEB_MAX_QUEUED_REQUESTS"), 24)
 WEB_QUEUE_TIMEOUT_SECONDS = _as_int(os.environ.get("WEB_QUEUE_TIMEOUT_SECONDS"), 20)
 
+# ── One set of open connections per web process (opt-in) ─────────────────────
+# With CONN_MAX_AGE=0 every request opens a TLS connection to the pool and
+# authenticates before its first query: 40-50 ms of each request in production
+# (performance audit 2026-10-05, F6). DB_APP_POOL keeps a bounded set of those
+# connections open in the process — Django's OPTIONS["pool"], psycopg_pool —
+# and lends one to a request for as long as it runs. CONN_MAX_AGE stays 0, so
+# a request thread still keeps nothing when it ends; what is kept belongs to
+# the process and is counted.
+#
+# Honoured only behind DB_USE_PGBOUNCER, for the reason DB_CONN_MAX_AGE is:
+# connections held open against the cluster itself are what took production
+# down on 2026-09-12. And it is sized from the admission bound above, plus
+# room for what that bound exempts — a health probe, the realtime handshake,
+# the fiscal-year self-heal thread — so a request that was let in does not
+# then wait for a connection. Four processes of 10 + 2 are 48 client
+# connections to a 40-connection transaction pool, which is what a transaction
+# pool is for: at most 40 statements run at once, as now.
+#
+# Web component only. The scheduler and the migrate job keep their direct
+# connections (they leave DB_USE_PGBOUNCER unset, so this is ignored there).
+DB_APP_POOL_REQUESTED = _truthy(os.environ.get("DB_APP_POOL"), fallback=False)
+DB_APP_POOL = DB_APP_POOL_REQUESTED and DB_USE_PGBOUNCER
+# Surfaced as a boot warning (apps/core/boot_gates.py), like a lifetime set on
+# a direct connection.
+DB_APP_POOL_IGNORED = DB_APP_POOL_REQUESTED and not DB_USE_PGBOUNCER
+
+
+def database_pool_options(limit):
+    """OPTIONS["pool"] for a process that lets ``limit`` requests past at once.
+
+    A function because the bound is settled last: prod.py and loadtest.py give
+    WEB_MAX_CONCURRENT_REQUESTS its default after this module has been read,
+    and size the pool again from the value they settle on.
+    """
+    if DB_CONN_MAX_AGE_REQUESTED:
+        raise RuntimeError(
+            "DB_APP_POOL cannot be combined with DB_CONN_MAX_AGE: a pooled "
+            "connection is lent to one request, not kept by its thread. Unset "
+            "DB_CONN_MAX_AGE (or DB_APP_POOL)."
+        )
+    if limit <= 0:
+        raise RuntimeError(
+            "DB_APP_POOL needs WEB_MAX_CONCURRENT_REQUESTS: a process that lets "
+            "any number of requests past cannot share a bounded pool."
+        )
+    headroom = max(1, _as_int(os.environ.get("DB_APP_POOL_HEADROOM"), 2))
+    max_size = limit + headroom
+    min_size = max(1, _as_int(os.environ.get("DB_APP_POOL_MIN_SIZE"), 2))
+    return {
+        "name": "edify-web",
+        # Kept open while idle; the rest are opened as a busy process asks for
+        # them and closed again after ten idle minutes.
+        "min_size": min(min_size, max_size),
+        "max_size": max_size,
+        # How long a request waits for a connection before failing. With the
+        # pool larger than the admission bound it does not wait at all; this is
+        # the ceiling on a leak or an outage, matched to DB_CONNECT_TIMEOUT_S.
+        "timeout": _as_int(os.environ.get("DB_APP_POOL_TIMEOUT_S"), 5),
+        "max_idle": 600,
+        # A connection is replaced after an hour, so a change to the role's
+        # defaults or a moved pool endpoint reaches every process without a
+        # deploy.
+        "max_lifetime": 3600,
+    }
+
+
+if DB_APP_POOL and WEB_MAX_CONCURRENT_REQUESTS > 0:
+    DATABASES["default"].setdefault("OPTIONS", {})["pool"] = database_pool_options(
+        WEB_MAX_CONCURRENT_REQUESTS
+    )
+
 # apps.core.request_timing logs one structured `edify.perf` line for a request
 # slower than this, or issuing at least this many SQL statements.
 SLOW_REQUEST_MS = _as_int(os.environ.get("SLOW_REQUEST_MS"), 1500)

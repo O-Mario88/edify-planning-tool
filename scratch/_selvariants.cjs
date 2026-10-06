@@ -1,0 +1,18 @@
+/* Variants of one rule: how many elements one DOM insertion restyles under each. Audit tooling. */
+const { chromium } = require('@playwright/test');
+const B = process.env.BASE || 'http://127.0.0.1:8376';
+async function traced(browser, page, fn, arg) { await browser.startTracing(page, { categories: ['devtools.timeline', 'blink.user_timing'] }); const ret = await page.evaluate(fn, arg); const events = JSON.parse((await browser.stopTracing()).toString()).traceEvents;
+  const marks = events.filter((e) => e.cat && e.cat.includes('blink.user_timing') && /:(start|end)$/.test(e.name)).sort((a, b) => a.ts - b.ts); const styles = events.filter((e) => e.name === 'UpdateLayoutTree' && e.ph === 'X'); const out = {};
+  for (let i = 0; i < marks.length - 1; i++) { const m = marks[i]; if (!m.name.endsWith(':start')) continue; const label = m.name.slice(0, -6); const end = marks.slice(i + 1).find((x) => x.name === label + ':end'); if (!end) continue; const inside = styles.filter((s) => s.ts >= m.ts && s.ts <= end.ts); out[label] = inside.reduce((s, e) => s + ((e.args && e.args.elementCount) || 0), 0); } return { counts: out, ret }; }
+function trials(spec) { const flush = () => { getComputedStyle(document.body).color; void document.body.offsetWidth; }; const host = Array.from(document.querySelectorAll('main table tbody td')).pop();
+  const probe = (label) => { flush(); performance.mark(label + ':start'); const d = document.createElement('span'); host.appendChild(d); flush(); performance.mark(label + ':end'); d.remove(); flush(); };
+  const find = () => { for (const l of document.querySelectorAll('link[rel=stylesheet]')) { if (!l.href.includes(spec.sheet)) continue; const rules = l.sheet.cssRules; for (let i = 0; i < rules.length; i++) if (rules[i].cssText.replace(/\s+/g, ' ').startsWith(spec.startsWith)) return { sheet: l.sheet, i }; } return null; };
+  const at = find(); if (!at) return { error: 'rule not found' }; const original = at.sheet.cssRules[at.i].cssText; const deep = Array.from(document.querySelectorAll('main td span, main td a')).pop() || host; const sel = (pseudo) => getComputedStyle(deep, pseudo).backgroundColor + ' / ' + getComputedStyle(deep, pseudo).color;
+  const out = { original: original.slice(0, 160), selection: { original: sel('::selection') } }; probe('original');
+  for (const [name, text] of Object.entries(spec.variants)) { at.sheet.deleteRule(at.i); if (text) at.sheet.insertRule(text.replace('{BODY}', original.slice(original.indexOf('{'))), at.i); else at.sheet.insertRule('.edify-audit-never{color:red}', at.i); flush(); out.selection[name] = sel('::selection'); probe(name); at.sheet.deleteRule(at.i); at.sheet.insertRule(original, at.i); flush(); }
+  return out; }
+(async () => { const browser = await chromium.launch(); const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+  await page.goto(B + '/login'); await page.fill('input[name=email]', process.env.EMAIL); await page.fill('input[name=password]', 'edify'); await Promise.all([page.waitForNavigation(), page.press('input[name=password]', 'Enter')]);
+  await page.goto(B + process.env.PATHNAME, { waitUntil: 'load', timeout: 180000 }); await page.waitForTimeout(5000);
+  const r = await traced(browser, page, trials, JSON.parse(process.env.SPEC)); console.log(JSON.stringify(r.ret.error || r.ret.original)); for (const [k, v] of Object.entries(r.counts)) console.log(`   ${String(v).padStart(6)} elements restyled  — ${k}   ::selection of a deep element: ${(r.ret.selection || {})[k]}`);
+  await browser.close(); })().catch((e) => { console.error(e); process.exit(1); });

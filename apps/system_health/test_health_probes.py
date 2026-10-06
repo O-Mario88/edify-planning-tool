@@ -70,6 +70,37 @@ class ReadinessTest(TestCase):
         self.assertEqual(self.client.get("/api/health").status_code, 200)
 
 
+class PerProcessPoolReadinessTest(TestCase):
+    """DB_APP_POOL: readiness says what the process's pool holds, so turning
+    it on can be seen from outside (audit 2026-10-05, F6)."""
+
+    def test_it_says_nothing_of_a_pool_that_is_not_there(self):
+        self.assertNotIn("db_pool", self.client.get("/api/health/ready").json())
+
+    def test_it_reports_the_pool_this_process_holds(self):
+        from django.db import connections
+
+        pool = mock.Mock()
+        pool.get_stats.return_value = {
+            "pool_min": 2,
+            "pool_max": 12,
+            "pool_size": 3,
+            "pool_available": 2,
+            "requests_waiting": 0,
+        }
+        with mock.patch.object(
+            type(connections["default"]),
+            "pool",
+            new_callable=mock.PropertyMock,
+            return_value=pool,
+        ):
+            response = self.client.get("/api/health/ready")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["db_pool"], {"open": 3, "idle": 2, "max": 12, "waiting": 0}
+        )
+
+
 class PooledReadinessTest(TestCase):
     @mock.patch.object(settings, "DB_USE_PGBOUNCER", True, create=True)
     def test_it_rejects_a_runtime_role_with_disabled_timeouts(self):
@@ -116,6 +147,73 @@ class PooledReadinessTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["db_jit"], "on")
         self.assertEqual(response.json()["status"], "degraded")
+
+
+class PooledSessionsJitDefaultTest(TestCase):
+    """The role's default is what a pooled session gets, so the migration sets it.
+
+    A test connection is direct and sends ``-c jit=off`` itself, which would
+    hide a missing default; the catalogue is asked instead (migration
+    system_health.0003, audit 2026-10-05).
+
+    The migration's two statements are run here, not looked for. PostgreSQL
+    keeps a role's default for a database beside the database, not in it, so a
+    copy of a migrated database does not carry it - and ``manage.py test
+    --parallel`` gives each worker a copy. A test that looked for the row
+    passed on the migrated database and failed in a worker's (CI, 2026-10-06);
+    what the migration does is the same in both, and that is what is held.
+    A production database that was copied rather than migrated would be in the
+    worker's position: readiness answers ``"db_jit": "on"`` there, which is
+    what that answer is for.
+    """
+
+    @staticmethod
+    def _defaults_of_this_role_here(cursor) -> list[str]:
+        cursor.execute(
+            """
+            SELECT s.setconfig
+            FROM pg_db_role_setting s
+            JOIN pg_roles r ON r.oid = s.setrole
+            JOIN pg_database d ON d.oid = s.setdatabase
+            WHERE r.rolname = current_user AND d.datname = current_database()
+            """
+        )
+        row = cursor.fetchone()
+        return list(row[0]) if row else []
+
+    def test_the_migration_makes_jit_off_the_default_of_the_role_that_runs_it(self):
+        from importlib import import_module
+
+        from django.db import connection
+
+        migration = import_module(
+            "apps.system_health.migrations.0003_pooled_sessions_jit_off"
+        )
+        # Both statements are undone with this test's transaction.
+        with connection.cursor() as cursor:
+            cursor.execute(migration.RESET_JIT)
+            self.assertNotIn("jit=off", self._defaults_of_this_role_here(cursor))
+
+            cursor.execute(migration.SET_JIT_OFF)
+            self.assertIn("jit=off", self._defaults_of_this_role_here(cursor))
+
+            cursor.execute(migration.RESET_JIT)
+            self.assertNotIn("jit=off", self._defaults_of_this_role_here(cursor))
+
+    def test_the_migration_is_the_one_that_runs(self):
+        """The statements above are the ones the migration applies and reverses."""
+        from importlib import import_module
+
+        from django.db import migrations
+
+        migration = import_module(
+            "apps.system_health.migrations.0003_pooled_sessions_jit_off"
+        )
+        operations = migration.Migration.operations
+        self.assertEqual(len(operations), 1)
+        self.assertIsInstance(operations[0], migrations.RunSQL)
+        self.assertEqual(operations[0].sql, migration.SET_JIT_OFF)
+        self.assertEqual(operations[0].reverse_sql, migration.RESET_JIT)
 
 
 class ReadinessNamesADegradedCacheTest(TestCase):

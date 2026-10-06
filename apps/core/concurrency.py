@@ -25,6 +25,16 @@ that was only busy, dropping every request it was serving at the worst
 moment. Static files never reach here: WhiteNoise answers them.
 
 Zero disables the guard (the development and test default).
+
+Where the process keeps a pool of connections (``DB_APP_POOL``), a request
+that leaves here hands its connection back as it goes. Django returns a
+request's connection only once the response has been sent, which is after
+this slot is free: a new request could be let in while the last one's
+connection was still out, and a client slow to take its page kept a
+connection it had finished with. Returned here, a connection is out exactly
+as long as its request holds a slot, and the pool — sized past the limit —
+is never what a let-in request waits for. A response still being produced (a
+stream) keeps its connection until Django closes it.
 """
 
 from __future__ import annotations
@@ -34,6 +44,7 @@ import threading
 import time
 
 from django.conf import settings
+from django.db import connections
 from django.http import HttpResponse, JsonResponse
 
 logger = logging.getLogger("edify.concurrency")
@@ -64,6 +75,7 @@ class DatabaseConcurrencyGuardMiddleware:
         )
         self._waiting = 0
         self._lock = threading.Lock()
+        self.returns_connections = bool(getattr(settings, "DB_APP_POOL", False))
 
     def __call__(self, request):
         if self.semaphore is None or request.path.startswith(self.exempt):
@@ -95,6 +107,7 @@ class DatabaseConcurrencyGuardMiddleware:
             return busy_response(request, retry_after=5)
         try:
             response = self.get_response(request)
+            self._return_connections(response)
         finally:
             self.semaphore.release()
         if waited >= 1.0:
@@ -124,9 +137,27 @@ class DatabaseConcurrencyGuardMiddleware:
             return busy_response(request, retry_after=5)
         request.edify_queue_wait_ms = 0.0
         try:
-            return self.get_response(request)
+            response = self.get_response(request)
+            self._return_connections(response)
+            return response
         finally:
             self.semaphore.release()
+
+    def _return_connections(self, response) -> None:
+        """Hand this request's connection back to the process's pool.
+
+        Everything that reads or writes the database for a finished response
+        is inside this middleware (the session is saved below it), so nothing
+        of this request needs the connection again; if something did, it
+        would simply be lent one. Not inside a transaction someone else opened
+        around the request — a test case does — and not for a stream, whose
+        body is still to be produced.
+        """
+        if not self.returns_connections or getattr(response, "streaming", False):
+            return
+        for connection in connections.all(initialized_only=True):
+            if connection.connection is not None and not connection.in_atomic_block:
+                connection.close()
 
 
 def _is_speculative(request) -> bool:

@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -74,6 +75,157 @@ class DesignSystemContractTest(SimpleTestCase):
             r"css/main\.css' %}\?v=\d{8}[a-z0-9]+",
             "The compiled stylesheet must keep a release-specific cache key.",
         )
+
+    def test_the_first_frame_waits_for_the_whole_document(self):
+        """No bare page background between two pages.
+
+        A browser draws a new document as soon as it has a ``<body>``. On a
+        slow processor that first frame was the empty theme background for
+        110-290 ms — near-black in the dark theme (audit, 2026-10-05). The
+        head therefore names the document's last element as something the
+        first frame has to wait for, and the browser keeps the previous page
+        on screen until then.
+        """
+        base = (ROOT / "templates/base.html").read_text()
+        head, body = base.split("</head>", 1)
+
+        self.assertIn(
+            '<link rel="expect" href="#toast-container" blocking="render">', head
+        )
+        # The target has to exist, once, and be the last thing the body draws:
+        # an id that is missing is simply ignored, and one that is early lets
+        # the frame through before the shell has been parsed.
+        self.assertEqual(body.count('id="toast-container"'), 1)
+        self.assertNotIn("{% block content %}", body.split('id="toast-container"')[1])
+
+    #: Blocks of base.html that are in the document's head.
+    HEAD_BLOCKS = {"feature_head_js", "feature_css"}
+    #: Partials with a deferred script that are only ever included from one.
+    HEAD_PARTIALS = {
+        "templates/partials/vendor/apexcharts.html",
+        "templates/partials/priorities/_workspace_head_scripts.html",
+    }
+    #: Documents of their own, outside the shell.
+    OWN_DOCUMENTS = {"templates/base.html", "templates/layouts/login.html"}
+
+    def test_the_first_frame_waits_for_the_page_to_start_up(self):
+        """No "old UI, then new UI".
+
+        The scripts that give tables and filter rows their classes and their
+        shape run on DOMContentLoaded, straight after the last deferred
+        script. That script holds the first frame, so the first thing drawn
+        is the finished page (audit, 2026-10-05: 1,200-4,500 class changes
+        and a layout shift of 0.30 were being drawn after the first frame).
+
+        The hold is released when that script runs, so it has to be the last
+        deferred script in the document: one in a page's body runs after it
+        and lets a frame through first. Page-level deferred scripts therefore
+        go in a head block.
+        """
+        deferred = re.compile(r'<script\b[^>]*(?:\bdefer\b|type="module")[^>]*>')
+        base = (ROOT / "templates/base.html").read_text()
+        head, body = base.split("</head>", 1)
+
+        last = deferred.findall(head)[-1]
+        self.assertIn('blocking="render"', last)
+        # After the block pages add their own deferred scripts to.
+        self.assertLess(head.index("{% block feature_head_js %}"), head.index(last))
+        self.assertIsNone(deferred.search(body))
+
+        token = re.compile(
+            r"{%\s*block\s+(\w+)\s*%}|{%\s*endblock[^%]*%}|"
+            r'<script\b[^>]*(?:\bdefer\b|type="module")[^>]*>'
+        )
+        checked = 0
+        for path in sorted((ROOT / "templates").rglob("*.html")):
+            name = path.relative_to(ROOT).as_posix()
+            if name in self.OWN_DOCUMENTS:
+                continue
+            open_blocks = []
+            for match in token.finditer(path.read_text()):
+                if match.group(1):
+                    open_blocks.append(match.group(1))
+                elif match.group(0).startswith("{%"):
+                    if open_blocks:
+                        open_blocks.pop()
+                else:
+                    checked += 1
+                    with self.subTest(template=name, script=match.group(0)):
+                        if open_blocks:
+                            self.assertIn(open_blocks[0], self.HEAD_BLOCKS)
+                        else:
+                            self.assertIn(name, self.HEAD_PARTIALS)
+        # The page-level scripts this was written for are still being seen.
+        self.assertGreaterEqual(checked, 6)
+
+    def test_the_search_box_says_whether_it_holds_its_button(self):
+        """The stylesheets read an attribute where they asked with ``:has()``.
+
+        ``search:has(.edify-search-submit) input[type="search"]`` reserves
+        room in the field for the button. Asked that way, a browser restyled
+        every element with a ``type`` attribute — each button and field on
+        the page — whenever anything was added anywhere (audit, 2026-10-05).
+        The shell now says it in ``data-edify-has-submit``, on the condition
+        its three forms share, and micro-ux.js keeps it true afterwards. This
+        holds the template to that: the attribute is written exactly when a
+        button is.
+        """
+        from django.template import Context, Template
+
+        names = [
+            path.relative_to(ROOT).as_posix()
+            for path in sorted((ROOT / "templates").rglob("*.html"))
+            if "edify-search-submit" in path.read_text()
+        ]
+        self.assertEqual(names, ["templates/layouts/shell.html"])
+
+        shell = (ROOT / "templates/layouts/shell.html").read_text()
+        self.assertEqual(shell.count("<search"), 1)
+        box = shell[
+            shell.index("<search") : shell.index("</search>") + len("</search>")
+        ]
+        self.assertIn(
+            "{% if not topbar_search.hide %}data-edify-has-submit{% endif %}", box
+        )
+        template = Template(box)
+
+        for topbar_search, holds_button in (
+            (None, True),
+            ({}, True),
+            ({"placeholder": "Search my plan"}, True),
+            ({"hx_get": "/my-plan", "hx_target": "#plan"}, True),
+            ({"attach_to": "filters-form"}, True),
+            ({"attach_to": "filters-form", "autosubmit": True}, True),
+            ({"hide": True}, False),
+            ({"hide": True, "attach_to": "filters-form"}, False),
+        ):
+            with self.subTest(topbar_search=topbar_search):
+                html = template.render(Context({"topbar_search": topbar_search}))
+                opening = html[: html.index(">", html.index("@keydown.escape.stop"))]
+                self.assertEqual("data-edify-has-submit" in opening, holds_button)
+                self.assertEqual(
+                    "edify-search-submit" in html[len(opening) :], holds_button
+                )
+                self.assertEqual(html.count('type="search"'), 1 if holds_button else 0)
+
+        for sheet in (
+            "static/css/components.css",
+            "static/css/components/mobile-shell.css",
+        ):
+            css = (ROOT / sheet).read_text()
+            # Only rules that style the box itself still ask it with :has().
+            css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+            asked = [
+                selector.strip()
+                for rule in re.findall(r"([^{}]+)\{", css)
+                for selector in rule.split(",")
+                if ":has(.edify-search-submit)" in selector
+            ]
+            self.assertIn("[data-edify-has-submit]", css, sheet)
+            for selector in asked:
+                self.assertTrue(
+                    selector.endswith(":has(.edify-search-submit)"), selector
+                )
 
     def test_workspace_route_links_prefetch_without_global_page_swaps(self):
         """Likely sibling views warm up natively, while navigation stays real.
