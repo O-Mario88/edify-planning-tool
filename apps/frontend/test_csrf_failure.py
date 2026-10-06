@@ -4,7 +4,7 @@ Reported from production on 2026-10-05: "CSRF verification failed. Request
 aborted." Django replaces the CSRF secret every time a sign-in completes, so a
 page rendered before that sign-in carries a token the server no longer accepts.
 The application shell re-reads the cookie before it posts (csrf-sync.js); the
-sign-in pages did not load that script, and the session-expired dialog opens
+sign-in pages did not load that script, and the "Session paused" dialog opens
 sign-in in a NEW tab — so every idle timeout left behind a sign-in tab whose
 form could only ever be refused, with a page that says nothing a person can
 act on.

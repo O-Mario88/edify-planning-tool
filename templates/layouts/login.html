@@ -84,7 +84,7 @@
   <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261002tokens2">
   {% comment %}
     The same synchronizer the application shell loads. Django replaces the
-    CSRF token whenever a sign-in completes, and the session-expired dialog
+    CSRF token whenever a sign-in completes, and the "Session paused" dialog
     opens sign-in in a new tab — so a second sign-in tab, or this page restored
     from history, holds a token the server no longer accepts. Without this the
     form could only be refused (production, 2026-10-05). Ahead of login.js,

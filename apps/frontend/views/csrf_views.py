@@ -3,7 +3,7 @@
 Django's own answer is a bare page reading "CSRF verification failed. Request
 aborted." — true, and useless to whoever is looking at it. The usual cause here
 is ordinary: Django replaces the token every time a sign-in completes, so a tab
-that was open before that sign-in is holding the old one. The session-expired
+that was open before that sign-in is holding the old one. The "Session paused"
 dialog opens sign-in in a new tab, so this happens to people doing exactly what
 they were asked to do.
 
