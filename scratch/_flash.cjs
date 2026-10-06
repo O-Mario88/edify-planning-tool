@@ -11,7 +11,10 @@ const rewrite = { asis: (h) => h, noexpect: (h) => h.replace(/<link rel="expect"
   // What the template change will send: every deferred script that sat in the
   // body moved, in order, to the end of the head's deferred list; the last one holds the first frame.
   planned: (h) => { const cut = h.indexOf('<body'); let head = h.slice(0, cut), body = h.slice(cut); const moved = [];
-    body = body.replace(/<script\b[^>]*\bdefer\b[^>]*><\/script>\n?/g, (tag) => { if (!/\bsrc=/.test(tag)) return tag; moved.push(tag.trim()); return ''; });
+    // Until a pass moves nothing: text either side of a cut can close up into
+    // another deferred script, and that one belongs in the head as well.
+    let before;
+    do { before = body; body = body.replace(/<script\b[^>]*\bdefer\b[^>]*><\/script>\n?/g, (tag) => { if (!/\bsrc=/.test(tag)) return tag; moved.push(tag.trim()); return ''; }); } while (body !== before);
     if (!moved.length) return h; moved[moved.length - 1] = moved[moved.length - 1].replace('<script', '<script blocking="render"');
     const anchor = head.lastIndexOf('<script>', head.indexOf('App-wide ordered palette')); if (anchor < 0) throw new Error('palette script not found');
     return head.slice(0, anchor) + moved.join('\n') + '\n' + head.slice(anchor) + body; },

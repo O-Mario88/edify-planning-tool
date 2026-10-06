@@ -29,7 +29,11 @@ function readFn(mode) {
   const norm = (v) => String(v).replace(/\s+/g, ' ').replace(/(^|[\s,(\/*:])([-+]?)\.(\d)/g, '$1$20.$3').trim();
   if (!window.__oracleNames) {
     const root = getComputedStyle(document.documentElement); const standard = []; for (let i = 0; i < root.length; i++) if (!root[i].startsWith('--')) standard.push(root[i]);
-    const scoped = new Set(); const rootish = /^(:root|html)([.:\[][^\s,>+~]*)*$/;
+    const scoped = new Set();
+    // One optional tail, not a repeated one: the tail's own characters already
+    // include `.`, `:` and `[`, so repeating it matched nothing more and only
+    // multiplied the ways a long non-match could be tried.
+    const rootish = /^(:root|html)(?:[.:\[][^\s,>+~]*)?$/;
     const walk = (rules) => { for (const r of rules) { if (r.style && r.selectorText !== undefined) { if (!r.selectorText.split(',').every((part) => rootish.test(part.trim()))) for (let i = 0; i < r.style.length; i++) if (r.style[i].startsWith('--')) scoped.add(r.style[i]); }
         if (r.cssRules && r.cssRules.length) walk(r.cssRules); } };
     for (const sheet of document.styleSheets) { try { walk(sheet.cssRules); } catch (e) { /* another origin */ } }
