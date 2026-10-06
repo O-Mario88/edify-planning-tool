@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 
 from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
@@ -15,6 +16,8 @@ from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
 
 from . import services
+
+logger = logging.getLogger(__name__)
 
 ANALYTICS = [Permission.ANALYTICS_VIEW.value]
 RECRUITMENT = [Permission.RECRUITMENT_INTELLIGENCE_VIEW.value]
@@ -46,18 +49,42 @@ def _get_cache_key(prefix: str, user, params: dict) -> str:
     return f"analytics:allocations-v2:{revision()}:{prefix}:{user.id}:{role_hash}:{portfolio}:{param_hash}"
 
 
+def _cached(prefix: str, user, params: dict, build):
+    """One analytics answer, reused for five minutes.
+
+    The cache is an optimisation over the database: when it cannot be read
+    the answer is built, and when it cannot be written the answer is still
+    returned. Either used to be a 500 (see apps.hr.accountability_cache).
+    """
+    key = _get_cache_key(prefix, user, params)
+    try:
+        data = cache.get(key)
+    except Exception:  # noqa: BLE001 - cache loss must degrade to computation
+        logger.warning("Analytics cache unreadable for %s", prefix, exc_info=True)
+        return build()
+    if data is None:
+        data = build()
+        try:
+            cache.set(key, data, timeout=300)
+        except Exception:  # noqa: BLE001 - the computed answer is still valid
+            logger.warning("Analytics cache not written for %s", prefix, exc_info=True)
+    return data
+
+
 class AnalyticsDashboardView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ANALYTICS
 
     def get(self, request):
         params = _q(request)
-        key = _get_cache_key("dashboard", request.user, params)
-        data = cache.get(key)
-        if data is None:
-            data = services.dashboard_summary(request.user, params)
-            cache.set(key, data, timeout=300)
-        return Response(data)
+        return Response(
+            _cached(
+                "dashboard",
+                request.user,
+                params,
+                lambda: services.dashboard_summary(request.user, params),
+            )
+        )
 
 
 class AnalyticsLeadershipSummaryView(APIView):
@@ -66,12 +93,14 @@ class AnalyticsLeadershipSummaryView(APIView):
 
     def get(self, request):
         params = _q(request)
-        key = _get_cache_key("leadership_summary", request.user, params)
-        data = cache.get(key)
-        if data is None:
-            data = services.leadership_summary(request.user, params)
-            cache.set(key, data, timeout=300)
-        return Response(data)
+        return Response(
+            _cached(
+                "leadership_summary",
+                request.user,
+                params,
+                lambda: services.leadership_summary(request.user, params),
+            )
+        )
 
 
 class AnalyticsDistrictsView(APIView):
@@ -80,12 +109,14 @@ class AnalyticsDistrictsView(APIView):
 
     def get(self, request):
         params = _q(request)
-        key = _get_cache_key("districts", request.user, params)
-        data = cache.get(key)
-        if data is None:
-            data = services.district_rollups(request.user, params)
-            cache.set(key, data, timeout=300)
-        return Response(data)
+        return Response(
+            _cached(
+                "districts",
+                request.user,
+                params,
+                lambda: services.district_rollups(request.user, params),
+            )
+        )
 
 
 class AnalyticsCoverageView(APIView):
@@ -94,12 +125,14 @@ class AnalyticsCoverageView(APIView):
 
     def get(self, request):
         params = _q(request)
-        key = _get_cache_key("coverage", request.user, params)
-        data = cache.get(key)
-        if data is None:
-            data = services.coverage_summary(request.user, params)
-            cache.set(key, data, timeout=300)
-        return Response(data)
+        return Response(
+            _cached(
+                "coverage",
+                request.user,
+                params,
+                lambda: services.coverage_summary(request.user, params),
+            )
+        )
 
 
 class AnalyticsGeoMapView(APIView):

@@ -1,14 +1,40 @@
-"""Invalidate cached analytics only after a delivery/target transaction commits."""
+"""Invalidate cached analytics only after a delivery/target transaction commits.
 
+The cache here is an optimisation over the database and nothing more, so
+neither half may fail a request when it cannot be reached. That mattered less
+while every process kept its own cache, which cannot go away on its own. A
+shared cache is one more machine that restarts: rehearsed against a real
+server on 2026-10-06, stopping it took every Analytics page down through
+`revision`, and would have answered every activity save with an error after
+the save had committed, through the write in `changed`.
+"""
+
+import logging
 from uuid import uuid4
+
 from django.core.cache import cache
 from django.db import transaction
 
 KEY = "analytics:allocation-contract-revision:v1"
 
+logger = logging.getLogger(__name__)
+
 
 def revision():
-    return cache.get(KEY, "0")
+    """The token every cached analytics answer is filed under.
+
+    Unreadable, it is a token nobody has filed anything under: the answer is
+    then built from the database rather than read from a snapshot that may
+    belong to a revision already replaced.
+    """
+    try:
+        return cache.get(KEY, "0")
+    except Exception:  # noqa: BLE001 - cache loss must degrade to computation
+        logger.warning(
+            "Analytics revision unreadable; building from the database",
+            exc_info=True,
+        )
+        return f"unread-{uuid4().hex}"
 
 
 def changed(sender=None, **kwargs):
@@ -20,7 +46,14 @@ def changed(sender=None, **kwargs):
         return
 
     def invalidate():
-        cache.set(KEY, uuid4().hex, timeout=None)
+        # After the commit: the work is saved whatever happens here. A missed
+        # revision leaves cached analytics as they were until they lapse
+        # (five minutes at most), which is what every other process already
+        # saw while each kept a cache of its own.
+        try:
+            cache.set(KEY, uuid4().hex, timeout=None)
+        except Exception:  # noqa: BLE001 - committed work stays committed
+            logger.warning("Analytics revision not advanced", exc_info=True)
 
     invalidate._allocation_revision = True
     transaction.on_commit(invalidate, using=connection.alias)
