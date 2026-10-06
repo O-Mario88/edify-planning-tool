@@ -13,6 +13,8 @@ secondary-district school is priced as one secondary day.
 
 from __future__ import annotations
 
+import contextvars
+from contextlib import contextmanager
 from datetime import date
 
 from django.db import transaction
@@ -26,6 +28,81 @@ from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
 from .pricing import ACCOMMODATION_KEYS, KEY_LABELS, allocate_pool, compute_daily_pool
 from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
+
+
+#: The days waiting for their price while a save that adds several visits is
+#: in hand (`each_day_priced_once`), by batch id. None outside one.
+_days_to_price: contextvars.ContextVar[dict | None] = contextvars.ContextVar(
+    "daily_visit_batches_days_to_price", default=None
+)
+
+
+@contextmanager
+def each_day_priced_once():
+    """Price a day once for all the visits this block adds to it.
+
+    A visit joining a day re-prices every visit already on it, because the
+    day's pool is shared. A save that adds five (the cluster's bulk day) did
+    that after each one: five visits on an empty day were priced 1+2+3+4+5 =
+    15 times, five more on that day 40 times, and each pricing writes a cost
+    snapshot, an audit entry, its advance requests and a domain event, about
+    32 statements. In production one such save ran 990 to 3,576 statements
+    and took 5.6 to 18.9 seconds (performance audit, 2026-10-05, F11).
+
+    Inside this block a visit joins its day and the day is remembered; when
+    the block ends each remembered day is priced once, with all its members.
+    The figures a day ends with are the ones it ended with before: they are
+    computed from the same members, rates and neighbours, and
+    `test_day_priced_once` holds the two ways to each other line by line.
+    What changes, by the owner's decision of 2026-10-06, is the record of the
+    steps nobody saw: a visit added with four others has cost snapshot 1,
+    not snapshots 1 to 5, and one "cost calculated" audit entry, not five.
+
+    It must be used inside the save's transaction: until the block ends the
+    new visits carry no cost, and a refusal from the pricing (a member whose
+    money has moved, a missing rate) has to undo the whole save, as it
+    always did. Blocks nest; the outermost one prices. Only joining a day
+    waits. A visit leaving a day, or moving between two, is priced at once,
+    because what follows it (the week it left is re-filed from its lines)
+    reads the result.
+
+    ``PRICE_A_DAY_ONCE_PER_SAVE=false`` prices after every visit again.
+    """
+    from django.conf import settings
+    from django.db import connection
+
+    if _days_to_price.get() is not None or not getattr(
+        settings, "PRICE_A_DAY_ONCE_PER_SAVE", True
+    ):
+        yield
+        return
+    if not connection.in_atomic_block:
+        raise RuntimeError(
+            "each_day_priced_once() must run inside the save's transaction: "
+            "outside one, a failure before the day is priced would leave "
+            "scheduled visits with no cost."
+        )
+    days: dict[str, tuple] = {}
+    token = _days_to_price.set(days)
+    try:
+        yield
+    finally:
+        _days_to_price.reset(token)
+    for batch_id, (catalogue, responsible_user_id) in days.items():
+        batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
+        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+
+
+def _price_when_the_save_ends(batch, catalogue, responsible_user_id: str) -> bool:
+    """Remember this day for `each_day_priced_once`; False outside one."""
+    days = _days_to_price.get()
+    if days is None:
+        return False
+    # Asked again for the same day, the latest asking stands, as the latest
+    # pricing did when each visit was priced as it joined.
+    days.pop(batch.id, None)
+    days[batch.id] = (catalogue, responsible_user_id)
+    return True
 
 
 def _catalogue_for_batch_date(visit_date: date):
@@ -439,7 +516,8 @@ def attach_activity_to_batch(
 
     activity.daily_visit_batch = batch
     activity.save(update_fields=["daily_visit_batch", "updated_at"])
-    _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+    if not _price_when_the_save_ends(batch, catalogue, responsible_user_id):
+        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
     return True
 
 
@@ -579,6 +657,12 @@ def _recalculate_and_write_lines(
     The day before and the day after are re-priced with it when this day
     changed which of them is the day the traveller comes home."""
     from apps.budget.costing_service import rate_cards_held
+
+    # Priced now, with whoever is on it: nothing is left for a save in hand
+    # to price later (`each_day_priced_once`) unless another visit joins.
+    days = _days_to_price.get()
+    if days is not None:
+        days.pop(batch.id, None)
 
     # Every member prices against the same published cards: read them once.
     with rate_cards_held():
@@ -826,6 +910,7 @@ def _sync_route_batch(batch: DailyVisitBatch) -> None:
 __all__ = [
     "schedule_visits",
     "attach_activity_to_batch",
+    "each_day_priced_once",
     "remove_school",
     "reschedule_within_batch",
 ]
