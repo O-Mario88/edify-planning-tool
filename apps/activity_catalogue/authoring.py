@@ -178,3 +178,77 @@ def create_catalogue_item(data: dict, *, actor_id: str) -> ActivityCatalogueItem
     item, _outcome = install_item(row, actor_id=actor_id, status=CatalogueStatus.ACTIVE)
     create_version(item, actor_id=actor_id, reason=reason)
     return item
+
+
+#: What a training's record lets its editor change, and the form field each
+#: comes from. The SSA intervention a training is linked to is not among
+#: them: Impact Assessment sets it, through a reviewed rule
+#: (apps.activity_catalogue.intervention_mapping).
+TRAINING_EDITABLE_FIELDS = (
+    ("display_name", "name", 255),
+    ("description", "description", 4000),
+    ("training_category", "trainingCategory", 64),
+    ("ssa_indicator_label", "ssaIndicatorLabel", 128),
+    ("target_audience", "targetAudience", 128),
+)
+
+
+@transaction.atomic
+def update_training(
+    item_id: str, data: dict, *, actor_id: str
+) -> ActivityCatalogueItem:
+    """Change a training's definition from its own record (owner, 2026-10-06).
+
+    Only the catalogue entry changes. A training already scheduled keeps what
+    it was scheduled with: every Activity carries its own name, profile and
+    intervention snapshots and the catalogue version it was planned under, and
+    none of them is touched here. The change is written as a new catalogue
+    version with the editor's reason, and each changed field is marked as the
+    editor's so a later seed run does not put the old value back.
+    """
+    from apps.activity_catalogue.models import ActivityCatalogueAlias
+    from apps.activity_catalogue.seeding import normalize_alias
+
+    item = ActivityCatalogueItem.objects.select_for_update().filter(id=item_id).first()
+    if item is None:
+        raise BadRequest("That training was not found.")
+    if not item.is_training_course:
+        raise BadRequest("Only a training in the Training Catalogue is edited here.")
+    reason = str(data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequest("Say why the training is changing.")
+
+    changed = []
+    for field, key, limit in TRAINING_EDITABLE_FIELDS:
+        if key not in data:
+            continue
+        value = str(data.get(key) or "").strip()
+        if len(value) > limit:
+            raise BadRequest(f"That text is longer than {limit} characters.")
+        if field == "display_name":
+            if not value:
+                raise BadRequest("Give the training a name.")
+            if (
+                ActivityCatalogueItem.objects.filter(display_name__iexact=value)
+                .exclude(id=item.id)
+                .exists()
+            ):
+                raise BadRequest("Another activity already has this name.")
+        if field == "target_audience" and not value:
+            raise BadRequest("Say who the training is for.")
+        if getattr(item, field) != value:
+            setattr(item, field, value)
+            changed.append(field)
+    if not changed:
+        raise BadRequest("Nothing was changed.")
+
+    item.edited_fields = sorted({*(item.edited_fields or []), *changed})
+    item.updated_by = actor_id
+    item.save(update_fields=[*changed, "edited_fields", "updated_by", "updated_at"])
+    if "display_name" in changed:
+        ActivityCatalogueAlias.objects.get_or_create(
+            normalized_alias=normalize_alias(item.display_name),
+            defaults={"catalogue_item": item, "source_alias": item.display_name},
+        )
+    create_version(item, actor_id=actor_id, reason=reason)
+    return item

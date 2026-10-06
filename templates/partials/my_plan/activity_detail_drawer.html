@@ -36,6 +36,12 @@ calls on close; the actions below swap the next drawer into
 {{ act.responsible_staff_name|default:"CCEO User" }}{% if act.delivery_type == 'partner' %} <span class="text-slate-500">(partner monitored)</span>{% endif %}
 </dd>
 </div>
+{% if training_profile %}
+<div data-training-profile>
+<dt class="edify-text-caption text-slate-500">Training</dt>
+<dd class="font-medium text-slate-800">{{ training_profile.name|default:"No training named yet" }}{% if training_profile.delivery %} <span class="text-slate-500">({{ training_profile.delivery }})</span>{% endif %}</dd>
+</div>
+{% endif %}
 <div>
 <dt class="edify-text-caption text-slate-500">Intervention focus</dt>
 <dd class="font-medium text-slate-800 capitalize">{{ act.focus_intervention|default:"General"|replace_underscore }}</dd>

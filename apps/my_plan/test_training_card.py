@@ -82,9 +82,38 @@ class TrainingCardTest(TestCase):
         self.assertIn(self.training.id, trainings)
         self.assertIn(f'href="/schools/{self.school.id}"', trainings)
         self.assertIn("Nakaseke Hill Primary", trainings)
-        self.assertIn("In-school Training", trainings)
+        # Mode of Delivery says how it is delivered (owner, 2026-10-06:
+        # "Cluster Group training or In-School training"), and a training
+        # nobody has named yet says so rather than repeating its workflow.
+        self.assertIn("Mode of Delivery", trainings)
+        self.assertIn("In-School Training", trainings)
+        self.assertNotIn("Cluster Group Training", trainings)
+        self.assertIn("Not yet named", trainings)
         self.assertNotIn("Unknown Cluster", html)
         self.assertNotIn("Cluster Trainings Planned", html)
+
+    def test_the_training_is_named_by_its_catalogue_course(self):
+        """The Training Name column is the course from the Training
+        Catalogue — Literacy, TAM — not the workflow (owner, 2026-10-06)."""
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        # A course the seeded Training Catalogue holds, as the Edit drawer
+        # would name it.
+        course = (
+            ActivityCatalogueItem.objects.filter(
+                is_training_course=True, status="active"
+            )
+            .order_by("display_name")
+            .first()
+        )
+        self.assertIsNotNone(course)
+        self.training.training_course = course
+        self.training.save(update_fields=["training_course"])
+
+        _html, _visits, trainings = self._cards()
+
+        self.assertIn(course.display_name, trainings)
+        self.assertNotIn("Not yet named", trainings)
 
     def test_both_cards_carry_the_pair_without_being_asked_for_a_week(self):
         """The year is the resting state: today's work shows with no filtering."""

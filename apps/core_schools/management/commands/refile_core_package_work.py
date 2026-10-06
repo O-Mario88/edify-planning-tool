@@ -39,6 +39,7 @@ class Command(BaseCommand):
         from apps.core.fy import get_operational_fy
         from apps.core_schools import package_year
         from apps.core_schools.models import CoreActivitySlot, CorePlan
+        from apps.planning.training_entitlement import universal_course_ids
         from apps.projects.models import projects_outside_ssa
         from apps.schools.models import School
 
@@ -53,6 +54,7 @@ class Command(BaseCommand):
             write=apply,
             out=self.stdout.write,
             outside_projects=projects_outside_ssa(),
+            universal_courses=universal_course_ids(),
         )
         if report["unplaced"]:
             self.stdout.write(

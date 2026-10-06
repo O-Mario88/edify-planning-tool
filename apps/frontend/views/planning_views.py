@@ -1322,6 +1322,18 @@ def _planning_support_filter(raw) -> str:
     return value if value in dict(PLANNING_SUPPORT_FILTERS) else "all"
 
 
+def _carried_training(request, options) -> str:
+    """The training the planner had already chosen when the cluster drawer
+    redraws for another cluster; blank when it is not offered there."""
+    chosen = (
+        request.GET.get("catalogue_item_id")
+        or request.GET.get("training_course_id")
+        or request.GET.get("training")
+        or ""
+    ).strip()
+    return chosen if any(option["id"] == chosen for option in options) else ""
+
+
 def _may_open_schedule_drawer(user) -> bool:
     """Planners plan, visitors visit, the Accountant asks. Same drawer."""
     return RolePermissionService.can_open_schedule_drawer(user)
@@ -1427,10 +1439,10 @@ def _schedule_modal(request):
             training_activity_options,
         )
 
-        training_options = (
-            training_activity_options(planning_context=CLUSTER, cluster=cluster)
-            if action == "training"
-            else []
+        # A cluster meeting classified Training names a training too (owner,
+        # 2026-10-06), so both modes carry the Training Catalogue.
+        training_options = training_activity_options(
+            planning_context=CLUSTER, cluster=cluster
         )
         # Ticked by name rather than counted into a box, so the number that
         # multiplies into the budget is derived from the list and the two
@@ -1481,6 +1493,7 @@ def _schedule_modal(request):
         training_options.sort(key=lambda option: not option["addressesPriority"])
 
         from apps.accounts.models import StaffProfile
+        from apps.core.enums import MeetingKind
 
         context = {
             "cluster": cluster,
@@ -1512,6 +1525,19 @@ def _schedule_modal(request):
             "schools_invited": sum(1 for s in member_schools if s["invited"]),
             "training_activity_options": training_options,
             "training_activity_options_json": json.dumps(training_options),
+            # The training is chosen first and survives a change of cluster
+            # (owner, 2026-10-06): the chooser carries it across the redraw.
+            "selected_training_activity_id": _carried_training(
+                request, training_options
+            ),
+            # What a cluster meeting is for: a training delivered at it, a
+            # meeting only, or a cluster leaders' meeting.
+            "meeting_kinds": MeetingKind.choices,
+            "selected_meeting_kind": (
+                request.GET.get("meeting_kind")
+                if request.GET.get("meeting_kind") in MeetingKind.values
+                else MeetingKind.ONLY_MEETING.value
+            ),
             # §16 — certified agencies only. `partners` above is the ordinary
             # assignable-partner list and must not be offered for booking.
             "certified_agencies": _certified_agency_options(
@@ -1574,6 +1600,17 @@ def _schedule_modal(request):
     from apps.planning.visit_gate import POOL_PURPOSES, SSA_POOL, SUPPORT_POOL
 
     visit_locks: dict[str, dict[str, str]] = {}
+    # In-school Training keeps its purpose open when the support visit is
+    # used: a universal training is on top of the school's own (owner,
+    # 2026-10-06: a school "added to school improvement training can have
+    # one more training"), and a Special Project's training is never refused
+    # over it. The other trainings grey in the Training list instead
+    # (`training_locks`: year -> why), and the save refuses them.
+    from apps.planning.training_entitlement import universal_course_ids
+
+    training_locks: dict[str, str] = {}
+    drawer_project_id = request.GET.get("project_id", "")
+    has_universal_training = bool(universal_course_ids())
     open_years: list[str] = []
     if _gate.rule == "client":
         open_years = [_gate.fy]
@@ -1592,6 +1629,12 @@ def _schedule_modal(request):
             ):
                 if used:
                     for purpose in POOL_PURPOSES[pool]:
+                        if purpose == "in_school_training" and (
+                            drawer_project_id or has_universal_training
+                        ):
+                            if not drawer_project_id:
+                                training_locks[year] = reason
+                            continue
                         visit_locks.setdefault(purpose, {})[year] = reason
     locked_visit_purposes = list(visit_locks)
     purposes_locked_every_year = [
@@ -1845,6 +1888,9 @@ def _schedule_modal(request):
         "all_visit_locks_every_year": bool(visit_locks)
         and len(purposes_locked_every_year) == len(visit_locks),
         "visit_locks_json": json.dumps(visit_locks),
+        "training_locks_json": json.dumps(training_locks),
+        "training_locked_every_year": bool(open_years)
+        and len(training_locks) == len(open_years),
         "purposes_locked_every_year_json": json.dumps(purposes_locked_every_year),
         "package_locked_purposes": package_locked_purposes,
         "package_locked_reason": package_locked_reason,
@@ -1993,15 +2039,54 @@ def schedule_action_view(request):
                 catalogue_item_id,
                 planning_context=CLUSTER,
             )
-            # The course's SSA association is the RECOMMENDED target, used
-            # when the planner named none. It no longer overwrites a planner
-            # who did name one: the same course is legitimately delivered
-            # against different needs in different clusters.
-            focus_intervention = (
-                focus_intervention or selected_training["ssaIntervention"] or None
+            # Training -> SSA intervention (owner, 2026-10-06): the training's
+            # own intervention is the one scheduled, and a posted one is read
+            # only for a training linked to none. Project work keeps the
+            # interventions its project is linked to. The service applies the
+            # same rule again (apps.activities.services.create).
+            focus_intervention = _training_focus(
+                selected_training, focus_intervention, project_id
             )
         except BadRequest as exc:
             return error_fragment(exc, status=400)
+    meeting_kind = ""
+    meeting_training_id = ""
+    if cluster_id and activity_type == "cluster_meeting":
+        # What the meeting is for (owner, 2026-10-06). Blank is a caller that
+        # never asked, and stays a plain cluster meeting.
+        from apps.core.enums import MeetingKind
+
+        meeting_kind = (request.POST.get("meeting_kind") or "").strip()
+        if meeting_kind and meeting_kind not in MeetingKind.values:
+            return error_fragment(
+                BadRequest(
+                    "Choose the meeting type: Training, Only Meeting or "
+                    "Cluster Leaders Meeting."
+                ),
+                status=400,
+            )
+        if meeting_kind == MeetingKind.TRAINING:
+            meeting_training_id = (request.POST.get("training_course_id") or "").strip()
+            if not meeting_training_id:
+                return error_fragment(
+                    BadRequest("Select the Training this cluster meeting delivers."),
+                    status=400,
+                )
+            try:
+                from apps.activity_catalogue.availability import (
+                    CLUSTER,
+                    validate_priority_training_selection,
+                )
+
+                focus_intervention = _training_focus(
+                    validate_priority_training_selection(
+                        meeting_training_id, planning_context=CLUSTER
+                    ),
+                    focus_intervention,
+                    project_id,
+                )
+            except BadRequest as exc:
+                return error_fragment(exc, status=400)
     if school_id and purpose_of_visit == "in_school_training":
         if not catalogue_item_id:
             return error_fragment(
@@ -2016,9 +2101,9 @@ def schedule_action_view(request):
             selected_training = validate_in_school_training_course_selection(
                 catalogue_item_id,
             )
-            # Recommended, not imposed — see the cluster branch above.
-            focus_intervention = (
-                focus_intervention or selected_training["ssaIntervention"] or None
+            # The training's own intervention — see the cluster branch above.
+            focus_intervention = _training_focus(
+                selected_training, focus_intervention, project_id
             )
         except BadRequest as exc:
             return error_fragment(exc, status=400)
@@ -2211,6 +2296,10 @@ def schedule_action_view(request):
             ).strip()
         if delivery_type == "staff" and not partner_id:
             payload["responsibleStaffId"] = responsible_staff_id
+    if meeting_kind:
+        payload["meetingKind"] = meeting_kind
+        if meeting_training_id:
+            payload["trainingCourseId"] = meeting_training_id
     if cluster_id:
         payload["clusterId"] = cluster_id
         # Who the cluster session belongs to. The drawer offers this only to a
@@ -2250,6 +2339,19 @@ def schedule_action_view(request):
     if cluster_id and invited_school_ids:
         payload["invitedSchoolIds"] = invited_school_ids
         payload["schoolsInvited"] = str(len(invited_school_ids))
+    elif (
+        cluster_id
+        and request.POST.get("invited_schools_shown")
+        and (activity_type == "cluster_training" or meeting_kind == "training")
+    ):
+        # The drawer showed its checklist and nothing is ticked. Left to the
+        # older reading — "nobody named means the whole cluster" — a training
+        # would be planned and priced for schools nobody chose and none of
+        # them would be counted (owner, 2026-10-06: every school added to a
+        # training is counted).
+        return error_fragment(
+            BadRequest("Tick the schools this training is for."), status=400
+        )
     for key, raw in (
         ("teachersPerSchool", teachers_per_school),
         ("leadersPerSchool", leaders_per_school),
@@ -2763,12 +2865,12 @@ def _partner_training_handover(course_id: str, chosen_focus: str | None = None):
             "The standard In-school Training profile must be active before a "
             "training can be assigned. Ask the Country Director to restore it."
         )
-    # Recommended, not imposed: the planner's focus, any of the eight; blank
-    # keeps the course's own.
-    focus = (
-        chosen_focus
-        if chosen_focus in SsaIntervention.values
-        else selected["ssaIntervention"] or None
+    # The training's own intervention (owner, 2026-10-06): the one the
+    # Training Catalogue links it to, so the hand-over and the activity the
+    # partner later dates carry the same one. The planner's choice stands
+    # only for a training linked to none.
+    focus = selected["ssaIntervention"] or (
+        chosen_focus if chosen_focus in SsaIntervention.values else None
     )
     linked = ", ".join(selected["priorityTitles"])
     reason = (
@@ -2916,6 +3018,20 @@ def _prior_withdrawals(school):
         .select_related("partner")
         .order_by("-requested_at")[:5]
     ]
+
+
+def _training_focus(selected_training: dict, posted: str | None, project_id: str):
+    """The SSA intervention a scheduled training carries (owner, 2026-10-06).
+
+    The one the training is linked to in the Training Catalogue, whatever the
+    form posted; the planner's choice only for a training linked to none.
+    Work under a project keeps the planner's (its project's) intervention
+    first, as before.
+    """
+    linked = selected_training["ssaIntervention"] or None
+    if project_id:
+        return posted or linked
+    return linked or posted or None
 
 
 def visit_owner_for(school, actor):

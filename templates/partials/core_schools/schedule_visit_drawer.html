@@ -28,6 +28,24 @@ get availableCourses() {
 },
 get selectedCourse() { return this.availableCourses.find(course => course.id === this.trainingCourseId) || null; },
 get selectedFollowUp() { return this.followUps.find(row => row.id === this.sourceActivityId) || null; },
+{% comment %}What the officer has scheduled for the chosen training this fiscal
+year against the ceiling their Programme Lead set (owner, 2026-10-06). An
+in-school training takes one place; the save counts again behind a lock.{% endcomment %}
+planDate: '',
+capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
+capacityKey: null,
+get trainingCeilingFull() { return this.showTraining && this.delivery === 'staff' && !!this.trainingCourseId && this.capacity.managed && this.capacity.remaining <= 0; },
+loadCapacity() {
+  const training = this.showTraining && this.delivery === 'staff' ? this.trainingCourseId : '';
+  const query = new URLSearchParams({ training: training, date: this.planDate || '' }).toString();
+  if (query === this.capacityKey) { return; }
+  this.capacityKey = query;
+  if (!training) { this.capacity = { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' }; return; }
+  fetch('/planning/training-capacity?' + query, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(response => (response.ok ? response.json() : null))
+    .then(data => { if (data && query === this.capacityKey) { this.capacity = data; } })
+    .catch(() => {});
+},
 purposeAllowed(value) { return this.delivery !== 'partner' || this.partnerPurposes.includes(value); },
 onDeliveryChange() {
   if (this.purposeOfVisit && !this.purposeAllowed(this.purposeOfVisit)) { this.purposeOfVisit = ''; }
@@ -38,6 +56,7 @@ onPurposeChange() {
   if (!this.showFollowUp) { this.sourceActivityId = ''; }
 }
 }"
+x-init="$watch('trainingCourseId', () => loadCapacity()); $watch('planDate', () => loadCapacity()); $watch('purposeOfVisit', () => loadCapacity()); $watch('delivery', () => loadCapacity())"
 >
 {% if visit_request_owner_name %}
 <p class="edify-note" data-tone="warning" role="status" data-visit-request-notice>This school is in {{ visit_request_owner_name }}&rsquo;s portfolio. {{ visit_request_owner_name }} approves or declines the visit; you ({{ requester_name }}) stay the responsible person, and once approved it enters your plan and budget.</p>
@@ -100,6 +119,11 @@ class="space-y-4 text-[13px] text-slate-700"
     </select>
     <p class="edify-text-caption text-slate-500">Creates the Core training and its school visit together.</p>
     <p x-show="selectedCourse" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.category : ''"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="selectedCourse ? selectedCourse.ssaInterventionLabel : ''"></span></p>
+    <p x-show="selectedCourse && capacity.fy" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
+      <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>.</span></template>
+      <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled"></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
+    </p>
+    <p x-show="trainingCeilingFull" style="display:none" class="edify-note" data-tone="warning" role="alert" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools to this training in FY <span x-text="capacity.fy"></span>. Choose another training, or ask your Programme Lead to raise the ceiling.</p>
   </div>
   <div class="space-y-1">
     <label for="core_visit_training_number" class="block edify-text-caption font-semibold text-slate-600">Training slot</label>
@@ -142,7 +166,7 @@ class="space-y-4 text-[13px] text-slate-700"
 
 <div class="space-y-1">
   <label for="core_visit_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Planned date <span class="text-rose-500">*</span></label>
-  <input id="core_visit_scheduled_date" type="date" name="scheduled_date" value="" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+  <input id="core_visit_scheduled_date" type="date" name="scheduled_date" value="" x-model="planDate" required class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
 {% if recommendations %}
@@ -196,7 +220,7 @@ day a staff member chose. A school goes to a Partner from Assign.
 
 <div class="drawer-footer">
   <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-  <button type="submit" class="btn btn-primary h-8">Schedule visit</button>
+  <button type="submit" class="btn btn-primary h-8" :disabled="trainingCeilingFull">Schedule visit</button>
 </div>
 </form>
 </div>

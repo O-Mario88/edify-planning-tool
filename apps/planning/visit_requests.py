@@ -172,7 +172,17 @@ def approve(activity_id: str, principal, note: str = "") -> Activity:
                 rule_for,
             )
 
+            from apps.planning.training_entitlement import never_refused
+
             pool = client_visit_pool(a.activity_type, a.catalogue_item, a.purpose_type)
+            if never_refused(
+                a.activity_type,
+                course=a.training_course_id,
+                project_id=a.project_id,
+            ):
+                # A universal training, or a Special Project's: on top of
+                # the school's entitlement (owner, 2026-10-06).
+                pool = None
             if rule_for(a.school.school_type) == "client" and pool is not None:
                 assert_staff_may_schedule_visit(
                     a.school, a.fy, pool=pool, exclude_activity_id=a.id
@@ -187,9 +197,17 @@ def approve(activity_id: str, principal, note: str = "") -> Activity:
                 assert_side_open,
             )
 
+            from apps.planning.training_entitlement import never_refused
+
             assert_side_open(
                 a.school,
-                package_kind(a),
+                None
+                if never_refused(
+                    a.activity_type,
+                    course=a.training_course_id,
+                    project_id=a.project_id,
+                )
+                else package_kind(a),
                 PARTNER if a.delivery_type == "partner" else STAFF,
                 fy=a.fy,
                 exclude_activity_id=a.id,

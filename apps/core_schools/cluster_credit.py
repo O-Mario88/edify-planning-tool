@@ -78,9 +78,11 @@ def credited_school_ids(activity) -> set[str]:
 
 def counts_in_package(activity) -> bool:
     """Whether this session is one a Core package counts: a live group
-    training, not a meeting, and not the work of a project no SSA
-    intervention measures."""
+    training, not a meeting, not the work of a project no SSA intervention
+    measures, and not a universal training, which every school may attend on
+    top of its package's four (owner, 2026-10-06)."""
     from apps.core_schools.package_credit import outside_package
+    from apps.planning.training_entitlement import names_universal_course
 
     return (
         bool(activity.cluster_id)
@@ -89,6 +91,7 @@ def counts_in_package(activity) -> bool:
         and activity.status in LIVE_STATUSES
         and bool(activity.fy)
         and not outside_package(activity.project_id)
+        and not names_universal_course(activity)
     )
 
 

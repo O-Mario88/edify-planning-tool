@@ -40,6 +40,13 @@ school). A cluster meeting is not a training and a data collection visit is
 not a package visit: ``refile`` gives back every slot either holds, and puts
 the group trainings where this rule has them.
 
+**A universal training.** Owner, 2026-10-06: SSA Training (school improvement
+planning) "is universal every schools can attend", and Core gets its four
+trainings "ontop of" it. So it takes no slot and is on neither half, in
+school or as a group session, and the School Visit an in-school delivery
+writes beside itself follows it. ``refile`` gives back the slots such work
+holds when it is told which trainings those are (``universal_courses``).
+
 ``refile`` is written against whichever models it is handed, so the deploy
 migration (historical models) and ``manage.py refile_core_package_work`` (the
 live ones) run one piece of code. It reads no live service code.
@@ -342,9 +349,13 @@ def _day(activity):
 
 
 # ── The repair ───────────────────────────────────────────────────────────────
-def misfiled(Slot, Activity) -> list[tuple]:
+def misfiled(Slot, Activity, *, universal=()) -> list[tuple]:
     """``(slot, activity)`` for every slot whose work is dated in another
-    fiscal year than its package's, oldest work first."""
+    fiscal year than its package's, oldest work first. A universal training
+    and the visit written beside it are never moved into a package: in the
+    years the repair covers they are released (``universal_training_work``),
+    and an earlier year's package keeps what it recorded."""
+    universal = set(universal)
     slots = list(
         Slot.objects.exclude(activity_id__isnull=True)
         .exclude(activity_id="")
@@ -357,6 +368,16 @@ def misfiled(Slot, Activity) -> list[tuple]:
             id__in={s.activity_id for s in slots}, deleted_at__isnull=True
         )
     }
+    beside = (
+        set(
+            Activity.objects.filter(
+                training_course_id__in=list(universal),
+                paired_school_visit_id__in=list(activities),
+            ).values_list("paired_school_visit_id", flat=True)
+        )
+        if universal
+        else set()
+    )
     found = []
     for slot in slots:
         activity = activities.get(slot.activity_id)
@@ -364,6 +385,8 @@ def misfiled(Slot, Activity) -> list[tuple]:
             continue
         if not is_package_work(activity):
             continue  # released, not moved (`outside_package`)
+        if activity.training_course_id in universal or activity.id in beside:
+            continue
         if str(activity.fy) != str(slot.core_plan.fy):
             found.append((slot, activity))
     found.sort(key=lambda pair: (_day(pair[1]), str(pair[1].created_at), pair[0].id))
@@ -466,12 +489,13 @@ def staff_data_collection_without_a_slot(
 
 
 def companion_visits_without_a_slot(
-    Slot, Activity, School, *, from_fy: str, skip=()
+    Slot, Activity, School, *, from_fy: str, skip=(), universal=()
 ) -> list:
     """The School Visits in-school trainings wrote beside themselves at Core
     schools, dated in ``from_fy`` or later, that hold no package slot: every
     one written before 2026-10-03, when the pair's visit became a package
-    visit. Oldest first, so the earliest takes the earliest slot."""
+    visit. Oldest first, so the earliest takes the earliest slot. The visit
+    beside a universal training takes none, like its training."""
     core_ids = School.objects.filter(
         school_type="core", deleted_at__isnull=True
     ).values("id")
@@ -495,7 +519,56 @@ def companion_visits_without_a_slot(
     )
     if skip:
         rows = rows.exclude(project_id__in=list(skip))
+    if universal:
+        rows = rows.exclude(
+            id__in=Activity.objects.filter(
+                training_course_id__in=list(universal),
+                paired_school_visit_id__isnull=False,
+            ).values("paired_school_visit_id")
+        )
     return list(rows)
+
+
+def universal_training_work(Slot, Activity, *, from_fy: str, courses) -> list[tuple]:
+    """``(slot, activity)`` for every slot of a package of ``from_fy`` onward
+    held by a universal training delivered at the school, or by the School
+    Visit it wrote beside itself. ``courses`` are the catalogue ids of the
+    universal trainings. A group session of one is given back with the other
+    group trainings the rule does not have in a slot (``_GroupTrainings``)."""
+    courses = set(courses)
+    if not courses:
+        return []
+    slots = list(
+        Slot.objects.exclude(activity_id__isnull=True)
+        .exclude(activity_id="")
+        .filter(
+            activity_type__in=("visit", "training"),
+            core_plan__fy__gte=str(from_fy),
+        )
+        .select_related("core_plan")
+        .order_by("core_plan_id", "activity_type", "sequence_number")
+    )
+    held = {slot.activity_id for slot in slots}
+    activities = {
+        a.id: a
+        for a in Activity.objects.filter(
+            id__in=held, deleted_at__isnull=True, cluster_id__isnull=True
+        )
+    }
+    beside = set(
+        Activity.objects.filter(
+            training_course_id__in=list(courses), paired_school_visit_id__in=held
+        ).values_list("paired_school_visit_id", flat=True)
+    )
+    return [
+        (slot, activities[slot.activity_id])
+        for slot in slots
+        if slot.activity_id in activities
+        and (
+            slot.activity_id in beside
+            or activities[slot.activity_id].training_course_id in courses
+        )
+    ]
 
 
 def outside_package(Slot, Activity, *, from_fy: str) -> list[tuple]:
@@ -566,7 +639,18 @@ class _GroupTrainings:
     school's own misfiled work moves between them (``refile``).
     """
 
-    def __init__(self, Plan, Slot, Activity, Attendance, School, *, from_fy, skip):
+    def __init__(
+        self,
+        Plan,
+        Slot,
+        Activity,
+        Attendance,
+        School,
+        *,
+        from_fy,
+        skip,
+        universal=(),
+    ):
         from collections import defaultdict
 
         from django.db.models import Count, Q
@@ -585,6 +669,20 @@ class _GroupTrainings:
             # Alumni: a project no SSA intervention measures is no part of a
             # package (``package_credit.outside_package``).
             live = live.exclude(project_id__in=list(skip))
+        universal = list(universal)
+        #: Group sessions of a universal training: on top of the package, so
+        #: none of them is wanted in a slot and a slot one holds goes back.
+        self.universal_sessions = (
+            set(
+                group.filter(catalogue_item_id__in=universal).values_list(
+                    "id", flat=True
+                )
+            )
+            if universal
+            else set()
+        )
+        if universal:
+            live = live.exclude(catalogue_item_id__in=universal)
         self.sessions = {a.id: a for a in live}
 
         rows = defaultdict(list)
@@ -647,6 +745,8 @@ class _GroupTrainings:
         )
         if skip:
             at_school = at_school.exclude(project_id__in=list(skip))
+        if universal:
+            at_school = at_school.exclude(training_course_id__in=universal)
         for code, fy, delivery, n in (
             at_school.values_list("school__school_id", "fy", "delivery_type")
             .annotate(n=Count("id"))
@@ -674,6 +774,8 @@ class _GroupTrainings:
 
     def _why_not(self, slot, key, full) -> str:
         session = self.sessions.get(slot.activity_id)
+        if slot.activity_id in self.universal_sessions:
+            return "a universal training is on top of the package"
         if session is None:
             return "the session is not a live group training of this year"
         if str(session.fy) != key[1]:
@@ -793,6 +895,7 @@ def refile(
     out=print,
     tag: str = "refile_core_package_work",
     outside_projects=(),
+    universal_courses=(),
 ) -> dict:
     """Put every Core package's work in the package of its own year, and take
     out of the packages what is no part of one.
@@ -814,9 +917,13 @@ def refile(
        earliest dated first.
 
     ``outside_projects`` are the projects no SSA intervention measures
-    (Alumni), whose work is no part of a package. Nothing is removed and no
-    activity is changed: only which package slot points at it. Returns what
-    was (or, with ``write=False``, would be) done.
+    (Alumni), whose work is no part of a package. ``universal_courses`` are
+    the catalogue ids of the universal trainings (SSA Training; owner,
+    2026-10-06), which are on top of the package: a slot one holds, or the
+    visit written beside one holds, is given back in step 1 and none is
+    filled with one afterwards. Nothing is removed and no activity is
+    changed: only which package slot points at it. Returns what was (or,
+    with ``write=False``, would be) done.
     """
     report = {
         "moved": [],
@@ -835,11 +942,23 @@ def refile(
     def label_of(slot) -> str:
         return f"{SLOT_LETTER[slot.activity_type].upper()}{slot.sequence_number}"
 
+    universal_courses = set(universal_courses)
     # 1. Work that is no part of a package gives its slot back.
-    for slot, activity in outside_package(Slot, Activity, from_fy=from_fy):
+    on_top = universal_training_work(
+        Slot, Activity, from_fy=from_fy, courses=universal_courses
+    )
+    on_top_slots = {slot.id for slot, _activity in on_top}
+    outside = [
+        pair
+        for pair in outside_package(Slot, Activity, from_fy=from_fy)
+        if pair[0].id not in on_top_slots
+    ]
+    for slot, activity in [*outside, *on_top]:
         plan = slot.core_plan
         why = (
-            "a cluster meeting is not a training"
+            "a universal training is on top of the package"
+            if slot.id in on_top_slots
+            else "a cluster meeting is not a training"
             if activity.cluster_id or activity.activity_type in CLUSTER_SESSION_TYPES
             else "it is not a package visit"
         )
@@ -862,6 +981,7 @@ def refile(
         School,
         from_fy=from_fy,
         skip=outside_projects,
+        universal=universal_courses,
     )
     passes = {
         "write": write,
@@ -873,7 +993,7 @@ def refile(
     group.release(**passes)
 
     # 3. School-level work in another year's package.
-    for slot, activity in misfiled(Slot, Activity):
+    for slot, activity in misfiled(Slot, Activity, universal=universal_courses):
         source = slot.core_plan
         target, created = (
             ensure_plan(Plan, Slot, source.school_id, activity.fy)
@@ -932,7 +1052,12 @@ def refile(
     ] + [
         (activity, "companion_credited", "in-school training visit")
         for activity in companion_visits_without_a_slot(
-            Slot, Activity, School, from_fy=from_fy, skip=outside_projects
+            Slot,
+            Activity,
+            School,
+            from_fy=from_fy,
+            skip=outside_projects,
+            universal=universal_courses,
         )
     ]
     for activity, credited_as, what in unslotted:
@@ -1026,4 +1151,5 @@ __all__ = [
     "session_school_ids",
     "side_of",
     "slot_id",
+    "universal_training_work",
 ]

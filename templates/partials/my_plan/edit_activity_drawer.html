@@ -40,6 +40,33 @@ run that is still scheduled.
     schoolCode: '{{ act.school.school_id|default:''|escapejs }}',
     firstSchoolCode: '{{ act.school.school_id|default:''|escapejs }}',
     invitedCount: {{ schools_invited|default:0 }},
+    firstInvited: {{ schools_invited|default:0 }},
+    {% comment %}Which training this plan delivers (owner, 2026-10-06): chosen
+    from every training in the catalogue, empty when none is named yet. The
+    SSA intervention and the ceiling follow the training chosen.{% endcomment %}
+    trainingId: '{{ edit_training.id|default:''|escapejs }}',
+    firstTrainingId: '{{ edit_training.id|default:''|escapejs }}',
+    trainings: {% if edit_training.options_json %}{{ edit_training.options_json }}{% else %}[]{% endif %},
+    get chosenTraining() { return this.trainings.find((option) => option.id === this.trainingId) || null; },
+    get trainingMoved() { return this.trainingId !== this.firstTrainingId; },
+    get interventionLocked() { return this.trainingMoved ? !!this.chosenTraining && !this.chosenTraining.plannerChooses : {{ edit_training.intervention_locked|yesno:'true,false' }}; },
+    get interventionLabel() { return this.trainingMoved && this.chosenTraining ? this.chosenTraining.ssaInterventionLabel : '{{ act.get_focus_intervention_display|default:'Not SSA-scored'|escapejs }}'; },
+    trainingChosen() {
+      if (!{{ is_cluster_session|yesno:'true,false' }}) return;
+      const query = new URLSearchParams({ activity: '{{ act.id }}', training: this.trainingId }).toString();
+      fetch('/planning/training-capacity?' + query, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => { if (data) { this.ceiling = data; } })
+        .catch(() => {});
+    },
+    {% comment %}The officer's ceiling for this training, with this session's
+    own schools left out of `scheduled` (owner, 2026-10-06): the session may
+    keep the schools it has and grow only into what is left.{% endcomment %}
+    ceiling: {% if edit_ceiling_json %}{{ edit_ceiling_json }}{% else %}{ managed: false, ceiling: null, scheduled: 0, remaining: null, fy: '' }{% endif %},
+    get placesHeld() { return this.ceiling.managed ? Math.max(this.ceiling.remaining, this.trainingMoved ? 0 : this.firstInvited) : null; },
+    get ceilingFull() { return this.ceiling.managed && this.invitedCount >= this.placesHeld; },
+    get ceilingOver() { return this.ceiling.managed && this.invitedCount > this.placesHeld; },
+    isHeld(box) { return this.ceilingFull && !box['checked']; },
     projectId: '{{ edit_project.id|default:''|escapejs }}',
     firstProjectId: '{{ edit_project.id|default:''|escapejs }}',
     focus: '{{ act.focus_intervention|default:''|escapejs }}',
@@ -57,8 +84,13 @@ run that is still scheduled.
       const named = options.find((option) => option.code !== '');
       this.focus = named ? named.code : '';
     },
-    syncInvited() {
-      this.invitedCount = this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked').length;
+    syncInvited(event) {
+      let ticked = this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked').length;
+      if (event && event.target.checked && this.ceiling.managed && ticked > this.placesHeld) {
+        event.target.checked = false;
+        ticked -= 1;
+      }
+      this.invitedCount = ticked;
     }
   }"
 >
@@ -67,6 +99,27 @@ run that is still scheduled.
 
   {% if other_half %}
   <p class="edify-note" data-tone="info" role="note" data-edit-pair-note>This in-school training and its school visit are one mission: a new date or school moves both.</p>
+  {% endif %}
+
+  {% if edit_training %}
+  {% comment %}The training this plan delivers (owner, 2026-10-06: "click edit
+  and then the training field is empty then I click and get a dropdown of all
+  the trainings and select the right one for that training"). A plan under a
+  project keeps the training its project approved.{% endcomment %}
+  <div class="space-y-1" data-edit-training>
+    <label for="edit_training_course_id" class="block edify-text-caption font-semibold text-slate-600">Training{% if edit_training.may_change %} <span class="text-rose-500">*</span>{% endif %}</label>
+    {% if edit_training.may_change %}
+    <select id="edit_training_course_id" name="training_course_id" x-model="trainingId" @change="trainingChosen()" required
+            aria-describedby="edit-training-help"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="">Select a training…</option>
+      {% for option in edit_training.options %}<option value="{{ option.id }}"{% if option.id == edit_training.id %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+    </select>
+    <p id="edit-training-help" class="edify-text-caption text-slate-500"><span x-show="!trainingId"{% if edit_training.id %} style="display:none"{% endif %}>No training is named on this plan yet. Choose the one it delivers. </span>{% if edit_training.delivery %}Delivered as {{ edit_training.delivery }}. {% endif %}The SSA intervention comes with the training.</p>
+    {% else %}
+    <input id="edit_training_course_id" type="text" readonly value="{% firstof edit_training.name act.activity_name_snapshot %}{% if edit_training.delivery %} · {{ edit_training.delivery }}{% endif %}" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+    {% endif %}
+  </div>
   {% endif %}
 
   <div class="space-y-1">
@@ -88,15 +141,25 @@ run that is still scheduled.
       <span id="edit-schools-invited-title" class="edify-text-caption font-semibold text-slate-600">Schools invited <span class="text-rose-500">*</span></span>
       <span class="edify-text-caption text-slate-500" aria-live="polite"><span x-text="invitedCount"></span> of {{ member_schools|length }}</span>
     </div>
+    {% if edit_ceiling_json %}
+    <p class="mt-1 edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
+      <template x-if="ceiling.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(ceiling.scheduled + invitedCount) + ' / ' + ceiling.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY {{ act.fy }}.</span></template>
+      <template x-if="!ceiling.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="ceiling.scheduled + invitedCount"></strong> schools scheduled for this training in FY {{ act.fy }}. No training ceiling is set.</span></template>
+    </p>
+    <p x-show="ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="danger" role="alert" data-training-ceiling-over>This training's ceiling leaves <span x-text="placesHeld"></span> place<span x-show="placesHeld !== 1">s</span> and <span x-text="invitedCount"></span> schools are ticked. Untick <span x-text="invitedCount - placesHeld"></span> to save.</p>
+    <p x-show="ceilingFull && !ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="warning" role="status" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools.<span x-show="invitedCount > 0"> Untick a school to tick another.</span></p>
+    {% endif %}
     {% if member_schools %}<div class="mt-1.5">{% include "partials/components/select_all.html" with boxes="input[name=invited_school_ids]" %}</div>{% endif %}
     <div role="group" aria-labelledby="edit-schools-invited-title" x-ref="invitedList"
          class="mt-1.5 max-h-56 overflow-y-auto rounded-control border border-slate-200 bg-slate-50">
       {% for s in member_schools %}
-      <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100/50">
+      <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100/50"
+             :class="isHeld($el.querySelector('input')) ? 'opacity-50 cursor-not-allowed' : ''">
         <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
                {% if s.invited %}checked{% endif %}
-               @change="syncInvited()"
-               class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+               @change="syncInvited($event)"
+               :disabled="isHeld($el)"
+               class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus disabled:cursor-not-allowed">
         <span class="min-w-0 flex-1">
           <span class="block text-[13px] font-semibold text-slate-700 truncate">{{ s.name }}</span>
           <span class="block edify-text-caption font-medium text-slate-400">{{ s.school_id }}</span>
@@ -151,6 +214,19 @@ run that is still scheduled.
   {% include "partials/activities/facilitated_by_field.html" with field_id="edit_facilitating_partner_id" selected=act.facilitating_partner_id session_noun=session_noun %}
   {% endif %}
 
+  {% if edit_training and not edit_project %}
+  {% comment %}A training's SSA intervention is its Training Catalogue entry's
+  (owner, 2026-10-06): shown, never posted, and it follows the training chosen
+  above. Only a training the catalogue leaves open to any intervention offers
+  the list.{% endcomment %}
+  <template x-if="interventionLocked">
+  <div class="space-y-1" data-edit-focus data-training-ssa-intervention>
+    <span id="edit-training-ssa-label" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</span>
+    <input type="text" readonly data-linked-intervention aria-labelledby="edit-training-ssa-label" :value="interventionLabel" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+    <p class="edify-text-caption text-slate-500">Set on the training in the Training Catalogue. It cannot be changed here.</p>
+  </div>
+  </template>
+  <template x-if="!interventionLocked">
   <div class="space-y-1" data-edit-focus>
     <label for="edit_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
     {% if edit_project %}
@@ -172,7 +248,30 @@ run that is still scheduled.
     </select>
     {% endif %}
   </div>
-
+  </template>
+  {% else %}
+  <div class="space-y-1" data-edit-focus>
+    <label for="edit_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
+    {% if edit_project %}
+    {% comment %}The interventions the chosen project is linked to. Drawn by
+    Alpine so the list changes with the Project field above; :selected keeps
+    the saved focus chosen once the options exist.{% endcomment %}
+    <select id="edit_focus_intervention" name="focus_intervention" x-model="focus"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <template x-for="option in focusOptions" :key="option.code">
+        <option :value="option.code" :selected="option.code === focus" x-text="option.label"></option>
+      </template>
+    </select>
+    <p class="edify-text-caption text-slate-500">The interventions this project is linked to.</p>
+    {% else %}
+    <select id="edit_focus_intervention" name="focus_intervention"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+      <option value="">None</option>
+      {% for code, label in interventions %}<option value="{{ code }}"{% if code == act.focus_intervention %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    {% endif %}
+  </div>
+  {% endif %}
   <div class="space-y-1">
     <label for="edit_activity_purpose_text" class="block edify-text-caption font-semibold text-slate-600">Goal</label>
     <textarea name="activity_purpose_text" id="edit_activity_purpose_text" rows="2"

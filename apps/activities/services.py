@@ -1175,6 +1175,7 @@ def _assert_schedule_entitlement(
     core_slot_verified: bool = False,
     catalogue_item=None,
     is_request: bool = False,
+    training_course=None,
 ):
     """Core work must still arrive through the slot machinery, which sets
     coreSlotVerified after locking a slot — otherwise POSTing
@@ -1187,6 +1188,11 @@ def _assert_schedule_entitlement(
     it (owner, 2026-09-15; apps.planning.visit_gate is the one definition the
     greyed buttons and this refusal share). The annual training entitlement
     stays advisory.
+
+    ``training_course`` is the training being scheduled, when the work is
+    one. A universal training, and a training under a Special Project, are
+    never refused over the school's entitlement (owner, 2026-10-06;
+    apps.planning.training_entitlement).
     """
     if not school:
         return
@@ -1212,6 +1218,18 @@ def _assert_schedule_entitlement(
                 "Core support must be scheduled from the Core Schools page, "
                 "which reserves one of the package's slots."
             )
+        return
+    # Owner, 2026-10-06: "School Improvement Planning training is universal
+    # every schools can attend", on top of the school's own trainings, and
+    # "Special project trainings ... are not restricted. any school can be
+    # assigned to those but it is controlled byt project coordinator". So
+    # neither is refused over the client school's one support visit or a
+    # Core package's 2 + 2. A project's visits keep the school's rule.
+    from apps.planning.training_entitlement import never_refused
+
+    if never_refused(
+        activity_type, course=training_course, project_id=data.get("projectId")
+    ):
         return
     from apps.planning.visit_gate import (
         assert_partner_may_schedule_visit,
@@ -1983,6 +2001,54 @@ def _create(
     # verdict (apps.ssa.plan_alignment): the planner, a course, a project, a
     # source session, the catalogue mapping, or the SSA itself.
     focus_source = "planner" if (focus or data.get("purposeIntervention")) else ""
+    # What a cluster meeting is for (owner, 2026-10-06): a training delivered
+    # at it, a meeting only, or a cluster leaders' meeting. Only the first
+    # names a course; the other two never carry one, so neither can be read
+    # as a training or take a place under a training ceiling.
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.core.enums import MeetingKind
+
+    meeting_kind = ""
+    if activity_type in CLUSTER_MEETING_TYPES:
+        meeting_kind = str(data.get("meetingKind") or "").strip()
+        if meeting_kind and meeting_kind not in MeetingKind.values:
+            raise BadRequest(
+                "Choose the meeting type: Training, Only Meeting or Cluster "
+                "Leaders Meeting."
+            )
+        if meeting_kind == MeetingKind.TRAINING and training_course is None:
+            raise BadRequest("Select the Training this cluster meeting delivers.")
+        if meeting_kind != MeetingKind.TRAINING:
+            training_course = None
+    # The Training Catalogue entry this plan delivers: the course named
+    # beside the workflow, else the catalogue item when it is itself a course.
+    scheduled_course = training_course
+    if (
+        scheduled_course is None
+        and catalogue_item is not None
+        and catalogue_item.is_training_course
+        and activity_type in TRAINING_TYPES
+    ):
+        scheduled_course = catalogue_item
+    if scheduled_course is not None and not data.get("projectId"):
+        # Training -> SSA intervention (owner, 2026-10-06): a training fixed
+        # to an intervention is scheduled under that intervention and no
+        # other, whatever the request carried, so a Leadership training can
+        # never be saved against Financial Health. A course
+        # linked to none is left to the catalogue's own mapping below (an
+        # orientation records none), and project work keeps the
+        # interventions its project is linked to.
+        from apps.activity_catalogue.training_intervention import intervention_for
+
+        fixed_focus = intervention_for(training_course_id=scheduled_course.id)
+        if fixed_focus:
+            focus = fixed_focus
+            focus_source = "course"
+            data = {
+                **data,
+                "focusIntervention": fixed_focus,
+                "purposeIntervention": fixed_focus,
+            }
     if training_course is not None:
         if not getattr(training_course, "is_training_course", False):
             raise BadRequest("Select a training from the governed Training Catalogue.")
@@ -2265,6 +2331,7 @@ def _create(
         core_slot_verified=core_slot_verified,
         catalogue_item=catalogue_item,
         is_request=bool(approval_owner_id),
+        training_course=scheduled_course,
     )
 
     # ── Who executes ─────────────────────────────────────────────────────
@@ -2880,6 +2947,7 @@ def _create(
                 core_slot_verified=core_slot_verified,
                 catalogue_item=catalogue_item,
                 is_request=bool(approval_owner_id),
+                training_course=scheduled_course,
             )
         elif cluster_id:
             # Serialise concurrent cluster scheduling the same way the school
@@ -2888,6 +2956,50 @@ def _create(
             from apps.clusters.models import Cluster
 
             Cluster.objects.select_for_update().filter(pk=cluster_id).first()
+        if (
+            school is None
+            and cluster_id
+            and scheduled_course is not None
+            and not is_partner
+            and not data.get("projectId")
+            and not data.get("invitedSchoolIds")
+        ):
+            # A group delivery that names no school cannot be counted under
+            # a training ceiling, so where one is set it is not planned that
+            # way (owner, 2026-10-06: every school added to a training is
+            # counted).
+            from apps.planning.training_ceilings import assert_schools_named
+
+            assert_schools_named(
+                activity_type=activity_type,
+                meeting_kind=meeting_kind,
+                staff_id=responsible_staff_id,
+                course_id=scheduled_course.id,
+                fy=fy,
+            )
+        if (
+            school is not None
+            and scheduled_course is not None
+            and not is_partner
+            and not data.get("projectId")
+        ):
+            # An in-school training takes one place under the officer's
+            # ceiling for that training (owner, 2026-10-06). The ceiling row
+            # is locked before the count, so two saves cannot both take the
+            # last place. A group delivery's places are taken where its
+            # schools are named (cluster_attendance.set_invited_schools).
+            # Work under a Special Project is the project's: its schools are
+            # counted there, against the capacity its coordinator set.
+            from apps.planning.training_ceilings import reserve_for_activity
+
+            reserve_for_activity(
+                activity_type=activity_type,
+                meeting_kind=meeting_kind,
+                staff_id=responsible_staff_id,
+                course_id=scheduled_course.id,
+                fy=fy,
+                school_id=school.id,
+            )
         elif non_school and responsible_staff_id:
             # Non-school work has no school/cluster row to lock; the
             # responsible person is the natural serialization anchor, so a
@@ -3019,6 +3131,7 @@ def _create(
             # no date yet (country_oversight.rules: who dated Partner work).
             partner_date_set_by="staff" if is_certified_agency_booking else "",
             cluster_slot=data.get("clusterSlot"),
+            meeting_kind=meeting_kind,
             purpose_intervention=focus or data.get("purposeIntervention"),
             activity_purpose_text=p_text,
             purpose_type=p_type,
@@ -3074,11 +3187,17 @@ def _create(
             if training_course is not None:
                 # Operational snapshots stay sourced from the standard
                 # in-school profile. Only course identity and its governed
-                # source metadata replace the generic display label.
-                activity.activity_name_snapshot = training_course.display_name
+                # source metadata replace the generic display label. A
+                # cluster meeting that delivers a training stays named as the
+                # meeting it is; the course is on the row beside it.
+                if activity_type not in CLUSTER_MEETING_TYPES:
+                    activity.activity_name_snapshot = training_course.display_name
                 activity.recommendation_source = {
                     **(activity.recommendation_source or {}),
                     "trainingCourseId": training_course.id,
+                    # The name as it stood when this was scheduled: a later
+                    # edit of the catalogue entry does not rename the plan.
+                    "trainingCourseName": training_course.display_name,
                     "trainingCourseCode": training_course.stable_code,
                     "trainingCategory": training_course.training_category,
                     "ssaIndicator": training_course.ssa_indicator_label,
@@ -4798,6 +4917,12 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         # Asked again on the locked row: a completion that landed between the
         # read above and this lock must not be undone by the move.
         assert_not_executed(a, action="rescheduled")
+        if str(new_fy) != str(a.fy):
+            # A training moved into another fiscal year takes its schools'
+            # places under that year's training ceiling (owner, 2026-10-06).
+            from apps.planning.training_ceilings import reserve_for_move
+
+            reserve_for_move(a, fy=new_fy)
         old_date = a.scheduled_date
         from apps.activities.duplicate_visits import (
             assert_not_duplicate_client_visit,
@@ -5060,6 +5185,14 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
         # attached to no partner.
         if "assignedPartnerId" in data:
             a.assigned_partner_id = data.get("assignedPartnerId")
+        if data.get("responsibleStaffId") and (
+            data["responsibleStaffId"] != a.responsible_staff_id
+        ):
+            # A training handed to another officer takes its schools' places
+            # under that officer's training ceiling (owner, 2026-10-06).
+            from apps.planning.training_ceilings import reserve_for_move
+
+            reserve_for_move(a, staff_id=data["responsibleStaffId"])
         a.responsible_staff_id = (
             data.get("responsibleStaffId") or a.responsible_staff_id
         )
@@ -5397,7 +5530,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             from apps.core_schools.package_credit import package_kind_for
             from apps.core_schools.package_split import PARTNER, assert_side_open
 
-            if not _past_rules:
+            from apps.planning.training_entitlement import is_universal
+
+            # A universal training is on top of the package (owner,
+            # 2026-10-06): the partner's half does not hold it back.
+            if not _past_rules and not is_universal(pa.training_course_id):
                 assert_side_open(
                     pa.school,
                     package_kind_for(_sched_activity_type, pa.purpose_of_visit),
@@ -6154,6 +6291,24 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
         *SsaIntervention.values,
     ):
         raise BadRequest("Choose one of the eight SSA interventions.")
+    if "focusIntervention" in data:
+        # A training linked to an SSA intervention in the Training Catalogue
+        # is held to it (owner, 2026-10-06): it may be set to that one, or
+        # left as it was scheduled, and to nothing else.
+        from apps.activity_catalogue.training_intervention import (
+            catalogue_sets_intervention,
+            linked_intervention,
+        )
+
+        wanted = data["focusIntervention"] or None
+        if catalogue_sets_intervention(a) and wanted not in (
+            linked_intervention(a) or None,
+            a.focus_intervention or None,
+        ):
+            raise BadRequest(
+                "This training's SSA intervention comes from the Training "
+                "Catalogue and is not changed on the activity."
+            )
     if "activityPurposeText" in data:
         a.activity_purpose_text = data["activityPurposeText"]
         update_fields.append("activity_purpose_text")

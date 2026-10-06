@@ -31,6 +31,7 @@ from apps.partners.models import Partner
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
+from apps.planning import training_ceilings
 from apps.partners.purposes import visit_purpose_label
 
 # A visit request that the school owner has not yet approved is not on the
@@ -1203,6 +1204,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             "school__sub_county",
             "cluster",
             "cluster__district",
+            # The Trainings card names each training by its catalogue course
+            # (owner, 2026-10-06): the course beside an in-school delivery or
+            # a training meeting, else the catalogue item of a group training.
+            "training_course",
+            "catalogue_item",
         )
         .prefetch_related(
             "schedule_cost_lines",
@@ -1540,6 +1546,23 @@ def get_frontend_context(principal, query: dict) -> dict:
             # The governed course or item planned — the Group Trainings card
             # names the training by it.
             "activity_name": a.activity_name_snapshot or "",
+            # The training's name from the Training Catalogue — Literacy,
+            # TAM, Leadership — and how it is delivered (owner, 2026-10-06:
+            # "the training Name should be the actual training name fetched
+            # from the training catalogue ... Mode of delivery should be
+            # Cluster Group training or In-School training"). Blank on a
+            # training nobody has named yet; the Edit drawer names it.
+            "training_name": training_ceilings.course_name_of(a),
+            "training_mode": training_ceilings.mode_of_delivery(a),
+            # What a cluster meeting is for (owner, 2026-10-06): a training
+            # delivered at it, a meeting only, or a cluster leaders' meeting;
+            # blank on a meeting planned before the types existed.
+            "meeting_kind": a.get_meeting_kind_display() if a.meeting_kind else "",
+            "meeting_training": (
+                (a.recommendation_source or {}).get("trainingCourseName", "")
+                if a.meeting_kind == "training"
+                else ""
+            ),
             "status": a.status,
             "planned_date": a.planned_date,
             "quarter": a.quarter,

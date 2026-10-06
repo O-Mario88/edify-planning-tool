@@ -227,6 +227,11 @@ def edit(activity_id: str, data: dict, principal) -> dict:
       not in the new project yet joins it through ``projects.assign_school``.
       ``focusIntervention`` is then one the new project is linked to; General
       is no SSA focus.
+    * ``trainingCourseId`` — which Training Catalogue entry a training
+      delivers (owner, 2026-10-06: "click edit … get a dropdown of all the
+      trainings and select the right one for that training"). Its SSA
+      intervention and its place under the officer's training ceiling follow
+      the training chosen (``training_change.change_training``).
     * ``facilitatingPartnerId`` — who facilitates a training or cluster
       meeting; blank is Staff (``services.set_facilitator``).
     * ``activityPurposeText``, ``expectedOutcome``, ``focusIntervention`` —
@@ -308,6 +313,16 @@ def edit(activity_id: str, data: dict, principal) -> dict:
         for key in ("activityPurposeText", "expectedOutcome", "focusIntervention")
         if key in data
     }
+    if "focusIntervention" in patch and new_project is None:
+        # A training's SSA intervention is its Training Catalogue entry's
+        # (owner, 2026-10-06), not a field of the plan: an edit leaves the
+        # one it was scheduled with exactly as it is.
+        from apps.activity_catalogue.training_intervention import (
+            catalogue_sets_intervention,
+        )
+
+        if catalogue_sets_intervention(activity):
+            patch.pop("focusIntervention")
     if "focusIntervention" in patch:
         # Read against the project the activity ends up under, so a focus
         # left over from the old project is refused rather than carried.
@@ -326,7 +341,35 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             ):
                 patch.pop("focusIntervention")
 
+    from apps.planning import training_ceilings
+
+    training_moves = "trainingCourseId" in data and str(
+        data.get("trainingCourseId") or ""
+    ).strip() != (training_ceilings.course_id_of(activity) or "")
+    if training_moves and (new_school is not None or new_project is not None):
+        raise BadRequest(
+            "Change the training in one save, and the school or project in another."
+        )
+
     with transaction.atomic():
+        if training_moves:
+            from apps.activities.training_change import change_training
+
+            after = None
+            if "invitedSchoolIds" in data and is_cluster_session(activity):
+                after = len(
+                    {
+                        str(i).strip()
+                        for i in (data.get("invitedSchoolIds") or [])
+                        if str(i).strip()
+                    }
+                )
+            change_training(
+                activity, data.get("trainingCourseId"), principal, schools_after=after
+            )
+            # The intervention came with the training; a focus posted beside
+            # it belongs to the training the form opened with.
+            patch.pop("focusIntervention", None)
         if new_school is not None or new_project is not None:
             return _schedule_again(
                 activity,
