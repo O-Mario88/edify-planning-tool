@@ -57,12 +57,28 @@
           </div>
         </div>
 
+        {% if training_profile %}
+        {% comment %}Which training this is and how it is delivered (owner,
+        2026-10-06). One that names none yet says so; Edit Activity is where
+        the training is chosen.{% endcomment %}
+        <div class="ad-field" data-training-profile>
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.2-3.4v5.2A2 2 0 0117 12.6 9.7 9.7 0 0112 14a9.7 9.7 0 01-5-1.4 2 2 0 01-1.2-1.8V9.6L12 14z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Training</p>
+            <p class="ad-field__value">{{ training_profile.name|default:"No training named yet" }}</p>
+            <p class="ad-field__note">{{ training_profile.delivery }}{% if not training_profile.name and edit_state == "open" %} · choose it with Edit Activity{% endif %}</p>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="ad-field">
           <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span>
           <div>
             <p class="ad-field__label">Focus intervention</p>
             <p class="ad-field__value capitalize">{{ act.focus_intervention|default:"None"|replace_underscore }}</p>
             <p class="ad-field__note">Intervention area</p>
+            {% comment %}What a cluster meeting is for (owner, 2026-10-06).{% endcomment %}
+            {% if act.meeting_kind %}<p class="ad-field__note" data-meeting-kind>Meeting type: {{ act.get_meeting_kind_display }}{% if act.meeting_kind == "training" and act.recommendation_source.trainingCourseName %} · {{ act.recommendation_source.trainingCourseName }}{% endif %}</p>{% endif %}
             {% include "partials/ssa/plan_verdict.html" with verdict=ssa_verdict %}
           </div>
         </div>

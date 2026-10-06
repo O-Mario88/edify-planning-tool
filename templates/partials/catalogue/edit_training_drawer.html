@@ -1,0 +1,70 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Edit a training from its own record in the catalogue (owner, 2026-10-06:
+"existing trainings must be editable from their existing Training Profile").
+It changes the definition only. A training already scheduled keeps the name,
+profile and SSA intervention it was scheduled with, and each save is kept as a
+catalogue version with its reason. The SSA intervention is shown, not edited:
+Impact Assessment sets it through a reviewed rule, and every schedule of the
+training takes it from there (apps.activity_catalogue.authoring.update_training).
+{% endcomment %}
+
+{% block drawer_title %}Edit {{ item.display_name }}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+<form hx-post="/settings/activity-catalogue/{{ item.id }}/edit" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-edit-training-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="edit-training-name" class="block edify-text-caption font-semibold text-slate-600">Training name <span class="text-rose-500">*</span></label>
+    <input id="edit-training-name" name="name" required maxlength="255" value="{{ values.name }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <span class="block edify-text-caption font-semibold text-slate-600">SSA intervention</span>
+    <input type="text" readonly aria-label="SSA intervention" data-training-intervention value="{{ intervention_label|default:'Not SSA-scored' }}" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 text-[13px] font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+    <p class="edify-text-caption text-slate-500">Every schedule of this training takes this intervention. Impact Assessment changes it{% if can_open_mapping %} on <a href="/priorities/ssa-mapping" class="edify-primary-text hover:underline">SSA Activity Mapping</a>{% endif %}.</p>
+  </div>
+
+  {% if item.universal_training %}
+  <p class="edify-note" data-tone="info" role="note" data-universal-training>Universal training: every school that takes training may attend it, on top of the trainings its type is entitled to in the year.</p>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="edit-training-category" class="block edify-text-caption font-semibold text-slate-600">Training category</label>
+    <input id="edit-training-category" name="training_category" maxlength="64" value="{{ values.training_category }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit-training-indicator" class="block edify-text-caption font-semibold text-slate-600">SSA intervention association</label>
+    <input id="edit-training-indicator" name="ssa_indicator_label" maxlength="128" value="{{ values.ssa_indicator_label }}" aria-describedby="edit-training-indicator-help" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+    <p id="edit-training-indicator-help" class="edify-text-caption text-slate-500">The programme's own wording, shown beside the training when it is scheduled.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit-training-audience" class="block edify-text-caption font-semibold text-slate-600">Target audience <span class="text-rose-500">*</span></label>
+    <input id="edit-training-audience" name="target_audience" required maxlength="128" value="{{ values.target_audience }}" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit-training-description" class="block edify-text-caption font-semibold text-slate-600">Description</label>
+    <textarea id="edit-training-description" name="description" rows="3" maxlength="4000" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px] font-medium">{{ values.description }}</textarea>
+  </div>
+
+  <div class="space-y-1">
+    <label for="edit-training-reason" class="block edify-text-caption font-semibold text-slate-600">Reason for the change <span class="text-rose-500">*</span></label>
+    <input id="edit-training-reason" name="reason" required maxlength="512" value="{{ values.reason }}" aria-describedby="edit-training-reason-help" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-medium">
+    <p id="edit-training-reason-help" class="edify-text-caption text-slate-500">Kept on the training&rsquo;s history.{% if scheduled_use_count %} The {{ scheduled_use_count }} time{{ scheduled_use_count|pluralize }} this training is already scheduled {{ scheduled_use_count|pluralize:"keeps,keep" }} what {{ scheduled_use_count|pluralize:"it was,they were" }} scheduled with.{% endif %}</p>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Save training</button>
+  </div>
+</form>
+{% endblock %}

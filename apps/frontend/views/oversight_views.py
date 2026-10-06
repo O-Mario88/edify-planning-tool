@@ -389,6 +389,9 @@ def _lens_tabs(
         ("monitor", "Planning Monitor"),
         ("projects", "Special Projects"),
         ("execution", "Execution & Completion"),
+        # After the three the owner ordered on 2026-09-30 (Planning Monitor,
+        # Special Projects, Execution & Completion), which stay together.
+        ("trainings", "Training Summary"),
         ("portfolio", "Country Portfolio" if country else "Team Portfolio"),
         ("coverage", "Schools & Coverage"),
         ("targets", "Target Performance"),
@@ -1832,6 +1835,21 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
     return owner_groups
 
 
+def _training_summary_context(request) -> dict:
+    """The Training Summary lens: every training with a school planned for
+    it, its mode of delivery, the Country Ceiling with what is planned and
+    what remains, and the schools each officer has planned."""
+    from apps.planning import training_summary
+
+    fy = (request.GET.get("fy") or "").strip()
+    if fy not in fy_options():
+        fy = str(get_operational_fy())
+    summary = training_summary.for_reader(
+        request.user, fy, lead=(request.GET.get("program_lead") or "").strip()
+    )
+    return {"fy": fy, "training_summary": summary}
+
+
 @require_any_page_permission("team_planning_oversight", "team_targets")
 def team_planning_oversight_view(request):
     """One Team Oversight workspace for planning and target performance."""
@@ -1866,6 +1884,15 @@ def team_planning_oversight_view(request):
             in ("ImpactAssessment", "CountryDirector", "Admin")
         )
     )
+    # Staff and the summary of all their planned trainings (owner,
+    # 2026-10-06): a Programme Lead reads their officers and sets the
+    # numbers; the Country Director, Impact Assessment and Admin read every
+    # officer and set nothing (apps.planning.training_summary).
+    from apps.planning.training_summary import SUMMARY_ROLES
+
+    can_view_trainings = (
+        can_view_planning and (request.user.active_role or "") in SUMMARY_ROLES
+    )
     requested_view = (request.GET.get("view") or "planning").strip().lower()
     # The people monitors moved to their own page (owner, 2026-09-29).
     if requested_view in ("monitor", "execution") and not can_view_monitors:
@@ -1881,9 +1908,19 @@ def team_planning_oversight_view(request):
     active_view = (
         requested_view
         if requested_view
-        in {"targets", "coverage", "portfolio", "monitor", "projects", "execution"}
+        in {
+            "targets",
+            "coverage",
+            "portfolio",
+            "monitor",
+            "projects",
+            "execution",
+            "trainings",
+        }
         else "planning"
     )
+    if active_view == "trainings" and not can_view_trainings:
+        active_view = "planning"
     if active_view == "targets" and not can_view_targets:
         active_view = "planning"
     if active_view == "coverage" and not can_view_coverage:
@@ -1901,6 +1938,7 @@ def team_planning_oversight_view(request):
             ("planning", can_view_planning),
             ("monitor", can_view_monitors),
             ("projects", can_view_projects),
+            ("trainings", can_view_trainings),
             ("execution", can_view_monitors),
             ("portfolio", can_view_portfolio),
             ("coverage", can_view_coverage),
@@ -1930,6 +1968,27 @@ def team_planning_oversight_view(request):
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/targets/team/workspace.html", context)
+        return render(request, "pages/oversight/team_planning.html", context)
+
+    if active_view == "trainings":
+        # Its own figures and nothing else's: the period's planning items are
+        # not built for a lens that does not read them.
+        context = {
+            **_training_summary_context(request),
+            "active_oversight_view": active_view,
+            "lens_tabs": lens_tabs,
+            "lens_base_url": TEAM_OVERSIGHT_PATH,
+            "base_url": TEAM_OVERSIGHT_PATH,
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+            "can_view_school_coverage": can_view_coverage,
+            "can_view_portfolio": can_view_portfolio,
+            "fy_options": fy_options(),
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(
+                request, "partials/oversight/training_summary_workspace.html", context
+            )
         return render(request, "pages/oversight/team_planning.html", context)
 
     period = _period_filters(request)

@@ -280,6 +280,19 @@ class ClusterMeetingSlot(models.TextChoices):
     THIRD_MEETING = "third_meeting", "Third Meeting"
 
 
+class MeetingKind(models.TextChoices):
+    """What a cluster meeting is for (owner, 2026-10-06).
+
+    A TRAINING meeting delivers a course from the Training Catalogue and
+    counts its invited schools under the officer's training ceiling; the
+    other two are meetings and consume no training ceiling.
+    """
+
+    TRAINING = "training", "Training"
+    ONLY_MEETING = "only_meeting", "Only Meeting"
+    CLUSTER_LEADERS = "cluster_leaders", "Cluster Leaders Meeting"
+
+
 class DeliveryType(models.TextChoices):
     STAFF = "staff", "Staff"
     PARTNER = "partner", "Partner"
@@ -490,6 +503,7 @@ __all__ = [
     "SsaIntervention",
     "ActivityType",
     "ClusterMeetingSlot",
+    "MeetingKind",
     "DeliveryType",
     "ActivityStatus",
     "EvidenceStatus",

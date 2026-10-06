@@ -57,7 +57,29 @@ get followUpWithoutSource() { return this.showFollowUpPicker && !this.followUpRe
   an SSA collection, and a follow-up that inherits its target from the
   session being followed up.
 {% endcomment %}
-get showManualIntervention() { return !this.showSsaDataGathering && (!this.showFollowUpPicker || this.followUpWithoutSource); },
+get showManualIntervention() { return !this.showSsaDataGathering && (!this.showFollowUpPicker || this.followUpWithoutSource) && !this.showLinkedIntervention; },
+{% comment %}
+  Training -> SSA intervention (owner, 2026-10-06). A training is scheduled
+  under the intervention the Training Catalogue links it to: the field is
+  read-only (a training that is not SSA-scored says so) and the save takes it
+  from the catalogue again. Only a training the catalogue maps to "any SSA
+  intervention" leaves the select above to the planner.
+{% endcomment %}
+get showLinkedIntervention() { return this.showTrainingActivityPicker && !(this.selectedTrainingActivity && this.selectedTrainingActivity.plannerChooses); },
+capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
+capacityKey: null,
+get trainingCeilingFull() { return this.showTrainingActivityPicker && !!this.trainingActivityId && this.capacity.managed && this.capacity.remaining <= 0; },
+loadCapacity() {
+  const training = this.showTrainingActivityPicker ? this.trainingActivityId : '';
+  const query = new URLSearchParams({ training: training, date: this.scheduledDate || '', school: '{{ school.school_id|default:''|escapejs }}' }).toString();
+  if (query === this.capacityKey) { return; }
+  this.capacityKey = query;
+  if (!training) { this.capacity = { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' }; return; }
+  fetch('/planning/training-capacity?' + query, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(response => (response.ok ? response.json() : null))
+    .then(data => { if (data && query === this.capacityKey) { this.capacity = data; } })
+    .catch(() => {});
+},
 get selectedSourceActivity() {
   return this.followUpActivities.find(activity => activity.id === this.sourceActivityId) || null;
 },
@@ -80,7 +102,7 @@ get selectedTrainingActivity() {
 onTrainingActivityChange(keepChoice = false) {
   const selected = this.selectedTrainingActivity;
   const suggested = selected ? selected.ssaIntervention : '';
-  if (!keepChoice || !this.focusIntervention) { this.focusIntervention = suggested; }
+  if (suggested || !keepChoice || !this.focusIntervention) { this.focusIntervention = suggested; }
   if (selected) {
     this.recommendationReason = selected.priorityTitles.length
       ? `Priority activity: ${selected.priorityTitles.join(', ')}`
@@ -141,9 +163,24 @@ lockFor(purpose) {
 },
 get visitLockReasons() { return [...new Set(Object.keys(this.visitLocks).map(p => this.lockFor(p)).filter(Boolean))]; },
 get visitLockReason() { return this.lockFor(this.purposeOfVisit); },
-get followUpBlocked() { return !!this.visitLockReason; }
+get followUpBlocked() { return !!this.visitLockReason; },
+{% comment %}A universal training is on top of the school's own (owner,
+2026-10-06), so In-school Training stays open once the support visit is used
+and only the other trainings grey: `trainingLocks` holds, per open year, why.
+The save refuses them again (apps.planning.training_entitlement).{% endcomment %}
+trainingLocks: {{ training_locks_json|default:'{}' }},
+trainingLockedEveryYear: {{ training_locked_every_year|yesno:"true,false" }},
+get trainingLockReason() {
+  if (!this.showTrainingActivityPicker) return '';
+  const year = this.fyOf(this.scheduledDate);
+  if (year) return this.trainingLocks[year] || '';
+  return this.trainingLockedEveryYear ? (Object.values(this.trainingLocks)[0] || '') : '';
+},
+isTrainingHeld(activity) { return !!this.trainingLockReason && !activity.universal; },
+get universalTrainingNames() { return this.availableTrainingActivities.filter(activity => activity.universal).map(activity => activity.label).join(', '); },
+get trainingBlocked() { return !!this.trainingLockReason && !!this.selectedTrainingActivity && !this.selectedTrainingActivity.universal; }
 }"
-x-init="ensureTrainingActivity()"
+x-init="ensureTrainingActivity(); loadCapacity(); $watch('scheduledDate', () => loadCapacity()); $watch('trainingActivityId', () => loadCapacity()); $watch('purposeOfVisit', () => loadCapacity())"
 >
 {% csrf_token %}
 {% if not reschedule_mode %}
@@ -347,9 +384,60 @@ its costing on, so the costing link is derived server-side and never asked for.
 </div>
 
 {% comment %}
-  The intervention is the operational need. For In-school Training it filters
-  the governed Activity Catalogue below; for other visit purposes it remains
-  the SSA outcome this support is intended to move.
+  Training first (owner, 2026-10-06): for an In-school Training the planner
+  chooses the training, and the SSA intervention linked to it in the Training
+  Catalogue follows it, before the date and the rest.
+{% endcomment %}
+{% comment %}
+  This select exists only for In-school Training, so switching to another
+  purpose removes its named input from the DOM and cannot post a stale
+  Catalogue choice. The backend validates the selected item's mapping again.
+{% endcomment %}
+<template x-if="showTrainingActivityPicker">
+<div class="space-y-1">
+  <label for="training_activity_id" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+  <select
+    name="catalogue_item_id"
+    id="training_activity_id"
+    x-model="trainingActivityId"
+    @change="onTrainingActivityChange()"
+    required
+    class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+    aria-describedby="training-catalogue-help"
+  >
+    <option value="">Select a training…</option>
+    <template x-for="activity in availableTrainingActivities" :key="activity.id">
+      <option :value="activity.id" x-text="activity.label" :disabled="isTrainingHeld(activity)"></option>
+    </template>
+  </select>
+  <p x-show="trainingLockReason" style="display:none" class="edify-note" data-tone="warning" role="note" data-training-entitlement-used>Only <strong x-text="universalTrainingNames"></strong> can still be scheduled: it is on top of the school&rsquo;s own training for the year.</p>
+  <p x-show="selectedTrainingActivity" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedTrainingActivity ? selectedTrainingActivity.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedTrainingActivity ? selectedTrainingActivity.ssaIndicator : ''"></span></p>
+  <p id="training-catalogue-help" class="edify-text-caption text-slate-500">After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
+</div>
+</template>
+<template x-if="showLinkedIntervention">
+<div class="space-y-1" data-training-ssa-intervention>
+  <span id="training-ssa-label" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</span>
+  <input type="text" readonly data-linked-intervention aria-labelledby="training-ssa-label" placeholder="Filled in from the training" :value="selectedTrainingActivity ? selectedTrainingActivity.ssaInterventionLabel : ''" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+  <p class="edify-text-caption text-slate-500">Set on the training in the Training Catalogue. It cannot be changed here.</p>
+</div>
+</template>
+<template x-if="showTrainingActivityPicker">
+<div class="space-y-1" data-training-ceiling>
+  {% comment %}What the officer this training belongs to has scheduled for
+  it this fiscal year, against the ceiling their Programme Lead set (owner,
+  2026-10-06). An in-school training takes one place.{% endcomment %}
+  <p x-show="selectedTrainingActivity && capacity.fy" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
+    <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for this training<span x-show="capacity.staffName"> by <span x-text="capacity.staffName"></span></span> in FY <span x-text="capacity.fy"></span>.</span></template>
+    <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled"></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
+  </p>
+  <p x-show="trainingCeilingFull" style="display:none" class="edify-note" data-tone="warning" role="alert" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools to this training in FY <span x-text="capacity.fy"></span>. Choose another training, or ask your Programme Lead to raise the ceiling.</p>
+</div>
+</template>
+{% comment %}
+  The intervention is the operational need: the SSA outcome this support is
+  intended to move. An In-school Training takes it from its training above,
+  and offers this select only for a training linked to none.
 {% endcomment %}
 <template x-if="showManualIntervention">
 <div class="space-y-1">
@@ -413,32 +501,6 @@ its costing on, so the costing link is derived server-side and never asked for.
 </div>
 </template>
 
-{% comment %}
-  This select exists only for In-school Training, so switching to another
-  purpose removes its named input from the DOM and cannot post a stale
-  Catalogue choice. The backend validates the selected item's mapping again.
-{% endcomment %}
-<template x-if="showTrainingActivityPicker">
-<div class="space-y-1">
-  <label for="training_activity_id" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
-  <select
-    name="catalogue_item_id"
-    id="training_activity_id"
-    x-model="trainingActivityId"
-    @change="onTrainingActivityChange()"
-    required
-    class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-    aria-describedby="training-catalogue-help"
-  >
-    <option value="">Select a training…</option>
-    <template x-for="activity in availableTrainingActivities" :key="activity.id">
-      <option :value="activity.id" x-text="activity.label"></option>
-    </template>
-  </select>
-  <p x-show="selectedTrainingActivity" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedTrainingActivity ? selectedTrainingActivity.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedTrainingActivity ? selectedTrainingActivity.ssaIndicator : ''"></span></p>
-  <p id="training-catalogue-help" class="edify-text-caption text-slate-500">After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
-</div>
-</template>
 <template x-if="showTrainingActivityPicker">
 {% include "partials/activities/facilitated_by_field.html" with field_id="school_facilitating_partner_id" %}
 </template>
@@ -565,7 +627,7 @@ class="w-full px-3 py-2 rounded-control border border-slate-200 bg-slate-50 focu
 
 <div class="drawer-footer">
 <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-<button type="submit" class="schedule-drawer-submit btn btn-primary h-8" :disabled="followUpBlocked">{% if reschedule_mode %}Save new date{% else %}Schedule visit{% endif %}</button>
+<button type="submit" class="schedule-drawer-submit btn btn-primary h-8" :disabled="followUpBlocked || trainingBlocked || trainingCeilingFull">{% if reschedule_mode %}Save new date{% else %}Schedule visit{% endif %}</button>
 </div>
 </form>
 {% endblock %}

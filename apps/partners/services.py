@@ -1217,8 +1217,12 @@ def _assert_partner_half_open(school, fields: dict) -> None:
     from .models import PartnerAssignment
 
     project = fields.get("project")
+    course = fields.get("training_course")
     shape = PartnerAssignment(
         project_id=fields.get("project_id") or getattr(project, "id", None),
+        # A universal training is on top of the package (owner, 2026-10-06).
+        training_course_id=fields.get("training_course_id")
+        or getattr(course, "id", None),
         support_type=fields.get("support_type"),
         visit_number=fields.get("visit_number"),
         training_number=fields.get("training_number"),

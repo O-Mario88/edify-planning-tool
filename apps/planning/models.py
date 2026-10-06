@@ -85,8 +85,14 @@ from apps.planning.execution_snapshot_models import (  # noqa: E402
     ExecutionPeriodSnapshot,
     SnapshotKind,
 )
+from apps.planning.training_ceiling_models import (  # noqa: E402
+    TrainingCeiling,
+    TrainingCountryCeiling,
+)
 
 __all__ = [
+    "TrainingCeiling",
+    "TrainingCountryCeiling",
     "ExecutionPeriodSnapshot",
     "SnapshotKind",
     "FiscalYearPlanningPolicy",

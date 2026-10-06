@@ -315,6 +315,17 @@ def my_plan_view(request):
     context["can_plan_clusters"] = RolePermissionService.can_view_page(
         request.user, "planning"
     ) and RolePermissionService.can_schedule_activity(request.user)
+    # My Training Summary (owner, 2026-10-06): the reader's own training
+    # ceilings and what they have scheduled under them, never another
+    # officer's (apps.planning.training_ceilings.own_summary).
+    from apps.planning.training_ceilings import own_summary, summary_totals
+
+    context["my_training_summary"] = own_summary(
+        request.user, str(context.get("fy") or get_operational_fy())
+    )
+    # The line over the card, in the Project Capacity shape (owner,
+    # 2026-10-06): trainings, ceilings, schools scheduled, balance, excess.
+    context["my_training_totals"] = summary_totals(context["my_training_summary"])
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
@@ -550,6 +561,7 @@ def activity_detail_view(request, activity_id):
         "can_cancel": _can_cancel(a, request.user),
         **_return_context(a),
         **_facilitator_context(request.user, a),
+        **_training_profile_context(a),
     }
     # ── IA review · IA-P: OneTest results ──
     # A delivered OneTest visit carries "Record learning results"; the link a
@@ -1973,6 +1985,95 @@ def _edit_drawer_context(user, a) -> dict:
         training, visit = pair
         context["other_half"] = visit if a.id == training.id else training
     context.update(_edit_project_context(user, a))
+    context.update(_edit_training_context(a))
+    return context
+
+
+def _training_profile_context(a) -> dict:
+    """What a training's profile says it is (owner, 2026-10-06): the training
+    it delivers, by the name it was scheduled under, and how it is delivered —
+    Group Training or In-School Training. A training that names none yet says
+    so, and its Edit drawer is where one is chosen."""
+    from apps.planning import training_ceilings
+
+    if not training_ceilings.is_training(a):
+        return {}
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES
+
+    name = ""
+    if training_ceilings.course_id_of(a):
+        course = a.training_course or a.catalogue_item
+        if a.activity_type in CLUSTER_MEETING_TYPES:
+            # A meeting keeps its own name; the training is named beside it.
+            name = (a.recommendation_source or {}).get("trainingCourseName") or (
+                course.display_name
+            )
+        else:
+            name = a.activity_name_snapshot or course.display_name
+    return {
+        "training_profile": {
+            "name": name,
+            "delivery": training_ceilings.DELIVERY_LABELS.get(
+                training_ceilings.delivery_of(a), ""
+            ),
+        }
+    }
+
+
+def _edit_training_context(a) -> dict:
+    """What the Edit drawer says about a training (owner, 2026-10-06).
+
+    Which training it delivers, as a list of every training to choose from —
+    empty when the plan names none yet ("click edit … the training field is
+    empty … get a dropdown of all the trainings and select the right one").
+    The SSA intervention it was scheduled under is read-only wherever the
+    Training Catalogue decides it, and follows the training chosen. For a
+    group delivery, the officer's ceiling is carried with this session's own
+    schools left out of what is already scheduled, so they are never counted
+    twice.
+    """
+    import json
+
+    from apps.activities.training_change import may_change_training, training_options
+    from apps.activity_catalogue.training_intervention import (
+        catalogue_sets_intervention,
+    )
+    from apps.planning import training_ceilings
+
+    if not training_ceilings.is_training(a):
+        return {}
+    course_id = training_ceilings.course_id_of(a)
+    course = a.training_course or (a.catalogue_item if course_id else None)
+    delivery = training_ceilings.delivery_of(a)
+    may_change = may_change_training(a)
+    options = training_options(a) if may_change else []
+    context = {
+        "edit_training": {
+            "id": course_id or "",
+            "name": course.display_name if course else "",
+            "delivery": training_ceilings.DELIVERY_LABELS.get(delivery, ""),
+            "may_change": may_change,
+            "options": options,
+            "options_json": json.dumps(
+                [
+                    {
+                        "id": option["id"],
+                        "label": option["label"],
+                        "ssaInterventionLabel": option["ssaInterventionLabel"],
+                        "plannerChooses": option["plannerChooses"],
+                    }
+                    for option in options
+                ]
+            ),
+            "intervention_locked": catalogue_sets_intervention(a),
+        }
+    }
+    if delivery == training_ceilings.GROUP:
+        context["edit_ceiling_json"] = json.dumps(
+            training_ceilings.capacity(
+                a.responsible_staff_id, course_id, a.fy, exclude_activity_id=a.id
+            )
+        )
     return context
 
 
@@ -2107,6 +2208,7 @@ def edit_activity_action(request, activity_id):
         ("facilitatingPartnerId", "facilitating_partner_id"),
         ("schoolId", "school_id"),
         ("projectId", "project_id"),
+        ("trainingCourseId", "training_course_id"),
     ):
         if name in request.POST:
             data[key] = request.POST.get(name, "").strip()

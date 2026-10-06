@@ -9,6 +9,15 @@ interventions and posted the course's own intervention from a hidden field;
 its meeting listed only the recommended interventions. Both sat behind a
 "Show all" step. The fixture's cluster is strong in Christlike Behaviour and
 weak in Leadership, so a drawer that still hid the strong one would fail here.
+
+Owner, 2026-10-06, narrowing that for trainings: a training is scheduled
+under the SSA intervention the Training Catalogue links it to, shown
+read-only and taken from the catalogue again on save. What is pinned here
+still holds beside that rule: no training is hidden by the cluster's scores,
+no hidden field posts an intervention, and the list of all eight is what a
+planner is given for a training the catalogue maps to any SSA intervention,
+for a cluster meeting, and for a partner hand-over. That the linked
+intervention wins is pinned in apps.planning.test_training_ceilings.
 """
 
 from __future__ import annotations

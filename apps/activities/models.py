@@ -19,6 +19,7 @@ from apps.core.enums import (
     ClusterMeetingSlot,
     DeliveryType,
     EvidenceStatus,
+    MeetingKind,
     ExecutorType,
     PaymentStatus,
     ProgrammeActivityType,
@@ -273,6 +274,16 @@ class Activity(SoftDeleteModel):
     )
     cluster_slot = models.CharField(
         max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True
+    )
+    # What a cluster meeting is for (owner, 2026-10-06): a training delivered
+    # at the meeting — which names its course in ``training_course``, carries
+    # the course's SSA intervention and counts its invited schools under the
+    # officer's training ceiling like any group training — a meeting only, or
+    # a cluster leaders' meeting. Blank on rows written before the kinds
+    # existed and on everything that is not a cluster meeting; a blank meeting
+    # consumes no training ceiling.
+    meeting_kind = models.CharField(
+        max_length=24, choices=MeetingKind.choices, blank=True, default=""
     )
 
     # Core Schools tracking fields

@@ -958,8 +958,48 @@ def schedule_cluster_activity(data: dict, principal) -> dict:
     if not data.get("clusterId"):
         raise BadRequest("A cluster is required for a cluster activity.")
     return create_activity(
-        {**data, "activityType": kind, "requireCatalogue": True}, principal
+        {**data, "activityType": kind, "requireCatalogue": True},
+        principal,
+        training_course=_meeting_training_course(kind, data),
     )
+
+
+def _meeting_training_course(kind: str, data: dict):
+    """The Training Catalogue entry a cluster meeting classified *Training*
+    delivers (owner, 2026-10-06); None for a group training, which names its
+    course as its catalogue item, and for a meeting of any other type.
+
+    Read from the id the request carries and checked against the governed
+    list here, so the drawer and an API caller meet the same rule: a
+    Training meeting names an active training that may be delivered to a
+    cluster, and nothing else is accepted in its place.
+    """
+    from apps.core.enums import MeetingKind
+    from apps.core.exceptions import BadRequest
+
+    if kind != "cluster_meeting" or data.get("meetingKind") != MeetingKind.TRAINING:
+        return None
+    course_id = str(data.get("trainingCourseId") or "").strip()
+    if not course_id:
+        raise BadRequest("Select the Training this cluster meeting delivers.")
+    from apps.activity_catalogue.availability import (
+        CLUSTER,
+        validate_priority_training_selection,
+    )
+    from apps.activity_catalogue.services import get_selectable_item
+
+    on_date = None
+    if data.get("scheduledDate"):
+        try:
+            on_date = datetime.fromisoformat(
+                str(data["scheduledDate"]).replace("Z", "+00:00")
+            ).date()
+        except ValueError as exc:
+            raise BadRequest("Choose a valid meeting date.") from exc
+    validate_priority_training_selection(
+        course_id, planning_context=CLUSTER, on_date=on_date
+    )
+    return get_selectable_item(course_id, on_date=on_date)
 
 
 def _serialize_plan(p: MonthlyPlan, include_activities: bool = False) -> dict:

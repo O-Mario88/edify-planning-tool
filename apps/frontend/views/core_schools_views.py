@@ -1124,9 +1124,15 @@ def _schedule_core_in_school_training(
         "catalogueItemId": course_id,
         "responsibleStaffId": responsible_staff_id,
     }
+    # A universal training is on top of the package's four (owner,
+    # 2026-10-06: "School Improvement Planning training is universal every
+    # schools can attend"): it is scheduled like any other and takes no slot.
+    from apps.planning.training_entitlement import is_universal
+
+    universal = is_universal(course_id)
     with transaction.atomic():
         plan = _locked_core_plan(school, scheduled_for)
-        if not plan:
+        if not plan and not universal:
             raise BadRequest("This school does not have an active core package.")
         # No first-visit gate here any more: a TRAINING slot is not a visit
         # slot, and refusing one on the state of the other is how a core
@@ -1138,25 +1144,28 @@ def _schedule_core_in_school_training(
         # anybody's half.
         requested = request.POST.get("training_number", "").strip()
         training_sequence = int(requested) if requested else 1
-        slot = CorePackageSchedulingService.assert_can_schedule(
-            plan=plan,
-            school=school,
-            activity_type="training",
-            sequence_number=training_sequence,
-            scheduled_for=scheduled_for,
-            is_partner_delivery=bool(partner_id),
-        )
-        training_sequence = slot.sequence_number
+        slot = None
+        if not universal:
+            slot = CorePackageSchedulingService.assert_can_schedule(
+                plan=plan,
+                school=school,
+                activity_type="training",
+                sequence_number=training_sequence,
+                scheduled_for=scheduled_for,
+                is_partner_delivery=bool(partner_id),
+            )
+            training_sequence = slot.sequence_number
         created = schedule_in_school_training_pair(payload, request.user)
-        CorePackageSchedulingService.commit_schedule(
-            slot,
-            activity_id=created["id"],
-            scheduled_for=scheduled_date,
-            scheduled_month=str(payload.get("plannedMonth")),
-            scheduled_week=payload.get("plannedWeek"),
-            assigned_staff_id=responsible_staff_id,
-            partner_id=partner_id,
-        )
+        if slot is not None:
+            CorePackageSchedulingService.commit_schedule(
+                slot,
+                activity_id=created["id"],
+                scheduled_for=scheduled_date,
+                scheduled_month=str(payload.get("plannedMonth")),
+                scheduled_week=payload.get("plannedWeek"),
+                assigned_staff_id=responsible_staff_id,
+                partner_id=partner_id,
+            )
         audit_log(
             action="schedule_core_training",
             subject_kind="Activity",
@@ -1169,8 +1178,16 @@ def _schedule_core_in_school_training(
         request,
         created,
         scheduled_date,
-        f"Core Training T{training_sequence} ({created['trainingCourseLabel']}) and "
-        "its school visit scheduled successfully.",
+        (
+            f"{created['trainingCourseLabel']} and its school visit scheduled. "
+            "It is on top of the package's four trainings."
+        )
+        if universal
+        else (
+            f"Core Training T{training_sequence} "
+            f"({created['trainingCourseLabel']}) and "
+            "its school visit scheduled successfully."
+        ),
     )
 
 
@@ -1332,20 +1349,25 @@ def core_schedule_training_action(request):
 
     from apps.activities.services import create as create_activity
 
+    # A universal training is on top of the package's four (owner,
+    # 2026-10-06): it is scheduled like any other and takes no slot.
+    universal = bool(course.universal_training)
     try:
         with transaction.atomic():
             plan = _locked_core_plan(school, scheduled_for)
-            if not plan:
+            if not plan and not universal:
                 raise BadRequest("This school does not have an active core package.")
-            slot = CorePackageSchedulingService.assert_can_schedule(
-                plan=plan,
-                school=school,
-                activity_type="training",
-                sequence_number=training_sequence,
-                scheduled_for=scheduled_for,
-                is_partner_delivery=bool(partner_id),
-            )
-            training_sequence = slot.sequence_number
+            slot = None
+            if not universal:
+                slot = CorePackageSchedulingService.assert_can_schedule(
+                    plan=plan,
+                    school=school,
+                    activity_type="training",
+                    sequence_number=training_sequence,
+                    scheduled_for=scheduled_for,
+                    is_partner_delivery=bool(partner_id),
+                )
+                training_sequence = slot.sequence_number
 
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
@@ -1353,22 +1375,23 @@ def core_schedule_training_action(request):
             act_data = create_activity(
                 payload,
                 request.user,
-                core_slot_verified=True,
+                core_slot_verified=slot is not None,
                 training_course=course,
             )
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
             # owner.
-            CorePackageSchedulingService.commit_schedule(
-                slot,
-                activity_id=act_data["id"],
-                scheduled_for=scheduled_date,
-                scheduled_month=str(payload.get("plannedMonth")),
-                scheduled_week=payload.get("plannedWeek"),
-                assigned_staff_id=responsible_staff_id,
-                partner_id=partner_id,
-            )
+            if slot is not None:
+                CorePackageSchedulingService.commit_schedule(
+                    slot,
+                    activity_id=act_data["id"],
+                    scheduled_for=scheduled_date,
+                    scheduled_month=str(payload.get("plannedMonth")),
+                    scheduled_week=payload.get("plannedWeek"),
+                    assigned_staff_id=responsible_staff_id,
+                    partner_id=partner_id,
+                )
 
             # Audit log
             audit_log(
@@ -1384,7 +1407,12 @@ def core_schedule_training_action(request):
                 request,
                 act_data,
                 scheduled_date,
-                f"Core Training T{training_sequence} scheduled successfully.",
+                (
+                    f"{course.display_name} scheduled. It is on top of the "
+                    "package's four trainings."
+                )
+                if universal
+                else f"Core Training T{training_sequence} scheduled successfully.",
             )
     except Exception as e:
         return error_fragment(e, status=400)
@@ -1592,12 +1620,11 @@ def core_assign_partner_action(request):
                 catalogue_item = resolve_item_for_workflow_kind(
                     ActivityType.IN_SCHOOL_TRAINING
                 )
-                # The planner's focus, any of the eight (owner, 2026-09-30);
-                # blank keeps the course's own.
-                focus_intervention = (
-                    chosen_focus
-                    if chosen_focus in SsaIntervention.values
-                    else selected["ssaIntervention"] or None
+                # The training's own intervention (owner, 2026-10-06): the
+                # one the Training Catalogue links it to. The planner's
+                # choice stands only for a training linked to none.
+                focus_intervention = selected["ssaIntervention"] or (
+                    chosen_focus if chosen_focus in SsaIntervention.values else None
                 )
                 linked = ", ".join(selected["priorityTitles"])
                 recommendation_reason = (

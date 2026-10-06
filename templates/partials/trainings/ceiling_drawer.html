@@ -1,0 +1,108 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Set Training Ceiling / Edit ceiling / Remove ceiling (owner, 2026-10-06), in
+the Project Capacity drawer's shape. A Programme Lead says how many schools one
+officer they supervise may schedule for one training in one fiscal year, group
+and in-school deliveries together. It is a ceiling on scheduling: nothing is
+handed to the officer by setting it. Choosing the officer, the training or the
+year reloads the drawer with what that officer has already scheduled, counted
+from the plans themselves. apps.planning.training_ceilings.set_ceiling checks
+all of it again.
+{% endcomment %}
+
+{% block drawer_title %}{% if mode == "edit" %}Edit training ceiling{% elif mode == "remove" %}Remove training ceiling{% elif mode == "missing" %}Training ceiling not found{% else %}Set training capacity{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if mode == "missing" %}
+<p class="edify-note" data-tone="warning">That ceiling is not for an officer you supervise, or it no longer exists.</p>
+{% elif not may_set %}
+<p class="edify-note" data-tone="warning" data-ceiling-no-team>A Programme Lead sets the training ceilings of the officers they supervise. No officer is recorded under you yet.</p>
+{% else %}
+<form {% if mode == "edit" %}hx-post="/training-ceilings/{{ row.id }}/edit"{% elif mode == "remove" %}hx-post="/training-ceilings/{{ row.id }}/remove"{% else %}hx-post="/training-ceilings/set"{% endif %} hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-training-ceiling-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if mode == "edit" or mode == "remove" %}
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-ceiling-current>
+    <div><dt>Staff</dt><dd>{{ row.staff.user.name }}</dd></div>
+    <div><dt>Training</dt><dd>{{ row.training.display_name }}</dd></div>
+    <div><dt>Fiscal year</dt><dd>FY {{ row.fy }}</dd></div>
+    <div><dt>Ceiling</dt><dd><strong>{{ row.ceiling }}</strong></dd></div>
+    <div><dt>Schools scheduled</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.group }} group training, {{ current.inSchool }} in-school training)</dd></div>
+  </dl>
+  </div>
+  {% else %}
+  <div class="space-y-1">
+    <label for="ceiling-staff" class="block edify-text-caption font-semibold text-slate-600">Staff member <span class="text-rose-500">*</span></label>
+    <select id="ceiling-staff" name="staff_id" required
+            hx-get="/training-ceilings/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">Choose a staff member</option>
+      {% for staff in staff_options %}<option value="{{ staff.id }}"{% if staff.id == values.staff_id %} selected{% endif %}>{{ staff.user.name }}</option>{% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">The officers you supervise.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="ceiling-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+    <select id="ceiling-training" name="training_id" required
+            hx-get="/training-ceilings/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">Choose a training</option>
+      {% for training in trainings %}<option value="{{ training.id }}"{% if training.id == values.training_id %} selected{% endif %}>{{ training.name }}{% if training.intervention %} · {{ training.intervention }}{% endif %}</option>{% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">From the Training Catalogue, with the SSA intervention each is linked to.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="ceiling-fy" class="block edify-text-caption font-semibold text-slate-600">Fiscal year <span class="text-rose-500">*</span></label>
+    <select id="ceiling-fy" name="fy" required
+            hx-get="/training-ceilings/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      {% for option in fy_options %}<option value="{{ option }}"{% if option == values.fy %} selected{% endif %}>FY {{ option }}</option>{% endfor %}
+    </select>
+  </div>
+
+  {% if current %}
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-ceiling-current>
+    <div><dt>Schools scheduled</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.group }} group training, {{ current.inSchool }} in-school training)</dd></div>
+    <div><dt>Ceiling now</dt><dd>{% if current.managed %}<strong>{{ current.ceiling }}</strong>{% else %}None set{% endif %}</dd></div>
+  </dl>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if mode == "remove" %}
+  <p class="edify-note" data-tone="warning" role="note">With no ceiling, {{ row.staff.user.name }} schedules {{ row.training.display_name }} without a limit, as before one was set. The schools already scheduled stay as they are.</p>
+  {% else %}
+  <div class="space-y-1">
+    <label for="ceiling-value" class="block edify-text-caption font-semibold text-slate-600">Training ceiling <span class="text-rose-500">*</span></label>
+    <input id="ceiling-value" name="ceiling" type="number" inputmode="numeric" min="1" step="1" required value="{{ values.ceiling }}"
+           aria-describedby="ceiling-value-help"
+           class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+    <p id="ceiling-value-help" class="edify-text-caption text-slate-500">The most schools this staff member may schedule for this training in the year, group and in-school training together. Scheduled, balance and excess are counted for you.</p>
+  </div>
+  {% endif %}
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if mode == "remove" %}
+    <button type="submit" name="save" value="1" class="btn btn-danger h-8">Remove ceiling</button>
+    {% else %}
+    {% if existing %}
+    <button type="button" hx-get="/training-ceilings/{{ existing.id }}/remove" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" data-remove-ceiling>Remove ceiling</button>
+    {% elif mode == "edit" %}
+    <button type="button" hx-get="/training-ceilings/{{ row.id }}/remove" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" data-remove-ceiling>Remove ceiling</button>
+    {% endif %}
+    <button type="submit" name="save" value="1" class="btn btn-primary h-8">Save ceiling</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

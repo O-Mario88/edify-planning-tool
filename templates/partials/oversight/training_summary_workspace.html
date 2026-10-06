@@ -1,0 +1,35 @@
+{% load components %}
+{% comment %}
+The Training Summary lens of Planning Oversight (owner, 2026-10-06): staff and
+the summary of all their planned trainings. A Programme Lead reads the
+officers they supervise and sets each one's ceiling from the page header's
+capacity button; the Country Director, Impact Assessment and Admin read every
+officer in the country, or one Programme Lead's team. Admin and Impact
+Assessment set the Country Ceiling; the Country Director sets nothing.
+{% endcomment %}
+<div class="space-y-4" data-training-summary-workspace>
+  {% filter_bar action=base_url|default:"/team-planning-oversight/" label="Training summary filters" %}
+    <input type="hidden" name="view" value="trainings">
+    <label class="block">
+      <span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for option in fy_options %}
+        <option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY {{ option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if training_summary.leads %}
+    <label class="block">
+      <span class="edify-filter-label">Programme Lead</span>
+      <select name="program_lead" aria-label="Programme Lead" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All Programme Leads</option>
+        {% for lead_id, lead_name in training_summary.leads %}
+        <option value="{{ lead_id }}"{% if lead_id == training_summary.lead %} selected{% endif %}>{{ lead_name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
+  {% endfilter_bar %}
+
+  {% include "partials/trainings/summary_matrix.html" with summary=training_summary table_name="training-summary" table_title="Staff and the summary of all their planned trainings" %}
+</div>
