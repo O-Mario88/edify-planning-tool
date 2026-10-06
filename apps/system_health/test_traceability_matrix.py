@@ -19,12 +19,21 @@ on purpose -- and asserts it saw each. If the tracer stops seeing, these go red
 before any conclusion is drawn from a zero.
 
 The zero that matters is pinned separately, in ``TheJourneysNeverKnockTest``.
+
+A third failure was found on 2026-10-06: the same code rebuilt into a different
+matrix, three ways in one day. What a test was seen to touch depended on which
+test had been first to import a file, on what the process had already built
+and kept, and on how long the machine took. ``ImportingIsNotRunningTest``,
+``TheClockStandsStillTest`` and ``OneInterpreterPerTestTest`` each make one of
+those happen on purpose and hold the tracer to the same record regardless.
 """
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
+import time
 import unittest
 from pathlib import Path
 
@@ -33,6 +42,7 @@ from django.test import SimpleTestCase, TestCase
 
 from apps.core.tests.release_journeys import JOURNEYS
 from apps.system_health.traceability import (
+    REPO_ROOT,
     Instrumentation,
     Recording,
     TestPointerError,
@@ -40,6 +50,7 @@ from apps.system_health.traceability import (
     fingerprint_sources,
     normalise_route,
     split_service_path,
+    trace_in_its_own_interpreter,
     trace_test,
 )
 
@@ -60,6 +71,69 @@ _CONTROL = "apps.system_health.test_traceability_matrix:TracerFixtures."
 
 def load_matrix() -> dict:
     return json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
+
+
+#: A file the tracer takes for part of the platform, though it exists nowhere
+#: but here: it is compiled under a path inside ``apps/``, and a path is all the
+#: trace hook reads. It does what a real module does when it is imported --
+#: runs a function while its body runs, defines others for later -- and it
+#: builds one thing once and keeps it, as a service keeps a compiled template
+#: or a filled ``lru_cache``.
+_CONTROL_MODULE = "apps/system_health/_traceability_control_module.py"
+_CONTROL_MODULE_SOURCE = """
+def run_while_importing():
+    return "ran while importing"
+
+
+def run_when_called():
+    return "ran when called"
+
+
+_kept = {}
+
+
+def build_once():
+    return "built"
+
+
+def needs_what_is_built_once():
+    if "it" not in _kept:
+        _kept["it"] = build_once()
+    return _kept["it"]
+
+
+WHILE_IMPORTING = run_while_importing()
+"""
+
+
+def _import_the_control_module() -> dict:
+    """Run the control module's body, which is what importing a file does."""
+    namespace: dict = {}
+    body = compile(_CONTROL_MODULE_SOURCE, str(REPO_ROOT / _CONTROL_MODULE), "exec")
+    exec(body, namespace)  # nosec B102 - the source is the constant above
+    return namespace
+
+
+#: Imported once per process, like any module: what it keeps, it keeps for
+#: every test this process goes on to run.
+_CONTROL_MODULE_HERE = _import_the_control_module()
+
+
+def _seconds_a_clock_says_real_work_took() -> float:
+    """Do some real work without reading a clock, then ask one how long it took.
+
+    A few hundredths of a second on any machine this suite runs on, so a clock
+    that measures says so by a wide margin and a clock that does not says one
+    reading's worth.
+    """
+    started = time.monotonic()
+    sum(range(3_000_000))
+    return time.monotonic() - started
+
+
+#: Far above one reading of the tracer's clock (a millionth of a second) and
+#: far below what the work above really takes.
+_A_MEASURABLE_TIME = 0.001
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,6 +184,55 @@ class TracerFixtures(TestCase):
             is_authenticated = True
 
         self.assertFalse(has_permission(_Nobody(), "traceability.controlPermission"))
+
+    def test_fixture_imports_a_file_and_does_not_use_it(self):
+        module = _import_the_control_module()
+        self.assertEqual(module["WHILE_IMPORTING"], "ran while importing")
+
+    def test_fixture_imports_a_file_and_then_uses_it(self):
+        module = _import_the_control_module()
+        self.assertEqual(module["run_when_called"](), "ran when called")
+
+    def test_fixture_needs_what_a_process_builds_once(self):
+        self.assertEqual(_CONTROL_MODULE_HERE["needs_what_is_built_once"](), "built")
+
+    def test_fixture_says_whether_time_passed(self):
+        from apps.audit.services import log as audit_log
+
+        took = _seconds_a_clock_says_real_work_took()
+        verdict = "time_passed" if took >= _A_MEASURABLE_TIME else "no_time_passed"
+        audit_log(
+            action=f"traceability.control.{verdict}",
+            subject_kind="Control",
+            subject_id="clock",
+        )
+
+    def test_fixture_waits_and_says_how_far_the_clock_moved(self):
+        from apps.audit.services import log as audit_log
+
+        started = time.monotonic()
+        time.sleep(0.01)
+        moved = time.monotonic() - started
+        # What was asked for and one reading of the clock, give or take what a
+        # float this size can hold. A clock that measured the wait would say
+        # more by the time a sleep overruns, which is never this little.
+        exact = abs(moved - 0.010001) < 0.000002
+        audit_log(
+            action=f"traceability.control.waited_{'exactly' if exact else 'roughly'}",
+            subject_kind="Control",
+            subject_id="clock",
+        )
+
+    def test_fixture_says_what_day_it_is(self):
+        from django.utils import timezone
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=f"traceability.control.today_{timezone.localdate().isoformat()}",
+            subject_kind="Control",
+            subject_id="clock",
+        )
 
     def test_fixture_fails_on_purpose(self):
         self.fail("this fixture exists to prove a red test is never traced")
@@ -189,6 +312,154 @@ class InstrumentationIsReversibleTest(SimpleTestCase):
             during = len(post_save.receivers)
         self.assertGreater(during, before)
         self.assertEqual(len(post_save.receivers), before)
+
+
+class ImportingIsNotRunningTest(SimpleTestCase):
+    """A file being imported is being read, not used.
+
+    Its body, its class bodies and its decorators run once per process, for
+    whichever test needs the file first. Counted as execution, that listed
+    nine files under journey 1 that it never used -- it comes first in the
+    manifest, so it was first to import them -- and two more,
+    ``presence_labels.py`` and ``return_day.py``, whenever the matrix was built
+    with ``--keepdb``, because no migration had then imported them beforehand.
+    """
+
+    databases = "__all__"
+
+    def test_a_file_that_is_only_imported_is_not_recorded(self):
+        recording = trace_test(
+            _CONTROL + "test_fixture_imports_a_file_and_does_not_use_it"
+        )
+        self.assertNotIn(_CONTROL_MODULE, recording.services)
+        self.assertEqual(
+            [name for name in recording.functions if name.startswith(_CONTROL_MODULE)],
+            [],
+        )
+
+    def test_what_a_file_runs_while_it_is_imported_is_not_recorded(self):
+        recording = trace_test(
+            _CONTROL + "test_fixture_imports_a_file_and_then_uses_it"
+        )
+        self.assertNotIn(f"{_CONTROL_MODULE}::<module>", recording.functions)
+        self.assertNotIn(f"{_CONTROL_MODULE}::run_while_importing", recording.functions)
+
+    def test_what_is_called_once_it_is_imported_is_recorded(self):
+        """The other half: the import must not hide the use that follows it."""
+        recording = trace_test(
+            _CONTROL + "test_fixture_imports_a_file_and_then_uses_it"
+        )
+        self.assertIn(f"{_CONTROL_MODULE}::run_when_called", recording.functions)
+        self.assertIn(_CONTROL_MODULE, recording.services)
+
+
+class TheClockStandsStillTest(SimpleTestCase):
+    """How long the machine took decides nothing a traced test is seen to do.
+
+    A presence beat credits time only once a second has passed since the one
+    before, and a request is logged as slow only when it took a second and a
+    half. The first happened to journey 3 on a busy afternoon and not on a
+    quiet one; the second to journey 1 in one of two runs made minutes apart.
+    """
+
+    databases = "__all__"
+
+    def test_this_suite_can_tell_when_time_passes(self):
+        """Or the control below would pass on a clock that measures."""
+        self.assertGreaterEqual(
+            _seconds_a_clock_says_real_work_took(), _A_MEASURABLE_TIME
+        )
+
+    def test_no_time_passes_while_a_test_is_traced(self):
+        recording = trace_test(_CONTROL + "test_fixture_says_whether_time_passed")
+        self.assertIn("traceability.control.no_time_passed", recording.audit_actions)
+        self.assertNotIn("traceability.control.time_passed", recording.audit_actions)
+
+    def test_a_wait_moves_the_clock_by_what_was_asked_for(self):
+        """Or a loop that waits for a deadline would never reach it."""
+        recording = trace_test(
+            _CONTROL + "test_fixture_waits_and_says_how_far_the_clock_moved"
+        )
+        self.assertIn("traceability.control.waited_exactly", recording.audit_actions)
+
+    def test_it_is_still_today(self):
+        """The test database is seeded for today; the trace runs on that day."""
+        from django.utils import timezone
+
+        before = timezone.localdate()
+        recording = trace_test(_CONTROL + "test_fixture_says_what_day_it_is")
+        after = timezone.localdate()
+        said = {
+            action.rsplit("_", 1)[-1]
+            for action in recording.audit_actions
+            if action.startswith("traceability.control.today_")
+        }
+        self.assertTrue(said, "the fixture did not say what day it was")
+        self.assertLessEqual(said, {before.isoformat(), after.isoformat()})
+
+    def test_it_gives_the_clock_back(self):
+        sleep = time.sleep
+        trace_test(_CONTROL + "test_fixture_checks_one_permission")
+        self.assertIs(time.sleep, sleep)
+        self.assertIs(type(datetime.datetime.now()), datetime.datetime)
+        self.assertGreaterEqual(
+            _seconds_a_clock_says_real_work_took(), _A_MEASURABLE_TIME
+        )
+
+
+class OneInterpreterPerTestTest(SimpleTestCase):
+    """What ran before does not decide what a test is seen to touch.
+
+    Traced one after another in one process, the first test to need a compiled
+    template or a filled cache was seen to build it and every later one was
+    not: with the manifest read backwards, fifteen of the twenty-six tests were
+    seen to call something different and six to use different files. The
+    matrix is built with ``trace_in_its_own_interpreter``.
+    """
+
+    databases = "__all__"
+
+    _BUILD = f"{_CONTROL_MODULE}::build_once"
+    _NEEDS = _CONTROL + "test_fixture_needs_what_a_process_builds_once"
+
+    def test_a_process_that_has_built_it_is_not_seen_to_build_it_again(self):
+        """The defect, held still: this is why ``trace_test`` is not enough."""
+        _CONTROL_MODULE_HERE["needs_what_is_built_once"]()
+        self.assertNotIn(self._BUILD, trace_test(self._NEEDS).functions)
+
+    def test_started_alone_a_test_is_seen_to_build_what_it_needs(self):
+        _CONTROL_MODULE_HERE["needs_what_is_built_once"]()
+        first = trace_in_its_own_interpreter(self._NEEDS)
+        self.assertIn(self._BUILD, first.functions)
+        # And again: the same test, the same record.
+        self.assertEqual(trace_in_its_own_interpreter(self._NEEDS), first)
+
+    def test_a_failing_test_is_refused_from_there_too(self):
+        with self.assertRaises(TestPointerError) as refused:
+            trace_in_its_own_interpreter(_CONTROL + "test_fixture_fails_on_purpose")
+        self.assertIn("did not pass while tracing", str(refused.exception))
+
+    def test_an_interpreter_that_cannot_start_the_test_says_why(self):
+        with self.assertRaises(TestPointerError) as refused:
+            trace_in_its_own_interpreter("apps.no_such_app.tests:Nothing.test_nothing")
+        self.assertIn("could not be traced", str(refused.exception))
+
+    def test_a_recording_survives_the_trip_between_interpreters(self):
+        recording = Recording(
+            routes={"GET /x"},
+            services={"apps/x/y.py"},
+            functions={"apps/x/y.py::z"},
+            models_written={"x.Y"},
+            permissions={"x.view"},
+            pages={"x"},
+            object_guards={"apps/x/y.py::assert_may_write_school"},
+            notifications={"x.created"},
+            audit_actions={"x.create"},
+        )
+        self.assertEqual(
+            Recording.from_dict(json.loads(json.dumps(recording.as_dict()))),
+            recording,
+        )
 
 
 class ServicePathResolutionTest(SimpleTestCase):

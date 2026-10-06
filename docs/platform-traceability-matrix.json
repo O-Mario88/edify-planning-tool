@@ -1,7 +1,7 @@
 {
   "generatedBy": "python manage.py build_traceability_matrix",
   "requirementSource": "apps.core.tests.release_journeys.JOURNEYS",
-  "method": "Each requirement's covering test is executed with the platform instrumented; every cell records what the run touched, not what anyone asserts it should touch.",
+  "method": "Each requirement's covering test is executed with the platform instrumented; every cell records what the run touched, not what anyone asserts it should touch. Each test runs in an interpreter of its own, on a clock that does not measure how long it took, and a file being imported is not a file being used -- so the same code gives the same record.",
   "requirements": [
     {
       "requirement": "journey-01",
@@ -33,8 +33,6 @@
         "GET /performance-conversation"
       ],
       "services": [
-        "apps/accounts/auth_backend.py",
-        "apps/accounts/lockout_service.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
@@ -55,7 +53,6 @@
         "apps/budget/services.py",
         "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
-        "apps/clusters/catchment.py",
         "apps/clusters/eligibility.py",
         "apps/clusters/facilitation.py",
         "apps/clusters/membership_history.py",
@@ -90,13 +87,11 @@
         "apps/core_schools/package_credit.py",
         "apps/core_schools/visit_routing.py",
         "apps/daily_visit_batches/districts.py",
-        "apps/daily_visit_batches/exceptions.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/requirements.py",
         "apps/frontend/templatetags/components.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/views/hr_views.py",
@@ -129,11 +124,7 @@
         "apps/planning/training_entitlement.py",
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
-        "apps/professional_development/approval_service.py",
-        "apps/professional_development/completion_service.py",
-        "apps/professional_development/fund_service.py",
         "apps/professional_development/services.py",
-        "apps/professional_development/uploads.py",
         "apps/projects/models.py",
         "apps/projects/signals.py",
         "apps/projects/staff_priorities.py",
@@ -919,7 +910,6 @@
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
         "apps/activities/services.py",
-        "apps/activities/training_history.py",
         "apps/activity_catalogue/training_intervention.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -1483,7 +1473,6 @@
         "apps/planning/visit_gate.py",
         "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
-        "apps/projects/authority.py",
         "apps/projects/capacity.py",
         "apps/projects/dashboard_service.py",
         "apps/projects/handlers.py",
@@ -2108,7 +2097,6 @@
         "apps/hr/milestone_progress.py",
         "apps/hr/team_roster.py",
         "apps/integrations/services.py",
-        "apps/my_plan/past_due_service.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
         "apps/planning/country_oversight/freshness.py",
@@ -3364,8 +3352,6 @@
         "apps/planning/fy_policy.py",
         "apps/planning/oversight_service.py",
         "apps/planning/risk_service.py",
-        "apps/planning/training_ceilings.py",
-        "apps/planning/training_summary.py",
         "apps/planning/urgent_attention.py",
         "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
@@ -4733,9 +4719,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "b9ae903421a400fa684f68cb316ab2a499033d3fd88de207bd6cd3d0d0a2506d",
-    "sources": "a64cd4ac88212780bf444a33447635b19e9e06ea6736c06c0a3481091a072c7c",
-    "sourceCount": 245,
+    "payload": "f2bd755d228efffb0faeb1dec1c4f581c7d557a29a8a939415f6dbb6a267cfc2",
+    "sources": "157223543f0888055f75c45911ad04828aaae987f393a998d2868d2309cf79fe",
+    "sourceCount": 234,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
