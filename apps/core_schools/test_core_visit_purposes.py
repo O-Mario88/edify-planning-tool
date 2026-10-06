@@ -348,12 +348,15 @@ class CoreTrainingCatalogueTest(_CoreFixture):
         self.assertEqual(response.status_code, 200, response.content[:300])
         return Activity.objects.get(school=self.school)
 
-    def test_the_planner_aims_a_core_training_at_any_intervention(self):
-        """Owner, 2026-09-30: "leave the users to select any SSA intervention".
-        The drawer's intervention was a hidden copy of the course's, and the
-        save ignored it."""
+    def test_a_core_training_takes_its_trainings_own_intervention(self):
+        """Owner, 2026-10-06: the SSA intervention is the one the Training
+        Catalogue links the training to, and a scheduler does not pick
+        another. A post naming Christlike Behaviour for a Leadership training
+        is saved under Leadership. This reverses the rule of 2026-09-30
+        ("leave the users to select any SSA intervention"), which this test
+        pinned until then."""
         training = self._schedule_training(focus_intervention="christlike_behaviour")
-        self.assertEqual(training.focus_intervention, "christlike_behaviour")
+        self.assertEqual(training.focus_intervention, "leadership")
 
     def test_a_blank_focus_keeps_the_courses_own_intervention(self):
         training = self._schedule_training(focus_intervention="")
@@ -730,8 +733,11 @@ class CorePartnerPurposeTest(_CoreFixture):
             [("client_partner_visit", 41_000)],
         )
 
-    def test_an_in_school_training_handoff_takes_any_intervention(self):
-        """Owner, 2026-09-30: the planner chooses the focus, not the course."""
+    def test_an_in_school_training_handoff_takes_its_trainings_intervention(self):
+        """Owner, 2026-10-06: a training is handed over under the SSA
+        intervention the Training Catalogue links it to, whatever the request
+        names. This reverses the rule of 2026-09-30 ("the planner chooses the
+        focus, not the course"), which this test pinned until then."""
         self._take_first_visit()
         course = ActivityCatalogueItem.objects.get(stable_code="SCHOOL_LEADERSHIP")
         response = self._assign(
@@ -741,7 +747,7 @@ class CorePartnerPurposeTest(_CoreFixture):
         )
         self.assertEqual(response.status_code, 200, response.content[:300])
         pa = PartnerAssignment.objects.get(school=self.school)
-        self.assertEqual(pa.focus_intervention, "financial_health")
+        self.assertEqual(pa.focus_intervention, "leadership")
 
     def test_the_handoff_drawer_offers_every_intervention_for_a_training(self):
         from apps.core.enums import SsaIntervention

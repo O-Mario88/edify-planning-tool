@@ -54,6 +54,7 @@ from .views import (
     today_views,
     undo_views,
     staff_activity_views,
+    training_ceiling_views,
 )
 
 app_name = "frontend"
@@ -106,10 +107,61 @@ urlpatterns = [
         catalogue_views.activity_catalogue_lifecycle_action,
         name="activity_catalogue_lifecycle",
     ),
+    # A training's profile is its Activity Catalogue record; Edit opens here
+    # (owner, 2026-10-06).
+    path(
+        "settings/activity-catalogue/<str:item_id>/edit",
+        catalogue_views.activity_catalogue_edit_action,
+        name="activity_catalogue_edit",
+    ),
     path(
         "settings/activity-catalogue/reviews/<str:review_id>/resolve",
         catalogue_views.activity_catalogue_review_resolve_action,
         name="activity_catalogue_review_resolve",
+    ),
+    # Training ceilings and the training summary (owner, 2026-10-06): the
+    # Programme Lead sets how many schools an officer may schedule for a
+    # training; the drawers read what is left; every figure opens its schools.
+    path(
+        "planning/training-capacity",
+        training_ceiling_views.training_capacity_view,
+        name="training_capacity",
+    ),
+    # The Country Ceiling of a training, set by Admin and Impact Assessment.
+    path(
+        "training-ceilings/country/set",
+        training_ceiling_views.training_country_ceiling_set_view,
+        name="training_country_ceiling_set",
+    ),
+    path(
+        "training-ceilings/country/<str:ceiling_id>/edit",
+        training_ceiling_views.training_country_ceiling_edit_view,
+        name="training_country_ceiling_edit",
+    ),
+    path(
+        "training-ceilings/country/<str:ceiling_id>/remove",
+        training_ceiling_views.training_country_ceiling_remove_view,
+        name="training_country_ceiling_remove",
+    ),
+    path(
+        "training-ceilings/set",
+        training_ceiling_views.training_ceiling_set_view,
+        name="training_ceiling_set",
+    ),
+    path(
+        "training-ceilings/<str:ceiling_id>/edit",
+        training_ceiling_views.training_ceiling_edit_view,
+        name="training_ceiling_edit",
+    ),
+    path(
+        "training-ceilings/<str:ceiling_id>/remove",
+        training_ceiling_views.training_ceiling_remove_view,
+        name="training_ceiling_remove",
+    ),
+    path(
+        "training-summary/schools",
+        training_ceiling_views.training_summary_schools_drawer,
+        name="training_summary_schools",
     ),
     path(
         "strategic-priorities",

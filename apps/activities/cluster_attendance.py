@@ -154,6 +154,25 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
             r.school_id: r
             for r in ClusterActivityAttendance.objects.filter(activity=activity)
         }
+        # A group training's invited schools are the schools scheduled for
+        # that training, and they count under the officer's training ceiling
+        # (owner, 2026-10-06; apps.planning.training_ceilings). Asked before
+        # a row is written and behind the ceiling's row lock, so the list a
+        # browser was allowed to tick is not the authority and two saves
+        # cannot share the last places. The session's own schools are left
+        # out of the count, so editing it never counts them twice.
+        from apps.planning.training_ceilings import reserve_for_session
+
+        kept = {
+            sid
+            for sid, r in rows.items()
+            if r.invited and sid not in wanted and (r.attended or r.is_guest)
+        }
+        reserve_for_session(
+            activity,
+            invited_after=len(wanted | kept),
+            invited_now=sum(1 for r in rows.values() if r.invited),
+        )
         for school_id in wanted:
             row = rows.get(school_id)
             if row is None:

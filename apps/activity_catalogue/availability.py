@@ -263,6 +263,17 @@ def _serialize_training_courses(items) -> list[dict]:
         )
         ssa_intervention = primary_mapping.intervention if primary_mapping else None
         interventions = [ssa_intervention] if ssa_intervention else []
+        # Whether the planner names the intervention (owner, 2026-10-06): only
+        # for a training the catalogue maps to "any SSA intervention". A
+        # training linked to one carries that one, and a training that is not
+        # SSA-scored (an orientation) records none, so neither offers a choice.
+        from .models import MappingMode
+
+        planner_chooses = bool(
+            primary_mapping is not None
+            and not ssa_intervention
+            and primary_mapping.mapping_mode == MappingMode.ANY_SSA_INTERVENTION
+        )
         options.append(
             {
                 "id": str(item.id),
@@ -275,6 +286,10 @@ def _serialize_training_courses(items) -> list[dict]:
                     if ssa_intervention
                     else "Not SSA-scored"
                 ),
+                "plannerChooses": planner_chooses,
+                # On top of the school's own trainings (owner, 2026-10-06;
+                # apps.planning.training_entitlement).
+                "universal": bool(item.universal_training),
                 "category": item.training_category,
                 "ssaIndicator": item.ssa_indicator_label,
                 "standardSupport": item.standard_support,

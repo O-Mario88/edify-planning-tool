@@ -50,6 +50,12 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         options = in_school_training_course_options(school=self.school)
         self.assertEqual(len(options), 21)
         by_code = {option["stableCode"]: option for option in options}
+        # SSA Training is linked to Leadership (owner, 2026-10-06); it was
+        # linked to no intervention until then.
+        self.assertEqual(
+            by_code["SSA_TRAINING"]["ssaIntervention"],
+            SsaIntervention.LEADERSHIP,
+        )
         self.assertEqual(
             by_code["TAM_I"]["ssaIntervention"],
             SsaIntervention.EXPOSURE_TO_WORD_OF_GOD,

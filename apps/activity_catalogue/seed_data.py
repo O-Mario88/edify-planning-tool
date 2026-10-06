@@ -151,6 +151,7 @@ def _item(
         "requires_participant_counts": participant_counts,
         "programme_category": programme_category,
         "is_training_course": is_training_course,
+        "universal_training": False,
         "training_category": training_category,
         "ssa_indicator_label": ssa_indicator_label,
     }
@@ -610,7 +611,17 @@ TRAINING_COURSE_REFERENCE = [
         INTERVENTION.LEARNING_ENVIRONMENT,
     ),
     ("NEW_SCHOOL_ORIENTATION", "New School Orientation", "Other", "Other", None),
-    ("SSA_TRAINING", "SSA Training", "Other", "Other", None),
+    # Owner, 2026-10-06: "School improvement Planning is actually SSA
+    # training. can you just link SSA training to Leadership ssa
+    # intervention". It was linked to no intervention until then. Its
+    # category is the programme's own and stays.
+    (
+        "SSA_TRAINING",
+        "SSA Training",
+        "Other",
+        "Leadership Practices",
+        INTERVENTION.LEADERSHIP,
+    ),
     (
         "TECH_SKILLS_EMPLOYABLE_FUTURE",
         "Students Digital Skills Training",
@@ -677,6 +688,11 @@ _training_reference_by_code = {
     code: (name, category, indicator, intervention)
     for code, name, category, indicator, intervention in TRAINING_COURSE_REFERENCE
 }
+#: The trainings every school may attend on top of what its type is entitled
+#: to (owner, 2026-10-06: "School Improvement Planning training is universal
+#: every schools can attend", and, later the same day, "School improvement
+#: Planning is actually SSA training"). See apps.planning.training_entitlement.
+UNIVERSAL_TRAINING_CODES = frozenset({"SSA_TRAINING"})
 for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
     _training_reference = _training_reference_by_code.get(_training_row["stable_code"])
     if _training_reference is None:
@@ -685,6 +701,7 @@ for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
     _training_row.update(
         display_name=_name,
         is_training_course=True,
+        universal_training=_training_row["stable_code"] in UNIVERSAL_TRAINING_CODES,
         training_category=_category,
         ssa_indicator_label=_indicator,
         programme_category=_category,
@@ -697,6 +714,7 @@ for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
 
 assert len(TRAINING_COURSE_REFERENCE) == 21
 assert len({row[0] for row in TRAINING_COURSE_REFERENCE}) == 21
+assert UNIVERSAL_TRAINING_CODES <= {row[0] for row in TRAINING_COURSE_REFERENCE}
 
 
 def _standard(

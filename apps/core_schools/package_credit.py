@@ -54,6 +54,13 @@ Not credited here, each for its reason:
   Alumni "is not an intervention ... it should not restrict another project
   from being assigned to that school") — it takes no slot and no side of the
   split (`apps.projects.models.measured_by_ssa`);
+* a universal training, which is SSA Training (owner, 2026-10-06: "School
+  Improvement Planning training is universal every schools can attend ...
+  Core gets 4 training ... ontop of School improvement training", and
+  "School improvement Planning is actually SSA training") — it is on top of
+  the package's four, so it takes no training slot and is on neither half,
+  and the School Visit an in-school delivery writes beside it takes no visit
+  slot (`apps.planning.training_entitlement`);
 * work at a school whose package is for an earlier year than the work's own —
   a past year's visit is not this year's V1.
 """
@@ -162,8 +169,16 @@ def package_kind_for(
     return None
 
 
+def _names_universal_course(activity) -> bool:
+    from apps.planning.training_entitlement import names_universal_course
+
+    return names_universal_course(activity)
+
+
 def package_kind(activity) -> str | None:
     """ "visit", "training", or None when this work is not package work."""
+    if _names_universal_course(activity):
+        return None
     return package_kind_for(
         activity.activity_type,
         activity.purpose_type,
@@ -195,7 +210,12 @@ def slot_kind_for(
 
 
 def slot_kind(activity) -> str | None:
-    """ "visit", "training", or None: the slot this saved work takes."""
+    """ "visit", "training", or None: the slot this saved work takes. A
+    universal training takes none. The visit written beside one is told apart
+    where the package is read (`credit_school_activity`), not here: this is
+    asked on every save and that visit is found through its training."""
+    if _names_universal_course(activity):
+        return None
     return slot_kind_for(
         activity.activity_type,
         activity.purpose_type,
@@ -397,6 +417,12 @@ def credit_school_activity(activity_id: str):
     kind = slot_kind(activity)
     if kind is None or outside_package(activity.project_id):
         return None
+    from apps.planning.training_entitlement import activity_is_universal
+
+    if activity_is_universal(activity):
+        # The visit a universal training wrote beside itself: on top of the
+        # package, like its training.
+        return None
 
     if CoreActivitySlot.objects.filter(activity_id=activity.id).exists():
         return None
@@ -450,16 +476,47 @@ def credit_school_activity(activity_id: str):
     return slot
 
 
+def release_work(activity_ids) -> int:
+    """Give back the package slots this work holds, because it has stopped
+    being package work — a training renamed as a universal one, with the
+    visit written beside it. Returns how many slots went back. The work
+    itself is not touched: only which slot points at it."""
+    from apps.core_schools.cluster_credit import _release
+    from apps.core_schools.models import CoreActivitySlot
+    from apps.core_schools.services import resync_plan_completion
+
+    ids = [activity_id for activity_id in activity_ids if activity_id]
+    if not ids:
+        return 0
+    plans = {}
+    released = 0
+    with transaction.atomic():
+        for slot in (
+            CoreActivitySlot.objects.select_for_update(of=("self",))
+            .filter(activity_id__in=ids)
+            .select_related("core_plan")
+        ):
+            _release(slot)
+            released += 1
+            plans[slot.core_plan_id] = slot.core_plan
+        for plan in plans.values():
+            resync_plan_completion(plan)
+    return released
+
+
 def uncredited_package_work(*, fy: str | None = None, school_code: str | None = None):
     """Live visits and trainings at Core Schools that fill no package slot —
     what `credit_school_activity` would link. For the backfill command."""
     from apps.activities.models import Activity
     from apps.core_schools.models import CoreActivitySlot
 
+    from apps.planning.training_entitlement import not_universal_q
+
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, school__school_type="core")
         .filter(package_work_q())
         .filter(not_outside_package_q())
+        .filter(not_universal_q())
         .exclude(status__in=UNCREDITED_STATUSES)
         .exclude(
             id__in=CoreActivitySlot.objects.filter(activity_id__isnull=False).values(
@@ -492,8 +549,15 @@ def uncredited_package_work(*, fy: str | None = None, school_code: str | None = 
 
 def assignment_kind(assignment) -> str | None:
     """ "visit" or "training" for a handover at a Core School, else None —
-    None too for the hand-over of a project outside the package."""
+    None too for the hand-over of a project outside the package, and for the
+    hand-over of a universal training."""
     if outside_package(getattr(assignment, "project_id", None)):
+        return None
+    from apps.planning.training_entitlement import is_universal
+
+    if is_universal(getattr(assignment, "training_course_id", None)):
+        # A universal training is on top of the package (owner, 2026-10-06):
+        # its hand-over holds none of the partner's two.
         return None
     support = (assignment.support_type or "").strip().lower()
     if support in ("visit", "training"):

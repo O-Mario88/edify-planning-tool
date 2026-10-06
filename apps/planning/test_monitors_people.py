@@ -405,6 +405,10 @@ class IaReadsTheMonitorsOnPlanningOversight(PeopleFixture):
                 ("monitor", "Planning Monitor"),
                 ("projects", "Special Projects"),
                 ("execution", "Execution & Completion"),
+                # Owner, 2026-10-06: the training summary sits "under
+                # planning oversight". It follows the three tabs above, which
+                # keep the order they were given.
+                ("trainings", "Training Summary"),
                 ("portfolio", "Country Portfolio"),
                 ("coverage", "Schools & Coverage"),
                 ("targets", "Target Performance"),

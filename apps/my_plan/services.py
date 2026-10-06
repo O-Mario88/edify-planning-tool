@@ -1551,9 +1551,18 @@ def get_frontend_context(principal, query: dict) -> dict:
             # "the training Name should be the actual training name fetched
             # from the training catalogue ... Mode of delivery should be
             # Cluster Group training or In-School training"). Blank on a
-            # training nobody has named yet.
+            # training nobody has named yet; the Edit drawer names it.
             "training_name": training_names.course_name_of(a),
             "training_mode": training_names.mode_of_delivery(a),
+            # What a cluster meeting is for (owner, 2026-10-06): a training
+            # delivered at it, a meeting only, or a cluster leaders' meeting;
+            # blank on a meeting planned before the types existed.
+            "meeting_kind": a.get_meeting_kind_display() if a.meeting_kind else "",
+            "meeting_training": (
+                (a.recommendation_source or {}).get("trainingCourseName", "")
+                if a.meeting_kind == "training"
+                else ""
+            ),
             "status": a.status,
             "planned_date": a.planned_date,
             "quarter": a.quarter,

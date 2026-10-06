@@ -2959,6 +2959,35 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 5298,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/settings/activity-catalogue/<str:item_id>/edit"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Edit Training Drawer",
+      "purpose": "Reusable edit training drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/catalogue/edit_training_drawer.html",
+      "variants": [
+        "danger",
+        "info"
+      ]
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 5364,
@@ -3749,7 +3778,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10254,
+      "bytes": 11260,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -4064,7 +4093,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7396,
+      "bytes": 11144,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -4079,6 +4108,8 @@
       "states": [
         "default",
         "empty",
+        "error",
+        "disabled",
         "open"
       ],
       "tables": 0,
@@ -4093,7 +4124,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12709,
+      "bytes": 15303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -4108,6 +4139,7 @@
       "states": [
         "default",
         "empty",
+        "error",
         "disabled",
         "open"
       ],
@@ -9721,7 +9753,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10140,
+      "bytes": 10492,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -9873,7 +9905,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6006,
+      "bytes": 6237,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10064,7 +10096,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12606,
+      "bytes": 21174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -10079,13 +10111,16 @@
       "states": [
         "default",
         "empty",
+        "error",
         "disabled",
         "open"
       ],
       "tables": 0,
       "template": "partials/my_plan/edit_activity_drawer.html",
       "variants": [
-        "info"
+        "danger",
+        "info",
+        "warning"
       ]
     },
     {
@@ -10682,7 +10717,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2216,
+      "bytes": 2390,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -12107,6 +12142,31 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
+      "bytes": 1985,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Training Summary Workspace",
+      "purpose": "Reusable training summary workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/training_summary_workspace.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
       "bytes": 11220,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12553,7 +12613,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 9801,
+      "bytes": 10861,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -12696,7 +12756,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 26253,
+      "bytes": 35615,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -12728,7 +12788,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 34024,
+      "bytes": 39751,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -15740,6 +15800,222 @@
       "tables": 0,
       "template": "partials/todos/row.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1483,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Country Ceiling Cell",
+      "purpose": "Reusable  country ceiling cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/_country_ceiling_cell.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2176,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Summary Cell",
+      "purpose": "Reusable  summary cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/_summary_cell.html",
+      "variants": [
+        "{{ cell.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 7149,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/training-ceilings/<str:ceiling_id>/edit",
+        "/training-ceilings/<str:ceiling_id>/remove",
+        "/training-ceilings/set"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 8,
+      "kind": "application-partial",
+      "name": "Ceiling Drawer",
+      "purpose": "Reusable ceiling drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/ceiling_drawer.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 6928,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/training-ceilings/country/<str:ceiling_id>/edit",
+        "/training-ceilings/country/<str:ceiling_id>/remove",
+        "/training-ceilings/country/set"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 7,
+      "kind": "application-partial",
+      "name": "Country Ceiling Drawer",
+      "purpose": "Reusable country ceiling drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/country_ceiling_drawer.html",
+      "variants": [
+        "danger",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 7306,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "My Summary",
+      "purpose": "Reusable my summary interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/trainings/my_summary.html",
+      "variants": [
+        "danger",
+        "{{ row.flag_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 4901,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Summary Matrix",
+      "purpose": "Reusable summary matrix interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/summary_matrix.html",
+      "variants": [
+        "{{ row.country_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 3901,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Summary Schools Drawer",
+      "purpose": "Reusable summary schools drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty",
+        "error"
+      ],
+      "tables": 1,
+      "template": "partials/trainings/summary_schools_drawer.html",
+      "variants": [
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12461,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 9,
+      "kind": "application-partial",
+      "name": "Team Summary",
+      "purpose": "Reusable team summary interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "selected",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/trainings/team_summary.html",
+      "variants": [
+        "danger",
+        "{{ row.flag_tone }}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -35233,7 +35509,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_schedule_training_drawer",
       "card_count": 0,
@@ -35305,7 +35581,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": true,
         "loading": false
@@ -76662,8 +76938,8 @@
       "htmx_endpoints": [
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
-        "GET /planning/schedule-modal",
         "POST /planning/schedule-action",
+        "GET /planning/schedule-modal",
         "GET /clusters/cost-preview",
         "POST {% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
       ],
@@ -76839,6 +77115,85 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_capacity_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B476CEB13A",
+      "page_title": "Training Capacity",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Training Capacity",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "What a scheduling drawer shows under its Training field: the ceiling of the officer the plan belongs to, and what is already scheduled under it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/training-capacity",
+      "route_name": "training_capacity",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -88091,7 +88446,8 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /settings/activity-catalogue/new"
+        "GET /settings/activity-catalogue/new",
+        "GET /settings/activity-catalogue/{{ item.id }}/edit"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -88151,6 +88507,90 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.catalogue_views",
+      "backend_view": "apps.frontend.views.catalogue_views.activity_catalogue_edit_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/catalogue/edit_training_drawer.html",
+        "test:coverage-review-required",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /settings/activity-catalogue/{{ item.id }}/edit"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-F80D491FDF",
+      "page_title": "Activity Catalogue Edit",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Save training",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Edit a training from its own record (owner, 2026-10-06).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/settings/activity-catalogue/<str:item_id>/edit",
+      "route_name": "activity_catalogue_edit",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/settings/activity-catalogue/{{ item.id }}/edit"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.partners.models",
+        "apps.projects.scoping",
+        "apps.ssa.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/catalogue/edit_training_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -91507,6 +91947,7 @@
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
+        "template:partials/oversight/training_summary_workspace.html",
         "template:partials/oversight/coverage_workspace.html",
         "test:referenced-by-automated-test",
         "permission:team_planning_oversight"
@@ -91518,6 +91959,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
+        "GET /training-ceilings/set?fy={{ fy }}",
+        "GET /training-ceilings/country/set?fy={{ fy }}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}",
         "GET {{ row.detail_url }}"
       ],
@@ -91590,6 +92033,7 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
+        "partials/oversight/training_summary_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -92057,7 +92501,7 @@
       "backend_view": "apps.frontend.views.staff_views.team_targets_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
@@ -92071,6 +92515,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
+        "GET /training-ceilings/set?fy={{ fy }}",
+        "GET /training-ceilings/country/set?fy={{ fy }}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -92157,7 +92603,7 @@
       "backend_view": "apps.frontend.views.staff_views.team_targets_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/targets/team/workspace.html",
         "template:pages/oversight/team_planning.html",
@@ -92171,6 +92617,8 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /team-planning-oversight/",
+        "GET /training-ceilings/set?fy={{ fy }}",
+        "GET /training-ceilings/country/set?fy={{ fy }}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -94435,6 +94883,644 @@
         "text-[13px]",
         "text-[15px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_ceiling_edit_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/{{ row.id }}/edit",
+        "POST /training-ceilings/{{ row.id }}/remove",
+        "POST /training-ceilings/set",
+        "GET /training-ceilings/set",
+        "GET /training-ceilings/{{ existing.id }}/remove",
+        "GET /training-ceilings/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4E05AF754C",
+      "page_title": "Training Ceiling Edit",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Change one ceiling.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/<str:ceiling_id>/edit",
+      "route_name": "training_ceiling_edit",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_ceiling_remove_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/{{ row.id }}/edit",
+        "POST /training-ceilings/{{ row.id }}/remove",
+        "POST /training-ceilings/set",
+        "GET /training-ceilings/set",
+        "GET /training-ceilings/{{ existing.id }}/remove",
+        "GET /training-ceilings/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-7467D165E9",
+      "page_title": "Training Ceiling Remove",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Remove one ceiling, after the drawer has said what that means.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/<str:ceiling_id>/remove",
+      "route_name": "training_ceiling_remove",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_edit_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/country_ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/country/{{ row.id }}/edit",
+        "POST /training-ceilings/country/{{ row.id }}/remove",
+        "POST /training-ceilings/country/set",
+        "GET /training-ceilings/country/set",
+        "GET /training-ceilings/country/{{ existing.id }}/remove",
+        "GET /training-ceilings/country/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8F869EF697",
+      "page_title": "Training Country Ceiling Edit",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save Country Ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Change the Country Ceiling of one training.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/country/<str:ceiling_id>/edit",
+      "route_name": "training_country_ceiling_edit",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/country/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_remove_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/country_ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/country/{{ row.id }}/edit",
+        "POST /training-ceilings/country/{{ row.id }}/remove",
+        "POST /training-ceilings/country/set",
+        "GET /training-ceilings/country/set",
+        "GET /training-ceilings/country/{{ existing.id }}/remove",
+        "GET /training-ceilings/country/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-E88A1334C8",
+      "page_title": "Training Country Ceiling Remove",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save Country Ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Remove the Country Ceiling of one training, after saying what it means.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/country/<str:ceiling_id>/remove",
+      "route_name": "training_country_ceiling_remove",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/country/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_country_ceiling_set_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/country_ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/country/{{ row.id }}/edit",
+        "POST /training-ceilings/country/{{ row.id }}/remove",
+        "POST /training-ceilings/country/set",
+        "GET /training-ceilings/country/set",
+        "GET /training-ceilings/country/{{ existing.id }}/remove",
+        "GET /training-ceilings/country/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D1EB52056C",
+      "page_title": "Training Country Ceiling Set",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save Country Ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "``+ Set Country Ceiling``: one training, one year, for the country.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/country/set",
+      "route_name": "training_country_ceiling_set",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/country/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_ceiling_set_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/trainings/ceiling_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /training-ceilings/{{ row.id }}/edit",
+        "POST /training-ceilings/{{ row.id }}/remove",
+        "POST /training-ceilings/set",
+        "GET /training-ceilings/set",
+        "GET /training-ceilings/{{ existing.id }}/remove",
+        "GET /training-ceilings/{{ row.id }}/remove"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C8BCFC16E3",
+      "page_title": "Training Ceiling Set",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Save ceiling",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "``+ Set Training Ceiling``: one officer, one training, one year.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/training-ceilings/set",
+      "route_name": "training_ceiling_set",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/training-ceilings/set"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.training_ceiling_views",
+      "backend_view": "apps.frontend.views.training_ceiling_views.training_summary_schools_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9C9EA8284F",
+      "page_title": "Training Summary Schools",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Training Summary Schools",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The schools one summary figure counts, read-only.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/training-summary/schools",
+      "route_name": "training_summary_schools",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.planning.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -113491,6 +114577,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.training_ceiling_views.training_capacity_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/training-capacity",
+      "route_name": "training_capacity",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.undo_views.undo_change_view",
       "kind": "action",
       "methods": [
@@ -115180,6 +116278,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.catalogue_views.activity_catalogue_edit_action",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/settings/activity-catalogue/<str:item_id>/edit",
+      "route_name": "activity_catalogue_edit",
+      "templates": [
+        "partials/catalogue/edit_training_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.catalogue_views.activity_catalogue_lifecycle_action",
       "kind": "platform-route",
       "methods": [
@@ -115873,6 +116986,7 @@
       "templates": [
         "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html",
+        "partials/oversight/training_summary_workspace.html",
         "partials/oversight/coverage_workspace.html"
       ]
     },
@@ -116303,6 +117417,108 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.training_ceiling_views.training_ceiling_edit_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/<str:ceiling_id>/edit",
+      "route_name": "training_ceiling_edit",
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_ceiling_remove_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/<str:ceiling_id>/remove",
+      "route_name": "training_ceiling_remove",
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_country_ceiling_edit_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/country/<str:ceiling_id>/edit",
+      "route_name": "training_country_ceiling_edit",
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_country_ceiling_remove_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/country/<str:ceiling_id>/remove",
+      "route_name": "training_country_ceiling_remove",
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_country_ceiling_set_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/country/set",
+      "route_name": "training_country_ceiling_set",
+      "templates": [
+        "partials/trainings/country_ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_ceiling_set_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/training-ceilings/set",
+      "route_name": "training_ceiling_set",
+      "templates": [
+        "partials/trainings/ceiling_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.training_ceiling_views.training_summary_schools_drawer",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/training-summary/schools",
+      "route_name": "training_summary_schools",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.staff_views.trainings_log_view",
       "kind": "page",
       "methods": [
@@ -116501,30 +117717,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 576,
+    "accessibility_contract_pass": 583,
     "activity_states": 24,
-    "all_routes": 1365,
+    "all_routes": 1374,
     "api_routes": 360,
-    "component_templates": 632,
+    "component_templates": 642,
     "full_pages": 263,
-    "mobile_contract_pass": 576,
-    "nonvisual_actions": 283,
+    "mobile_contract_pass": 583,
+    "nonvisual_actions": 285,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 593,
+      "interaction-fragment": 602,
       "operational-queue": 152,
       "planning-or-creation": 14,
       "record-detail": 25,
       "report": 45
     },
-    "partials_and_drawers": 310,
-    "permission_gated": 877,
+    "partials_and_drawers": 317,
+    "permission_gated": 885,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 893,
+    "routed_surfaces": 902,
     "scheduled_jobs": 36,
     "severity_counts": {
       "critical": 0,
@@ -116532,8 +117748,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 576,
-    "test_referenced": 786,
-    "theme_contract_pass": 576
+    "tablet_contract_pass": 583,
+    "test_referenced": 794,
+    "theme_contract_pass": 583
   }
 }

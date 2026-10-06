@@ -1,0 +1,69 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load school_identity table_pagination %}
+
+{% comment %}
+The schools behind a Training Summary figure (owner, 2026-10-06): every school
+one officer has scheduled for one training this fiscal year, one row per
+school and session, saying how it is delivered — Group Training with its
+cluster, or In-School Training — and where the plan stands, which opens the
+plan it comes from. Read-only. A request for an officer the reader may not
+see is refused with the reason (apps.planning.training_ceilings.schools_behind).
+{% endcomment %}
+
+{% block drawer_title %}{% if refusal %}Training summary{% else %}{{ training_name }} · {{ staff_name }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if not refusal %}{% if delivery_label %}{{ delivery_label }} · {% endif %}Schools scheduled in FY {{ fy }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if refusal %}
+<div class="edify-note" data-tone="warning" role="alert" data-training-summary-refusal>{{ refusal }}</div>
+{% else %}
+<div class="space-y-2" data-training-summary-schools>
+  {% if summary %}
+  <dl class="project-capacity-line" data-training-summary-line>
+    <div><dt>Ceiling</dt><dd>{% if summary.ceiling is None %}None set{% else %}{{ summary.ceiling }}{% endif %}</dd></div>
+    <div><dt>Group Training</dt><dd>{{ summary.group }}</dd></div>
+    <div><dt>In-School Training</dt><dd>{{ summary.in_school }}</dd></div>
+    <div><dt>Total scheduled</dt><dd><strong>{{ summary.total }}</strong></dd></div>
+    {% if summary.ceiling is not None %}
+    <div><dt>Balance</dt><dd>{{ summary.balance }}</dd></div>
+    <div><dt>Excess</dt><dd>{{ summary.excess }}</dd></div>
+    {% endif %}
+    <div><dt>Status</dt><dd data-summary-flag="{{ summary.state }}">{{ summary.flag }}</dd></div>
+  </dl>
+  {% endif %}
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Schools scheduled for {{ training_name }}; scroll sideways for more columns">
+    {% paginate rows "training_schools_page" as training_schools_pager %}
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Schools {{ staff_name }} has scheduled for {{ training_name }} in FY {{ fy }}: how each is delivered, its cluster and where the plan stands.</caption>
+      <thead>
+        <tr>
+          <th scope="col">School ID</th>
+          <th scope="col">School</th>
+          <th scope="col">Delivery</th>
+          <th scope="col">Cluster</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in training_schools_pager.rows %}
+        <tr data-delivery="{{ row.delivery_key }}">
+          <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_pk %}{% school_code row.school_pk %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
+          <th scope="row" data-record-title><span><a href="/schools/{{ row.school_pk }}">{{ row.school_name }}</a></span></th>
+          <td data-label="Delivery">{{ row.delivery }}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}</td>
+          <td data-label="Cluster">{{ row.cluster|default:"—" }}</td>
+          <td data-label="Status"><a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training">{{ row.status }}{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="5">
+            {% include "components/empty_state.html" with message="No school is scheduled for this training yet." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% include "components/table_pager.html" with pager=training_schools_pager param="training_schools_page" %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

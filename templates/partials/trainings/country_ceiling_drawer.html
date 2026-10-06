@@ -1,0 +1,101 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% comment %}
+Set Country Ceiling / Edit / Remove (owner, 2026-10-06: "The admin IA will set
+the Country Ceiling and Leads will set each staff ceiling"), in the training
+capacity drawer's shape. Admin or Impact Assessment says how many schools the
+country plans for one training in one fiscal year. Planned and Remaining are
+counted for them from the plans: every school invited to a group training or
+to a cluster meeting that is a training, and every in-school training.
+Choosing the training or the year reloads the drawer with what is planned
+now. apps.planning.training_ceilings.set_country_ceiling checks all of it
+again.
+{% endcomment %}
+
+{% block drawer_title %}{% if mode == "edit" %}Edit Country Ceiling{% elif mode == "remove" %}Remove Country Ceiling{% elif mode == "missing" %}Country Ceiling not found{% else %}Set Country Ceiling{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if mode == "missing" %}
+<p class="edify-note" data-tone="warning">That Country Ceiling no longer exists, or it is not yours to change.</p>
+{% elif not may_set %}
+<p class="edify-note" data-tone="warning" data-country-ceiling-read-only>Admin and Impact Assessment set the Country Ceiling. A Programme Lead sets the ceiling of each officer they supervise.</p>
+{% else %}
+<form {% if mode == "edit" %}hx-post="/training-ceilings/country/{{ row.id }}/edit"{% elif mode == "remove" %}hx-post="/training-ceilings/country/{{ row.id }}/remove"{% else %}hx-post="/training-ceilings/country/set"{% endif %} hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-country-ceiling-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if mode == "edit" or mode == "remove" %}
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-country-ceiling-current>
+    <div><dt>Training</dt><dd>{{ row.training.display_name }}</dd></div>
+    <div><dt>Country</dt><dd>{{ row.country }}</dd></div>
+    <div><dt>Fiscal year</dt><dd>FY {{ row.fy }}</dd></div>
+    <div><dt>Country Ceiling</dt><dd><strong>{{ row.ceiling|intcomma }}</strong></dd></div>
+    <div><dt>Planned</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.group|intcomma }} group training, {{ current.inSchool|intcomma }} in-school training)</dd></div>
+    <div><dt>Remaining</dt><dd>{{ current.remaining|intcomma }}{% if current.over %} · {{ current.over|intcomma }} above the ceiling{% endif %}</dd></div>
+  </dl>
+  </div>
+  {% else %}
+  <div class="space-y-1">
+    <label for="country-ceiling-training" class="block edify-text-caption font-semibold text-slate-600">Training <span class="text-rose-500">*</span></label>
+    <select id="country-ceiling-training" name="training_id" required
+            hx-get="/training-ceilings/country/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">Choose a training</option>
+      {% for training in trainings %}<option value="{{ training.id }}"{% if training.id == values.training_id %} selected{% endif %}>{{ training.name }}{% if training.intervention %} · {{ training.intervention }}{% endif %}</option>{% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">From the Training Catalogue. The training joins the summary once a school is planned for it.</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="country-ceiling-fy" class="block edify-text-caption font-semibold text-slate-600">Fiscal year <span class="text-rose-500">*</span></label>
+    <select id="country-ceiling-fy" name="fy" required
+            hx-get="/training-ceilings/country/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      {% for option in fy_options %}<option value="{{ option }}"{% if option == values.fy %} selected{% endif %}>FY {{ option }}</option>{% endfor %}
+    </select>
+  </div>
+
+  {% if current %}
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-country-ceiling-current>
+    <div><dt>Country</dt><dd>{{ country }}</dd></div>
+    <div><dt>Planned</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.group|intcomma }} group training, {{ current.inSchool|intcomma }} in-school training)</dd></div>
+    <div><dt>Country Ceiling now</dt><dd>{% if current.ceiling is None %}Not set{% else %}<strong>{{ current.ceiling|intcomma }}</strong>{% endif %}</dd></div>
+  </dl>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if mode == "remove" %}
+  <p class="edify-note" data-tone="warning" role="note">With no Country Ceiling, {{ row.training.display_name }} reads &ldquo;Not set&rdquo; on the summary and has no Remaining. The schools already planned stay as they are, and each officer&rsquo;s own ceiling is unchanged.</p>
+  {% else %}
+  <div class="space-y-1">
+    <label for="country-ceiling-value" class="block edify-text-caption font-semibold text-slate-600">Country Ceiling <span class="text-rose-500">*</span></label>
+    <input id="country-ceiling-value" name="ceiling" type="number" inputmode="numeric" min="1" step="1" required value="{{ values.ceiling }}"
+           aria-describedby="country-ceiling-value-help"
+           class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+    <p id="country-ceiling-value-help" class="edify-text-caption text-slate-500">The most schools the country plans for this training in the year, group and in-school training together. Planned and Remaining are counted for you.</p>
+  </div>
+  {% endif %}
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if mode == "remove" %}
+    <button type="submit" name="save" value="1" class="btn btn-danger h-8">Remove Country Ceiling</button>
+    {% else %}
+    {% if existing %}
+    <button type="button" hx-get="/training-ceilings/country/{{ existing.id }}/remove" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" data-remove-country-ceiling>Remove Country Ceiling</button>
+    {% elif mode == "edit" %}
+    <button type="button" hx-get="/training-ceilings/country/{{ row.id }}/remove" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8" data-remove-country-ceiling>Remove Country Ceiling</button>
+    {% endif %}
+    <button type="submit" name="save" value="1" class="btn btn-primary h-8">Save Country Ceiling</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

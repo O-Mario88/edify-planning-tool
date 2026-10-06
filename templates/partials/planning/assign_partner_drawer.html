@@ -45,7 +45,7 @@
       const item = this.trainingActivities.find(option => option.id === id);
       this.catalogueItemId = id;
       this.activityType = item ? 'in_school_training' : '';
-      if (item && item.ssaIntervention) { this.focusIntervention = item.ssaIntervention; }
+      this.focusIntervention = item ? item.ssaIntervention : '';
     }
   }"
 >
@@ -94,16 +94,28 @@
       <p x-show="partnerCourses[partnerId]" style="display:none" class="edify-text-caption text-slate-500" data-partner-courses>Showing the trainings this partner is recorded as delivering.</p>
       <p x-show="selectedTraining" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true">Training category <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.category : ''"></span> · SSA intervention association <span class="font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.ssaIndicator : ''"></span></p>
       <p id="partner-training-help" class="edify-text-caption text-slate-500">After delivery, it is confirmed with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
-      {% comment %}The planner's choice, any of the eight (owner,
-      2026-09-30). Unnamed: the form's one focus_intervention field above
-      carries it, as it does for every purpose.{% endcomment %}
-      <label for="partner_training_focus_intervention" class="mt-3 block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
-      <select id="partner_training_focus_intervention" x-model="focusIntervention"
-        class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-        <option value="">The training's own intervention</option>
-        {% for code, label in interventions %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
-      </select>
-      <p class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
+      {% comment %}The training's own SSA intervention (owner, 2026-10-06),
+      read-only: the one the Training Catalogue links it to. Only a training
+      the catalogue leaves open to any intervention offers the list. Unnamed:
+      the form's one focus_intervention field above carries it, as it does
+      for every purpose, and the save reads the catalogue again.{% endcomment %}
+      <span id="partner-training-ssa-label" class="mt-3 block edify-text-caption font-semibold text-slate-600">SSA intervention</span>
+      <template x-if="!(selectedTraining && selectedTraining.plannerChooses)">
+        <div class="space-y-1" data-training-ssa-intervention>
+          <input type="text" readonly data-linked-intervention aria-labelledby="partner-training-ssa-label" placeholder="Filled in from the training" :value="selectedTraining ? selectedTraining.ssaInterventionLabel : ''" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+          <p class="edify-text-caption text-slate-500">Set on the training in the Training Catalogue. It cannot be changed here.</p>
+        </div>
+      </template>
+      <template x-if="selectedTraining && selectedTraining.plannerChooses">
+        <div class="space-y-1">
+          <select id="partner_training_focus_intervention" x-model="focusIntervention" aria-labelledby="partner-training-ssa-label"
+            class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+            <option value="">No specific intervention</option>
+            {% for code, label in interventions %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+          </select>
+          <p class="edify-text-caption text-slate-500">The Training Catalogue leaves this training open to any SSA intervention. Choose the one it targets.</p>
+        </div>
+      </template>
     </div>
   </template>
 

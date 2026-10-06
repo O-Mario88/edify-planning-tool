@@ -436,6 +436,12 @@ def visit_gates(
             setattr(gate, attr, getattr(gate, attr) + row["n"])
 
     if client_ids:
+        # A universal training is on top of the school's entitlement (owner,
+        # 2026-10-06: a school "added to school improvement training can
+        # have one more training"), so an in-school delivery of one is not
+        # the year's support visit (apps.planning.training_entitlement).
+        from apps.planning.training_entitlement import not_universal_q
+
         counted = (
             live.filter(school_id__in=client_ids)
             .exclude(purpose_type=COMPANION_VISIT_PURPOSE)
@@ -443,6 +449,7 @@ def visit_gates(
                 catalogue_item__counts_toward_client_visit=True,
                 catalogue_item__eligibility_rule__counts_toward_entitlement=False,
             )
+            .filter(not_universal_q())
         )
         _tally(counted.filter(_support_visit_q()), "staff_visits", "partner_visits")
         _tally(counted.filter(_ssa_visit_q()), "staff_ssa_visits", "partner_ssa_visits")

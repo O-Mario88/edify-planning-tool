@@ -221,6 +221,15 @@ class ActivityCatalogueItem(TimeStampedModel):
     # visit, meeting, programme event or operational support workflow; only
     # rows marked here may appear in a "Which training?" control.
     is_training_course = models.BooleanField(default=False)
+    #: A training every school may attend, on top of the trainings its type
+    #: is entitled to (owner, 2026-10-06: "School Improvement Planning
+    #: training is universal every schools can attend ... schools that are
+    #: added to school improvement training can have one more training", and
+    #: "School improvement Planning is actually SSA training"). SSA Training
+    #: carries it. It is not the client school's one training of the year and
+    #: takes none of a Core package's four
+    #: (apps.planning.training_entitlement).
+    universal_training = models.BooleanField(default=False)
     training_category = models.CharField(max_length=64, blank=True, default="")
     # Preserve the programme's exact source wording (for example
     # "Fee/Budget/Accounts") while the intervention mapping carries the
@@ -244,6 +253,13 @@ class ActivityCatalogueItem(TimeStampedModel):
 
     created_by = models.CharField(max_length=30, null=True, blank=True)
     updated_by = models.CharField(max_length=30, null=True, blank=True)
+    #: Fields a person changed on the training's own record (owner,
+    #: 2026-10-06: a training is edited from its profile). The governed seed
+    #: is re-installed on every deploy and repairs the fields it owns; a field
+    #: named here is the editor's decision and the seed leaves it alone.
+    edited_fields = ArrayField(
+        base_field=models.CharField(max_length=64), default=list, blank=True
+    )
 
     class Meta:
         db_table = "activity_catalogue_item"

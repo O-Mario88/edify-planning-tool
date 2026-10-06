@@ -14,16 +14,45 @@ focusIntervention: '',
 trainingCategory: '',
 ssaIndicator: '',
 recommendationReason: '',
+{% comment %}
+  Training -> SSA intervention (owner, 2026-10-06): a training linked to an
+  intervention in the Training Catalogue is scheduled under that one, shown
+  read-only; a training linked to none leaves the choice to the planner. The
+  ceiling line is what this officer has scheduled for the training this
+  fiscal year against the ceiling their Programme Lead set; the save counts
+  again behind a lock.
+{% endcomment %}
+linkedIntervention: '',
+linkedInterventionLabel: '',
+plannerChooses: false,
+planDate: '',
+capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
+capacityKey: null,
+get trainingCeilingFull() { return !!this.catalogueItemId && this.capacity.managed && this.capacity.remaining <= 0; },
 selectTraining(event) {
   const option = event.target.options[event.target.selectedIndex];
   this.catalogueItemId = event.target.value;
-  const suggested = option ? option.dataset.intervention || '' : '';
-  if (suggested) { this.focusIntervention = suggested; }
+  this.linkedIntervention = option ? option.dataset.intervention || '' : '';
+  this.linkedInterventionLabel = option ? option.dataset.interventionLabel || '' : '';
+  this.plannerChooses = !!option && option.dataset.plannerChooses === 'yes';
+  this.focusIntervention = this.linkedIntervention;
   this.trainingCategory = option ? option.dataset.category || '' : '';
   this.ssaIndicator = option ? option.dataset.indicator || '' : '';
   this.recommendationReason = option ? option.dataset.reason || '' : '';
+  this.loadCapacity();
+},
+loadCapacity() {
+  const query = new URLSearchParams({ training: this.catalogueItemId, date: this.planDate || '' }).toString();
+  if (query === this.capacityKey) { return; }
+  this.capacityKey = query;
+  if (!this.catalogueItemId) { this.capacity = { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' }; return; }
+  fetch('/planning/training-capacity?' + query, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    .then(response => (response.ok ? response.json() : null))
+    .then(data => { if (data && query === this.capacityKey) { this.capacity = data; } })
+    .catch(() => {});
 }
 }"
+x-init="$watch('planDate', () => loadCapacity())"
 >
 <div id="training-form-errors" aria-live="polite"></div>
 
@@ -47,27 +76,45 @@ class="space-y-4 text-[13px] text-slate-700"
       data-category="{{ item.category }}"
       data-indicator="{{ item.ssaIndicator }}"
       data-intervention="{{ item.ssaIntervention }}"
+      data-intervention-label="{{ item.ssaInterventionLabel }}"
+      data-planner-chooses="{{ item.plannerChooses|yesno:'yes,no' }}"
       data-reason="{% if item.priorityTitles %}Priority activity: {{ item.priorityTitles|join:', ' }}{% else %}Governed {{ item.category }} training.{% endif %}">{{ item.label }}</option>
     {% endfor %}
   </select>
   <p id="core-training-help" class="edify-text-caption text-slate-500">Any training in the Training Catalogue, whatever intervention it serves.</p>
   <p x-show="catalogueItemId" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="trainingCategory"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="ssaIndicator"></span></p>
   {% if not catalogue_items %}<p class="edify-note" data-tone="warning">No training is active in the Training Catalogue.</p>{% endif %}
+  <p x-show="catalogueItemId && capacity.fy" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
+    <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>.</span></template>
+    <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled"></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
+  </p>
+  <p x-show="trainingCeilingFull" style="display:none" class="edify-note" data-tone="warning" role="alert" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools to this training in FY <span x-text="capacity.fy"></span>. Choose another training, or ask your Programme Lead to raise the ceiling.</p>
 </div>
 
-{% comment %}The planner's choice, any of the eight (owner, 2026-09-30). The
-course pre-fills it; it used to be a hidden copy of the course's own
-intervention that the save then ignored.{% endcomment %}
-<div class="space-y-1">
-  <label for="core_training_focus_intervention" class="block edify-text-caption font-semibold text-slate-600">Focus intervention</label>
-  <select id="core_training_focus_intervention" name="focus_intervention" x-model="focusIntervention"
-    class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-    <option value="">The training's own intervention</option>
-    {% for code, label in interventions %}
-    <option value="{{ code }}">{{ label }}</option>
-    {% endfor %}
-  </select>
-  <p class="edify-text-caption text-slate-500">Filled from the training. Any SSA intervention may be chosen.</p>
+{% comment %}The training's own SSA intervention (owner, 2026-10-06), read-only
+when the Training Catalogue links the training to one. Only a training linked
+to none offers the list, and the save takes the linked one from the catalogue
+again whatever is posted.{% endcomment %}
+<div class="space-y-1" data-training-ssa-intervention>
+  <span id="core-training-ssa-label" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</span>
+  <template x-if="!(catalogueItemId && plannerChooses)">
+  <div class="space-y-1">
+    <input type="text" readonly data-linked-intervention aria-labelledby="core-training-ssa-label" placeholder="Filled in from the training" :value="linkedInterventionLabel" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700 cursor-not-allowed focus:outline-none">
+    <p class="edify-text-caption text-slate-500">Set on the training in the Training Catalogue. It cannot be changed here.</p>
+  </div>
+  </template>
+  <template x-if="catalogueItemId && plannerChooses">
+  <div class="space-y-1">
+    <select id="core_training_focus_intervention" name="focus_intervention" x-model="focusIntervention" aria-labelledby="core-training-ssa-label"
+      class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+      <option value="">No specific intervention</option>
+      {% for code, label in interventions %}
+      <option value="{{ code }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">The Training Catalogue leaves this training open to any SSA intervention. Choose the one it targets.</p>
+  </div>
+  </template>
 </div>
 
 <div class="space-y-1">
@@ -83,7 +130,7 @@ intervention that the save then ignored.{% endcomment %}
 
 <div class="space-y-1">
   <label for="core_training_scheduled_date" class="block edify-text-caption font-semibold text-slate-600">Planned date <span class="text-rose-500">*</span></label>
-  <input id="core_training_scheduled_date" type="date" name="scheduled_date" value="" required class="w-full rounded-control border border-slate-200 px-3 py-2">
+  <input id="core_training_scheduled_date" type="date" name="scheduled_date" value="" x-model="planDate" required class="w-full rounded-control border border-slate-200 px-3 py-2">
 </div>
 
 {% comment %}The SSA recommendation stays advisory; the selected Training owns the saved association.{% endcomment %}
@@ -130,7 +177,7 @@ Partner who facilitates a training staff deliver is named below.
 
 <div class="drawer-footer">
   <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-  <button type="submit" class="btn btn-primary h-8">Schedule training</button>
+  <button type="submit" class="btn btn-primary h-8" :disabled="trainingCeilingFull">Schedule training</button>
 </div>
 </form>
 </div>
