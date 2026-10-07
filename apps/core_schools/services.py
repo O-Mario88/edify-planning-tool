@@ -22,6 +22,7 @@ from .models import (
     cplan_id,
     cprof_id,
 )
+from apps.schools.lifecycle_service import active_schools
 
 # The 11 polymorphic slot actions.
 SLOT_ACTIONS = {
@@ -178,10 +179,7 @@ def ensure_core_plan(school, fy: str | None = None, *, lock: bool = False):
 
 def list_candidates(principal) -> list[dict]:
     """Best-SSA Client and Core Trained schools → Core onboarding candidates."""
-    qs = School.objects.filter(
-        deleted_at__isnull=True,
-        school_type__in=["client", "core_trained"],
-    )
+    qs = active_schools().filter(school_type__in=["client", "core_trained"])
     out = []
     for s in qs:
         latest = (

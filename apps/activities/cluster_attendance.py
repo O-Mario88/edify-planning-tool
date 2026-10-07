@@ -219,6 +219,58 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
     return len(wanted)
 
 
+#: A session that has not happened yet: its invitations are still a plan.
+_NOT_YET_HELD = (
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+    "awaiting_owner_approval",
+)
+
+
+def release_school_invitations(school, *, on_or_after, actor_id="") -> int:
+    """Take a school off the cluster sessions it was invited to and that have
+    not been held. Returns how many sessions it left.
+
+    A school that closes stops receiving work (owner, 2026-10-07: "if a school
+    is closed they go to the closed school list and total number updated").
+    Its own visits and trainings are cancelled by the closure; an invitation
+    to a group training is a row on somebody else's session, and it stayed:
+    the school was still listed as invited, still one of the schools counted
+    under the officer's training ceiling, still priced into the session and,
+    for a Core School, still holding a package slot.
+
+    Only the invitation goes. A row that records attendance is what happened
+    and is never removed; a session already held is left as it was. The
+    session is re-counted and re-priced the way unticking the school in its
+    drawer does it.
+    """
+    from apps.activities.models import ClusterActivityAttendance
+    from apps.core_schools.cluster_credit import credit_cluster_session
+
+    rows = list(
+        ClusterActivityAttendance.objects.filter(
+            school=school,
+            invited=True,
+            attended=False,
+            activity__deleted_at__isnull=True,
+            activity__status__in=_NOT_YET_HELD,
+            activity__planned_date__gte=on_or_after,
+        ).select_related("activity")
+    )
+    left = 0
+    for row in rows:
+        activity = row.activity
+        with transaction.atomic():
+            row.delete()
+            sync_expected_participants(activity)
+            credit_cluster_session(activity)
+        left += 1
+    return left
+
+
 def sync_expected_participants(activity) -> int:
     """Write the derived head count back and re-price if it moved.
 

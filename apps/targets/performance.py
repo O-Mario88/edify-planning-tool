@@ -491,15 +491,18 @@ def workload_context(staff_id: str) -> dict:
     and easy territory isn't ranked above one with 40 schools and remote
     districts. Returns assigned-school counts, district/cluster spread, leave."""
     from apps.accounts.models import StaffSchoolAssignment, Leave
-    from apps.schools.models import School
 
     school_ids = list(
         StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list(
             "school_id", flat=True
         )
     )
-    schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True).values(
-        "id", "school_type", "district_id"
+    from apps.schools.lifecycle_service import active_schools
+
+    schools = (
+        active_schools()
+        .filter(id__in=school_ids)
+        .values("id", "school_type", "district_id")
     )
     core_count = sum(1 for s in schools if s["school_type"] == "core")
     client_count = sum(1 for s in schools if s["school_type"] == "client")
@@ -507,9 +510,8 @@ def workload_context(staff_id: str) -> dict:
 
     # Cluster count from the schools' cluster_id.
     cluster_ids = list(
-        School.objects.filter(
-            id__in=school_ids, deleted_at__isnull=True, cluster_id__isnull=False
-        )
+        active_schools()
+        .filter(id__in=school_ids, cluster_id__isnull=False)
         .values_list("cluster_id", flat=True)
         .distinct()
     )

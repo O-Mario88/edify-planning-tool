@@ -33,6 +33,7 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities.models import Activity
+from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
 from apps.core.fy import get_month_date_range, get_operational_fy
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
@@ -52,6 +53,7 @@ from apps.analytics.pl_analytics_service import (
     _ssa_score,
     ssa_band,
 )
+from apps.schools.lifecycle_service import active_schools
 
 PARTNER_DELIVERY = "partner"
 
@@ -147,7 +149,9 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None, country="") -> 
     cluster / school_type). ``country`` bounds it to one country's regions
     and staff; empty keeps the whole deployment."""
     filters = filters or {}
-    schools = School.objects.filter(deleted_at__isnull=True)
+    # The country's operating schools: a closed school is on the Closed
+    # Schools page and in no current total.
+    schools = active_schools()
     if country:
         schools = schools.filter(region__country=country)
 
@@ -229,7 +233,10 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None, country="") -> 
 
 
 def _country_activities(cd: CDScope):
-    qs = Activity.objects.filter(fy=cd.fy, deleted_at__isnull=True)
+    # Called-off work is not planned work (NOT_IN_PLAN_ACTIVITY_STATUSES).
+    qs = Activity.objects.filter(fy=cd.fy, deleted_at__isnull=True).exclude(
+        status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+    )
     if cd.country:
         qs = qs.filter(
             Q(school__region__country=cd.country)
@@ -547,11 +554,7 @@ class CDAnalyticsService:
         scope_ids = (
             set(cd.school_ids)
             if cd is not None
-            else set(
-                School.objects.filter(deleted_at__isnull=True).values_list(
-                    "id", flat=True
-                )
-            )
+            else set(active_schools().values_list("id", flat=True))
         )
         # The supervised profiles come back off the link rows themselves, so
         # this stays the single joined read it was. `supervisee__deleted_at`
@@ -1801,9 +1804,14 @@ class CDAnalyticsService:
         partner_ids = [p.id for p in partners]
 
         schools_by_partner: dict = {pid: set() for pid in partner_ids}
-        for pid, sid in PartnerAssignment.objects.filter(
-            partner_id__in=partner_ids, school__isnull=False
-        ).values_list("partner_id", "school_id"):
+        for pid, sid in (
+            PartnerAssignment.objects.filter(
+                partner_id__in=partner_ids, school__isnull=False
+            )
+            # A school withdrawn from a partner is not one of its schools.
+            .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+            .values_list("partner_id", "school_id")
+        ):
             schools_by_partner[pid].add(sid)
 
         counts = {
@@ -2820,7 +2828,7 @@ class CDAnalyticsService:
         from apps.clusters.models import Cluster
         from apps.partners.models import Partner
 
-        schools = School.objects.filter(deleted_at__isnull=True)
+        schools = active_schools()
         district_ids = list(
             schools.exclude(district__isnull=True)
             .order_by("district_id")

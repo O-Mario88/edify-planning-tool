@@ -11,6 +11,7 @@ from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 
 from .models import MonthlyPlan, MonthlyPlanActivity
+from apps.schools.lifecycle_service import active_schools
 
 
 def setup(query: dict, principal) -> list[dict]:
@@ -159,7 +160,6 @@ def core_planning(query: dict, principal) -> list[dict]:
 
 
 def plan_builder(query: dict, principal) -> dict:
-    from apps.schools.models import School
     from apps.clusters.models import Cluster
     from apps.ssa.models import SsaRecord
     from apps.core.enums import SsaIntervention
@@ -241,7 +241,7 @@ def plan_builder(query: dict, principal) -> dict:
     serialized_clusters = []
     for c in clusters_in_scope:
         # Member schools of this cluster
-        member_schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
+        member_schools = active_schools().filter(cluster_id=c.id)
         school_count = member_schools.count()
 
         # Most recent confirmed SsaRecord for each member school

@@ -3,20 +3,28 @@
 Planned and remaining (owner, 2026-10-03): for each Programme Lead and CCEO,
 what they have planned and what is left, in four parts — staff visits and
 the schools in training, the Partner's visits and Core trainings, the schools handed to a
-Partner and the schools in a project — against what the schools THEY hold ask
-for, never a flat 280 or 560 a small portfolio cannot reach. Readiness is the
+Partner and the schools in a project. Staff visits read against the 280 a
+Programme Lead and the 560 a CCEO plans, whatever they hold, and somebody
+whose schools cannot take that many is told how many to recruit (owner,
+2026-10-07). Readiness is the
 average of visits, trainings, Partner assignment and project assignment
 (apps.planning.readiness), so a person who has planned all four reads 100%.
+Two columns flag visits planned on both sides (owner, 2026-10-07: "flag
+visits planned by both staff and also assigned to partners for visits ... core
+one should have 2 visits from staff and 2 from partner. more than those should
+be flagged"). A Client school takes one visit, so one staff scheduled that is
+also in a Partner's hands is booked twice. A Core school takes two visits by
+staff and two by a Partner, so it is flagged only with more than that.
 {% endcomment %}
 {% data_table name="monitor-readiness" %}
   {% slot title %}Planned and remaining · FY {{ fy }}{% endslot %}
   {% slot summary %}{{ monitor_readiness.schools_total|intcomma }} schools · {{ monitor_readiness.net_visits_remaining|intcomma }} visits not yet planned · readiness {{ monitor_readiness.score }}%{% endslot %}
-  {% slot caption %}Each Programme Lead's and CCEO's staff visits and trainings, Partner visits and trainings, schools with a Partner and schools in a project: planned, target and remaining, grouped by Programme Lead.{% endslot %}
+  {% slot caption %}Each Programme Lead's and CCEO's staff visits and trainings, Partner visits and trainings, schools with a Partner and schools added to projects: planned, target and remaining, grouped by Programme Lead.{% endslot %}
   {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
   {% slot footer %}
   <details class="px-4 py-2.5 edify-text-caption edify-text-muted" data-readiness-about>
     <summary class="cursor-pointer font-semibold">About these figures</summary>
-    <p class="mt-1">What counts as a staff visit is every Follow up, In-school Training and SSA Support visit staff schedule themselves; SSA Support assigned to a Partner does not count. The target is two at each Core school and one at each Client, Core Trained and Core Graduate school, to the ceiling of {{ pl_visits_target }} for a Programme Lead and {{ default_visits_target }} for a CCEO; somebody whose schools ask for fewer is measured against what they ask for. The Partner takes the other two visits and two trainings at each Core school and every school beyond staff capacity; a school already in a Partner's hands is the Partner's. Schools scheduled by staff are the schools held where staff scheduled a visit themselves; Staff and Partner counts those of them that are also in a Partner's hands, and opens the list. Schools in training are the schools attached to an in-school training or a group training, of the schools that take one; a cluster meeting is not a training. Core partner trainings are the Partner's two at each Core school. A Partner visit is planned once the Partner has dated it. Schools in a project counts every school held, Champion included. Each percentage stops at 100, so planning past one target does not cover another, and a part that asks nothing is complete. Readiness is the average of staff visits, schools in training, schools with a Partner and schools in a project. The ceiling warns and never refuses, and no school is assigned to a Partner by this page: the Partner's share is a target.</p>
+    <p class="mt-1">What counts as a staff visit is every Follow up, In-school Training and SSA Support visit staff schedule themselves; SSA Support assigned to a Partner does not count. The target is {{ pl_visits_target }} visits a year for a Programme Lead and {{ default_visits_target }} for a CCEO, whatever they hold: two at each Core school and the rest at Client, Core Trained and Core Graduate schools. Once those are planned, the schools left are the Partner's. Somebody whose schools cannot take that many visits is marked “recruit N more schools”, and is sent a notice to recruit them. The Partner takes the other two visits and two trainings at each Core school and every school beyond the staff target. Schools scheduled by staff are the schools held where staff scheduled a visit themselves; Two columns flag visits planned on both sides, and each count opens its schools. Client: Staff and Partner counts the Client, Core Trained and Core Graduate schools staff scheduled a visit at that are also in a Partner's hands; such a school takes one visit, staff's or the Partner's, so it is booked twice. A Core school takes two visits by staff and two by a Partner, so both visiting is its package and is not flagged; Core: over 2 Staff or 2 Partner visits counts the Core schools with more than two staff visits or more than two Partner visits, dated or awaiting the Partner's date. Schools in training are the schools attached to an in-school training or a group training, of the schools that take one; a cluster meeting is not a training. Core partner trainings are the Partner's two at each Core school. A Partner visit is planned once the Partner has dated it. Schools added to projects are the schools the person added to a project, of the ceilings the Project Coordinator set them, put together; what is left is what remains to reach those ceilings, and somebody with no ceiling is asked nothing. Each percentage stops at 100, so planning past one target does not cover another, and a part that asks nothing is complete. Readiness is the average of staff visits, schools in training, schools with a Partner and schools added to projects. The target warns and never refuses, and no school is assigned to a Partner by this page: the Partner's share is a target.</p>
   </details>
   {% endslot %}
   {% if monitor.leads %}
@@ -26,18 +34,19 @@ average of visits, trainings, Partner assignment and project assignment
           <th scope="col" class="px-3 py-2 text-right">Readiness</th>
           <th scope="col" class="px-3 py-2 text-right">Staff visits</th>
           <th scope="col" class="px-3 py-2 text-right">Schools scheduled<br>by staff</th>
-          <th scope="col" class="px-3 py-2 text-right">Staff and<br>Partner</th>
+          <th scope="col" class="px-3 py-2 text-right">Core: over 2 Staff<br>or 2 Partner visits</th>
+          <th scope="col" class="px-3 py-2 text-right">Client: Staff<br>and Partner</th>
           <th scope="col" class="px-3 py-2 text-right">Schools in<br>training</th>
           <th scope="col" class="px-3 py-2 text-right">Partner visits</th>
           <th scope="col" class="px-3 py-2 text-right">Core partner<br>trainings</th>
           <th scope="col" class="px-3 py-2 text-right">Schools with a Partner</th>
-          <th scope="col" class="px-3 py-2 text-right">Schools in a project</th>
+          <th scope="col" class="px-3 py-2 text-right">Schools added to projects</th>
         </tr>
       </thead>
       <tbody>
         {% for lead in monitor.leads %}
         <tr class="edify-group-head">
-          <th colspan="10" scope="colgroup">
+          <th colspan="11" scope="colgroup">
             <span class="edify-group-head__label">{{ lead.name }}</span>
             <span class="edify-group-head__count">{{ lead.officer_count }} staff · {{ lead.readiness.schools_total|intcomma }} schools · readiness {{ lead.readiness.score }}%</span>
           </th>

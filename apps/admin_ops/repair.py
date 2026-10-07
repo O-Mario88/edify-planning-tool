@@ -118,7 +118,9 @@ def _find_uncosted_scheduled_activities() -> list:
 
     return list(
         Activity.objects.filter(
-            deleted_at__isnull=True, status="scheduled", cost_missing=True
+            deleted_at__isnull=True,
+            status__in=("scheduled", "rescheduled"),
+            cost_missing=True,
         ).select_related("school")[:200]
     )
 

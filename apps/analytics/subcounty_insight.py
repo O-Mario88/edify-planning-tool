@@ -31,6 +31,7 @@ from apps.analytics.pl_analytics_service import (
     score_order,
 )
 from apps.analytics.plan_progress import empty_progress, plan_progress_by_subcounty
+from apps.schools.lifecycle_service import active_schools
 
 
 def boundary_name(value: str | None) -> str:
@@ -66,14 +67,9 @@ def subcounty_insight(
     """
 
     from apps.activities.models import Activity
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
 
-    school_qs = (
-        schools
-        if schools is not None
-        else School.objects.filter(deleted_at__isnull=True)
-    )
+    school_qs = schools if schools is not None else active_schools()
     # Keep every dependent aggregate inside the same school scope. This is a
     # lazy subquery, so district-scoped map refreshes remain constant-query
     # without first materialising thousands of school identifiers in Python.

@@ -1,11 +1,12 @@
 {% load frontend_filters %}{% comment %}
 One part of the planner's year. Each figure opens the schools behind it,
 under the table (owner, 2026-10-05; readiness_list.html): `planned_key`,
-`target_key` and `left_key` name the lists.
+`target_key` and `left_key` name the lists; `target_href` and `left_href`
+open another page's table where the figure is not a list of schools.
 {% endcomment %}<tr data-readiness-line>
   <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ label }}{% if note %} <span class="edify-text-muted">{{ note }}</span>{% endif %}</th>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Planned">{% include "partials/my_plan/_readiness_count.html" with count=line.planned key=planned_key %}{% if line.over %} <span class="edify-text-muted">{{ line.over|intcomma }} over</span>{% endif %}</td>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{% if line.required %}{% include "partials/my_plan/_readiness_count.html" with count=line.target key=target_key %}{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining">{% include "partials/my_plan/_readiness_count.html" with count=line.remaining key=left_key tone="warning" %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{% if line.required %}{% include "partials/my_plan/_readiness_count.html" with count=line.target key=target_key href=target_href %}{% else %}<span class="edify-text-muted">None required</span>{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining">{% include "partials/my_plan/_readiness_count.html" with count=line.remaining key=left_key href=left_href tone="warning" %}</td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Share"><span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.percent }}%</span></td>
 </tr>

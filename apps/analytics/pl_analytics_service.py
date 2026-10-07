@@ -54,11 +54,17 @@ from apps.core.fy import (
     get_operational_fy,
 )
 from apps.core.scoping import resolve_user_scope
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.activities.cluster_attendance import trained_school_ids
 from apps.planning.country_oversight.rules import TRAINED_TYPES
-from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 # Target achievement is completed-vs-StaffTargetProfile (the spec's definition),
 # computed inline; the stricter apps.targets.performance engine is intentionally
 # not used here (it measures IA-verified achievement, not field execution).
@@ -286,9 +292,13 @@ def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
         "staff_id", "school_id"
     )
     assigned_ids = {school_id for _, school_id in assign}
+    # Operating schools: one that has closed is no longer part of anybody's
+    # portfolio (apps.schools.lifecycle_service.active_schools).
     active_ids = set(
-        School.objects.filter(id__in=assigned_ids).values_list("id", flat=True)
-    )  # School.objects is soft-delete-filtered
+        active_schools(School.objects.filter(id__in=assigned_ids)).values_list(
+            "id", flat=True
+        )
+    )
     per_cceo_schools: dict[str, set] = {}
     for staff_id, school_id in assign:
         if school_id in active_ids:
@@ -317,9 +327,9 @@ def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
             school_ids |= c["school_ids"]
     else:
         school_ids = set(
-            School.objects.filter(id__in=set(scope.school_ids)).values_list(
-                "id", flat=True
-            )
+            active_schools(
+                School.objects.filter(id__in=set(scope.school_ids))
+            ).values_list("id", flat=True)
         )
 
     school_filtered = bool(cceo_filter)
@@ -350,16 +360,20 @@ def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
         # The portfolio is own + team + coverage, so the subquery must span the
         # same staff set resolve_user_scope used — not just the CCEOs.
         portfolio_staff = list(scope.assignment_staff_ids) or cceo_sp_ids
-        school_ref = School.objects.filter(
-            id__in=StaffSchoolAssignment.objects.filter(
-                staff_id__in=portfolio_staff
-            ).values("school_id")
+        school_ref = active_schools(
+            School.objects.filter(
+                id__in=StaffSchoolAssignment.objects.filter(
+                    staff_id__in=portfolio_staff
+                ).values("school_id")
+            )
         ).values("id")
         for c in cceos:
-            c["school_ref"] = School.objects.filter(
-                id__in=StaffSchoolAssignment.objects.filter(
-                    staff_id=c["staff_id"]
-                ).values("school_id")
+            c["school_ref"] = active_schools(
+                School.objects.filter(
+                    id__in=StaffSchoolAssignment.objects.filter(
+                        staff_id=c["staff_id"]
+                    ).values("school_id")
+                )
             ).values("id")
 
     return PLScope(
@@ -379,7 +393,10 @@ def _team_activity_qs(pls: PLScope, fy: str, quarter: str | None, filters: dict)
     """The team's activity set for the period. When a school-narrowing filter
     is active, scope purely by the filtered schools (so the filter bites);
     otherwise use the union of team-owned OR portfolio-school activities."""
-    base = Activity.objects.filter(fy=fy, deleted_at__isnull=True)
+    # Called-off work is not planned work (NOT_IN_PLAN_ACTIVITY_STATUSES).
+    base = Activity.objects.filter(fy=fy, deleted_at__isnull=True).exclude(
+        status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+    )
     if pls.school_filtered:
         base = base.filter(school_id__in=pls.school_ref)
     else:
@@ -534,6 +551,7 @@ class PLAnalyticsService:
             PartnerAssignment.objects.filter(
                 Q(school_id__in=pls.school_ref) | Q(cluster_id__in=cluster_ids)
             )
+            .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
             .values_list("partner_id", flat=True)
             .distinct()
         )
@@ -1495,11 +1513,17 @@ class PLAnalyticsService:
             or 0
         )
         schools_improved = PLAnalyticsService._schools_improved(pls, fy)
+        # Which two years "improved" compares: the latest year with a
+        # confirmed SSA and the one before it, which need not be the year the
+        # page is open on. Without them the figure read as this year's.
+        latest, prev = PLAnalyticsService._cycle_fys(pls, fy)
         return {
             "teachers_trained": int(teachers),
             "leaders_trained": int(leaders),
             "students_impacted": int(students),
             "schools_improved": schools_improved,
+            "improved_from_fy": prev or "",
+            "improved_to_fy": latest or "",
         }
 
     @staticmethod

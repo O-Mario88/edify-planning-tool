@@ -18,7 +18,12 @@ from apps.accounts.models import StaffProfile
 from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
 from apps.analytics.country_map_context import country_map_context
-from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import (
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
+from apps.schools.lifecycle_service import active_schools
 
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 CLUSTER_MEETING_TYPE = "cluster_meeting"
@@ -45,8 +50,12 @@ class AnalyticsDashboardService:
         scope = resolve_user_scope(principal)
 
         # 2. Base Querysets
-        schools_qs = School.objects.filter(deleted_at__isnull=True)
-        activities_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+        # Operating schools only: a closed school is in no current total.
+        schools_qs = active_schools()
+        # Called-off work is not planned work (NOT_IN_PLAN_ACTIVITY_STATUSES).
+        activities_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy).exclude(
+            status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+        )
         ssa_qs = SsaRecord.objects.filter(
             deleted_at__isnull=True, fy=fy, verification_status="confirmed"
         )
@@ -392,14 +401,20 @@ class AnalyticsDashboardService:
         )
 
         # Schools Impacted remains an execution metric: a school only counts
-        # here after completed/verified work in the selected quarter.
+        # here after completed/verified work in the selected quarter. Work
+        # held for a cluster names no school, and its blank was counted as
+        # one more school reached.
         reached_school_ids = (
-            curr_activities.filter(status__in=ACHIEVED_STATUSES)
+            curr_activities.filter(
+                status__in=ACHIEVED_STATUSES, school_id__isnull=False
+            )
             .values_list("school_id", flat=True)
             .distinct()
         )
         reached_prior_school_ids = (
-            prior_activities.filter(status__in=ACHIEVED_STATUSES)
+            prior_activities.filter(
+                status__in=ACHIEVED_STATUSES, school_id__isnull=False
+            )
             .values_list("school_id", flat=True)
             .distinct()
         )

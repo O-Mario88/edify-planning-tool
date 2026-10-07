@@ -274,12 +274,16 @@ class RolloutScope:
         """The portfolio as a subquery, so `school_id__in` never ships the
         materialised id list (apps.analytics.pl_analytics_service PLScope)."""
         from apps.accounts.models import StaffSchoolAssignment
+        from apps.schools.lifecycle_service import active_schools
         from apps.schools.models import School
 
-        return School.objects.filter(
-            id__in=StaffSchoolAssignment.objects.filter(
-                staff_id__in=self.staff_ids
-            ).values("school_id")
+        # Operating schools: a closed school is not waiting to be trained.
+        return active_schools(
+            School.objects.filter(
+                id__in=StaffSchoolAssignment.objects.filter(
+                    staff_id__in=self.staff_ids
+                ).values("school_id")
+            )
         ).values("id")
 
     def activity_filter(self) -> Q:
@@ -330,6 +334,7 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
     from apps.accounts.models import StaffSchoolAssignment
     from apps.clusters.models import Cluster
     from apps.hr.team_roster import team_members
+    from apps.schools.lifecycle_service import active_schools
     from apps.schools.models import School
 
     role = getattr(principal, "active_role", "") or ""
@@ -384,8 +389,11 @@ def resolve_rollout_scope(principal, *, lead: str | None = None) -> RolloutScope
             "district": district or "",
             "cluster_id": cluster_id,
         }
-        for school_id, name, code, district, cluster_id in School.objects.filter(
-            id__in={school_id for _staff, school_id in assignments}
+        # Operating schools: a closed school is not waiting for a training.
+        for school_id, name, code, district, cluster_id in active_schools(
+            School.objects.filter(
+                id__in={school_id for _staff, school_id in assignments}
+            )
         ).values_list("id", "name", "school_id", "district__name", "cluster_id")
     }
     for staff_id, school_id in assignments:

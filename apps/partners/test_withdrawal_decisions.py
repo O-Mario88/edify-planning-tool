@@ -93,9 +93,10 @@ class NoSecondDecisionTest(_Fixture):
 
         item = svc.build_item_by_assignment(assignment.id)
         self.assertFalse(item.awaits_staff_decision)
-        row = self.row(self.page(), assignment)
-        self.assertNotIn("Resolve Exception", row)
-        self.assertIn(">Returned<", row)
+        # Decided as it was withdrawn, so it is no longer a row of the
+        # partner's table: nothing to resolve, and nothing reading
+        # "Returned" (owner, 2026-10-06).
+        self.assertNotIn(f'data-assignment="{assignment.id}"', self.page())
 
         # Resolving it again reports the decision already made and creates
         # nothing — never a second replacement for the same slot.

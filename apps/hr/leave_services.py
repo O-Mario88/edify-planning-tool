@@ -1341,7 +1341,13 @@ class LeaveImpactAnalysisService:
 
         # 3. My Plan items due during leave (incomplete activities)
         my_plan_due = activities.filter(
-            status__in=["planned", "scheduled", "partner_scheduled", "in_progress"]
+            status__in=[
+                "planned",
+                "scheduled",
+                "rescheduled",
+                "partner_scheduled",
+                "in_progress",
+            ]
         )
 
         # 4. Partner assignments waiting

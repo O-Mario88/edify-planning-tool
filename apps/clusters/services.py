@@ -36,6 +36,7 @@ from apps.ssa.presentation import build_ssa_score_summary
 from apps.ssa.models import SsaRecord, SsaScore
 
 from .models import Cluster, ClusterSubCounty, SchoolClusterAssignment
+from apps.schools.lifecycle_service import active_schools as operating_schools
 
 
 def _latest_confirmed_ssa(school):
@@ -125,19 +126,15 @@ def list_clusters(principal) -> list[dict]:
     cluster_ids = [cluster.id for cluster in clusters]
     school_counts = {
         row["cluster_id"]: row["count"]
-        for row in School.objects.filter(
-            cluster_id__in=cluster_ids, deleted_at__isnull=True
-        )
+        for row in operating_schools()
+        .filter(cluster_id__in=cluster_ids)
         .values("cluster_id")
         .annotate(count=Count("id"))
     }
     completed_ssa_counts = {
         row["cluster_id"]: row["count"]
-        for row in School.objects.filter(
-            cluster_id__in=cluster_ids,
-            deleted_at__isnull=True,
-            current_fy_ssa_status="done",
-        )
+        for row in operating_schools()
+        .filter(cluster_id__in=cluster_ids, current_fy_ssa_status="done")
         .values("cluster_id")
         .annotate(count=Count("id"))
     }
@@ -835,7 +832,8 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
 
     cluster = _scoped_cluster(cluster_id, principal)
     schools = (
-        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+        operating_schools()
+        .filter(cluster_id=cluster.id)
         # Champion schools have their own table on Core Schools and take no
         # cluster training (owner, 2026-09-25).
         .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
@@ -1105,7 +1103,7 @@ def active_schools(cluster_id: str):
 def cluster_detail(cluster_id: str, principal) -> dict:
     cluster = _scoped_cluster(cluster_id, principal)
 
-    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+    schools = operating_schools().filter(cluster_id=cluster.id)
     school_totals = schools.aggregate(
         school_count=Count("id"), student_impact=Sum("enrollment")
     )
@@ -1286,7 +1284,7 @@ def _weakest_from_stats(stats: dict[str, dict]) -> list[dict]:
 
 def _cluster_ssa_stats(cluster_id: str) -> dict[str, dict]:
     """Per-intervention stats for one cluster, from its schools' latest SSAs."""
-    schools = School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
+    schools = operating_schools().filter(cluster_id=cluster_id)
     # One read for every school's latest confirmed record plus its scores,
     # rather than two per school inside a loop.
     records = _latest_confirmed_ssa_map(schools).values()
@@ -1365,7 +1363,7 @@ def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
 def cluster_intelligence(cluster_id: str, principal) -> dict:
     """Per-cluster intelligence surface."""
     cluster = _scoped_cluster(cluster_id, principal)
-    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+    schools = operating_schools().filter(cluster_id=cluster.id)
     total = schools.count()
     ssa_done = schools.filter(current_fy_ssa_status="done").count()
     return {
@@ -1428,6 +1426,7 @@ def cluster_planning(principal) -> list[dict]:
     DONE_STATUSES = ["ia_verified", "closed", "accountant_confirmed"]
     OPEN_STATUSES = [
         "scheduled",
+        "rescheduled",
         "partner_scheduled",
         "assigned_to_partner",
         "evidence_uploaded",
@@ -1441,9 +1440,8 @@ def cluster_planning(principal) -> list[dict]:
 
     school_rows = {
         row["cluster_id"]: row
-        for row in School.objects.filter(
-            cluster_id__in=cluster_ids, deleted_at__isnull=True
-        )
+        for row in operating_schools()
+        .filter(cluster_id__in=cluster_ids)
         .values("cluster_id")
         .annotate(
             total=Count("id"),
@@ -1647,9 +1645,11 @@ class ClusterDashboardService:
         )
         # The card counts the schools its list shows: Champion and Core
         # Graduate schools are not on it (owner, 2026-09-25).
-        cluster_schools_qs = School.objects.filter(
-            cluster_id__in=cluster_ids, deleted_at__isnull=True
-        ).exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
+        cluster_schools_qs = (
+            operating_schools()
+            .filter(cluster_id__in=cluster_ids)
+            .exclude(school_type__in=OWN_TABLE_SCHOOL_TYPES)
+        )
 
         schools_count_by_cluster: dict[str, int] = {}
         staff_by_cluster: dict[str, set] = {}
@@ -1849,9 +1849,8 @@ class ClusterDashboardService:
             filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
         if staff_id:
             staff_cluster_ids = (
-                School.objects.filter(
-                    account_owner_id=staff_id, deleted_at__isnull=True
-                )
+                operating_schools()
+                .filter(account_owner_id=staff_id)
                 .exclude(cluster_id__isnull=True)
                 .exclude(cluster_id="")
                 .values("cluster_id")
@@ -2285,6 +2284,7 @@ _UNHELD_STATUSES = frozenset(
     {
         "planned",
         "scheduled",
+        "rescheduled",
         "assigned_to_partner",
         "partner_scheduled",
         "awaiting_owner_approval",

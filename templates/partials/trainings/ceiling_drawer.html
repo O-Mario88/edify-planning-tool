@@ -2,12 +2,13 @@
 
 {% comment %}
 Set Training Ceiling / Edit ceiling / Remove ceiling (owner, 2026-10-06), in
-the Project Capacity drawer's shape. A Programme Lead says how many schools one
-officer they supervise may schedule for one training in one fiscal year, group
-and in-school deliveries together. It is a ceiling on scheduling: nothing is
-handed to the officer by setting it. Choosing the officer, the training or the
-year reloads the drawer with what that officer has already scheduled, counted
-from the plans themselves. apps.planning.training_ceilings.set_ceiling checks
+the Project Capacity drawer's shape. A Programme Lead says how many schools
+they themselves, or one officer they supervise, may schedule for one training
+in one fiscal year, group and in-school deliveries together (the Lead is on
+the list: owner, 2026-10-06). It is a ceiling on scheduling: nothing is handed
+to anybody by setting it. Choosing the person, the training or the year
+reloads the drawer with what that person has already scheduled, counted from
+the plans themselves. apps.planning.training_ceilings.set_ceiling checks
 all of it again.
 {% endcomment %}
 
@@ -16,9 +17,9 @@ all of it again.
 
 {% block drawer_body %}
 {% if mode == "missing" %}
-<p class="edify-note" data-tone="warning">That ceiling is not for an officer you supervise, or it no longer exists.</p>
+<p class="edify-note" data-tone="warning">That ceiling is not yours or an officer&rsquo;s you supervise, or it no longer exists.</p>
 {% elif not may_set %}
-<p class="edify-note" data-tone="warning" data-ceiling-no-team>A Programme Lead sets the training ceilings of the officers they supervise. No officer is recorded under you yet.</p>
+<p class="edify-note" data-tone="warning" data-ceiling-no-team>A Programme Lead sets their own training ceiling and those of the officers they supervise. No staff record is linked to your account yet.</p>
 {% else %}
 <form {% if mode == "edit" %}hx-post="/training-ceilings/{{ row.id }}/edit"{% elif mode == "remove" %}hx-post="/training-ceilings/{{ row.id }}/remove"{% else %}hx-post="/training-ceilings/set"{% endif %} hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-training-ceiling-form>
   {% csrf_token %}
@@ -43,9 +44,9 @@ all of it again.
             hx-get="/training-ceilings/set" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="closest form"
             class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
       <option value="">Choose a staff member</option>
-      {% for staff in staff_options %}<option value="{{ staff.id }}"{% if staff.id == values.staff_id %} selected{% endif %}>{{ staff.user.name }}</option>{% endfor %}
+      {% for staff in staff_options %}<option value="{{ staff.id }}"{% if staff.id == values.staff_id %} selected{% endif %}>{{ staff.user.name }}{% if staff.id == request.user.staff_profile_id %} (you){% endif %}</option>{% endfor %}
     </select>
-    <p class="edify-text-caption text-slate-500">The officers you supervise.</p>
+    <p class="edify-text-caption text-slate-500">You, and the officers you supervise.</p>
   </div>
 
   <div class="space-y-1">

@@ -22,7 +22,7 @@
           {% if item.period %}data-metric-period="{{ item.period }}"{% endif %}
           {% if item.scope %}data-metric-scope="{{ item.scope }}"{% endif %}
           {% if item.data_state %}data-metric-state="{{ item.data_state }}"{% endif %}
-          {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% endif %}>
+          {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% elif item.helper_note %}title="{{ item.helper_note }}"{% endif %}>
       {% if item.hx_get %}
       <button type="button" hx-get="{{ item.hx_get }}" hx-target="#drawer-container" hx-swap="innerHTML" class="context-metrics__link">
       {% elif drilldown_mode == "program_lead" and item.link %}
@@ -41,7 +41,7 @@
         <span class="context-metrics__label"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% firstof item.label item.canonical_label %}</span>
         {% kpi_value item as formatted_value %}
         <strong class="context-metrics__value{% if formatted_value.compact %} context-metrics__value--compact{% endif %}" title="{{ formatted_value.exact }}"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% if formatted_value.compact %}<span class="sr-only">{{ formatted_value.exact }}</span><span aria-hidden="true">{{ formatted_value.display }}</span>{% else %}{{ formatted_value.display }}{% endif %}</strong>
-        {% if item.trend.value %}{% firstof item.trend.tone item.tone "neutral" as trend_tone %}<span class="context-metrics__helper" title="{{ item.trend.value }}{% if item.helper %} · {% firstof item.helper_exact item.helper %}{% endif %}" data-tone="{{ trend_tone }}">{% if item.trend.direction == "up" %}<span aria-hidden="true">↗ </span>{% elif item.trend.direction == "down" %}<span aria-hidden="true">↘ </span>{% endif %}{{ item.trend.value }}</span>{% elif item.helper %}<span class="context-metrics__helper" title="{% firstof item.helper_exact item.helper %}" data-tone="{{ item.tone }}">{{ item.helper }}</span>{% endif %}
+        {% if item.trend.value %}{% firstof item.trend.tone item.tone "neutral" as trend_tone %}<span class="context-metrics__helper" title="{{ item.trend.value }}{% if item.helper or item.helper_note %} · {% firstof item.helper_note item.helper_exact item.helper %}{% endif %}" data-tone="{{ trend_tone }}">{% if item.trend.direction == "up" %}<span aria-hidden="true">↗ </span>{% elif item.trend.direction == "down" %}<span aria-hidden="true">↘ </span>{% endif %}{{ item.trend.value }}</span>{% elif item.helper %}<span class="context-metrics__helper" title="{% firstof item.helper_note item.helper_exact item.helper %}" data-tone="{{ item.tone }}"{% if item.helper_note %} aria-hidden="true"{% endif %}>{{ item.helper }}</span>{% endif %}{% comment %}The sentence the line under the figure was, when it was cut to its figure or left out: read by a screen reader, shown on hover.{% endcomment %}{% if item.helper_note %}<span class="sr-only" data-kpi-note>{{ item.helper_note }}</span>{% endif %}
 
       {% if item.hx_get %}</button>
       {% elif drilldown_mode == "program_lead" and item.link %}</button>

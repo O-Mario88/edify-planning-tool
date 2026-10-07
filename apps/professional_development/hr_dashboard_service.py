@@ -34,6 +34,7 @@ from apps.professional_development.models import (
     ProfessionalDevelopmentCertificate,
     ProfessionalDevelopmentRequest,
 )
+from apps.schools.lifecycle_service import active_schools
 
 PD_ELIGIBLE_ROLES = [
     ("CCEO", "CCEO"),
@@ -163,12 +164,11 @@ def _scoped_staff_ids(principal):
         # the school's region cannot be reached by traversal — resolve the
         # region's schools first, then the staff assigned to them.
         from apps.accounts.models import StaffSchoolAssignment
-        from apps.schools.models import School
 
         region_school_ids = list(
-            School.objects.filter(
-                region_id__in=scope.region_ids, deleted_at__isnull=True
-            ).values_list("id", flat=True)
+            active_schools()
+            .filter(region_id__in=scope.region_ids)
+            .values_list("id", flat=True)
         )
         if not region_school_ids:
             return [], None

@@ -258,5 +258,7 @@ class TheCoreActionsTest(_CoreTableFixture):
 
         slot = CoreActivitySlot.objects.get(id=cslot_id("CORE-P1", "v", 2, fy=self.fy))
         self.assertEqual((slot.status, slot.assigned_partner_id), ("Planned", None))
-        row = self.core_row(self.page(), handover)
-        self.assertNotIn("UGX 55,000", row, "work taken back is priced at nothing")
+        # The school has left the partner's table (owner, 2026-10-06: "it
+        # should leave the list or tables where they have been withdrawn").
+        # It used to stay, as a row with no price.
+        self.assertNotIn(f'data-assignment="{handover.id}"', self.page())

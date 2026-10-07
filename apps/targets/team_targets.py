@@ -21,6 +21,10 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
 from apps.accounts.models import StaffSchoolAssignment, StaffSupervisorAssignment, User
+from apps.core.activity_types import (
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
+    NOT_STARTED_ACTIVITY_STATUSES,
+)
 from apps.activities.models import Activity
 from apps.core.fy import get_month_date_range
 from apps.ssa.models import SsaRecord
@@ -96,16 +100,17 @@ def supervised_users(pl_user) -> list[User]:
 
         from apps.accounts.models import StaffSchoolAssignment
         from apps.core.scoping import resolve_user_scope
-        from apps.schools.models import School
 
         scope = resolve_user_scope(pl_user)
         if not scope.region_ids:
             return []
         # StaffSchoolAssignment.school_id is a plain column, not a relation,
         # so the reach is resolved on School first.
-        reach_school_ids = School.objects.filter(
-            region_id__in=scope.region_ids, deleted_at__isnull=True
-        ).values("id")
+        from apps.schools.lifecycle_service import active_schools
+
+        reach_school_ids = (
+            active_schools().filter(region_id__in=scope.region_ids).values("id")
+        )
         staff_ids = set(
             StaffSchoolAssignment.objects.filter(
                 school_id__in=reach_school_ids
@@ -477,7 +482,13 @@ class PLTeamTargetsService:
             # and district names come from one small read instead of a joined
             # District per school.
             assigned = StaffSchoolAssignment.objects.filter(staff_id__in=all_staff_ids)
-            portfolio = School.objects.filter(id__in=assigned.values("school_id"))
+            from apps.schools.lifecycle_service import active_schools
+
+            # Operating schools: a closed school owes no SSA, visit or
+            # training and is not part of the team's portfolio.
+            portfolio = active_schools(
+                School.objects.filter(id__in=assigned.values("school_id"))
+            )
             portfolio_codes = portfolio.values("school_id")
             schools = {
                 s.id: s
@@ -1509,6 +1520,10 @@ class PLTeamTargetsService:
             .filter(models_q_team(team_ids))
             .exclude(assigned_partner_id__isnull=True)
             .exclude(assigned_partner_id="")
+            # Work that was called off is not assigned to anybody: a visit
+            # cancelled when staff took the school back stayed in the
+            # Partner's "Assigned" for the rest of the year.
+            .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
         )
         by_partner = {}
         for a in qs:
@@ -1525,7 +1540,10 @@ class PLTeamTargetsService:
                 },
             )
             row["assigned"] += 1
-            if a.status in ("scheduled", "planned"):
+            # Dated and not started. Partner work is dated as
+            # `partner_scheduled`, which this column never read, so it said
+            # 0 for a Partner with a full calendar.
+            if a.planned_date and a.status in NOT_STARTED_ACTIVITY_STATUSES:
                 row["scheduled"] += 1
             if a.status in COMPLETED_STATUSES:
                 row["completed"] += 1
@@ -1942,10 +1960,10 @@ class PLCatchUpPlanService:
             )
             if not statuses:
                 continue
-            live = [s for s in statuses if s not in ("cancelled", "rejected")]
+            live = [s for s in statuses if s not in NOT_IN_PLAN_ACTIVITY_STATUSES]
             if live and all(s in COMPLETED_STATUSES for s in live):
                 new_status = "completed"
-            elif any(s not in ("planned", "scheduled") for s in live):
+            elif any(s not in NOT_STARTED_ACTIVITY_STATUSES for s in live):
                 new_status = "in_progress"
             else:
                 continue

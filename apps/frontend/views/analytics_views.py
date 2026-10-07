@@ -18,10 +18,13 @@ from apps.geography.models import Region, District, SubRegion, SubCounty
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner
 from apps.accounts.models import StaffProfile
-from apps.schools.models import School
 from apps.activities.models import Activity
-from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
+from apps.analytics.analytics_dashboard_service import (
+    ACHIEVED_STATUSES,
+    AnalyticsDashboardService,
+)
 from apps.core.cache_utils import stampede_safe_get_or_compute
+from apps.schools.lifecycle_service import active_schools
 
 
 #: The filters Analytics understands; anything else a request carries is ignored.
@@ -489,7 +492,7 @@ def analytics_drilldown_view(request):
     # ForeignKey, so select_related("account_owner__user") raises FieldError
     # and this endpoint returned HTTP 500 for every metric. Only `district` is
     # a real relation here.
-    schools = School.objects.filter(deleted_at__isnull=True).select_related("district")
+    schools = active_schools().select_related("district")
     scope = resolve_user_scope(request.user)
     if scope.can_view_summary_only:
         activities = activities.none()
@@ -557,7 +560,13 @@ def analytics_drilldown_view(request):
         headers = ["School ID", "School Name", "District", "Type", "Enrollment"]
 
         school_ids = (
-            activities.filter(quarter=quarter, status__in=["completed", "ia_verified"])
+            # The tile's own rule (AnalyticsDashboardService), so the list
+            # is the schools the number counted.
+            activities.filter(
+                quarter=quarter,
+                status__in=ACHIEVED_STATUSES,
+                school_id__isnull=False,
+            )
             .values_list("school_id", flat=True)
             .distinct()
         )
@@ -1151,10 +1160,7 @@ def map_subcounty_metrics_view(request):
 
     payload = subcounty_insight(
         fy,
-        schools=School.objects.filter(
-            deleted_at__isnull=True,
-            district_id=district.id,
-        ),
+        schools=active_schools().filter(district_id=district.id),
     )
     response = JsonResponse(payload)
     response["Cache-Control"] = "private, no-store"

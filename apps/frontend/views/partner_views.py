@@ -3,7 +3,11 @@ GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    NON_FUNDABLE_ACTIVITY_STATUSES,
+    VISIT_TYPES,
+)
 import csv
 from collections import defaultdict
 
@@ -32,6 +36,7 @@ from apps.partners.purposes import visit_purpose_label
 from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.schools.models import School
+from apps.schools.lifecycle_service import active_schools
 
 #: Work a partner must not act on: stopped by staff, or already refused.
 #: Named once so every partner-facing list excludes the same set —
@@ -163,7 +168,9 @@ def _partner_workspace(request):
                     Q(school__name__icontains=search)
                     | Q(school__school_id__icontains=search)
                     | Q(school__district__name__icontains=search)
-                ).values("partner_id")
+                )
+                .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+                .values("partner_id")
             )
         )
     if selected_partner:
@@ -174,17 +181,24 @@ def _partner_workspace(request):
     start, end = get_fy_date_range(selected_fy)
     start_date, end_date = start.date(), end.date()
 
+    # Work the Partner holds. A school withdrawn from them, or handed back,
+    # is no longer theirs, and a visit called off is nobody's: both used to
+    # stay in the table and in every figure above it (owner, 2026-10-06: "it
+    # should leave the list or tables where they have been withdrawn. It also
+    # does not update the counts").
     activities_qs = (
         Activity.objects.filter(
             assigned_partner_id__in=partner_ids,
             deleted_at__isnull=True,
             fy=selected_fy,
         )
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .select_related("school__district", "cluster")
         .order_by("planned_date", "scheduled_date", "created_at")
     )
     assignments_qs = (
         PartnerAssignment.objects.filter(partner_id__in=partner_ids)
+        .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
         .select_related("partner", "school__district", "cluster")
         .order_by("scheduled_date", "created_at")
     )
@@ -769,9 +783,18 @@ def partner_detail_view(request, partner_id):
     from apps.core.scoping import resolve_user_scope
     from apps.ssa.services import get_ssa_progress_by_fy
 
-    # The whole history, not a window of it: this is the record.
+    # The whole history, not a window of it: this is the record. Work staff
+    # took back from the partner is not part of it: the visit was called off
+    # with the withdrawal, and it used to stay here as work the partner had
+    # not completed, at a school it was then listed as supporting.
+    taken_back = PartnerAssignment.objects.filter(
+        partner=partner,
+        status__in=PartnerAssignment.RELEASED_STATUSES,
+        scheduled_activity_id__isnull=False,
+    ).values("scheduled_activity_id")
     activities = list(
         Activity.objects.filter(assigned_partner_id=partner.id, deleted_at__isnull=True)
+        .exclude(id__in=taken_back)
         .select_related("school", "cluster")
         .order_by("-planned_date", "-created_at")
     )
@@ -838,12 +861,12 @@ def partner_detail_view(request, partner_id):
         if n and n.casefold() not in roster_names:
             named_on_deliveries[n] = named_on_deliveries.get(n, 0) + 1
 
-    assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list(
-        "school_id", flat=True
+    assigned_school_ids = (
+        PartnerAssignment.objects.filter(partner=partner)
+        .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+        .values_list("school_id", flat=True)
     )
-    partner_schools = School.objects.filter(
-        id__in=assigned_school_ids, deleted_at__isnull=True
-    )
+    partner_schools = active_schools().filter(id__in=assigned_school_ids)
     partner_progress = get_ssa_progress_by_fy(partner_schools)
 
     # The schools this organisation supports — every portfolio school it has
@@ -1965,9 +1988,7 @@ def partner_activity_workroom_view(request, activity_id):
     member_schools = []
     if a.cluster_id:
         member_schools = list(
-            School.objects.filter(
-                cluster_id=a.cluster_id, deleted_at__isnull=True
-            ).order_by("name")
+            active_schools().filter(cluster_id=a.cluster_id).order_by("name")
         )
     visit_feedback = getattr(a, "school_visit_feedback", None)
     context = {

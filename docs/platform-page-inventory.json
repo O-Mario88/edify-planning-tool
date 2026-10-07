@@ -200,7 +200,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5508,
+      "bytes": 5931,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -2346,7 +2346,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1866,
+      "bytes": 2131,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -9678,7 +9678,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 661,
+      "bytes": 1206,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -9701,7 +9701,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1308,
+      "bytes": 1439,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10486,7 +10486,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4193,
+      "bytes": 6595,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -10503,7 +10503,9 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/readiness.html",
-      "variants": []
+      "variants": [
+        "danger"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -10990,7 +10992,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2157,
+      "bytes": 2306,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11097,7 +11099,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5004,
+      "bytes": 6418,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11122,7 +11124,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8229,
+      "bytes": 8763,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11240,7 +11242,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1350,
+      "bytes": 2351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11262,12 +11264,13 @@
       "tables": 0,
       "template": "partials/oversight/_readiness_cell.html",
       "variants": [
+        "danger",
         "warning"
       ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3673,
+      "bytes": 4305,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -15116,7 +15119,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2775,
+      "bytes": 2886,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -15139,7 +15142,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6355,
+      "bytes": 6415,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity/people/<str:person_id>"
@@ -15211,7 +15214,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5568,
+      "bytes": 6079,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -15883,7 +15886,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7149,
+      "bytes": 7322,
       "deprecated_alternatives": [],
       "example_pages": [
         "/training-ceilings/<str:ceiling_id>/edit",
@@ -15966,7 +15969,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4901,
+      "bytes": 5145,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -25624,7 +25627,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -25726,7 +25728,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -25906,7 +25907,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -25994,7 +25994,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26083,7 +26082,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26169,7 +26167,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26270,7 +26267,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26366,7 +26362,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26460,7 +26455,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26643,7 +26637,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26731,7 +26724,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -26819,7 +26811,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -27089,7 +27080,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -27468,7 +27458,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -27558,7 +27547,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -34324,7 +34312,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -34626,7 +34613,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -34718,7 +34704,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -34813,7 +34798,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -34913,7 +34897,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35014,7 +34997,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35110,7 +35092,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35205,7 +35186,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35303,7 +35283,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35400,7 +35379,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35497,7 +35475,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35598,7 +35575,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35694,7 +35670,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35791,7 +35766,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35887,7 +35861,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -35980,7 +35953,6 @@
         "apps.notifications.services",
         "apps.partners.models",
         "apps.planning.services",
-        "apps.schools.models",
         "apps.ssa.models",
         "apps.ssa.services"
       ],
@@ -91298,7 +91270,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
         "apps.system_health.services"
       ],
       "shared_layout": [
@@ -96890,7 +96861,7 @@
           "hour": 6,
           "minute": 45
         },
-        "description": "Each CCEO's activities for the day, and each Programme Lead's team plans to monitor (today's work, past due, completions waiting).",
+        "description": "Each CCEO's activities for the day, and each Programme Lead's team plans to monitor (today's work, past due, completions waiting). Also tells a Programme Lead or CCEO who holds too few schools to reach their visit target to recruit more, once, until they do.",
         "expected_runtime_seconds": 60,
         "idempotency_note": "Keyed per person per day (context_id dp-<date>), checked even against archived notices; a same-day re-run sends nothing.",
         "idempotent": true,

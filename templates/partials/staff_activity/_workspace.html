@@ -32,20 +32,20 @@
           <caption class="sr-only">Staff activity, {{ log.period.label }}</caption>
           <thead>
             <tr>
-              <th scope="col">Status</th>
+              <th scope="col" title="Where the person is right now, whatever period the other columns read">Status</th>
               <th scope="col">Staff</th>
               <th scope="col">Role</th>
               <th scope="col">Supervisor</th>
               <th scope="col">Region</th>
-              <th scope="col" class="sal-num">Logins</th>
+              <th scope="col" class="sal-num" title="Successful sign-ins in the period, one for each time the person signed in">Logins</th>
               <th scope="col" title="First active time in the period">First<br>Active</th>
               <th scope="col" title="Most recent active time in the period">Last<br>Active</th>
               <th scope="col" class="sal-num" title="Time spent active on the platform: the day's for Day; for Week, Month, Quarter and FY each day's time added up. Deduplicated across tabs and devices; idle and background tabs excluded">Active<br>Time</th>
-              <th scope="col" class="sal-num" title="Meaningful workflow actions completed">Actions</th>
-              <th scope="col" class="sal-num" title="Distinct schools with a meaningful action">Schools</th>
-              <th scope="col">Last Page</th>
-              <th scope="col">Last Meaningful Action</th>
-              <th scope="col">Usage</th>
+              <th scope="col" class="sal-num" title="Meaningful workflow actions completed in the period, each counted once however many records its request wrote. A page view is not an action">Actions</th>
+              <th scope="col" class="sal-num" title="Distinct schools the person's actions in the period were for">Schools</th>
+              <th scope="col" title="The part of the platform the person was last on">Last Page</th>
+              <th scope="col" title="The person's latest meaningful action in the period, and when">Last Meaningful Action</th>
+              <th scope="col" title="No login on an expected working day, on approved leave, or a follow-up suggested; never a score">Usage</th>
               <th scope="col" title="Open manager follow-ups">Follow-up</th>
               <th scope="col"><span class="sr-only">Actions</span></th>
             </tr>

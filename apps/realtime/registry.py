@@ -87,7 +87,9 @@ JOB_REGISTRY: list[JobSpec] = [
         name="daily_plan_notifications",
         description=(
             "Each CCEO's activities for the day, and each Programme Lead's "
-            "team plans to monitor (today's work, past due, completions waiting)."
+            "team plans to monitor (today's work, past due, completions waiting). "
+            "Also tells a Programme Lead or CCEO who holds too few schools to "
+            "reach their visit target to recruit more, once, until they do."
         ),
         cron="daily 06:45 Africa/Nairobi",
         cron_kwargs={"hour": 6, "minute": 45},

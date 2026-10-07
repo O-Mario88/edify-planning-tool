@@ -94,8 +94,14 @@ class DashboardMetricsService:
             round(without_ssa_count / total_schools * 100) if total_schools > 0 else 0
         )
 
-        # Scope filter for activities
-        activities_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+        # Scope filter for activities. Called-off work is not scheduled work:
+        # a visit cancelled when a school was taken back from its partner
+        # used to stay in every "scheduled" count here.
+        from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+
+        activities_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy).exclude(
+            status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+        )
         if not scope.country_scope:
             if scope.staff_ids:
                 activities_qs = activities_qs.filter(
@@ -248,7 +254,7 @@ class DashboardMetricsService:
         for act in priorities_qs:
             status_label = "Scheduled"
             status_class = "s-blue"
-            if act.status == "completed":
+            if act.status in COMPLETED_WORK_STATUSES:
                 status_label = "Completed"
                 status_class = "s-green"
             elif act.status in ("in_progress", "completion_started"):

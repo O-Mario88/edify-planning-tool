@@ -357,6 +357,7 @@ def close_school(school_id: str, data: dict, principal) -> SchoolClosure:
         )
 
         stopped = _stop_future_work(school, closure, principal, effective_date)
+        _leave_what_it_was_in(school, principal, effective_date)
         closure.activities_cancelled = stopped["cancelled"]
         closure.locked_activities_for_review = stopped["locked"]
         closure.budget_released = stopped["released"]
@@ -450,6 +451,57 @@ def _stop_future_work(school, closure, principal, effective_date) -> dict:
             # The health check reports active partner work on a closed school.
             continue
 
+    return result
+
+
+def _leave_what_it_was_in(school, principal, effective_date) -> dict:
+    """Take the school out of the plans and queues that still held it.
+
+    Cancelling its own activities and withdrawing its partners
+    (``_stop_future_work``) left three things naming a school that no longer
+    operates (owner, 2026-10-07: "if a school is closed they go to the closed
+    school list and total number updated"):
+
+    * invitations to group trainings and cluster meetings not yet held: the
+      school stayed on the session, in the officer's training count and in
+      the session's price;
+    * project enrolments with no project work behind them: the school stayed
+      on the project's table and went on using one of the adder's places;
+    * open data-quality issues, which the nightly sweep (operating schools
+      only) would never close.
+
+    Each is undone through the door that normally undoes it. An enrolment the
+    project has delivered work under is left alone: it is that work's record,
+    and the project tables read operating schools only
+    (``projects.models.current_enrolments``).
+    """
+    from apps.activities.cluster_attendance import release_school_invitations
+    from apps.core.exceptions import ConflictError
+    from apps.projects import services as project_services
+    from apps.projects.models import ProjectSchoolAssignment
+    from apps.schools.data_quality import settle_closed_school
+
+    result = {"invitations": 0, "projects": 0, "issues": 0}
+    result["invitations"] = release_school_invitations(
+        school,
+        on_or_after=effective_date,
+        actor_id=str(getattr(principal, "id", "") or ""),
+    )
+    for project_id in list(
+        ProjectSchoolAssignment.objects.filter(school=school).values_list(
+            "project_id", flat=True
+        )
+    ):
+        try:
+            with transaction.atomic():
+                project_services.remove_school(
+                    project_id, school.id, None, reason="The school closed."
+                )
+            result["projects"] += 1
+        except (ConflictError, BadRequest, NotFoundError):
+            # Project work was delivered here: the enrolment is its record.
+            continue
+    result["issues"] = settle_closed_school(school)
     return result
 
 

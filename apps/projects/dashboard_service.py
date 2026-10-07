@@ -631,7 +631,7 @@ def get_dashboard(
         elif (
             activity.planned_date
             and activity.planned_date < today
-            and activity.status in {"scheduled", "in_progress"}
+            and activity.status in {"scheduled", "rescheduled", "in_progress"}
         ):
             issue = "Overdue activity"
             detail = "The planned date has passed without completion."

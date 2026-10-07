@@ -20,6 +20,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
@@ -38,8 +39,15 @@ VISIT_DATES = (
     date(2027, 7, 2),  # Q4
     date(2027, 1, 14),  # Q2
 )
+#: The day these are read on: before the first of them. My Plan's tables
+#: leave out a visit whose day has passed (it is listed as past due
+#: instead), so read on the real day every test that counts the year's
+#: visits lost the October one on 7 October 2026 and would have lost the
+#: rest in turn.
+READ_ON = "2026-10-01"
 
 
+@freeze_time(READ_ON)
 class MyPlanPeriodFilterTest(TestCase):
     @classmethod
     def setUpTestData(cls):

@@ -554,6 +554,11 @@ class NotificationLinkResolver:
         if event_type == "team_target_own_at_risk":
             return "/my-targets", "Open My Targets"
 
+        # Too few schools to reach the year's visit target: My Plan says how
+        # many more are needed (apps.planning.recruit_notice).
+        if event_type == "planning_recruit_schools":
+            return "/my-plan", "Open My Plan"
+
         if event_type.startswith("catchup_plan_"):
             return "/my-targets", "Open Catch-Up Plan"
 

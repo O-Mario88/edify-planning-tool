@@ -1,5 +1,8 @@
 from apps.core.metrics import PresentationKpi, render_precomputed_metric_item
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
+)
 from apps.planning.owner_groups import group_label as _group_label
 from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
 from django.db.models import Count, Q
@@ -11,6 +14,15 @@ from apps.partners.models import PartnerAssignment
 from apps.accounts.models import StaffProfile
 from apps.ssa.models import SsaRecord
 from apps.ssa.presentation import build_ssa_score_summary
+
+#: Activities that are not (or not yet) part of the year's plan: called off,
+#: never planned, or a visit request still waiting on the school's owner.
+#: Everything else is in the plan, whatever stage it has reached — the
+#: "In My Plan" tile and tab named four statuses by hand, so an activity
+#: left the count when it was rescheduled, came back when Impact Assessment
+#: verified it and left again when it was closed (2026-10-07 calculation
+#: check).
+_NOT_IN_THE_PLAN = (*NOT_IN_PLAN_ACTIVITY_STATUSES, "awaiting_owner_approval")
 
 
 class PlanningReadinessService:
@@ -332,18 +344,11 @@ class PlanningDashboardService:
             ).values_list("school_id", flat=True)
             table_schools_qs = schools_qs.filter(id__in=partner_school_ids)
         elif active_tab == "scheduled":
-            scheduled_school_ids = Activity.objects.filter(
-                deleted_at__isnull=True,
-                status__in=[
-                    "planned",
-                    "scheduled",
-                    "partner_scheduled",
-                    "in_progress",
-                    "completed",
-                    "ia_verified",
-                ],
-                fy=fy,
-            ).values_list("school_id", flat=True)
+            scheduled_school_ids = (
+                Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+                .exclude(status__in=_NOT_IN_THE_PLAN)
+                .values_list("school_id", flat=True)
+            )
             table_schools_qs = schools_qs.filter(id__in=scheduled_school_ids)
         else:
             table_schools_qs = schools_qs
@@ -872,7 +877,7 @@ class PlanningDashboardService:
             Activity.objects.filter(
                 deleted_at__isnull=True, fy=fy, school_id__in=all_school_ids
             )
-            .exclude(status="cancelled")
+            .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
             .values_list("school_id", flat=True)
         )
 
@@ -932,11 +937,8 @@ class PlanningDashboardService:
             school__isnull=True, cluster_id__in=scoped_cluster_ids
         )
         in_my_plan_count = (
-            Activity.objects.filter(
-                deleted_at__isnull=True,
-                status__in=["scheduled", "in_progress", "completed", "ia_verified"],
-                fy=fy,
-            )
+            Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+            .exclude(status__in=_NOT_IN_THE_PLAN)
             .filter(in_scope_activity)
             .count()
         )
@@ -955,6 +957,7 @@ class PlanningDashboardService:
                 status__in=[
                     "planned",
                     "scheduled",
+                    "rescheduled",
                     "assigned_to_partner",
                     "partner_scheduled",
                     "awaiting_owner_approval",
@@ -971,18 +974,32 @@ class PlanningDashboardService:
         informed_plans = sum(verdicts.get(value, 0) for value in INFORMED)
         informed_share = percentage(informed_plans, judged_plans)
 
+        # Core schools with no finished work this year. One sub-query, so the
+        # status and the year are tested on the SAME activity: the two-keyword
+        # exclude this replaces let a school out on last year's finished visit
+        # plus any activity this year, counted deleted activities, and read
+        # two of the four finished statuses.
+        from django.db.models import Exists, OuterRef
+
+        finished_this_year = Activity.objects.filter(
+            school_id=OuterRef("pk"),
+            deleted_at__isnull=True,
+            fy=fy,
+            status__in=COMPLETED_WORK_STATUSES,
+        )
         core_package_gaps_count = (
             base_schools_qs.filter(school_type="core")
-            .exclude(
-                activities__status__in=["completed", "ia_verified"], activities__fy=fy
-            )
-            .distinct()
+            .exclude(Exists(finished_this_year))
             .count()
         )
 
-        planned_cluster_ids = Activity.objects.filter(
-            cluster_id__in=scoped_cluster_ids, deleted_at__isnull=True, fy=fy
-        ).values_list("cluster_id", flat=True)
+        planned_cluster_ids = (
+            Activity.objects.filter(
+                cluster_id__in=scoped_cluster_ids, deleted_at__isnull=True, fy=fy
+            )
+            .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
+            .values_list("cluster_id", flat=True)
+        )
         clusters_needing_action_count = len(
             set(scoped_cluster_ids) - set(planned_cluster_ids)
         )
@@ -1020,7 +1037,7 @@ class PlanningDashboardService:
                 "planning_planning_service_ssa_required",
                 str(baseline_required_count),
                 raw_value=baseline_required_count,
-                helper="No current SSA",
+                helper="No confirmed SSA on record",
                 icon="warning",
                 variant="danger",
             ),
@@ -1028,7 +1045,7 @@ class PlanningDashboardService:
                 "planning_planning_service_clusters_needing_action",
                 str(clusters_needing_action_count),
                 raw_value=clusters_needing_action_count,
-                helper="Missing cluster action",
+                helper="No activity planned this year",
                 icon="users",
                 variant="warning",
             ),
@@ -1036,7 +1053,7 @@ class PlanningDashboardService:
                 "planning_planning_service_core_package_gaps",
                 str(core_package_gaps_count),
                 raw_value=core_package_gaps_count,
-                helper="Core schools gaps",
+                helper="Core schools with nothing completed this year",
                 icon="target",
                 variant="danger",
             ),
@@ -1052,7 +1069,7 @@ class PlanningDashboardService:
                 "planning_planning_service_in_my_plan",
                 str(in_my_plan_count),
                 raw_value=in_my_plan_count,
-                helper="Scheduled activities",
+                helper="Activities in this year's plan",
                 icon="calendar",
                 variant="blue",
             ),

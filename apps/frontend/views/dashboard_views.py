@@ -184,14 +184,23 @@ def _agenda_icon(activity_type):
 
 
 def _agenda_status_pill(activity, today):
-    if activity.status == "completed":
+    """Completed once the work is done (verified work included: it used to
+    read "Overdue" the day after its date), In Progress from the moment it is
+    started until it is verified, Overdue only for work not yet started whose
+    date has passed."""
+    from apps.core.activity_types import (
+        NOT_STARTED_ACTIVITY_STATUSES,
+        UNDER_WAY_ACTIVITY_STATUSES,
+    )
+
+    if activity.status in COMPLETED_WORK_STATUSES:
         return "Completed", "bg-emerald-50 text-emerald-700 border-emerald-200"
-    if activity.status in ("in_progress", "completion_started"):
+    if activity.status in UNDER_WAY_ACTIVITY_STATUSES:
         return "In Progress", "bg-amber-50 text-amber-700 border-amber-200"
     if (
         activity.planned_date
         and activity.planned_date < today
-        and activity.status not in ("completed", "closed")
+        and activity.status in NOT_STARTED_ACTIVITY_STATUSES
     ):
         return "Overdue", "bg-rose-50 text-rose-700 border-rose-200"
     return "Planned", "bg-slate-50 text-slate-500 border-slate-200"
@@ -995,16 +1004,25 @@ def dashboard_view(request):
                 f"/planning/assign-partner-modal?{urlencode(partner_query)}"
             )
 
+        # The four tiles split the person's live work, and each activity is
+        # in exactly one (apps.core.activity_types): done; under way, from
+        # the moment it is started until it is verified; not started and
+        # still ahead; not started with its date passed. "Overdue" used to
+        # be "date passed and not completed or closed", which counted work
+        # already verified, and "Planned" every scheduled activity, the
+        # overdue ones included, so the same activity sat in two tiles.
+        from apps.core.activity_types import (
+            NOT_STARTED_ACTIVITY_STATUSES,
+            UNDER_WAY_ACTIVITY_STATUSES,
+        )
+
         completed_cnt = cc_activities.filter(status__in=COMPLETED_WORK_STATUSES).count()
         in_progress_cnt = cc_activities.filter(
-            status__in=["in_progress", "completion_started"]
+            status__in=UNDER_WAY_ACTIVITY_STATUSES
         ).count()
-        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count()
-        overdue_cnt = (
-            cc_activities.filter(planned_date__lt=today)
-            .exclude(status__in=["completed", "closed"])
-            .count()
-        )
+        not_started = cc_activities.filter(status__in=NOT_STARTED_ACTIVITY_STATUSES)
+        overdue_cnt = not_started.filter(planned_date__lt=today).count()
+        planned_cnt = not_started.exclude(planned_date__lt=today).count()
 
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)
@@ -1097,7 +1115,10 @@ def dashboard_view(request):
             .select_related("school", "school__district")
             .order_by("planned_date")[:8]
         ):
-            is_today = a.planned_date == today and a.status == "scheduled"
+            is_today = a.planned_date == today and a.status in (
+                "scheduled",
+                "rescheduled",
+            )
             school_visits_week.append(
                 {
                     "school_id": a.school_id,
@@ -1126,7 +1147,10 @@ def dashboard_view(request):
             .select_related("cluster")
             .order_by("planned_date")[:8]
         ):
-            is_today = a.planned_date == today and a.status == "scheduled"
+            is_today = a.planned_date == today and a.status in (
+                "scheduled",
+                "rescheduled",
+            )
             is_training = "training" in a.activity_type
             cluster_activities_week.append(
                 {
@@ -1165,21 +1189,21 @@ def dashboard_view(request):
             render_precomputed_metric_item(
                 "frontend_views_dashboard_views_in_progress",
                 str(in_progress_cnt),
-                helper="Being executed",
+                helper="Started, not yet verified",
                 icon="clock",
                 variant="info",
             ),
             render_precomputed_metric_item(
                 "frontend_views_dashboard_views_planned_tasks",
                 str(planned_cnt),
-                helper="Scheduled ahead",
+                helper="Not started, date ahead",
                 icon="calendar",
                 variant="warning",
             ),
             render_precomputed_metric_item(
                 "frontend_views_dashboard_views_overdue_tasks",
                 str(overdue_cnt),
-                helper="Past due date",
+                helper="Not started, date passed",
                 icon="warning",
                 variant="danger",
             ),

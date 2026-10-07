@@ -40,6 +40,7 @@ from apps.core.enums import (
     SsaIntervention,
     ssa_score_band,
 )
+from apps.schools.lifecycle_service import active_schools
 
 ENGINE_VERSION = "apps.ssa.plan_alignment/2026-09"
 
@@ -262,12 +263,11 @@ def cluster_need(cluster_id, school_ids=None) -> ClusterNeed:
     first (the ranking the cluster page's weakest-interventions panel uses), and
     each row says how many schools sit below the 5.5 weakness line.
     """
-    from apps.schools.models import School
     from apps.ssa.services import latest_applicable_records
 
     if not cluster_id:
         return ClusterNeed(0)
-    members = School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
+    members = active_schools().filter(cluster_id=cluster_id)
     if school_ids:
         members = members.filter(id__in=list(school_ids))
     members = list(members.only("id", "school_id"))
@@ -621,12 +621,11 @@ def _cluster_school_ids(activity) -> list[str]:
     )
     if invited:
         return invited
-    from apps.schools.models import School
 
     return list(
-        School.objects.filter(
-            cluster_id=activity.cluster_id, deleted_at__isnull=True
-        ).values_list("id", flat=True)
+        active_schools()
+        .filter(cluster_id=activity.cluster_id)
+        .values_list("id", flat=True)
     )
 
 
@@ -790,6 +789,7 @@ def rejudge(activity, *, focus_source: str = "planner") -> PlanEvidence:
 LIVE_PLAN_STATUSES = (
     "planned",
     "scheduled",
+    "rescheduled",
     "assigned_to_partner",
     "partner_scheduled",
     "awaiting_owner_approval",
@@ -912,12 +912,8 @@ def school_need_as_of(school, day, plan_fy) -> SchoolNeed:
 
 
 def cluster_need_as_of(cluster_id, day, plan_fy) -> ClusterNeed:
-    from apps.schools.models import School
-
     members = list(
-        School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True).only(
-            "id", "school_id"
-        )
+        active_schools().filter(cluster_id=cluster_id).only("id", "school_id")
     )
     records = _records_as_of(members, day)
     stale = {sid for sid, r in records.items() if not _as_of_record_fy(r, plan_fy)}

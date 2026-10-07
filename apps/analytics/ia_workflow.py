@@ -42,7 +42,6 @@ from django.utils import timezone
 
 from apps.core.enums import SsaIntervention
 from apps.core.scoping import resolve_user_scope, scoped_school_queryset
-from apps.projects.models import ProjectSchoolAssignment
 from apps.projects.ssa_impact import MEASURED
 
 
@@ -250,13 +249,21 @@ def _baseline_details(assignments, rows) -> None:
 
 def outcome_workspace(user, query):
     scope = resolve_user_scope(user)
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     # Summary-only authority never authorises this school-identifiable worklist.
     if scope.can_view_summary_only:
         schools = schools.none()
-    assignments = ProjectSchoolAssignment.objects.filter(
-        school__in=schools, project__deleted_at__isnull=True
-    ).select_related("school", "project", "baseline_ssa", "follow_up_ssa")
+    from apps.projects.models import current_enrolments
+
+    # Measurement still owed: nothing is collected at a school that closed.
+    assignments = (
+        current_enrolments()
+        .filter(school__in=schools, project__deleted_at__isnull=True)
+        .select_related("school", "project", "baseline_ssa", "follow_up_ssa")
+    )
     projects = list(
         assignments.order_by("project__name")
         .values("project_id", "project__name")
@@ -419,7 +426,10 @@ def portfolio_change(user, *, fy: str) -> dict:
     from apps.ssa import change_rules
 
     scope = resolve_user_scope(user)
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     prev_fy = str(int(fy) - 1)
     base = {
         "fy": fy,

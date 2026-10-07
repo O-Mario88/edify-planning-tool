@@ -59,6 +59,7 @@ from apps.analytics.pl_analytics_service import (
     score_order,
 )
 from apps.core.enums import SsaIntervention
+from apps.schools.lifecycle_service import active_schools
 
 SSA_CONFIRMED = "confirmed"
 # Below this many scored assessments, naming a best and worst intervention is
@@ -103,7 +104,6 @@ def district_insight(
     from apps.activities.models import Activity
     from apps.clusters.models import Cluster
     from apps.geography.models import District
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
 
     districts = list(
@@ -122,11 +122,7 @@ def district_insight(
     )
 
     schools_are_scoped = schools is not None
-    school_qs = (
-        schools
-        if schools_are_scoped
-        else School.objects.filter(deleted_at__isnull=True)
-    )
+    school_qs = schools if schools_are_scoped else active_schools()
     if clusters is None:
         if schools_are_scoped:
             cluster_ids = (

@@ -26,6 +26,7 @@ from .models import ActivityCatalogueItem, CatalogueStatus
 LIVE_STATUSES = (
     "planned",
     "scheduled",
+    "rescheduled",
     "assigned_to_partner",
     "partner_scheduled",
     "in_progress",

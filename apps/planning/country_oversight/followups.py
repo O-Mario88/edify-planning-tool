@@ -34,6 +34,7 @@ from apps.planning.followup_models import (
     FollowUpStatus,
     PlanningOversightFollowUp,
 )
+from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
 
@@ -273,13 +274,10 @@ def evaluate(scope: Scope, *, dataset=None):
     gap.
     """
     from apps.planning.country_oversight.service import Filters, build_dataset, fold
-    from apps.schools.models import School
 
     if dataset is None:
         owners = _portfolio_owner_ids(scope)
-        base = School.objects.filter(
-            deleted_at__isnull=True, account_owner_id__in=owners
-        )
+        base = active_schools().filter(account_owner_id__in=owners)
         dataset = build_dataset(_system_scope(scope.country), scope.window, base=base)
     filters = Filters(
         fy=scope.fy,
@@ -974,7 +972,7 @@ def school_gap_open(school_id: str, fy: str, action_type: str) -> bool:
     if held is not None and time.monotonic() - held[0] < GAP_DATASET_SECONDS:
         dataset = held[1]
     else:
-        base = School.objects.filter(deleted_at__isnull=True)
+        base = active_schools()
         base = (
             base.filter(account_owner_id=school.account_owner_id)
             if school.account_owner_id

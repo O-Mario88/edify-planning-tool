@@ -15,8 +15,8 @@ A training is delivered one of two ways, and never a third:
 * **In-School Training** — one training at one school (the activity's own
   ``school``).
 
-A Programme Lead sets the ceiling for each officer they supervise, per
-training and fiscal year (``TrainingCeiling``). Nothing else is stored: what
+A Programme Lead sets the ceiling for themselves and for each officer they
+supervise, per training and fiscal year (``TrainingCeiling``). Nothing else is stored: what
 is scheduled is counted here from the persisted plans, so the drawers, the
 summary tables and the save all read one figure, and a second drawer never
 hands out a fresh allowance.
@@ -720,9 +720,16 @@ def _role(principal) -> str:
 
 
 def may_set_ceiling(principal, staff_profile_id: str) -> bool:
-    """A Programme Lead sets the ceilings of the officers they supervise."""
+    """A Programme Lead sets their own ceiling and the ceilings of the
+    officers they supervise (owner, 2026-10-06: "they can set their own
+    ceiling and that of their CCEOs"). A Lead schedules trainings too, and
+    had no ceiling anybody could set."""
     if _role(principal) != EdifyRole.COUNTRY_PROGRAM_LEAD.value:
         return False
+    if not staff_profile_id:
+        return False
+    if staff_profile_id == getattr(principal, "staff_profile_id", None):
+        return True
     return staff_profile_id in {p.id for p in _supervised(principal)}
 
 
@@ -759,10 +766,17 @@ def team_summary(profiles, fy: str) -> list[SummaryRow]:
 
 
 def ceiling_staff_options(principal) -> list:
-    """The officers a Programme Lead may set a ceiling for."""
+    """The people a Programme Lead may set a ceiling for: the Lead first,
+    then the officers they supervise, by name. The Lead used to be missing
+    from the list, and so from every table built from it."""
     if _role(principal) != EdifyRole.COUNTRY_PROGRAM_LEAD.value:
         return []
-    return sorted(_supervised(principal), key=lambda p: (p.user.name or "").casefold())
+    own = _own_profile(principal)
+    officers = sorted(
+        (p for p in _supervised(principal) if own is None or p.id != own.id),
+        key=lambda p: (p.user.name or "").casefold(),
+    )
+    return [own, *officers] if own is not None else officers
 
 
 def training_options() -> list[dict]:
@@ -819,7 +833,7 @@ def _actor(principal) -> str:
 def set_ceiling(
     principal, *, staff_id: str, training_id: str, fy: str, ceiling, note: str = ""
 ):
-    """Set or change one officer's ceiling for one training in one year.
+    """Set or change one person's ceiling for one training in one year.
 
     A ceiling may be set below what is already scheduled — the summary then
     shows the difference as Excess and no more schools can be added — because
@@ -836,8 +850,8 @@ def set_ceiling(
         raise NotFoundError("That staff member was not found.")
     if not may_set_ceiling(principal, profile.id):
         raise Forbidden(
-            "A Programme Lead sets the training ceilings of the officers "
-            "they supervise."
+            "A Programme Lead sets their own training ceiling and those of "
+            "the officers they supervise."
         )
     training = (
         effective_items().filter(is_training_course=True, id=training_id or "").first()
@@ -899,8 +913,8 @@ def remove_ceiling(principal, ceiling_id: str) -> dict:
             raise NotFoundError("That training ceiling was not found.")
         if not may_set_ceiling(principal, row.staff_id):
             raise Forbidden(
-                "A Programme Lead sets the training ceilings of the officers "
-                "they supervise."
+                "A Programme Lead sets their own training ceiling and those "
+                "of the officers they supervise."
             )
         detail = {
             "staffId": row.staff_id,

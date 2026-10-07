@@ -870,9 +870,7 @@ def districts_list_view(request):
 def district_detail_view(request, district_id):
     """District detail — schools, SSA, and activities."""
     district = get_object_or_404(District, id=district_id)
-    schools = School.objects.filter(
-        district=district, deleted_at__isnull=True
-    ).order_by("name")
+    schools = active_schools().filter(district=district).order_by("name")
     from apps.ssa.services import get_ssa_progress_by_fy
 
     district_progress = get_ssa_progress_by_fy(schools)
@@ -3054,8 +3052,11 @@ def project_detail_view(request, project_id):
     from apps.projects.models import OPEN_PROJECT_STATUSES
 
     project = get_scoped_project(project_id, request.user)
+    from apps.projects.models import current_enrolments
+
     school_assignments = (
-        ProjectSchoolAssignment.objects.filter(project=project)
+        current_enrolments()
+        .filter(project=project)
         .select_related("school")
         .order_by("school__name")
     )
@@ -3724,9 +3725,11 @@ def admin_staff_setup_queue_view(request):
     from apps.accounts.models import StaffProfile
 
     # Fetch unmatched schools
-    unmatched_schools = School.objects.filter(
-        account_owner_status__in=["pending", "unmatched"], deleted_at__isnull=True
-    ).order_by("name")
+    unmatched_schools = (
+        active_schools()
+        .filter(account_owner_status__in=["pending", "unmatched"])
+        .order_by("name")
+    )
 
     # Fetch available staff to match
     staff_list = StaffProfile.objects.filter(deleted_at__isnull=True).select_related(
@@ -3845,43 +3848,38 @@ def admin_school_upload_history_view(request):
 @require_page_permission("data_quality_center")
 def admin_data_quality_center_view(request):
     """Data quality issues dashboard."""
-    from apps.schools.models import School, DataQualityIssue, UnmatchedSSARecord
+    from apps.schools.data_quality import open_issues
+    from apps.schools.models import UnmatchedSSARecord
 
-    clean_count = School.objects.filter(
-        data_quality_status="Clean", deleted_at__isnull=True
-    ).count()
-    needs_review_count = School.objects.filter(
-        data_quality_status="Needs Review", deleted_at__isnull=True
-    ).count()
-    needs_cleanup_count = School.objects.filter(
-        data_quality_status="Needs Cleanup", deleted_at__isnull=True
-    ).count()
-    duplicate_risk_count = School.objects.filter(
-        data_quality_status="Duplicate Risk", deleted_at__isnull=True
-    ).count()
-    missing_critical_count = School.objects.filter(
-        data_quality_status="Missing Critical Data", deleted_at__isnull=True
-    ).count()
+    clean_count = active_schools().filter(data_quality_status="Clean").count()
+    needs_review_count = (
+        active_schools().filter(data_quality_status="Needs Review").count()
+    )
+    needs_cleanup_count = (
+        active_schools().filter(data_quality_status="Needs Cleanup").count()
+    )
+    duplicate_risk_count = (
+        active_schools().filter(data_quality_status="Duplicate Risk").count()
+    )
+    missing_critical_count = (
+        active_schools().filter(data_quality_status="Missing Critical Data").count()
+    )
 
     # Sub-queues issues
-    missing_phone = DataQualityIssue.objects.filter(
-        issue_type="missing_phone", status="open"
-    ).select_related("school")
-    missing_contact = DataQualityIssue.objects.filter(
-        issue_type="missing_contact", status="open"
-    ).select_related("school")
-    missing_enrollment = DataQualityIssue.objects.filter(
-        issue_type="missing_enrollment", status="open"
-    ).select_related("school")
-    no_cluster = DataQualityIssue.objects.filter(
-        issue_type="no_cluster", status="open"
-    ).select_related("school")
-    unmatched_staff = DataQualityIssue.objects.filter(
-        issue_type="unmatched_staff", status="open"
-    ).select_related("school")
-    no_ssa = DataQualityIssue.objects.filter(
-        issue_type="no_ssa", status="open"
-    ).select_related("school")
+    missing_phone = (
+        open_issues().filter(issue_type="missing_phone").select_related("school")
+    )
+    missing_contact = (
+        open_issues().filter(issue_type="missing_contact").select_related("school")
+    )
+    missing_enrollment = (
+        open_issues().filter(issue_type="missing_enrollment").select_related("school")
+    )
+    no_cluster = open_issues().filter(issue_type="no_cluster").select_related("school")
+    unmatched_staff = (
+        open_issues().filter(issue_type="unmatched_staff").select_related("school")
+    )
+    no_ssa = open_issues().filter(issue_type="no_ssa").select_related("school")
     unmatched_ssa_count = UnmatchedSSARecord.objects.filter(
         status__in=["pending", "hold"]
     ).count()
@@ -4220,9 +4218,9 @@ def duplicate_review_view(request):
     from apps.schools.models import DataQualityIssue
     from django.contrib import messages
 
-    issues = DataQualityIssue.objects.filter(
-        issue_type="duplicate_risk", status="open"
-    ).select_related("school")
+    from apps.schools.data_quality import open_issues
+
+    issues = open_issues().filter(issue_type="duplicate_risk").select_related("school")
 
     if request.method == "POST":
         issue_id = request.POST.get("issue_id")

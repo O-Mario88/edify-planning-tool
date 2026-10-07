@@ -673,10 +673,13 @@ class ProjectMonitoring:
 def _visible_assignments(principal, project_ids):
     """The enrolments this reader may see, by the owner's rule."""
     from apps.core.scoping import owner_ids
-    from apps.projects.models import ProjectSchoolAssignment
 
+    from apps.projects.models import current_enrolments
+
+    # The project's schools today: one that has closed is not on the table.
     rows = (
-        ProjectSchoolAssignment.objects.filter(project_id__in=project_ids)
+        current_enrolments()
+        .filter(project_id__in=project_ids)
         .select_related("school", "school__district", "project")
         .order_by("school__name")
     )
@@ -999,10 +1002,11 @@ def _activity_totals(project_ids, school_ids, *, fys, whole: bool) -> dict:
         TRAINING_TYPES,
         VISIT_TYPES,
     )
-    from apps.projects.models import ProjectSchoolAssignment
+
+    from apps.projects.models import current_enrolments
 
     live = _live_project_activities(project_ids, fys)
-    enrolled = ProjectSchoolAssignment.objects.filter(project_id__in=project_ids)
+    enrolled = current_enrolments().filter(project_id__in=project_ids)
     if not whole:
         if not school_ids:
             return {}
