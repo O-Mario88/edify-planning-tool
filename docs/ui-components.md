@@ -215,7 +215,8 @@ address bar, because the page is read again from the address it is at.
 How it works:
 
 - `apps/activities/live.py` hangs on the save and delete of an activity, a
-  hand-over to a partner and a school's place in a project. After the change
+  hand-over to a partner, a school's place in a project and somebody's leave
+  (the Calendar draws it and planned work on that day is marked). After the change
   commits it sends a `plan.changed` event, carrying only the time, to the
   people whose pages show that record: the owner and the monitor, the people
   they report to, the holder of the school or cluster, the partner, the
@@ -224,10 +225,32 @@ How it works:
   (`/api/realtime/stream`) on a page that has a live region. On the event it
   fetches the page it is on and replaces each marked region with the fresh
   one of the same id, then lets htmx, Alpine and the table scripts take it up.
-- It never swaps under an open drawer, a ticked activity, an open Actions
-  menu or a field in use: it waits until they are done. A hidden tab closes
-  its stream; when it is looked at again the stream says whether anything
-  changed meanwhile, and only then is the page read again.
+- It never swaps under an open drawer, a ticked activity or school, a ticked
+  row of any region's table, an open Actions menu or a field in use: it waits
+  until they are done. A hidden tab closes its stream; when it is looked at
+  again the stream says whether anything changed meanwhile, and only then is
+  the page read again.
+- After a read the page rests: five seconds, or four times as long as the
+  read took if that is longer. The first change after a quiet spell is read
+  at once; changes that keep coming cost the server one read per rest, not
+  one per change (owner, 2026-10-06: the app froze when many people were on).
+
+Everything a reader counts from belongs inside a region: the tabs with their
+numbers, the table and the summary (owner, 2026-10-07: "make sure the table
+pill counters are also accurate and refreshes with changing data ... and
+should apply to the tables and summaries as well"). A summary strip that sits
+outside its page's live part takes an id of its own:
+
+```django
+{% include "components/context_metrics.html" with items=kpis live_id="planning-context" %}
+{% kpi_strip live_id="programme-schools-context" %}…{% endkpi_strip %}
+```
+
+Not live, on purpose: the role dashboards' headline strips (their payload is
+kept five minutes, `cached_role_dashboard`), maps, and pages whose records do
+not announce themselves (budgets, HR, analytics). A public holiday or an
+organisation event is not announced either: it would be read by every open
+page in the country at the same instant.
 
 A region that holds state the address does not (rows opened, a tab chosen in
 the page) looks after it itself, as Country Planning Oversight's two tables

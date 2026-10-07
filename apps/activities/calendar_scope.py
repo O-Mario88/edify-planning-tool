@@ -43,10 +43,21 @@ def personal_plan(activities, user):
     partner_ids = resolve_partner_ids(user)
     if partner_ids:
         return activities.filter(assigned_partner_id__in=partner_ids)
-    mine = owner_ids(user)
+    return plan_of(activities, owner_ids(user))
+
+
+def plan_of(activities, holder_ids):
+    """Narrow `activities` to the plan of the staff these ids name: the work
+    they are responsible for, and the partner-delivered work they monitor.
+
+    It is `personal_plan` for somebody who is not the reader — the calendar a
+    Programme Lead opens for one of their CCEOs draws what that CCEO's own
+    calendar does (`apps.activities.calendar_people`).
+    """
+    ids = [i for i in holder_ids if i]
     return activities.filter(
-        Q(responsible_staff_id__in=mine)
-        | Q(monitored_by_staff_id__in=mine, delivery_type="partner")
+        Q(responsible_staff_id__in=ids)
+        | Q(monitored_by_staff_id__in=ids, delivery_type="partner")
     )
 
 

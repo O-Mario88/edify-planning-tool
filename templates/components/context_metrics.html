@@ -1,7 +1,9 @@
 {% load kpi_metrics %}
 {% if items %}
 {% professional_kpis items variant density as professional_items %}
+{# `live_id`: an id that makes the strip read itself again when the plan changes (static/js/live-regions.js), on a page whose strip sits outside its live part. #}
 <section class="context-metrics{% if variant and variant != 'executive' %} context-metrics--{{ variant }}{% endif %}"
+         {% if live_id %}id="{{ live_id }}" data-live-region{% endif %}
          data-mobile-summary
          data-context-metrics
          data-kpi-count="{{ professional_items|length }}"

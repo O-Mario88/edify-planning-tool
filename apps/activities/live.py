@@ -12,10 +12,16 @@ module is the sending half: what counts as a change, who is told, and what
 they are told.
 
 **What counts.** Any save or delete of an activity, of a school's or a
-cluster's hand-over to a partner, or of a school's place in a project. The
-records say so themselves (`connect` hangs this on their signals), so a door
-added later announces without being taught to: scheduling, rescheduling,
-cancelling, starting, completing, verifying, handing over, withdrawing.
+cluster's hand-over to a partner, of a school's place in a project, or of
+somebody's leave. The records say so themselves (`connect` hangs this on
+their signals), so a door added later announces without being taught to:
+scheduling, rescheduling, cancelling, starting, completing, verifying,
+handing over, withdrawing, asking for leave and approving it.
+
+Leave is on the list because the plan is drawn against it (owner,
+2026-10-07: "everything should update live as data change"): the Calendar
+draws an approved day and counts it, and planned work on that day is marked
+for rescheduling (`apps.activities.day_off`).
 
 **What they are told** is next to nothing: a ``plan.changed`` event with the
 time. The page that hears it reads itself again from the server
@@ -293,6 +299,14 @@ def _project_school_changed(sender, instance, **kwargs):
     )
 
 
+def _leave_changed(sender, instance, **kwargs):
+    # The person away and whoever covers them; their line and the country's
+    # readers follow from the staff, as for an activity.
+    announce(
+        staff_ids=(instance.staff_id, getattr(instance, "covering_staff_id", None))
+    )
+
+
 def connect() -> None:
     """Hang the announcement on the records' own signals."""
     from django.db.models.signals import post_delete, post_save
@@ -301,6 +315,7 @@ def connect() -> None:
         ("activities.Activity", _activity_changed),
         ("partners.PartnerAssignment", _partner_assignment_changed),
         ("projects.ProjectSchoolAssignment", _project_school_changed),
+        ("accounts.Leave", _leave_changed),
     )
     for sender, receiver in watched:
         uid = f"live:{sender}"

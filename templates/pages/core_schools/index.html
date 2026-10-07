@@ -51,7 +51,7 @@ exists to avoid.
 {% include "partials/core_schools/filters.html" %}
 
 <!-- KPI Strip inclusion -->
-{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Current portfolio context" %}
+{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Current portfolio context" live_id="core-schools-context" %}
 
 {% if is_oversight_lens %}
 
@@ -163,7 +163,7 @@ selection. The container is the Select-all box's scope (group-select.js).
 {% endif %}
 
 {% if not is_oversight_lens %}
-<div id="core-lifecycle-tables" class="w-full min-w-0 space-y-4">
+<div id="core-lifecycle-tables" data-live-region class="w-full min-w-0 space-y-4">
 {% include "partials/core_schools/programme_sections.html" %}
 </div>
 {% endif %}

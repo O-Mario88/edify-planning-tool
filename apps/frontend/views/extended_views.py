@@ -350,13 +350,34 @@ def calendar_view(request):
         # coordinator running the project, because a partner activity has no
         # responsible staff and is only reachable through monitored_by_staff_id.
         activity_owner_ids = None
+    # Whose calendar this is (owner, 2026-10-07): the reader's own first, and
+    # for a Programme Lead a tab for each of their CCEOs, for the Country
+    # Director a tab for every team (apps.activities.calendar_people). A
+    # `person` who is not on the reader's own strip opens nobody's calendar
+    # but the reader's.
+    from apps.activities import calendar_people
+
+    people_teams: list = []
+    shown_team = shown_person = None
+    month_activities = None
     if activity_owner_ids is not None:
         # The one rule both calendars read: a partner's plan is their
         # organisation's work, a staff member's is their own and the partner
         # work they monitor (apps.activities.calendar_scope).
-        from apps.activities.calendar_scope import personal_plan
+        from apps.activities.calendar_scope import personal_plan, plan_of
 
-        activities = personal_plan(activities, user)
+        people_teams = calendar_people.teams_for(user)
+        shown_team, shown_person = calendar_people.find(
+            people_teams, request.GET.get("person", "")
+        )
+        month_activities = activities
+        if shown_person:
+            activities = plan_of(activities, shown_person.ids)
+            # Their approved leave, as on their own calendar. A request still
+            # waiting is theirs alone and is skipped below.
+            leave_staff_ids = [shown_person.key]
+        else:
+            activities = personal_plan(activities, user)
 
     # One evaluation for the event loop and the name batch; the queryset
     # itself stays in context (scoping tests inspect it as a queryset).
@@ -392,7 +413,27 @@ def calendar_view(request):
     # it is rescheduled from the calendar itself (owner, 2026-10-05).
     from apps.activities.group_actions import tickable_ids
 
-    tickable = tickable_ids(activity_rows, user)
+    # Only on the reader's own calendar. Somebody else's is read, never run
+    # (owner, 2026-10-07: "only the owners can make changes from the calendar.
+    # calendar oversights are strictly read only"): it carries no tick box,
+    # whoever reads it and whatever part they have in that person's work.
+    tickable = set() if shown_person else tickable_ids(activity_rows, user)
+
+    # On somebody else's calendar an activity is a link only where its record
+    # opens for the reader. A Programme Lead reads their team's work, but is
+    # refused a visit to a school outside the team's portfolios
+    # (RolePermissionService.can_view_record), and a link to a refusal is
+    # worse than a plain entry. A school in the reader's scope is that rule's
+    # own first answer, taken here without its queries for each record.
+    unopened: set[str] = set()
+    if shown_person and not scope.country_scope:
+        schools_in_scope = set(scope.school_ids or ())
+        unopened = {
+            activity.id
+            for activity in activity_rows
+            if activity.school_id not in schools_in_scope
+            and not RolePermissionService.can_view_record(user, activity)
+        }
 
     for activity in activity_rows:
         if activity.id not in spans:
@@ -436,12 +477,14 @@ def calendar_view(request):
             if part
         )
         family = _calendar_event_family(activity.activity_type)
+        href = "" if activity.id in unopened else f"/my-plan/{activity.id}"
         day_off = day_off_by_activity.get(activity.id)
         if day_off:
             tooltip = f"{tooltip} · {day_off.advice}"
             day_off_rows.append(
                 {
                     "id": activity.id,
+                    "href": href,
                     "date": day_off.days[0].day,
                     "title": title,
                     "place": place,
@@ -467,7 +510,7 @@ def calendar_view(request):
                     "family": family,
                     "title": title,
                     "meta": meta,
-                    "href": f"/my-plan/{activity.id}",
+                    "href": href,
                     "status": status_label,
                     "tooltip": tooltip,
                     "continued": current_date > start_date,
@@ -637,6 +680,8 @@ def calendar_view(request):
     # One serialised copy of the non-date query state, so every navigation
     # link preserves the filters (and the filters preserve the month).
     keep_params = {}
+    if shown_person:
+        keep_params["person"] = shown_person.key
     if project_scope:
         keep_params["project_scope"] = project_scope
     if selected_project:
@@ -651,8 +696,21 @@ def calendar_view(request):
     if view_mode == "agenda":
         keep_params["view"] = "agenda"
 
+    people_tabs, member_tabs = _calendar_people_tabs(
+        user,
+        people_teams,
+        shown_team,
+        shown_person,
+        month_activities,
+        {"year": year, "month": month, **keep_params},
+    )
+
     context = {
         "activities": activities,
+        "calendar_people_tabs": people_tabs,
+        "calendar_member_tabs": member_tabs,
+        "calendar_team_name": shown_team.name if shown_team else "",
+        "calendar_person": shown_person,
         "calendar_weeks": calendar_weeks,
         "agenda_days": agenda_days,
         "view_mode": view_mode,
@@ -673,7 +731,10 @@ def calendar_view(request):
         "selected_type": selected_type,
         "selected_status": selected_status,
         "selected_event_kind": selected_event_kind,
-        "can_add_calendar_event": user.active_role
+        # A country event is added from the reader's own calendar: on
+        # somebody else's tab the form would read as an entry in theirs.
+        "can_add_calendar_event": shown_person is None
+        and user.active_role
         in {EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value},
         "filters_active": bool(
             selected_type or selected_status or selected_event_kind != "all"
@@ -704,6 +765,67 @@ def calendar_view(request):
         ),
     }
     return render(request, "pages/calendar/index.html", context)
+
+
+def _calendar_people_tabs(
+    user, teams, shown_team, shown_person, month_activities, params
+) -> tuple[list[dict], list[dict]]:
+    """The strips that choose whose calendar is open, each tab with the
+    number of activities its calendar draws for the month and filters shown.
+
+    The first strip is the reader's own calendar and then their people: a
+    Programme Lead's CCEOs, or for the Country Director one tab for each
+    Programme Lead's team. The second is the people of the team the Country
+    Director opened, the Lead first. Both are empty for a reader who opens
+    nobody's calendar but their own, and the page draws no strip.
+    """
+    from apps.activities import calendar_people
+    from apps.core.scoping import owner_ids
+
+    if not teams:
+        return [], []
+    own = "mine"
+    holders = {own: frozenset(str(i) for i in owner_ids(user))}
+    for team in teams:
+        for person in team.people:
+            holders[person.key] = person.ids
+    counts = calendar_people.plan_counts(month_activities, holders)
+    own_params = {key: value for key, value in params.items() if key != "person"}
+
+    def person_tab(person) -> dict:
+        return {
+            "label": person.name,
+            "count": counts[person.key],
+            "qs": urlencode({**own_params, "person": person.key}),
+            "is_active": person is shown_person,
+        }
+
+    people_tabs = [
+        {
+            "label": calendar_people.OWN_LABEL,
+            "count": counts[own],
+            "qs": urlencode(own_params),
+            "is_active": shown_person is None,
+        }
+    ]
+    member_tabs: list[dict] = []
+    for team in teams:
+        if not team.name:
+            # A Programme Lead's own team: its people are the tabs.
+            people_tabs.extend(person_tab(person) for person in team.people)
+            continue
+        people_tabs.append(
+            {
+                "label": team.name,
+                "count": sum(counts[person.key] for person in team.people),
+                # A team opens on its first person: the Lead.
+                "qs": urlencode({**own_params, "person": team.people[0].key}),
+                "is_active": team is shown_team,
+            }
+        )
+        if team is shown_team:
+            member_tabs = [person_tab(person) for person in team.people]
+    return people_tabs, member_tabs
 
 
 @require_page_permission("calendar")

@@ -17,7 +17,7 @@
   function busy() {
     var host = doc.getElementById('drawer-container');
     if (host && host.childElementCount) return true;
-    if (doc.querySelector('input[data-activity-pick]:checked, input[data-school-pick]:checked, ' + REGION + ' .row-menu__trigger[aria-expanded="true"]')) return true;
+    if (doc.querySelector('input[data-activity-pick]:checked, input[data-school-pick]:checked, ' + REGION + ' td input[type="checkbox"]:checked:not(:disabled), ' + REGION + ' .row-menu__trigger[aria-expanded="true"]')) return true;
     var at = doc.activeElement;
     return !!(at && at.closest && at.closest(REGION) &&
       at.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select'));
@@ -59,8 +59,10 @@
       .then(function (html) {
         loading = false;
         // A busy day does not turn into a page reading itself without pause:
-        // it rests for as long as the last read took, a second at least.
-        notBefore = Date.now() + Math.max(1000, Date.now() - began);
+        // it rests four times as long as the last read took, five seconds at
+        // least, so an open page asks a fifth of the server's time at most.
+        // The first change after a quiet spell is still read at once.
+        notBefore = Date.now() + Math.max(5000, 4 * (Date.now() - began));
         if (!html) return;
         // Something was opened while the page was being read: wait again.
         if (busy()) { wanted = true; return; }

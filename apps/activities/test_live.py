@@ -170,6 +170,39 @@ class WhatAnnouncesItself(LiveFixture):
                 enrolment.delete()
         self.assertIn(str(self.cceo.id), self._told(publish))
 
+    def test_leave_asked_for_approved_or_withdrawn_announces(self):
+        """The Calendar draws an approved day and counts it, and planned work
+        on that day is marked (owner, 2026-10-07: "everything should update
+        live as data change (added or removed)")."""
+        from apps.accounts.models import Leave
+
+        day = (timezone.localdate() + datetime.timedelta(days=20)).isoformat()
+        with patch("apps.realtime.bus.bus.publish_many") as publish:
+            with self.captureOnCommitCallbacks(execute=True):
+                leave = Leave.objects.create(
+                    staff=self.cceo_staff,
+                    type="personal_time_off",
+                    start_date=day,
+                    end_date=day,
+                    days=1,
+                )
+        told = self._told(publish)
+        self.assertIn(str(self.cceo.id), told)
+        self.assertIn(str(self.pl.id), told)
+        self.assertIn(str(self.director.id), told)
+        self.assertNotIn(str(self.stranger.id), told)
+
+        for change in ("approve", "delete"):
+            live.reset()
+            with patch("apps.realtime.bus.bus.publish_many") as publish:
+                with self.captureOnCommitCallbacks(execute=True):
+                    if change == "approve":
+                        leave.status = "approved"
+                        leave.save(update_fields=["status"])
+                    else:
+                        leave.delete()
+            self.assertIn(str(self.pl.id), self._told(publish), change)
+
     def test_a_returning_reader_is_told_something_changed_while_away(self):
         with patch("apps.realtime.bus.bus.publish_many"):
             with self.captureOnCommitCallbacks(execute=True):
@@ -226,14 +259,88 @@ class LiveRegionsContract(SimpleTestCase):
         "pages/oversight/core_schools_oversight.html": 'id="core-workspace"',
     }
 
+    #: Owner, 2026-10-07: "make sure the table pill counters are also accurate
+    #: and refreshes with changing data. everything should update live as data
+    #: change (added or removed) and should apply to the tables and summaries
+    #: as well". The tabs with their numbers, the tables and the summaries of
+    #: the pages that show the plan and were not read again, and the parts of
+    #: a live page that sat outside its live part.
+    MORE_REGIONS = (
+        ("pages/projects/monitoring.html", 'id="project-monitoring-root"'),
+        ("partials/projects/portfolio_list.html", 'id="project-list"'),
+        ("pages/projects/my_plan.html", 'id="special-project-plan-workspace"'),
+        ("pages/projects/planning.html", 'id="spp-workspace"'),
+        ("pages/oversight/country_map.html", 'id="oversight-workspace"'),
+        ("pages/partner/assigned_list.html", 'id="partner-assigned-list"'),
+        ("pages/schools/programme_schools.html", 'id="programme-schools-table"'),
+        ("pages/core_schools/index.html", 'id="core-lifecycle-tables"'),
+        # The same tables as a filter sends them back (hx-swap-oob).
+        ("partials/core_schools/matrix_response.html", 'id="core-lifecycle-tables"'),
+        ("pages/oversight/team_planning.html", 'id="school-oversight"'),
+        ("pages/my_plan/pl_queue.html", 'id="completion-reviews"'),
+    )
+
+    #: A summary strip that sits outside its page's live part is a region of
+    #: its own (`live_id` on components/context_metrics.html).
+    LIVE_SUMMARIES = {
+        "pages/planning/index.html": 'live_id="planning-context"',
+        "pages/work_plan/index.html": 'live_id="work-plan-context"',
+        "pages/core_schools/index.html": 'live_id="core-schools-context"',
+        "pages/projects/index.html": 'live_id="project-portfolio-context"',
+        "pages/schools/programme_schools.html": 'live_id="programme-schools-context"',
+    }
+
     def test_each_region_has_its_id_and_its_mark(self):
-        for name, ident in self.REGIONS.items():
-            with self.subTest(template=name):
+        for name, ident in (*self.REGIONS.items(), *self.MORE_REGIONS):
+            with self.subTest(template=name, region=ident):
                 text = (TEMPLATES / name).read_text()
                 start = text.index(ident)
                 tag_start = text.rindex("<", 0, start)
                 tag = text[tag_start : text.index(">", start)]
                 self.assertIn("data-live-region", tag)
+
+    def test_a_summary_outside_the_live_part_is_a_region_of_its_own(self):
+        from django.template import Context, Template
+        from django.template.loader import render_to_string
+
+        for name, mark in self.LIVE_SUMMARIES.items():
+            with self.subTest(template=name):
+                self.assertIn(mark, (TEMPLATES / name).read_text())
+
+        items = [{"label": "Schools", "value": "3"}]
+        marked = render_to_string(
+            "components/context_metrics.html",
+            {"items": items, "live_id": "planning-context"},
+        )
+        self.assertIn('id="planning-context" data-live-region', marked)
+        # A page's own variables never make a strip a region: `region` is a
+        # place on half the pages of the platform.
+        plain = render_to_string(
+            "components/context_metrics.html",
+            {"items": items, "region": "Central", "id": "x"},
+        )
+        self.assertNotIn("data-live-region", plain)
+        self.assertNotIn("id=", plain.split(">", 1)[0])
+
+        strip = Template(
+            '{% load kpi_metrics %}{% kpi_strip live_id="programme-schools-context" %}'
+            "{% kpi_metric %}{% kpi_label %}Schools{% endkpi_label %}3{% endkpi_metric %}"
+            "{% endkpi_strip %}"
+        ).render(Context({}))
+        self.assertIn('id="programme-schools-context" data-live-region', strip)
+
+    def test_the_listener_waits_for_ticked_rows_and_rests_between_reads(self):
+        """A page is not read again under a row somebody has ticked, in any
+        region's table. And an open page rests after a read, so a busy day
+        does not become every open page reading itself without pause: the
+        first change after a quiet spell is read at once, the next not for
+        five seconds, or four times what the last read took."""
+        script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
+        self.assertIn(
+            "REGION + ' td input[type=\"checkbox\"]:checked:not(:disabled), '",
+            script,
+        )
+        self.assertIn("Math.max(5000, 4 * (Date.now() - began))", script)
 
     def test_the_listener_is_loaded_by_the_shell_and_names_the_event(self):
         self.assertIn("js/live-regions.js", (TEMPLATES / "base.html").read_text())
