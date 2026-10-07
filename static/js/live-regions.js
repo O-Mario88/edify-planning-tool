@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0;
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0;
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -44,9 +44,13 @@
 
   function refresh() {
     wanted = true;
-    if (loading || doc.hidden || !regions().length || busy() || Date.now() < notBefore) return;
+    if (loading || doc.hidden || !regions().length || busy()) return;
+    // Asked for while it rests: changes are coming faster than it reads them.
+    if (Date.now() < notBefore) { held = true; return; }
     wanted = false;
     loading = true;
+    spell = held ? Math.min(spell + 1, 4) : 0;
+    held = false;
     var began = Date.now();
     fetch(location.href, { credentials: 'same-origin', headers: { 'X-Requested-With': 'EdifyLive' } })
       .then(function (response) {
@@ -59,10 +63,10 @@
       .then(function (html) {
         loading = false;
         // A busy day does not turn into a page reading itself without pause:
-        // it rests four times as long as the last read took, five seconds at
-        // least, so an open page asks a fifth of the server's time at most.
-        // The first change after a quiet spell is still read at once.
-        notBefore = Date.now() + Math.max(5000, 4 * (Date.now() - began));
+        // it rests a second, or as long as the read took. While changes keep
+        // arriving during the rest, each rest is twice the last, to sixteen
+        // seconds; one that ends with nothing waiting starts again at one.
+        notBefore = Date.now() + Math.max(1000 << spell, Date.now() - began);
         if (!html) return;
         // Something was opened while the page was being read: wait again.
         if (busy()) { wanted = true; return; }

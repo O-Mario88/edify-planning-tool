@@ -331,16 +331,18 @@ class LiveRegionsContract(SimpleTestCase):
 
     def test_the_listener_waits_for_ticked_rows_and_rests_between_reads(self):
         """A page is not read again under a row somebody has ticked, in any
-        region's table. And an open page rests after a read, so a busy day
-        does not become every open page reading itself without pause: the
-        first change after a quiet spell is read at once, the next not for
-        five seconds, or four times what the last read took."""
+        region's table. And an open page rests after a read: a second, as it
+        always did, so a person's own save is on their page at once; twice as
+        long each time a change arrives while it is still resting, to sixteen
+        seconds, so a busy day does not become every open page reading itself
+        without pause (tests/js/live-regions.test.js runs the clock)."""
         script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
         self.assertIn(
             "REGION + ' td input[type=\"checkbox\"]:checked:not(:disabled), '",
             script,
         )
-        self.assertIn("Math.max(5000, 4 * (Date.now() - began))", script)
+        self.assertIn("Math.max(1000 << spell, Date.now() - began)", script)
+        self.assertIn("spell = held ? Math.min(spell + 1, 4) : 0;", script)
 
     def test_the_listener_is_loaded_by_the_shell_and_names_the_event(self):
         self.assertIn("js/live-regions.js", (TEMPLATES / "base.html").read_text())

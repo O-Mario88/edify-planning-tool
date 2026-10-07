@@ -230,10 +230,13 @@ How it works:
   until they are done. A hidden tab closes its stream; when it is looked at
   again the stream says whether anything changed meanwhile, and only then is
   the page read again.
-- After a read the page rests: five seconds, or four times as long as the
-  read took if that is longer. The first change after a quiet spell is read
-  at once; changes that keep coming cost the server one read per rest, not
-  one per change (owner, 2026-10-06: the app froze when many people were on).
+- After a read the page rests a second, or as long as the read took. A
+  change that arrives while it rests is read when the rest ends, and the
+  next rest is twice as long, up to sixteen seconds; a rest that ends with
+  nothing waiting starts again at one. So one save, or a save in several
+  steps, is on the page at once, and changes that keep coming cost the
+  server one read per rest, not one per change (owner, 2026-10-06: the app
+  froze when many people were on).
 
 Everything a reader counts from belongs inside a region: the tabs with their
 numbers, the table and the summary (owner, 2026-10-07: "make sure the table
