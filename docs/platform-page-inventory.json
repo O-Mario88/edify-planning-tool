@@ -200,7 +200,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5931,
+      "bytes": 6166,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3903,7 +3903,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 215,
+      "bytes": 232,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -14064,7 +14064,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1691,
+      "bytes": 1708,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",

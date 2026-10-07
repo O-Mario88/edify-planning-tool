@@ -212,6 +212,17 @@
   justify-self: start;
 }
 
+/* Whose calendar is open (owner, 2026-10-07): the reader's own, then their
+   people's. The Country Director has two strips, the teams and under them
+   the people of the team that is open. The strips are the platform's own
+   (interactions.css); this only spaces them. */
+.calendar-workspace__people {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-bottom: 0.9rem;
+}
+
 .calendar-workspace__filters {
   display: flex;
   align-items: center;

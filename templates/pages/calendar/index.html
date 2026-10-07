@@ -4,7 +4,7 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261005pick1">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20261007people1">
 {% endblock %}
 
 {% block shell_content %}
@@ -74,7 +74,8 @@
     {% comment %}Only for a role whose leave page lets it in — a partner's calendar
     offered Apply for Leave into a page that refuses partners (2026-09-14).{% endcomment %}
     {% url 'frontend:personal_time_off' as personal_time_off_url %}
-    {% if request.user|can_open:personal_time_off_url %}
+    {# Not on somebody else's calendar, which offers no action at all (owner, 2026-10-07): there it would read as leave for them. #}
+    {% if not calendar_person and request.user|can_open:personal_time_off_url %}
     <div class="edify-page-header__controls">
     <a href="{{ personal_time_off_url }}" class="btn btn-primary calendar-workspace__leave-action">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -89,6 +90,38 @@
   {# The sidebar entry's other pages, as a strip (apps.core.navigation WORKSPACES; the Project Coordinator's, owner 2026-09-30). #}
   {% include "partials/_section_nav.html" %}
 
+  {% comment %}Whose calendar is open (owner, 2026-10-07): the reader's own
+  first, then a Programme Lead's CCEOs, or for the Country Director each
+  Programme Lead's team and under it that team's people, the Lead first
+  (apps.activities.calendar_people). Long strips scroll sideways. Nobody else
+  is sent a strip.{% endcomment %}
+  {% if calendar_people_tabs %}
+  <div class="calendar-workspace__people">
+    <nav class="oversight-entity-tabs" aria-label="Whose calendar">
+      {% for entry in calendar_people_tabs %}
+      <a href="/calendar?{{ entry.qs }}" :href="'/calendar' + withEventFilter('{{ entry.qs|escapejs }}')"
+         class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         {% if entry.is_active %}aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    {% if calendar_member_tabs %}
+    <nav class="oversight-entity-tabs" aria-label="{{ calendar_team_name }}">
+      {% for entry in calendar_member_tabs %}
+      <a href="/calendar?{{ entry.qs }}" :href="'/calendar' + withEventFilter('{{ entry.qs|escapejs }}')"
+         class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+         {% if entry.is_active %}aria-current="page"{% endif %}>
+        <span>{{ entry.label }}</span>
+        <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% comment %}Planned work on a public holiday or on its owner's leave day
   (owner, 2026-10-05; apps.activities.day_off). The same activities are the
   marked ones in the month below.{% endcomment %}
@@ -96,12 +129,18 @@
   <section class="calendar-dayoff" aria-labelledby="calendar-dayoff-heading">
     <svg class="calendar-dayoff__mark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /></svg>
     <div class="calendar-dayoff__copy">
+      {% if calendar_person %}
+      {# Somebody else's calendar is read, not run: the notice says what is wrong and leaves the moving to its owner. #}
+      <h2 id="calendar-dayoff-heading">{{ calendar_person.name }} has {{ day_off_rows|length }} activit{{ day_off_rows|length|pluralize:"y,ies" }} to reschedule in {{ month_name }}</h2>
+      <p>{{ day_off_rows|length|pluralize:"It is,They are" }} planned on a public holiday or on a day {{ calendar_person.name }} is on leave.</p>
+      {% else %}
       <h2 id="calendar-dayoff-heading">Reschedule {{ day_off_rows|length }} activit{{ day_off_rows|length|pluralize:"y,ies" }} in {{ month_name }}</h2>
       <p>{{ day_off_rows|length|pluralize:"It is,They are" }} planned on a public holiday or on a day the responsible person is on leave. Open an activity and choose Reschedule.</p>
+      {% endif %}
       <ul class="calendar-dayoff__list">
         {% for row in day_off_rows %}
         <li>
-          <a href="/my-plan/{{ row.id }}">{{ row.title }}{% if row.place %} · {{ row.place }}{% endif %}</a>
+          {% if row.href %}<a href="/my-plan/{{ row.id }}">{{ row.title }}{% if row.place %} · {{ row.place }}{% endif %}</a>{% else %}<strong>{{ row.title }}{% if row.place %} · {{ row.place }}{% endif %}</strong>{% endif %}
           <span>{{ row.why }}</span>
         </li>
         {% endfor %}
@@ -153,6 +192,7 @@
     <input type="hidden" name="year" value="{{ year }}">
     <input type="hidden" name="month" value="{{ month }}">
     {% if view_mode == 'agenda' %}<input type="hidden" name="view" value="agenda">{% endif %}
+    {% if calendar_person %}<input type="hidden" name="person" value="{{ calendar_person.key }}">{% endif %}
     {% if project_scope %}<input type="hidden" name="project_scope" value="{{ project_scope }}">{% endif %}
     {% if selected_project %}<input type="hidden" name="project" value="{{ selected_project }}">{% endif %}
     <input type="hidden" name="event_kind" :value="eventFilter" :disabled="eventFilter === 'all'">
@@ -210,7 +250,7 @@
   <section class="calendar-mobile" aria-labelledby="calendar-mobile-heading">
     <header class="calendar-mobile__header">
       <div>
-        <p class="calendar-mobile__eyebrow">Your schedule</p>
+        <p class="calendar-mobile__eyebrow">{% if calendar_person %}{{ calendar_person.name }}{% else %}Your schedule{% endif %}</p>
         <h2 id="calendar-mobile-heading">{{ month_name }} {{ year }}</h2>
       </div>
       <nav class="calendar-mobile__navigation" aria-label="Calendar month navigation">

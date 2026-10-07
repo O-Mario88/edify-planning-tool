@@ -41,8 +41,13 @@ on an element of its own: on the wrapper, htmx would hand its hx-select down
 to every drawer button inside.
 
 `selected` is the schools ticked in the project table, for the Assign bar at
-the foot of the page (owner, 2026-10-05).{% endcomment %}
-<div id="project-monitoring-root" class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-oversight-workspace
+the foot of the page (owner, 2026-10-05).
+
+The same root reads itself again when somebody else changes the plan (owner,
+2026-10-07: "everything should update live as data change"): the project tabs
+and their numbers, the summary and the table. It waits while a school is
+ticked (static/js/live-regions.js).{% endcomment %}
+<div id="project-monitoring-root" class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-oversight-workspace data-live-region
      x-data="{ selected: [] }" @planning-saved.window="selected = []">
   <span hidden data-project-monitoring-refresh
         hx-get="/projects/monitoring?project={{ selected_project }}&amp;stage={{ selected_stage }}&amp;fy={{ fy }}{% if filter_query %}&amp;{{ filter_query }}{% endif %}" hx-trigger="planning-saved from:body"

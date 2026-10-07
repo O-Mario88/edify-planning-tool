@@ -23,7 +23,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-06` | Special Project | ✓ | 1 | 121 | 29 | 4 | 9 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 90 | 27 | 4 | 10 | 9 | 23 | 80 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 88 | 25 | 3 | 6 | 7 | 18 | 79 |
-| `journey-09` | Leave and temporary coverage | ✓ | 1 | 59 | 15 | 0 | 0 | 1 | 4 | 25 |
+| `journey-09` | Leave and temporary coverage | ✓ | 1 | 60 | 15 | 0 | 0 | 1 | 4 | 25 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 108 | 35 | 2 | 2 | 7 | 25 | 80 |
 | `journey-11` | Professional Development | ✓ | 1 | 45 | 8 | 1 | 9 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 41 | 12 | 0 | 0 | 1 | 10 | 5 |
@@ -213,7 +213,7 @@ Steps: Leave request → Approval → Calendar block → Access transfer → To-
 | Permissions checked | — |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+37 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/day_off.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py`, `apps/core/audit_hash.py`, `apps/core/calendar_policy.py` _+49 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/day_off.py`, `apps/activities/live.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py`, `apps/clusters/membership_history.py`, `apps/core/audit_hash.py` _+50 more_ |
 | Models written | `accounts.Leave`, `accounts.LeaveBalance`, `accounts.LeaveTypePolicy`, `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.TemporaryCoverageAssignment`, `accounts.User`, `audit.AuditLog`, `audit.DomainEventLog`, `geography.District`, `geography.Region` _+3 more_ |
 | Notifications raised | `leave_approved` |
 | Audit actions (evidence) | `hr.coverage_granted`, `hr.coverage_revoked`, `leave.approved`, `notification.leave_approved` |
