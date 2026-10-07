@@ -183,6 +183,12 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     # Password-reset seam: store only a HASH of the reset token + its expiry.
     password_reset_token_hash = models.CharField(max_length=255, null=True, blank=True)
     password_reset_expires = models.DateTimeField(null=True, blank=True)
+    # The last day of this person's latest standing acting appointment
+    # (apps.acting), or null. A hint and nothing more: it lets a request skip
+    # the appointment lookup for everyone who has never been appointed, on the
+    # row the request has already read. It grants nothing; the appointment
+    # itself is read, with its dates, before any acting capacity is given.
+    acting_until = models.DateField(null=True, blank=True)
 
     # Django admin bookkeeping.
     is_staff = models.BooleanField(default=False)
@@ -214,6 +220,26 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
 
     def __str__(self) -> str:
         return f"{self.name} <{self.email}>"
+
+    def save(self, *args, **kwargs):
+        """An acting capacity is never written to the account.
+
+        A request made in an acting capacity presents ``active_role`` as the
+        acting role on this instance, in memory (apps.core.acting). Whatever
+        saves the instance during that request writes the permanent role the
+        database already holds, and the instance keeps its capacity after.
+        """
+        from apps.core.acting import acting_context
+
+        context = acting_context(self)
+        if context is None:
+            return super().save(*args, **kwargs)
+        presented = self.active_role
+        self.active_role = context.substantive_role
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            self.active_role = presented
 
     @property
     def active_role_enum(self) -> EdifyRole:

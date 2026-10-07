@@ -26,10 +26,15 @@ from apps.core.rbac import Permission, permissions_for_role, EdifyRole
 
 def _user_permissions(principal: AuthPrincipal | object) -> set[str]:
     """Resolve the active-role permissions for a principal. Falls back to the
-    canonical matrix so the gate works even before RolePermission is seeded."""
+    canonical matrix so the gate works even before RolePermission is seeded.
+
+    A principal working in an acting appointment holds the acting role's
+    keys less the ones the appointment withholds (apps.core.acting)."""
     active_role = getattr(principal, "active_role", None)
     if active_role:
-        return set(permissions_for_role(active_role))
+        from apps.core.acting import effective_permissions
+
+        return set(effective_permissions(principal))
     if isinstance(principal, AuthPrincipal):
         return set(permissions_for_role(principal.active_role))
     # Anonymous / unauthenticated
@@ -122,6 +127,12 @@ def is_ia_fallback_verifier(user, activity) -> bool:
 
     if getattr(user, "active_role", None) != EdifyRole.COUNTRY_DIRECTOR.value:
         return False
+    # The Director's own judgment, not their seat's: an Acting Country
+    # Director verifies nothing (apps.acting.policy).
+    from apps.core.acting import VERIFICATION, withholds
+
+    if withholds(user, VERIFICATION):
+        return False
     responsible = str(getattr(activity, "responsible_staff_id", "") or "")
     if not responsible:
         return False
@@ -155,6 +166,13 @@ class RolePermissionService:
 
         role_slug = get_user_role_slug(user)
         if not role_slug:
+            return False
+
+        # An acting appointment opens the acting role's pages less the ones
+        # it leaves with the substantive leader (apps.acting.policy).
+        from apps.core.acting import page_withheld
+
+        if page_withheld(user, page):
             return False
 
         # Specialist operational pages can explicitly opt out of the Admin
@@ -689,6 +707,11 @@ class RolePermissionService:
 
     @staticmethod
     def can_manage_cost_catalogue(user) -> bool:
+        from apps.core.acting import GOVERNANCE, withholds
+
+        # The rate card is the Director's own, never an acting leader's.
+        if withholds(user, GOVERNANCE):
+            return False
         role = getattr(user, "active_role", None)
         return role in ["CountryDirector", "Admin"]
 

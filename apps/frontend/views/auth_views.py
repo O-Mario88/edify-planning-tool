@@ -703,6 +703,31 @@ def logout_view(request):
 def switch_role_view(request):
     role = request.POST.get("role")
     user = request.user
+    # An acting appointment (apps.acting) is entered and left here, beside
+    # the roles a person holds. Entering it writes nothing to the account:
+    # the appointment records the capacity its holder is working in.
+    from apps.acting import services as acting_services
+    from apps.core.acting import APPOINTMENT_ATTR
+
+    appointment = getattr(user, APPOINTMENT_ATTR, None)
+    if role == "acting":
+        if (
+            appointment is None
+            or acting_services.set_capacity(user, acting=True) is None
+        ):
+            messages.error(request, "You have no active acting appointment.")
+            return redirect("/dashboard")
+        messages.success(
+            request,
+            f"You are now working as {appointment.label} for "
+            f"{appointment.period_label}.",
+        )
+        return redirect("/dashboard")
+    if appointment is not None and role in user.roles:
+        # Back to a role they hold. Dropped in memory first, so the account
+        # is saved, and audited, in its own role.
+        acting_services.set_capacity(user, acting=False)
+        acting_services.drop(user)
     if role in user.roles:
         old_role = user.active_role
         user.active_role = role

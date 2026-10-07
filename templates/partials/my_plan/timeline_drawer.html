@@ -1,5 +1,6 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
+{% load acting %}
 
 {% block drawer_title %}{{ act.activity_type|replace_underscore|capfirst }} timeline{% endblock %}
 {% block drawer_subtitle %}{% if act.school %}{{ act.school.name }}{% elif act.cluster %}{{ act.cluster.name }}{% endif %}{% endblock %}
@@ -27,7 +28,7 @@
 </div>
 {% endif %}
 
-<p class="edify-text-caption text-slate-500 font-medium">By <span class="font-semibold text-slate-600">{{ log.actor_role|default:"System" }}</span></p>
+<p class="edify-text-caption text-slate-500 font-medium">By <span class="font-semibold text-slate-600">{{ log|audit_capacity|default:"System" }}</span></p>
 </div>
 </li>
 {% endfor %}

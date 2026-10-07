@@ -1,0 +1,64 @@
+{% extends "layouts/shell.html" %}
+{% load components row_actions table_pagination %}
+
+{% block title %}Acting Leadership · Edify{% endblock %}
+
+{% comment %}
+Acting Leadership (apps.acting). A Programme Lead appoints one of their
+officers Acting Programme Lead, a Country Director one of their Leads Acting
+Country Director, for one calendar month. Three tables, by where each
+appointment is in its life: current, upcoming, and the record of those that
+ended or were cancelled. An appointment starts and ends with its month; nobody
+switches it on or off.
+
+Every table names the person's permanent role beside the acting one: an
+appointment never changes who somebody is.
+{% endcomment %}
+
+{% block shell_content %}
+{% paginate current "current_page" as current_pager %}
+{% paginate upcoming "upcoming_page" as upcoming_pager %}
+{% paginate history "history_page" as history_pager %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-acting-leadership>
+
+  {% page_header title="Acting Leadership" description="Who is acting as Program Lead or Country Director, for which month, and who appointed them. An appointment gives operational access for the month and ends with it; nobody's permanent role or reporting line changes." %}
+    {% if appoints %}
+    <button type="button" hx-get="/acting-leadership/appoint" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary h-9" data-appoint-acting>Appoint {{ appoints.short_label }}</button>
+    {% endif %}
+  {% endpage_header %}
+
+  {% data_table name="acting-current" %}
+    {% slot title %}Current{% endslot %}
+    {% slot summary %}{{ current|length }} active{% endslot %}
+    {% slot caption %}Acting appointments in effect today: the person and their permanent role, the acting role, the period, the scope and the status.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="Nobody is acting this month." compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=current_pager param="current_page" %}{% endslot %}
+    {% if current %}
+    {% include "partials/acting/_rows.html" with rows=current_pager.rows period_heading="Period" %}
+    {% endif %}
+  {% enddata_table %}
+
+  {% data_table name="acting-upcoming" %}
+    {% slot title %}Upcoming{% endslot %}
+    {% slot summary %}{{ upcoming|length }} scheduled{% endslot %}
+    {% slot caption %}Acting appointments made for a month that has not begun. Each starts by itself on the first day of its month.{% endslot %}
+    {% slot empty %}{% if appoints and has_candidates %}{% include "components/empty_state.html" with message="No appointment is scheduled." hint="An appointment made ahead starts by itself on the first day of its month." compact="true" %}{% elif appoints %}{% include "components/empty_state.html" with message="No appointment is scheduled." hint="Nobody is recorded under you who can be appointed yet." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No appointment is scheduled." compact="true" %}{% endif %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=upcoming_pager param="upcoming_page" %}{% endslot %}
+    {% if upcoming %}
+    {% include "partials/acting/_rows.html" with rows=upcoming_pager.rows period_heading="Month" %}
+    {% endif %}
+  {% enddata_table %}
+
+  {% data_table name="acting-history" %}
+    {% slot title %}History{% endslot %}
+    {% slot summary %}{{ history|length }} ended or cancelled{% endslot %}
+    {% slot caption %}Acting appointments that have ended or were cancelled: the person and their permanent role, the acting role, the period, who appointed them and the status. The record is kept.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No acting appointment has ended yet." compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=history_pager param="history_page" %}{% endslot %}
+    {% if history %}
+    {% include "partials/acting/_rows.html" with rows=history_pager.rows period_heading="Period" names="appointed_by" %}
+    {% endif %}
+  {% enddata_table %}
+
+</div>
+{% endblock %}

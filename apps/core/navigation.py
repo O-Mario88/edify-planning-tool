@@ -532,6 +532,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The Programme Lead's team home (owner, 2026-09-13). The CD and HR only
     # ever got an empty team here; they read people from the directory.
     "my_team": {PL, ADMIN},
+    # Acting Leadership (apps.acting): a Programme Lead appoints an Acting
+    # Programme Lead from their officers and a Country Director an Acting
+    # Country Director from their Leads, for one month. Human Resources and
+    # Admin read the record; an officer reads their own appointments, which
+    # is why the CCEO is here and not in the sidebar entry.
+    "acting_leadership": {PL, CD, HR, ADMIN, CCEO},
     "ssa": {IA, CD, RVP, PL, CCEO, ADMIN},
     # SSA Performance is an intelligence surface for every role. Its service
     # applies school/region/partner/project scope before computing any metric.
@@ -873,6 +879,7 @@ ICONS.update(
         "ia_stories": ICONS["performance_conversations"],
         "impact_reports": ICONS["reports"],
         "my_team": ICONS["team_targets"],
+        "acting_leadership": ICONS["team_targets"],
         "uploads": ICONS["ia_upload_center"],
         "closed_schools": ICONS["completed_archive"],
         "programme_schools": ICONS["core_schools"],
@@ -1802,12 +1809,16 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
     if not role:
         return []
 
+    from apps.core.acting import page_withheld
+
     sections = []
     previous_cluster = None
     for section in registry:
         if role != ADMIN and role not in PAGE_PERMISSIONS.get(
             section["page_key"], set()
         ):
+            continue
+        if page_withheld(user, section["page_key"]):
             continue
         url = section.get("role_urls", {}).get(role, section["url"])
         match = section.get("match", "prefix")
@@ -2229,6 +2240,14 @@ SIDEBAR_ITEMS = [
                 "url": "/leave/approvals",
                 "page_key": "leave_approvals",
                 "visible_to": PAGE_PERMISSIONS["leave_approvals"] - {PL},
+            },
+            {
+                # The Country Director appoints here; Human Resources reads
+                # the record. The Programme Lead's entry is in TEAM LEADERSHIP.
+                "label": "Acting Leadership",
+                "url": "/acting-leadership",
+                "page_key": "acting_leadership",
+                "visible_to": {CD, HR},
             },
             {
                 # Leave administration: the roster, balances and cover across
@@ -3035,6 +3054,12 @@ SIDEBAR_ITEMS = [
                 "extra_active_paths": ("/leave/tracker", "/leave/team-availability"),
             },
             {
+                "label": "Acting Leadership",
+                "url": "/acting-leadership",
+                "page_key": "acting_leadership",
+                "visible_to": {PL},
+            },
+            {
                 "label": "Field Debrief",
                 "url": "/debriefs",
                 "page_key": "daily_debrief",
@@ -3341,6 +3366,8 @@ ADMIN_NAV_PAGE_KEYS: set[str] = {
 
 def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     """Generates the grouped list of visible sidebar links for the given user."""
+    from apps.core.acting import page_withheld
+
     role = get_user_role_slug(user)
     if not role:
         return []
@@ -3387,6 +3414,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
         for item in sec["items"]:
             # A page this role reads as a tab of another entry (NAV_FOLDS).
             if item.get("page_key") in folded:
+                continue
+            # A page an acting appointment leaves with the substantive leader
+            # is not offered to the acting capacity (apps.core.acting).
+            if page_withheld(user, item.get("page_key")):
                 continue
             # Staff have one direct Partner Oversight entry; the Partners
             # directory remains available to its other audiences.

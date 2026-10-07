@@ -168,6 +168,10 @@ class NotificationLinkResolver:
                 else "/staff-activity/follow-ups",
                 "Open Follow-up",
             )
+        # Acting leadership (apps.acting): the appointee, the appointing
+        # leader and the team all read the appointment on the one page.
+        if event_type.startswith("acting."):
+            return "/acting-leadership", "Open Acting Leadership"
         if event_type == "daily_plan_today":
             return "/dashboard?view=today", "Open Today"
         # Planned work on a public holiday or a leave day (owner, 2026-10-05;

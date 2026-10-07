@@ -136,6 +136,27 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="acting_lifecycle",
+        description=(
+            "Records each acting leadership appointment's life in the audit "
+            "log and tells the appointee: a reminder three days before it "
+            "begins, its start and its end. Access itself follows the dates "
+            "and never waits for this job."
+        ),
+        cron="hourly at :05",
+        cron_kwargs={"minute": 5},
+        expected_runtime_seconds=10,
+        max_interval_minutes=60 * 3,
+        idempotent=True,
+        idempotency_note=(
+            "Each step stamps the appointment it records (reminded_at, "
+            "activated_at, expired_at) under a row lock and skips a stamped "
+            "one, so a re-run or an overlap says nothing twice."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="target_ledger_sync",
         description=(
             "Rebuilds TargetAchievementLedger for every active CCEO/PL so My "

@@ -290,6 +290,9 @@ def _assert_may_review(fr, principal) -> None:
     — could approve another Program Lead's team request, and even one already
     escalated to the CD or RVP. Mirrors weekly_service._require_weekly_approver.
     """
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Deciding a fund request")
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission
     from apps.core.scoping import resolve_user_scope

@@ -789,6 +789,13 @@ def team_user_ids(user) -> set[str]:
         from apps.hr.team_roster import team_members
 
         ids.update(member.user_id for member in team_members(user))
+        # An Acting Programme Lead follows the whole seat, the Lead who
+        # appointed them included (apps.core.acting).
+        from apps.core.acting import SCOPE_PL_TEAM, seat
+
+        acting = seat(user, SCOPE_PL_TEAM)
+        if acting is not None:
+            ids.add(acting.seat_user_id)
     ids.discard(None)
     return ids
 

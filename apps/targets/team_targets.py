@@ -141,10 +141,16 @@ def supervised_users(pl_user) -> list[User]:
     sp_id = getattr(pl_user, "staff_profile_id", None)
     if not sp_id:
         return []
+    from apps.core.acting import seat_staff_ids
+
+    # As Acting Programme Lead: the officers of the Lead who appointed them,
+    # and never the reader's own row (apps.core.acting).
     supervisee_ids = list(
-        StaffSupervisorAssignment.objects.filter(supervisor_id=sp_id).values_list(
-            "supervisee_id", flat=True
+        StaffSupervisorAssignment.objects.filter(
+            supervisor_id__in=seat_staff_ids(pl_user) or [sp_id]
         )
+        .exclude(supervisee_id=sp_id)
+        .values_list("supervisee_id", flat=True)
     )
     return list(
         User.objects.filter(

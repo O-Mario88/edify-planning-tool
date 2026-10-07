@@ -590,6 +590,9 @@ def _require_accountability_approver(adv: AdvanceRequest, principal) -> None:
     """The owner's Program Lead (or country authority) approves fund
     accountability; nobody approves their own. Mirrors the weekly request's
     approval law (weekly_service._require_weekly_approver)."""
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Approving a fund accountability")
     if adv.responsible_user_id == principal.user_id:
         raise Forbidden("You cannot approve your own accountability.")
 

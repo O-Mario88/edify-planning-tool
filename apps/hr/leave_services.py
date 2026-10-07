@@ -698,6 +698,13 @@ class LeaveApprovalService:
         if leave.staff.user_id == reviewer_user.id:
             return False
 
+        # Leave is decided on the permanent reporting line. An acting
+        # appointment does not carry it (apps.acting.policy).
+        from apps.core.acting import LEAVE_DECISION, withholds
+
+        if withholds(reviewer_user, LEAVE_DECISION):
+            return False
+
         def normalize_role(r):
             if not r:
                 return ""

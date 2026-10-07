@@ -409,6 +409,9 @@ def _require_weekly_approver(wfr: WeeklyFundRequest, principal) -> str:
         raise BadRequest(f"Request is not awaiting approval (status '{wfr.status}').")
     if wfr.responsible_user == principal.user_id:
         raise Forbidden("You cannot approve your own fund request.")
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Deciding a weekly advance request")
 
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission

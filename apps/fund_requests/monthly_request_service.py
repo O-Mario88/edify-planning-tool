@@ -35,6 +35,9 @@ def _period_key(fy: str, month: int) -> str:
 
 
 def _require_program_lead(principal) -> None:
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Preparing the team's monthly request")
     if getattr(principal, "active_role", None) not in ("Program Lead", "Admin"):
         raise Forbidden("Only a Program Lead can prepare a team monthly request.")
 
@@ -590,6 +593,9 @@ def get_monthly_request(principal, filters=None) -> dict:
 
 def submit_to_rvp(principal, fy: str, month: int):
     """Submits the country monthly budget to the RVP for approval."""
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Submitting the country budget")
     from apps.monthly_work_plan.country_budget_service import (
         get_country_monthly_budget,
         send_to_rvp as cd_send_to_rvp,
