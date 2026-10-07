@@ -509,7 +509,7 @@ def get_my_plan(principal, filters=None) -> dict:
         elif (
             activity.planned_date
             and activity.planned_date < today
-            and activity.status in {"scheduled", "in_progress"}
+            and activity.status in {"scheduled", "rescheduled", "in_progress"}
         ):
             issue, tone = "Activity is overdue", "danger"
         else:
@@ -537,7 +537,7 @@ def get_my_plan(principal, filters=None) -> dict:
             for activity in activities
             if activity.planned_date
             and activity.planned_date < today
-            and activity.status in {"scheduled", "in_progress"}
+            and activity.status in {"scheduled", "rescheduled", "in_progress"}
         ),
     )
     recommended = next(

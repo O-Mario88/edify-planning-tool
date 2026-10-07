@@ -12,6 +12,7 @@ tile is built through this function.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from apps.core.metrics.registry import get_metric
@@ -135,6 +136,51 @@ def render_strip(
             f"stated reason"
         )
     return [tile.as_dict() for tile in tiles]
+
+
+# ── The line under a KPI ─────────────────────────────────────────────────────
+# Owner, 2026-10-07: "KPI strip has a lot of explanation can you minimize the
+# explanations so the focus is on the actual KPI, i noticed the explanations
+# are already somewhere else." A tile is its name and its figure. The line
+# under it stays when it is a second figure about the first ("of 700
+# schools", "33% of expected", "4 no login"), cut to that figure; a sentence
+# that explains the metric is said by the tile's hover text, by the table
+# under the strip and by the metric's definition, and is not drawn again.
+HELPER_FIGURE_CHARS = 28
+_HELPER_CLAUSES = re.compile(r"\s+[·—–|]\s+|;\s+")
+_HELPER_STARTS_WITH_A_FIGURE = re.compile(
+    r"^(?:of\s+|about\s+|≈\s*|~\s*|UGX\s+)?[+\-−]?\d", re.IGNORECASE
+)
+_HELPER_QUANTITY = re.compile(
+    r"^(?:of\s+|about\s+|≈\s*|~\s*|UGX\s+)?[+\-−]?\d[\d,.]*%?"
+    r"(?:\s+of\s+\d[\d,.]*)?(?:\s+[A-Za-z][\w'’-]*)?",
+    re.IGNORECASE,
+)
+
+
+def brief_helper(helper) -> str:
+    """What is drawn under a KPI's figure: a short second figure, or nothing.
+
+    ``"of 280 a year · 0 Core, 1 Client"`` is ``"of 280 a year"``;
+    ``"1 of 302 schools the Partner should hold (102 Core, …) · 301 still to
+    assign"`` is ``"1 of 302 schools"``; ``"deduplicated across tabs and
+    devices"`` is nothing. The whole sentence is kept by the caller for the
+    hover text and for a screen reader.
+    """
+    text = " ".join(str(helper or "").split())
+    if not text or not _HELPER_STARTS_WITH_A_FIGURE.match(text):
+        return ""
+    kept = ""
+    for clause in _HELPER_CLAUSES.split(text):
+        clause = re.sub(r"\s*\([^)]*\)", "", clause).strip(" .,")
+        joined = f"{kept} · {clause}" if kept else clause
+        if len(joined) > HELPER_FIGURE_CHARS:
+            break
+        kept = joined
+    if kept:
+        return kept
+    quantity = _HELPER_QUANTITY.match(text)
+    return quantity.group(0).strip() if quantity else ""
 
 
 def consolidate_kpi_items(items, *, max_items: int | None = None) -> list[dict]:

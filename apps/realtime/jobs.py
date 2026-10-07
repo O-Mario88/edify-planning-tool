@@ -496,10 +496,25 @@ def _do_daily_plan_notifications(today=None) -> int:
     return sent
 
 
+def _do_daily_planning_notices() -> int:
+    """The day's plan notices, then the standing one for a Programme Lead or
+    a CCEO who holds too few schools to reach their visit target (owner,
+    2026-10-07; apps.planning.recruit_notice). The second never stops the
+    first from being counted as sent."""
+    sent = _do_daily_plan_notifications()
+    try:
+        from apps.planning.recruit_notice import sweep
+
+        sent += sweep()
+    except Exception:  # noqa: BLE001 - the day's plans were sent all the same
+        logger.exception("recruit_notice_sweep_failed")
+    return sent
+
+
 def daily_plan_notifications_job():
     if not _enabled():
         return
-    run_tracked_job("daily_plan_notifications", _do_daily_plan_notifications)
+    run_tracked_job("daily_plan_notifications", _do_daily_planning_notices)
 
 
 def _do_day_off_alerts() -> int:

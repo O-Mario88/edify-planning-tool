@@ -1417,7 +1417,11 @@ def _ia_operations_context(request, header: dict) -> dict:
     activities = _ia_activities(request)
     reach_ids = activities.values("id")
     waiting_qs = _ia_staff_queue(request, activities)
-    schools = _ia_school_scope(request)
+    from apps.schools.lifecycle_service import active_schools
+
+    # The school figures are about schools open now: one that has closed is
+    # not "missing an SSA" or a record to clean up.
+    schools = active_schools(_ia_school_scope(request))
     kpis = header["kpis"]
     waiting_cnt = kpis["waiting"]
     missing_sf_id = kpis["sf_queue"]

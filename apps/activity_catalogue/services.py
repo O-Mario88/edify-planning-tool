@@ -21,6 +21,7 @@ from .models import (
     CatalogueStatus,
     MappingMode,
 )
+from apps.schools.lifecycle_service import active_schools
 
 
 ACTIVE_SUPPORT_STATUSES = [
@@ -966,7 +967,6 @@ def recommend_cluster_activities(
     """
     from apps.activities.models import Activity
     from apps.core.request_cache import scoped
-    from apps.schools.models import School
     from apps.ssa.recommendation_engine import (
         prime_recommendation_inputs,
         prioritized_interventions,
@@ -981,11 +981,7 @@ def recommend_cluster_activities(
     fy = get_operational_fy(on_date)
     # School.cluster_id is a bare CharField (no FK — see apps/schools/models),
     # so membership filters on the id, never a relation lookup.
-    members = list(
-        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True).order_by(
-            "school_id"
-        )
-    )
+    members = list(active_schools().filter(cluster_id=cluster.id).order_by("school_id"))
 
     items = effective_items(on_date).prefetch_related("intervention_mappings")
     if executor_type == DeliveryType.PARTNER:

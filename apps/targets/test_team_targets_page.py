@@ -773,6 +773,27 @@ class TeamTargetsPageTest(TestCase):
         prow = next(p for p in page["partners"] if p["name"] == "Helper Org")
         self.assertEqual((prow["assigned"], prow["valid"]), (1, 1))  # shown separately
 
+    def test_partner_row_counts_dated_work_and_drops_called_off_work(self):
+        """Partner work is dated as `partner_scheduled`, which the Scheduled
+        column never read; and a visit cancelled when staff took the school
+        back stayed in Assigned (2026-10-07 calculation check)."""
+        partner = Partner.objects.create(name="Dated Org", region_name="R")
+        for status in ("partner_scheduled", "assigned_to_partner", "cancelled"):
+            self._act(
+                self.cceo1_sp,
+                date(2026, 7, 20),
+                status=status,
+                sf_id="",
+                delivery="partner",
+                partner=partner,
+            )
+        # Handed over, not dated yet.
+        Activity.objects.filter(
+            assigned_partner_id=partner.id, status="assigned_to_partner"
+        ).update(planned_date=None, scheduled_date=None)
+        prow = next(p for p in self._page()["partners"] if p["name"] == "Dated Org")
+        self.assertEqual((prow["assigned"], prow["scheduled"]), (2, 1))
+
     # ── 15–16: pace + leave ──────────────────────────────────────────────────
     def test_staff_risk_uses_expected_pace(self):
         # pace ≈ 48% mid-July: 5/10=50% On Track · 4/10 Slightly Behind ·

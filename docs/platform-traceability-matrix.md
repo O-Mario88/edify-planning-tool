@@ -16,11 +16,11 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 111 | 31 | 2 | 2 | 6 | 19 | 80 |
-| `journey-02` | SSA to school improvement | ✓ | 1 | 45 | 10 | 1 | 11 | 0 | 0 | 29 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 46 | 10 | 1 | 11 | 0 | 0 | 29 |
 | `journey-03` | Standard staff school visit | ✓ | 12 | 115 | 33 | 3 | 8 | 10 | 26 | 80 |
-| `journey-04` | Cluster training | ✓ | 1 | 71 | 17 | 2 | 6 | 0 | 1 | 76 |
+| `journey-04` | Cluster training | ✓ | 1 | 72 | 17 | 2 | 6 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 61 | 27 | 2 | 2 | 1 | 4 | 91 |
-| `journey-06` | Special Project | ✓ | 1 | 120 | 29 | 4 | 9 | 6 | 19 | 80 |
+| `journey-06` | Special Project | ✓ | 1 | 121 | 29 | 4 | 9 | 6 | 19 | 80 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 90 | 27 | 4 | 10 | 9 | 23 | 80 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 88 | 25 | 3 | 6 | 7 | 18 | 79 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 59 | 15 | 0 | 0 | 1 | 4 | 25 |
@@ -28,7 +28,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-11` | Professional Development | ✓ | 1 | 45 | 8 | 1 | 9 | 1 | 1 | 1 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 41 | 12 | 0 | 0 | 1 | 10 | 5 |
 | `journey-13` | PIP | ✓ | 1 | 42 | 7 | 0 | 0 | 0 | 3 | 1 |
-| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 61 | 14 | 1 | 9 | 2 | 3 | 25 |
+| `journey-14` | Team Oversight and Send School to | ✓ | 1 | 62 | 14 | 1 | 9 | 2 | 3 | 25 |
 | `journey-15` | Financial Health | ✓ | 1 | 57 | 17 | 2 | 4 | 1 | 6 | 29 |
 | `journey-16` | Government Requirements | ✓ | 1 | 56 | 17 | 2 | 4 | 1 | 5 | 29 |
 | `journey-17` | Loan | ✓ | 1 | 48 | 25 | 11 | 7 | 3 | 17 | 37 |
@@ -73,7 +73,7 @@ Steps: IA confirms SSA → Recommendation generated → School prioritized → A
 | Permissions checked | `analytics.view` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/analytics/role_analytics.py`, `apps/analytics/services.py`, `apps/analytics/views.py` _+35 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/analytics/role_analytics.py`, `apps/analytics/services.py`, `apps/analytics/views.py` _+36 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `sessions.Session`, `ssa.SsaRecord`, `ssa.SsaScore` |
 | Notifications raised | — |
 | Audit actions (evidence) | — |
@@ -113,7 +113,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Permissions checked | `cluster.catchmentManage`, `project.assignSchool` |
 | Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `clusters`, `core_schools`, `dashboard`, `debriefs_list` _+26 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py` _+61 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py`, `apps/activities/salesforce.py`, `apps/activities/schedule_trail.py`, `apps/activities/services.py` _+62 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
@@ -153,7 +153,7 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Permissions checked | `data.export`, `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools_oversight` _+50 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/editing.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py` _+110 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/duplicate_visits.py`, `apps/activities/editing.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/pair_costing.py`, `apps/activities/profile_activities.py` _+111 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+17 more_ |
 | Notifications raised | `activity_submitted_for_review`, `activity_verified_by_pl`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.activity_verified_by_pl`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready` _+11 more_ |
@@ -313,7 +313,7 @@ Steps: CCEO school appears under team → Not in PL personal portfolio → Urgen
 | Permissions checked | `data.export` |
 | Page gates checked | `actions_sent`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_oversight`, `clusters`, `core_schools`, `core_schools_oversight` _+35 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+51 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/activities/cluster_attendance.py`, `apps/activities/completion_columns.py`, `apps/activity_catalogue/scheduling_health.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/clusters/eligibility.py` _+52 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `geography.District`, `geography.Region`, `messaging.Message`, `messaging.MessageParticipant`, `messaging.MessageThread`, `notifications.Notification`, `planning.TeamAction` _+2 more_ |
 | Notifications raised | `message`, `school_action_assigned` |
 | Audit actions (evidence) | `notification.message`, `school_action.acknowledged`, `school_action.sent` |

@@ -59,11 +59,17 @@ ORIENTATION = "NEW_SCHOOL_ORIENTATION"
 
 
 def _day(offset: int = 0) -> datetime.date:
-    """A schedulable day in the fiscal year of ``_schedulable_date()``."""
-    first = _schedulable_date(room=40)
-    day = first + datetime.timedelta(days=offset)
-    while day.weekday() == 6:
+    """The ``offset``-th schedulable day after ``_schedulable_date()``, in
+    its fiscal year. Sundays are stepped over one day at a time, so two
+    offsets are never the same date: added to the first day and then moved
+    off a Sunday, offsets 1 and 2 were both the Monday whenever the first day
+    was a Saturday, and every test that plans on both failed on Wednesdays
+    as a duplicate booking."""
+    day = _schedulable_date(room=40)
+    for _ in range(offset):
         day += datetime.timedelta(days=1)
+        while day.weekday() == 6:
+            day += datetime.timedelta(days=1)
     return day
 
 
@@ -1397,9 +1403,11 @@ class WhoSeesTheSummary(CeilingFixture):
 
         self.assertEqual(response.status_code, 200)
         summary = response.context["training_summary"]
+        # The Lead first, then the officers they supervise (owner,
+        # 2026-10-06: "make sure they are included on the list").
         self.assertEqual(
             [column["name"] for column in summary.columns],
-            ["Mary Officer", "Standard CCEO"],
+            ["Lead Lydia", "Mary Officer", "Standard CCEO"],
         )
         self.assertTrue(summary.may_set)
         body = response.content.decode()
@@ -1500,7 +1508,11 @@ class WhoSeesTheSummary(CeilingFixture):
             "training_summary"
         ]
 
-        self.assertEqual([c["name"] for c in summary.columns], ["Outside Officer"])
+        # The Lead's own column, then their officers' (owner, 2026-10-06:
+        # the Leads are on the list).
+        self.assertEqual(
+            [c["name"] for c in summary.columns], ["Lead Lucas", "Outside Officer"]
+        )
         self.assertEqual(summary.lead, self.other_pl_staff.id)
         self.assertEqual(
             {name for _id, name in summary.leads}, {"Lead Lydia", "Lead Lucas"}

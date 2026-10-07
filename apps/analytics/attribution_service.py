@@ -154,7 +154,10 @@ def attribution(
     fy = fy or get_operational_fy()
     prior_fy = str(int(fy) - 1)
     scope = resolve_user_scope(principal)
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     if schools is None or scope.can_view_summary_only:
         schools = None
     elif district_id:

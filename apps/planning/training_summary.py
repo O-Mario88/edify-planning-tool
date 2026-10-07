@@ -228,11 +228,18 @@ class Summary:
     may_set_country: bool = False
     leads: list = field(default_factory=list)  # (staff id, name)
     lead: str = ""
+    #: The columns that are a Programme Lead's own (owner, 2026-10-06: the
+    #: Leads are on the list beside their officers).
+    lead_ids: frozenset = frozenset()
 
     @property
     def columns(self) -> list[dict]:
         return [
-            {"id": profile.id, "name": profile.user.name or profile.user.email}
+            {
+                "id": profile.id,
+                "name": profile.user.name or profile.user.email,
+                "is_lead": profile.id in self.lead_ids,
+            }
             for profile in self.staff
         ]
 
@@ -260,13 +267,16 @@ def _reader_country(principal) -> str:
 
 
 def country_officers(country: str) -> list:
-    """Every officer who schedules trainings in the country: the people who
-    hold the CCEO role and have not left."""
+    """Everybody who schedules trainings in the country: the people who hold
+    the CCEO or the Programme Lead role and have not left. The Leads were
+    missing (owner, 2026-10-06: "make sure they are included on the list"):
+    they hold schools and schedule trainings, and a ceiling can be set for
+    them."""
     from apps.accounts.models import StaffProfile
     from apps.core.role_holding import holds_role_q
 
     officers = StaffProfile.objects.filter(
-        holds_role_q(EdifyRole.CCEO),
+        holds_role_q(EdifyRole.CCEO) | holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD),
         deleted_at__isnull=True,
         user__deleted_at__isnull=True,
         user__is_active=True,
@@ -277,7 +287,8 @@ def country_officers(country: str) -> list:
 
 
 def _leads_of(officers) -> tuple[dict, list]:
-    """{officer id: lead id} and the Programme Leads, by name."""
+    """{officer id: lead id} and the Programme Leads, by name: everybody who
+    holds the role, whether or not an officer reports to them yet."""
     from apps.accounts.models import StaffSupervisorAssignment
     from apps.core.role_holding import holds_role_q
 
@@ -288,10 +299,34 @@ def _leads_of(officers) -> tuple[dict, list]:
     ).values_list("supervisee_id", "supervisor_id", "supervisor__user__name")
     lead_of: dict[str, str] = {}
     names: dict[str, str] = {}
+    lead_role = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    for profile in officers:
+        user = profile.user
+        if lead_role in (user.roles or []) or user.active_role == lead_role:
+            names[profile.id] = user.name or user.email or "Programme Lead"
     for officer_id, lead_id, lead_name in links:
+        if officer_id == lead_id or officer_id in names:
+            # A Lead is filed under themselves, never under another Lead.
+            continue
         lead_of.setdefault(officer_id, lead_id)
-        names[lead_id] = lead_name or "Programme Lead"
+        names.setdefault(lead_id, lead_name or "Programme Lead")
     return lead_of, sorted(names.items(), key=lambda pair: pair[1].casefold())
+
+
+def _teams_in_order(officers, lead_of: dict, lead_ids: list) -> list:
+    """Each Programme Lead followed by the officers who report to them, then
+    anybody with no Lead: the columns read as teams."""
+    by_id = {profile.id: profile for profile in officers}
+    ordered, placed = [], set()
+    for lead_id in lead_ids:
+        team = [lead_id] if lead_id in by_id else []
+        team += [p.id for p in officers if lead_of.get(p.id) == lead_id]
+        for staff_id in team:
+            if staff_id not in placed:
+                placed.add(staff_id)
+                ordered.append(by_id[staff_id])
+    ordered += [p for p in officers if p.id not in placed]
+    return ordered
 
 
 # ── Rows ────────────────────────────────────────────────────────────────────
@@ -479,12 +514,15 @@ def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
     role = getattr(principal, "active_role", "") or ""
     country = _reader_country(principal)
     if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        # The Lead's own column first, then their officers'.
         staff = training_ceilings.ceiling_staff_options(principal)
+        own_id = getattr(principal, "staff_profile_id", None)
         return Summary(
             fy=str(fy),
             staff=staff,
             rows=build(staff, str(fy), country=country),
             may_set=bool(staff),
+            lead_ids=frozenset({own_id} if own_id else ()),
         )
     if role not in COUNTRY_READER_ROLES:
         raise Forbidden(
@@ -495,7 +533,10 @@ def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
     lead_of, leads = _leads_of(officers)
     lead = lead if any(lead == lead_id for lead_id, _name in leads) else ""
     if lead:
-        officers = [p for p in officers if lead_of.get(p.id) == lead]
+        # A Lead's team is the Lead and the officers who report to them.
+        officers = [p for p in officers if p.id == lead or lead_of.get(p.id) == lead]
+    lead_ids = frozenset(lead_id for lead_id, _name in leads)
+    officers = _teams_in_order(officers, lead_of, [i for i, _name in leads])
     return Summary(
         fy=str(fy),
         staff=officers,
@@ -504,4 +545,5 @@ def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
         may_set_country=training_ceilings.may_set_country_ceiling(principal),
         leads=leads,
         lead=lead,
+        lead_ids=lead_ids,
     )

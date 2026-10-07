@@ -232,11 +232,11 @@ def preview_school_transfer(
         new_owner_name=new_owner.user.name if new_owner else "",
         open_activities=open_qs.count(),
         scheduled_activities=open_qs.filter(
-            status__in=("scheduled", "partner_scheduled")
+            status__in=("scheduled", "rescheduled", "partner_scheduled")
         ).count(),
         settled_activities=activities.filter(status__in=SETTLED_STATUSES).count(),
         partner_assignments=PartnerAssignment.objects.filter(school_id=school.id)
-        .exclude(status__in=("returned", "cancelled", "completed"))
+        .exclude(status__in=(*PartnerAssignment.RELEASED_STATUSES, "completed"))
         .count(),
         project_memberships=ProjectSchoolAssignment.objects.filter(
             school_id=school.id
@@ -772,11 +772,11 @@ def preview_district_transfer(district, from_staff, new_owner=None) -> TransferP
         school_count=len(school_ids),
         open_activities=activities.filter(status__in=TRANSFERABLE_STATUSES).count(),
         scheduled_activities=activities.filter(
-            status__in=("scheduled", "partner_scheduled")
+            status__in=("scheduled", "rescheduled", "partner_scheduled")
         ).count(),
         settled_activities=activities.filter(status__in=SETTLED_STATUSES).count(),
         partner_assignments=PartnerAssignment.objects.filter(school_id__in=school_ids)
-        .exclude(status__in=("returned", "cancelled", "completed"))
+        .exclude(status__in=(*PartnerAssignment.RELEASED_STATUSES, "completed"))
         .count(),
         project_memberships=ProjectSchoolAssignment.objects.filter(
             school_id__in=school_ids

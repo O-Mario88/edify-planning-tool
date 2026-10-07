@@ -44,8 +44,13 @@ def priority_portfolio(
             "school_id", flat=True
         )
     )
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school owes no SSA.
     school_ids = list(
-        School.objects.filter(id__in=assigned_school_ids).values_list("id", flat=True)
+        active_schools(School.objects.filter(id__in=assigned_school_ids)).values_list(
+            "id", flat=True
+        )
     )
     latest_by_school = {}
     if school_ids:

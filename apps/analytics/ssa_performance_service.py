@@ -13,7 +13,7 @@ from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService
 from apps.core.scoping import resolve_user_scope
-from apps.schools.models import School
+from apps.schools.lifecycle_service import active_schools
 from apps.ssa.models import SsaRecord, SsaScore
 
 from .platform_engine import (
@@ -157,7 +157,8 @@ def _scoped_schools(principal):
     from apps.core.scoping import scoped_school_queryset
 
     scope = resolve_user_scope(principal)
-    schools = School.objects.filter(deleted_at__isnull=True)
+    # Operating schools: "of N schools" is the schools open now.
+    schools = active_schools()
     return scoped_school_queryset(scope, schools), scope
 
 

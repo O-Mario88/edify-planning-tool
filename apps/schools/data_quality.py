@@ -276,23 +276,56 @@ def scan_all(*, batch_size: int = 500) -> dict:
     return {**totals, **duplicates}
 
 
+def open_issues():
+    """Open data-quality issues at operating schools: the work queue.
+
+    A closed school's record is nobody's to fix. Its issues are settled when
+    it closes (``settle_closed_school``), and an issue still open at a school
+    closed before that existed is not listed or counted either.
+    """
+    from apps.schools.models import DataQualityIssue
+
+    return DataQualityIssue.objects.filter(
+        status="open",
+        school__deleted_at__isnull=True,
+        school__operational_status__in=("active", "reopened"),
+    )
+
+
+def settle_closed_school(school) -> int:
+    """Close the open issues of a school that has closed. Returns how many.
+
+    The nightly sweep reads operating schools only, so nothing would ever
+    resolve them: they stayed in the Data Quality Center asking somebody to
+    add a phone number for a school that no longer operates. A school that
+    reopens gets its issues back on the next sweep.
+    """
+    from django.utils import timezone
+
+    from apps.schools.models import DataQualityIssue
+
+    return DataQualityIssue.objects.filter(school=school, status="open").update(
+        status="resolved", resolved_at=timezone.now(), updated_at=timezone.now()
+    )
+
+
 def data_quality_summary() -> dict:
     """Aggregate counts for System Health — queue sizes and their owners."""
 
-    from apps.schools.models import DataQualityIssue, SchoolDuplicateCandidate
+    from apps.schools.models import SchoolDuplicateCandidate
 
-    open_issues = DataQualityIssue.objects.filter(status="open")
+    queue = open_issues()
     by_severity = {
         row["severity"]: row["count"]
-        for row in open_issues.values("severity").annotate(count=Count("id")).order_by()
+        for row in queue.values("severity").annotate(count=Count("id")).order_by()
     }
     return {
         "openIssues": sum(by_severity.values()),
         "critical": by_severity.get("critical", 0),
         "warning": by_severity.get("warning", 0),
         "info": by_severity.get("info", 0),
-        "missingCoordinates": open_issues.filter(issue_type="no_coordinates").count(),
-        "unassignedOpenIssues": open_issues.filter(
+        "missingCoordinates": queue.filter(issue_type="no_coordinates").count(),
+        "unassignedOpenIssues": queue.filter(
             Q(assigned_to__isnull=True) | Q(assigned_to="")
         ).count(),
         "pendingDuplicatePairs": SchoolDuplicateCandidate.objects.filter(

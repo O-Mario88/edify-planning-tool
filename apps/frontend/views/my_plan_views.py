@@ -25,6 +25,7 @@ from apps.my_plan.services import get_frontend_context as get_my_plan
 # move together (apps.activities.pairs).
 from apps.activities.pairs import reschedule as reschedule_activity
 from apps.activities.services import (
+    STARTABLE_STATUSES,
     get_activity,
     start_completion,
     start_in_school_training_pair,
@@ -64,6 +65,7 @@ from apps.frontend.views.hr_programme_views import _back, _drawer, _field
 from apps.core.interventions import (
     INTERVENTION_ABBREVIATIONS as SSA_SCORE_ABBREVIATIONS,
 )  # noqa: E402
+from apps.schools.lifecycle_service import active_schools
 
 
 def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
@@ -698,22 +700,10 @@ def complete_drawer_view(request, activity_id):
 
     # Auto-start completion if in scheduling status to unlock files/codes
     pair_needs_start = paired_school_visit is not None and (
-        act.get("status")
-        in (
-            "scheduled",
-            "in_progress",
-            "assigned_to_partner",
-            "partner_scheduled",
-        )
-        or paired_school_visit.status
-        in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled")
+        act.get("status") in STARTABLE_STATUSES
+        or paired_school_visit.status in STARTABLE_STATUSES
     )
-    if pair_needs_start or act.get("status") in (
-        "scheduled",
-        "in_progress",
-        "assigned_to_partner",
-        "partner_scheduled",
-    ):
+    if pair_needs_start or act.get("status") in STARTABLE_STATUSES:
         forbidden = _forbid_staff_on_partner_activity(request, a)
         if forbidden:
             return forbidden
@@ -737,11 +727,10 @@ def complete_drawer_view(request, activity_id):
     guest_rows = []
     if a.cluster:
         from apps.activities.models import ClusterActivityAttendance
-        from apps.schools.models import School
 
-        cluster_schools = School.objects.filter(
-            cluster_id=a.cluster_id, deleted_at__isnull=True
-        ).order_by("name")
+        cluster_schools = (
+            active_schools().filter(cluster_id=a.cluster_id).order_by("name")
+        )
         # The register opens on who was invited when this was scheduled, so
         # the person who delivered confirms rather than reconstructs. Rows
         # already marked attended stay ticked on a second visit.
@@ -1225,15 +1214,9 @@ def complete_activity_action(request, activity_id):
     if request.method == "POST":
         # Handle start completion if still in scheduled status
         pair_needs_start = paired_school_visit is not None and (
-            paired_school_visit.status
-            in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled")
+            paired_school_visit.status in STARTABLE_STATUSES
         )
-        if pair_needs_start or act.get("status") in (
-            "scheduled",
-            "in_progress",
-            "assigned_to_partner",
-            "partner_scheduled",
-        ):
+        if pair_needs_start or act.get("status") in STARTABLE_STATUSES:
             try:
                 if paired_school_visit is not None:
                     start_in_school_training_pair(a.id, request.user)
@@ -2781,11 +2764,9 @@ def attendance_upload_drawer_view(request, activity_id):
 
     cluster_schools = []
     if a.cluster:
-        from apps.schools.models import School
-
-        cluster_schools = School.objects.filter(
-            cluster_id=a.cluster_id, deleted_at__isnull=True
-        ).order_by("name")
+        cluster_schools = (
+            active_schools().filter(cluster_id=a.cluster_id).order_by("name")
+        )
 
     context = {
         "act": a,

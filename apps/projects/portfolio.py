@@ -40,11 +40,14 @@ def portfolio_rows(project, *, fy: str | None = None) -> list[dict]:
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
     from apps.partners.models import PartnerAssignment
-    from apps.projects.models import ProjectSchoolAssignment
 
     fy = fy or get_operational_fy()
+    from apps.projects.models import current_enrolments
+
+    # The project's schools today: one that has closed is not on the roster.
     assignments = list(
-        ProjectSchoolAssignment.objects.filter(project=project)
+        current_enrolments()
+        .filter(project=project)
         .select_related("school", "school__district", "school__region", "baseline_ssa")
         .order_by("school__name")
     )
@@ -73,11 +76,17 @@ def portfolio_rows(project, *, fy: str | None = None) -> list[dict]:
         ):
             delivered[row["school_id"]] = delivered.get(row["school_id"], 0) + 1
 
+    from apps.partners.support_responsibility import left_partner_q
+
+    # The partner holding the school's project work now. A school withdrawn
+    # from its partner is "Not assigned" again: it used to keep the partner's
+    # name beside "Returned To Staff" for as long as it stayed in the project.
     partner_rows: dict[str, str] = {}
     for assignment in (
         PartnerAssignment.objects.filter(
             project_id=project.id, school_id__in=school_ids
         )
+        .exclude(left_partner_q())
         .select_related("partner")
         .order_by("-created_at")
     ):
@@ -165,7 +174,6 @@ def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int =
     from apps.projects.models import (
         OPEN_PROJECT_STATUSES,
         Project,
-        ProjectSchoolAssignment,
     )
 
     projects = Project.objects.filter(
@@ -181,8 +189,11 @@ def schools_awaiting_project_planning(coordinator_staff_id: str, *, limit: int =
     project_ids = list(projects.values_list("id", flat=True).distinct())
     if not project_ids:
         return []
+    from apps.projects.models import current_enrolments
+
     enrolled = list(
-        ProjectSchoolAssignment.objects.filter(project_id__in=project_ids)
+        current_enrolments()
+        .filter(project_id__in=project_ids)
         .select_related("school", "project")
         .order_by("-created_at")[: limit * 5]
     )

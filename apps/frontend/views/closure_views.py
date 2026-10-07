@@ -84,6 +84,7 @@ def closure_readiness_queue_view(request):
                 "not_planned",
                 "planned",
                 "scheduled",
+                "rescheduled",
                 "assigned_to_partner",
                 "partner_scheduled",
             ]

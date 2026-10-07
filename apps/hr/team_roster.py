@@ -377,15 +377,17 @@ def _portfolio(members) -> dict:
             "staff_id", "school_id"
         )
     )
+    from apps.schools.lifecycle_service import active_schools
+
     district_of_school = dict(
-        School.objects.filter(id__in={s for _, s in assignments}).values_list(
-            "id", "district__name"
-        )
+        active_schools(
+            School.objects.filter(id__in={s for _, s in assignments})
+        ).values_list("id", "district__name")
     )
     by_staff: dict[str, set] = {}
     for staff_id, school_id in assignments:
-        # School.objects is soft-delete filtered: a stale assignment to a
-        # closed school never counts.
+        # Operating schools only: an assignment to a deleted or a closed
+        # school never counts.
         if school_id in district_of_school:
             by_staff.setdefault(staff_id, set()).add(school_id)
     home_district_ids = {
@@ -441,8 +443,13 @@ def _delivery(owner_of: dict, schools: dict, staff_ids, fy: str):
         for school_id in school_ids:
             school_owner.setdefault(school_id, []).append(staff_id)
 
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+
     rows = (
         Activity.objects.filter(fy=fy, deleted_at__isnull=True)
+        # Called-off work is not planned work: "1 of 13" used to become
+        # "1 of 14" when a visit was planned and then cancelled.
+        .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
         .filter(
             Q(responsible_staff_id__in=list(owner_of))
             | Q(

@@ -30,6 +30,7 @@ from apps.planning.flagged_schools import team_flagged_schools
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
+from apps.schools.lifecycle_service import active_schools
 
 
 # Where a no-JavaScript send returns to when the Referer cannot be trusted.
@@ -1138,15 +1139,25 @@ def _monitor_kpis(totals, figures, *, monitor_url: str) -> list[dict]:
     return [
         share(
             "monitor_visits_planned_share",
-            # Against what the schools held ask of staff, to each person's
-            # ceiling: the sum of every 280 and 560 counted people holding
-            # no school, and read a fully planned country as a few percent.
+            # Against the 280 a Programme Lead and the 560 a CCEO plans,
+            # whatever they hold (owner, 2026-10-07); somebody whose schools
+            # cannot take that many is marked to recruit more on their row.
             figures.staff_visits.credited,
             figures.staff_visits.target,
+            # The split is of every visit staff planned; the share counts
+            # each person's no further than their own target. Said apart, so
+            # "4 of 560 ... 0 core, 5 client" does not read as a sum that is
+            # one out.
             helper=f"{figures.staff_visits.credited:,} of "
             f"{figures.staff_visits.target:,} staff visits · "
             f"{figures.staff_visits.remaining:,} remaining · "
-            f"{totals.core_visits:,} core, {totals.client_visits:,} client",
+            f"{figures.staff_visits.planned:,} planned in all: "
+            f"{totals.core_visits:,} core, {totals.client_visits:,} client"
+            + (
+                f" ({figures.staff_visits.over:,} past the planner's own target)"
+                if figures.staff_visits.over
+                else ""
+            ),
             icon="target",
             empty="No one in scope",
         ),
@@ -1194,15 +1205,18 @@ def _monitor_kpis(totals, figures, *, monitor_url: str) -> list[dict]:
         render_kpi_item(
             "monitor_partner_share",
             MetricValue.measured(totals.partner_assigned_schools),
-            # One line from one count (apps.planning.readiness): "29 of 20
-            # ... 20 still to assign" was two sums of different people.
-            helper=f"{figures.partner_assignment.credited:,} of "
+            # The figure is the schools with Partner work in the year, so
+            # the line under it starts with that work; the Partner's target
+            # is a second count (apps.planning.readiness), of schools in a
+            # Partner's hands now, and is said after it. Leading with the
+            # target put "1 of 302" under a figure of 2.
+            helper=f"{totals.partner_scheduled:,} dated · "
+            f"{totals.partner_awaiting:,} awaiting a date · "
+            f"{figures.partner_assignment.credited:,} of "
             f"{figures.partner_assignment.target:,} schools the Partner should "
-            f"hold ({figures.partner_core_schools:,} Core, "
+            f"hold are with a Partner now ({figures.partner_core_schools:,} Core, "
             f"{figures.partner_beyond_staff:,} beyond staff capacity) · "
-            f"{figures.partner_assignment.remaining:,} still to assign · "
-            f"{totals.partner_scheduled:,} partner activities scheduled · "
-            f"{totals.partner_awaiting:,} awaiting a date",
+            f"{figures.partner_assignment.remaining:,} still to assign",
             tone="warning" if figures.partner_assignment.remaining else "neutral",
             icon="users",
             drilldown_url=f"{monitor_url}&gap=no_partner",
@@ -1653,9 +1667,9 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
             att_school_ids.add(sid)
 
         member_schools = list(
-            School.objects.filter(
-                cluster_id__in=cluster_ids, deleted_at__isnull=True
-            ).select_related("district", "region", "sub_county")
+            active_schools()
+            .filter(cluster_id__in=cluster_ids)
+            .select_related("district", "region", "sub_county")
         )
         schools_by_cluster = defaultdict(list)
         schools_by_cluster_confirmed = defaultdict(list)
@@ -4041,7 +4055,6 @@ def partner_allowance_drawer(request):
 
     from apps.partners.models import Partner
     from apps.partners.services import ALLOWANCE_GRANT_ROLES
-    from apps.schools.models import School
 
     if request.user.active_role not in ALLOWANCE_GRANT_ROLES:
         return HttpResponseForbidden("Granting is a CD / PL / Admin decision.")
@@ -4050,9 +4063,7 @@ def partner_allowance_drawer(request):
             "name"
         )[:200]
     )
-    schools = list(
-        School.objects.filter(deleted_at__isnull=True).order_by("name")[:1000]
-    )
+    schools = list(active_schools().order_by("name")[:1000])
     from apps.core.fy import fy_options, get_operational_fy
 
     return render(

@@ -132,7 +132,9 @@ class SchoolVisitEffectivenessAnalyticsService:
         followup_fy = followup_fy or DEFAULT_FOLLOWUP_FY
 
         scope = resolve_user_scope(principal)
-        schools_qs = scoped_school_queryset(scope).filter(deleted_at__isnull=True)
+        schools_qs = scoped_school_queryset(scope).filter(
+            deleted_at__isnull=True, operational_status__in=("active", "reopened")
+        )
         schools = pd.DataFrame(
             schools_qs.values(
                 "id",

@@ -45,6 +45,7 @@ from apps.core.activity_types import (
 )
 from apps.core.enums import ActivityType
 from apps.planning import oversight_service as oversight
+from apps.schools.lifecycle_service import active_schools
 
 
 def _values(types) -> frozenset[str]:
@@ -210,7 +211,6 @@ def _reach(user) -> dict:
     """The countries this lead oversees and who works in them."""
     from apps.accounts.models import StaffProfile
     from apps.core.scoping import resolve_user_scope
-    from apps.schools.models import School
 
     scope = resolve_user_scope(user)
     countries = list(scope.region_countries or ())
@@ -226,9 +226,7 @@ def _reach(user) -> dict:
         "region_ids": region_ids,
         "lead_count": active.filter(user__roles__contains=["Program Lead"]).count(),
         "officer_count": active.filter(user__roles__contains=["CCEO"]).count(),
-        "school_count": School.objects.filter(
-            deleted_at__isnull=True, region_id__in=region_ids
-        ).count()
+        "school_count": active_schools().filter(region_id__in=region_ids).count()
         if region_ids
         else 0,
     }
@@ -554,7 +552,6 @@ def _ssa_needs(reach: dict, fy: str) -> dict:
     from apps.activities.models import Activity
     from apps.cce_leadership.services import activities_in_countries
     from apps.core.interventions import INTERVENTION_LABELS, intervention_abbr
-    from apps.schools.models import School
     from apps.ssa.plan_alignment import INFORMED, LIVE_PLAN_STATUSES
     from apps.ssa.recommendation_engine import bulk_weakest
     from apps.ssa.recommendation_models import RecommendationState, SsaRecommendation
@@ -562,9 +559,9 @@ def _ssa_needs(reach: dict, fy: str) -> dict:
     countries = reach["countries"]
     country_of = (
         dict(
-            School.objects.filter(
-                deleted_at__isnull=True, region_id__in=reach["region_ids"]
-            ).values_list("id", "region__country")
+            active_schools()
+            .filter(region_id__in=reach["region_ids"])
+            .values_list("id", "region__country")
         )
         if reach["region_ids"]
         else {}
@@ -773,7 +770,6 @@ def _networks(reach: dict, *, today: date) -> dict:
     from apps.clusters.models import Cluster
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, COMPLETED_WORK_STATUSES
     from apps.core.enums import ActivityType, ClusterRecordStatus
-    from apps.schools.models import School
 
     countries = reach["countries"]
     if not countries:
@@ -813,9 +809,11 @@ def _networks(reach: dict, *, today: date) -> dict:
         .values_list("activity_id", "n")
     )
     schools = defaultdict(Counter)
-    for country, status in School.objects.filter(
-        deleted_at__isnull=True, region_id__in=reach["region_ids"]
-    ).values_list("region__country", "cluster_status"):
+    for country, status in (
+        active_schools()
+        .filter(region_id__in=reach["region_ids"])
+        .values_list("region__country", "cluster_status")
+    ):
         schools[country or ""]["total"] += 1
         schools[country or ""]["clustered"] += status == "clustered"
 

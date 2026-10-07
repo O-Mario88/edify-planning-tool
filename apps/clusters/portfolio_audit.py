@@ -283,15 +283,17 @@ def _school_sub_county_outside_its_district() -> dict:
 # ── Clusters ─────────────────────────────────────────────────────────────────
 def _clusters_without_an_owner() -> dict:
     from apps.clusters.models import Cluster
-    from apps.schools.models import School
 
     rows = []
     for cluster in Cluster.objects.filter(deleted_at__isnull=True).filter(
         Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     )[:200]:
         # §25: derive from the member schools only when they agree.
+        from apps.schools.lifecycle_service import active_schools
+
         owners = set(
-            School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+            active_schools()
+            .filter(cluster_id=cluster.id)
             .exclude(account_owner_id__isnull=True)
             .exclude(account_owner_id="")
             .values_list("account_owner_id", flat=True)[:50]

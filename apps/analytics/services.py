@@ -13,6 +13,7 @@ from apps.core.enums import PlanningReadiness
 from apps.core.exceptions import NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
@@ -31,7 +32,8 @@ def _scoped_schools(principal):
     from apps.core.scoping import scoped_school_queryset
 
     scope = resolve_user_scope(principal)
-    qs = School.objects.filter(deleted_at__isnull=True)
+    # Operating schools: a closed school is in no current total.
+    qs = active_schools()
     return scoped_school_queryset(scope, qs), scope
 
 
@@ -148,7 +150,7 @@ def leadership_summary(principal, query: dict) -> dict:
             acts = acts.none()
 
     planned = acts.filter(status="planned").count()
-    scheduled = acts.filter(status="scheduled").count()
+    scheduled = acts.filter(status__in=("scheduled", "rescheduled")).count()
     in_progress = acts.filter(status="in_progress").count()
     evidence_uploaded = acts.filter(status="evidence_uploaded").count()
     awaiting_ia = acts.filter(status="awaiting_ia_verification").count()
@@ -760,7 +762,12 @@ def activity_pipeline(principal, query: dict) -> dict:
         "awaiting_ia_verification",
         "ia_verified",
     )
-    by_status = [{"status": s, "count": qs.filter(status=s).count()} for s in statuses]
+    # A rescheduled activity is a scheduled one that has been moved.
+    same_stage = {"scheduled": ("scheduled", "rescheduled")}
+    by_status = [
+        {"status": s, "count": qs.filter(status__in=same_stage.get(s, (s,))).count()}
+        for s in statuses
+    ]
 
     deliveries = ("staff", "partner")
     by_delivery = [
@@ -773,14 +780,13 @@ def activity_pipeline(principal, query: dict) -> dict:
         "total": qs.count(),
         "byStatus": by_status,
         "byDelivery": by_delivery,
-        "completed": qs.filter(status__in=["completed", "ia_verified"]).count(),
+        "completed": qs.filter(status__in=COMPLETED_WORK_STATUSES).count(),
     }
 
 
 def contribution_summary(principal, query: dict) -> dict:
     from django.db.models import Sum, Q
     from apps.activities.models import Activity
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord
 
     schools, scope = _scoped_schools(principal)
@@ -789,12 +795,11 @@ def contribution_summary(principal, query: dict) -> dict:
     lens = query.get("lens", "own")
 
     if lens == "team" and scope.supervised_staff_ids:
-        schools_in_lens = School.objects.filter(
-            deleted_at__isnull=True, account_owner_id__in=scope.supervised_staff_ids
+        schools_in_lens = active_schools().filter(
+            account_owner_id__in=scope.supervised_staff_ids
         )
     elif lens == "combined" and scope.supervised_staff_ids:
-        schools_in_lens = School.objects.filter(
-            deleted_at__isnull=True,
+        schools_in_lens = active_schools().filter(
             account_owner_id__in=list(scope.supervised_staff_ids)
             + list(scope.staff_ids or []),
         )
@@ -820,9 +825,11 @@ def contribution_summary(principal, query: dict) -> dict:
     else:
         completed_qs = completed_qs.none()
 
-    # Headline statistics should only count verified activities (ia_verified or accountant_confirmed)
+    # Headline statistics count verified work. Closed work is verified work
+    # whose money has been settled; named without it, a school left "reached"
+    # the day its activity was closed.
     verified_completed_qs = completed_qs.filter(
-        status__in=["ia_verified", "accountant_confirmed"]
+        status__in=["ia_verified", "accountant_confirmed", "closed"]
     )
 
     reached_school_ids = list(
@@ -934,7 +941,7 @@ def contribution_summary(principal, query: dict) -> dict:
     partner_activities = completed_qs.filter(delivery_type="partner").count()
     staff_activities = completed_qs.filter(delivery_type="staff").count()
     ia_verified_activities = completed_qs.filter(
-        status__in=["ia_verified", "accountant_confirmed"]
+        status__in=["ia_verified", "accountant_confirmed", "closed"]
     ).count()
 
     # Evidence pending query
@@ -1317,7 +1324,6 @@ def activity_impact_report(principal, query: dict) -> list[dict]:
 def school_impact(school_id: str, principal) -> dict:
     from apps.activities.models import Activity
     from apps.activities.services import calculate_activity_impact
-    from apps.schools.models import School
 
     school = School.objects.filter(school_id=school_id, deleted_at__isnull=True).first()
     if not school:

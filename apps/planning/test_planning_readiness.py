@@ -1,10 +1,14 @@
 """Planned and remaining (apps.planning.readiness).
 
-Owner, 2026-10-03: staff who had planned everything their schools take read
-as a few percent, because every person was divided by the flat 280 or 560.
-These pin the arithmetic on the monitor's own row shapes, with no database:
-a full plan reads 100% in every part, the Partner's share is a target that
-follows the schools, and the figures add up before a page shows them.
+Owner, 2026-10-07: a Programme Lead reads against 280 visits and a CCEO
+against 560 whatever they hold ("target visits set for PL/CCEO and once they
+have planned to that target, the rest they are supposed to assign to the
+partners"), and somebody whose schools cannot take that many is told to
+recruit more. That reverses 2026-10-03, when a small portfolio was measured
+against what it held. These pin the arithmetic on the monitor's own row
+shapes, with no database: a full plan reads 100% in every part, the Partner's
+share is the schools beyond the staff target, and the figures add up before a
+page shows them.
 """
 
 from django.test import SimpleTestCase, override_settings
@@ -64,16 +68,16 @@ def officer(schools, *, role=ROLE_CCEO, planned_core=0, planned_client=0, outrea
 
 
 class FullPlanReadsOneHundredTests(SimpleTestCase):
-    def test_a_small_portfolio_fully_planned_is_100_in_every_part(self):
-        """10 Core and 30 Client schools ask a CCEO for 50 visits, not 560."""
+    def test_a_full_plan_is_100_in_every_part(self):
+        """10 Core and 540 Client schools are a CCEO's 560 visits."""
         schools = [core_done(n) for n in range(10)] + [
             school(100 + n, staff_visits=1, group_training=True, in_project=True)
-            for n in range(30)
+            for n in range(540)
         ]
         figures = readiness.person_readiness(
-            officer(schools, planned_core=20, planned_client=30)
+            officer(schools, planned_core=20, planned_client=540)
         )
-        self.assertEqual(figures.staff_visits.target, 50)
+        self.assertEqual(figures.staff_visits.target, 560)
         self.assertEqual(figures.staff_visits.remaining, 0)
         self.assertEqual(figures.partner_visits.target, 20)
         self.assertEqual(figures.partner_assignment.target, 10)
@@ -82,24 +86,68 @@ class FullPlanReadsOneHundredTests(SimpleTestCase):
         )
         self.assertEqual(figures.score, 100)
         self.assertEqual(figures.net_visits_remaining, 0)
+        self.assertEqual(figures.schools_to_recruit, 0)
         self.assertEqual(readiness.problems(figures), [])
 
-    def test_a_champion_school_is_held_and_needs_only_a_project(self):
+    def test_a_small_portfolio_reads_against_560_and_is_told_to_recruit(self):
+        """10 Core and 30 Client schools take 50 of a CCEO's 560 visits
+        (owner, 2026-10-07: always 280 / 560, "but those with less should be
+        notified to recruit more schools to meet the target")."""
+        schools = [core_done(n) for n in range(10)] + [
+            school(100 + n, staff_visits=1, group_training=True, in_project=True)
+            for n in range(30)
+        ]
+        figures = readiness.person_readiness(
+            officer(schools, planned_core=20, planned_client=30)
+        )
+        self.assertEqual(figures.staff_visits.target, 560)
+        self.assertEqual(figures.staff_visits.planned, 50)
+        self.assertEqual(figures.staff_visits.remaining, 510)
+        self.assertEqual(figures.staff_visits.percent, 8)
+        self.assertEqual(figures.portfolio_visits, 50)
+        self.assertEqual(figures.schools_to_recruit, 510)
+        self.assertEqual(figures.short_people, 1)
+        # Nothing is beyond the target, so the Partner's is the Core half.
+        self.assertEqual(figures.partner_visits.target, 20)
+        self.assertEqual(figures.partner_assignment.target, 10)
+        self.assertEqual(figures.score, (8 + 100 + 100 + 100) // 4)
+        self.assertEqual(readiness.problems(figures), [])
+
+    def test_a_champion_school_is_held_and_asks_no_visit_or_training(self):
         champion = school(900, "champion")
         figures = readiness.person_readiness(
             officer([core_done(1)], planned_core=2, outreach=[champion])
         )
         self.assertEqual(figures.schools_total, 2)
         self.assertEqual(figures.inventory["champion"].fully, 1)
-        self.assertEqual(figures.staff_visits.target, 2)
-        self.assertEqual(figures.project_assignment.target, 2)
-        self.assertEqual(figures.project_assignment.remaining, 1)
-        self.assertEqual(figures.score, (100 + 100 + 100 + 50) // 4)
+        # The role's 560; the one Core school takes two of them.
+        self.assertEqual(figures.staff_visits.target, 560)
+        self.assertEqual(figures.schools_to_recruit, 558)
+        # Held, and counted among the schools read for projects: one of the
+        # two is in a project.
+        self.assertEqual((figures.project_assigned, figures.project_total), (1, 2))
+        # The project line is the person's ceilings (owner, 2026-10-06), and
+        # nobody set this person one: it asks nothing.
+        self.assertFalse(figures.project_assignment.required)
+        self.assertEqual(figures.score, (0 + 100 + 100 + 100) // 4)
+
+    def test_the_project_line_is_schools_added_of_the_ceilings_set(self):
+        person = officer([core_done(1)], planned_core=2)
+        person.project_ceiling, person.project_added = 4, 2
+        figures = readiness.person_readiness(person)
+
+        line = figures.project_assignment
+        self.assertEqual((line.planned, line.target, line.remaining), (2, 4, 2))
+        self.assertEqual(figures.score, (0 + 100 + 100 + 50) // 4)
 
     def test_somebody_holding_no_school_has_no_score(self):
         figures = readiness.person_readiness(officer([]))
         self.assertFalse(figures.applicable)
         self.assertIsNone(figures.as_dict()["completion"]["overall"])
+        # Their target stands all the same, and every school of it is to
+        # recruit.
+        self.assertEqual(figures.staff_visits.target, 560)
+        self.assertEqual(figures.schools_to_recruit, 560)
 
 
 class CeilingAndPartnerShareTests(SimpleTestCase):
@@ -118,44 +166,101 @@ class CeilingAndPartnerShareTests(SimpleTestCase):
         self.assertEqual(figures.staff_trainings.target, 320)
         self.assertEqual(figures.partner_trainings.target, 40)
 
-    def test_a_school_in_a_partners_hands_is_the_partners_target(self):
-        """Nothing is beyond the ceiling, and 5 schools were handed over:
-        staff are not asked to visit them, and the Partner's target has
-        them, dated or not."""
+    def test_a_school_handed_over_inside_the_target_is_not_the_partners_target(self):
+        """Nothing is beyond the 560, and 5 of 20 schools were handed over:
+        staff's target is still 560, the Partner is asked nothing here, and
+        what it holds is shown as held, past a target of none."""
         schools = [school(n, staff_visits=1) for n in range(15)] + [
             school(50 + n, partner_pending=1) for n in range(3)
         ]
         schools += [school(60 + n, partner_visits=1) for n in range(2)]
         figures = readiness.person_readiness(officer(schools, planned_client=15))
-        self.assertEqual(figures.staff_visits.target, 15)
-        self.assertEqual(figures.staff_visits.percent, 100)
-        self.assertEqual(figures.partner_visits.target, 5)
+        self.assertEqual(figures.staff_visits.target, 560)
+        self.assertEqual(figures.staff_visits.percent, 2)
+        self.assertEqual(figures.partner_beyond_staff, 0)
+        self.assertEqual(figures.partner_visits.target, 0)
         self.assertEqual(figures.partner_visits.planned, 2)
-        self.assertEqual(figures.partner_visits.remaining, 3)
+        self.assertEqual(figures.partner_visits.over, 2)
         self.assertEqual(figures.partner_visits_awaiting, 3)
-        self.assertEqual(figures.partner_assignment.percent, 100)
+        self.assertFalse(figures.partner_assignment.required)
+        self.assertEqual(figures.partner_assignment.planned, 5)
         self.assertEqual(readiness.problems(figures), [])
 
     def test_past_the_ceiling_is_shown_and_never_counts_twice(self):
         schools = [school(n, staff_visits=1) for n in range(10)]
-        figures = readiness.person_readiness(officer(schools, planned_client=14))
-        self.assertEqual(figures.staff_visits.planned, 14)
+        figures = readiness.person_readiness(officer(schools, planned_client=564))
+        self.assertEqual(figures.staff_visits.planned, 564)
         self.assertEqual(figures.staff_visits.over, 4)
         self.assertEqual(figures.staff_visits.percent, 100)
 
     def test_one_persons_extra_does_not_close_a_colleagues_gap(self):
-        ahead = officer([school(n) for n in range(10)], planned_client=14)
+        ahead = officer([school(n) for n in range(10)], planned_client=570)
         behind = officer([school(20 + n) for n in range(10)], planned_client=2)
         team = readiness.total(
             readiness.person_readiness(person) for person in (ahead, behind)
         )
-        self.assertEqual(team.staff_visits.target, 20)
-        self.assertEqual(team.staff_visits.planned, 16)
-        self.assertEqual(team.staff_visits.remaining, 8)
-        self.assertEqual(team.staff_visits.percent, 60)
+        self.assertEqual(team.staff_visits.target, 1120)
+        self.assertEqual(team.staff_visits.planned, 572)
+        self.assertEqual(team.staff_visits.remaining, 558)
+        self.assertEqual(team.staff_visits.percent, 50)
+        # Each is 550 schools short of their own 560.
+        self.assertEqual((team.schools_to_recruit, team.short_people), (1100, 2))
 
     def test_279_of_280_is_not_100(self):
         self.assertEqual(readiness.Line(280, 279, 279).percent, 99)
+
+
+class TooFewSchoolsTests(SimpleTestCase):
+    """Owner, 2026-10-07: "those with less should be notified to recruit
+    more schools to meet the target"."""
+
+    def short(self, core, client, role=ROLE_CCEO):
+        schools = [school(n, "core") for n in range(core)] + [
+            school(1000 + n) for n in range(client)
+        ]
+        return readiness.person_readiness(officer(schools, role=role))
+
+    def test_a_core_school_takes_two_of_the_target_and_the_others_one(self):
+        self.assertEqual(self.short(10, 30).schools_to_recruit, 560 - 50)
+        self.assertEqual(self.short(0, 100, ROLE_PL).schools_to_recruit, 180)
+
+    def test_enough_schools_is_none_to_recruit(self):
+        for core, client in ((0, 560), (10, 540), (280, 0), (300, 0), (50, 900)):
+            with self.subTest(core=core, client=client):
+                figures = self.short(core, client)
+                self.assertEqual(figures.schools_to_recruit, 0)
+                self.assertEqual(figures.short_people, 0)
+
+    def test_a_row_with_no_target_recruits_nothing(self):
+        nobody = officer([school(1), school(2)])
+        nobody.visits_target = 0
+        figures = readiness.person_readiness(nobody)
+        self.assertEqual(figures.staff_visits.target, 0)
+        self.assertEqual(figures.schools_to_recruit, 0)
+
+    def test_core_and_client_targets_add_up_to_the_role_target(self):
+        for core, client in ((0, 0), (10, 30), (102, 556), (140, 5), (800, 0)):
+            with self.subTest(core=core, client=client):
+                person = officer(
+                    [school(n, "core") for n in range(core)]
+                    + [school(1000 + n) for n in range(client)]
+                )
+                figures = readiness.person_readiness(person)
+                self.assertEqual(
+                    person.core_visit_target + person.client_visit_target, 560
+                )
+                self.assertEqual(figures.staff_visits.target, 560)
+                # What the Partner should hold is the same on both tabs.
+                self.assertEqual(person.partner_needed, figures.partner_beyond_staff)
+                self.assertEqual(
+                    person.partner_visit_target, figures.partner_visits.target
+                )
+                self.assertEqual(person.schools_to_recruit, figures.schools_to_recruit)
+
+    def test_the_figure_is_served_as_data(self):
+        visits = self.short(10, 30).as_dict()["visits"]
+        self.assertEqual(visits["schools_held_can_take"], 50)
+        self.assertEqual(visits["schools_to_recruit"], 510)
 
 
 class SchoolsAddUpTests(SimpleTestCase):
@@ -220,9 +325,10 @@ class SchoolsAddUpTests(SimpleTestCase):
         figures = readiness.for_monitor(
             {"totals": totals, "leads": [lead]}, expected_schools=1
         )
-        self.assertEqual(figures.staff_visits.percent, 100)
+        self.assertEqual(figures.staff_visits.target, 560)
         self.assertEqual(lead.readiness.schools_total, 1)
-        self.assertEqual(people[0].readiness.staff_visits.remaining, 0)
+        self.assertEqual(people[0].readiness.staff_visits.remaining, 559)
+        self.assertEqual(people[0].readiness.schools_to_recruit, 559)
 
 
 class LedgerLineTests(SimpleTestCase):
@@ -254,6 +360,23 @@ class LedgerLineTests(SimpleTestCase):
         self.assertEqual(self.key(delivery_type="partner"), "partner_visit")
         self.assertEqual(
             self.key(delivery_type="partner", school_id="elsewhere"), "off_schools"
+        )
+
+    def test_a_partner_visit_at_a_school_that_takes_none_is_not_on_a_row(self):
+        """A Champion school is on its holder's row and takes no visit: a
+        Partner's visit there is on nobody's figures, and was filed with the
+        Partner visits that are (2026-10-07 calculation check)."""
+        partner = self.row(delivery_type="partner", school_id="champion")
+        on_rows, take_a_visit = {"s1", "champion"}, {"s1"}
+        self.assertEqual(
+            readiness._ledger_key(partner, {"p1"}, on_rows, take_a_visit),
+            "partner_no_visit_school",
+        )
+        self.assertEqual(
+            readiness._ledger_key(
+                self.row(delivery_type="partner"), {"p1"}, on_rows, take_a_visit
+            ),
+            "partner_visit",
         )
 
     def test_what_the_rulebook_leaves_out_says_why(self):

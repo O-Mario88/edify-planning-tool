@@ -15,6 +15,15 @@ notification sent, a page refused) and is not counted.
 
 ``school`` marks work done for a school — the "schools acted on" column counts
 the distinct schools those rows name.
+
+One thing a person does can write more than one of these rows: scheduling a
+Core visit writes ``activity.scheduled`` and ``schedule_core_visit``, and a
+Lead's confirmation writes ``pl_review_confirm`` and ``pl_approve_completion``,
+in the same request and about the same record. The log counts what the person
+did, so rows written by one request about one record are ONE action
+(``services.fold_acts``; owner, 2026-10-06: "make sure it is doing the right
+calculation"). ``secondary`` marks the row that only repeats the other: when
+both are there, the other one names the action.
 """
 
 from __future__ import annotations
@@ -27,14 +36,25 @@ class ActionDefinition:
     label: str
     module: str
     school: bool = False
+    secondary: bool = False
 
 
 _A = ActionDefinition
 
 MEANINGFUL_ACTIONS: dict[str, ActionDefinition] = {
     # ── Field work (CCEO, Project Coordinator, Partner) ──
-    "activity.planned": _A("Planned an activity", "Planning", True),
-    "activity.scheduled": _A("Scheduled an activity", "Planning", True),
+    "activity.planned": _A("Planned an activity", "Planning", True, True),
+    "activity.scheduled": _A("Scheduled an activity", "Planning", True, True),
+    "schedule_core_outreach_visit": _A(
+        "Scheduled a core outreach visit", "Planning", True
+    ),
+    "edit_activity": _A("Edited an activity", "Planning", True),
+    "activity.training_changed": _A(
+        "Changed an activity's training", "Planning", True, True
+    ),
+    "activity.facilitator_changed": _A(
+        "Changed a training's facilitator", "Planning", True
+    ),
     "schedule_core_visit": _A("Scheduled a core school visit", "Planning", True),
     "schedule_core_training": _A("Scheduled a core training", "Planning", True),
     "reschedule_activity": _A("Rescheduled an activity", "Planning", True),
@@ -46,7 +66,9 @@ MEANINGFUL_ACTIONS: dict[str, ActionDefinition] = {
     "start_activity": _A("Started an activity", "My Plan", True),
     "partner_start_activity": _A("Started a partner activity", "My Plan", True),
     "submit_for_review": _A("Submitted an activity for review", "My Plan", True),
-    "activity.salesforce_id_entered": _A("Entered a Salesforce ID", "My Plan", True),
+    "activity.salesforce_id_entered": _A(
+        "Entered a Salesforce ID", "My Plan", True, True
+    ),
     "upload_evidence": _A("Submitted activity evidence", "Evidence", True),
     "upload_attendance": _A("Uploaded attendance", "Evidence", True),
     "upload_ssa": _A("Uploaded an SSA", "SSA", True),
@@ -58,10 +80,37 @@ MEANINGFUL_ACTIONS: dict[str, ActionDefinition] = {
     "school.profile_updated": _A("Updated a school record", "Schools", True),
     "school.updated": _A("Updated a school record", "Schools", True),
     "cluster.membership_changed": _A("Changed a cluster's schools", "Clusters", True),
+    "cluster.facilitator_changed": _A(
+        "Set a cluster's partner facilitator", "Clusters"
+    ),
+    "school.owner_transferred": _A(
+        "Handed a school to another officer", "Schools", True
+    ),
+    # Special Projects: a school added to a project uses one of the person's
+    # places, and one withdrawn gives it back.
+    "project.school_added": _A("Added a school to a project", "Projects", True),
+    "project.school_withdrawn": _A(
+        "Withdrew a school from a project", "Projects", True
+    ),
+    "project.school_enrolment_undone": _A(
+        "Undid adding a school to a project", "Projects", True
+    ),
+    # Partner hand-overs. Every door that hands a school to a partner writes
+    # ``partner.assigned`` (apps.partners.signals), so the door's own row
+    # (``assign_core_partner``) is not listed: it would count the same
+    # hand-over twice.
+    "partner.assignment_withdrawn": _A(
+        "Withdrew a school from a partner", "Partners", True
+    ),
+    "partner.assignment_return_resolved": _A(
+        "Decided a returned partner assignment", "Partners", True
+    ),
+    "partner.assignment_undone": _A("Undid a partner assignment", "Partners", True),
+    "partner_oversight.reminder_sent": _A("Sent a partner a reminder", "Partners"),
     "escalation_raise": _A("Raised an escalation", "Escalations"),
     # ── Team leadership (Programme Lead) ──
-    "pl_review_confirm": _A("Confirmed an activity", "Planning Oversight", True),
-    "pl_review_return": _A("Returned an activity", "Planning Oversight", True),
+    "pl_review_confirm": _A("Confirmed an activity", "Planning Oversight", True, True),
+    "pl_review_return": _A("Returned an activity", "Planning Oversight", True, True),
     "pl_approve_completion": _A(
         "Confirmed a completed activity", "Planning Oversight", True
     ),
@@ -74,6 +123,9 @@ MEANINGFUL_ACTIONS: dict[str, ActionDefinition] = {
     "school_action.sent": _A("Sent a school to an officer", "Planning Oversight", True),
     "oversight.role_queue_nudged": _A("Followed up a team queue", "Planning Oversight"),
     "send_reminder": _A("Sent a reminder", "Planning Oversight"),
+    "training_ceiling.set": _A("Set a training ceiling", "Planning Oversight"),
+    "training_ceiling.removed": _A("Removed a training ceiling", "Planning Oversight"),
+    "grant_partner_allowance": _A("Granted a partner allowance", "Planning Oversight"),
     "weekly_fund_request.approve": _A(
         "Approved a weekly fund request", "Fund Approvals"
     ),
@@ -184,6 +236,9 @@ FAILED_REQUEST_ACTIONS = ("request_failed",)
 # Audit subjects that are a school, or name one.
 SCHOOL_SUBJECTS = {"school", "School"}
 ACTIVITY_SUBJECTS = {"Activity", "activity"}
+# A row about any other record (a hand-over, a withdrawal) names its school in
+# the payload, under one of these keys.
+PAYLOAD_SCHOOL_KEYS = ("school_id", "schoolId")
 
 
 def definition(action: str) -> ActionDefinition | None:

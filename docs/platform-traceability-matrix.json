@@ -419,6 +419,7 @@
         "apps/planning/country_oversight/freshness.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
+        "apps/schools/lifecycle_service.py",
         "apps/schools/models.py",
         "apps/ssa/change_rules.py",
         "apps/ssa/models.py",
@@ -963,6 +964,7 @@
         "apps/projects/models.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
+        "apps/schools/lifecycle_service.py",
         "apps/schools/models.py",
         "apps/ssa/presentation.py",
         "apps/ssa/services.py",
@@ -1464,6 +1466,7 @@
         "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
+        "apps/partners/support_responsibility.py",
         "apps/pl_review/services.py",
         "apps/planning/country_oversight/freshness.py",
         "apps/planning/country_oversight/rules.py",
@@ -3346,6 +3349,7 @@
         "apps/hr/team_roster.py",
         "apps/messaging/services.py",
         "apps/notifications/services.py",
+        "apps/partners/support_responsibility.py",
         "apps/planning/action_service.py",
         "apps/planning/country_oversight/freshness.py",
         "apps/planning/flagged_schools.py",
@@ -4719,8 +4723,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "f2bd755d228efffb0faeb1dec1c4f581c7d557a29a8a939415f6dbb6a267cfc2",
-    "sources": "4350275f028310118e3c9a846e4b197f83b01919a6fcd879daf278cf1c7c14a0",
+    "payload": "07c05899dccba84ed200df39feaf3e02c355088474be5df01f1e6e62abe67c91",
+    "sources": "0e29d85ff42a34a714c3edec99dbd849917a96417327f3c49c0fbcfeff5f9a8c",
     "sourceCount": 234,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

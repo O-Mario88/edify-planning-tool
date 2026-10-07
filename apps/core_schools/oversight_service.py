@@ -18,6 +18,7 @@ from apps.schools.programme_schools import type_options
 from apps.planning.oversight_service import system_program_leads
 from apps.schools.models import School
 from django.db.models import Avg, Q
+from apps.schools.lifecycle_service import active_schools
 
 
 #: The package counts a group of schools folds to, for the chart that reads
@@ -148,11 +149,12 @@ def planned_core_work(principal, *, fy: str) -> list:
         cluster_ids = {item.cluster_id for item in sessions}
         invited_ids = {sid for ids in invited.values() for sid in ids}
         core_schools = list(
-            School.objects.filter(
+            active_schools()
+            .filter(
                 Q(cluster_id__in=cluster_ids) | Q(id__in=invited_ids),
-                deleted_at__isnull=True,
                 school_type="core",
-            ).select_related("district", "region")
+            )
+            .select_related("district", "region")
         )
         by_id = {school.id: school for school in core_schools}
         members = defaultdict(list)
@@ -215,9 +217,11 @@ def core_schools_oversight_data(principal, *, fy: str | None = None) -> dict:
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
     # 1. Query scoped core schools
-    base = School.objects.filter(
-        deleted_at__isnull=True, school_type__in=CORE_LIFECYCLE_TYPES
-    ).select_related("district", "region")
+    base = (
+        active_schools()
+        .filter(school_type__in=CORE_LIFECYCLE_TYPES)
+        .select_related("district", "region")
+    )
 
     own_ids: set[str] = set()
     if is_programme_lead:

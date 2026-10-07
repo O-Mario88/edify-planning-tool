@@ -15,6 +15,7 @@ from django.db.models import Count, Q, Sum
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.schools.models import School
+from apps.schools.lifecycle_service import active_schools
 
 # `Activity.assigned_partner_id` is a plain CharField, so "names no partner"
 # is NULL *or* empty string. A predicate that checks one of them reports half
@@ -485,7 +486,7 @@ def _schools_held_by_one_person_and_assigned_to_another() -> dict:
     from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 
     owners = dict(
-        School.objects.filter(deleted_at__isnull=True)
+        active_schools()
         .exclude(account_owner_id__isnull=True)
         .exclude(account_owner_id="")
         .values_list("id", "account_owner_id")
@@ -545,7 +546,7 @@ def _scheduled_activities_without_a_cost() -> dict:
     scheduled = (
         Activity.objects.filter(deleted_at__isnull=True)
         .filter(
-            Q(status__in=("scheduled", "partner_scheduled"))
+            Q(status__in=("scheduled", "rescheduled", "partner_scheduled"))
             | Q(status="planned", planned_date__isnull=False)
         )
         .exclude(UNCOSTED_PAIR_TRAINING)

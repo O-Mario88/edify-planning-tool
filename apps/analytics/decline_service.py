@@ -40,7 +40,10 @@ def declining_schools(principal, query: dict | None = None) -> dict:
     query = query or {}
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     if schools is None:
         return _empty(fy, scope)
 

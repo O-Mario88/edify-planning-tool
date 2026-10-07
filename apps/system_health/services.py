@@ -14,10 +14,11 @@ from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 from apps.core.enums import PlanningReadiness
 from apps.core.models import DataSource
 from apps.schools.models import School
+from apps.schools.lifecycle_service import active_schools
 
 
 def report() -> dict:
-    schools = School.objects.filter(deleted_at__isnull=True)
+    schools = active_schools()
     # Single conditional-aggregation query (8 COUNTs → 1 pass) for the org-wide
     # health strip. bySchoolType is built from the same aggregate.
     agg = schools.aggregate(
@@ -702,9 +703,7 @@ def _workflow_issues() -> dict:
     # ── Activity Closure & Analytics Workflow Breaks ──────────────────────────
     from apps.core.enums import ActivityStatus
 
-    unclustered_schools = _School.objects.filter(
-        cluster_status="unclustered", deleted_at__isnull=True
-    ).count()
+    unclustered_schools = active_schools().filter(cluster_status="unclustered").count()
     stuck_in_planning = active.filter(status=ActivityStatus.PLANNED).count()
     partner_scheduled_missing = active.filter(
         status=ActivityStatus.ASSIGNED_TO_PARTNER
@@ -759,7 +758,7 @@ def _workflow_issues() -> dict:
     from apps.projects.models import ProjectSchoolAssignment
 
     fy = _fy()
-    live_schools = _School.objects.filter(deleted_at__isnull=True)
+    live_schools = active_schools()
 
     # Clustered schools whose readiness state keeps them out of Planning.
     planning_visible_readiness = [
@@ -1061,7 +1060,7 @@ def _workflow_issues() -> dict:
     # work has already drawn its money, so counting those reported a defect
     # nobody could correct.
     scheduled_visits_missing_batch = active.filter(
-        status__in=("planned", "scheduled", "in_progress"),
+        status__in=("planned", "scheduled", "rescheduled", "in_progress"),
         planned_date__isnull=False,
         activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES,
         delivery_type="staff",
@@ -1443,12 +1442,14 @@ def _workflow_issues() -> dict:
         status__in=["Cancelled", "cancelled", "Exited", "exited"]
     )
     core_schools_missing_plan = (
-        School.objects.filter(school_type="core", deleted_at__isnull=True)
+        active_schools()
+        .filter(school_type="core")
         .exclude(school_id__in=_core_active_plans.values_list("school_id", flat=True))
         .count()
     )
     core_schools_missing_cluster = (
-        School.objects.filter(school_type="core", deleted_at__isnull=True)
+        active_schools()
+        .filter(school_type="core")
         .filter(Q(cluster_id__isnull=True) | Q(cluster_id=""))
         .count()
     )

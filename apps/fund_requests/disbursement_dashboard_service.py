@@ -333,7 +333,11 @@ def fy_totals_all_fund_types(fy) -> dict:
         WeeklyFundRequest,
     )
 
-    monthly = list(FundRequest.objects.filter(period="monthly", fy=fy))
+    # Submitted requests only: a draft is the month's automatic snapshot,
+    # not a request at any stage (see ``_monthly_items``).
+    monthly = list(
+        FundRequest.objects.filter(period="monthly", fy=fy).exclude(status="draft")
+    )
     weekly = list(
         WeeklyFundRequest.objects.filter(fy=fy).exclude(
             status__in=["not_requested", "cancelled"]
@@ -464,10 +468,19 @@ def month_overview_all_fund_types(fy, month) -> dict:
 
 
 def _monthly_items(fy, month, names_out):
-    from .models import FundRequest
+    from .models import FundRequest, FundRequestStatus
 
+    # A draft is the automatic snapshot of the month's scheduled work
+    # (apps.fund_requests.monthly_service): nobody has submitted it, and its
+    # cost lines are the very lines the weekly advance requests carry. Listed
+    # here it read as "Pending Approval", and the month's money was added up
+    # twice: UGX 1.5M "in the approval chain" where UGX 722K had been asked
+    # for (2026-10-07 calculation check). A request is on this queue from the
+    # moment it is submitted.
     frs = list(
-        FundRequest.objects.filter(period="monthly", fy=fy, period_key=f"{fy}-M{month}")
+        FundRequest.objects.filter(
+            period="monthly", fy=fy, period_key=f"{fy}-M{month}"
+        ).exclude(status=FundRequestStatus.DRAFT)
     )
     names = _user_names([f.submitted_by_user_id for f in frs])
     names_out.update(names)
@@ -1429,9 +1442,19 @@ def get_disbursement_dashboard(principal, filters=None):
     # ── Allocation & utilization (planned budget lines vs money out) ──────────
     from apps.activities.models import ActivityScheduleCostLine
 
-    allocation = ActivityScheduleCostLine.objects.filter(
-        activity__fy=fy, month=month, activity__deleted_at__isnull=True
-    ).values_list("amount", flat=True)
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+
+    # A called-off activity keeps its cost lines as the record of what it
+    # would have cost; they are not money allocated to anything. They used
+    # to stay in this total, so a partner visit taken back still read as
+    # budget available to spend.
+    allocation = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__fy=fy, month=month, activity__deleted_at__isnull=True
+        )
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .values_list("amount", flat=True)
+    )
     allocation_total = sum(allocation)
     utilized = disbursed_month
     committed = pending_disb + held_amt

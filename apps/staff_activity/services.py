@@ -518,6 +518,7 @@ def _people(ids, chosen: dict, *, now, today) -> list[dict]:
             "actions": act.get("done", 0),
             "failed": act.get("failed", 0),
             "schools": act.get("schools", 0),
+            "school_ids": act.get("school_ids", frozenset()),
             "status_key": status_key,
             "status_label": dict(STATUS_OPTIONS).get(status_key, "Offline"),
             "status_tone": STATUS_TONES.get(status_key, "neutral"),
@@ -609,10 +610,97 @@ def _judge_usage(people: list[dict], chosen: dict) -> None:
         p["suggestions"] = [{"trigger": t, "reason": r} for t, r in suggestions]
 
 
+def actor_identities(user_ids) -> dict[str, str]:
+    """Every id the audit chain may hold for these people, and whose it is.
+
+    Most rows carry the person's user id. A hand-over to a partner is filed
+    under ``PartnerAssignment.assigning_staff_id`` (apps.partners.signals),
+    which is the staff-profile id whenever the person has one. Read by user
+    id alone, every school a CCEO assigned to a partner was missing from
+    their actions (owner, 2026-10-06: "fetching the right data").
+    """
+    from apps.accounts.models import StaffProfile
+
+    owners = {str(uid): str(uid) for uid in user_ids if uid}
+    for profile_id, user_id in StaffProfile.all_objects.filter(
+        user_id__in=list(owners)
+    ).values_list("id", "user_id"):
+        owners.setdefault(str(profile_id), str(user_id))
+    return owners
+
+
+def _act_key():
+    """What makes two audit rows the same action: the request that wrote
+    them and the record they are about. A row with no request stands alone.
+    """
+    from django.db.models import CharField, Value
+    from django.db.models.functions import Coalesce, Concat, NullIf
+
+    return Concat(
+        Coalesce(NullIf("correlation_id", Value("")), "id", output_field=CharField()),
+        Value("|"),
+        Coalesce("subject_kind", Value("")),
+        Value("|"),
+        Coalesce("subject_id", Value("")),
+        output_field=CharField(),
+    )
+
+
+def fold_acts(rows) -> list[dict]:
+    """Audit rows, newest first, as the actions they record, newest first.
+
+    Rows one request wrote about one record are one action, named by the row
+    that is not an echo of another (``ActionDefinition.secondary``). A
+    refused request is an action of its own, and failed. Each action carries
+    ``at``, ``label``, ``module``, ``ok``, ``subject_kind`` and
+    ``subject_id``.
+    """
+    from .registry import MEANINGFUL_ACTIONS
+
+    acts: dict[tuple, dict] = {}
+    for row in rows:
+        definition = MEANINGFUL_ACTIONS.get(row.action)
+        done = bool(definition and row.success)
+        key = (
+            (row.correlation_id or row.id, row.subject_kind or "", row.subject_id or "")
+            if done
+            else (row.id,)
+        )
+        act = acts.get(key)
+        if act is None:
+            acts[key] = {
+                "at": row.created_at,
+                "ok": done,
+                "definition": definition if done else None,
+                "label": definition.label if done else "A request failed",
+                "module": definition.module if done else (row.reason or "")[:80],
+                "subject_kind": row.subject_kind,
+                "subject_id": row.subject_id,
+            }
+        elif act["definition"].secondary and not definition.secondary:
+            # The echo was read first: the action is named by this row.
+            act.update(
+                definition=definition, label=definition.label, module=definition.module
+            )
+    return list(acts.values())
+
+
 def meaningful_action_counts(ids, start_dt, end_dt) -> dict[str, dict]:
     """Per person: meaningful actions done, failed, distinct schools acted on
-    and the latest action — from the audit chain, in three queries."""
+    and the latest action, from the audit chain, in a fixed number of
+    queries.
+
+    * An action is counted once, however many rows its request wrote about
+      the record (``_act_key``): scheduling a Core visit is one action, not
+      the two rows it leaves.
+    * A person's rows are read under every id the chain holds for them
+      (``actor_identities``).
+    * A school is named by the row's subject (a school, or an activity at
+      one) or, for any other record, by its payload.
+    """
     from django.db.models import Count, OuterRef, Q, Subquery
+    from django.db.models.fields.json import KeyTextTransform
+    from django.db.models.functions import Coalesce
 
     from apps.activities.models import Activity
     from apps.audit.models import AuditLog
@@ -621,24 +709,30 @@ def meaningful_action_counts(ids, start_dt, end_dt) -> dict[str, dict]:
         ACTIVITY_SUBJECTS,
         FAILED_REQUEST_ACTIONS,
         MEANINGFUL_ACTIONS,
+        PAYLOAD_SCHOOL_KEYS,
         SCHOOL_SUBJECTS,
     )
 
+    owners = actor_identities(ids)
     keys = list(MEANINGFUL_ACTIONS)
     rows = AuditLog.objects.filter(
-        actor_id__in=list(ids), created_at__gte=start_dt, created_at__lt=end_dt
+        actor_id__in=list(owners), created_at__gte=start_dt, created_at__lt=end_dt
     )
-    out: dict[str, dict] = defaultdict(dict)
+    out: dict[str, dict] = defaultdict(lambda: {"done": 0, "failed": 0})
     for r in (
         rows.filter(Q(action__in=keys) | Q(action__in=FAILED_REQUEST_ACTIONS))
         .values("actor_id")
         .annotate(
-            done=Count("id", filter=Q(action__in=keys, success=True)),
+            done=Count(
+                _act_key(), distinct=True, filter=Q(action__in=keys, success=True)
+            ),
             failed=Count("id", filter=Q(success=False)),
         )
     ):
-        out[r["actor_id"]]["done"] = r["done"]
-        out[r["actor_id"]]["failed"] = r["failed"]
+        # A person's two ids hold different rows, so their counts add up.
+        person = out[owners[r["actor_id"]]]
+        person["done"] += r["done"]
+        person["failed"] += r["failed"]
 
     school_of_activity = Activity.all_objects.filter(id=OuterRef("subject_id")).values(
         "school_id"
@@ -646,32 +740,57 @@ def meaningful_action_counts(ids, start_dt, end_dt) -> dict[str, dict]:
     touched = rows.filter(
         action__in=[k for k, d in MEANINGFUL_ACTIONS.items() if d.school], success=True
     )
-    for actor_id, school_id in (
+    named = (*SCHOOL_SUBJECTS, *ACTIVITY_SUBJECTS)
+    pairs = [
         touched.filter(subject_kind__in=SCHOOL_SUBJECTS)
         .values_list("actor_id", "subject_id")
-        .distinct()
-    ):
-        out[actor_id].setdefault("_schools", set()).add(school_id)
-    for actor_id, school_id in (
+        .distinct(),
         touched.filter(subject_kind__in=ACTIVITY_SUBJECTS)
         .annotate(school=Subquery(school_of_activity))
         .values_list("actor_id", "school")
-        .distinct()
-    ):
-        if school_id:
-            out[actor_id].setdefault("_schools", set()).add(school_id)
+        .distinct(),
+        # A hand-over, a withdrawal: the school is in the payload.
+        touched.exclude(subject_kind__in=named)
+        .annotate(
+            school=Coalesce(
+                *(KeyTextTransform(key, "payload") for key in PAYLOAD_SCHOOL_KEYS)
+            )
+        )
+        .values_list("actor_id", "school")
+        .distinct(),
+    ]
+    for query in pairs:
+        for actor_id, school_id in query:
+            if school_id:
+                out[owners[actor_id]].setdefault("_schools", set()).add(school_id)
 
-    latest = (
-        rows.filter(action__in=keys, success=True)
-        .order_by("actor_id", "-created_at")
-        .distinct("actor_id")
-        .values_list("actor_id", "action", "created_at")
+    done = rows.filter(action__in=keys, success=True).order_by(
+        "actor_id", "-created_at"
     )
-    for actor_id, action, at in latest:
-        out[actor_id]["last_label"] = MEANINGFUL_ACTIONS[action].label
-        out[actor_id]["last_at"] = at
+    fields = ("actor_id", "action", "created_at", "correlation_id", "subject_id")
+    latest: dict[str, tuple] = {}
+    for row in done.distinct("actor_id").values_list(*fields):
+        person = owners[row[0]]
+        if person not in latest or row[2] > latest[person][2]:
+            latest[person] = row
+    # The row that names the latest action, when the latest row is an echo.
+    plain = [k for k, d in MEANINGFUL_ACTIONS.items() if not d.secondary]
+    named_by: dict[str, tuple] = {}
+    for row in done.filter(action__in=plain).distinct("actor_id").values_list(*fields):
+        person = owners[row[0]]
+        if person not in named_by or row[2] > named_by[person][2]:
+            named_by[person] = row
+    for person, row in latest.items():
+        other = named_by.get(person)
+        same_act = bool(other and row[3] and other[3] == row[3] and other[4] == row[4])
+        action = other[1] if same_act else row[1]
+        out[person]["last_label"] = MEANINGFUL_ACTIONS[action].label
+        out[person]["last_at"] = row[2]
     for value in out.values():
-        value["schools"] = len(value.pop("_schools", ()))
+        # The schools themselves too: a team's total counts a school once,
+        # whoever acted on it.
+        value["school_ids"] = frozenset(value.pop("_schools", ()))
+        value["schools"] = len(value["school_ids"])
     return out
 
 
@@ -800,13 +919,21 @@ def _groups(people: list[dict], mode: str) -> list[dict]:
 def _kpis(people: list[dict], scope: dict) -> dict:
     expected = [p for p in people if p["expected_days"] > 0]
     active = [p for p in people if p["logins"] or p["active_seconds"]]
+    # Of the staff expected: somebody on leave who signed in is active, and
+    # is not one of the people expected, so the share never passes 100%.
+    expected_active = [p for p in expected if p["logins"] or p["active_seconds"]]
     seconds = [p["active_seconds"] for p in active]
     open_follow_ups = sum(len(p["open_follow_ups"]) for p in people)
+    schools: set = set()
+    for p in people:
+        schools |= p.get("school_ids", frozenset())
     return {
         "staff_expected": len(expected),
         "staff_total": len(people),
         "staff_active": len(active),
-        "active_share": round(len(active) / len(expected) * 100) if expected else None,
+        "active_share": round(len(expected_active) / len(expected) * 100)
+        if expected
+        else None,
         "no_login": sum(1 for p in people if p["usage_key"] == "no_login"),
         "total_active_seconds": sum(seconds),
         "total_active_label": _duration(sum(seconds)),
@@ -814,7 +941,9 @@ def _kpis(people: list[dict], scope: dict) -> dict:
         if seconds
         else "0m",
         "meaningful_actions": sum(p["actions"] for p in people),
-        "schools": sum(p["schools"] for p in people),
+        # Distinct schools: one two people acted on is one school. The
+        # people's own figures used to be added up here.
+        "schools": len(schools),
         "open_follow_ups": open_follow_ups,
         "suggested": sum(
             1 for p in people if p["suggestions"] and not p["open_follow_ups"]
@@ -915,6 +1044,8 @@ def _insights(people: list[dict], chosen: dict, *, now, today) -> dict:
         "online": counts["online"],
         "modules": module_rows,
         "trend": trend,
+        "trend_end": trend_end,
+        "trend_is_latest": trend_end >= today,
         "devices": device_rows,
         "device_total": device_total,
     }
@@ -925,7 +1056,7 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
     """The expanded row: sign-in history, time by part of the tool, the
     meaningful-action timeline, the period trend and follow-ups. Loaded only
     when a row is opened."""
-    from django.db.models import Count, Q
+    from django.db.models import Q
 
     from apps.accounts.models import LoginEvent, PresenceTime, User
     from apps.audit.models import AuditLog
@@ -990,16 +1121,35 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
             }
         )
 
-    # B. Time by part of the tool, with the actions done there.
-    actions = AuditLog.objects.filter(
-        actor_id=person_id, created_at__gte=start_dt, created_at__lt=end_dt
+    # B. Time by part of the tool, with the actions done there. The person's
+    # rows under every id the audit chain holds for them, as the actions they
+    # record: the same count as their row in the table.
+    acts = fold_acts(
+        AuditLog.objects.filter(
+            actor_id__in=list(actor_identities([person_id])),
+            created_at__gte=start_dt,
+            created_at__lt=end_dt,
+        )
+        .filter(
+            Q(action__in=list(MEANINGFUL_ACTIONS))
+            | Q(action__in=FAILED_REQUEST_ACTIONS)
+        )
+        .order_by("-created_at")
+        .only(
+            "id",
+            "action",
+            "success",
+            "reason",
+            "created_at",
+            "correlation_id",
+            "subject_kind",
+            "subject_id",
+        )
     )
-    done = actions.filter(action__in=list(MEANINGFUL_ACTIONS), success=True)
+    done = [act for act in acts if act["ok"]]
     per_module_actions: dict[str, int] = defaultdict(int)
-    for action, n in (
-        done.values("action").annotate(n=Count("id")).values_list("action", "n")
-    ):
-        per_module_actions[MEANINGFUL_ACTIONS[action].module] += n
+    for act in done:
+        per_module_actions[act["module"]] += 1
     sections = person["sections"]
     module_names = sorted(
         set(sections) | set(per_module_actions),
@@ -1024,24 +1174,22 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
         .count()
     )
 
-    # C. Meaningful-action timeline (successful and failed).
-    timeline_rows = actions.filter(
-        Q(action__in=list(MEANINGFUL_ACTIONS)) | Q(action__in=FAILED_REQUEST_ACTIONS)
-    ).order_by("-created_at")
-    timeline_total = timeline_rows.count()
-    timeline = []
-    for a in timeline_rows[:ACTIONS_SHOWN]:
-        definition = MEANINGFUL_ACTIONS.get(a.action)
-        timeline.append(
-            {
-                "at_label": _clock(a.created_at, today=today),
-                "label": definition.label if definition else "A request failed",
-                "module": definition.module if definition else (a.reason or "")[:80],
-                "outcome": "Successful" if a.success else "Failed",
-                "ok": a.success,
-                "link": record_link(a.subject_kind, a.subject_id) if a.success else "",
-            }
-        )
+    # C. Meaningful-action timeline (successful and failed), one line an
+    # action.
+    timeline_total = len(acts)
+    timeline = [
+        {
+            "at_label": _clock(act["at"], today=today),
+            "label": act["label"],
+            "module": act["module"],
+            "outcome": "Successful" if act["ok"] else "Failed",
+            "ok": act["ok"],
+            "link": record_link(act["subject_kind"], act["subject_id"])
+            if act["ok"]
+            else "",
+        }
+        for act in acts[:ACTIONS_SHOWN]
+    ]
 
     # D. The period trend: by day up to a month, by week for a quarter, by
     # month for a year.
@@ -1076,8 +1224,9 @@ def person_detail(viewer, person_id: str, *, period=None, on=None, now=None) -> 
 
 
 def _person_trend(person_id: str, chosen: dict, done_actions) -> list[dict]:
-    from django.db.models import Count, Sum
-    from django.db.models.functions import TruncDate
+    """Active time and actions done, a bar a day, a week or a month.
+    ``done_actions`` are the person's actions (``fold_acts``)."""
+    from django.db.models import Sum
 
     from apps.accounts.models import PresenceTime
 
@@ -1116,14 +1265,8 @@ def _person_trend(person_id: str, chosen: dict, done_actions) -> list[dict]:
     ):
         seconds[bucket(day)] += total or 0
     actions: dict = defaultdict(int)
-    for day, n in (
-        done_actions.annotate(d=TruncDate("created_at"))
-        .values("d")
-        .annotate(n=Count("id"))
-        .values_list("d", "n")
-    ):
-        if day:
-            actions[bucket(day)] += n
+    for act in done_actions:
+        actions[bucket(timezone.localtime(act["at"]).date())] += 1
     keys = []
     d = start
     while d <= end:

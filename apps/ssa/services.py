@@ -34,6 +34,7 @@ from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
 from .models import SsaRecord, SsaScore
+from apps.schools.lifecycle_service import active_schools
 
 
 # All 8 SSA interventions.
@@ -517,9 +518,9 @@ def _compute_for_staff(staff_id: str, fy: str) -> dict:
             "school_id", flat=True
         )
     )
-    client_count = School.objects.filter(
-        id__in=school_ids, school_type="client", deleted_at__isnull=True
-    ).count()
+    client_count = (
+        active_schools().filter(id__in=school_ids, school_type="client").count()
+    )
     required = max(1, round(client_count * 0.10))
     verified = SsaRecord.objects.filter(
         school_id__in=school_ids,

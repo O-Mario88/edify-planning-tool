@@ -33,6 +33,7 @@ from django.views.decorators.http import require_POST
 
 from apps.command_center import today_actions
 from apps.command_center.todo_groups import group_identical, limit_entries
+from apps.core.activity_types import NOT_STARTED_ACTIVITY_STATUSES
 from apps.core.permissions import require_page_permission
 
 WAITING_LIMIT = 8
@@ -276,7 +277,8 @@ def build_today_context(request, *, include_team: bool = True) -> dict:
                 (
                     activity
                     for activity in activities
-                    if activity["status"] in ("planned", "scheduled", "in_progress")
+                    if activity["status"]
+                    in (*NOT_STARTED_ACTIVITY_STATUSES, "in_progress")
                 ),
                 None,
             ),
@@ -293,7 +295,7 @@ def build_today_context(request, *, include_team: bool = True) -> dict:
             "done_count": sum(
                 1
                 for activity in activities
-                if activity["status"] not in ("planned", "scheduled")
+                if activity["status"] not in NOT_STARTED_ACTIVITY_STATUSES
             ),
         }
     )
