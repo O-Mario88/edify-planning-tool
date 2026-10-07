@@ -1202,7 +1202,12 @@ class CorePackageProgressService:
                     "id": s.id,
                     "school_id": s.school_id,
                     "name": s.name,
-                    "geo_label": f"{s.district.name} / {s.region.name}",
+                    # A school uploaded with an unmatched district has
+                    # neither a district nor a region on record.
+                    "geo_label": " / ".join(
+                        part.name for part in (s.district, s.region) if part
+                    )
+                    or "—",
                     "district_name": s.district.name if s.district else "—",
                     "district_id": s.district_id,
                     "sub_county_name": s.sub_county.name if s.sub_county else "—",
@@ -1549,7 +1554,7 @@ class CorePlanningService:
                 {
                     "school_id": s.school_id,
                     "name": s.name,
-                    "region": s.region.name,
+                    "region": s.region.name if s.region else "—",
                     "assigned_staff": assigned_staff_name,
                     "assigned_partner": assigned_partner_name,
                     "weakest_interventions": weakest_intervention,

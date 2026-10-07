@@ -55,6 +55,45 @@ What a zero means, exactly, because a zero is the cell most easily misread:
   twelve analytics metrics because some unrelated function in the same file
   had run.
 
+What a rebuild may not depend on. A record of what a requirement touches is
+worth reading only if the same code gives the same record. Until 2026-10-06 it
+did not: one day's rebuilds of unchanged code named 244, 243 and 242 files, and
+every pull request that had to rebuild the matrix carried somebody else's
+difference. Three things decided a cell that had nothing to do with the
+requirement, and each is now taken out of it:
+
+* **Which test was first to import a file.** Importing a file runs its module
+  body, its class bodies and its decorators, once per process. The trace hook
+  counted that as the file being executed, so a lazily imported file landed on
+  whichever journey reached it first: nine files on journey 1 that it never
+  used, and two more with ``--keepdb``, where no migration had imported them
+  beforehand. What runs while a file is being imported is no longer recorded
+  (``Instrumentation._trace``).
+* **What ran before in the same process.** A compiled template, a filled
+  ``lru_cache``, a module-level memo: the first test to need one paid for it,
+  and the next was seen to touch less. With the manifest read backwards six
+  of the twenty-six tests were seen to use different files. Each test is now
+  traced in an interpreter started for it alone
+  (``trace_in_its_own_interpreter``), so what it is seen to touch is what it
+  touches when run by itself.
+* **How long the machine took.** A presence beat credits the time since the
+  one before it only when a whole second has passed, and a request is logged
+  as slow only when it was: on a loaded machine both happened, on a quiet one
+  neither. A traced test runs on a clock that tells the right time and does not
+  measure it (``_OnAStillClock``).
+
+Rebuilt with the manifest backwards, on a machine kept busy, on a fresh
+database and on a kept one, the matrix came out the same, cell for cell.
+
+What is left is the calendar, and it is left on purpose. The clock stands still
+at the moment the trace starts, on today's date: the test database is seeded
+for today, and a journey traced on another day against it would be a journey
+nobody ran. The journeys schedule work a week ahead of today, so in the last
+week of a fiscal year that week belongs to the next one and five cells differ
+(journeys 3, 7 and 8 also write a cost catalogue for it). Traced as if on a
+Saturday, after midnight, and on three other days through the year, the matrix
+came out the same as today's.
+
 Building the matrix requires a test database and takes several minutes, so it
 is a management command (``build_traceability_matrix``) that writes
 ``docs/platform-traceability-matrix.json`` and ``.md``. The committed artefact
@@ -65,13 +104,17 @@ pass as "the platform touched nothing".
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import importlib
 import json
 import os
 import re
+import subprocess
 import sys
+import tempfile
 import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -193,26 +236,50 @@ class Recording:
         ):
             getattr(self, field_name).update(getattr(other, field_name))
 
+    def as_dict(self) -> dict:
+        """As the interpreter that traced a test hands it back."""
+        return {name: sorted(getattr(self, name)) for name in self.__dataclass_fields__}
+
+    @classmethod
+    def from_dict(cls, values: dict) -> "Recording":
+        return cls(**{name: set(values[name]) for name in cls.__dataclass_fields__})
+
 
 class Instrumentation:
     """Record what the platform touches, for the duration of a ``with`` block.
 
-    The trace hook returns ``None`` for every frame, so no line events are
-    requested and the cost stays proportional to call count rather than to
-    executed lines. Frames outside ``apps/`` are rejected on the first
-    comparison, which is most of them.
+    The trace hook returns ``None`` for every frame but a module body, so no
+    line events are requested and the cost stays proportional to call count
+    rather than to executed lines. Frames outside ``apps/`` are rejected on the
+    first comparison, which is most of them.
     """
 
     def __init__(self) -> None:
         self.recording = Recording()
         self._previous_trace = None
         self._receivers: list = []
+        #: How many module bodies are running on this thread: an import, and
+        #: the imports it sets off.
+        self._importing = threading.local()
 
     # ── the trace hook ───────────────────────────────────────────────────
     def _trace(self, frame, event, arg):
         if event != "call":
             return None
         code = frame.f_code
+        if code.co_name == "<module>":
+            # A file being imported is being read, not used. Its body, its
+            # class bodies, its decorators and whatever it builds at module
+            # level run once per process, for whichever test happens to need
+            # the file first -- so recording them credited that test with the
+            # file and every later one with nothing. Whatever runs until this
+            # body returns is the import; a function it defines is recorded
+            # when something calls it.
+            self._importing.depth = getattr(self._importing, "depth", 0) + 1
+            frame.f_trace_lines = False
+            return self._until_the_import_ends
+        if getattr(self._importing, "depth", 0):
+            return None
         filename = code.co_filename
         if not _is_first_party(filename):
             return None
@@ -228,6 +295,14 @@ class Instrumentation:
         elif name in _OBJECT_GUARDS:
             self.recording.object_guards.add(f"{rel}::{name}")
         return None
+
+    def _until_the_import_ends(self, frame, event, arg):
+        # A module body's own events. It "returns" when it has run to the end
+        # and also when an exception leaves it, so the count always comes back.
+        if event == "return":
+            self._importing.depth -= 1
+            return None
+        return self._until_the_import_ends
 
     def _record_guard(self, frame, name: str) -> None:
         wanted = _PERMISSION_GUARDS[name]
@@ -502,6 +577,68 @@ class _AsATestRun:
         return None
 
 
+#: What one reading of the clock moves it by while a test is traced: the
+#: smallest step a timestamp holds. Two rows written one after the other still
+#: sort in the order they were written; a million readings make one second.
+_CLOCK_STEP_SECONDS = 0.000001
+
+
+class _OnAStillClock:
+    """Run a test on a clock that tells the right time and does not measure it.
+
+    How long a run takes is a fact about the machine. The platform asks it in
+    several places -- a presence beat credits the seconds since the one before
+    (``apps.accounts.presence``), a request over the threshold is logged as
+    slow, a throttle lets the next call through once its interval is up -- and
+    each answer picked a branch. On a busy laptop a journey was therefore seen
+    to write ``PresenceTime`` and run ``presence_labels.py`` that on a quiet
+    one it never reached, and the matrix was rebuilt into a different matrix.
+
+    So the clock starts at the real moment, which keeps the date the one the
+    test database was seeded for, and every reading moves it by a millionth of
+    a second and nothing else does. That is the run the suite itself makes on
+    a machine fast enough that no second passes inside a test, so it is still a
+    run the suite verifies. Waiting is the exception, because a wait is the
+    code asking for time to pass: ``time.sleep`` still sleeps, and moves the
+    clock by what was asked for, so a loop that waits for a deadline reaches it.
+
+    Stopping the clock is ``freezegun``'s work, as in the tests that need a
+    particular day. It is a development requirement, which is all this module's
+    command ever runs under, and is imported here rather than at the top so
+    that the module still imports where only the application's own
+    requirements are installed.
+    """
+
+    def __enter__(self) -> "_OnAStillClock":
+        from freezegun import freeze_time
+
+        # Both keep the date and time classes they find when they are first
+        # imported. Met for the first time under a stopped clock, pandas takes
+        # the process down and openpyxl can no longer write a date, so every
+        # export fails (found on the simulated-date sweeps of 2026-09-28).
+        importlib.import_module("pandas")
+        importlib.import_module("openpyxl.cell.cell")
+
+        self._freezer = freeze_time(
+            datetime.datetime.now(datetime.timezone.utc),
+            auto_tick_seconds=_CLOCK_STEP_SECONDS,
+        )
+        clock = self._freezer.start()
+        self._sleep = time.sleep
+
+        def sleep(seconds):
+            self._sleep(seconds)
+            clock.tick(datetime.timedelta(seconds=max(float(seconds), 0.0)))
+
+        time.sleep = sleep
+        return self
+
+    def __exit__(self, *exc) -> None:
+        time.sleep = self._sleep
+        self._freezer.stop()
+        return None
+
+
 def trace_test(pointer: str) -> Recording:
     """Run one test with the platform instrumented and return what it touched.
 
@@ -509,6 +646,10 @@ def trace_test(pointer: str) -> Recording:
     describe the code path up to the failure and present it as evidence the
     requirement is met, which is precisely the kind of green this audit exists
     to refuse.
+
+    This runs in the calling process, so what it sees a test touch still
+    depends on what that process has already compiled and remembered. The
+    matrix is built with ``trace_in_its_own_interpreter``, which does not.
     """
     import unittest
 
@@ -516,7 +657,7 @@ def trace_test(pointer: str) -> Recording:
     stream = open(os.devnull, "w")
     try:
         runner = unittest.TextTestRunner(stream=stream, verbosity=0)
-        with _AsATestRun(), Instrumentation() as instrumentation:
+        with _AsATestRun(), _OnAStillClock(), Instrumentation() as instrumentation:
             result = runner.run(suite)
     finally:
         stream.close()
@@ -525,6 +666,75 @@ def trace_test(pointer: str) -> Recording:
         detail = problems[0][1].strip().splitlines()[-1] if problems else "unknown"
         raise TestPointerError(f"{pointer} did not pass while tracing: {detail}")
     return instrumentation.recording
+
+
+#: Names the prepared test database to the interpreter that traces one test
+#: (``build_traceability_matrix --one``), which attaches to it rather than
+#: setting one up.
+TEST_DATABASE_ENV = "EDIFY_TRACEABILITY_TEST_DATABASE"
+
+#: The exit status of that interpreter when the test it was given did not pass.
+#: The reason is in the file it was asked to write.
+DID_NOT_PASS = 3
+
+
+def trace_in_its_own_interpreter(pointer: str) -> Recording:
+    """Trace one test in an interpreter started for it and for nothing else.
+
+    A process remembers. The first template it renders is compiled and kept;
+    the first call fills an ``lru_cache``; a module-level memo says a sync has
+    been done. Traced one after another in one process, the first test to need
+    any of these was seen to run the code that builds it, and every later test
+    was seen to touch less -- so a requirement's row depended on which
+    requirements came before it in the manifest. Read backwards, fifteen of
+    the twenty-six tests were seen to call something different and six to use
+    different files.
+
+    Started alone, a test is seen to touch what it touches when somebody runs
+    it by itself, which is the only reading of "what this requirement
+    exercises" that does not mention another requirement. The interpreter
+    attaches to the test database this process already prepared: the test
+    rolls its own work back, as it does in the suite, so the next one finds the
+    database as this one did.
+
+    ``PYTHONHASHSEED`` is fixed so the order a set of names is walked in is the
+    same in every interpreter. No run was seen to depend on it; it is one more
+    thing a rebuild has no business varying with.
+    """
+    from django.db import connection
+
+    with tempfile.TemporaryDirectory() as folder:
+        into = Path(folder) / "recording.json"
+        done = subprocess.run(
+            [
+                sys.executable,
+                str(REPO_ROOT / "manage.py"),
+                "build_traceability_matrix",
+                "test",
+                "--one",
+                pointer,
+                "--into",
+                str(into),
+            ],
+            env={
+                **os.environ,
+                TEST_DATABASE_ENV: connection.settings_dict["NAME"],
+                "PYTHONHASHSEED": "0",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        written = json.loads(into.read_text(encoding="utf-8")) if into.exists() else {}
+    if done.returncode == DID_NOT_PASS and "error" in written:
+        raise TestPointerError(written["error"])
+    if done.returncode != 0 or not written:
+        detail = (done.stderr or done.stdout).strip().splitlines()[-1:] or ["no output"]
+        raise TestPointerError(
+            f"{pointer} could not be traced: its interpreter exited "
+            f"{done.returncode}: {detail[0]}"
+        )
+    return Recording.from_dict(written)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -644,7 +854,7 @@ def build_traceability_matrix(*, progress=None) -> dict:
             continue
         merged = Recording()
         for pointer in journey.covered_by:
-            merged.merge(trace_test(pointer))
+            merged.merge(trace_in_its_own_interpreter(pointer))
         rows.append(
             row_from_recording(
                 requirement=requirement,
@@ -660,7 +870,10 @@ def build_traceability_matrix(*, progress=None) -> dict:
         "method": (
             "Each requirement's covering test is executed with the platform "
             "instrumented; every cell records what the run touched, not what "
-            "anyone asserts it should touch."
+            "anyone asserts it should touch. Each test runs in an interpreter "
+            "of its own, on a clock that does not measure how long it took, "
+            "and a file being imported is not a file being used -- so the "
+            "same code gives the same record."
         ),
         "requirements": [row.as_dict() for row in rows],
         "summary": {
