@@ -415,7 +415,9 @@ def _schools_in_oversight_scope(principal):
     from apps.schools.lifecycle_service import active_schools
 
     scope = resolve_user_scope(principal)
-    qs = scoped_school_queryset(scope)
+
+    # Operating schools: a closed school is in no current denominator.
+    qs = scoped_school_queryset(scope, active_schools())
     if qs is None:
         return None
     # Closed schools take no work and are never "missing training"

@@ -33,6 +33,7 @@ from apps.planning.followup_models import (
     FollowUpStatus,
     PlanningOversightFollowUp,
 )
+from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
 
@@ -259,11 +260,9 @@ def _slots_left(figure: str, scope: ExecScope) -> int:
         system_scope,
     )
     from apps.planning.country_oversight.followups import _portfolio_owner_ids
-    from apps.schools.models import School
 
     filters = scope.filters().planning()
-    base = School.objects.filter(
-        deleted_at__isnull=True,
+    base = active_schools().filter(
         account_owner_id__in=_portfolio_owner_ids(
             planning_fu.Scope(
                 fy=scope.fy,
@@ -273,7 +272,7 @@ def _slots_left(figure: str, scope: ExecScope) -> int:
                 lead_key=scope.lead_key,
                 cceo_key=scope.cceo_key,
             )
-        ),
+        )
     )
     dataset = build_dataset(system_scope(scope.country), filters.window, base=base)
     tally = fold(dataset, filters).country

@@ -23,21 +23,30 @@ from django.test import TestCase
 
 from apps.accounts.models import StaffProfile
 from apps.activities.models import Activity
-from apps.core.fy import get_quarter_for_date
+from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.geography.models import District, Region
 from apps.my_plan.services import QUARTER_FIRST_MONTH, get_frontend_context
 from apps.schools.models import School
 
 User = get_user_model()
 
-FY = "2027"
-#: One school visit in each quarter of FY2027, out of date order on purpose.
-VISIT_DATES = (
-    date(2027, 4, 9),  # Q3
-    date(2026, 10, 6),  # Q1
-    date(2027, 7, 2),  # Q4
-    date(2027, 1, 14),  # Q2
-)
+#: The financial year after the one in progress, so every visit in it is
+#: still ahead on whatever day this is read. My Plan's tables leave out a
+#: visit whose day has passed (it is listed as past due instead): written
+#: with fixed dates in FY2027, every test that counts the year's visits lost
+#: the October one on 7 October 2026 and would have lost the rest in turn.
+#: Not a frozen clock: a class frozen from its first line can be the first
+#: thing in a test worker to load the URL configuration, and pandas and
+#: openpyxl do not survive being imported under one.
+_YEAR = int(get_operational_fy()) + 1
+FY = str(_YEAR)
+PREVIOUS_FY = str(_YEAR - 1)
+Q1_VISIT = date(_YEAR - 1, 10, 6)
+Q2_VISIT = date(_YEAR, 1, 14)
+Q3_VISIT = date(_YEAR, 4, 9)
+Q4_VISIT = date(_YEAR, 7, 2)
+#: One school visit in each quarter of the year, out of date order on purpose.
+VISIT_DATES = (Q3_VISIT, Q1_VISIT, Q4_VISIT, Q2_VISIT)
 
 
 class MyPlanPeriodFilterTest(TestCase):
@@ -120,11 +129,11 @@ class MyPlanPeriodFilterTest(TestCase):
 
     def test_q1_shows_october_and_only_october(self):
         ctx = self.context(quarter="Q1")
-        self.assertEqual(self.visit_dates(ctx), [date(2026, 10, 6)])
+        self.assertEqual(self.visit_dates(ctx), [Q1_VISIT])
 
     def test_q2_shows_january_not_october(self):
         ctx = self.context(quarter="Q2")
-        self.assertEqual(self.visit_dates(ctx), [date(2027, 1, 14)])
+        self.assertEqual(self.visit_dates(ctx), [Q2_VISIT])
 
     # --- A month is that month ---------------------------------------------
 
@@ -132,7 +141,7 @@ class MyPlanPeriodFilterTest(TestCase):
         ctx = self.context(month="4")
         self.assertEqual(ctx["period"], "month")
         self.assertEqual(ctx["selected_month"], 4)
-        self.assertEqual(self.visit_dates(ctx), [date(2027, 4, 9)])
+        self.assertEqual(self.visit_dates(ctx), [Q3_VISIT])
 
     def test_a_month_wins_over_the_quarter_it_sits_in(self):
         """Q3 opens on April, but May was asked for by name."""
@@ -143,7 +152,7 @@ class MyPlanPeriodFilterTest(TestCase):
     # --- Widening clears what it contains ----------------------------------
 
     def test_changing_the_year_drops_the_quarter_and_month(self):
-        ctx = self.context(fy_prev="2026", quarter="Q1", month="10")
+        ctx = self.context(fy_prev=PREVIOUS_FY, quarter="Q1", month="10")
         self.assertEqual(ctx["period"], "fy")
         self.assertIsNone(ctx["selected_quarter"])
         self.assertIsNone(ctx["selected_month"])
@@ -152,7 +161,7 @@ class MyPlanPeriodFilterTest(TestCase):
     def test_changing_the_quarter_drops_the_month_under_the_old_one(self):
         ctx = self.context(quarter_prev="Q1", quarter="Q3", month="10")
         self.assertEqual(ctx["selected_month"], QUARTER_FIRST_MONTH["Q3"])
-        self.assertEqual(self.visit_dates(ctx), [date(2027, 4, 9)])
+        self.assertEqual(self.visit_dates(ctx), [Q3_VISIT])
 
     def test_the_same_year_resubmitted_keeps_the_month(self):
         ctx = self.context(fy_prev=FY, quarter_prev="Q3", quarter="Q3", month="4")
@@ -168,7 +177,7 @@ class MyPlanPeriodFilterTest(TestCase):
     def test_an_explicit_period_overrides_the_derived_one(self):
         ctx = self.context(period="quarter", quarter="Q3")
         self.assertEqual(ctx["period"], "quarter")
-        self.assertEqual(self.visit_dates(ctx), [date(2027, 4, 9)])
+        self.assertEqual(self.visit_dates(ctx), [Q3_VISIT])
 
     def test_only_an_explicit_period_travels_with_the_filter_form(self):
         self.assertEqual(self.context()["period_param"], "")

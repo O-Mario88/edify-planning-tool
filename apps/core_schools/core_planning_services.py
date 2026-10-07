@@ -23,6 +23,7 @@ from apps.core_schools.models import (
     cprof_id,
 )
 from apps.core_schools.services import EXPECTED_CORE_SLOTS
+from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
 
@@ -584,7 +585,7 @@ class CoreSchoolsService:
         from apps.schools.models import School
 
         scope = resolve_user_scope(user)
-        base = School.objects.filter(deleted_at__isnull=True)
+        base = active_schools()
         if lens == "oversight":
             qs = team_oversight_schools(scope, base=base)
         else:
@@ -657,9 +658,13 @@ class CoreSchoolsService:
 
         partner_assigned = filters.get("partner_assigned")
         if partner_assigned and partner_assigned != "All":
-            assigned_ids = PartnerAssignment.objects.filter(
-                school__school_type="core"
-            ).values_list("school_id", flat=True)
+            # With a partner now: a school withdrawn from its partner is
+            # unassigned again.
+            assigned_ids = (
+                PartnerAssignment.objects.filter(school__school_type="core")
+                .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+                .values_list("school_id", flat=True)
+            )
             if partner_assigned == "assigned":
                 core_schools_qs = core_schools_qs.filter(id__in=assigned_ids)
             elif partner_assigned == "unassigned":
@@ -1813,6 +1818,7 @@ class CoreInterventionImpactService:
         active_statuses = [
             "planned",
             "scheduled",
+            "rescheduled",
             "partner_scheduled",
             "in_progress",
             "completed",
@@ -2091,9 +2097,11 @@ class CoreStaffPartnerPerformanceService:
 
         cohort_id_set = set(cohort_ids)
         partner_schools: dict[str, set[str]] = {}
-        for partner_id, school_id in PartnerAssignment.objects.filter(
-            school__school_type="core"
-        ).values_list("partner_id", "school_id"):
+        for partner_id, school_id in (
+            PartnerAssignment.objects.filter(school__school_type="core")
+            .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+            .values_list("partner_id", "school_id")
+        ):
             if school_id in cohort_id_set:
                 partner_schools.setdefault(partner_id, set()).add(school_id)
 
@@ -2440,6 +2448,7 @@ class CoreTeamOversightService:
         partner_counts = {
             row["school_id"]: row["n"]
             for row in PartnerAssignment.objects.filter(school_id__in=db_ids)
+            .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
             .values("school_id")
             .annotate(n=Count("id"))
         }

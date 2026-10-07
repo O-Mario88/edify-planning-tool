@@ -23,6 +23,7 @@ from __future__ import annotations
 from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import cluster_queryset, resolve_user_scope
+from apps.schools.lifecycle_service import active_schools
 
 #: A cluster with no responsible staff is unassigned, not unowned-by-accident.
 #: It groups under its own heading rather than being dropped, because a cluster
@@ -283,13 +284,10 @@ def grouped_clusters(principal) -> dict:
     # School counts in one query rather than one per cluster.
     from django.db.models import Count
 
-    from apps.schools.models import School
-
     counts = {
         row["cluster_id"]: row["n"]
-        for row in School.objects.filter(
-            cluster_id__in=[c.id for c in clusters], deleted_at__isnull=True
-        )
+        for row in active_schools()
+        .filter(cluster_id__in=[c.id for c in clusters])
         .values("cluster_id")
         .annotate(n=Count("id"))
     }
@@ -414,7 +412,6 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     from apps.core.enums import SsaIntervention
     from apps.core.rbac import EdifyRole
     from apps.core.scoping import any_id, cluster_queryset, resolve_user_scope
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
     from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
     from apps.planning.oversight_service import system_program_leads
@@ -497,9 +494,7 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
 
     # 1. School counts & mapping
     schools = list(
-        School.objects.filter(
-            cluster_id__in=cluster_ids, deleted_at__isnull=True
-        ).values("id", "cluster_id")
+        active_schools().filter(cluster_id__in=cluster_ids).values("id", "cluster_id")
     )
     school_to_cluster = {s["id"]: s["cluster_id"] for s in schools}
     cluster_schools_count: dict[str, int] = {}

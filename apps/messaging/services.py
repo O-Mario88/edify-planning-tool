@@ -566,7 +566,11 @@ def suggested_recipients(
                     add(supervisor_of(owner.id))
             from apps.partners.models import PartnerAssignment
 
-            pa = PartnerAssignment.objects.filter(school=record).first()
+            pa = (
+                PartnerAssignment.objects.filter(school=record)
+                .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+                .first()
+            )
             if pa and pa.partner and pa.partner.user_id:
                 add(User.objects.filter(id=pa.partner.user_id).first())
             add_by_role("ImpactAssessment", 1)
@@ -845,6 +849,7 @@ def context_summary(user, context_type, context_id, linked_ids=None) -> dict:
 
                 pa = (
                     PartnerAssignment.objects.filter(school=school)
+                    .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
                     .select_related("partner")
                     .first()
                 )
@@ -1181,7 +1186,15 @@ def context_panel(thread: MessageThread, user) -> dict:
         )
         steps = [
             ("Planned", ["planned"]),
-            ("Scheduled", ["scheduled", "partner_scheduled", "assigned_to_partner"]),
+            (
+                "Scheduled",
+                [
+                    "scheduled",
+                    "rescheduled",
+                    "partner_scheduled",
+                    "assigned_to_partner",
+                ],
+            ),
             ("In Progress", ["in_progress", "completion_started"]),
             ("Completed", ["completed", "awaiting_ia_verification"]),
             ("Verified & Closed", ["ia_verified", "accountant_confirmed", "closed"]),

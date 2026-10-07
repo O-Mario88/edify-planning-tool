@@ -28,6 +28,7 @@ from apps.analytics.plan_progress import (
 )
 from apps.analytics.pl_analytics_service import map_score
 from apps.analytics.platform_engine import engine_metadata
+from apps.schools.lifecycle_service import active_schools
 
 # SSA rows only count once a reviewer has confirmed them.
 SSA_CONFIRMED = "confirmed"
@@ -138,18 +139,13 @@ def district_frame(
     reduced to the current role and active analytics filters.
     """
     from apps.clusters.models import Cluster
-    from apps.schools.models import School
 
     base = _frame()
     if base.empty:
         return base
 
     schools_are_scoped = schools is not None
-    school_qs = (
-        schools
-        if schools_are_scoped
-        else School.objects.filter(deleted_at__isnull=True)
-    )
+    school_qs = schools if schools_are_scoped else active_schools()
     if clusters is None:
         if schools_are_scoped:
             cluster_ids = (

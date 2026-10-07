@@ -19,7 +19,6 @@ from apps.core.permissions import (
 from apps.core.exceptions import BadRequest
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.enums import SsaIntervention
-from apps.schools.models import School
 from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
@@ -50,6 +49,7 @@ from apps.core_schools.core_planning_services import (
 )
 from apps.core.scoping import resolve_user_scope
 from apps.core_schools.services import ensure_core_plan
+from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
 
@@ -411,9 +411,9 @@ def core_schools_view(request):
     )
     partners = (
         Partner.objects.filter(
-            id__in=PartnerAssignment.objects.filter(school__school_type="core").values(
-                "partner_id"
-            )
+            id__in=PartnerAssignment.objects.filter(school__school_type="core")
+            .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+            .values("partner_id")
         )
         .distinct()
         .order_by("name")
@@ -1935,7 +1935,8 @@ def champions_list_view(request):
     from apps.ssa.models import SsaRecord
 
     champions = (
-        School.objects.filter(school_type="champion", deleted_at__isnull=True)
+        active_schools()
+        .filter(school_type="champion")
         .select_related("district", "region")
         .order_by("name")
     )

@@ -76,6 +76,7 @@ from apps.debriefs.field_debrief_service import FieldDebriefService
 from apps.debriefs.models import DailyDebriefChallenge
 from apps.fund_requests.finance_models import PartnerPayment
 from apps.fund_requests.models import AdvanceRequest
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.targets.my_targets import (
@@ -178,7 +179,8 @@ def _scoped_schools(principal):
     from apps.core.scoping import scoped_school_queryset
 
     scope = resolve_user_scope(principal)
-    schools = School.objects.filter(deleted_at__isnull=True)
+    # Operating schools: a closed school is in no current total.
+    schools = active_schools()
     if getattr(principal, "active_role", "") == EdifyRole.REGIONAL_VICE_PRESIDENT.value:
         return schools, scope
     return scoped_school_queryset(scope, schools), scope

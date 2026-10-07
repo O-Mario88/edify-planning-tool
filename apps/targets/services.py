@@ -17,7 +17,6 @@ from .models import TargetSetting
 def time_period(query: dict, principal=None) -> dict:
     from apps.core.fy import get_operational_fy
     from apps.accounts.models import StaffProfile, StaffTargetProfile
-    from apps.schools.models import School
     from apps.activities.models import Activity
 
     fy = query.get("fy") or get_operational_fy()
@@ -50,9 +49,9 @@ def time_period(query: dict, principal=None) -> dict:
             "dataQuality": [f"Staff profile not found for ID {staff_id}."],
         }
 
-    total_portfolio = School.objects.filter(
-        account_owner_id=sp.id, deleted_at__isnull=True
-    ).count()
+    from apps.schools.lifecycle_service import active_schools
+
+    total_portfolio = active_schools().filter(account_owner_id=sp.id).count()
 
     tp = StaffTargetProfile.objects.filter(staff=sp, fy=fy).first()
     staff_target = (tp.visits_target + tp.trainings_target) if tp else 0

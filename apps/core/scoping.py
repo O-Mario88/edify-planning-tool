@@ -579,10 +579,13 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             try:
                 from apps.partners.models import PartnerAssignment
 
+                # Schools the partner holds. One withdrawn from them, or
+                # handed back, is no longer theirs to read: it used to stay
+                # in their scope, and so in their school counts, for good.
                 assigned_schools = list(
-                    PartnerAssignment.objects.filter(
-                        partner_id__in=partner_ids
-                    ).values_list("school_id", flat=True)
+                    PartnerAssignment.objects.filter(partner_id__in=partner_ids)
+                    .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+                    .values_list("school_id", flat=True)
                 )
                 school_ids = _uniq(assigned_schools)
                 # `own_school_ids` stays empty for partner users, as it always
@@ -1335,6 +1338,11 @@ def scope_cache_fingerprint(scope: UserScope) -> str:
             "coverage": sorted(scope.assignment_staff_ids),
             "regions": sorted(scope.region_ids),
             "partners": sorted(scope.partner_ids),
+            # A partner owns no school: what it may reach is the schools
+            # handed to it, which none of the fields above name. Without them
+            # a school withdrawn from a partner stayed in its cached figures
+            # until they lapsed.
+            "held": sorted(scope.school_ids) if scope.partner_ids else [],
         },
         sort_keys=True,
     ).encode("utf-8")

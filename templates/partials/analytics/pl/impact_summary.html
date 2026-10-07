@@ -29,5 +29,5 @@
       {% kpi_label %}Schools improved{% endkpi_label %}
     {% endkpi_metric %}
   {% endkpi_strip %}
-  <p class="edify-text-caption text-slate-400 font-medium pt-1">Students Impacted = enrollment of schools reached · Schools Improved = positive annual SSA delta.</p>
+  <p class="edify-text-caption text-slate-400 font-medium pt-1">Students Impacted = enrollment of schools reached · Schools Improved = confirmed SSA average higher in {% if impact_summary.improved_to_fy and impact_summary.improved_from_fy %}FY{{ impact_summary.improved_to_fy }} than in FY{{ impact_summary.improved_from_fy }}{% else %}the latest assessed year than in the year before (no two years to compare yet){% endif %}.</p>
 </div>

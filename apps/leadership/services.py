@@ -16,6 +16,7 @@ from .models import (
     DecisionType,
     LeadershipDecisionInsight,
 )
+from apps.schools.lifecycle_service import active_schools
 
 
 def boards(principal, query: dict) -> dict:
@@ -271,11 +272,10 @@ def _detect_recruitment_gaps(fy: str, now) -> list[dict]:
     staff owner -- a direct recruitment/coverage-gap signal."""
     from django.db.models import Count, Q
 
-    from apps.schools.models import School
-
     insights = []
     rows = (
-        School.objects.filter(deleted_at__isnull=True, district__isnull=False)
+        active_schools()
+        .filter(district__isnull=False)
         .values("district_id", "district__name")
         .annotate(
             total=Count("id"),

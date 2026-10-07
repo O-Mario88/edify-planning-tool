@@ -30,6 +30,16 @@ from apps.core.fy import get_operational_fy
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 from apps.core.pagination import TABLE_PAGE_SIZE
 
+#: Dated staff work that has not been handed in: still to start, or begun in
+#: the field. A rescheduled activity is a scheduled one that has been moved;
+#: left out, a moved visit whose new date had passed was never "overdue".
+_NOT_FINISHED_IN_FIELD = (
+    "scheduled",
+    "rescheduled",
+    "in_progress",
+    "completion_started",
+)
+
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
 
@@ -151,7 +161,7 @@ def staff_directory_view(request):
     overdue_counts = (
         Activity.objects.filter(
             planned_date__lt=today,
-            status__in=["scheduled", "in_progress", "completion_started"],
+            status__in=_NOT_FINISHED_IN_FIELD,
             deleted_at__isnull=True,
             responsible_staff_id__in=scoped_owner_ids,
         )
@@ -454,12 +464,14 @@ def staff_profile_view(request, user_id):
         for a in activities
         if a.planned_date
         and a.planned_date < now
-        and a.status in ("scheduled", "in_progress", "completion_started")
+        and a.status in _NOT_FINISHED_IN_FIELD
     ]
     upcoming = [
         a
         for a in activities
-        if a.planned_date and a.planned_date >= now and a.status == "scheduled"
+        if a.planned_date
+        and a.planned_date >= now
+        and a.status in ("scheduled", "rescheduled")
     ]
 
     # Schools covered
@@ -476,12 +488,11 @@ def staff_profile_view(request, user_id):
 
     profile = getattr(member, "staff_profile", None)
 
-    from apps.schools.models import School
     from apps.ssa.services import get_ssa_progress_by_fy
 
-    assigned_schools = School.objects.filter(
-        account_owner_id__in=member_ids, deleted_at__isnull=True
-    )
+    from apps.schools.lifecycle_service import active_schools
+
+    assigned_schools = active_schools().filter(account_owner_id__in=member_ids)
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
     back_href, back_label = _profile_back_link(request)
 
@@ -543,11 +554,7 @@ def visits_log_view(request):
 
     visits = list(visits_qs[:100])
     completed = sum(1 for v in visits if v.status in COMPLETED_WORK_STATUSES)
-    pending = sum(
-        1
-        for v in visits
-        if v.status in ("scheduled", "in_progress", "completion_started")
-    )
+    pending = sum(1 for v in visits if v.status in _NOT_FINISHED_IN_FIELD)
 
     context = {
         "visits": visits,
@@ -788,8 +795,13 @@ def _build_core_tracker(user):
             "school_id", flat=True
         )
     )
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed Core School owes no package visits.
     op_ids = dict(
-        School.objects.filter(id__in=school_cuids).values_list("id", "school_id")
+        active_schools(School.objects.filter(id__in=school_cuids)).values_list(
+            "id", "school_id"
+        )
     )
     plans = list(
         CorePlan.objects.filter(school_id__in=list(op_ids.values())).order_by(

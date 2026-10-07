@@ -4227,12 +4227,7 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         _sync_cluster_attendance(
             a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
         )
-        if a.status in (
-            "scheduled",
-            "in_progress",
-            "assigned_to_partner",
-            "partner_scheduled",
-        ):
+        if a.status in STARTABLE_STATUSES:
             a.status = "completion_started"
         a.save(
             update_fields=[

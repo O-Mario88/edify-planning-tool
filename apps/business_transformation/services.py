@@ -2374,6 +2374,7 @@ _DELIVERED_ACTIVITY_STATUSES = {
 _OPEN_SUPPORT_STATUSES = {
     "planned",
     "scheduled",
+    "rescheduled",
     "assigned_to_partner",
     "partner_scheduled",
     "in_progress",
@@ -2792,10 +2793,14 @@ def _intervention_school_portfolio_context(
             ).count(),
         )
 
-    relevant_partner_ids = PartnerAssignment.objects.filter(
-        school_id__in=portfolio_school_ids,
-        focus_intervention=intervention,
-    ).values("partner_id")
+    relevant_partner_ids = (
+        PartnerAssignment.objects.filter(
+            school_id__in=portfolio_school_ids,
+            focus_intervention=intervention,
+        )
+        .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+        .values("partner_id")
+    )
     return {
         "fy": fy,
         "filters": filters,

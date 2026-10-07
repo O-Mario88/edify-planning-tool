@@ -135,6 +135,18 @@ LISTS = (
     ("core_staff_visits_left", "Core schools short of two staff visits"),
     ("client_staff_visits", "Client schools with a staff visit planned"),
     ("client_staff_visits_left", "Client schools with no staff visit planned"),
+    # The two visit flags of Planned and remaining (owner, 2026-10-07: "flag
+    # visits planned by both staff and also assigned to partners for visits
+    # ... core one should have 2 visits from staff and 2 from partner. more
+    # than those should be flagged").
+    (
+        "core_visits_over",
+        "Core schools with more than two staff visits or two Partner visits",
+    ),
+    (
+        "client_staff_and_partner",
+        "Client schools scheduled by staff and also with a Partner: booked twice",
+    ),
     ("core_staff_trainings", "Core schools with a staff training in their package"),
     ("core_staff_trainings_left", "Core schools short of two staff trainings"),
     ("training", "In a group or in-school training"),
@@ -154,6 +166,7 @@ LISTS = (
     ("core_partner_trainings_left", "Core schools short of two Partner trainings"),
     ("in_project", "In a project"),
     ("not_in_project", "Not in a project"),
+    ("project_added", "Added to a project by the person who holds them"),
     ("fully_planned", "Fully planned"),
     ("partly_planned", "Partly planned"),
     ("not_yet_planned", "Not yet planned"),
@@ -192,6 +205,10 @@ def in_list(school, key: str) -> bool:
         return not core and school.staff_visits > 0
     if key == "client_staff_visits_left":
         return not core and not school.staff_visits
+    if key == "core_visits_over":
+        return school.core_visits_over
+    if key == "client_staff_and_partner":
+        return not core and school.staff_and_partner
     if key == "core_staff_trainings":
         return school.core_staff_trainings > 0
     if key == "core_staff_trainings_left":
@@ -236,6 +253,8 @@ def in_list(school, key: str) -> bool:
         return school.in_project
     if key == "not_in_project":
         return not school.in_project
+    if key == "project_added":
+        return school.project_places > 0
     from apps.planning import readiness
 
     if key in ("fully_planned", "partly_planned", "not_yet_planned"):
@@ -307,12 +326,17 @@ class SchoolState:
     staff_ssa_visits: int = 0
     staff_visits_done: int = 0
     partner_visits: int = 0
+    # Counted visits in a Partner's hands that the Partner has not dated.
+    partner_visits_undated: int = 0
     partner_pending: int = 0
     group_training: bool = False
     meeting: bool = False
     in_school_training: bool = False
     training_done: bool = False
     in_project: bool = False
+    # Places in open projects the person who holds this school used on it:
+    # one for each project they added it to (`_count_project_places`).
+    project_places: int = 0
     # The partner half of this Core school's package: visits and trainings a
     # partner holds, to the two of each it takes (`_count_core_packages`).
     core_partner_visits: int = 0
@@ -357,6 +381,21 @@ class SchoolState:
     def staff_and_partner(self) -> bool:
         """Scheduled by staff and also in a Partner's hands."""
         return self.staff_scheduled and self.has_partner
+
+    @property
+    def partner_visits_assigned(self) -> int:
+        """The Partner's visits here, dated or still awaiting its date."""
+        return self.partner_visits + self.partner_visits_undated
+
+    @property
+    def core_visits_over(self) -> bool:
+        """A Core school with more visits than its package takes: two by
+        staff and two by a Partner (owner, 2026-10-07). Staff and a Partner
+        both visiting is the package itself, and is not flagged."""
+        return self.is_core and (
+            self.staff_visits > CORE_STAFF_VISITS_PER_SCHOOL
+            or self.partner_visits_assigned > CORE_PARTNER_PER_SCHOOL
+        )
 
     @property
     def needs_training(self) -> bool:
@@ -426,6 +465,11 @@ class OfficerMonitor:
     partner_scheduled: int = 0
     partner_delivered: int = 0
     partner_awaiting: int = 0
+    # Special Projects (`_count_project_places`, owner 2026-10-06): the
+    # ceilings the Project Coordinator set this person on open projects, put
+    # together, and the schools the person has added to open projects.
+    project_ceiling: int = 0
+    project_added: int = 0
 
     @property
     def list_scope(self) -> str:
@@ -461,7 +505,9 @@ class OfficerMonitor:
     # ── Visits against the target ──
     @property
     def core_visit_target(self) -> int:
-        return CORE_STAFF_VISITS_PER_SCHOOL * self.core_schools
+        """Two at each Core school, to the person's target: with the Client
+        visits it is the 280 or 560 the role plans, never more."""
+        return min(CORE_STAFF_VISITS_PER_SCHOOL * self.core_schools, self.visits_target)
 
     @property
     def client_visit_target(self) -> int:
@@ -512,6 +558,31 @@ class OfficerMonitor:
 
         share = rules.workload(self.visits_target, self.core_schools, 0)
         return 1 if share.core_only else 0
+
+    # ── Too few schools for the target (owner, 2026-10-07) ──
+    @property
+    def portfolio_visits(self) -> int:
+        """Staff visits the schools held can take: two a Core school, one
+        each of the others."""
+        return self._workload.portfolio_visits
+
+    @property
+    def schools_to_recruit(self) -> int:
+        """Schools the person still needs to recruit for their schools to
+        take the visits their role plans (``rules.Workload.short_of_target``)."""
+        return self._workload.short_of_target
+
+    @property
+    def short_people(self) -> int:
+        return 1 if self.schools_to_recruit else 0
+
+    @property
+    def _workload(self):
+        from apps.planning.country_oversight import rules
+
+        return rules.workload(
+            self.visits_target, self.core_schools, self.client_schools
+        )
 
     # ── The partner's share ──
     @property
@@ -620,6 +691,19 @@ class OfficerMonitor:
     def schools_staff_and_partner(self) -> int:
         """Of those, the schools also in a Partner's hands."""
         return sum(1 for s in self.schools if s.staff_and_partner)
+
+    @property
+    def client_staff_and_partner(self) -> int:
+        """The Client, Core Trained and Core Graduate schools among them. Such
+        a school takes one visit, staff's or the Partner's: it is booked
+        twice (``readiness.is_duplicate``). A Core school takes both, so it
+        is flagged only past its package (``core_visits_over``)."""
+        return sum(1 for s in self.schools if not s.is_core and s.staff_and_partner)
+
+    @property
+    def core_visits_over(self) -> int:
+        """Core schools with more than two staff visits or two Partner visits."""
+        return sum(1 for s in self.schools if s.core_visits_over)
 
     @property
     def schools_in_school_training(self) -> int:
@@ -818,6 +902,7 @@ def planning_monitor(
 
     _count_planned_visits(officers.values(), fy)
     _count_partner_work(officers.values(), fy)
+    _count_project_places(officers.values())
 
     # The roster's order: each Lead, then their CCEOs by name; the country's
     # CCEOs with no Lead, and schools with no officer, last.
@@ -972,6 +1057,7 @@ def own_monitor(principal, fy: str) -> OfficerMonitor | None:
     )
     _count_planned_visits([officer], fy)
     _count_partner_work([officer], fy)
+    _count_project_places([officer])
     return officer
 
 
@@ -1010,12 +1096,13 @@ def _monitored_schools(principal):
     oversight_scope = resolve_oversight_scope(principal)
     if queryset is None or oversight_scope.kind != "pl":
         return queryset
-    from apps.schools.models import School
 
     held = Q(account_owner_id__in=list(oversight_scope.team_ids))
     unheld_in_scope = Q(id__in=list(user_scope.school_ids or [])) & (
         Q(account_owner_id__isnull=True) | Q(account_owner_id="")
     )
+    from apps.schools.models import School
+
     return School.objects.filter(deleted_at__isnull=True).filter(held | unheld_in_scope)
 
 
@@ -1219,16 +1306,17 @@ def _count_activities(schools: dict, school_ids, fy: str) -> None:
         if status in delivered:
             school.training_done = True
     # Partner work a Partner has not dated: the school is in its hands.
-    for school_id, n in (
+    for school_id, n, visits in (
         at_schools.filter(deleted_at__isnull=True)
         .filter(rules.partner_held_q())
         .exclude(rules.partner_planned_q())
         .values_list("school_id")
-        .annotate(n=Count("id"))
+        .annotate(n=Count("id"), visits=Count("id", filter=rules.counted_visit_q()))
         .order_by()
     ):
         if school_id in schools:
             schools[school_id].partner_pending += n
+            schools[school_id].partner_visits_undated += visits
 
 
 def _count_planned_visits(officers, fy: str) -> None:
@@ -1447,6 +1535,54 @@ def _count_core_packages(schools: dict, fy: str) -> None:
         school.core_staff_trainings = min(
             split.staff_trainings, CORE_STAFF_VISITS_PER_SCHOOL
         )
+
+
+def _count_project_places(officers) -> None:
+    """Each person's project ceilings, put together, and the schools they
+    have added to projects (owner, 2026-10-06: "calculate all the schools the
+    user added to the project against the project general ceiling (all project
+    ceilings put together)").
+
+    Both are read as the Project Capacity page and the person's own "My
+    project allocations" table read them (apps.projects.capacity): a ceiling
+    is a ``ProjectStaffCapacity`` row, and a place is used by an enrolment
+    whose ``assigned_staff`` is the person. So the target here is that
+    table's Maximum column added up. A school withdrawn from a project has no
+    enrolment, so its place is back the moment it leaves. Two queries,
+    whatever the number of people.
+    """
+    from django.db.models import Sum
+
+    from apps.projects.models import ProjectSchoolAssignment, ProjectStaffCapacity
+
+    by_id: dict[str, OfficerMonitor] = {}
+    held: dict[tuple[int, str], SchoolState] = {}
+    for officer in officers:
+        officer.project_ceiling = officer.project_added = 0
+        for staff_id in officer.ids:
+            by_id[str(staff_id)] = officer
+        for school in (*officer.schools, *officer.outreach_schools):
+            school.project_places = 0
+            held[(id(officer), school.id)] = school
+    if not by_id:
+        return
+    for staff_id, ceiling in (
+        ProjectStaffCapacity.objects.filter(
+            staff_id__in=list(by_id), project__deleted_at__isnull=True
+        )
+        .values_list("staff_id")
+        .annotate(ceiling=Sum("max_schools"))
+        .order_by()
+    ):
+        by_id[str(staff_id)].project_ceiling += int(ceiling or 0)
+    for staff_id, school_id in ProjectSchoolAssignment.objects.filter(
+        assigned_staff_id__in=list(by_id), project__deleted_at__isnull=True
+    ).values_list("assigned_staff_id", "school_id"):
+        officer = by_id[str(staff_id)]
+        officer.project_added += 1
+        school = held.get((id(officer), school_id))
+        if school is not None:
+            school.project_places += 1
 
 
 def _mark_projects(schools: dict, school_ids) -> None:

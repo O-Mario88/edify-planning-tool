@@ -34,7 +34,6 @@ from .models import (
     Project,
     ProjectCategory,
     ProjectPartnerAssignment,
-    ProjectSchoolAssignment,
 )
 
 
@@ -316,8 +315,12 @@ def get_planning(principal, filters=None) -> dict:
         .order_by("-date_of_ssa"),
         to_attr="planning_ssa_records",
     )
+    from apps.projects.models import current_enrolments
+
+    # Nothing is planned at a closed school, so it is not on the planning list.
     assignments_qs = (
-        ProjectSchoolAssignment.objects.filter(project_id__in=project_ids)
+        current_enrolments()
+        .filter(project_id__in=project_ids)
         .select_related("project", "school", "school__region", "school__district")
         .prefetch_related(ssa_prefetch)
         # Project first, school second. The queue reads as one block per

@@ -27,6 +27,7 @@ from django.utils import timezone
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
 from .models import CatchmentRelationship, Cluster, ClusterServiceDistrict
+from apps.schools.lifecycle_service import active_schools
 
 #: Shown when a cluster does not serve the school's district. The brief's
 #: honest empty state, reused by the drawer and the service refusal.
@@ -337,7 +338,6 @@ def memberships_outside_catchment(limit: int = 500) -> list:
     predates catchments, or one whose approval has since ended. Listed for a
     person to approve the district or move the school — never changed here.
     """
-    from apps.schools.models import School
 
     served = {
         (row.cluster_id, row.district_id)
@@ -353,7 +353,7 @@ def memberships_outside_catchment(limit: int = 500) -> list:
     }
     rows = []
     for school in (
-        School.objects.filter(deleted_at__isnull=True)
+        active_schools()
         .exclude(cluster_id__isnull=True)
         .exclude(cluster_id="")
         .select_related("district")

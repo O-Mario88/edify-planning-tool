@@ -10,7 +10,6 @@ from apps.core.scoping import resolve_user_scope
 
 def roster(principal) -> dict:
     """Staff directory. Conforms to BeRoster contract."""
-    from apps.schools.models import School
     from apps.geography.models import District
 
     scope = resolve_user_scope(principal)
@@ -36,9 +35,9 @@ def roster(principal) -> dict:
 
     for sp in qs:
         email = None if strip_email else sp.user.email
-        schools_count = School.objects.filter(
-            account_owner_id=sp.id, deleted_at__isnull=True
-        ).count()
+        from apps.schools.lifecycle_service import active_schools
+
+        schools_count = active_schools().filter(account_owner_id=sp.id).count()
         supervisees_count = sp.supervisee_links.count()
         primary_district_name = (
             district_map.get(sp.primary_district_id) if sp.primary_district_id else None

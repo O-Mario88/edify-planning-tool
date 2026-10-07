@@ -136,7 +136,7 @@ def _kpi_items(log: dict, render_metric) -> list[dict]:
         item(
             "Staff Expected",
             k["staff_expected"],
-            f"of {k['staff_total']} with an expected working day",
+            f"of {k['staff_total']} listed",
         ),
         item("Staff Active", k["staff_active"], share, "success"),
         item(
@@ -154,7 +154,7 @@ def _kpi_items(log: dict, render_metric) -> list[dict]:
         item(
             "Meaningful Actions",
             k["meaningful_actions"],
-            f"{k['schools']} schools acted on",
+            f"{k['schools']} school{'' if k['schools'] == 1 else 's'} acted on",
             "success",
         ),
         item(

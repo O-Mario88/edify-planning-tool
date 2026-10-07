@@ -38,6 +38,7 @@ from typing import Any
 
 from apps.analytics.platform_engine import engine_metadata, trend_analysis
 from apps.core.enums import SsaIntervention, ssa_score_band
+from apps.schools.lifecycle_service import active_schools
 
 # A score at or below this is treated as a "weak" intervention for the
 # persistence signal — matches the < 5.5 below-count already used by the
@@ -141,7 +142,6 @@ def _latest_scores_by_cluster(cluster_ids) -> dict[str, dict[str, dict[str, floa
     would have (2026-09-24 A+ audit: three queries per cluster, fifteen
     clusters on a field officer's Planning page).
     """
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord, SsaScore
 
     wanted = [cid for cid in dict.fromkeys(cluster_ids) if cid]
@@ -149,9 +149,7 @@ def _latest_scores_by_cluster(cluster_ids) -> dict[str, dict[str, dict[str, floa
     if not wanted:
         return out
     cluster_of = dict(
-        School.objects.filter(
-            cluster_id__in=wanted, deleted_at__isnull=True
-        ).values_list("id", "cluster_id")
+        active_schools().filter(cluster_id__in=wanted).values_list("id", "cluster_id")
     )
     if not cluster_of:
         return out

@@ -110,6 +110,7 @@ OPEN_COLLECTION_STATUSES = (
     "awaiting_owner_approval",
     "planned",
     "scheduled",
+    "rescheduled",
     "assigned_to_partner",
     "partner_scheduled",
     "in_progress",

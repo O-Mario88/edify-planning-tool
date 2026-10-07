@@ -9,9 +9,9 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from apps.schools.models import School
 
 from .models import CommandCenterAlert, CommandCenterAlertDismissal
+from apps.schools.lifecycle_service import active_schools
 
 
 def today(principal) -> dict:
@@ -67,9 +67,11 @@ def today(principal) -> dict:
 
     # Field staff (CCEO): SSA-missing schools in scope (planning-locked).
     if scope.school_ids:
-        schools = School.objects.filter(
-            id__in=scope.school_ids, deleted_at__isnull=True
-        ).exclude(current_fy_ssa_status="done")
+        schools = (
+            active_schools()
+            .filter(id__in=scope.school_ids)
+            .exclude(current_fy_ssa_status="done")
+        )
         n = schools.count()
         if n:
             critical_items.append(

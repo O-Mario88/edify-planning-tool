@@ -152,6 +152,45 @@ COMPLETED_WORK_STATUSES = (
     "completed",
 )
 
+# ── Where live work stands ───────────────────────────────────────────────────
+# With COMPLETED_WORK_STATUSES these split an activity that is somebody's plan
+# three ways, and an activity is in exactly one: not started, under way (begun,
+# evidence in, or with a reviewer), done. A tile that says "planned", "in
+# progress" or "overdue" reads these, so the tiles of one strip add up to the
+# person's work and nothing is in two of them. The CCEO dashboard read
+# "overdue" as "date passed and not `completed` or `closed`", which counted
+# work Impact Assessment had already verified, and "planned" as every
+# scheduled activity, the overdue ones included (2026-10-07 calculation check).
+NOT_STARTED_ACTIVITY_STATUSES = (
+    "planned",
+    "scheduled",
+    "rescheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+)
+UNDER_WAY_ACTIVITY_STATUSES = (
+    "in_progress",
+    "completion_started",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "submitted_to_pl",
+    "returned_by_pl",
+    "awaiting_ia_verification",
+    "returned",
+    "returned_by_ia",
+)
+
+# ── Not in anybody's plan ────────────────────────────────────────────────────
+# Work that was called off (cancelled, rejected, deferred) or never planned.
+# It is the record of a decision, not planned work, so a figure that says how
+# much is planned or how much of it is done does not count it. A visit a
+# Partner had dated is cancelled when staff take the school back, and it used
+# to stay in "planned" on the analytics pages for the rest of the year (owner,
+# 2026-10-06: "It also does not update the counts, and summaries where they
+# are counted").
+NOT_IN_PLAN_ACTIVITY_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
+
 # ── Non-fundable status vocabulary ───────────────────────────────────────────
 # Activity statuses that remove work from every staff funding channel (weekly
 # generator, monthly draft, period submit, PL approval) AND from budget

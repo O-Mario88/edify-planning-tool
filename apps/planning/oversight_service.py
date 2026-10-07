@@ -459,9 +459,13 @@ def build_item_by_reference(
             return None
         # A scheduled assignment is no longer an awaiting-schedule item, so the
         # condition that raised the action has cleared by definition.
-        if assignment.status not in (
-            *PartnerAssignment.UNSCHEDULED_STATUSES,
-            _RETURNED_ASSIGNMENT_STATUS,
+        if (
+            assignment.status
+            not in (
+                *PartnerAssignment.UNSCHEDULED_STATUSES,
+                _RETURNED_ASSIGNMENT_STATUS,
+            )
+            or assignment.has_left_partner
         ):
             return None
         directory = _StaffDirectory([], [assignment])
@@ -886,7 +890,12 @@ def _unscheduled_assignments_in_scope(
     is the single place the no-double-count rule lives.
     """
     from apps.partners.models import PartnerAssignment
+    from apps.partners.support_responsibility import left_partner_q
 
+    # Waiting on the partner's date, or handed back and waiting on a staff
+    # decision. Work taken back from the partner waits on neither: it used to
+    # stay here, reading "Partner yet to schedule" for a partner who no longer
+    # held it (owner, 2026-10-06).
     qs = (
         PartnerAssignment.objects.filter(
             status__in=(
@@ -894,6 +903,7 @@ def _unscheduled_assignments_in_scope(
                 _RETURNED_ASSIGNMENT_STATUS,
             )
         )
+        .exclude(left_partner_q())
         .select_related(
             "school",
             "school__district",

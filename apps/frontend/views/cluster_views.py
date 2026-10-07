@@ -48,6 +48,7 @@ from apps.clusters.services import (
     ClusterRecommendationService,
     ClusterCostPreviewService,
 )
+from apps.schools.lifecycle_service import active_schools
 
 
 def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
@@ -988,7 +989,8 @@ def _catchment_context(user, cluster) -> dict:
         for r in ClusterServiceDistrict.objects.filter(active_on(), cluster=cluster)
     } | {cluster.district_id}
     outside = list(
-        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+        active_schools()
+        .filter(cluster_id=cluster.id)
         .exclude(district_id__in=in_force)
         .select_related("district")
         .order_by("name")[:50]
@@ -1615,10 +1617,8 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
 
     # GET method — bring out all unclustered schools in the district where the cluster is.
     if scope.country_scope or scope.can_view_summary_only:
-        unassigned_schools = School.objects.filter(
-            served_district_q,
-            cluster_status="unclustered",
-            deleted_at__isnull=True,
+        unassigned_schools = active_schools().filter(
+            served_district_q, cluster_status="unclustered"
         )
     else:
         writable = or_empty(direct_portfolio_schools(scope), School)

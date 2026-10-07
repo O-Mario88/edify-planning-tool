@@ -175,7 +175,10 @@ def scoped_countries(principal) -> dict:
     scope = resolve_user_scope(principal)
     if scope.can_view_summary_only:
         return {}
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     if schools is None:
         return {}
     return dict(schools.values_list("id", "region__country"))

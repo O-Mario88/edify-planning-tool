@@ -63,7 +63,7 @@
 
   <article class="sal-box" aria-labelledby="sal-done-{{ person.id }}">
     <h4 id="sal-done-{{ person.id }}">Meaningful actions</h4>
-    <p class="sal-sub">{% if detail.timeline_total > detail.timeline|length %}Latest {{ detail.timeline|length }} of {{ detail.timeline_total }}{% else %}{{ detail.timeline_total }} action{{ detail.timeline_total|pluralize }}{% endif %} · page views are not actions</p>
+    <p class="sal-sub">{% if detail.timeline_total > detail.timeline|length %}Latest {{ detail.timeline|length }} of {{ detail.timeline_total }}{% else %}{{ detail.timeline_total }} in the period{% endif %} · {{ person.actions }} done{% if person.failed %}, {{ person.failed }} failed{% endif %} · page views are not actions</p>
     {% if detail.timeline %}
     <ol class="sal-timeline">
       {% for a in detail.timeline %}

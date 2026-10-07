@@ -47,6 +47,7 @@ from apps.analytics.pl_analytics_service import (
 )
 from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf_id
 from apps.core.activity_types import (
+    NOT_STARTED_ACTIVITY_STATUSES,
     TRAINING_TYPES as _SF_TRAINING_TYPES,
     VISIT_TYPES as _SF_VISIT_TYPES,
 )
@@ -1076,7 +1077,7 @@ class CDDashboardService:
         not_started = sum(
             1
             for a in funded
-            if a.activity and a.activity.status in ("scheduled", "planned")
+            if a.activity and a.activity.status in NOT_STARTED_ACTIVITY_STATUSES
         )
         return {
             "pending_rows": pending_rows,

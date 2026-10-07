@@ -401,6 +401,11 @@ _WORKED_STATUSES = (
     "salesforce_id_required",
 )
 
+# Staff work with a date that is still to do or begun: what "Due today" and
+# "This week" list. A rescheduled activity is a scheduled one that has been
+# moved; without it a moved visit sat under "Upcoming" on its own day.
+_DATED_AND_OPEN = ("scheduled", "rescheduled", "in_progress")
+
 
 def compute_next_action(a, today) -> dict:
     """Computes the single primary action and its properties for a given activity."""
@@ -465,7 +470,14 @@ def compute_next_action(a, today) -> dict:
     # opened My Plan on the morning of their own training and were offered
     # "View Details", while start_completion would have accepted them all
     # along (see STARTABLE_STATUSES).
-    if a.status in ("scheduled", "partner_scheduled") and a.planned_date == today:
+    #
+    # `rescheduled` counts too: it is a scheduled activity that has been
+    # moved, and on its new day it was offered "View Details" for the same
+    # reason (2026-10-07 calculation check).
+    if (
+        a.status in ("scheduled", "rescheduled", "partner_scheduled")
+        and a.planned_date == today
+    ):
         return {
             "text": "Start",
             "action": "start",
@@ -1782,12 +1794,12 @@ def get_frontend_context(principal, query: dict) -> dict:
             "accountability",
         ]:
             waiting_on_me_list.append(activity_data)
-        elif a.planned_date == today and a.status in ["scheduled", "in_progress"]:
+        elif a.planned_date == today and a.status in _DATED_AND_OPEN:
             due_today_list.append(activity_data)
         elif (
             a.planned_date
             and today < a.planned_date <= today + timedelta(days=7)
-            and a.status in ["scheduled", "in_progress"]
+            and a.status in _DATED_AND_OPEN
         ):
             this_week_list.append(activity_data)
         elif (

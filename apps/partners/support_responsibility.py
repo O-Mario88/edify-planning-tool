@@ -149,6 +149,30 @@ def returned_unresolved_q(prefix: str = "") -> Q:
     )
 
 
+def left_partner_q(prefix: str = "") -> Q:
+    """A hand-over the Partner no longer holds, with nothing left to decide.
+
+    The query twin of ``PartnerAssignment.has_left_partner``: work staff took
+    back (a withdrawal records its decision as it takes effect) or a hand-back
+    staff have since decided. Such a row is history. It is not a school
+    assigned to the Partner, so no list of them shows it and no count of them
+    includes it (owner, 2026-10-06: "all withdrawn schools ... it should
+    leave the list or tables where they have been withdrawn. It also does not
+    update the counts, and summaries where they are counted").
+    """
+    p = prefix
+    return Q(**{f"{p}status__in": ("returned", "cancelled")}) | (
+        Q(**{f"{p}status": "returned_to_staff"})
+        & Q(**{f"{p}resolved_at__isnull": False})
+    )
+
+
+def released_q(prefix: str = "") -> Q:
+    """A hand-over the Partner no longer holds, decided or not
+    (``PartnerAssignment.RELEASED_STATUSES``)."""
+    return Q(**{f"{prefix}status__in": ("returned_to_staff", "returned", "cancelled")})
+
+
 def partner_stage(assignment) -> str:
     """Where one assignment is in the Partner workflow, in one word."""
     if assignment.status == "returned_to_staff":

@@ -700,6 +700,20 @@ class Workload:
         return self.partner_core_trainings + self.partner_client_visits
 
     @property
+    def portfolio_visits(self) -> int:
+        """Staff visits the schools held can take: two at each Core school
+        and one at each Client, Core Trained and Core Graduate school."""
+        return self.staff_core_visits + self.client_schools
+
+    @property
+    def short_of_target(self) -> int:
+        """Visits of the target the schools held cannot supply, which is how
+        many more schools the person needs to recruit to meet it: one more
+        Client school is one more visit (owner, 2026-10-07: "those with less
+        should be notified to recruit more schools to meet the target")."""
+        return max(0, self.cap - self.portfolio_visits)
+
+    @property
     def core_over(self) -> int:
         """Core staff visits the ceiling cannot hold."""
         return max(0, self.staff_core_visits - self.cap) if self.cap else 0

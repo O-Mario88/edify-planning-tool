@@ -53,6 +53,7 @@ _COMPLETE_STATUSES = ("ia_verified", "accountant_confirmed", "completed", "close
 _NOT_STARTED_STATUSES = (
     "planned",
     "scheduled",
+    "rescheduled",
     "partner_scheduled",
     "assigned_to_partner",
 )
@@ -593,7 +594,14 @@ def build_items(
     if scope["kind"] == "team" and not scope["staff_ids"]:
         return []
 
-    qs = PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS)
+    from apps.partners.support_responsibility import left_partner_q
+
+    # Work taken back from the Partner, or handed back and since decided, is
+    # no longer theirs: it is in none of these tables and in none of their
+    # counts. It used to stay, reading "Returned", for the rest of the year.
+    qs = PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS).exclude(
+        left_partner_q()
+    )
     if _has_soft_delete():
         qs = qs.filter(deleted_at__isnull=True)
     team_q = _assignment_team_q(scope)
@@ -1320,11 +1328,13 @@ def build_items_for_school(school_id: str):
     exists to prevent.
     """
     from apps.partners.models import PartnerAssignment
+    from apps.partners.support_responsibility import left_partner_q
 
+    # A Partner the school was withdrawn from no longer supports it.
     assignments = list(
-        PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS).filter(
-            school_id=school_id
-        )
+        PartnerAssignment.objects.select_related(*ASSIGNMENT_RELATIONS)
+        .filter(school_id=school_id)
+        .exclude(left_partner_q())
     )
     if not assignments:
         return []
@@ -1436,8 +1446,14 @@ def summarize(items) -> dict:
             )
             for i in items
         ),
-        "active_partners": len({i.partner_id for i in items if i.partner_id}),
-        "schools_assigned": len({i.school_id for i in items if i.school_id}),
+        # Held by a Partner now: a hand-back still waiting on a staff
+        # decision is a row of the table, not a school assigned to them.
+        "active_partners": len(
+            {i.partner_id for i in items if i.partner_id and not i.is_returned}
+        ),
+        "schools_assigned": len(
+            {i.school_id for i in items if i.school_id and not i.is_returned}
+        ),
         "awaiting_schedule": len(awaiting),
         "scheduled": len(scheduled),
         "returned": len(returned),

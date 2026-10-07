@@ -22,6 +22,7 @@ def professional_kpis(items, variant="executive", density=None):
     names inside the KPIs … in all the KPIs and stats strips").
     """
     from apps.core.interventions import abbreviate_interventions, mentions_intervention
+    from apps.core.metrics.payload import HELPER_FIGURE_CHARS, brief_helper
 
     prepared = []
     for item in consolidate_kpi_items(items):
@@ -30,6 +31,20 @@ def professional_kpis(items, variant="executive", density=None):
             item = dict(item)
             item["helper_exact"] = helper
             item["helper"] = abbreviate_interventions(helper)
+        # The line under the figure is a second figure or nothing (owner,
+        # 2026-10-07: "minimize the explanations so the focus is on the actual
+        # KPI"). The sentence it was is kept whole for the hover text and for
+        # a screen reader, so nothing a tile said is lost.
+        shown = item.get("helper") if hasattr(item, "get") else None
+        # A line that names an intervention ("Weakest: TE") is a second fact
+        # about the figure, not an explanation of it: kept when it is short.
+        names_a_fact = bool(item.get("helper_exact")) if hasattr(item, "get") else False
+        if shown and not (names_a_fact and len(str(shown)) <= HELPER_FIGURE_CHARS):
+            brief = brief_helper(shown)
+            if brief != shown:
+                item = dict(item)
+                item["helper_note"] = item.get("helper_exact") or helper
+                item["helper"] = brief
         prepared.append(item)
     return prepared
 

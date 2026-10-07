@@ -88,7 +88,10 @@ def _visit_feedback_review(principal) -> list[dict]:
     from apps.core.scoping import resolve_user_scope, scoped_school_queryset
 
     scope = resolve_user_scope(principal)
-    schools = scoped_school_queryset(scope)
+    from apps.schools.lifecycle_service import active_schools
+
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     feedback_rows = list(
         SchoolVisitFeedback.objects.filter(
             activity__school_id__in=schools.values("id"),

@@ -87,7 +87,10 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
     _row(
         "Staff Active",
         line=128,
-        definition="Staff who signed in or had active time in the period.",
+        definition=(
+            "Staff who signed in or had active time in the period. The share "
+            "beside it is of the staff expected: those of them who were active."
+        ),
         question="How many people used the platform?",
         numerator="people with a sign-in or active seconds in the period",
         denominator="Staff Expected",
@@ -133,10 +136,16 @@ STAFF_ACTIVITY_METRIC_ROWS: tuple[dict, ...] = (
         line=142,
         definition=(
             "Successful governed workflow actions in the period, read from the audit "
-            "chain through apps.staff_activity.registry — never page views."
+            "chain through apps.staff_activity.registry — never page views. An "
+            "action is counted once, however many audit rows its request wrote "
+            "about the record, and under every id the chain holds for the person "
+            "(the user's, and the staff record's a partner hand-over is filed under)."
         ),
         question="How much operational work did the staff complete on the platform?",
-        numerator="successful AuditLog rows whose action is a registered meaningful action",
+        numerator=(
+            "distinct (request, record) pairs among successful AuditLog rows whose "
+            "action is a registered meaningful action"
+        ),
         models=_AUDIT,
         category="outcome",
     ),

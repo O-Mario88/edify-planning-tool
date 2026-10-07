@@ -1,12 +1,16 @@
 """Planned and remaining: one person's year in four parts, and one score.
 
-Owner, 2026-10-03: staff who had planned every visit and training their
-schools take, handed every school the Partner should have and put every
-school in a project still read as a few percent planned. Nothing was missing
-from the plan. The Planning Monitor divided each person's visits by the flat
-280 or 560 whatever they held, so somebody holding 80 schools could never
-pass 20%, and the country's line divided by the sum of every ceiling,
-people holding no school included.
+Owner, 2026-10-07: "280/560 ... are target visits set for PL/CCEO and once
+they have planned to that target, the rest they are supposed to assign to the
+partners", and, of somebody who holds fewer schools than that: always 280 /
+560, "but those with less should be notified to recruit more schools to meet
+the target". So a Programme Lead reads against 280 visits and a CCEO against
+560 whatever they hold, and a person whose schools cannot supply that many is
+told how many more to recruit (``schools_to_recruit``).
+
+This reverses the reading of 2026-10-03, when the target was the ceiling "or,
+for a portfolio that asks for fewer, what it asks for": a small portfolio
+fully planned read 100% then, and reads its visits of 280 or 560 now.
 
 This module reads the monitor's own rows (apps.planning.planning_monitor), so
 it counts nothing a second time, and says for each Programme Lead and CCEO,
@@ -16,9 +20,9 @@ each team and the country:
   Trained and Core Graduate school, up to the ceiling (280 / 560). What
   counts toward it is every Follow up, In-school Training and SSA Support
   visit staff schedule themselves (a Partner's SSA Support does not). The target
-  is the ceiling or, for a portfolio that asks for fewer, what it asks for.
+  is the role's 280 or 560, whatever the person holds.
   Partner: the other two at each Core school and one at every school beyond
-  staff capacity. A Partner visit is planned once the Partner has dated it.
+  that target. A Partner visit is planned once the Partner has dated it.
 * **Trainings** — the schools attached to an in-school training or a group
   training, of the schools that take a training (owner, 2026-10-03: "count
   all the schools attached to those"). A cluster meeting is not a training.
@@ -26,19 +30,23 @@ each team and the country:
 * **Partner assignment** — every Core school (for the Partner's half of its
   package) and every school beyond staff capacity, against those in a
   Partner's hands.
-* **Project assignment** — every school held, Champion included, against
-  those enrolled in an open project.
+* **Project assignment** — the schools the person has added to projects,
+  against the ceilings the Project Coordinator set them on their projects,
+  put together (owner, 2026-10-06). What remains is what is left to
+  reach those ceilings, not every school the person holds that is in no
+  project: it used to read 1,102 of 1,147 remaining for somebody whose
+  ceilings asked for a few dozen. Somebody with no ceiling is asked nothing.
 
 Each part has a target, what is planned and what remains, and a percentage
 that stops at 100: planning past a target is shown as over, never as cover for
 another gap. A part that asks nothing (nobody to hand over to a Partner)
 is complete. **Readiness** is the plain average of the four.
 
-A school already in a Partner's hands is the Partner's, whether or not it is
-beyond the ceiling: staff are not asked to visit a school they handed over,
-and the Partner's target includes it.
+Staff plan to their target first; the schools beyond it are the Partner's. A
+school handed over inside the target is counted with a Partner and is not
+asked of the Partner twice.
 
-The ceiling still warns and never refuses (owner, 2026-10-03), and nothing
+The target still warns and never refuses (owner, 2026-10-03), and nothing
 here assigns a school to anybody: the Partner's share is a target.
 """
 
@@ -147,10 +155,18 @@ _SUMMED = (
     "partner_credited",
     "partner_core_schools",
     "partner_beyond_staff",
+    "portfolio_visits",
+    "schools_to_recruit",
+    "short_people",
     "schools_staff_scheduled",
     "schools_staff_and_partner",
+    "client_staff_and_partner",
+    "core_visits_over",
     "project_total",
     "project_assigned",
+    "project_ceiling",
+    "project_added",
+    "project_credited",
     "duplicates",
     "over_ceiling_people",
     "over_ceiling_visits",
@@ -183,12 +199,31 @@ class Readiness:
     partner_credited: int = 0
     partner_core_schools: int = 0
     partner_beyond_staff: int = 0
+    # Staff visits the schools held can take (two a Core school, one each of
+    # the others), the schools still to recruit for them to take the role's
+    # target, and how many people that is (owner, 2026-10-07).
+    portfolio_visits: int = 0
+    schools_to_recruit: int = 0
+    short_people: int = 0
     # Schools held that staff scheduled a visit at themselves, and those of
     # them also in a Partner's hands.
     schools_staff_scheduled: int = 0
     schools_staff_and_partner: int = 0
+    # The two visit flags (owner, 2026-10-07). A Client, Core Trained or
+    # Core Graduate school takes one visit, so one scheduled by staff that is
+    # also with a Partner is booked twice. A Core school takes two visits by
+    # staff and two by a Partner, so it is flagged only with more than that.
+    client_staff_and_partner: int = 0
+    core_visits_over: int = 0
+    # Every school held, and those of them enrolled in an open project: the
+    # inventory's figures (Schools by type).
     project_total: int = 0
     project_assigned: int = 0
+    # The person's project ceilings put together, the schools they added to
+    # projects, and those no further than the ceilings.
+    project_ceiling: int = 0
+    project_added: int = 0
+    project_credited: int = 0
     # What Impact Assessment looks into.
     duplicates: int = 0
     over_ceiling_people: int = 0
@@ -235,7 +270,7 @@ class Readiness:
 
     @property
     def project_assignment(self) -> Line:
-        return Line(self.project_total, self.project_assigned, self.project_assigned)
+        return Line(self.project_ceiling, self.project_added, self.project_credited)
 
     @property
     def net_visits_remaining(self) -> int:
@@ -258,12 +293,13 @@ class Readiness:
     @property
     def applicable(self) -> bool:
         """Whether there is anything to be ready with: somebody holding no
-        school has no score, not a full one."""
+        school has no score, not a full one. Their visit target stands all
+        the same, and the row says how many schools they need to recruit."""
         return bool(
-            self.staff_visit_target
-            or self.staff_training_target
+            self.staff_training_target
             or self.partner_required
             or self.project_total
+            or self.project_ceiling
         )
 
     @property
@@ -336,9 +372,17 @@ class Readiness:
             "ceiling": self.ceiling,
             "visits": {
                 "staff": line(self.staff_visits),
+                "schools_held_can_take": self.portfolio_visits,
+                "schools_to_recruit": self.schools_to_recruit,
                 "schools_scheduled_by_staff": self.schools_staff_scheduled,
                 "schools_scheduled_by_staff_and_with_partner": (
                     self.schools_staff_and_partner
+                ),
+                "client_schools_scheduled_by_staff_and_with_partner": (
+                    self.client_staff_and_partner
+                ),
+                "core_schools_past_two_staff_or_two_partner_visits": (
+                    self.core_visits_over
                 ),
                 "partner": {
                     **line(self.partner_visits),
@@ -355,7 +399,11 @@ class Readiness:
                 "core_schools": self.partner_core_schools,
                 "beyond_staff_capacity": self.partner_beyond_staff,
             },
-            "project_assignment": line(self.project_assignment),
+            "project_assignment": {
+                **line(self.project_assignment),
+                "schools_held": self.project_total,
+                "schools_held_in_a_project": self.project_assigned,
+            },
             "completion": {
                 "visits": self.staff_visits.percent,
                 "trainings": self.staff_trainings.percent,
@@ -457,13 +505,11 @@ def person_readiness(officer) -> Readiness:
     core = [s for s in officer.schools if s.is_core]
     client = [s for s in officer.schools if not s.is_core]
     cap = int(officer.visits_target or 0)
-    # In a Partner's hands and not planned by staff: the Partner's school.
-    with_partner = [s for s in client if s.has_partner and not s.staff_visits]
     share = rules.workload(cap, len(core), len(client))
-    staff_client = min(share.remaining_capacity, len(client) - len(with_partner))
-    partner_client = len(client) - staff_client
-
-    staff_visit_target = min(cap, share.staff_core_visits + staff_client)
+    # The role's 280 or 560, whatever is held; the Client schools beyond it
+    # are the Partner's (owner, 2026-10-07).
+    staff_visit_target = cap
+    partner_client = share.partner_client_visits
     partner_visit_target = share.partner_core_visits + partner_client
     partner_visits = sum(
         min(s.partner_visits, _CORE.partner_visits) for s in core
@@ -485,6 +531,8 @@ def person_readiness(officer) -> Readiness:
     )
     client_assigned = sum(1 for s in client if s.has_partner)
     held = [*officer.schools, *officer.outreach_schools]
+    project_ceiling = int(getattr(officer, "project_ceiling", 0) or 0)
+    project_added = int(getattr(officer, "project_added", 0) or 0)
 
     inventory: dict[str, TypeInventory] = {}
     for school in held:
@@ -519,10 +567,18 @@ def person_readiness(officer) -> Readiness:
         partner_credited=core_assigned + min(client_assigned, partner_client),
         partner_core_schools=len(core),
         partner_beyond_staff=partner_client,
+        portfolio_visits=share.portfolio_visits,
+        schools_to_recruit=share.short_of_target,
+        short_people=1 if share.short_of_target else 0,
         schools_staff_scheduled=officer.schools_staff_scheduled,
         schools_staff_and_partner=officer.schools_staff_and_partner,
+        client_staff_and_partner=officer.client_staff_and_partner,
+        core_visits_over=officer.core_visits_over,
         project_total=len(held),
         project_assigned=sum(1 for s in held if s.in_project),
+        project_ceiling=project_ceiling,
+        project_added=project_added,
+        project_credited=min(project_added, project_ceiling),
         duplicates=sum(1 for s in client if is_duplicate(s)),
         over_ceiling_people=1 if officer.over_ceiling else 0,
         over_ceiling_visits=officer.over_ceiling,
@@ -572,6 +628,12 @@ def problems(figures: Readiness, *, expected_schools: int | None = None) -> list
             f"{expected_schools} operating schools in scope, "
             f"{figures.schools_total} on the rows"
         )
+    if figures.client_staff_and_partner > figures.schools_staff_and_partner:
+        found.append(
+            f"{figures.client_staff_and_partner} Client schools scheduled by "
+            f"staff and also with a Partner, of {figures.schools_staff_and_partner} "
+            "schools of every type"
+        )
     if figures.partner_visits_credited and not figures.partner_visit_target:
         found.append("Partner visits planned against a Partner target of nothing")
     if figures.partner_credited > figures.partner_required:
@@ -601,6 +663,11 @@ def verify(figures: Readiness, *, where: str, expected_schools: int | None = Non
 LEDGER = (
     ("staff_visit", "Staff visits on a person's row", False),
     ("partner_visit", "Partner visits at a school on the rows", False),
+    (
+        "partner_no_visit_school",
+        "Partner visits at a school that takes none, such as a Champion (not counted)",
+        False,
+    ),
     ("cluster", "Group trainings and cluster meetings (schools with training)", False),
     ("training", "In-school trainings (schools with training)", False),
     ("companion", "The visit an in-school training writes beside itself", False),
@@ -621,7 +688,11 @@ def _outside_ssa(project_id) -> bool:
     return is_outside_ssa(project_id)
 
 
-def _ledger_key(row, people: set, schools: set) -> str:
+def _ledger_key(row, people: set, schools: set, counted: set | None = None) -> str:
+    """Where one planned activity goes. ``schools`` are the schools on the
+    rows; ``counted`` those of them that take a visit (every one, when it is
+    not given): a Partner's visit at a Champion school is on nobody's
+    figures, and was filed with the Partner visits that are."""
     from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
 
     activity_type, purpose = row["activity_type"], row["purpose_type"]
@@ -635,7 +706,11 @@ def _ledger_key(row, people: set, schools: set) -> str:
         activity_type, purpose, row["project_id"], delivery_type=delivery
     )
     if shaped and kind and delivery == "partner":
-        return "partner_visit" if row["school_id"] in schools else "off_schools"
+        if row["school_id"] in (schools if counted is None else counted):
+            return "partner_visit"
+        return (
+            "partner_no_visit_school" if row["school_id"] in schools else "off_schools"
+        )
     if shaped and kind:
         on_row = str(row["responsible_staff_id"] or "") in people
         return "staff_visit" if on_row else "off_roster"
@@ -672,6 +747,7 @@ def ledger(monitor: dict, fy: str, *, whole_country: bool) -> dict:
         for officer in officers
         for s in (*officer.schools, *officer.outreach_schools)
     }
+    counted = {s.id for officer in officers for s in officer.schools}
     planned = Activity.objects.filter(fy=str(fy), deleted_at__isnull=True).filter(
         rules.planned_q()
     )
@@ -689,7 +765,7 @@ def ledger(monitor: dict, fy: str, *, whole_country: bool) -> dict:
         "responsible_staff_id",
         "project_id",
     ):
-        counts[_ledger_key(row, people, schools)] += 1
+        counts[_ledger_key(row, people, schools, counted)] += 1
     lines = [
         {"key": key, "label": label, "count": counts[key], "flagged": flagged}
         for key, label, flagged in LEDGER

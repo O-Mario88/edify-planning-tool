@@ -31,6 +31,7 @@ from apps.ssa.recommendation_models import (
     SsaRecommendation,
     condition_key_for,
 )
+from apps.schools.lifecycle_service import active_schools
 
 #: How long a recommendation stays current before it should be re-derived from
 #: a fresher assessment. An SSA cycle is annual; half a year is the point at
@@ -341,7 +342,6 @@ def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> 
 
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
-    from apps.schools.models import School
     from apps.ssa.models import SsaRecord
     from apps.ssa.plan_alignment import link_recommendations
 
@@ -356,7 +356,7 @@ def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> 
         .values("id")[:1]
     )
     schools = (
-        School.objects.filter(deleted_at__isnull=True)
+        active_schools()
         .annotate(latest_ssa_id=latest)
         .exclude(latest_ssa_id=None)
         .annotate(
@@ -391,6 +391,7 @@ def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> 
             status__in=(
                 "planned",
                 "scheduled",
+                "rescheduled",
                 "assigned_to_partner",
                 "partner_scheduled",
                 "in_progress",

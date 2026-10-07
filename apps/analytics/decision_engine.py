@@ -20,6 +20,7 @@ from django.db.models import Max
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.ssa import change_rules
 
@@ -46,9 +47,8 @@ def _scoped_school_ids(principal) -> list[str]:
     portfolio.
     """
     scope = resolve_user_scope(principal)
-    schools = scoped_school_queryset(
-        scope, School.objects.filter(deleted_at__isnull=True)
-    )
+    # Operating schools: a closed school is in no current denominator.
+    schools = scoped_school_queryset(scope, active_schools())
     if schools is None:
         return []
     return list(schools.values_list("id", flat=True))

@@ -208,6 +208,14 @@ class PartnerAssignment(TimeStampedModel):
     STATUS_RETURNED_TO_STAFF = PartnerAssignmentStatus.RETURNED_TO_STAFF.value
     UNSCHEDULED_STATUSES = (STATUS_ASSIGNED, STATUS_PENDING_SCHEDULING)
     SCHEDULED_STATUSES = (STATUS_PARTNER_SCHEDULED, STATUS_SCHEDULED, STATUS_COMPLETED)
+    #: The Partner no longer holds the work: they handed it back, or staff
+    #: took it back (a withdrawal ends in ``returned_to_staff`` too). The two
+    #: legacy spellings mean the same and no writer produces them any more.
+    RELEASED_STATUSES = (
+        STATUS_RETURNED_TO_STAFF,
+        PartnerAssignmentStatus.RETURNED.value,
+        PartnerAssignmentStatus.CANCELLED.value,
+    )
 
     id = CuidField()
     school = models.ForeignKey(
@@ -471,6 +479,24 @@ class PartnerAssignment(TimeStampedModel):
     #: The purpose of a data collection hand-over (SSA Support): assigned on
     #: any school, counted nowhere (owner, 2026-10-02).
     DATA_COLLECTION_PURPOSE = "ssa_support"
+
+    @property
+    def is_released(self) -> bool:
+        """The Partner no longer holds this work (``RELEASED_STATUSES``)."""
+        return self.status in self.RELEASED_STATUSES
+
+    @property
+    def has_left_partner(self) -> bool:
+        """Released, with nothing left for staff to decide: not a school
+        assigned to the Partner, and not a row of any list of them (owner,
+        2026-10-06: "it should leave the list or tables where they have been
+        withdrawn"). A hand-back nobody has decided on is still somebody's
+        to act on, so it stays where that decision is made."""
+        if not self.is_released:
+            return False
+        return (
+            self.status != self.STATUS_RETURNED_TO_STAFF or self.resolved_at is not None
+        )
 
     @property
     def is_data_collection(self) -> bool:

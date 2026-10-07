@@ -82,6 +82,12 @@ EMBED = {"HTTP_HX_REQUEST": "true", "HTTP_X_EDIFY_EMBED": "dashboard"}
 
 class Team(TestCase):
     def setUp(self):
+        # These tests write audit rows directly, outside any request. A
+        # request made earlier on this thread leaves its context behind, and
+        # the rows would all carry that one request's id.
+        from apps.core.request_context import set_request_context
+
+        set_request_context(None)
         self.director = _user("clara", "CountryDirector")
         self.admin = _user("root", "Admin")
         self.accountant = _user("abby", "Accountant")

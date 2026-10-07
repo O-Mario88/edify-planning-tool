@@ -36,7 +36,7 @@
   </section>
 
   <section class="sal-aside__part" aria-labelledby="sal-teamtrend-title">
-    <h3 id="sal-teamtrend-title">Active staff, last 7 days</h3>
+    <h3 id="sal-teamtrend-title">Active staff a day, {% if insights.trend_is_latest %}last 7 days{% else %}7 days to {{ insights.trend_end|date:"j M" }}{% endif %}</h3>
     <ol class="sal-bars sal-bars--team">
       {% for d in insights.trend %}
       <li title="{{ d.day|date:'D j M' }}: {{ d.count }} active">
@@ -49,7 +49,7 @@
   </section>
 
   <section class="sal-aside__part" aria-labelledby="sal-devices-title">
-    <h3 id="sal-devices-title">Device split</h3>
+    <h3 id="sal-devices-title">Sign-ins by device</h3>
     {% if insights.device_total %}
     <ul class="sal-devices">
       {% for d in insights.devices %}<li><strong>{{ d.share }}%</strong> {{ d.label }}</li>{% endfor %}

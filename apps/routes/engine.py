@@ -37,6 +37,7 @@ from apps.routes.models import (
     RouteStatus,
     RouteValidationIssue,
 )
+from apps.schools.lifecycle_service import active_schools
 
 # ── Working-day + travel constants ───────────────────────────────────────────
 WORK_MINUTES = 9 * 60  # 08:00 – 17:00
@@ -351,7 +352,8 @@ class RouteRecommendationService:
             # Nearby schools in the dominant sub-county; ones still needing
             # SSA first (they benefit most from an extra visit), then the rest.
             candidates = (
-                School.objects.filter(sub_county_id=dominant, deleted_at__isnull=True)
+                active_schools()
+                .filter(sub_county_id=dominant)
                 .exclude(id__in=selected_ids)
                 .order_by("current_fy_ssa_status", "id")[:3]
             )

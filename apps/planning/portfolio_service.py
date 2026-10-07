@@ -301,7 +301,9 @@ def country_portfolio(
 
     today = today or date.today()
     scope = resolve_user_scope(principal)
-    queryset = scoped_school_queryset(scope)
+
+    # Operating schools: a closed school is in no current denominator.
+    queryset = scoped_school_queryset(scope, active_schools())
     if queryset is None:
         return {
             "leads": [],

@@ -7,9 +7,12 @@ nothing indexed it and each question read the whole table: 5-7 ms a call on
 production, 60,000 calls, a quarter of the database's time (audit,
 2026-10-05).
 
-The index is checked in the database's own catalogue rather than through a
-query plan: on a table as small as a test's, Postgres reads it whole whether
-or not an index exists.
+The index is checked in the database's own catalogue, and its use through a
+query plan over a table with rows in it. An empty table's plan proves
+nothing: once Postgres has analysed the table as empty every index on it
+costs the same, and the planner keeps the first one made, which is not this
+one. That test passed or failed by whether autovacuum had reached the table
+in the worker's database before it ran (CI, 2026-10-07).
 """
 
 from __future__ import annotations
@@ -17,7 +20,11 @@ from __future__ import annotations
 from django.db import connection
 from django.test import TestCase
 
-from apps.core_schools.models import CoreActivitySlot
+from apps.core_schools.models import CoreActivitySlot, CorePlan
+
+#: Enough slots that reading them all through another index costs more than
+#: finding one through this one.
+SLOTS = 300
 
 
 def indexes_leading_with(model, column: str) -> list[str]:
@@ -42,7 +49,24 @@ class SlotActivityLookupIndexTest(TestCase):
         )
 
     def test_the_lookup_uses_it(self):
+        plan_row = CorePlan.objects.create(id="idx-plan", school_id="IDX-1", fy="2027")
+        CoreActivitySlot.objects.bulk_create(
+            CoreActivitySlot(
+                id=f"idx-slot-{n}",
+                core_plan=plan_row,
+                school_id="IDX-1",
+                intervention="leadership",
+                activity_type="visit",
+                sequence_number=n,
+                activity_id=f"act-{n}",
+            )
+            for n in range(SLOTS)
+        )
         with connection.cursor() as cursor:
+            # Inside the test's transaction: the figures are this test's and
+            # leave with it.
+            cursor.execute("ANALYZE core_activity_slot")
+            cursor.execute("ANALYZE core_plan")
             cursor.execute("SET LOCAL enable_seqscan = off")
         plan = (
             CoreActivitySlot.objects.filter(activity_id="act-1")

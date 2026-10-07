@@ -5,7 +5,7 @@ from __future__ import annotations
 from apps.accounts.models import Report
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from apps.schools.models import School
+from apps.schools.lifecycle_service import active_schools
 
 
 def _scoped_reports(principal):
@@ -41,7 +41,7 @@ def generate(data: dict, principal) -> dict:
     report_type = data.get("type", "program_summary")
     fy = data.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
-    schools = School.objects.filter(deleted_at__isnull=True)
+    schools = active_schools()
     if not scope.country_scope and scope.school_ids:
         schools = schools.filter(id__in=scope.school_ids)
     summary = {

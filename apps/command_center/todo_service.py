@@ -29,6 +29,7 @@ from django.utils import timezone
 from apps.core.cache_utils import stampede_safe_get_or_compute
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
+from apps.schools.lifecycle_service import active_schools
 
 logger = logging.getLogger(__name__)
 
@@ -476,8 +477,6 @@ def _fund_request_todos(principal, role):
 
 
 def _school_quality_todos(scope):
-    from apps.schools.models import School
-
     # A Programme Lead's data-quality chores are their own schools'. Falling
     # back to the team's put every officer's missing contact and unclustered
     # school on the lead's desk, as work the officer owns and the lead cannot
@@ -489,7 +488,7 @@ def _school_quality_todos(scope):
         ids = scope.own_school_ids or scope.school_ids
     if not ids:
         return []
-    qs = School.objects.filter(id__in=ids, deleted_at__isnull=True)
+    qs = active_schools().filter(id__in=ids)
     todos = []
 
     def _q(title, desc, category, priority, label, url, sid, key):
@@ -2415,7 +2414,6 @@ def _core_school_todos(principal, role):
     try:
         from apps.core.fy import get_operational_fy
         from apps.core_schools.models import CorePlan
-        from apps.schools.models import School
 
         scope = resolve_user_scope(principal)
         own_pks = list(
@@ -2425,9 +2423,9 @@ def _core_school_todos(principal, role):
         fy = get_operational_fy()
         own_codes = (
             dict(
-                School.objects.filter(
-                    id__in=own_pks, school_type="core", deleted_at__isnull=True
-                ).values_list("school_id", "name")
+                active_schools()
+                .filter(id__in=own_pks, school_type="core")
+                .values_list("school_id", "name")
             )
             if own_pks
             else {}
@@ -2511,7 +2509,6 @@ def _team_core_school_todos(principal, fy) -> list[dict]:
     from apps.accounts.models import StaffSchoolAssignment
     from apps.core_schools.models import CorePlan
     from apps.hr.team_roster import team_members
-    from apps.schools.models import School
 
     members = team_members(principal)
     if not members:
@@ -2527,9 +2524,11 @@ def _team_core_school_todos(principal, fy) -> list[dict]:
     if not staff_by_school:
         return []
     officers_of: dict[str, set[str]] = {}
-    for school_pk, code in School.objects.filter(
-        id__in=list(staff_by_school), school_type="core", deleted_at__isnull=True
-    ).values_list("id", "school_id"):
+    for school_pk, code in (
+        active_schools()
+        .filter(id__in=list(staff_by_school), school_type="core")
+        .values_list("id", "school_id")
+    ):
         officers_of.setdefault(code, set()).update(staff_by_school[school_pk])
     if not officers_of:
         return []
@@ -3537,9 +3536,14 @@ def _business_transformation_todos(principal, role, today):
 
         uncovered = list(
             District.objects.annotate(
+                # Operating schools: a closed school is not eligible for
+                # financing and is on the Closed Schools page.
                 eligible_count=models.Count(
                     "schools",
-                    filter=Q(schools__deleted_at__isnull=True),
+                    filter=Q(
+                        schools__deleted_at__isnull=True,
+                        schools__operational_status__in=("active", "reopened"),
+                    ),
                     distinct=True,
                 ),
                 financed_count=models.Count(

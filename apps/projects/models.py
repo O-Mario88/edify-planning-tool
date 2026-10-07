@@ -309,6 +309,27 @@ class ProjectSchoolAssignment(TimeStampedModel):
         ]
 
 
+def current_enrolments(queryset=None):
+    """Enrolments at schools that are operating.
+
+    A school that has closed is on the Closed Schools page, not on a project's
+    table: nobody plans work there and it is not one of the project's schools
+    today (owner, 2026-10-07: "if a school is closed they go to the closed
+    school list and total number updated"). The enrolment row itself stays
+    where project work was delivered, because the baseline and the follow-up
+    it was measured by are that work's record; the impact reports read it.
+    """
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    queryset = (
+        queryset if queryset is not None else ProjectSchoolAssignment.objects.all()
+    )
+    return queryset.filter(
+        school__deleted_at__isnull=True,
+        school__operational_status__in=OPERATING_STATUSES,
+    )
+
+
 class ProjectSchoolEnrollmentHistory(TimeStampedModel):
     """A school's finished spell in a project (owner, 2026-09-15).
 
