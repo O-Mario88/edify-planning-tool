@@ -562,6 +562,14 @@ class Activity(SoftDeleteModel):
                 from apps.core_schools.cluster_credit import credit_cluster_session
 
                 credit_cluster_session(self)
+            # Work that has been called off holds no slot: it goes back to the
+            # package, and what is still live takes the first slots again
+            # (owner, 2026-10-08: "the v1 or v2 v3 or v4 should be reset back
+            # to the actual scheduled activities"). Mirrored as it used to be,
+            # a cancelled visit stayed on V1 and the next one read V2.
+            from apps.core_schools.package_credit import give_back_slots
+
+            give_back_slots(self)
             # One cluster session can fill a slot at several schools.
             for slot in CoreActivitySlot.objects.filter(
                 activity_id=self.id

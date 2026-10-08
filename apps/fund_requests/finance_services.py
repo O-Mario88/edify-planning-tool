@@ -297,7 +297,15 @@ class FinanceBlockedReasonService:
         from apps.evidence.models import EvidenceRecord
 
         if queryset is None:
-            queryset = Activity.objects.filter(deleted_at__isnull=True)
+            # Work that was called off is owed no payment, so nothing blocks
+            # one: it is not on this list (owner, 2026-10-08: "the cancelled
+            # activities should not remain counting"). A caller that passes
+            # its own activities decides for itself.
+            from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+
+            queryset = Activity.objects.filter(deleted_at__isnull=True).exclude(
+                status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+            )
         activity = OuterRef("pk")
         return queryset.annotate(
             fin_has_evidence=Exists(

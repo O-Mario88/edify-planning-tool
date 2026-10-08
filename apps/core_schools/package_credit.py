@@ -688,6 +688,217 @@ def reserve_for_assignment(assignment):
     return slot
 
 
+# ── Work that is called off ──────────────────────────────────────────────────
+# Owner, 2026-10-08: "the cancelled activities should not remain counting for
+# example if i scheduled school visits on core school and cancelled, it should
+# stop counting and the v1 or v2 v3 or v4 should be reset back to the actual
+# scheduled activities. Apply the same on training, T1, T2, T3, T4 display."
+#
+# A cancelled visit stopped being counted, but it stayed on its slot: with V1
+# cancelled and V2 booked the package read "V1 not planned, V2 planned", and
+# the slot still pointed at the cancelled visit. The slot now goes back to the
+# package and the work that is live takes the first slots again, in the order
+# it held them, so two visits read V1 and V2 whichever was cancelled.
+
+
+def _is_taken(slot) -> bool:
+    """Whether a slot is spoken for: filled by work that is still live —
+    whatever stage it has reached — or held for a Partner who has not dated
+    it. A slot left pointing at work that was called off is not."""
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.core_schools import package_year
+    from apps.core_schools.core_planning_services import (
+        CorePackageSchedulingService,
+        slot_state,
+    )
+
+    status = (slot.status or "").strip().lower()
+    if slot.activity_id:
+        return status not in NOT_IN_PLAN_ACTIVITY_STATUSES and not package_year.is_open(
+            status
+        )
+    return slot_state(
+        slot.status
+    ) == "done" or CorePackageSchedulingService.status_is_taken(slot.status)
+
+
+def close_gaps(plan, kind: str) -> dict[int, int]:
+    """Renumber one kind of a package so its live work holds the first slots.
+
+    The slots that are taken keep their order and move down over any that
+    opened before them; the rest are open. A hand-over that names its slot
+    (a Core Schools hand-over: "Visit 3") is renumbered with it, so the
+    Partner dating it later still finds the slot it holds.
+
+    Returns ``{old number: new number}`` for what moved; empty when the
+    package already reads from its first slot. Call inside a transaction.
+    """
+    from apps.core_schools import package_year
+    from apps.core_schools.models import CoreActivitySlot
+
+    slots = list(
+        CoreActivitySlot.objects.select_for_update(of=("self",))
+        .filter(core_plan=plan, activity_type=kind)
+        .order_by("sequence_number")
+    )
+    taken = [slot for slot in slots if _is_taken(slot)]
+    if [slot.id for slot in taken] == [slot.id for slot in slots[: len(taken)]]:
+        # No gap among the taken ones. A slot left linked to work that is no
+        # longer live is still cleared, so nothing reads as held by it.
+        for slot in slots[len(taken) :]:
+            if slot.activity_id or not package_year.is_open(slot.status):
+                package_year._clear(slot)
+                slot.save()
+        return {}
+    work = [
+        (
+            {name: getattr(slot, name) for name in package_year.SLOT_WORK_FIELDS},
+            slot.sequence_number,
+        )
+        for slot in taken
+    ]
+    moves: dict[int, int] = {}
+    for position, slot in enumerate(slots):
+        if position < len(work):
+            fields, was = work[position]
+            for name, value in fields.items():
+                setattr(slot, name, value)
+            if was != slot.sequence_number:
+                moves[was] = slot.sequence_number
+        else:
+            package_year._clear(slot)
+        slot.save()
+    _renumber_named_handovers(plan, kind, moves)
+    return moves
+
+
+def _renumber_named_handovers(plan, kind: str, moves: dict[int, int]) -> None:
+    """Keep the hand-overs that name a slot of this package on the slot they
+    hold, after it has moved. Lowest new number first: the number each takes
+    was given up by the one before it."""
+    from apps.partners.models import PartnerAssignment
+    from apps.schools.models import School
+
+    if not moves:
+        return
+    school_ids = list(
+        School.objects.filter(school_id=plan.school_id).values_list("id", flat=True)
+    )
+    field = "visit_number" if kind == "visit" else "training_number"
+    named = [
+        handover
+        for handover in PartnerAssignment.objects.filter(school_id__in=school_ids)
+        .exclude(status__in=PartnerAssignment.RELEASED_STATUSES)
+        .exclude(**{f"{field}__isnull": True})
+        .exclude(**{field: ""})
+        if assignment_kind(handover) == kind
+    ]
+
+    def number_of(handover) -> int:
+        try:
+            return int(getattr(handover, field) or 0)
+        except ValueError:
+            return 0
+
+    for handover in sorted(named, key=lambda h: moves.get(number_of(h), 0)):
+        target = moves.get(number_of(handover))
+        if not target:
+            continue
+        try:
+            with transaction.atomic():
+                setattr(handover, field, str(target))
+                handover.save(update_fields=[field, "updated_at"])
+        except Exception:  # noqa: BLE001 - bookkeeping never blocks the release
+            logger.warning(
+                "Could not renumber hand-over %s to %s %s",
+                handover.id,
+                kind,
+                target,
+                exc_info=True,
+            )
+
+
+def give_back_slots(activity) -> int:
+    """Give back the package slots held by work that has been called off —
+    cancelled, rejected, deferred or no longer planned
+    (``NOT_IN_PLAN_ACTIVITY_STATUSES``) — and renumber what is left
+    (``close_gaps``). Returns how many slots went back.
+
+    A visit waiting for its owner's approval keeps its slot: it is on its way
+    into the plan, not out of it.
+
+    Called on every save of an activity (``Activity.save``): for live work it
+    does nothing.
+    """
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.core_schools.cluster_credit import _release
+    from apps.core_schools.models import CoreActivitySlot
+    from apps.core_schools.services import resync_plan_completion
+
+    if (activity.status or "") not in NOT_IN_PLAN_ACTIVITY_STATUSES:
+        return 0
+    with transaction.atomic():
+        slots = list(
+            CoreActivitySlot.objects.select_for_update(of=("self",))
+            .filter(activity_id=activity.id)
+            .select_related("core_plan")
+        )
+        packages = {}
+        for slot in slots:
+            _release(slot)
+            packages[(slot.core_plan_id, slot.activity_type)] = slot.core_plan
+        for (_plan_id, kind), plan in packages.items():
+            close_gaps(plan, kind)
+            resync_plan_completion(plan)
+    return len(slots)
+
+
+def hold_slot_again(assignment):
+    """A hand-over whose date was undone is waiting again, and holds a place
+    in its Core School's package as it did before the Partner dated it: the
+    package's next open slot of its kind, marked Assigned. One that names its
+    slot is renumbered to the slot it takes. Returns the slot, or None."""
+    from apps.core_schools.core_planning_services import (
+        CorePackageSchedulingService,
+    )
+    from apps.core_schools.services import ensure_core_plan, resync_plan_completion
+
+    if not _names_its_slot(assignment):
+        return reserve_for_assignment(assignment)
+    school = assignment.school
+    kind = assignment_kind(assignment)
+    if school is None or school.school_type != "core" or kind is None:
+        return None
+    with transaction.atomic():
+        plan = ensure_core_plan(school)
+        if plan is None:
+            return None
+        slot = next(
+            (
+                candidate
+                for candidate in plan.slots.select_for_update()
+                .filter(activity_type=kind)
+                .order_by("sequence_number")
+                if not CorePackageSchedulingService.status_is_taken(candidate.status)
+            ),
+            None,
+        )
+        if slot is None:
+            return None
+        slot.status = "Assigned"
+        slot.activity_id = None
+        slot.owner = "partner"
+        slot.assigned_partner_id = assignment.partner_id
+        slot.assigned_partner_name = getattr(assignment.partner, "name", None)
+        slot.save()
+        field = "visit_number" if kind == "visit" else "training_number"
+        if str(getattr(assignment, field) or "") != str(slot.sequence_number):
+            setattr(assignment, field, str(slot.sequence_number))
+            assignment.save(update_fields=[field, "updated_at"])
+        resync_plan_completion(plan)
+    return slot
+
+
 def release_assignment_slot(assignment, *, replacement=None):
     """Give back the slot a handover held, now that the partner no longer
     holds the work — withdrawn by staff, or returned by the partner.

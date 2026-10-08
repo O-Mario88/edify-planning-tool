@@ -9,6 +9,7 @@ from apps.core.donut import build_gauge
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
     COMPLETED_WORK_STATUSES,
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
     PROGRAMME_EVENT_TYPES,
     TRAINING_TYPES,
     VISIT_TYPES,
@@ -185,7 +186,14 @@ def fy_overview_view(request):
         .distinct()
         .count()
     )
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
+    # Work that was called off is nobody's plan (owner, 2026-10-08: "the
+    # cancelled activities should not remain counting"): counted here it
+    # lowered the completion rate each time a visit was cancelled.
+    total_activities = (
+        Activity.objects.filter(deleted_at__isnull=True)
+        .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
+        .count()
+    )
     completed_activities = Activity.objects.filter(
         status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
     ).count()

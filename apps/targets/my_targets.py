@@ -55,6 +55,10 @@ from apps.analytics.pl_analytics_service import (
 IA_VERIFIED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 
 RETURNED_STATUSES = ("returned_by_pl", "returned_by_ia", "cancelled", "rejected")
+#: Of those, the work sent back to be corrected and submitted again. Work
+#: that was cancelled or rejected is not waiting on anybody (owner,
+#: 2026-10-08: cancelled work does not count).
+RETURNED_FOR_CORRECTION_STATUSES = ("returned_by_pl", "returned_by_ia")
 
 # Pacing thresholds (mandate §11) — configurable in one place.
 ON_TRACK_BAND = 5  # within ±5pp of expected pace
@@ -1351,9 +1355,12 @@ class MyTargetQueryService:
                     "date": a.planned_date,
                     "status": a.status.replace("_", " ").title(),
                 }
-                if a.status in RETURNED_STATUSES:
+                if a.status in RETURNED_FOR_CORRECTION_STATUSES:
                     row["why"] = "Returned — fix and resubmit"
                     out["returned"].append(row)
+                elif a.status in RETURNED_STATUSES:
+                    # Cancelled or rejected: in no list of work to act on.
+                    continue
                 elif a.status in COMPLETED_STATUSES:
                     if (a.salesforce_activity_id or "").strip():
                         if a.status == "awaiting_ia_verification":

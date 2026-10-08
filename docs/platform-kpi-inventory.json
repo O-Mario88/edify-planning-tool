@@ -3867,7 +3867,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 843,
+   "line": 851,
    "label": null,
    "keys": [
     "count",
@@ -3886,7 +3886,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 851,
+   "line": 859,
    "label": null,
    "keys": [
     "count",
@@ -3905,7 +3905,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2335,
+   "line": 2343,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3925,7 +3925,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3908,
+   "line": 3916,
    "label": null,
    "keys": [
     "label",
@@ -3942,7 +3942,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4722,
+   "line": 4730,
    "label": null,
    "keys": [
     "count",
@@ -3961,7 +3961,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 865,
+   "line": 873,
    "label": null,
    "keys": [
     "count",
@@ -3980,7 +3980,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1324,
+   "line": 1332,
    "label": null,
    "keys": [
     "achieved",
@@ -4001,7 +4001,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1431,
+   "line": 1439,
    "label": null,
    "keys": [
     "label",
@@ -4018,7 +4018,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3814,
+   "line": 3822,
    "label": "About",
    "keys": [
     "label",
@@ -4035,7 +4035,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3815,
+   "line": 3823,
    "label": "Raised by",
    "keys": [
     "label",
@@ -4052,7 +4052,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3816,
+   "line": 3824,
    "label": "Flag",
    "keys": [
     "label",
@@ -4069,7 +4069,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3817,
+   "line": 3825,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -8645,7 +8645,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3120,
+   "line": 3144,
    "label": null,
    "keys": [
     "count",
@@ -8663,7 +8663,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3237,
+   "line": 3261,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -11113,7 +11113,7 @@
    "audit_id": "KPI-SOURCE-612",
    "kind": "breakdown-row",
    "module": "apps/planning/country_execution/service.py",
-   "line": 1866,
+   "line": 1870,
    "label": null,
    "keys": [
     "count",
@@ -12131,7 +12131,7 @@
    "audit_id": "KPI-SOURCE-667",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 1034,
+   "line": 1038,
    "label": null,
    "keys": [
     "achieved",
@@ -12157,7 +12157,7 @@
    "audit_id": "KPI-SOURCE-668",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 1187,
+   "line": 1191,
    "label": null,
    "keys": [
     "count",
@@ -12174,7 +12174,7 @@
    "audit_id": "KPI-SOURCE-669",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 1115,
+   "line": 1119,
    "label": null,
    "keys": [
     "achieved",
@@ -12198,7 +12198,7 @@
    "audit_id": "KPI-SOURCE-670",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 1306,
+   "line": 1310,
    "label": null,
    "keys": [
     "label",
@@ -12515,7 +12515,7 @@
    "audit_id": "KPI-SOURCE-685",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 1357,
+   "line": 1362,
    "label": null,
    "keys": [
     "label",
@@ -12533,7 +12533,7 @@
    "audit_id": "KPI-SOURCE-686",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1409,
+   "line": 1414,
    "label": null,
    "keys": [
     "label",
@@ -12574,7 +12574,7 @@
    "audit_id": "KPI-SOURCE-688",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1352,
+   "line": 1357,
    "label": "Overall weighted performance",
    "keys": [
     "label",
@@ -12591,7 +12591,7 @@
    "audit_id": "KPI-SOURCE-689",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1354,
+   "line": 1359,
    "label": null,
    "keys": [
     "label",
@@ -12608,7 +12608,7 @@
    "audit_id": "KPI-SOURCE-690",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 1287,
+   "line": 1292,
    "label": null,
    "keys": [
     "achieved",
@@ -42224,7 +42224,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3367,
+   "line": 3375,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42246,7 +42246,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4109,
+   "line": 4117,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -42806,7 +42806,7 @@
   {
    "audit_id": "KPI-PAYLOAD-033",
    "module": "apps/targets/team_targets.py",
-   "line": 1089,
+   "line": 1094,
    "function": "get_page",
    "target": "validation_issues",
    "source_item_count": 3,
@@ -42828,7 +42828,7 @@
   {
    "audit_id": "KPI-PAYLOAD-034",
    "module": "apps/targets/team_targets.py",
-   "line": 1193,
+   "line": 1198,
    "function": "get_page",
    "target": "summary_kpis",
    "source_item_count": 6,

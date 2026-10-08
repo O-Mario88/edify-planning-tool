@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
@@ -832,6 +833,127 @@ def mark_assignment_scheduled(assignment, *, scheduled_date, activity):
         ]
     )
     return assignment
+
+
+#: What cancelling a partner's activity did to the hand-over it belonged to.
+HANDOVER_REOPENED = "reopened"
+HANDOVER_CLOSED = "closed"
+
+
+def undo_assignment_scheduling(
+    activity, *, partner_dated: bool, reason: str = "", actor_id: str = ""
+) -> str:
+    """Undo the scheduling a cancelled activity stood for (owner, 2026-10-08:
+    "cancelled activities should undo the scheduling done and should apply to
+    both staff and partner cancelled activities").
+
+    Cancelling staff's own work already put the school back where it was. A
+    Partner's work did not come back: the hand-over stayed "scheduled by the
+    partner" on the cancelled day, pointing at the cancelled activity, so the
+    Partner was refused when it tried to date the school again ("This
+    assignment is already scheduled") and the school was on no list — neither
+    waiting for the Partner nor on its plan.
+
+    What is undone is what the scheduling did, and no more:
+
+    * **The Partner had dated it** (``partner_dated``). The date is what was
+      scheduled, so the date is what goes: the hand-over is waiting for the
+      Partner again, with no day and no activity, and the Partner dates it
+      afresh. The school stays assigned — taking it back from the Partner is
+      a withdrawal, with its own reasons and notices. ``HANDOVER_REOPENED``.
+    * **Staff had booked it** — a Certified Partner Agency put on a day, or
+      work created already carrying a Partner that the Partner never dated.
+      The booking is what was scheduled, so the booking goes: its hand-over
+      is closed, with nothing left for anybody to decide, and no longer holds
+      the school, a package slot or a place among the school's Partners.
+      ``HANDOVER_CLOSED``.
+
+    Returns which, or "" when the activity belongs to no live hand-over. Call
+    inside the cancellation's transaction; the hand-over row is locked. A
+    withdrawal does not come through here: it decides the hand-over itself.
+    """
+    from apps.audit.services import log as audit_log
+
+    assignment = (
+        PartnerAssignment.objects.select_for_update(of=("self",))
+        .select_related("school", "partner")
+        .filter(scheduled_activity_id=activity.id)
+        .first()
+    )
+    if assignment is None or assignment.status not in (
+        PartnerAssignment.SCHEDULED_STATUSES
+    ):
+        return ""
+    reason = (reason or "").strip()
+    before = {
+        "status": assignment.status,
+        "scheduledDate": (
+            assignment.scheduled_date.isoformat() if assignment.scheduled_date else None
+        ),
+        "activityId": activity.id,
+    }
+    # One open hand-over per school and partner (the model's own rule): with
+    # another already waiting, this one cannot wait beside it.
+    reopen = partner_dated and assignment.open_duplicate() is None
+    assignment.scheduled_date = None
+    assignment.scheduled_activity = None
+    fields = ["status", "scheduled_date", "scheduled_activity", "updated_at"]
+    if reopen:
+        assignment.status = PartnerAssignment.STATUS_PENDING_SCHEDULING
+        if not assignment.training_course_id and activity.training_course_id:
+            # Work created in one step names its training on the activity
+            # alone; the Partner dating it again must deliver the same one.
+            assignment.training_course_id = activity.training_course_id
+            fields.append("training_course")
+    else:
+        now = timezone.now()
+        assignment.status = PartnerAssignment.STATUS_RETURNED_TO_STAFF
+        assignment.returned_at = now
+        assignment.return_reason = f"The booking was cancelled. {reason}".strip()[
+            :RETURN_REASON_MAX_LENGTH
+        ]
+        assignment.resolution = PartnerAssignment.RESOLUTION_SUPPORT_CLOSED
+        assignment.resolution_note = "Closed with the cancelled activity."
+        assignment.resolved_at = now
+        assignment.resolved_by = actor_id or None
+        fields += [
+            "returned_at",
+            "return_reason",
+            "resolution",
+            "resolution_note",
+            "resolved_at",
+            "resolved_by",
+        ]
+    assignment.save(update_fields=fields)
+    if reopen:
+        # Waiting again, it holds a place in a Core School's package as any
+        # waiting hand-over does. Bookkeeping: it never blocks a cancellation.
+        from apps.core_schools.package_credit import hold_slot_again
+
+        try:
+            with transaction.atomic():
+                hold_slot_again(assignment)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Core slot reservation failed for reopened assignment %s",
+                assignment.id,
+                exc_info=True,
+            )
+    outcome = HANDOVER_REOPENED if reopen else HANDOVER_CLOSED
+    audit_log(
+        action=f"partner_assignment.scheduling_{outcome}",
+        subject_kind="PartnerAssignment",
+        subject_id=assignment.id,
+        actor_id=str(actor_id or ""),
+        payload={
+            "before": before,
+            "after": {"status": assignment.status},
+            "school": getattr(assignment.school, "name", ""),
+            "partner": getattr(assignment.partner, "name", ""),
+            "reason": reason,
+        },
+    )
+    return outcome
 
 
 # ── Returning an assignment to staff ─────────────────────────────────────────
