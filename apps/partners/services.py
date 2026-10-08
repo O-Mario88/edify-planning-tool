@@ -72,6 +72,37 @@ def may_manage_partner_users(principal) -> bool:
     ) and has_permission(principal, Permission.USER_MANAGE.value)
 
 
+def partner_login_roles() -> frozenset[str]:
+    """The roles an account partner staff sign in with holds."""
+    from apps.core.rbac import EdifyRole
+
+    return frozenset(
+        {EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value}
+    )
+
+
+def is_partner_login(user) -> bool:
+    """Is this the account a partner's people sign in with, rather than a
+    member of staff's? Read from the role it works in."""
+    return (getattr(user, "active_role", "") or "") in partner_login_roles()
+
+
+def login_organisation(user) -> Partner | None:
+    """The organisation this account is the login for, if it is one's."""
+    if user is None:
+        return None
+    return Partner.objects.filter(user_id=user.pk).first()
+
+
+def partner_login(partner: Partner):
+    """The account an organisation signs in with, or None: nothing linked, or
+    an account that has since been deleted."""
+    user = partner.user if partner.user_id else None
+    if user is None or user.deleted_at is not None:
+        return None
+    return user
+
+
 def assert_partner_activity_allowance(
     partner_id: str,
     school_id: str,
@@ -353,10 +384,7 @@ def configure_partner_user(partner_id: str, data: dict, principal) -> dict:
         raise NotFoundError("Partner organisation not found.")
     mode = (data.get("mode") or "").strip()
     previous = {"userId": partner.user_id, "userSetupStatus": partner.user_setup_status}
-    partner_roles = {
-        EdifyRole.PARTNER_ADMIN.value,
-        EdifyRole.PARTNER_FIELD_OFFICER.value,
-    }
+    partner_roles = partner_login_roles()
 
     if mode == "not_required":
         partner.user_setup_status = PartnerUserSetupStatus.NOT_REQUIRED

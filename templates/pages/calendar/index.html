@@ -122,6 +122,10 @@
   </div>
   {% endif %}
 
+  {% comment %}A partner's day: today's visits and trainings with the team
+  member who delivers each (owner, 2026-10-08).{% endcomment %}
+  {% if partner_today %}{% include "partials/calendar/partner_today.html" %}{% endif %}
+
   {% comment %}Planned work on a public holiday or on its owner's leave day
   (owner, 2026-10-05; apps.activities.day_off). The same activities are the
   marked ones in the month below.{% endcomment %}

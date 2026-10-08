@@ -84,6 +84,9 @@ urlpatterns = [
     # between a correct password and a session, and the only thing admitting
     # them is the pending state in their own session.
     path("login/verify", auth_views.mfa_verify_view, name="mfa_verify"),
+    # Asked by a page nobody has touched for the idle window; answers for a
+    # signed-out browser too, which is the answer it is asked for.
+    path("login/state", auth_views.session_state_view, name="session_state"),
     path("login/resend-code", auth_views.mfa_resend_view, name="mfa_resend"),
     path("settings/two-step", auth_views.mfa_settings_view, name="mfa_settings"),
     path("settings/two-step/app", auth_views.mfa_app_setup_view, name="mfa_app_setup"),
@@ -2260,6 +2263,19 @@ urlpatterns = [
         name="partner_activity_submit",
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
+    # The team member who delivers one of the organisation's activities.
+    path(
+        "partner/activities/<str:activity_id>/delivered-by",
+        partner_views.partner_delivery_member_view,
+        name="partner_delivery_member",
+    ),
+    # A partner's invoice as the platform wrote it: the partner, the
+    # Programme Lead it is addressed to and Finance read the same page.
+    path(
+        "partner-invoices/<str:invoice_id>",
+        partner_views.partner_invoice_document_view,
+        name="partner_invoice_document",
+    ),
     # ── GROUP 4: SSA, FY & Planning ──────────────────────────────────────────
     # Keep the legacy route name for reverse() compatibility; the destination
     # is now the unified SSA Performance workspace.

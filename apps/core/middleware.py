@@ -556,12 +556,25 @@ class SlidingSessionMiddleware:
     sixty seconds out of thirty minutes, and the error is always the safe way
     round — the interval is derived from the window so it stays proportional if
     the window is ever changed.
+
+    Only a person slides the window (owner, 2026-10-08: "make sure the session
+    expires after 30 minutes of idle"). Every request used to, and a page
+    makes requests of its own: it listens to the live stream, reads itself
+    again when a colleague changes the plan, and reports its own script
+    errors. So a page left on screen kept its session for as long as the
+    office was open, and the timeout only ever ended a closed laptop's. Those
+    requests are answered and move nothing. The moment of the last request a
+    person made is kept in the session, and a session whose last one is a
+    window old is ended here, on the way in, whatever else has saved its row
+    since.
     """
 
+    #: When a person last used this session, to within ``refresh_interval``.
     TOUCHED_AT = "_last_touch"
 
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
         self.get_response = get_response
+        self.window = settings.SESSION_COOKIE_AGE
         # A thirtieth of the window: 60s of a 30-minute window, and the same
         # 3.3% worst-case early expiry whatever the window is set to.
         self.refresh_interval = max(1, settings.SESSION_COOKIE_AGE // 30)
@@ -570,22 +583,70 @@ class SlidingSessionMiddleware:
     #: (static/js/live-regions.js); its re-reads name themselves in
     #: ``X-Requested-With``.
     LIVE_STREAM_PATH = "/api/realtime/stream"
+    #: Where a page that has sat untouched for the window asks whether it is
+    #: still signed in (static/js/staff-activity-beat.js).
+    STATE_PATH = "/login/state"
+    #: What a page or the browser fetches without anyone asking it to.
+    UNATTENDED_PREFIXES = (
+        LIVE_STREAM_PATH,
+        STATE_PATH,
+        "/support/client-defect",
+        "/sw.js",
+        "/manifest",
+        "/favicon",
+    )
 
     def _keeping_up(self, request: HttpRequest) -> bool:
         """Is this the page following the plan on its own (owner, 2026-10-05:
         "Every event should update ... in real time")? It is other people's
         work arriving, not this person working, so it never marks them as
-        present. Like any poll it still slides the session: a reader is not
-        signed out of the page they are watching.
+        present and never keeps their session open.
         """
         return (
             request.headers.get("X-Requested-With") == "EdifyLive"
             or request.path == self.LIVE_STREAM_PATH
         )
 
+    def _unattended(self, request: HttpRequest) -> bool:
+        """A request nobody made: the page keeping up, an htmx request from a
+        page nobody has touched for a while (the activity script marks those),
+        or the browser's own machinery."""
+        return (
+            self._keeping_up(request)
+            or request.headers.get("X-Edify-Background") == "1"
+            or request.path.startswith(self.UNATTENDED_PREFIXES)
+        )
+
+    @classmethod
+    def idle_seconds(cls, session) -> float | None:
+        """How long ago a person last used this session; None when it has not
+        been used yet (a sign-in still on its way to its first page)."""
+        if session is None or session.is_empty():
+            return None
+        touched = session.get(cls.TOUCHED_AT)
+        if not isinstance(touched, (int, float)):
+            return None
+        return max(0.0, time.time() - touched)
+
+    def _end_if_idle(self, request: HttpRequest) -> None:
+        """End a session nobody has used for the window, before anything
+        reads who is signed in. The row's own expiry cannot be the rule: it
+        is pushed out by every save, and a view may save the session while
+        answering a request the page made by itself."""
+        session = getattr(request, "session", None)
+        idle = self.idle_seconds(session)
+        if idle is not None and idle >= self.window:
+            session.flush()
+
     def __call__(self, request: HttpRequest) -> HttpResponse:
+        self._end_if_idle(request)
         response = self.get_response(request)
-        slid = self._slide(getattr(request, "session", None))
+        unattended = self._unattended(request)
+        slid = not unattended and self._slide(
+            getattr(request, "session", None),
+            # The heartbeat says how long ago its page was last touched.
+            idle=getattr(request, "_edify_idle_seconds", 0),
+        )
         # The same once-a-minute beat marks the person as seen, so the
         # Admin's "who is online" costs one indexed UPDATE per active user
         # per minute and never a write per request. A write (or a drawer
@@ -596,6 +657,10 @@ class SlidingSessionMiddleware:
         # nobody has touched within the idle threshold — says nothing about
         # the person working (Staff Activity Log, 2026-09-29). The activity
         # script marks those (static/js/staff-activity-beat.js).
+        # What marks the person as seen is a narrower question than what keeps
+        # their session, and is answered as it was: the defect beacon is not
+        # someone at work for the session, but its arrival still closes the
+        # minutes on the page they were on (apps.accounts.presence).
         background = (
             self._keeping_up(request)
             or request.headers.get("X-Edify-Background") == "1"
@@ -629,21 +694,27 @@ class SlidingSessionMiddleware:
         session[self.ACTION_TOUCHED_AT] = int(now)
         return True
 
-    def _slide(self, session) -> bool:
+    def _slide(self, session, idle: float = 0) -> bool:
         # An empty session has nothing to keep alive, and creating one here
         # would hand a session cookie to every anonymous visitor.
         if session is None or session.is_empty():
             return False
 
-        now = time.time()
+        # A request is made now. A heartbeat is sent for up to five minutes
+        # after its page was last touched, and it is that touch which counts:
+        # taken as "now", each beat would add its lateness to the window.
+        used_at = time.time() - max(0.0, idle)
         touched = session.get(self.TOUCHED_AT)
-        if isinstance(touched, (int, float)) and now - touched < self.refresh_interval:
+        if (
+            isinstance(touched, (int, float))
+            and used_at - touched < self.refresh_interval
+        ):
             return False
 
         # Assigning is the whole mechanism: it sets session.modified, and
         # SessionMiddleware then saves the row with a fresh expiry and re-sends
         # the cookie with a fresh max-age.
-        session[self.TOUCHED_AT] = int(now)
+        session[self.TOUCHED_AT] = int(used_at)
         return True
 
 

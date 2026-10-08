@@ -199,13 +199,218 @@ class SlidingWindowTest(TestCase):
                 f"signed out while still working (interval {minute + 1})",
             )
 
-    def test_a_background_poll_counts_as_activity(self):
-        """Pages poll; if those requests did not slide the window, someone
-        reading a dashboard would be signed out while looking at it."""
+    def test_a_request_the_person_made_counts_wherever_it_goes(self):
+        """Not only pages: a save, a search, a file asked for."""
         _idle_for(self.client, timedelta(minutes=29))
         self.client.get("/api/health/live")
         _idle_for(self.client, timedelta(minutes=29))
         self.assertEqual(self.client.get("/dashboard").status_code, 200)
+
+
+#: What a page asks for without anyone at it, as the browser sends it.
+UNATTENDED = {
+    "the page reading itself again when the plan changes": (
+        "/dashboard",
+        {"HTTP_X_REQUESTED_WITH": "EdifyLive"},
+    ),
+    "an htmx request from a page nobody has touched": (
+        "/dashboard",
+        {"HTTP_HX_REQUEST": "true", "HTTP_X_EDIFY_BACKGROUND": "1"},
+    ),
+    "the page asking whether it is still signed in": ("/login/state", {}),
+    "the service worker being fetched": ("/sw.js", {}),
+}
+
+
+class OnlyAPersonSlidesTheWindowTest(TestCase):
+    """Owner, 2026-10-08: "make sure the session expires after 30 minutes of
+    idle". Every request used to slide the window, the page's own included, so
+    a page left on screen never signed anyone out."""
+
+    def setUp(self):
+        self.user = _user("unattended@edify.test")
+        self.client = Client()
+        self.client.force_login(self.user)
+        self.client.get("/dashboard")
+
+    def test_a_page_left_open_does_not_keep_the_session(self):
+        for what, (path, headers) in UNATTENDED.items():
+            with self.subTest(what):
+                _idle_for(self.client, timedelta(minutes=29))
+                before = _row(self.client).expire_date
+                touched = self.client.session[SlidingSessionMiddleware.TOUCHED_AT]
+
+                self.client.get(path, **headers)
+
+                self.assertEqual(
+                    _row(self.client).expire_date,
+                    before,
+                    f"{what} pushed the session's expiry out",
+                )
+                self.assertEqual(
+                    self.client.session[SlidingSessionMiddleware.TOUCHED_AT], touched
+                )
+
+    def test_opening_the_live_stream_does_not_keep_it_either(self):
+        """Asked of the middleware itself: the stream's view closes its
+        database connection, which a test's transaction cannot survive."""
+        from django.http import HttpResponse
+        from django.test import RequestFactory
+
+        _idle_for(self.client, timedelta(minutes=29))
+        request = RequestFactory().get("/api/realtime/stream")
+        request.session = self.client.session
+        request.user = self.user
+
+        SlidingSessionMiddleware(lambda r: HttpResponse())(request)
+
+        self.assertFalse(request.session.modified)
+
+    def test_it_ends_at_the_window_however_much_the_page_asked_for(self):
+        """Thirty-one minutes of a page keeping up with the plan, nobody at
+        it. The next thing asked of the session finds it ended."""
+        _idle_for(self.client, timedelta(minutes=20))
+        for path, headers in UNATTENDED.values():
+            self.client.get(path, **headers)
+        _idle_for(self.client, timedelta(minutes=31))
+        response = self.client.get(
+            "/dashboard", HTTP_X_REQUESTED_WITH="EdifyLive", follow=True
+        )
+        self.assertIn("/login", response.redirect_chain[-1][0])
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_the_rule_is_the_last_use_not_the_last_save(self):
+        """Any view may save the session, and saving pushes the row's expiry
+        out. A row that is still good for half an hour is ended all the same
+        when nobody has used it for the window."""
+        store = self.client.session
+        store[SlidingSessionMiddleware.TOUCHED_AT] = int(
+            time.time() - IDLE_LIMIT.total_seconds() - 5
+        )
+        store.save()
+        self.assertGreater(_row(self.client).expire_date, timezone.now())
+
+        response = self.client.get("/dashboard")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response["Location"])
+        self.assertFalse(
+            Session.objects.filter(session_key=store.session_key).exists(),
+            "the idle session's row is still there to be presented again",
+        )
+
+    def test_a_beat_counts_from_the_touch_it_reports(self):
+        """The heartbeat goes on for five minutes after the last touch. Each
+        one says how long ago that was, so a sitting ends thirty minutes after
+        the person stopped and not thirty-five."""
+        _idle_for(self.client, timedelta(minutes=10))
+        self.client.post("/staff-activity/beat", {"page": "/my-plan", "idle": "4"})
+        fresh = self.client.session[SlidingSessionMiddleware.TOUCHED_AT]
+        self.assertAlmostEqual(fresh, time.time() - 4, delta=3)
+
+        # Four more minutes of beats from the same untouched page.
+        store = self.client.session
+        store[SlidingSessionMiddleware.TOUCHED_AT] = fresh - 240
+        store.save()
+        self.client.post("/staff-activity/beat", {"page": "/my-plan", "idle": "244"})
+        self.assertEqual(
+            self.client.session[SlidingSessionMiddleware.TOUCHED_AT],
+            fresh - 240,
+            "a beat from an untouched page moved the last use forward",
+        )
+
+    def test_a_beat_cannot_claim_more_than_the_threshold_or_less_than_now(self):
+        _idle_for(self.client, timedelta(minutes=20))
+        self.client.post("/staff-activity/beat", {"page": "/my-plan", "idle": "-900"})
+        self.assertLessEqual(
+            self.client.session[SlidingSessionMiddleware.TOUCHED_AT], time.time()
+        )
+        _idle_for(self.client, timedelta(minutes=20))
+        self.client.post("/staff-activity/beat", {"page": "/my-plan", "idle": "x"})
+        self.assertAlmostEqual(
+            self.client.session[SlidingSessionMiddleware.TOUCHED_AT],
+            time.time(),
+            delta=3,
+        )
+
+
+class StillSignedInTest(TestCase):
+    """What an untouched page is told when it asks (/login/state)."""
+
+    def setUp(self):
+        self.user = _user("state@edify.test")
+        self.client = Client()
+        self.client.force_login(self.user)
+        self.client.get("/dashboard")
+
+    def test_it_says_how_long_is_left(self):
+        _idle_for(self.client, timedelta(minutes=10))
+        state = self.client.get("/login/state").json()
+        self.assertTrue(state["signedIn"])
+        self.assertAlmostEqual(state["remaining"], 20 * 60, delta=5)
+
+    def test_it_says_signed_out_once_the_window_has_passed(self):
+        _idle_for(self.client, IDLE_LIMIT + timedelta(seconds=5))
+        response = self.client.get("/login/state")
+        self.assertEqual(response.json(), {"signedIn": False, "remaining": 0})
+        self.assertEqual(response["Cache-Control"], "no-store")
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_it_answers_a_browser_that_was_never_signed_in(self):
+        response = Client().get("/login/state")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"signedIn": False, "remaining": 0})
+
+    def test_someone_who_must_change_their_password_is_still_answered(self):
+        """It sits under /login, which the forced password change lets
+        through: the page would otherwise be handed the change form."""
+        self.user.must_change_password = True
+        self.user.save(update_fields=["must_change_password"])
+        self.assertTrue(self.client.get("/login/state").json()["signedIn"])
+
+    def test_the_page_is_told_the_window_it_counts(self):
+        body = self.client.get("/dashboard").content.decode()
+        self.assertIn(f'data-edify-session-idle="{settings.SESSION_COOKIE_AGE}"', body)
+
+
+class StreamEndsWithTheSessionTest(TestCase):
+    """A live stream is admitted once and then runs by itself, so it is given
+    the end of the session it was opened under."""
+
+    def _deadline_in(self, idle: timedelta | None) -> float | None:
+        from django.test import RequestFactory
+
+        from apps.realtime.views import _session_deadline
+
+        client = Client()
+        client.force_login(_user("stream@edify.test"))
+        client.get("/dashboard")
+        if idle is not None:
+            _idle_for(client, idle)
+        request = RequestFactory().get("/api/realtime/stream")
+        request.user = get_user_model().objects.get(email="stream@edify.test")
+        request.session = client.session
+        return _session_deadline(request) - time.monotonic()
+
+    def test_it_closes_when_the_window_does(self):
+        self.assertAlmostEqual(
+            self._deadline_in(timedelta(minutes=12)), 18 * 60, delta=5
+        )
+
+    def test_a_fresh_session_gets_the_whole_window(self):
+        self.assertAlmostEqual(
+            self._deadline_in(None), settings.SESSION_COOKIE_AGE, delta=5
+        )
+
+    def test_a_token_stream_is_left_to_its_token(self):
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        from apps.realtime.views import _session_deadline
+
+        request = RequestFactory().get("/api/realtime/stream")
+        request.user = AnonymousUser()
+        self.assertIsNone(_session_deadline(request))
 
 
 class ThrottleTest(TestCase):

@@ -288,21 +288,25 @@ class TransportPayment(TimeStampedModel):
 
 
 class PartnerInvoice(TimeStampedModel):
-    """A partner's PERIOD invoice — one invoice sums all their planned
-    activity costs for a week, month or quarter, grouped by category
-    (School Visits, Training facilitation). The entered amount must equal
-    the system-fetched period total — that equality links the invoice to
-    the plan. Routing: the partner submits to their Program Lead, the PL
-    confirms the invoice against the plan, and only then does the
-    accountant download and pay the instalment (50% first; the balance
-    once IA has cleared the work).
+    """A partner's PERIOD invoice — one invoice sums their planned activity
+    costs for a week, month or quarter, grouped by category (School Visits,
+    Training facilitation), for the schools of ONE Programme Lead. The
+    platform writes it from the plan (owner, 2026-10-08): its total is the sum
+    of its lines, which is the link between invoice and plan, and a document
+    of the partner's own is optional. Routing: the partner sends it, the
+    Programme Lead it is addressed to confirms it against the plan, and only
+    then does the accountant pay the instalment: 50% on scheduled work, and
+    work completed with its evidence and cleared by IA in full (the balance,
+    where the 50% went out).
     """
 
     TYPE_ADVANCE = "advance"
     TYPE_CLEARANCE = "clearance"
     TYPE_CHOICES = [
         (TYPE_ADVANCE, "50% Advance Invoice"),
-        (TYPE_CLEARANCE, "Clearance Invoice"),
+        # Work completed with its evidence, paid in full: the whole cost, or
+        # the balance where the 50% advance went out (owner, 2026-10-08).
+        (TYPE_CLEARANCE, "Completed Work Invoice"),
     ]
     STATUS_CHOICES = [
         ("submitted_to_pl", "With Program Lead"),
@@ -326,14 +330,23 @@ class PartnerInvoice(TimeStampedModel):
     system_total = models.BigIntegerField()
     entered_total = models.BigIntegerField()  # must equal system_total
     payable_amount = models.BigIntegerField()  # 50% or the balance
-    stored_name = models.CharField(max_length=255)
-    original_name = models.CharField(max_length=255)
+    # The partner's own document, when it attached one. Empty for an invoice
+    # the platform wrote, which is read on its page (invoice_document).
+    stored_name = models.CharField(max_length=255, blank=True, default="")
+    original_name = models.CharField(max_length=255, blank=True, default="")
     mime_type = models.CharField(max_length=128, blank=True, default="")
     file_size = models.BigIntegerField(default=0)
     status = models.CharField(
         max_length=24, choices=STATUS_CHOICES, default="submitted_to_pl"
     )
     submitted_by = models.CharField(max_length=30)
+    # The Programme Lead it is addressed to: the Lead who holds its schools
+    # or whose officers do (apps.fund_requests.invoice_routing). Empty on an
+    # invoice raised before 2026-10-08, which its schools' Leads all read, and
+    # on one for schools no Lead holds, which Finance confirms.
+    program_lead_staff_id = models.CharField(
+        max_length=30, null=True, blank=True, db_index=True
+    )
     pl_confirmed_by = models.CharField(max_length=30, null=True, blank=True)
     pl_confirmed_at = models.DateTimeField(null=True, blank=True)
     pl_note = models.CharField(max_length=512, blank=True, default="")

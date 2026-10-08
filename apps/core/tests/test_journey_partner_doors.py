@@ -92,6 +92,10 @@ class PartnerJourneyThroughTheDoorsTest(TestCase):
         cls.partner = Partner.objects.create(
             name="PD Partner Org", user_id=cls.partner_user.id, active_status=True
         )
+        # Who goes is chosen from the organisation's team (owner, 2026-10-08).
+        from apps.partners.models import PartnerMember
+
+        PartnerMember.objects.create(partner=cls.partner, name="Grace Partner")
         catalogue, _ = CostCatalogue.objects.get_or_create(
             country="Uganda", fy="2026", version=1, defaults={"is_active": True}
         )

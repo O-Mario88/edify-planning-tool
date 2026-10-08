@@ -61,7 +61,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
      :inert="payOpen" :aria-hidden="payOpen ? 'true' : null">
 <div class="px-6 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800">Partner Invoices — Awaiting Payment</h2>
-<p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Confirmed by the Program Lead against the plan. The entered amount equals the period's planned cost; the payable instalment is system-derived.</p>
+<p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Confirmed by the Programme Lead against the plan. Each invoice is written from the plan's costs; the payable instalment is derived from them.</p>
 </div>
 <div class="overflow-x-auto edify-table-scroll-region">
 {% paginate invoice_queue "invoice_queue_page" as invoice_queue_pager %}
@@ -95,7 +95,8 @@ side (owner, 2026-09-26). Paying needs a reference and a method, so that
 form stays in the row, out of the menu: choosing Pay Partner opens it under
 the menu with focus on the reference.{% endcomment %}
 {% row_actions inv.partner_name %}
-<a class="row-menu__item" role="menuitem" href="/accounts/partner-invoices/{{ inv.id }}/download">Download Invoice</a>
+<a class="row-menu__item" role="menuitem" href="/partner-invoices/{{ inv.id }}" data-invoice-open>Open Invoice</a>
+{% if inv.stored_name %}<a class="row-menu__item" role="menuitem" href="/accounts/partner-invoices/{{ inv.id }}/download">Partner's Document</a>{% endif %}
 <button type="button" class="row-menu__item" role="menuitem" aria-controls="invoice-pay-{{ inv.id }}" @click="paying = true; $nextTick(() => requestAnimationFrame(() => $refs.payReference.focus()))">Pay Partner</button>
 {% endrow_actions %}
 <form id="invoice-pay-{{ inv.id }}" method="POST" action="/accounts/partner-invoices/{{ inv.id }}/pay" class="flex flex-wrap items-center gap-2 justify-end mt-2" x-show="paying" x-cloak @keydown.escape="paying = false">

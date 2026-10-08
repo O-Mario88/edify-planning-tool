@@ -1,0 +1,46 @@
+{% load components school_identity table_pagination %}
+{% comment %}
+Trainings to facilitate (owner, 2026-10-08: "list of trainings they are going
+to facilitate"). The in-school trainings handed to this organisation, and the
+group trainings and cluster meetings an officer runs with it as facilitator
+(apps.partners.profile_lists.trainings): what still needs a date first, then
+what is coming, then what is done.
+{% endcomment %}
+{% paginate partner_trainings "partner_trainings_page" as partner_trainings_pager %}
+{% data_table name="partner-trainings" %}
+  {% slot title %}Trainings to facilitate{% endslot %}
+  {% slot summary %}{{ partner_trainings|length }} training{{ partner_trainings|length|pluralize }}{% endslot %}
+  {% slot caption %}Trainings {{ partner.name }} delivers or facilitates, with the date, the facilitator and where each stands.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No trainings to facilitate." hint="A training appears here when it is handed to this organisation, or when an officer names it as the facilitator." %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=partner_trainings_pager param="partner_trainings_page" pagination_label="Trainings to facilitate" %}{% endslot %}
+  {% if partner_trainings %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Training</th>
+      <th scope="col" class="px-3 py-2">Kind</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">School / cluster</th>
+      <th scope="col" class="px-3 py-2">District</th>
+      <th scope="col" class="px-3 py-2">Date</th>
+      <th scope="col" class="px-3 py-2">Facilitator</th>
+      <th scope="col" class="px-3 py-2">Edify officer</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in partner_trainings_pager.rows %}
+    <tr data-partner-training="{{ row.activity_id }}">
+      <td class="px-3 py-2 font-semibold" data-record-title>{{ row.training }}</td>
+      <td class="px-3 py-2" data-label="Kind">{{ row.kind }}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
+      <td class="px-3 py-2" data-label="School / cluster">{% if row.place_href %}<a href="{{ row.place_href }}" class="hover:underline">{{ row.place }}</a>{% else %}{{ row.place|default:"—" }}{% endif %}</td>
+      <td class="px-3 py-2" data-label="District">{{ row.district|default:"—" }}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="Date">{{ row.date|date:"j M Y"|default:"Not dated" }}</td>
+      <td class="px-3 py-2" data-label="Facilitator">{{ row.facilitator|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Edify officer">{{ row.officer|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}

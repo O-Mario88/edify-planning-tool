@@ -52,6 +52,7 @@ def stream(request):
         )
         response.status_code = 401
         return response
+    closes_at = _session_deadline(request)
     # A cap per account and a rate per address (AEGIS review, 2026-09-12).
     # Three streams is generous for a person; a tab left open in many windows
     # or a reconnect loop stops here instead of holding the worker.
@@ -143,6 +144,10 @@ def stream(request):
                     drained = True
                     yield _sse(event)
                 now = time.monotonic()
+                # The browser asks again by itself, and is answered only if
+                # the session is still in use (see _session_deadline).
+                if closes_at is not None and now >= closes_at:
+                    break
                 if drained:
                     last_beat = now
                 elif now - last_beat >= _HEARTBEAT_SECONDS:
@@ -161,6 +166,30 @@ def stream(request):
     response["X-Accel-Buffering"] = "no"  # disable nginx buffering
     response["Connection"] = "keep-alive"
     return response
+
+
+def _session_deadline(request) -> float | None:
+    """When a stream opened under a browser session must close, on the
+    monotonic clock; None for a token's stream, which has its own expiry.
+
+    A stream is admitted once and then runs by itself: nothing looks at the
+    session again, so one opened before a person walked away went on telling
+    their page that the plan had changed long after the session had ended
+    (owner, 2026-10-08: "make sure the session expires after 30 minutes of
+    idle"). It closes when the session it was opened under would end if
+    nobody used it again. EventSource reconnects on its own, and the new
+    request is admitted or refused like any other: a person still at work
+    gets a fresh stream, an ended session a 401.
+    """
+    user = getattr(request, "user", None)
+    if not getattr(user, "is_authenticated", False):
+        return None
+    from django.conf import settings
+
+    from apps.core.middleware import SlidingSessionMiddleware
+
+    idle = SlidingSessionMiddleware.idle_seconds(getattr(request, "session", None))
+    return time.monotonic() + max(0.0, settings.SESSION_COOKIE_AGE - (idle or 0.0))
 
 
 def _now_iso() -> str:

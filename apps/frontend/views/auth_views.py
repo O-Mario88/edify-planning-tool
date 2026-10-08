@@ -690,6 +690,33 @@ def mfa_app_remove_view(request):
     return redirect("/settings")
 
 
+@require_http_methods(["GET"])
+def session_state_view(request):
+    """Whether this browser is still signed in, and for how much longer if
+    nobody touches it.
+
+    A page asks once it has sat untouched for the idle window
+    (static/js/staff-activity-beat.js), so it can say "sign in to continue"
+    when the session ends rather than at the next click. Asking changes
+    nothing: SlidingSessionMiddleware has already ended a session that was
+    idle for the window before this runs, and does not count the question as
+    someone working. The time left is the server's answer, because the page
+    cannot know about the tab beside it that is still in use.
+    """
+    from django.http import JsonResponse
+
+    from apps.core.middleware import SlidingSessionMiddleware
+
+    signed_in = request.user.is_authenticated
+    remaining = 0
+    if signed_in:
+        idle = SlidingSessionMiddleware.idle_seconds(request.session) or 0
+        remaining = max(0, int(settings.SESSION_COOKIE_AGE - idle))
+    response = JsonResponse({"signedIn": signed_in, "remaining": remaining})
+    response["Cache-Control"] = "no-store"
+    return response
+
+
 @require_POST
 def logout_view(request):
     record_logout(request, request.user)

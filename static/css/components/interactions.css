@@ -2504,3 +2504,34 @@ main .edify-band-glyph.edify-band-glyph:is(:hover, :focus-visible) {
   overflow: visible !important;
   text-overflow: clip !important;
 }
+
+/* A CLICK IS ANSWERED AT ONCE (owner, 2026-10-08; static/js/click-feedback.js).
+   The line that runs across the top of the window from the frame after a
+   click until the next page, or the part asked for, is there. It is the
+   root's own pseudo-element: nothing is added to the page, and only the root
+   is asked whether it carries the attribute, so setting it restyles nothing
+   else. It runs fast at first and slows, and never reaches the end by itself:
+   the new page replaces it. */
+:root[data-edify-loading]::after {
+  content: "";
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 2147483000;
+  inline-size: 100%;
+  block-size: 3px;
+  background: var(--edify-accent);
+  transform-origin: 0 50%;
+  animation: edify-loading-line 12s cubic-bezier(0.05, 0.7, 0.2, 1) forwards;
+  pointer-events: none;
+}
+@keyframes edify-loading-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(0.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-edify-loading]::after {
+    animation: none;
+    transform: scaleX(0.6);
+  }
+}

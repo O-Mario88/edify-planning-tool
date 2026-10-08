@@ -742,7 +742,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             # Headers may be bold; the body never is. Cells use a medium-light weight (450)
             # per the reference grid, and identity separates itself with ink
             # colour plus a half-step of medium, not a second bold rail.
-            "--edify-table-header-weight: 600",
+            # Bold since 2026-10-08 (owner: "make it bold").
+            "--edify-table-header-weight: 700",
             "--edify-table-body-weight: 450",
             "--edify-table-identity-weight: 550",
             "--edify-table-action-size: 2rem",
@@ -1755,10 +1756,15 @@ class StableTypographyContractTest(SimpleTestCase):
             "--edify-text-micro-size: clamp(var(--edify-text-floor),",
         ):
             self.assertIn(expected, tokens)
-        # Headers sit one step below cells (micro, muted) per the reference
-        # dashboard — the band separates by weight and colour.
+        # A table reads in three steps (owner, 2026-10-08): its name is the
+        # largest, the column names "just slightly bigger not large" than the
+        # cells. Column names sat one step below the cells before.
         self.assertIn(
-            "--edify-text-table-heading-size: var(--edify-text-micro-size);",
+            "--edify-text-table-heading-size: var(--edify-text-body-size);",
+            tokens,
+        )
+        self.assertIn(
+            "--edify-text-table-title-size: var(--edify-text-title-size);",
             tokens,
         )
 
@@ -1799,7 +1805,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn(".drawer-body table th {", platform)
         self.assertIn(".drawer-body table td {", platform)
         self.assertIn(
-            "--edify-text-table-heading-size: var(--edify-text-micro-size);",
+            "--edify-text-table-heading-size: var(--edify-text-body-size);",
             _read("static/css/design-system.css"),
         )
         self.assertIn("text-wrap: nowrap", platform)
@@ -1822,6 +1828,68 @@ class StableTypographyContractTest(SimpleTestCase):
         )
         self.assertIn("EVERY TABLE STAYS ON ONE LINE", consistency)
         self.assertIn("white-space: nowrap !important", consistency)
+
+
+class TableReadsInThreeStepsTest(SimpleTestCase):
+    """Owner, 2026-10-08: a line under the column names, "Capitalise Case for
+    the column head, increase the font size and make it bold and don't change
+    the font color to blue ... keep the font color same as the table body font
+    color"; then "just slightly bigger not large. It is the Table Header
+    (table name) that should be larger since it is not in any column"."""
+
+    def setUp(self):
+        self.css = _read("static/css/consistency.css")
+
+    def _block(self, selector_end):
+        at = self.css.index(selector_end)
+        return self.css[at : self.css.index("}", at)]
+
+    def test_column_names_are_bold_title_case_in_the_cells_ink_on_a_line(self):
+        block = self._block(
+            "table:not(.sr-only):not(.edify-visually-hidden)"
+            ":not(#edify-heading-none) > thead > tr > :is(th, td) {"
+        )
+        for declaration in (
+            "border-block-end: 2px solid var(--edify-border-strong) !important;",
+            # What a table cell is drawn in, not the link blue.
+            "color: var(--edify-text-muted) !important;",
+            "font-size: var(--edify-text-table-heading-size) !important;",
+            "font-weight: var(--edify-table-header-weight) !important;",
+            "letter-spacing: 0 !important;",
+            "text-transform: capitalize !important;",
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertIn(declaration, block)
+
+    def test_no_table_heading_is_written_in_capitals_or_blue_again(self):
+        self.assertNotRegex(
+            self.css,
+            r"thead[^{}]*\{[^{}]*text-transform:\s*uppercase\s*!important",
+        )
+
+    def test_the_tables_name_is_the_largest_text_of_the_table(self):
+        block = self._block(
+            ":is(h2, h3, h4).edify-table-titlebar.edify-table-titlebar"
+            ".edify-table-titlebar {"
+        )
+        self.assertIn("font-size: var(--edify-text-table-title-size) !important;", block)
+        self.assertIn("font-weight: var(--edify-table-header-weight) !important;", block)
+        # The officer panels name their tables in an h5.
+        self.assertIn(
+            ".edify-table-titlebar.edify-table-titlebar.edify-table-titlebar "
+            "h5:not(button *):not(a *),",
+            self.css,
+        )
+
+    def test_the_three_steps_are_three_rungs_of_the_one_scale(self):
+        tokens = _read("static/css/design-system.css")
+        for role, step in (
+            ("--edify-text-table-title-size", "--edify-text-title-size"),
+            ("--edify-text-table-heading-size", "--edify-text-body-size"),
+            ("--edify-text-table-size", "--edify-text-label-size"),
+        ):
+            with self.subTest(role=role):
+                self.assertIn(f"{role}: var({step});", tokens)
 
 
 class TemplateFilterArgumentGuardTest(SimpleTestCase):

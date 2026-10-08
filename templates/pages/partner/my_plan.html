@@ -40,6 +40,7 @@
             <th class="px-5 py-2.5">Type</th>
             <th class="px-5 py-2.5">Location</th>
             <th class="px-5 py-2.5">Planned</th>
+            <th class="px-5 py-2.5">Delivered by</th>
             <th class="px-5 py-2.5">Status</th>
             <th class="px-5 py-2.5">Evidence</th>
             <th class="px-5 py-2.5 text-right">Actions</th>
@@ -56,6 +57,7 @@
             <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Type">{{ row.a.get_activity_type_display }}</td>
             <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Location">{% firstof row.location "—" %}</td>
             <td class="px-5 py-3 text-slate-600 tabular-nums max-xl:px-0" data-label="Planned">{{ row.a.planned_date|date:"d M Y"|default:"—" }}</td>
+            <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Delivered by">{{ row.a.delivery_contact_name|default:"Nobody named yet" }}</td>
             <td class="px-5 py-3 max-xl:px-0" data-label="Status"><span class="edify-status-text" data-edify-tone="{% if row.return_reason %}danger{% elif row.a.status == 'partner_scheduled' or row.a.status == 'scheduled' %}neutral{% else %}info{% endif %}">{{ row.a.status|status_label }}</span></td>
             <td class="px-5 py-3 text-slate-500 max-xl:px-0" data-label="Evidence">{{ row.evidence_summary }}</td>
             <td class="px-5 py-3 text-right max-xl:px-0 max-xl:border-t max-xl:border-slate-100 max-xl:py-3" data-record-action>
@@ -82,6 +84,11 @@
                   same control every role uses from My Plan. {% endcomment %}
                   <button type="button" class="row-menu__item" role="menuitem"
                           hx-get="/my-plan/{{ row.a.id }}/reschedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML">Reschedule</button>
+                  {% endif %}
+                  {% if "team" in row.actions %}
+                  {# The team member who delivers it (owner, 2026-10-08; apps.partners.delivery_team). #}
+                  <button type="button" class="row-menu__item" role="menuitem"
+                          hx-get="/partner/activities/{{ row.a.id }}/delivered-by" hx-target="#drawer-container" hx-swap="innerHTML">{% if row.a.delivery_contact_name %}Change team member{% else %}Name team member{% endif %}</button>
                   {% endif %}
               {% endrow_actions %}
             </td>
@@ -119,13 +126,13 @@
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <div>
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Invoices &amp; Payments</h2>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">50% advance on your invoice · balance after IA clears the work.</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">50% advance on scheduled work · paid in full once the work is completed with its evidence and IA verifies it. Open an invoice to read or print it.</p>
     </div>
     <div class="divide-y divide-slate-50">
       {% for row in partner_invoice_tracker %}
       <div class="py-2.5 flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[12px] font-semibold truncate">{{ row.invoice.get_invoice_type_display }} · {{ row.label }}</p>
+          <p class="text-[12px] font-semibold truncate"><a href="/partner-invoices/{{ row.invoice.id }}" class="hover:underline" data-invoice-open>{{ row.reference }}</a> · {{ row.invoice.get_invoice_type_display }} · {{ row.label }}</p>
           <p class="edify-text-caption font-medium {% if row.tone == 'danger' %}edify-danger-text{% elif row.tone == 'success' %}text-emerald-600{% else %}text-slate-400{% endif %}" data-edify-tone="{{ row.tone }}">{{ row.stage }}</p>
         </div>
         <p class="text-[12px] font-semibold tabular-nums text-slate-700 shrink-0">{{ row.invoice.payable_amount|ugx_amount }}</p>

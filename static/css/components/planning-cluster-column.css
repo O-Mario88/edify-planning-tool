@@ -14,7 +14,7 @@
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(5) { width: 10.25rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(6) { width: 11.75rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(7) { width: 8rem; }
-:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6rem; }
+:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6.5rem; }
 :root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(8) { width: 8rem; }
 /* A longer cluster name ends in an ellipsis and reads whole in its title.
    This table fixes its column widths, so a cell cannot grow to fit what it

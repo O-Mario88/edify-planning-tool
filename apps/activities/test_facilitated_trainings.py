@@ -264,10 +264,28 @@ class FacilitatedTrainingTest(APITestCase):
         )
         activity.status = "ia_verified"
         activity.save(update_fields=["status"])
+        # ... and for its evidence (owner, 2026-10-08: "upon completion and
+        # evidence upload"), which the accountant's payment step has always
+        # refused to pay without.
+        clearance = invoice_basis(
+            self.partner_user, "month", date(2026, 7, 1), "clearance"
+        )
+        self.assertFalse(
+            [i for i in clearance["items"] if i["activity"].id == activity.id]
+        )
+        from apps.evidence.models import EvidenceRecord
+
+        EvidenceRecord.objects.create(
+            activity=activity,
+            kind="photo",
+            uri="facilitated-training.jpg",
+            uploaded_by=self.cceo_staff.user_id,
+        )
         clearance = invoice_basis(
             self.partner_user, "month", date(2026, 7, 1), "clearance"
         )
         [item] = [i for i in clearance["items"] if i["activity"].id == activity.id]
+        # The 50% was paid, so only the remaining balance is asked for.
         self.assertEqual(item["payable"], fee - fee // 2)
 
     def test_the_officers_advance_does_not_block_the_partners_fee(self):

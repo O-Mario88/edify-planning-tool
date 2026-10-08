@@ -243,7 +243,29 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #:   desktop page, 2-4 % now (F18, F19, F20).
     #:   e2e/maintained-facts.spec.js holds each attribute to the selector
     #:   it replaced while the page changes under it.
-    JS_GZIP_KB = 146
+    #:
+    #: Raised to 146.5 on 2026-10-08 (145.82 to 146.08 KB) for the session
+    #: ending after thirty minutes without a touch (owner: "make sure the
+    #: session expires after 30 minutes of idle"). staff-activity-beat.js
+    #: already knew when its page was last touched; it now tells the server
+    #: with each beat, and a page untouched for the window asks whether it is
+    #: still signed in and says so when it is not. 0.26 KB gzipped, no new
+    #: file and no stylesheet: the notice is the session dialog the shell
+    #: already had. Half a kilobyte, not a whole one: this is a ratchet.
+    #:
+    #: Raised to 147.5 the same day (146.08 to 147.43 KB) for click-feedback.js
+    #: (1.35 KB gzipped, deferred), after the owner reported that on the live
+    #: site "it takes too long to switch from the current page to the page
+    #: clicked from the side bar menu" and asked for every click's response to
+    #: be looked at. Measured: a link that leaves the page changed nothing on
+    #: screen until the next page was ready, one to three seconds on the live
+    #: site (three to five on its heaviest pages). The script answers a link,
+    #: a browser-submitted form and a click-started htmx GET in the frame
+    #: after the click with a line across the top of the window, and gives the
+    #: sidebar entry pressed the chosen look. It is in the shell because every
+    #: page has links that leave it. Its rationale is in base.html and
+    #: docs/ui-components.md, not in the file.
+    JS_GZIP_KB = 147.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod

@@ -192,6 +192,13 @@ OVERSIGHT_ONLY_MESSAGE = (
     "You have read-only supervisory oversight of this record. Operational "
     "planning must be completed by the responsible CCEO."
 )
+# The Country Director's answer to the same question (owner, 2026-10-08): the
+# team's calendars and plans are theirs to read, and an officer's scheduled
+# work is the officer's to edit, move or cancel.
+TEAM_READ_ONLY_MESSAGE = (
+    "You can see this activity but not change it: a team member's scheduled "
+    "work is edited, rescheduled or cancelled by the person responsible for it."
+)
 
 
 def _uniq(items: Iterable[str]) -> list[str]:
@@ -1465,6 +1472,7 @@ def _get_partner_model():
 __all__ = [
     "UserScope",
     "OVERSIGHT_ONLY_MESSAGE",
+    "TEAM_READ_ONLY_MESSAGE",
     "resolve_user_scope",
     "forget_user_scope",
     "cluster_in_scope",
