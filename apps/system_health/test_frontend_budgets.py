@@ -265,7 +265,27 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: sidebar entry pressed the chosen look. It is in the shell because every
     #: page has links that leave it. Its rationale is in base.html and
     #: docs/ui-components.md, not in the file.
-    JS_GZIP_KB = 147.5
+    #:
+    #: Raised to 148 the same day (147.43 to 147.97 KB) for four faults
+    #: the nightly Browser Matrix had been showing in Safari's engine since
+    #: 1 October, each fixed where it was:
+    #:
+    #: - chart-standard.js (+0.36 KB) draws a chart that was asked for
+    #:   before the chart library had run. The library is a deferred script
+    #:   after Alpine, so a chart an Alpine component draws as it starts
+    #:   could ask too soon; it was given up without a word and its card
+    #:   stayed empty, on a slow first visit in any browser
+    #:   (e2e/chart-library-late.spec.js). alpine-components.js (+0.06 KB)
+    #:   has its two charts that checked for the library themselves wait
+    #:   the same way.
+    #: - date-picker.js (+0.06 KB) leaves a date field that is not drawn on
+    #:   its size watch instead of taking it off and putting it back, which
+    #:   Safari answered on every frame for as long as the page was open
+    #:   (e2e/date-picker.spec.js).
+    #: - live-regions.js (+0.06 KB) opens its stream only once the page has
+    #:   stayed a second and a half, a section that settles sooner included
+    #:   (tests/js/live-regions.test.cjs).
+    JS_GZIP_KB = 148
     INLINE_SCRIPT_KB = 40
 
     @classmethod

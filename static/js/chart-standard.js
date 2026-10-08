@@ -289,7 +289,27 @@
     }
     return 0;
   }
-  const api = {panels, options, render, palette, pageSize, barShare, colorFor, initialPage};
+  /* The chart library is a deferred script after Alpine, so a chart an Alpine
+   * component draws as it starts can ask before the library has run (a slow
+   * first visit). It was given up silently and its card stayed empty.
+   * `whenLibraryRuns` runs `draw` once the library has run, false on a page
+   * without it; `late` is that for renderDetached, with a handle to destroy. */
+  function whenLibraryRuns(draw) {
+    if (typeof ApexCharts === 'function') { draw(); return true; }
+    const library = document.querySelector('script[src*="apexcharts"]');
+    if (!library) return false;
+    library.addEventListener('load', () => draw(), {once: true});
+    return true;
+  }
+  function late(system, el, options) {
+    const waiting = {destroy() { waiting.cancelled = true; }};
+    return whenLibraryRuns(() => {
+      if (waiting.cancelled || !el.isConnected) return;
+      const chart = system.renderDetached(el, options);
+      waiting.destroy = () => chart?.destroy?.();
+    }) ? waiting : null;
+  }
+  const api = {panels, options, render, palette, pageSize, barShare, colorFor, initialPage, whenLibraryRuns, late};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EdifyBarStandard = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0;
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false;
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -91,7 +91,7 @@
   }
 
   function open() {
-    if (stream || doc.hidden || !regions().length) return;
+    if (!stayed || stream || doc.hidden || !regions().length) return;
     stream = new EventSource('/api/realtime/stream');
     stream.onmessage = function (event) {
       var data;
@@ -121,8 +121,9 @@
   window.addEventListener('pagehide', close);
   doc.addEventListener('htmx:afterSettle', function () { if (!stream && !refused) open(); });
   setInterval(function () { if (wanted) refresh(); }, 1000);
-  // Not on a page passed through on the way to another.
-  setTimeout(open, 1500);
+  // Not on a page passed through on the way to another: nothing opens the
+  // stream sooner, a section that settles in its first second included.
+  setTimeout(function () { stayed = true; open(); }, 1500);
 
   window.EdifyLive = Object.freeze({ refresh: refresh, busy: busy });
 })();

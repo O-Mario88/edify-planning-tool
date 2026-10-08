@@ -18,8 +18,10 @@ for(const [role,user,routes] of roles)test('populated landscape pages: '+role,as
   }
   for(const [width,height] of (['/team-targets','/hr-today','/leave/approvals/','/analytics'].includes(url) ? [[390,844],[768,1024],[1280,720],[1920,1080]] : [[1280,720],[1920,1080]])){
    await page.setViewportSize({width,height});
-   // The rails refit 150ms after a resize (micro-ux.js), so let them settle before reading them.
-   if(url==='/team-targets')await page.waitForTimeout(400);
+   // The rails refit 150ms after a resize (micro-ux.js) and fold what does not fit into More; until they have, a rail's
+   // own width reads as overflow. Wait for that itself, not for a fixed time: 400ms was not enough for WebKit on a CI
+   // runner (26px over on the iPhone profile, 2026-10-08). An overflow that stays is still caught by the check below.
+   if(url==='/team-targets')await expect.poll(()=>page.evaluate(()=>{const main=document.querySelector('main');return main.scrollWidth-main.clientWidth}),{timeout:5000}).toBeLessThanOrEqual(2).catch(()=>{});
    await page.waitForFunction(()=>[...document.querySelectorAll('.apexcharts-canvas')].every(e=>e.getBoundingClientRect().width<=e.parentElement.getBoundingClientRect().width+2),null,{timeout:2000}).catch(()=>{});
    for(const theme of ['light','dark','theme-blue']){
    await page.evaluate(t=>{const root=document.documentElement;root.classList.remove('light','dark','theme-dark','theme-blue');root.classList.add(t==='light'?'light':'dark');if(t!=='light')root.classList.add(t==='dark'?'theme-dark':'theme-blue');root.dataset.theme=t==='theme-blue'?'blue':t},theme);

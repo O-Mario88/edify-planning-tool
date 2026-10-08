@@ -47,6 +47,16 @@ async function chooseTraining(page, drawer, label) {
 
 const boxes = drawer => drawer.locator('input[name=invited_school_ids]');
 
+// A school is ticked by its row. On a touch screen the row's label is the
+// tick box's 44px target and lies over the box itself (mobile-micro-ux.css,
+// owner 2026-09-27), so pressing the bare box is something only a mouse
+// can do; the row takes the press on every device.
+async function tick(box, on = true) {
+  if ((await box.isChecked()) !== on) await box.locator('xpath=ancestor::label[1]').click();
+  if (on) await expect(box).toBeChecked();
+  else await expect(box).not.toBeChecked();
+}
+
 test.describe('Group Training drawer holds the training ceiling', () => {
   test('the training comes first and brings its SSA intervention', async ({ page }) => {
     await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
@@ -90,11 +100,11 @@ test.describe('Group Training drawer holds the training ceiling', () => {
     const counter = drawer.locator('[data-training-ceiling-count]');
     await expect(counter).toHaveText('18 / 20');
 
-    await all.nth(0).check();
+    await tick(all.nth(0));
     await expect(counter).toHaveText('19 / 20');
     await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(0);
 
-    await all.nth(1).check();
+    await tick(all.nth(1));
     await expect(counter).toHaveText('20 / 20');
     // The ceiling is reached: every other school is greyed and cannot be ticked.
     await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(total - 2);
@@ -111,7 +121,9 @@ test.describe('Group Training drawer holds the training ceiling', () => {
     await expect(drawer.locator('input[name=invited_school_ids]:checked')).toHaveCount(2);
 
     // Removing a school gives its place back.
-    await drawer.locator('input[name=invited_school_ids]:checked').first().uncheck();
+    // Named by its value: once unticked it is no longer the first ticked one.
+    const ticked = await drawer.locator('input[name=invited_school_ids]:checked').first().getAttribute('value');
+    await tick(drawer.locator(`input[name=invited_school_ids][value="${ticked}"]`), false);
     await expect(counter).toHaveText('19 / 20');
     await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(0);
   });
@@ -145,7 +157,7 @@ test.describe('Group Training drawer holds the training ceiling', () => {
     const first = boxes(drawer).first();
     await expect(first).toBeEnabled();
     await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(total - 1);
-    await first.check();
+    await tick(first);
     await expect(first).toBeChecked();
     await expect(drawer.locator('input[name=invited_school_ids]:checked')).toHaveCount(1);
     await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(total - 1);

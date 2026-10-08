@@ -1,9 +1,10 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
+const {watchPageErrors}=require('./helpers/page-errors');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
 test('blue login and compact Planning and leave strips at every device size',async({page},info)=>{
  test.setTimeout(180000);
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const errors=watchPageErrors(page);
  await page.goto('/login');
  for(const width of [390,768,1048,1290,1600]){
   await page.setViewportSize({width,height:900});

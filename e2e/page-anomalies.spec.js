@@ -1,8 +1,9 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
+const {watchPageErrors}=require('./helpers/page-errors');
 test.use({video:'off',trace:'off'});
 const runtimeErrors=new WeakMap();
-test.beforeEach(async({page})=>{const errors=[];runtimeErrors.set(page,errors);page.on('pageerror',e=>errors.push(e.message));});
+test.beforeEach(async({page})=>{runtimeErrors.set(page,watchPageErrors(page));});
 test.afterEach(async({page},info)=>{
  if(info.title.startsWith('empty-state')||info.title.startsWith('search survives'))expect(runtimeErrors.get(page)).toEqual([]);
 });
@@ -40,7 +41,13 @@ test('empty-state icons and priority cards remain contained and actions open',as
  }
 });
 
-test('pending uploads works without external assets and preserves retry order',async({page,context},info)=>{
+// The retries below are answered by stubs. Once the service worker controls
+// the page it makes the page's requests itself, where WebKit does not offer
+// them to a stub: the second upload went to the real server and was never
+// counted (Browser Matrix, 2026-10-08). The queue under test is the page's own.
+test.describe('Pending uploads',()=>{
+ test.use({serviceWorkers:'block'});
+ test('pending uploads works without external assets and preserves retry order',async({page,context},info)=>{
  await page.route('**/static/**',r=>r.abort());
  await page.goto('/offline');
  // The page replays whatever was queued when it loaded. Let that settle before queueing the fixtures, or it can send
@@ -77,6 +84,7 @@ test('pending uploads works without external assets and preserves retry order',a
  await page.setViewportSize({width:390,height:844});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:info.outputPath('pending-uploads-no-assets.png')});
+});
 });
 
 test('installed fallback retains its layout and local queue when navigation fails',async({page,context,browserName})=>{

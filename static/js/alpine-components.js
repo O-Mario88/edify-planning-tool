@@ -486,6 +486,8 @@ document.addEventListener('alpine:init', () => {
       if (!this.$refs.chart || !this.$refs.chart.isConnected) return;
       if (typeof window.ApexCharts === 'undefined') {
         if (this.$refs.status) this.$refs.status.textContent = 'Chart unavailable; the numeric analysis remains available below.';
+        // Not here yet is not the same as not coming (chart-standard.js).
+        window.EdifyBarStandard.whenLibraryRuns(() => this.renderChart());
         return;
       }
       const data = this.payload();
@@ -751,7 +753,12 @@ document.addEventListener('alpine:init', () => {
           grid: { show: false },
         };
       }
-      if (!opts || !this.$refs.el || typeof ApexCharts === 'undefined') return;
+      if (!opts || !this.$refs.el) return;
+      if (typeof ApexCharts === 'undefined') {
+        // Not here yet is not the same as not coming (chart-standard.js).
+        window.EdifyBarStandard.whenLibraryRuns(() => this.render());
+        return;
+      }
       if (this.chart) this.chart.destroy();
       this.$refs.el.replaceChildren();
       this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, opts);

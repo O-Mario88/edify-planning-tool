@@ -218,6 +218,11 @@
    (interactions.css); this only spaces them. */
 .calendar-workspace__people {
   display: grid;
+  /* One column no wider than the page. Left to size itself, the column took
+     the width of the longest strip in Safari and Firefox (898px on a 390px
+     phone), so the strip ran off the screen instead of scrolling inside
+     itself and the people past the edge could not be reached. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   min-width: 0;
   margin-bottom: 0.9rem;

@@ -29,7 +29,10 @@ test('leave cards and budget bands retain readable surface pairs in every theme'
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
-    await page.goto('/budget');
+    // The month the demo seed's work is dated in. The page opens on the
+    // current month, which on a fresh seed has no costed work and so no
+    // band: that passed only where an earlier spec had planned some.
+    await page.goto('/budget?fy=2026&month=4');
     const band = page.locator('.budget-ledger-band > th, .budget-ledger-band > td').first();
     await expect(band).toBeVisible();
     // The ledger's group band is the table-header tone with ink text since 2026-10-02.

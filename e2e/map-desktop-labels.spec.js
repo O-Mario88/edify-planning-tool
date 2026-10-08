@@ -29,7 +29,14 @@ test('desktop labels survive laptop heights and district drilldown', async({page
   // hidden (the tooltip, the table and the sub-region zoom still name it). More than half keep theirs on a laptop. Placement runs
   // in idle slices and restarts on every resize, so after the sweep above it settles in seconds, not frames.
   const districts=await page.locator('#sr-cam path[data-district]').evaluateAll(paths=>new Set(paths.map(p=>p.dataset.district)).size);
-  const drawn=()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>n.dataset.labelPlacement && n.dataset.labelPlacement!=='hidden' && getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).map(n=>{const r=n.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]}));
+  // A name's own box on screen, the one the placement keeps apart (getBBox, in _regional_performance_script.html),
+  // not getBoundingClientRect: Firefox adds an SVG element's stroke to that, and every name has a halo of .2em,
+  // so names the page had placed clear of each other measured as touching there (12 pairs) and nowhere else.
+  const drawn=()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>n.dataset.labelPlacement && n.dataset.labelPlacement!=='hidden' && getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).map(n=>{
+    const b=n.getBBox(),m=n.getScreenCTM(),xs=[],ys=[];
+    for(const [x,y] of [[b.x,b.y],[b.x+b.width,b.y],[b.x,b.y+b.height],[b.x+b.width,b.y+b.height]]){xs.push(m.a*x+m.c*y+m.e);ys.push(m.b*x+m.d*y+m.f);}
+    return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+  }));
   await expect.poll(async()=>(await page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>n.dataset.labelPlacement).length)),{timeout:30000}).toBe(districts);
   const boxes=await drawn();
   expect(boxes.length).toBeGreaterThan(districts*0.5);

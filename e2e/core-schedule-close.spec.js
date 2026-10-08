@@ -1,6 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
 
+// The answers below are stubbed. A page the service worker controls has its
+// requests made by the worker, where WebKit does not offer them to the stub:
+// they went to the real server (a 404) and the drawer was judged on that.
+test.use({ serviceWorkers: 'block' });
+
 test('core scheduling closes after success and preserves validation errors', async ({ page }) => {
   await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
   await page.goto('/core-schools');
@@ -20,6 +25,11 @@ test('core scheduling closes after success and preserves validation errors', asy
     }
     const drawer = page.locator(`#schedule-${kind}-drawer-root`);
     await expect(drawer).toBeVisible();
+    // htmx takes a swapped-in form in hand a moment after it is on the page
+    // (it carries `htmx-added` until then). A submit event sent sooner has
+    // no listener: nothing is posted, and Firefox, which submits a form on
+    // an unhandled submit event, sent this one as a GET and left the page.
+    await expect(page.locator('#drawer-container .htmx-added')).toHaveCount(0);
     let invalid = true;
     await page.route(`**/core-schools/schedule-${kind}/action`, route => route.fulfill({
       status: invalid ? 400 : 200,

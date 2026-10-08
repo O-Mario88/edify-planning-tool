@@ -1,8 +1,9 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
+const {watchPageErrors}=require('./helpers/page-errors');
 
 test('bar charts preserve units, palette, data and layout through range changes and teardown',async({page})=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=watchPageErrors(page);
   await signIn(page,'pl1@edify.org','edify',{acceptRequiredAgreements:false});
   await page.goto('/debriefs');
   await page.evaluate(()=>{
@@ -40,7 +41,9 @@ test('bar charts preserve units, palette, data and layout through range changes 
   await expect(card.locator('[data-standard-charts]')).toHaveCount(0);
   // Cluster Oversight dropped its chart on 2026-09-23 for the member-by-member
   // clusters, trainings and meetings; the chart-bearing oversight pages remain.
-  for (const route of ['/team-planning-oversight/', '/core-schools-oversight/']) {
+  // The year the demo seed's work is dated in: in a year with nothing
+  // planned every bar is zero high, and a series of them has no box.
+  for (const route of ['/team-planning-oversight/?fy=2026', '/core-schools-oversight/?fy=2026']) {
     const response = await page.goto(route);
     expect(response.status()).toBe(200);
     const plot = page.locator('[data-standard-charts]:visible').first();

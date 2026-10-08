@@ -2085,6 +2085,12 @@
      neither has to be moved out of the markup each drawer already renders. */
   overflow: hidden auto !important;
   overscroll-behavior: contain !important;
+  /* The pinned title and action shelf lie over the card's own top and bottom
+     edge, so a field the browser brought into view (Tab reaching a tick box
+     low in a list) stopped underneath the shelf, where it could be neither
+     seen nor pressed: the Group Training drawer's schools, 2026-10-08. The
+     padding is the shelf's and the title's height with a little air. */
+  scroll-padding-block: 5rem 5.75rem;
   border: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
   border-radius: var(--edify-drawer-radius) !important;
   background: var(--edify-surface-raised) !important;
