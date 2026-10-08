@@ -141,7 +141,8 @@ class FluidTypeScaleTest(SimpleTestCase):
             ("--edify-text-card-heading-size", "var(--edify-text-heading-size)"),
             ("--edify-text-card-title-size", "var(--edify-text-title-size)"),
             ("--edify-text-table-size", "var(--edify-text-label-size)"),
-            ("--edify-text-table-heading-size", "var(--edify-text-micro-size)"),
+            ("--edify-text-table-heading-size", "var(--edify-text-body-size)"),
+            ("--edify-text-table-title-size", "var(--edify-text-title-size)"),
         ):
             with self.subTest(role=role):
                 self.assertEqual(_token(self.css, role), step)

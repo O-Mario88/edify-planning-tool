@@ -88,12 +88,12 @@ whole, and nothing about the settled page changes. Browsers that do not know
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260927coretones2">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20261008heads2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261002tabs15">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261008heads2">
 <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261002tabs15">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261002tokens2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261005bar2">
@@ -119,7 +119,7 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261002tabs15">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261008heads2">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20261004marks1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261002tokens2">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
@@ -131,7 +131,7 @@ other page was relying on them.
      After every layout layer, so none of them can re-open what it closes;
      only the pointer-response layer below comes later. -->
 <link rel="stylesheet" href="{% static 'build/css/components/responsive-system.css' %}?v=20261002hint2">
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261002tabs15">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20261008heads2">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -205,12 +205,36 @@ csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
 <script defer src="{% static 'js/field-outbox.js' %}?v=20260923owner1"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}Staff Activity heartbeat (owner, 2026-09-29): a beat while the page
-is visible, focused and in use; background htmx requests marked as such.{% endcomment %}
-<script defer src="{% static 'js/staff-activity-beat.js' %}?v=20260929sal1"></script>
+is visible, focused and in use; background htmx requests marked as such. A page
+untouched for the session's idle window asks whether it is still signed in
+(owner, 2026-10-08).{% endcomment %}
+<script defer src="{% static 'js/staff-activity-beat.js' %}?v=20261008idle1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260914pending3"></script>
+{% comment %}
+Every click is answered at once (owner, 2026-10-08: "when you click on live
+website it takes too long to switch from the current page to the page clicked
+from the side bar menu", then "investigate all the click related response issue
+system wide").
+
+A sidebar link, a tab, a row's link, a filter and a table's pager each load a
+whole new page, and the page the reader came from stays on screen until the new
+one can be drawn whole (rel="expect" above). On the live site that is a network
+round trip (a request that does no work measured 0.37 s from Kampala), the
+server's work and the browser's: one to three seconds, and three to five on the
+heaviest pages, in which the screen did not change at all. Measured on every
+kind of control: drawers and row menus answered in under 10 ms, saves relabel
+their button, and every link that leaves the page answered with nothing.
+
+This does not make the next page arrive sooner. In the frame after the click a
+line runs across the top of the window (interactions.css,
+[data-edify-loading]) and the menu entry pressed takes the chosen look, for a
+link that leaves the page, a form the browser itself submits, and an htmx GET
+started by a click.
+{% endcomment %}
+<script defer src="{% static 'js/click-feedback.js' %}?v=20261008click1"></script>
 {% comment %}
 Workspace switches are real document navigations, not in-page tabs. Ask the
 browser to fetch likely sibling views after user intent so the next document

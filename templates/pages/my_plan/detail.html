@@ -134,11 +134,17 @@
 
       {% if act.status != 'completed' %}
       <div class="ad-actions">
+        {% comment %}Complete, Edit, Reschedule and Cancel are the officer's.
+        A Programme Lead or the Country Director reading a team member's
+        activity sees where it stands and is offered none of them (owner,
+        2026-10-08: "strictly read only").{% endcomment %}
+        {% if can_complete %}
         <button hx-get="/my-plan/{{ act.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="ad-action ad-action--primary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span><strong>Complete Activity</strong><em>Mark activity as completed</em></span>
         </button>
+        {% endif %}
         {% comment %}Edit (owner, 2026-10-02): open while the activity is still
         scheduled, greyed and disabled once it has been carried out, absent when it is
         not this reader's to edit (apps.activities.editing.edit_state).{% endcomment %}
@@ -191,10 +197,16 @@
         </button>
         {% endif %}
       </div>
+{% if can_complete %}
       <p class="ad-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 4.97-3.4 8.94-8 10-4.6-1.06-8-5.03-8-10V6l8-3z"/></svg>
         Ensure all evidence and notes are updated before completing.
       </p>
+      {% else %}
+      <p class="ad-note" data-team-read-only>
+        You can see this activity but not change it: it is edited, rescheduled or cancelled by the person responsible for it.
+      </p>
+      {% endif %}
       {% else %}
       <p class="ad-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -243,6 +255,10 @@
         {% endfor %}
       </ul>
       {% else %}
+      {% comment %}Uploading is part of completing, which is the officer's:
+      a reader who may not run the activity is told there is none yet (owner,
+      2026-10-08).{% endcomment %}
+      {% if can_complete %}
       {% comment %}The drop zone opens the same completion drawer that owns the
       upload rather than posting from here — one upload path, not two.
       {% endcomment %}
@@ -253,6 +269,9 @@
         <span class="ad-drop__hint">Click to upload supporting evidence</span>
         <span class="ad-drop__formats">Accepted: JPG, PNG, PDF, DOC, DOCX</span>
       </button>
+      {% else %}
+      <p class="ad-note">No evidence uploaded yet for this activity.</p>
+      {% endif %}
       {% endif %}
     </section>
 

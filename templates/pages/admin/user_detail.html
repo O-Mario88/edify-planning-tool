@@ -16,7 +16,7 @@
 </div>
 <p class="edify-page-eyebrow">Administration</p>
 <h1 class="edify-page-title edify-page-header__title">{{ member.name }}</h1>
-<p class="edify-page-header__description">Configure roles, reporting teams, credentials, and account lifecycle status.</p>
+<p class="edify-page-header__description">{% if partner_login %}Configure this partner login: its details, password, and account status.{% else %}Configure roles, reporting teams, credentials, and account lifecycle status.{% endif %}</p>
 </div>
 
 <div class="edify-page-header__controls">
@@ -62,6 +62,19 @@ You must edit it to their valid operational email address before sending the inv
 </p>
 </div>
 </div>
+{% endif %}
+
+{% if partner_login %}
+{% comment %}A partner's login, configured like a member of staff's (owner,
+2026-10-08). It says whose it is, because the account carries a person's name
+and the directory lists organisations.{% endcomment %}
+<p class="edify-note text-[12px] font-semibold text-slate-600" data-tone="{% if partner_org %}info{% else %}warning{% endif %}" data-partner-login>
+{% if partner_org %}
+Partner login for <a href="/partners/{{ partner_org.id }}" class="font-semibold underline">{{ partner_org.name }}</a>{% if not partner_org.active_status %} (the organisation is inactive){% endif %}. Its people sign in with this account.
+{% else %}
+This partner account is not the login of any organisation yet. Link it from Partner Organisations on <a href="{% url 'frontend:admin_users' %}#partner-directory-title" class="font-semibold underline">User Management</a>: Actions, then Set up login.
+{% endif %}
+</p>
 {% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -145,7 +158,8 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 </div>
 </div>
 
-<!-- District Assignment -->
+<!-- District Assignment: staff only; a partner's login has no People record. -->
+{% if not partner_login %}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
 <div>
 <label class="edify-profile-field__label block mb-1.5">Primary District Assignment</label>
@@ -181,6 +195,7 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 </div>
 </div>
 </div>
+{% endif %}
 
 <div class="pt-4 border-t border-slate-100 flex justify-end">
 <button

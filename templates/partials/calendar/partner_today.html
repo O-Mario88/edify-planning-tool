@@ -1,0 +1,44 @@
+{% load components school_identity %}
+{% comment %}
+Today, on a partner's calendar (owner, 2026-10-08: "their calendar should show
+activities of the day and who is executing them from among the onboarded
+partner team member"). The organisation's visits and the trainings it
+facilitates that fall on today, each with the team member named for it and a
+way to name or change them (apps.partners.delivery_team).
+{% endcomment %}
+{% data_table name="partner-today" %}
+  {% slot title %}Today · {{ partner_today.date|date:"l j F" }}{% endslot %}
+  {% slot summary %}{{ partner_today.rows|length }} activit{{ partner_today.rows|length|pluralize:"y,ies" }}{% endslot %}
+  {% slot caption %}Your organisation's work today, with the team member who delivers each.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="Nothing scheduled today." hint="Your visits and the trainings you facilitate appear here on the day." %}{% endslot %}
+  {% if partner_today.rows %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Activity</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">School / cluster</th>
+      <th scope="col" class="px-3 py-2">Who delivers</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2 text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in partner_today.rows %}
+    <tr data-partner-today="{{ row.id }}">
+      <td class="px-3 py-2 font-semibold" data-record-title>{% if row.href %}<a href="{{ row.href }}" class="hover:underline">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}—{% endif %}</td>
+      <td class="px-3 py-2" data-label="School / cluster">{{ row.place }}</td>
+      <td class="px-3 py-2" data-label="Who delivers">{% if row.who %}{{ row.who }}{% else %}<span class="edify-status-text" data-edify-tone="warning">Nobody named yet</span>{% endif %}</td>
+      <td class="px-3 py-2" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status }}</span></td>
+      <td class="px-3 py-2 text-right" data-record-action>
+        {% if row.can_name %}
+        <button type="button" class="btn btn-secondary h-8"
+                hx-get="/partner/activities/{{ row.id }}/delivered-by" hx-target="#drawer-container" hx-swap="innerHTML"
+                aria-label="{% if row.who %}Change who delivers{% else %}Name who delivers{% endif %} {{ row.title }} at {{ row.place }}">{% if row.who %}Change{% else %}Name team member{% endif %}</button>
+        {% else %}<span class="edify-text-muted">—</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}

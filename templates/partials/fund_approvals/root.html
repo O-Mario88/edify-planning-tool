@@ -10,13 +10,13 @@ the PL's confirmation follow it.{% endcomment %}
   <div class="card overflow-hidden">
     <div class="px-4 py-3.5 border-b border-slate-100">
       <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Partner Invoices — Confirm Against the Plan</h2>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">The system verified each invoice equals the period's planned cost. Download, check the work, then send to the accountant or return.</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Each invoice is written from the plan for the schools you and your officers hold. Open it, check the work, then send it to the accountant or return it.</p>
     </div>
     <div class="divide-y divide-slate-50">
       {% for inv in partner_invoices %}
       <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[13px] font-bold text-slate-800">{{ inv.partner_name }} · {{ inv.get_invoice_type_display }}</p>
+          <p class="text-[13px] font-bold text-slate-800">{{ inv.partner_name }} · {{ inv.get_invoice_type_display }} · {{ inv.reference }}</p>
           <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">
             {{ inv.period_start|date:"d M" }} – {{ inv.period_end|date:"d M Y" }} ·
             {% for category, amount in inv.group_summary.items %}{{ category }} {{ amount|ugx_amount }}{% if not forloop.last %} · {% endif %}{% endfor %}
@@ -24,8 +24,12 @@ the PL's confirmation follow it.{% endcomment %}
           <p class="edify-text-caption font-bold edify-primary-text mt-0.5">Payable {{ inv.payable_amount|ugx_amount }} of {{ inv.system_total|ugx_amount }} planned</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <a href="/partner-invoices/{{ inv.id }}" data-invoice-open
+             class="inline-flex h-8 items-center rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Open invoice</a>
+          {% if inv.stored_name %}
           <a href="/fund-approvals/invoices/{{ inv.id }}/download"
-             class="inline-flex h-8 items-center rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Download</a>
+             class="inline-flex h-8 items-center rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Partner's document</a>
+          {% endif %}
           <form hx-post="/fund-approvals/invoices/{{ inv.id }}/action" hx-target="#fund-approval-root" hx-swap="innerHTML" class="inline">
             {% csrf_token %}
             <input type="hidden" name="action" value="confirm">

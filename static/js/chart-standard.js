@@ -290,12 +290,10 @@
     return 0;
   }
   /* The chart library is a deferred script after Alpine, so a chart an Alpine
-   * component draws as it starts can ask before the library has run: a slow
-   * first visit, and often in Safari. It was given up without a word and its
-   * card stayed empty (My Targets' trend, 2026-10-08). `whenLibraryRuns` runs
-   * `draw` once the library has run, and is false on a page that does not
-   * load it; `late` is that for the chart system's renderDetached, with the
-   * handle its callers destroy. */
+   * component draws as it starts can ask before the library has run (a slow
+   * first visit). It was given up silently and its card stayed empty.
+   * `whenLibraryRuns` runs `draw` once the library has run, false on a page
+   * without it; `late` is that for renderDetached, with a handle to destroy. */
   function whenLibraryRuns(draw) {
     if (typeof ApexCharts === 'function') { draw(); return true; }
     const library = document.querySelector('script[src*="apexcharts"]');

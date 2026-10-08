@@ -125,6 +125,140 @@ class _Roster(TestCase):
         return set(response.context["activities"].values_list("id", flat=True))
 
 
+class TeamActivitiesAreReadOnlyTest(_Roster):
+    """Owner, 2026-10-08: "I have just found out that the CD has the right to
+    edit team activities from the calendar and even cancel planned activities
+    through the calendar. can you give CD and PL strictly read only right for
+    the team member calendar access. they can see where the team are
+    operating but they cannot edit, reschedule or cancel any team member
+    scheduled activities."
+
+    A team member's calendar had no tick boxes, and each entry on it opened
+    the activity's own page. There the Country Director was offered Edit,
+    Reschedule and Cancel, and the services let them through as a country
+    scheduling role; a Programme Lead was shown Complete and Reschedule and
+    refused only on saving.
+    """
+
+    MOVE_TO = "2026-07-23"
+
+    def setUp(self):
+        self.carls = self.visit(self.carl_staff.id, school=self.far_school)
+        self.amoss = self.visit(self.amos_staff.id, school=self.amos_school)
+
+    def _controls(self, response, activity):
+        body = response.content.decode()
+        return {
+            door
+            for door in (
+                "complete-drawer",
+                "edit-drawer",
+                "reschedule-drawer",
+                "cancel-drawer",
+            )
+            if f"/my-plan/{activity.id}/{door}" in body
+        }
+
+    def _unchanged(self, activity):
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "scheduled")
+        self.assertEqual(activity.planned_date, DAY)
+        self.assertIsNone(activity.deleted_at)
+
+    def _every_door_is_shut(self, reader, activity):
+        """The page, the drawers, the saves behind them and the services."""
+        from apps.activities import editing, group_actions, services
+        from apps.core.exceptions import Forbidden
+
+        self.client.force_login(reader)
+        page = self.client.get(f"/my-plan/{activity.id}")
+        self.assertEqual(page.status_code, 200, "they may still read it")
+        self.assertEqual(self._controls(page, activity), set())
+        self.assertContains(page, "data-team-read-only")
+        drawer = self.client.get(f"/my-plan/{activity.id}", HTTP_HX_REQUEST="true")
+        self.assertEqual(self._controls(drawer, activity), set())
+
+        for door in ("reschedule-drawer", "cancel-drawer", "edit-drawer"):
+            with self.subTest(door=door):
+                opened = self.client.get(
+                    f"/my-plan/{activity.id}/{door}", HTTP_HX_REQUEST="true"
+                )
+                self.assertNotContains(opened, "<form", status_code=opened.status_code)
+                self.assertGreaterEqual(opened.status_code, 400)
+
+        for door, form in (
+            ("reschedule", {"scheduled_date": self.MOVE_TO, "reason": "Moved"}),
+            ("cancel", {"reason": "Called off"}),
+            ("edit", {"scheduled_date": self.MOVE_TO, "reason": "Edited"}),
+        ):
+            with self.subTest(save=door):
+                self.client.post(
+                    f"/my-plan/{activity.id}/{door}", form, HTTP_HX_REQUEST="true"
+                )
+                self._unchanged(activity)
+
+        payload = {"scheduledDate": self.MOVE_TO, "reason": "Moved"}
+        for name, call in (
+            ("reschedule", lambda: services.reschedule(activity.id, payload, reader)),
+            ("cancel", lambda: services.cancel(activity.id, {"reason": "x"}, reader)),
+            ("edit", lambda: editing.edit(activity.id, payload, reader)),
+        ):
+            with self.subTest(service=name), self.assertRaises(Forbidden):
+                call()
+        self._unchanged(activity)
+
+        # The tick-box bar is the same services, and has no box to tick.
+        self.assertEqual(group_actions.tickable_ids([activity], reader), set())
+        outcome = group_actions.cancel([activity.id], "Called off", reader)
+        self.assertEqual(outcome.done, [])
+        self._unchanged(activity)
+
+    def test_the_director_reads_an_officers_activity_and_changes_nothing(self):
+        calendar = self.read(self.director, f"&person={self.carl_staff.id}")
+        self.assertContains(calendar, f'href="/my-plan/{self.carls.id}"')
+        self.assertEqual(calendar.context["pickable_total"], 0)
+        self._every_door_is_shut(self.director, self.carls)
+
+    def test_the_director_changes_nothing_of_a_leads_work_either(self):
+        leads = self.visit(self.lead_staff.id)
+        self._every_door_is_shut(self.director, leads)
+
+    def test_a_lead_reads_their_cceos_activity_and_changes_nothing(self):
+        calendar = self.read(self.lead, f"&person={self.amos_staff.id}")
+        self.assertContains(calendar, f'href="/my-plan/{self.amoss.id}"')
+        self._every_door_is_shut(self.lead, self.amoss)
+
+    def test_the_officer_still_runs_their_own(self):
+        self.client.force_login(self.amos)
+        page = self.client.get(f"/my-plan/{self.amoss.id}")
+        self.assertEqual(
+            self._controls(page, self.amoss),
+            {"complete-drawer", "edit-drawer", "reschedule-drawer", "cancel-drawer"},
+        )
+        self.assertNotContains(page, "data-team-read-only")
+        opened = self.client.get(
+            f"/my-plan/{self.amoss.id}/cancel-drawer", HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(opened.status_code, 200)
+
+    def test_a_director_and_a_lead_still_run_what_they_scheduled_themselves(self):
+        from apps.activities import services
+
+        for reader, staff in (
+            (self.director, self.director_staff),
+            (self.lead, self.lead_staff),
+        ):
+            with self.subTest(reader=reader.name):
+                own = self.visit(staff.id)
+                self.client.force_login(reader)
+                page = self.client.get(f"/my-plan/{own.id}")
+                self.assertIn("cancel-drawer", self._controls(page, own))
+                self.assertIn("reschedule-drawer", self._controls(page, own))
+                services.cancel(own.id, {"reason": "Plans changed"}, reader)
+                own.refresh_from_db()
+                self.assertEqual(own.status, "cancelled")
+
+
 class ProgrammeLeadCalendarTabsTest(_Roster):
     def test_a_lead_has_their_own_calendar_first_and_a_tab_for_each_cceo(self):
         self.visit(self.lead_staff.id)

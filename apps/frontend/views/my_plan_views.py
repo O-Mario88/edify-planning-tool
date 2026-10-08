@@ -391,7 +391,29 @@ def _can_reschedule(activity, user) -> bool:
         return False
     if activity.delivery_type == "partner" and not is_agency_booking(activity):
         return acts_for_partner(user)
-    return True
+    # And only to a reader the service would let move it: a Programme Lead
+    # or the Country Director reading a team member's activity was shown the
+    # button all the same (owner, 2026-10-08: "strictly read only").
+    return _may_change(activity, user)
+
+
+def _may_change(activity, user) -> bool:
+    """Whether this reader may run the activity at all: complete it, edit it,
+    move it or call it off. A supervisor reading a team member's work may
+    not, and is offered none of them (`services._assert_may_execute`)."""
+    from apps.activities.profile_activities import _may_run
+
+    return _may_run(activity, user)
+
+
+def _team_read_only(request, activity):
+    """The answer to a reader who opens a change drawer on an activity they
+    may read and not run, or None when the activity is theirs to change."""
+    if _may_change(activity, request.user):
+        return None
+    from apps.core.scoping import TEAM_READ_ONLY_MESSAGE
+
+    return notice_fragment(TEAM_READ_ONLY_MESSAGE)
 
 
 def _can_cancel(activity, user) -> bool:
@@ -581,6 +603,10 @@ def activity_detail_view(request, activity_id):
         "edit_state": _edit_state(a, request.user),
         "can_reschedule": _can_reschedule(a, request.user),
         "can_cancel": _can_cancel(a, request.user),
+        # Complete is the officer's too. It was offered to every reader of
+        # the page; a team member's activity is read, not run (owner,
+        # 2026-10-08).
+        "can_complete": _may_change(a, request.user),
         **_return_context(a),
         **_facilitator_context(request.user, a),
         **_training_profile_context(a),
@@ -1060,6 +1086,12 @@ def reschedule_drawer_view(request, activity_id):
         return HttpResponseForbidden(
             "Access Denied: You do not have permission to access this activity drawer."
         )
+
+    # A team member's activity is read, not moved (owner, 2026-10-08): the
+    # service refuses, so the drawer says so instead of offering a form.
+    read_only = _team_read_only(request, a)
+    if read_only is not None:
+        return read_only
 
     # Work already delivered keeps its day (owner, 2026-10-02): the service
     # refuses the move, so the drawer says so instead of offering a form.
@@ -2277,6 +2309,10 @@ def cancel_activity_drawer_view(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
+    # A team member's activity is read, not called off (owner, 2026-10-08).
+    read_only = _team_read_only(request, a)
+    if read_only is not None:
+        return read_only
 
     from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest
 

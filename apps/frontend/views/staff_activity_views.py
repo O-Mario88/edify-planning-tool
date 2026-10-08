@@ -448,8 +448,22 @@ def staff_activity_beat_view(request):
     the server's clock decides how much of the gap since the last beat was
     active — only the page it was sent from, so a person reading or filling a
     long form keeps counting without making requests of their own."""
-    from apps.accounts.presence import is_untracked_path, touch_presence
+    from apps.accounts.presence import (
+        activity_setting,
+        is_untracked_path,
+        touch_presence,
+    )
     from apps.accounts.presence_labels import page_path
+
+    # A beat is sent for as long as its page was touched within the idle
+    # threshold, and says how long ago that was. The session's idle window
+    # (SlidingSessionMiddleware) is counted from the touch, not from the beat:
+    # otherwise every sitting would end the threshold late.
+    try:
+        idle = int(request.POST.get("idle") or 0)
+    except ValueError:
+        idle = 0
+    request._edify_idle_seconds = max(0, min(idle, activity_setting("IDLE_SECONDS")))
 
     page = page_path((request.POST.get("page") or "").strip())[:255]
     if not page.startswith("/") or is_untracked_path(page):

@@ -2024,6 +2024,10 @@ class FacilitatedTraining:
     # this fee stands, and the instalment to invoice next ("" = none now).
     invoice_label: str = ""
     invoice_instalment: str = ""
+    # The partner's team member who facilitates it, and whether the partner
+    # may still name or change them (apps.partners.delivery_team).
+    facilitator: str = ""
+    facilitator_editable: bool = False
 
     @property
     def awaits_review(self) -> bool:
@@ -2190,6 +2194,7 @@ def _facilitated_rows(activities) -> list[FacilitatedTraining]:
                 activity_status=activity.status or "",
                 partner_id=activity.facilitating_partner_id,
                 partner_name=names.get(activity.facilitating_partner_id, ""),
+                facilitator=activity.delivery_contact_name or "",
                 cluster_name=getattr(place, "name", "") or "",
                 district=getattr(getattr(place, "district", None), "name", "") or "",
                 # A facilitated cluster meeting names no course (owner,
@@ -2249,6 +2254,10 @@ def partner_facilitations(principal, *, fys=None) -> list[FacilitatedTraining]:
         qs = qs.filter(fy__in=tuple(str(fy) for fy in fys))
     rows = _facilitated_rows(list(qs))
     _annotate_invoices(rows)
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
+    for row in rows:
+        row.facilitator_editable = row.activity_status not in COMPLETED_WORK_STATUSES
     return rows
 
 
@@ -2279,6 +2288,18 @@ def _annotate_invoices(rows) -> None:
             "activity_id", "payment_type"
         )
     )
+    # Completed with its evidence, as the invoice itself reads it
+    # (partner_invoices._completed_with_evidence): verified, evidence on file.
+    from apps.evidence.models import EvidenceRecord
+
+    done = set(
+        EvidenceRecord.objects.filter(
+            activity_id__in=[
+                r.activity_id for r in rows if r.activity_status in _CLEARED_FOR_BALANCE
+            ],
+            quarantined=False,
+        ).values_list("activity_id", flat=True)
+    )
     for row in rows:
         key = row.activity_id
         if row.fee <= 0:
@@ -2296,6 +2317,11 @@ def _annotate_invoices(rows) -> None:
                 row.invoice_instalment = "clearance"
             else:
                 row.invoice_label = f"50% advance: {status_labels.get(status, status)}"
+        elif key in done:
+            # Completed with its evidence and never invoiced: payable in
+            # full, not at 50% (owner, 2026-10-08).
+            row.invoice_label = "Ready to invoice in full"
+            row.invoice_instalment = "clearance"
         elif row.training_date:
             row.invoice_label = "Ready to invoice (50% advance)"
             row.invoice_instalment = "advance"

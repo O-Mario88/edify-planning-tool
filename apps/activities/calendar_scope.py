@@ -30,7 +30,11 @@ OFF_CALENDAR_STATUSES = ("cancelled", "rejected", "awaiting_owner_approval")
 def personal_plan(activities, user):
     """Narrow `activities` to the reader's own plan.
 
-    * A partner's plan is the work scheduled for their organisation.
+    * A partner's plan is the work scheduled for their organisation: what it
+      delivers, and the officers' trainings and cluster meetings it
+      facilitates (owner, 2026-10-08: "a calendar of trainings and visits").
+      A facilitated training is the officer's record
+      (``apps.activities.facilitation``), which is why it was missing.
     * A staff member's is the work they are responsible for, and the
       partner-delivered work they monitor (a partner's activity has no
       responsible staff, so it is reachable only through its monitor).
@@ -42,7 +46,10 @@ def personal_plan(activities, user):
 
     partner_ids = resolve_partner_ids(user)
     if partner_ids:
-        return activities.filter(assigned_partner_id__in=partner_ids)
+        return activities.filter(
+            Q(assigned_partner_id__in=partner_ids)
+            | Q(facilitating_partner_id__in=partner_ids)
+        )
     return plan_of(activities, owner_ids(user))
 
 

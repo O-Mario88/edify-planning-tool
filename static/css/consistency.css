@@ -2730,14 +2730,10 @@ main :is(.apexcharts-datalabel-value) {
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) thead th {
   padding: var(--edify-table-cell-padding-block) var(--edify-table-cell-padding-inline) !important;
-  border-block-end: 1px solid var(--edify-table-header-divider, var(--edify-border)) !important;
   background-color: var(--edify-table-header, var(--edify-surface-muted)) !important;
-  color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-table-heading-size) !important;
-  font-weight: var(--edify-table-header-weight) !important;
   line-height: 1.3 !important;
-  text-transform: none !important;
   vertical-align: middle;
+  /* Its line, ink, size, weight and case: COLUMN HEADINGS, below. */
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
@@ -2753,13 +2749,6 @@ main :is(.apexcharts-datalabel-value) {
   background-color: var(--edify-table-canvas, var(--edify-surface)) !important;
   color: var(--edify-text);
   font-size: var(--edify-text-table-size) !important;
-}
-
-/* The global label-weight contract has three class-level specificity arms.
-   Match it explicitly so record headers retain the semibold scanning rail. */
-:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  table.edify-record-table:not(.edify-visually-hidden) thead th {
-  font-weight: var(--edify-table-header-weight) !important;
 }
 
 /* `.edify-group-head > th` is exempt: a row that heads the rows under it is
@@ -4411,18 +4400,24 @@ main textarea,
      text off the fill's edge. */
   padding: .375rem max(var(--edify-section-inset, var(--edify-card-inset)), var(--edify-table-cell-padding-inline)) !important;
 }
-/* A title band names the table under it; it does not compete with it (owner,
+/* A title band names the table under it. The band itself stays slim (owner,
    2026-09-27: "reduce the size of the blue table header row not to dominate
-   the designs"). Every theme: the title and its caption on the label step —
-   table structure never drops to micro — told apart by weight, both tight,
-   so a one-line band stays about 2rem tall. */
+   the designs") — its padding is unchanged and a one-line band is still
+   about 2rem tall — but the name in it is the largest text of the table
+   (owner, 2026-10-08: "It is the Table Header (table name) that should be
+   larger since it is not in any column"): one step above the column names,
+   which are one step above the cells, and as bold as they are. It sat at
+   the cells' own size, semibold, so a table's name read no larger than a
+   row of it. `h5` is the name in the officer panels' bands. The caption
+   beside or under the name stays on the label step. */
 :root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4):not(button *):not(a *),
+:root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar h5:not(button *):not(a *),
 :root :is(main, .drawer-body, [role="dialog"]) :is(h2, h3, h4).edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
   /* Block only: a heading that is itself the band bleeds through a padded
      card's inset (ONE CONTENT LINE, below). */
   margin-block: 0 !important;
-  font-size: var(--edify-text-label-size) !important;
-  font-weight: 600 !important;
+  font-size: var(--edify-text-table-title-size) !important;
+  font-weight: var(--edify-table-header-weight) !important;
   line-height: 1.3 !important;
   letter-spacing: 0 !important;
 }
@@ -4435,18 +4430,40 @@ main textarea,
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
   color: var(--edify-band-ink) !important;
 }
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td),
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table:not(.edify-record-table):not(.edify-data-table) thead :is(th, td) :is(span, a, button) {
-  color: #285b96 !important;
-}
-/* Who's Online is a record of people, read like every other dashboard table
-   (owner, 2026-09-27: one table header treatment across the dashboards). */
-:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) :is(table.edify-record-table, table.edify-data-table, table.presence-table) thead :is(th, td) {
-  color: #285b96 !important;
+/* COLUMN HEADINGS (owner, 2026-10-08: "On every table in the platform can we
+   add a line under the column header and instead of all upper case column
+   header, Capitalise Case for the column head, increase the font size and
+   make it bold and don't change the font color to blue. You can keep the font
+   color same as the table body font color only make it bold and elegant").
+
+   One treatment for every table, in every theme: the heading reads in the
+   body's ink one step above the cells' size ("just slightly bigger not
+   large"), bold, in Title Case, on a line that closes the heading row. It replaces the light theme's blue capitals (2026-09-27)
+   and the smaller muted heading the other themes had; the plain-table rule
+   above takes every border off a table, the heading's included, so the line
+   is put back here.
+
+   `:not(#edify-heading-none)` matches every table and lifts this over the
+   plain-table rule (three classes and a `:not()` list) without naming a
+   class a table would have to carry. */
+:root :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden):not(#edify-heading-none) > thead > tr > :is(th, td) {
+  border-block-end: 2px solid var(--edify-border-strong) !important;
+  /* The cells' own ink: --edify-text-muted is what a table cell is drawn in. */
+  color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-table-heading-size) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
+  font-weight: var(--edify-table-header-weight) !important;
+  letter-spacing: 0 !important;
+  text-transform: capitalize !important;
+}
+/* What a heading holds — a sort control, a label beside a tick box — is the
+   heading: the same ink and case, not a link's blue. */
+:root :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden):not(#edify-heading-none) > thead > tr > :is(th, td) :is(span, a, button, label, small) {
+  color: inherit !important;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
   .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
@@ -4834,14 +4851,16 @@ main .edify-avatar-neutral {
 .school-plan-table .school-plan-table__details > td { white-space: normal !important; overflow: visible !important; }
 /* With the Partner-supported school rule on, the planning table carries a
    Responsible column before Actions (owner, 2026-09-23). It holds one word,
-   Staff or Partner, so it is narrow and the name keeps its room. */
+   Staff or Partner, so it is narrow and the name keeps its room: as narrow
+   as its own heading allows, which is 6.5rem since the column names went up
+   a step (2026-10-08) — at 6rem "Responsible" was cut by 5px. */
 :root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 56rem !important; }
-.school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6rem; }
+.school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6.5rem; }
 .school-plan-table--selectable[data-support-column] thead th:nth-child(7) { width: 8rem; }
 /* Where the page is wide enough, Schedule and Assign sit side by side. */
 @media (min-width: 87.5rem) {
   .school-plan-table--selectable thead th:nth-child(6) { width: 13.25rem; }
-  .school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6rem; }
+  .school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6.5rem; }
   .school-plan-table--selectable[data-support-column] thead th:nth-child(7) { width: 13.25rem; }
 }
 :root main table.school-plan-table--selectable thead :is(th:nth-child(1), th:nth-child(2)) { padding-inline: .5rem !important; }

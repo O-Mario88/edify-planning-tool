@@ -123,6 +123,156 @@ Use the three tags. Do not write `class="edify-page-header"` or a `<form>` with
 its own `requestSubmit()` by hand: the ratchet will fail. A table that fits the
 card anatomy uses `{% data_table %}`.
 
+## Column headings
+
+Owner, 2026-10-08: "On every table in the platform can we add a line under the
+column header and instead of all upper case column header, Capitalise Case for
+the column head, increase the font size and make it bold and don't change the
+font color to blue. You can keep the font color same as the table body font
+color only make it bold and elegant." Then, the same day, on the size: "just
+slightly bigger not large. It is the Table Header (table name) that should be
+larger since it is not in any column."
+
+So a table reads in three steps of the one type scale, largest first:
+
+| Part | Step | At a 1440px window |
+| --- | --- | --- |
+| The table's name, in the band over it | `--edify-text-table-title-size` (the title step), bold | 16.4px |
+| The column names | `--edify-text-table-heading-size` (the body step), bold | 14.7px |
+| The cells | `--edify-text-table-size` (the label step) | 13.7px |
+
+The name's rule is the title band's (`.edify-table-titlebar`, in
+`consistency.css`); it covers the `h2`–`h5` that names the table and leaves
+the band as slim as it was (the 2026-09-27 rule that the band must not
+dominate still holds for its height). A caption beside the name stays on the
+label step.
+
+One rule in `consistency.css` (COLUMN HEADINGS) covers the column names of
+every table in a page, a drawer or a dialog, in every theme:
+
+| | Before | Now |
+| --- | --- | --- |
+| Case | capitals in the light theme, as typed in the others | Title Case (`text-transform: capitalize`) |
+| Ink | blue `#285b96` in the light theme, muted elsewhere | the cells' own ink (`--edify-text-muted`, which is what a cell is drawn in) |
+| Size | one step below the cells (`--edify-text-micro-size`) | one step above the cells (`--edify-text-table-heading-size` is `--edify-text-body-size`) |
+| Weight | 600 | 700 (`--edify-table-header-weight`) |
+| Line | none (the plain-table rule takes every border off) | 2px in `--edify-border-strong` under the heading row |
+
+Write a heading as words in the template ("Visit date", "Delivered by") and
+let the rule set the case. An abbreviation typed in capitals stays as typed
+("CCEO", "SF ID"). Do not add `uppercase`, a text colour or a size class to a
+`th`: the rule outranks them.
+
+Checked by crawl on 2026-10-08: 4,654 headings on 546 tables across the 470
+pages nine roles reach, in the light theme, and a sample in dark and blue.
+What does not match is a screen-reader-only label, and the fund breakdown
+ledger, whose cells are a step larger than a standard table's.
+
+**What a larger column name costs in width.** A column is as wide as the wider
+of its heading and its cells, and a table that no longer fits its card wraps
+its headings or scrolls (micro-ux.js, `wrapLongText` and `columnPlan`). So
+the size was measured before it was kept: 294 tables at 1440px and 1280px,
+drawn three ways. Title Case at 14.7px bold is *narrower* than what it
+replaced — capitals at 12.7px with 0.05em letter-spacing — so every table
+that changed behaves as it did or scrolls less (Loans 78px → 28px, CPD
+Learning 81px → 20px). One table needed a change: Planning fixes its column
+widths, and "Responsible" was cut by 5px at 6rem, so that column is 6.5rem.
+A table that sets a column's width by hand must leave room for its heading
+at this size.
+
+## A click is answered at once
+
+Owner, 2026-10-08: "when you click on live website it takes too long to switch
+from the current page to the page clicked from the side bar menu", then
+"investigate all the click related response issue system wide".
+
+What was measured:
+
+- **The live site, from Kampala.** A request that does no work takes about
+  0.37 s there and back; the sign-in page 0.45 s. Stylesheets and scripts are
+  not the cost: they are content-hashed, `immutable`, and served from the edge
+  cache in under 10 ms.
+- **Every kind of control** (`click` to first change on screen): a drawer
+  button 4-10 ms and a row's Actions menu 1-2 ms; a save relabels its button;
+  a link that leaves the page (sidebar, tab, row, pager) and a filter form
+  showed **nothing** until the next page replaced the old one.
+- **Why nothing.** Each of those loads a whole document, and the page the
+  reader came from stays on screen until the new one can be drawn whole
+  (`rel="expect"` in `base.html`, kept on 2026-10-05 so there is no blank or
+  black frame between pages). So the wait is the network, the server and the
+  browser added together, with no sign the click was taken.
+- **The server, at production size** (a 16,700-school copy, this machine
+  otherwise idle): a Programme Lead's pages answer in 0.14 s at the median and
+  0.6 s at the 90th percentile, a CCEO's 0.14 s and 0.26 s, the Country
+  Director's 0.11 s and 1.4 s. The first timings written here were two to three
+  times these: they were taken while a test run had the machine, and are
+  withdrawn. The order of the heavy pages was right, and they are below.
+
+`static/js/click-feedback.js` answers the click in the frame after it. It does
+not make the next page arrive sooner.
+
+| Click | What shows at once |
+| --- | --- |
+| A link that leaves the page | a line across the top of the window (`:root[data-edify-loading]::after`, `interactions.css`) |
+| A sidebar or bottom-bar entry | the line, and the entry takes the chosen look |
+| A form the browser submits (filters) | the line |
+| An htmx GET started by a click (a tab or panel fetched into the page) | the line, until the answer is in |
+
+Left alone: a new tab, a download or export, a link to the same page, a save
+(its button already says "Saving…"), typing in a search box. The line gives up
+after 12 seconds, and when "Leave this page?" is answered No.
+
+Not done, and why:
+
+- **Fetching on hover.** Sidebar links are fetched at pointer-down already
+  (speculation rules). Fetching on hover would save a further 0.2-0.4 s, but a
+  page fetched is a page the Staff Activity Log counts as opened, and it was
+  turned off for the analytics menus on 2026-09-23 for the renders it started.
+
+### The heavy pages
+
+Owner, 2026-10-08: "work on heavy and slow pages first". Server time for one
+view with nothing cached, same data before and after, and the page compared
+byte for byte each time (it did not change on any of them):
+
+| Page, reader | Before | After | What it was |
+| --- | --- | --- | --- |
+| Country Map, Country Director | 1.61 s | 0.60 s | the portfolio built a whole School and District for each of 16,700 schools, and wrote all 16,700 ids into two statements |
+| Planning Oversight, portfolio view, Country Director | 1.27 s | 0.30 s | the same builder |
+| Planning Monitor, Country Director | 0.80 s | 0.49 s | each figure on a row was folded from the row's schools on every read: one row was asked for its Core schools 2,500 times |
+| Core Schools, oversight lens, Programme Lead | 1.86 s | 1.43 s | the Lead's 4,700 team school ids written into 35 statements (165,000 values a view) |
+| Analytics, Programme Lead | 1.52 s | 1.23 s | the same list in two dozen statements |
+| To-Do, Programme Lead | 1.21 s | 1.04 s | the same, in the team figures the To-Dos are derived from |
+| Dashboard, Programme Lead | 0.55 s | 0.46 s | the same |
+| Clusters, Country Director | 1.23 s | 1.07 s | 2,577 cluster ids written into seven statements; each school's latest assessment found twice |
+| Clusters, CCEO | 0.47 s | 0.40 s | the same |
+
+How, for the next page that needs it:
+
+- **A list of ids is one array.** `field__in=id_list(ids)` or
+  `.filter(any_id("field", ids))` (`apps/core/scoping.py`) binds the list as
+  one parameter; `field__in=ids` binds one for each id, and past a few hundred
+  the statement costs more to build, send and parse than to run. The four
+  scope filters (`school_queryset`, `team_oversight_schools`,
+  `scoped_school_queryset`, `cluster_queryset`) do this for everything read
+  through them. An empty list stays `[]`: Django answers that without a
+  statement.
+- **Read the columns, not the model**, when a page reads every school to show
+  fifty: `values_list` of the eight a row is built from.
+- **A figure folded from a list is folded once.** `_folded_once` and `_settle`
+  in `apps/planning/planning_monitor.py`: a finished row remembers each
+  figure; a row still being counted does not.
+
+Still slow, and why they were left: Analytics for the Country Director (1.4 s
+when not cached, kept 30 s: 190 statements on the assessment tables), SSA
+(1.2 s: it reads 170,000 scores, already once), Core Schools' oversight lens
+(1.4 s: a dozen analyses each read the team's schools). Each wants its
+statements put together, not bound differently. One cost recurs on them:
+"each school's latest assessment" sorts the assessments by school id, a text
+key under the database's collation, 80-130 ms a time. The Country Map still
+sends 2 MB of sub-county figures it only needs when a district is opened
+(84 KB on the wire); the map already fetches the opened district's afresh.
+
 ## Tick boxes
 
 Owner, 2026-10-05: "all the places with checkboxes can you add Select All
@@ -272,8 +422,10 @@ Oversight rebuilds its fold no more often than its settle window, so a read
 inside the window includes `partials/country_oversight/_settle.html`, which
 asks once more when newer figures are due (`freshness.settles_in`). The page's
 own re-read names itself (`X-Requested-With: EdifyLive`): it is never a forced
-rebuild (`freshness.live_read`) and never marks the person as present in the
-Staff Activity Log (`SlidingSessionMiddleware`).
+rebuild (`freshness.live_read`), never marks the person as present in the
+Staff Activity Log and never keeps their session open
+(`SlidingSessionMiddleware`; docs/session-and-mfa-policy.md, "What counts as
+activity").
 
 The settled hooks run a moment after the swap, as htmx's own do: fired at
 once, the table scripts moved rows before Alpine had seen them and every menu

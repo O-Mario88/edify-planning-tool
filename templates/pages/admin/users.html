@@ -166,8 +166,17 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
               </form>
             {% else %}
             {% row_actions partner.name %}
+              {% comment %}An organisation with a login opens that account's
+              page, the one a member of staff's Configure opens: details,
+              status, unlock, reset password (owner, 2026-10-08). The drawer
+              stays for giving it a login, or a different one.{% endcomment %}
               {% if partner.presentation_status != "deleted" and can_manage_partner_users %}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Set up login for {{ partner.name }}">{% if partner.user_setup_status == 'pending' %}Set up login{% else %}Login{% endif %}</button>
+              {% if partner.login %}
+              <a class="row-menu__item" role="menuitem" href="{% url 'frontend:admin_user_detail' partner.login.id %}" aria-label="Configure the login of {{ partner.name }}">Configure login</a>
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Change the login of {{ partner.name }}">Change login</button>
+              {% else %}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Set up login for {{ partner.name }}">Set up login</button>
+              {% endif %}
               {% endif %}
               {% if partner.presentation_status != "deleted" %}
               <form role="none" method="post" action="{% url 'frontend:admin_users' %}">
@@ -276,7 +285,11 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 {{ u.name|slice:":2"|upper }}
 </div>
 <div>
-<span class="font-semibold text-slate-800 block">{{ u.name }}</span>
+{% comment %}A partner login carries a person's name: pointing at it says whose
+it is. Said in a tooltip, not a second line: a record table's cells stay on
+one line (e2e/responsive-contract.spec.js), and the organisation's own row
+above is where its login is reached from.{% endcomment %}
+<span class="font-semibold text-slate-800 block"{% if u.partner_org_name %} title="Partner login for {{ u.partner_org_name }}" data-partner-login-of="{{ u.partner_org_name }}"{% endif %}>{{ u.name }}</span>
 {% if "pending." in u.email %}
 <span class="inline-flex items-center edify-text-caption font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-pill px-1.5 mt-0.5 select-none" title="This is a placeholder email profile from school upload.">
 Needs Real Email

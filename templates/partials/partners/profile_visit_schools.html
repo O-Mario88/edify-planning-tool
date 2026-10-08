@@ -1,0 +1,46 @@
+{% load components school_identity table_pagination %}
+{% comment %}
+Schools assigned for visits (owner, 2026-10-08: "List of schools they have been
+assigned for visits"). One row per hand-over this organisation still holds or
+has delivered (apps.partners.profile_lists.visit_schools): a school waiting for
+a date is here from the moment it is handed over, which the table of schools
+already visited could not show.
+{% endcomment %}
+{% paginate visit_schools "visit_schools_page" as visit_schools_pager %}
+{% data_table name="partner-visit-schools" %}
+  {% slot title %}Schools assigned for visits{% endslot %}
+  {% slot summary %}{{ visit_schools|length }} visit{{ visit_schools|length|pluralize }}{% endslot %}
+  {% slot caption %}Schools handed to {{ partner.name }} for a visit, with the date, who visits and where each stands.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No schools assigned for visits." hint="A school appears here as soon as it is handed to this organisation for a visit." %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=visit_schools_pager param="visit_schools_page" pagination_label="Schools assigned for visits" %}{% endslot %}
+  {% if visit_schools %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">School</th>
+      <th scope="col" class="px-3 py-2">District</th>
+      <th scope="col" class="px-3 py-2">Visit</th>
+      <th scope="col" class="px-3 py-2">Assigned</th>
+      <th scope="col" class="px-3 py-2">Visit date</th>
+      <th scope="col" class="px-3 py-2">Visited by</th>
+      <th scope="col" class="px-3 py-2">Edify officer</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in visit_schools_pager.rows %}
+    <tr data-visit-school="{{ row.school.id }}">
+      <td class="px-3 py-2 tabular-nums" data-label="School ID">{% school_code row.school.id %}</td>
+      <td class="px-3 py-2" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold hover:underline">{{ row.school.name }}</a></td>
+      <td class="px-3 py-2" data-label="District">{{ row.district|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Visit">{{ row.visit }}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="Assigned">{{ row.assigned_on|date:"j M Y"|default:"—" }}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="Visit date">{{ row.date|date:"j M Y"|default:"Not dated" }}</td>
+      <td class="px-3 py-2" data-label="Visited by">{{ row.visited_by|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Edify officer">{{ row.officer|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}

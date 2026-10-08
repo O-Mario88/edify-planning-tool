@@ -1,0 +1,41 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Who delivers this {{ work_noun }}{% endblock %}
+{% block drawer_subtitle %}{{ work_title }}{% if work_place %} · {{ work_place }}{% endif %}{% if work_date %} · {{ work_date|date:"j M Y" }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% comment %}
+The team member who delivers a piece of the organisation's work (owner,
+2026-10-08: the calendar "should show activities of the day and who is
+executing them from among the onboarded partner team member"). Chosen from the
+team (apps.partners.delivery_team), not typed, and changeable until the work is
+finished.
+{% endcomment %}
+<form method="post"
+      action="/partner/activities/{{ activity.id }}/delivered-by"
+      hx-post="/partner/activities/{{ activity.id }}/delivered-by"
+      hx-target="#partner-delivery-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="partner-delivery-errors" aria-live="polite"></div>
+
+  <p class="font-medium text-slate-600">Now: <span class="font-semibold text-slate-800">{{ activity.delivery_contact_name|default:"Nobody named yet" }}</span></p>
+
+  <div class="space-y-1">
+    <label for="partner-delivery-member" class="block edify-text-caption font-semibold text-slate-600">Team member <span class="text-rose-500">*</span></label>
+    <select id="partner-delivery-member" name="delivery_contact_name" required
+            class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+      {% for name in team %}
+      <option value="{{ name }}" {% if name == activity.delivery_contact_name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">Your team is the Staff and volunteers list on <a href="/partners/{{ partner.id }}" class="font-semibold underline">your organisation's profile</a>. Add someone there to choose them here.</p>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Save</button>
+  </div>
+</form>
+{% endblock %}

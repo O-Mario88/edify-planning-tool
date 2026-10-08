@@ -43,6 +43,65 @@ Response phases run in reverse order, so "after" in the list means "before" at
 response time — which is when the session has to be touched for
 `SessionMiddleware` to notice and save it.
 
+### What counts as activity (owner, 2026-10-08)
+
+> "make sure the session expires after 30 minutes of idle"
+
+Only a request a person makes slides the window. Until 2026-10-08 every
+request did, and a page makes requests of its own: it listens to the live
+stream, reads itself again whenever a colleague changes the plan, reports its
+own script errors, and the browser fetches the service worker. A page left on
+screen therefore kept its session for as long as the office was open, and the
+timeout only ever ended the session of a closed laptop or a hidden tab.
+
+| Request | Slides the window |
+|---|---|
+| A page opened, a link followed, a form saved, an htmx action | Yes |
+| The activity heartbeat (`POST /staff-activity/beat`) | Yes, to the moment the page was last touched |
+| A page re-reading itself (`X-Requested-With: EdifyLive`) | No |
+| The live stream being opened (`/api/realtime/stream`) | No |
+| An htmx request nobody triggered from a page untouched for five minutes (`X-Edify-Background: 1`) | No |
+| The page asking whether it is still signed in (`/login/state`) | No |
+| The defect beacon, the service worker, the manifest, the favicon | No |
+
+Idle means untouched: no click or tap, no key, no scrolling. Moving the mouse
+over a page is not a touch, and neither is reading it. Someone reading a long
+page should scroll it; someone typing a long entry is never idle, because the
+heartbeat tells the server so once a minute without their sending anything.
+
+Three things enforce it:
+
+1. **The rule is the last use, not the last save.** The middleware keeps the
+   moment of the last request a person made (`_last_touch`, in the session)
+   and, on the way in, ends a session whose last one is a window old. The
+   row's own expiry cannot be the rule, because every save pushes it out and
+   a view may save the session while answering a request the page made by
+   itself.
+2. **The heartbeat reports the touch, not itself.** It is sent for five
+   minutes after the last touch (`STAFF_ACTIVITY_IDLE_SECONDS`) and carries
+   how long ago that touch was. Counted as "now", each sitting would have
+   ended thirty-five minutes after the person stopped.
+3. **The stream ends with the session.** A live stream is admitted once and
+   then runs by itself. It is closed when the session it was opened under
+   would end if nobody used it again; the browser reconnects on its own and
+   is admitted or refused like any other request.
+
+### What the person sees
+
+A page untouched for the window asks `GET /login/state`, which answers
+`{"signedIn": false, "remaining": 0}` once the session has ended, and the page
+shows the "Session paused: sign in to continue" dialog the shell already had
+for a session that expired under an htmx request. The page and anything typed
+on it stay where they are, behind the dialog.
+
+The server answers, not the page's own clock, because the page cannot know
+about the tab beside it that is still in use: with another tab at work the
+answer is `{"signedIn": true, "remaining": N}` and the page asks again in N
+seconds. A laptop that slept asks as soon as it wakes.
+
+In the Staff Activity Log such a sitting reads "Timed out after …", as it
+always has: nothing signs the person out, the session simply ends.
+
 ### A related fix
 
 `SESSION_ENGINE` used to be selected on `_redis_url`, which has a default and
@@ -163,8 +222,9 @@ no way to see an invitation link or a sign-in code locally.)
 ## Tests
 
 - `apps/accounts/test_session_idle_timeout.py` — the sliding window, idle
-  expiry, what the throttle costs and saves, and that the cache copy never
-  outlives the window
+  expiry, what the throttle costs and saves, that the cache copy never
+  outlives the window, that only a person slides it, what `/login/state`
+  answers, and when a stream is closed
 - `apps/accounts/test_mfa.py` — written from the attacker's side: what a
   stolen password reaches, guessing, replay, session fixation, the resend
   ceiling, the challenge rate limit, and the token API
