@@ -34,7 +34,7 @@ all of it again.
     <div><dt>Training</dt><dd>{{ row.training.display_name }}</dd></div>
     <div><dt>Fiscal year</dt><dd>FY {{ row.fy }}</dd></div>
     <div><dt>Ceiling</dt><dd><strong>{{ row.ceiling }}</strong></dd></div>
-    <div><dt>Schools scheduled</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.group }} group training, {{ current.inSchool }} in-school training)</dd></div>
+    <div><dt>Schools covered</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.inSchool }} staff planned, {{ current.partner }} assigned to a partner{% if current.awaitingPartner %}, {{ current.awaitingPartner }} of them awaiting the partner's date{% endif %}, {{ current.group }} group scheduled)</dd></div>
   </dl>
   </div>
   {% else %}
@@ -72,7 +72,7 @@ all of it again.
   {% if current %}
   <div>
   <dl class="project-capacity-line project-capacity-line--stack" data-ceiling-current>
-    <div><dt>Schools scheduled</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.group }} group training, {{ current.inSchool }} in-school training)</dd></div>
+    <div><dt>Schools covered</dt><dd><strong>{{ current.scheduled }}</strong> ({{ current.inSchool }} staff planned, {{ current.partner }} assigned to a partner{% if current.awaitingPartner %}, {{ current.awaitingPartner }} of them awaiting the partner's date{% endif %}, {{ current.group }} group scheduled)</dd></div>
     <div><dt>Ceiling now</dt><dd>{% if current.managed %}<strong>{{ current.ceiling }}</strong>{% else %}None set{% endif %}</dd></div>
   </dl>
   </div>
@@ -80,7 +80,7 @@ all of it again.
   {% endif %}
 
   {% if mode == "remove" %}
-  <p class="edify-note" data-tone="warning" role="note">With no ceiling, {{ row.staff.user.name }} schedules {{ row.training.display_name }} without a limit, as before one was set. The schools already scheduled stay as they are.</p>
+  <p class="edify-note" data-tone="warning" role="note">With no ceiling, {{ row.staff.user.name }} schedules {{ row.training.display_name }} without a limit, as before one was set. The schools already covered stay as they are.</p>
   {% else %}
   <div class="space-y-1">
     <label for="ceiling-value" class="block edify-text-caption font-semibold text-slate-600">Training ceiling <span class="text-rose-500">*</span></label>

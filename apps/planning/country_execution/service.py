@@ -1632,7 +1632,11 @@ def activity_rows(
 ) -> dict:
     """The records behind a figure, the oldest past-due first."""
     dataset = snapshot.dataset
-    test = STAGE_FILTERS.get(stage)
+    # With no figure named the list is the work that is live, as every count
+    # on the page is: cancelled work has its own figure and its own list
+    # (owner, 2026-10-08: "the cancelled activities should not remain
+    # counting").
+    test = STAGE_FILTERS.get(stage) or STAGE_FILTERS["due"]
     owners = dataset.owners
     picked = []
     for record in filtered_records(dataset, snapshot.filters):

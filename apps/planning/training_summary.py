@@ -21,10 +21,14 @@ The three country columns are the country's own, the same for every reader:
 
 * **Country Ceiling** — set by Admin or Impact Assessment
   (``training_ceilings.set_country_ceiling``); "Not set" until it is.
-* **Planned** — every school the country's staff have planned for the
-  training, group and in-school together.
-* **Remaining** — the ceiling less what is planned, never below zero; what
-  is planned past the ceiling shows on Planned.
+* **Total Covered** — every school the country has committed to the
+  training, each once: planned by staff for an in-school training, assigned
+  to a Partner for one — whether or not the Partner has dated it (owner,
+  2026-10-08: "the training summary should not wait for partner scheduling")
+  — or on a group training. Each route has its own column beside it, so a
+  school that is *assigned* is never read as *scheduled*.
+* **Remaining** — the ceiling less what is covered, never below zero; what
+  is covered past the ceiling shows on Total Covered.
 
 Then one column per staff member: the schools that person has planned, beside
 the ceiling their Programme Lead set for them.
@@ -81,9 +85,11 @@ __all__ = [
     "SUMMARY_ROLES",
     "build",
     "country_officers",
+    "coverage_profiles",
     "for_reader",
     "may_read_country",
     "own",
+    "reader_staff",
 ]
 
 #: Roles that read every officer in the country. None of them sets an
@@ -124,9 +130,29 @@ class Cell:
     limit: int | None
     group: int = 0
     in_school: int = 0
+    #: Schools assigned to a Partner for it, and those the Partner has dated.
+    partner: int = 0
+    partner_scheduled: int = 0
     ceiling_id: str = ""
     #: What the limit is called: a training ceiling, or a project capacity.
     noun: str = "ceiling"
+
+    @property
+    def awaiting_partner(self) -> int:
+        return max(self.partner - self.partner_scheduled, 0)
+
+    @property
+    def breakdown(self) -> str:
+        """How the schools are covered, route by route."""
+        waiting = (
+            f" ({self.awaiting_partner} awaiting the partner)"
+            if self.awaiting_partner
+            else ""
+        )
+        return (
+            f"{self.in_school} staff planned, {self.partner} partner "
+            f"assigned{waiting}, {self.group} group scheduled"
+        )
 
     @property
     def state(self) -> str:
@@ -175,10 +201,31 @@ class Row:
     #: always None for a project training.
     country_ceiling: int | None = None
     country_ceiling_id: str = ""
-    #: Every school the country has planned for it (a training), or every
-    #: school on the project (a project training).
+    #: Every school the country has covered for it (a training) — planned by
+    #: staff, assigned to a Partner or on a group training, each once — or
+    #: every school on the project (a project training).
     planned: int = 0
+    #: The country's schools by route (a training only): planned by staff,
+    #: assigned to a Partner, of those dated by the Partner, on a group
+    #: training.
+    staff_planned: int = 0
+    partner: int = 0
+    partner_scheduled: int = 0
+    group: int = 0
     cells: list[Cell] = field(default_factory=list)
+
+    @property
+    def awaiting_partner(self) -> int:
+        """Schools assigned to a Partner that the Partner has not dated."""
+        return max(self.partner - self.partner_scheduled, 0)
+
+    @property
+    def partner_hint(self) -> str:
+        """Assigned is the whole commitment; how much of it is on a day."""
+        return (
+            f"{self.partner_scheduled} scheduled by the partner · "
+            f"{self.awaiting_partner} awaiting the partner's date"
+        )
 
     @property
     def total(self) -> int:
@@ -243,6 +290,10 @@ class Summary:
     #: The columns that are a Programme Lead's own (owner, 2026-10-06: the
     #: Leads are on the list beside their officers).
     lead_ids: frozenset = frozenset()
+    #: The reader follows the whole country, so each country figure opens the
+    #: schools it counts. A Programme Lead reads the country's figures and
+    #: opens their own team's.
+    country_links: bool = False
 
     @property
     def columns(self) -> list[dict]:
@@ -370,15 +421,18 @@ def _training_rows(profiles, fy: str, *, country: str) -> list[Row]:
                     limit=figure.ceiling if figure else None,
                     group=figure.group if figure else 0,
                     in_school=figure.in_school if figure else 0,
+                    partner=figure.partner if figure else 0,
+                    partner_scheduled=figure.partner_scheduled if figure else 0,
                     ceiling_id=figure.ceiling_id if figure else "",
                 )
             )
         # How the country is delivering it: both modes when it is planned
-        # both ways.
+        # both ways. A Partner's training is an in-school one.
         country_row = planned[item.id]
-        if country_row["group"] and country_row["in_school"]:
+        in_school = country_row["in_school"] or country_row["partner"]
+        if country_row["group"] and in_school:
             mode = f"{MODE_LABELS[GROUP]} · {MODE_LABELS[IN_SCHOOL]}"
-        elif country_row["in_school"]:
+        elif in_school:
             mode = MODE_LABELS[IN_SCHOOL]
         else:
             mode = MODE_LABELS[GROUP]
@@ -393,6 +447,10 @@ def _training_rows(profiles, fy: str, *, country: str) -> list[Row]:
                 country_ceiling=ceiling.get("ceiling"),
                 country_ceiling_id=ceiling.get("id", ""),
                 planned=country_row["total"],
+                staff_planned=country_row["in_school"],
+                partner=country_row["partner"],
+                partner_scheduled=country_row["partner_scheduled"],
+                group=country_row["group"],
                 cells=cells,
             )
         )
@@ -503,12 +561,52 @@ def own(principal, fy: str) -> Summary:
     return Summary(fy=str(fy), staff=[profile], rows=rows)
 
 
-def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
+def reader_staff(principal, *, lead: str = "") -> list:
+    """The staff whose trainings this reader follows on Planning Oversight:
+    a Programme Lead's own column and their officers', or — for the Country
+    Director, Impact Assessment and Admin — every officer in the country,
+    narrowed to one Programme Lead's team on request."""
+    role = getattr(principal, "active_role", "") or ""
+    if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return training_ceilings.ceiling_staff_options(principal)
+    if role not in COUNTRY_READER_ROLES:
+        raise Forbidden(
+            "The training summary is read by a Programme Lead for their "
+            "officers, and by the Country Director, Impact Assessment and Admin."
+        )
+    officers = country_officers(_reader_country(principal))
+    lead_of, leads = _leads_of(officers)
+    if lead and any(lead == lead_id for lead_id, _name in leads):
+        officers = [p for p in officers if p.id == lead or lead_of.get(p.id) == lead]
+    return _teams_in_order(officers, lead_of, [i for i, _name in leads])
+
+
+def coverage_profiles(principal, summary: Summary) -> list:
+    """The staff whose schools the coverage table lists for this reader: the
+    people in the summary's columns — and, for a reader of the whole country
+    with no one team chosen, everybody the country's figures count, so the
+    list behind a country figure is as long as the figure. That includes
+    staff who have left and whose plans are still the country's."""
+    if not summary.country_links or summary.lead:
+        return list(summary.staff)
+    from apps.accounts.models import StaffProfile
+
+    country = _reader_country(principal)
+    staff = StaffProfile.objects.select_related("user")
+    if country:
+        staff = staff.filter(Q(country=country) | Q(country=""))
+    return list(staff)
+
+
+def for_reader(
+    principal, fy: str, *, lead: str = "", with_rows: bool = True
+) -> Summary:
     """The Planning Oversight table: a Programme Lead's officers, or — for the
     Country Director, Impact Assessment and Admin — every officer in the
     country, narrowed to one Programme Lead's team on request. Only a
     Programme Lead sets an officer's ceiling; Admin and Impact Assessment set
-    the Country Ceiling."""
+    the Country Ceiling. ``with_rows`` false gives the readers and columns
+    alone, for a tab that draws another table of the same people."""
     role = getattr(principal, "active_role", "") or ""
     country = _reader_country(principal)
     if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
@@ -518,7 +616,7 @@ def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
         return Summary(
             fy=str(fy),
             staff=staff,
-            rows=build(staff, str(fy), country=country),
+            rows=build(staff, str(fy), country=country) if with_rows else [],
             may_set=bool(staff),
             lead_ids=frozenset({own_id} if own_id else ()),
         )
@@ -538,10 +636,11 @@ def for_reader(principal, fy: str, *, lead: str = "") -> Summary:
     return Summary(
         fy=str(fy),
         staff=officers,
-        rows=build(officers, str(fy), country=country),
+        rows=build(officers, str(fy), country=country) if with_rows else [],
         may_set=False,
         may_set_country=training_ceilings.may_set_country_ceiling(principal),
         leads=leads,
         lead=lead,
         lead_ids=lead_ids,
+        country_links=True,
     )

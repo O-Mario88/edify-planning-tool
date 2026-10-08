@@ -1,0 +1,8 @@
+{% load frontend_filters %}{% comment %}
+One of the country's figures on a row of the training summary: `value`
+schools, the ones the Schools tab lists when shown `show`. A reader of the
+whole country (the Country Director, Impact Assessment, Admin) opens them;
+a Programme Lead reads the country's figure and opens their own team's from
+the staff columns. `what` finishes the sentence a screen reader hears; `tone`
+and `strong` mark the figure.
+{% endcomment %}{% if not value %}<span class="edify-text-muted">0</span>{% else %}{% if summary.country_links %}<a class="no-underline hover:opacity-90" href="/team-planning-oversight/?view=trainings&amp;tab=schools&amp;fy={{ summary.fy }}&amp;training={{ row.training_id }}&amp;show={{ show }}" aria-label="{{ value }} school{{ value|pluralize }} {{ what }} for {{ row.name }}. Show them."{% if hint %} title="{{ hint }}"{% endif %} data-summary-figure="country-{{ show }}">{% endif %}<span{% if tone %} class="edify-status-text" data-edify-tone="{{ tone }}"{% endif %}{% if hint and not summary.country_links %} title="{{ hint }}"{% endif %}>{% if strong %}<strong>{{ value|intcomma }}</strong>{% else %}{{ value|intcomma }}{% endif %}</span>{% if summary.country_links %}</a>{% endif %}{% endif %}

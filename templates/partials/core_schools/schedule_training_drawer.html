@@ -85,8 +85,8 @@ class="space-y-4 text-[13px] text-slate-700"
   <p x-show="catalogueItemId" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" aria-atomic="true"><span class="font-semibold text-slate-800" x-text="trainingCategory"></span> · SSA intervention association: <span class="font-semibold text-slate-800" x-text="ssaIndicator"></span></p>
   {% if not catalogue_items %}<p class="edify-note" data-tone="warning">No training is active in the Training Catalogue.</p>{% endif %}
   <p x-show="catalogueItemId && capacity.fy" style="display:none" class="edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
-    <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>.</span></template>
-    <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled"></strong> schools scheduled for this training in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
+    <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools covered for this training in FY <span x-text="capacity.fy"></span>.</span></template>
+    <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled"></strong> schools covered for this training in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
   </p>
   <p x-show="trainingCeilingFull" style="display:none" class="edify-note" data-tone="warning" role="alert" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools to this training in FY <span x-text="capacity.fy"></span>. Choose another training, or ask your Programme Lead to raise the ceiling.</p>
 </div>
