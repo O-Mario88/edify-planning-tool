@@ -159,8 +159,8 @@ run that is still scheduled.
     </div>
     {% if edit_ceiling_json %}
     <p class="mt-1 edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
-      <template x-if="ceiling.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(ceiling.scheduled + placesTaken) + ' / ' + ceiling.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY {{ act.fy }}.</span></template>
-      <template x-if="!ceiling.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="ceiling.scheduled + placesTaken"></strong> schools scheduled for this training in FY {{ act.fy }}. No training ceiling is set.</span></template>
+      <template x-if="ceiling.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(ceiling.scheduled + placesTaken) + ' / ' + ceiling.ceiling" data-training-ceiling-count></strong> schools covered for this training in FY {{ act.fy }}.</span></template>
+      <template x-if="!ceiling.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="ceiling.scheduled + placesTaken"></strong> schools covered for this training in FY {{ act.fy }}. No training ceiling is set.</span></template>
     </p>
     <p x-show="ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="danger" role="alert" data-training-ceiling-over>This training's ceiling leaves <span x-text="placesHeld"></span> place<span x-show="placesHeld !== 1">s</span> and <span x-text="placesTaken"></span> new schools are ticked. Untick <span x-text="placesTaken - placesHeld"></span> to save.</p>
     <p x-show="ceilingFull && !ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="warning" role="status" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools.<span x-show="invitedCount > 0"> Untick a school to tick another.</span></p>

@@ -1057,11 +1057,16 @@ class PLTeamTargetsService:
                 }
             )
 
+        # What its drawer lists (`?status=returned_by_ia`), and nothing else:
+        # the tile used to add work returned by the Programme Lead and work
+        # that was cancelled or rejected, so cancelling three visits read
+        # "3 Returned by IA" (owner, 2026-10-08: cancelled work does not
+        # count).
         returned_count = (
             Activity.objects.filter(
                 responsible_staff_id__in=team_ids,
                 fy=fy,
-                status__in=RETURNED_STATUSES,
+                status="returned_by_ia",
                 deleted_at__isnull=True,
             )
             .exclude(delivery_type="partner")

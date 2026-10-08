@@ -2,63 +2,86 @@
 {% load school_identity table_pagination %}
 
 {% comment %}
-The schools behind a Training Summary figure (owner, 2026-10-06): every school
-one officer has scheduled for one training this fiscal year, one row per
-school and session, saying how it is delivered — Group Training with its
-cluster, or In-School Training — and where the plan stands, which opens the
-plan it comes from. The figures above the table are schools, each counted
-once (owner, 2026-10-08): a school on a second session is its own row, marked
-as the same school. Read-only. A request for an officer the reader may not
-see is refused with the reason (apps.planning.training_ceilings.schools_behind).
+The schools behind a Training Summary figure (owner, 2026-10-06 and
+2026-10-08): the schools one officer has committed to one training this
+fiscal year — or to every training, when none is named — one row per school
+and session. Each row says how the school is covered (in-school by staff,
+in-school by a Partner and which one, or on a group training and in which
+cluster), where it stands and who owns the next step, and opens the record it
+is read from. Status and Next Action come first: the drawer is narrow, and
+they are what the reader came for.
+
+`figure` narrows it to the schools one number counts: staff planned, partner
+assigned, partner scheduled, awaiting the partner's date, group scheduled, or
+— Remaining — the schools the officer holds that are not covered yet.
+
+The figures above the table are schools, each counted once: a school on a
+second session is its own row, marked as the same school. Read-only. A
+request for an officer the reader may not see is refused with the reason
+(apps.planning.training_coverage.schools_behind).
 {% endcomment %}
 
 {% block drawer_title %}{% if refusal %}Training summary{% else %}{{ training_name }} · {{ staff_name }}{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if not refusal %}{% if delivery_label %}{{ delivery_label }} · {% endif %}Schools scheduled in FY {{ fy }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if not refusal %}{% if delivery_label %}{{ delivery_label }} · {% endif %}{{ school_count }} school{{ school_count|pluralize }} · FY {{ fy }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 {% if refusal %}
 <div class="edify-note" data-tone="warning" role="alert" data-training-summary-refusal>{{ refusal }}</div>
 {% else %}
-<div class="space-y-2" data-training-summary-schools>
+<div class="space-y-2" data-training-summary-schools data-coverage-figure="{{ figure|default:'covered' }}">
   {% if summary %}
-  <dl class="project-capacity-line" data-training-summary-line>
+  {% comment %}Each figure opens its own schools in this drawer; the one shown
+  is bold. A drawer sits outside the page's tab rails, so the figures are
+  the switch. Utility classes only: the shell's stylesheet budget has no room
+  for a rule of its own.{% endcomment %}
+  <dl class="project-capacity-line" data-training-summary-line data-coverage-figures>
     <div><dt>Ceiling</dt><dd>{% if summary.ceiling is None %}None set{% else %}{{ summary.ceiling }}{% endif %}</dd></div>
-    <div><dt>Group Training</dt><dd>{{ summary.group }}</dd></div>
-    <div><dt>In-School Training</dt><dd>{{ summary.in_school }}</dd></div>
-    <div><dt>Total scheduled</dt><dd><strong>{{ summary.total }}</strong></dd></div>
+    <div><dt>Staff planned</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=staff" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=staff" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "staff" %} font-bold{% endif %}"{% if figure == "staff" %} aria-current="true"{% endif %} data-coverage-switch="staff">{{ summary.in_school }}</a></dd></div>
+    <div><dt>Partner assigned</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=partner" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=partner" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "partner" %} font-bold{% endif %}"{% if figure == "partner" %} aria-current="true"{% endif %} data-coverage-switch="partner">{{ summary.partner }}</a></dd></div>
+    <div><dt>Partner scheduled</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=partner_scheduled" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=partner_scheduled" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "partner_scheduled" %} font-bold{% endif %}"{% if figure == "partner_scheduled" %} aria-current="true"{% endif %} data-coverage-switch="partner_scheduled">{{ summary.partner_scheduled }}</a></dd></div>
+    <div><dt>Awaiting partner scheduling</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=awaiting" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=awaiting" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "awaiting" %} font-bold{% endif %}"{% if figure == "awaiting" %} aria-current="true"{% endif %} data-coverage-switch="awaiting">{% if summary.awaiting_partner %}<span class="edify-status-text" data-edify-tone="warning">{{ summary.awaiting_partner }}</span>{% else %}0{% endif %}</a></dd></div>
+    <div><dt>Group scheduled</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=group" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=group" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "group" %} font-bold{% endif %}"{% if figure == "group" %} aria-current="true"{% endif %} data-coverage-switch="group">{{ summary.group }}</a></dd></div>
+    <div><dt>Schools covered</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=covered" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=covered" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if not figure or figure == "covered" %} font-bold{% endif %}"{% if not figure or figure == "covered" %} aria-current="true"{% endif %} data-coverage-switch="covered"><strong>{{ summary.total }}</strong></a></dd></div>
+    <div><dt>{% if summary.ceiling is None %}Not yet covered{% else %}Remaining{% endif %}</dt><dd><a href="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=remaining" hx-get="/training-summary/schools?staff={{ staff_id }}&amp;training={{ training_id }}&amp;fy={{ fy }}&amp;figure=remaining" hx-target="#drawer-container" hx-swap="innerHTML" class="underline{% if figure == "remaining" %} font-bold{% endif %}"{% if figure == "remaining" %} aria-current="true"{% endif %} data-coverage-switch="remaining">{% if summary.ceiling is None %}View{% else %}{{ summary.balance }}{% endif %}</a></dd></div>
     {% if summary.ceiling is not None %}
-    <div><dt>Balance</dt><dd>{{ summary.balance }}</dd></div>
     <div><dt>Excess</dt><dd>{{ summary.excess }}</dd></div>
     {% endif %}
     <div><dt>Status</dt><dd data-summary-flag="{{ summary.state }}">{{ summary.flag }}</dd></div>
   </dl>
   {% endif %}
-  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Schools scheduled for {{ training_name }}; scroll sideways for more columns">
+  <dl class="project-capacity-line" data-training-progress-line>
+    <div><dt>Scheduled</dt><dd>{{ progress.scheduled }}</dd></div>
+    <div><dt>Started</dt><dd>{{ progress.started }}</dd></div>
+    <div><dt>Completed</dt><dd>{{ progress.completed }}</dd></div>
+  </dl>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Schools for {{ training_name }}; scroll sideways for more columns">
     {% paginate rows "training_schools_page" as training_schools_pager %}
     <table class="rpl-table" data-mobile-table="scroll">
-      <caption class="sr-only">Schools {{ staff_name }} has scheduled for {{ training_name }} in FY {{ fy }}: how each is delivered, its cluster and where the plan stands.</caption>
+      <caption class="sr-only">{{ delivery_label|default:"Schools covered" }} for {{ training_name }} under {{ staff_name }} in FY {{ fy }}: how each school is covered, who is responsible, where it stands and the next action.</caption>
       <thead>
         <tr>
           <th scope="col">School ID</th>
           <th scope="col">School</th>
-          <th scope="col">Delivery</th>
-          <th scope="col">Cluster</th>
+          {% if show_training %}<th scope="col">Training</th>{% endif %}
           <th scope="col">Status</th>
+          <th scope="col">Next Action</th>
+          <th scope="col">Route</th>
         </tr>
       </thead>
       <tbody>
         {% for row in training_schools_pager.rows %}
-        <tr data-delivery="{{ row.delivery_key }}"{% if row.repeat %} data-repeat-school{% endif %}>
+        <tr data-coverage-row data-delivery="{{ row.delivery_key }}" data-route="{{ row.route|default:'none' }}" data-coverage-state="{{ row.status }}"{% if row.repeat %} data-repeat-school{% endif %}>
           <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_pk %}{% school_code row.school_pk %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <th scope="row" data-record-title><span><a href="/schools/{{ row.school_pk }}">{{ row.school_name }}</a></span></th>
-          <td data-label="Delivery">{{ row.delivery }}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}{% if row.repeat %} <span class="rpl-muted">· same school, counted once</span>{% endif %}</td>
-          <td data-label="Cluster">{{ row.cluster|default:"—" }}</td>
-          <td data-label="Status"><a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training">{{ row.status }}{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a></td>
+          {% if show_training %}<td data-label="Training">{{ row.training_name }}</td>{% endif %}
+          <td data-label="Status">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a>{% elif row.assignment_id %}<a href="/partner-oversight/" class="no-underline hover:opacity-90" title="Open Partner Oversight, where this hand-over is followed"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a>{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}{% endif %}</td>
+          <td data-label="Next Action">{{ row.next_action }}</td>
+          <td data-label="Route">{{ row.route_label }}{% if row.partner_name %} <span class="rpl-muted">· {{ row.partner_name }}</span>{% endif %}{% if row.cluster %} <span class="rpl-muted">· {{ row.cluster }}</span>{% endif %}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}{% if row.repeat %} <span class="rpl-muted">· same school, counted once</span>{% endif %}</td>
         </tr>
         {% empty %}
         <tr>
-          <td class="rpl-table__empty" colspan="5">
-            {% include "components/empty_state.html" with message="No school is scheduled for this training yet." compact="true" %}
+          <td class="rpl-table__empty" colspan="{% if show_training %}6{% else %}5{% endif %}">
+            {% if figure == "remaining" %}{% include "components/empty_state.html" with message="Every school this person holds is covered for this training." compact="true" %}{% elif figure == "awaiting" %}{% include "components/empty_state.html" with message="No school is waiting for a partner to schedule it." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No school is covered for this training yet." compact="true" %}{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -66,6 +89,9 @@ see is refused with the reason (apps.planning.training_ceilings.schools_behind).
     </table>
     {% include "components/table_pager.html" with pager=training_schools_pager param="training_schools_page" %}
   </div>
+  {% if figure == "remaining" %}
+  <p class="edify-text-caption edify-text-muted" data-coverage-remaining-note>The schools {{ staff_name }} holds that take a training and have no commitment to this one yet: not planned by staff, not assigned to a partner and on no group training for it.{% if summary and summary.ceiling is not None %} {{ summary.balance }} place{{ summary.balance|pluralize }} {{ summary.balance|pluralize:"is,are" }} left under the ceiling of {{ summary.ceiling }}.{% endif %}</p>
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}

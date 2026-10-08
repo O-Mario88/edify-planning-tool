@@ -6,7 +6,10 @@ Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-
 from apps.core.metrics import render_precomputed_metric_for_source
 
 from apps.core.htmx_errors import error_message
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
+)
 from django.utils.html import escape
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -201,11 +204,17 @@ def staff_directory_view(request):
 
     school_ids_by_user = {u.id: set() for u in page_staff}
     if all_ids:
-        for row in Activity.objects.filter(
-            responsible_staff_id__in=all_ids,
-            deleted_at__isnull=True,
-            activity_type__in=VISIT_TYPES,
-        ).values("responsible_staff_id", "school_id"):
+        # A school whose only visit was called off is not a school the
+        # person visits (owner, 2026-10-08: cancelled work does not count).
+        for row in (
+            Activity.objects.filter(
+                responsible_staff_id__in=all_ids,
+                deleted_at__isnull=True,
+                activity_type__in=VISIT_TYPES,
+            )
+            .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
+            .values("responsible_staff_id", "school_id")
+        ):
             owner = id_to_user.get(row["responsible_staff_id"])
             if owner and row["school_id"]:
                 school_ids_by_user[owner.id].add(row["school_id"])

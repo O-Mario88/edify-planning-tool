@@ -2331,6 +2331,20 @@ def cancel_activity_drawer_view(request, activity_id):
         status__in=MONEY_MOVED_ADVANCE_STATUSES,
     ).exists()
 
+    # A Partner's dated work: cancelling undoes the date, and the school waits
+    # for the Partner again (partners.services.undo_assignment_scheduling).
+    from apps.partners.dating_policy import partner_has_dated, partner_name_for
+    from apps.partners.models import PartnerAssignment
+
+    partner_keeps_school = (
+        a.delivery_type == "partner"
+        and partner_has_dated(a)
+        and PartnerAssignment.objects.filter(
+            scheduled_activity_id=a.id,
+            status__in=PartnerAssignment.SCHEDULED_STATUSES,
+        ).exists()
+    )
+
     return render(
         request,
         "partials/my_plan/cancel_drawer.html",
@@ -2338,6 +2352,10 @@ def cancel_activity_drawer_view(request, activity_id):
             "act": a,
             "money_moved": money_moved,
             "pair_joins": joined,
+            "partner_keeps_school": partner_keeps_school,
+            "partner_name": (
+                partner_name_for(a.assigned_partner_id) if partner_keeps_school else ""
+            ),
             "drawer_size": "sm",
         },
     )
@@ -3055,8 +3073,14 @@ def evidence_center_view(request):
     from apps.core.scoping import resolve_user_scope
     from apps.partners.models import Partner
 
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+
     scope = resolve_user_scope(request.user)
-    activities = Activity.objects.filter(deleted_at__isnull=True)
+    # No evidence is owed for work that was called off, so it is on none of
+    # these lists and in none of their counts (owner, 2026-10-08).
+    activities = Activity.objects.filter(deleted_at__isnull=True).exclude(
+        status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+    )
     if scope.can_view_summary_only:
         activities = activities.none()
     elif not scope.country_scope:

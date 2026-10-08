@@ -45,17 +45,39 @@ Its schools are the schools added to the project, against the capacity its
 coordinator set; it has no training ceiling, counts under none, and is listed
 once, under its project (``project_training_ids``).
 
+A school handed to a Partner for a training is a school committed to that
+training from the moment it is handed over (owner, 2026-10-08: "the training
+summary should not wait for partner scheduling ... Assigned must still count
+toward training coverage/capacity"). The hand-over is the commitment; the
+Partner dating it moves the same commitment on a stage and adds no school. So
+an in-school training is delivered by staff or by a Partner, and a Partner's
+is read from two records that are one piece of work at two moments:
+
+* the hand-over still waiting for the Partner's date (``PartnerAssignment``,
+  not yet scheduled), and
+* the training the Partner has dated (the ``Activity`` the hand-over became),
+  or work created already carrying a Partner.
+
+It is filed under the staff member who follows it: its monitor, else whoever
+assigned it or is responsible for it, else whoever holds the school — the
+order the planning monitors credit Partner work in. A hand-over has no date,
+so it is waiting now: it is read in the running year and in a year being
+planned ahead, never in a year that has closed.
+
 "Allocated" is not a word here. It keeps its meaning — a school assigned to a
 partner or to a project — and training uses Scheduled, Ceiling, Balance and
-Excess.
+Excess. Nor is every committed school "scheduled": staff *plan* an in-school
+training, a school is *assigned* to a Partner and then *scheduled* by it, and
+a school is *scheduled* on a group training. The four are never added into one
+number without saying which is which (``apps.planning.training_coverage``).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from django.db.models import Case, CharField, F, Q, When
-from django.db.models.functions import Coalesce
+from django.db.models import Case, CharField, F, IntegerField, Q, Value, When
+from django.db.models.functions import Coalesce, NullIf
 
 from apps.activities.training_names import MODE_OF_DELIVERY as _MODE_OF_DELIVERY
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
@@ -68,11 +90,17 @@ __all__ = [
     "MODE_OF_DELIVERY",
     "GROUP",
     "IN_SCHOOL",
+    "PARTNER",
+    "PARTNER_SCHEDULED",
+    "covered",
+    "handovers_read_in",
+    "reserve_for_handover",
     "SummaryRow",
     "flag_counts",
     "summary_totals",
     "summary_sections",
     "capacity",
+    "ceiling_staff_of",
     "course_id_of",
     "delivery_of",
     "is_training",
@@ -112,6 +140,11 @@ GROUP = "group"
 IN_SCHOOL = "in_school"
 #: The two ways a training is delivered. There is no third.
 DELIVERY_LABELS = {GROUP: "Group Training", IN_SCHOOL: "In-School Training"}
+#: An in-school training a Partner delivers: every school committed to the
+#: Partner for it, and those of them the Partner has dated. Not a third way of
+#: delivering a training — who delivers the in-school one.
+PARTNER = "partner"
+PARTNER_SCHEDULED = "partner_scheduled"
 #: The same two, as My Plan's Mode of Delivery column says them (owner,
 #: 2026-10-06: "Cluster Group training or In-School training"): the one
 #: definition, My Plan's (apps.activities.training_names).
@@ -255,7 +288,9 @@ def _course_expr(prefix: str = ""):
     )
 
 
-def _in_school_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
+def _school_training_rows(*, fy, course_id=None, exclude_activity_id=None):
+    """Every training planned at a school of its own, outside projects,
+    whoever delivers it."""
     from apps.activities.models import Activity
 
     rows = (
@@ -271,12 +306,132 @@ def _in_school_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
         .exclude(course__isnull=True)
     )
     rows = _not_a_projects(rows)
-    if owner_ids is not None:
-        rows = rows.filter(responsible_staff_id__in=list(owner_ids))
     if course_id:
         rows = rows.filter(course=course_id)
     if exclude_activity_id:
         rows = rows.exclude(id=exclude_activity_id)
+    return rows
+
+
+def _in_school_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
+    """In-school trainings staff deliver, filed under the officer who planned
+    them. One a Partner delivers is the Partner's (``_partner_rows``)."""
+    rows = _school_training_rows(
+        fy=fy, course_id=course_id, exclude_activity_id=exclude_activity_id
+    ).exclude(delivery_type="partner")
+    if owner_ids is not None:
+        rows = rows.filter(responsible_staff_id__in=list(owner_ids))
+    return rows
+
+
+def _blank_as_null(name: str):
+    return NullIf(F(name), Value(""), output_field=CharField())
+
+
+def _open_handovers():
+    """Hand-overs a Partner has not dated yet."""
+    from apps.partners.models import PartnerAssignment
+
+    return PartnerAssignment.objects.filter(
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES
+    )
+
+
+def _partner_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
+    """In-school trainings a Partner delivers, once they are an activity: the
+    training a hand-over became when the Partner dated it, and work created
+    already carrying a Partner. Each row says whose it is (``owner``: its
+    monitor, else who is responsible for it, else who holds the school) and
+    whether the Partner has dated it (``dated``): a booked Certified Partner
+    Agency is on its day too, though staff chose it.
+
+    An activity an open hand-over still carries is read from the hand-over
+    (``_handover_rows``), so the school is one commitment and one row."""
+    from apps.core.enums import ExecutorType
+    from apps.planning.country_oversight import rules
+
+    rows = (
+        _school_training_rows(
+            fy=fy, course_id=course_id, exclude_activity_id=exclude_activity_id
+        )
+        .filter(delivery_type="partner")
+        .exclude(
+            id__in=_open_handovers()
+            .filter(source_activity_id__isnull=False)
+            .values("source_activity_id")
+        )
+        .annotate(
+            owner=Coalesce(
+                _blank_as_null("monitored_by_staff_id"),
+                _blank_as_null("responsible_staff_id"),
+                F("school__account_owner_id"),
+                output_field=CharField(),
+            ),
+            dated=Case(
+                When(
+                    rules.partner_planned_q()
+                    | (
+                        rules.planned_q()
+                        & Q(executor_type=ExecutorType.CERTIFIED_PARTNER_AGENCY.value)
+                    ),
+                    then=Value(1),
+                ),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+        )
+    )
+    if owner_ids is not None:
+        rows = rows.filter(owner__in=list(owner_ids))
+    return rows
+
+
+def handovers_read_in(fy) -> bool:
+    """Whether a hand-over still waiting for the Partner's date is read in
+    this year. It has no date of its own, so it is waiting now: the running
+    year's, and a later year's while that year is being planned, never a
+    closed year's."""
+    from apps.core.fy import get_operational_fy
+
+    try:
+        return int(str(fy)) >= int(str(get_operational_fy()))
+    except (TypeError, ValueError):
+        return str(fy) == str(get_operational_fy())
+
+
+def _handover_rows(*, owner_ids, fy, course_id=None, exclude_assignment_id=None):
+    """Schools handed to a Partner for a training and still waiting for the
+    Partner's date: the training hand-overs (the course a hand-over names, or
+    a course chosen as its activity) at a school, outside projects, that the
+    Partner has neither dated nor let go. ``owner`` is whose they are: the
+    hand-over's monitor, else who assigned it, else who holds the school."""
+    from apps.partners.models import PartnerAssignment
+
+    if not handovers_read_in(fy):
+        return PartnerAssignment.objects.none().annotate(
+            course=_course_expr(), owner=F("monitoring_staff_id")
+        )
+    rows = (
+        _open_handovers()
+        .filter(school__isnull=False, project__isnull=True)
+        .annotate(
+            course=_course_expr(),
+            owner=Coalesce(
+                _blank_as_null("monitoring_staff_id"),
+                _blank_as_null("assigning_staff_id"),
+                F("school__account_owner_id"),
+                output_field=CharField(),
+            ),
+        )
+        .exclude(course__isnull=True)
+    )
+    rows = _not_a_projects(rows)
+    if owner_ids is not None:
+        rows = rows.filter(owner__in=list(owner_ids))
+    if course_id:
+        rows = rows.filter(course=course_id)
+    if exclude_assignment_id:
+        rows = rows.exclude(id=exclude_assignment_id)
     return rows
 
 
@@ -334,37 +489,64 @@ def _owner_ids(profile) -> list[str]:
 
 
 def scheduled_schools(
-    profile, course_id: str, fy: str, *, exclude_activity_id: str | None = None
+    profile,
+    course_id: str,
+    fy: str,
+    *,
+    exclude_activity_id: str | None = None,
+    exclude_assignment_id: str | None = None,
 ) -> dict:
-    """The schools this staff member has scheduled for one training in one
-    year, by delivery: two sets of school ids, read from the persisted plans.
-    A school on several sessions is in a set once."""
+    """The schools this staff member has committed to one training in one
+    year: sets of school ids read from the persisted records. A school on
+    several sessions is in a set once.
+
+    ``GROUP`` are the schools on their group trainings, ``IN_SCHOOL`` the
+    schools staff have planned an in-school training at, ``PARTNER`` the
+    schools assigned to a Partner for it — waiting for the Partner's date or
+    dated — and ``PARTNER_SCHEDULED`` those of them the Partner has dated,
+    which is part of ``PARTNER`` and never a second set of schools."""
     ids = _owner_ids(profile)
-    kwargs = dict(
-        owner_ids=ids,
-        fy=str(fy),
-        course_id=course_id,
-        exclude_activity_id=exclude_activity_id,
+    kwargs = dict(owner_ids=ids, fy=str(fy), course_id=course_id)
+    activity = dict(kwargs, exclude_activity_id=exclude_activity_id)
+    partner, partner_scheduled = set(), set()
+    for school_id, dated in _partner_rows(**activity).values_list("school_id", "dated"):
+        partner.add(school_id)
+        if dated:
+            partner_scheduled.add(school_id)
+    partner.update(
+        _handover_rows(
+            **kwargs, exclude_assignment_id=exclude_assignment_id
+        ).values_list("school_id", flat=True)
     )
     return {
-        GROUP: set(_group_rows(**kwargs).values_list("school_id", flat=True)),
-        IN_SCHOOL: set(_in_school_rows(**kwargs).values_list("school_id", flat=True)),
+        GROUP: set(_group_rows(**activity).values_list("school_id", flat=True)),
+        IN_SCHOOL: set(_in_school_rows(**activity).values_list("school_id", flat=True)),
+        PARTNER: partner,
+        PARTNER_SCHEDULED: partner_scheduled,
     }
+
+
+def covered(schools: dict) -> set:
+    """Every school of ``scheduled_schools``, once: the schools the training
+    is committed to, however each is delivered."""
+    return schools[GROUP] | schools[IN_SCHOOL] | schools[PARTNER]
 
 
 def scheduled_count(
     profile, course_id: str, fy: str, *, exclude_activity_id: str | None = None
 ) -> dict:
-    """How many schools this staff member has scheduled for one training in
-    one year, by delivery. Each school counts once: ``total`` is the schools,
-    not the sessions, so it can be less than the two deliveries added up."""
+    """How many schools this staff member has committed to one training in
+    one year. Each school counts once: ``total`` is the schools, not the
+    sessions, so it can be less than the routes added up."""
     schools = scheduled_schools(
         profile, course_id, fy, exclude_activity_id=exclude_activity_id
     )
     return {
         GROUP: len(schools[GROUP]),
         IN_SCHOOL: len(schools[IN_SCHOOL]),
-        "total": len(schools[GROUP] | schools[IN_SCHOOL]),
+        PARTNER: len(schools[PARTNER]),
+        PARTNER_SCHEDULED: len(schools[PARTNER_SCHEDULED]),
+        "total": len(covered(schools)),
     }
 
 
@@ -377,7 +559,8 @@ def _refusal(training_name, staff_name, ceiling, scheduled, requested, fy) -> st
     head = (
         f"Training ceiling reached. {staff_name} may schedule {ceiling} "
         f"school{'s' if ceiling != 1 else ''} for {training_name} in FY {fy}, "
-        f"and {scheduled} {'is' if scheduled == 1 else 'are'} already scheduled"
+        f"and {scheduled} {'is' if scheduled == 1 else 'are'} already covered "
+        "(planned by staff, assigned to a partner or on a group training)"
     )
     if left <= 0:
         return f"{head}, so no more schools can be added."
@@ -396,6 +579,7 @@ def reserve(
     schools,
     held=(),
     exclude_activity_id: str | None = None,
+    exclude_assignment_id: str | None = None,
 ) -> None:
     """Hold the ceiling for one write. Call inside the write's transaction.
 
@@ -405,11 +589,13 @@ def reserve(
     twice. The ceiling row is locked before anything is counted, which is
     what serialises two people taking the last places.
 
-    What is counted is schools. A school the officer has already scheduled
-    for this training on another session takes no new place, so adding it is
-    never refused. Nor is a write that adds no school: with a ceiling lowered
-    below what is scheduled, an officer can still untick a school or swap one
-    for another.
+    What is counted is schools, whichever way each is committed: planned by
+    staff, on a group training, or assigned to a Partner — dated by the
+    Partner or not (owner, 2026-10-08). A school the officer has already
+    committed to this training takes no new place, so adding it is never
+    refused. Nor is a write that adds no school: with a ceiling lowered below
+    what is covered, an officer can still untick a school or swap one for
+    another.
     """
     from apps.planning.training_ceiling_models import TrainingCeiling
 
@@ -430,10 +616,15 @@ def reserve(
         # No ceiling, or a project's training: its schools are the project's,
         # against the capacity its coordinator set.
         return
-    elsewhere = scheduled_schools(
-        profile, course_id, fy, exclude_activity_id=exclude_activity_id
+    elsewhere = covered(
+        scheduled_schools(
+            profile,
+            course_id,
+            fy,
+            exclude_activity_id=exclude_activity_id,
+            exclude_assignment_id=exclude_assignment_id,
+        )
     )
-    elsewhere = elsewhere[GROUP] | elsewhere[IN_SCHOOL]
     before = len(elsewhere | held)
     after = len(elsewhere | schools)
     if after > before and after > row.ceiling:
@@ -466,6 +657,27 @@ def reserve_for_activity(
     ):
         return
     reserve(staff_id=staff_id, course_id=course_id, fy=fy, schools={school_id})
+
+
+def reserve_for_handover(
+    *, school_id, course_id, monitoring_staff_id=None, assigning_staff_id=None
+) -> None:
+    """A school is about to be handed to a Partner for a training: it takes a
+    place under the ceiling of the staff member the hand-over is filed under,
+    as a training staff plan there does (owner, 2026-10-08: "the assignment
+    itself represents a legitimate planned/committed school for training
+    capacity purposes"). Held in the running year, where a hand-over with no
+    date is read; the Partner dating it later takes no second place."""
+    from apps.core.fy import get_operational_fy
+
+    if not school_id or not course_id:
+        return
+    reserve(
+        staff_id=monitoring_staff_id or assigning_staff_id,
+        course_id=course_id,
+        fy=str(get_operational_fy()),
+        schools={school_id},
+    )
 
 
 def assert_schools_named(
@@ -535,12 +747,25 @@ def schools_held(activity) -> int:
     return len(schools_of(activity))
 
 
+def ceiling_staff_of(activity) -> str | None:
+    """Whose ceiling a persisted training sits under: the officer responsible
+    for it, or — for one a Partner delivers — the staff member who follows
+    it, as ``_partner_rows`` files it."""
+    if (activity.delivery_type or "") != "partner":
+        return activity.responsible_staff_id
+    return (
+        activity.monitored_by_staff_id
+        or activity.responsible_staff_id
+        or getattr(activity.school, "account_owner_id", None)
+    )
+
+
 def reserve_for_move(activity, *, staff_id=None, fy=None) -> None:
     """A persisted training is moving to another year or another officer:
     its schools must fit under the ceiling it lands under."""
-    new_staff = staff_id or activity.responsible_staff_id
+    new_staff = staff_id or ceiling_staff_of(activity)
     new_fy = str(fy or activity.fy)
-    old = _profile(activity.responsible_staff_id)
+    old = _profile(ceiling_staff_of(activity))
     new = _profile(new_staff)
     same_staff = (old.id if old else None) == (new.id if new else None)
     if same_staff and new_fy == str(activity.fy):
@@ -567,8 +792,9 @@ def capacity(
     exclude_activity_id: str | None = None,
     school_id: str | None = None,
 ) -> dict:
-    """What a drawer shows before a save: the ceiling, the schools scheduled
-    under it apart from the plan being edited, and what is left.
+    """What a drawer shows before a save: the ceiling, the schools covered
+    under it apart from the plan being edited — planned by staff, on a group
+    training or assigned to a Partner — and what is left.
 
     ``schoolIds`` names those schools, so a drawer can tell a school that
     takes a new place from one already counted; ``counted`` says whether
@@ -583,6 +809,9 @@ def capacity(
         "scheduled": 0,
         "group": 0,
         "inSchool": 0,
+        "partner": 0,
+        "partnerScheduled": 0,
+        "awaitingPartner": 0,
         "remaining": None,
         "schoolIds": [],
         "counted": False,
@@ -600,7 +829,7 @@ def capacity(
     schools = scheduled_schools(
         profile, course_id, fy, exclude_activity_id=exclude_activity_id
     )
-    counted = schools[GROUP] | schools[IN_SCHOOL]
+    counted = covered(schools)
     ceiling = (
         TrainingCeiling.objects.filter(
             staff_id=profile.id, training_id=course_id, fy=str(fy)
@@ -614,6 +843,9 @@ def capacity(
         "scheduled": len(counted),
         "group": len(schools[GROUP]),
         "inSchool": len(schools[IN_SCHOOL]),
+        "partner": len(schools[PARTNER]),
+        "partnerScheduled": len(schools[PARTNER_SCHEDULED]),
+        "awaitingPartner": len(schools[PARTNER] - schools[PARTNER_SCHEDULED]),
         "remaining": None if ceiling is None else max(ceiling - len(counted), 0),
         "schoolIds": sorted(counted),
         "counted": bool(school_id) and str(school_id) in counted,
@@ -633,17 +865,27 @@ class SummaryRow:
     intervention: str
     ceiling_id: str
     ceiling: int | None
-    #: Schools on a group session, and schools with an in-school training.
+    #: Schools on a group session, and schools staff have planned an
+    #: in-school training at.
     group: int
     in_school: int
-    #: Schools in both, counted once in ``total``.
+    #: Schools in more than one of the routes, counted once in ``total``.
     both: int = 0
+    #: Schools assigned to a Partner for the training, and those of them the
+    #: Partner has dated: part of ``partner``, never more schools.
+    partner: int = 0
+    partner_scheduled: int = 0
 
     @property
     def total(self) -> int:
-        """Schools scheduled for the training: each one once, however it is
+        """Schools covered for the training: each one once, however it is
         delivered and on however many sessions."""
-        return self.group + self.in_school - self.both
+        return self.group + self.in_school + self.partner - self.both
+
+    @property
+    def awaiting_partner(self) -> int:
+        """Schools assigned to a Partner that the Partner has not dated."""
+        return max(self.partner - self.partner_scheduled, 0)
 
     @property
     def balance(self) -> int | None:
@@ -729,6 +971,9 @@ def summary_totals(rows) -> dict:
         "under_ceiling": sum(r.total for r in with_ceiling),
         "group": sum(r.group for r in rows),
         "in_school": sum(r.in_school for r in rows),
+        "partner": sum(r.partner for r in rows),
+        "partner_scheduled": sum(r.partner_scheduled for r in rows),
+        "awaiting_partner": sum(r.awaiting_partner for r in rows),
         "balance": sum(r.balance for r in with_ceiling) if with_ceiling else None,
         "excess": sum(r.excess for r in with_ceiling),
         "unlimited": len(rows) - len(with_ceiling),
@@ -754,6 +999,12 @@ def summary_sections(rows) -> list[dict]:
     for section in sections.values():
         section["totals"] = summary_totals(section["rows"])
     return list(sections.values())
+
+
+def _counted_twice(*routes: set) -> int:
+    """How many times a school is in more than one route: what the routes
+    added up exceed the schools by."""
+    return sum(len(route) for route in routes) - len(set().union(*routes))
 
 
 def summary_for_staff(profiles, fy: str) -> list[SummaryRow]:
@@ -795,12 +1046,31 @@ def summary_for_staff(profiles, fy: str) -> list[SummaryRow]:
         .distinct()
     ):
         in_school.setdefault((by_identity[staff], course), set()).add(school_id)
+    # Schools assigned to a Partner: the hand-overs still waiting, and the
+    # trainings the Partner has dated. One school, one commitment.
+    partner: dict[tuple, set] = {}
+    partner_scheduled: dict[tuple, set] = {}
+    for staff, course, school_id, dated in (
+        _partner_rows(owner_ids=by_identity, fy=fy)
+        .values_list("owner", "course", "school_id", "dated")
+        .distinct()
+    ):
+        key = (by_identity[staff], course)
+        partner.setdefault(key, set()).add(school_id)
+        if dated:
+            partner_scheduled.setdefault(key, set()).add(school_id)
+    for staff, course, school_id in (
+        _handover_rows(owner_ids=by_identity, fy=fy)
+        .values_list("owner", "course", "school_id")
+        .distinct()
+    ):
+        partner.setdefault((by_identity[staff], course), set()).add(school_id)
 
     # A project's training holds no ceiling here, whatever was set before it
     # became the project's.
     projects_own = project_training_ids()
     ceilings = {key: row for key, row in ceilings.items() if key[1] not in projects_own}
-    keys = set(ceilings) | set(group) | set(in_school)
+    keys = set(ceilings) | set(group) | set(in_school) | set(partner)
     trainings = dict(
         ActivityCatalogueItem.objects.filter(
             id__in={training_id for _staff, training_id in keys}
@@ -819,9 +1089,12 @@ def summary_for_staff(profiles, fy: str) -> list[SummaryRow]:
             ceiling=(ceilings.get((staff_id, training_id)) or {}).get("ceiling"),
             group=len(group.get((staff_id, training_id), ())),
             in_school=len(in_school.get((staff_id, training_id), ())),
-            both=len(
-                group.get((staff_id, training_id), set())
-                & in_school.get((staff_id, training_id), set())
+            partner=len(partner.get((staff_id, training_id), ())),
+            partner_scheduled=len(partner_scheduled.get((staff_id, training_id), ())),
+            both=_counted_twice(
+                group.get((staff_id, training_id), set()),
+                in_school.get((staff_id, training_id), set()),
+                partner.get((staff_id, training_id), set()),
             ),
         )
         for staff_id, training_id in keys
@@ -1132,29 +1405,50 @@ def _country_identities(country: str) -> list[str]:
 
 
 def country_scheduled(fy: str, country: str) -> dict[str, dict]:
-    """``{training id: {"group", "in_school", "total"}}``: every school the
-    country's staff have planned for each training in the year — the schools
-    invited to a group training or to a cluster meeting that is a training,
-    and the schools of in-school trainings (owner, 2026-10-06: "Each training
-    will fetch the schools inivited to attend or planned in-schools"). Only
-    trainings with something planned are in it."""
+    """``{training id: {"group", "in_school", "partner", "partner_scheduled",
+    "awaiting_partner", "total"}}``: every school the country has committed
+    to each training in the year — the schools invited to a group training or
+    to a cluster meeting that is a training, the schools staff have planned
+    an in-school training at (owner, 2026-10-06: "Each training will fetch
+    the schools inivited to attend or planned in-schools"), and the schools
+    assigned to a Partner for it, dated by the Partner or not (owner,
+    2026-10-08). ``total`` is the schools, each once. Only trainings with
+    something committed are in it."""
     owners = _country_identities(country)
+    fy = str(fy)
     schools: dict[str, dict] = {}
+
+    def row_of(course):
+        return schools.setdefault(
+            course,
+            {GROUP: set(), IN_SCHOOL: set(), PARTNER: set(), PARTNER_SCHEDULED: set()},
+        )
+
     for kind, rows in (
-        ("group", _group_rows(owner_ids=owners, fy=str(fy))),
-        ("in_school", _in_school_rows(owner_ids=owners, fy=str(fy))),
+        (GROUP, _group_rows(owner_ids=owners, fy=fy)),
+        (IN_SCHOOL, _in_school_rows(owner_ids=owners, fy=fy)),
+        (PARTNER, _handover_rows(owner_ids=owners, fy=fy)),
     ):
         for course, school_id in rows.values_list("course", "school_id").distinct():
-            schools.setdefault(course, {"group": set(), "in_school": set()})[kind].add(
-                school_id
-            )
-    # A school is one school for the country, whoever planned it and on
-    # however many sessions.
+            row_of(course)[kind].add(school_id)
+    for course, school_id, dated in (
+        _partner_rows(owner_ids=owners, fy=fy)
+        .values_list("course", "school_id", "dated")
+        .distinct()
+    ):
+        row_of(course)[PARTNER].add(school_id)
+        if dated:
+            row_of(course)[PARTNER_SCHEDULED].add(school_id)
+    # A school is one school for the country, whoever planned it, however it
+    # is delivered and on however many sessions.
     return {
         course: {
-            "group": len(row["group"]),
-            "in_school": len(row["in_school"]),
-            "total": len(row["group"] | row["in_school"]),
+            "group": len(row[GROUP]),
+            "in_school": len(row[IN_SCHOOL]),
+            "partner": len(row[PARTNER]),
+            "partner_scheduled": len(row[PARTNER_SCHEDULED]),
+            "awaiting_partner": len(row[PARTNER] - row[PARTNER_SCHEDULED]),
+            "total": len(covered(row)),
         }
         for course, row in schools.items()
     }
@@ -1177,13 +1471,24 @@ def country_capacity(training_id: str, fy: str, country: str) -> dict:
     now, what is planned under it and what is left."""
     ceiling = (country_ceilings(fy, country).get(training_id) or {}).get("ceiling")
     planned = country_scheduled(fy, country).get(
-        training_id, {"group": 0, "in_school": 0, "total": 0}
+        training_id,
+        {
+            "group": 0,
+            "in_school": 0,
+            "partner": 0,
+            "partner_scheduled": 0,
+            "awaiting_partner": 0,
+            "total": 0,
+        },
     )
     return {
         "ceiling": ceiling,
         "planned": planned["total"],
         "group": planned["group"],
         "inSchool": planned["in_school"],
+        "partner": planned["partner"],
+        "partnerScheduled": planned["partner_scheduled"],
+        "awaitingPartner": planned["awaiting_partner"],
         "remaining": None if ceiling is None else max(ceiling - planned["total"], 0),
         "over": 0 if ceiling is None else max(planned["total"] - ceiling, 0),
         "fy": str(fy),
@@ -1298,107 +1603,24 @@ def remove_country_ceiling(principal, ceiling_id: str) -> dict:
 
 # ── The schools behind a figure ─────────────────────────────────────────────
 def schools_behind(
-    principal, *, staff_id: str, training_id: str, fy: str, delivery: str = ""
+    principal,
+    *,
+    staff_id: str,
+    training_id: str = "",
+    fy: str,
+    delivery: str = "",
+    figure: str = "",
 ) -> dict:
-    """The schools one summary figure counts, one row per school and session.
+    """The schools one summary figure counts, one row per school and session
+    (``apps.planning.training_coverage.schools_behind``, where each row says
+    how the school is covered, who is responsible and what it waits on)."""
+    from apps.planning import training_coverage
 
-    The figure is schools; a school on two sessions is two rows here, the
-    second marked ``repeat`` (already counted on the row above it), and
-    ``school_count`` is the figure.
-
-    Refuses a staff member the reader may not see rather than listing
-    nothing, so an edited link cannot read another officer's schools.
-    """
-    from apps.activity_catalogue.models import ActivityCatalogueItem
-    from apps.core.enums import ActivityStatus
-
-    profile = _profile(staff_id)
-    if profile is None or not may_view_staff(principal, profile.id):
-        raise Forbidden("That training summary is not yours to open.")
-    training = ActivityCatalogueItem.objects.filter(id=training_id or "").first()
-    if training is None:
-        raise NotFoundError("That training was not found.")
-    fy = str(fy or "")
-    delivery = delivery if delivery in DELIVERY_LABELS else ""
-    ids = _owner_ids(profile)
-    status_labels = dict(ActivityStatus.choices)
-    rows = []
-    if delivery in ("", GROUP):
-        for row in _group_rows(owner_ids=ids, fy=fy, course_id=training.id).values(
-            "school_id",
-            "school__name",
-            "school__school_id",
-            "activity_id",
-            "activity__cluster__name",
-            "activity__planned_date",
-            "activity__status",
-            "activity__activity_type",
-        ):
-            rows.append(
-                {
-                    "school_pk": row["school_id"],
-                    "school_name": row["school__name"],
-                    "school_code": row["school__school_id"] or "",
-                    "delivery": DELIVERY_LABELS[GROUP],
-                    "delivery_key": GROUP,
-                    "is_meeting": row["activity__activity_type"] in _MEETING_TYPES,
-                    "cluster": row["activity__cluster__name"] or "",
-                    "date": row["activity__planned_date"],
-                    "status": status_labels.get(
-                        row["activity__status"], row["activity__status"]
-                    ),
-                    "activity_id": row["activity_id"],
-                }
-            )
-    if delivery in ("", IN_SCHOOL):
-        for row in _in_school_rows(owner_ids=ids, fy=fy, course_id=training.id).values(
-            "id",
-            "school_id",
-            "school__name",
-            "school__school_id",
-            "planned_date",
-            "status",
-        ):
-            rows.append(
-                {
-                    "school_pk": row["school_id"],
-                    "school_name": row["school__name"],
-                    "school_code": row["school__school_id"] or "",
-                    "delivery": DELIVERY_LABELS[IN_SCHOOL],
-                    "delivery_key": IN_SCHOOL,
-                    "is_meeting": False,
-                    "cluster": "",
-                    "date": row["planned_date"],
-                    "status": status_labels.get(row["status"], row["status"]),
-                    "activity_id": row["id"],
-                }
-            )
-    rows.sort(
-        key=lambda r: (
-            (r["school_name"] or "").casefold(),
-            str(r["date"] or ""),
-            r["activity_id"],
-        )
+    return training_coverage.schools_behind(
+        principal,
+        staff_id=staff_id,
+        training_id=training_id,
+        fy=fy,
+        delivery=delivery,
+        figure=figure,
     )
-    seen: set[str] = set()
-    for row in rows:
-        row["repeat"] = row["school_pk"] in seen
-        seen.add(row["school_pk"])
-    summary = next(
-        (
-            row
-            for row in summary_for_staff([profile], fy)
-            if row.training_id == training.id
-        ),
-        None,
-    )
-    return {
-        "staff_name": profile.user.name or profile.user.email,
-        "training_name": training.display_name,
-        "fy": fy,
-        "delivery": delivery,
-        "delivery_label": DELIVERY_LABELS.get(delivery, ""),
-        "rows": rows,
-        "school_count": len(seen),
-        "summary": summary,
-    }

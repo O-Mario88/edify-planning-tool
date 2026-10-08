@@ -1850,18 +1850,51 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
 
 
 def _training_summary_context(request) -> dict:
-    """The Training Summary lens: every training with a school planned for
-    it, its mode of delivery, the Country Ceiling with what is planned and
-    what remains, and the schools each officer has planned."""
-    from apps.planning import training_summary
+    """The Training Summary lens, one tab at a time (owner, 2026-10-08):
+
+    * **Summary** — every training with a school committed to it, its mode of
+      delivery, the Country Ceiling with what is covered by each route and
+      what remains, and the schools each officer has covered;
+    * **By staff** — each person's trainings, as their own summary reads;
+    * **Schools** — the school-level coverage table.
+
+    Only the tab asked for is worked out."""
+    from apps.planning import training_ceilings, training_coverage, training_summary
 
     fy = (request.GET.get("fy") or "").strip()
     if fy not in fy_options():
         fy = str(get_operational_fy())
+    tab = (request.GET.get("tab") or "").strip().lower()
+    tab = tab if tab in ("staff", "schools") else "summary"
     summary = training_summary.for_reader(
-        request.user, fy, lead=(request.GET.get("program_lead") or "").strip()
+        request.user,
+        fy,
+        lead=(request.GET.get("program_lead") or "").strip(),
+        with_rows=tab == "summary",
     )
-    return {"fy": fy, "training_summary": summary}
+    context = {"fy": fy, "training_summary": summary, "training_tab": tab}
+    if tab == "staff":
+        rows = training_ceilings.summary_for_staff(summary.staff, fy)
+        context["coverage_by_staff"] = rows
+        context["coverage_totals"] = training_ceilings.summary_totals(rows)
+    elif tab == "schools":
+        staff_id = (request.GET.get("staff") or "").strip()
+        training_id = (request.GET.get("training") or "").strip()
+        profiles = training_summary.coverage_profiles(request.user, summary)
+        context["coverage"] = training_coverage.table(
+            profiles,
+            fy,
+            training_id=training_id,
+            staff_id=staff_id,
+            show=(request.GET.get("show") or "").strip(),
+        )
+        context["coverage_trainings"] = training_coverage.trainings_committed(
+            profiles, fy
+        )
+        context["coverage_training"] = training_id
+        context["coverage_staff"] = staff_id
+        context["coverage_show_options"] = training_coverage.SHOW_OPTIONS
+    return context
 
 
 @require_any_page_permission("team_planning_oversight", "team_targets")

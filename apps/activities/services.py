@@ -3020,7 +3020,6 @@ def _create(
         if (
             school is not None
             and scheduled_course is not None
-            and not is_partner
             and not data.get("projectId")
         ):
             # An in-school training takes one place under the officer's
@@ -3030,12 +3029,20 @@ def _create(
             # schools are named (cluster_attendance.set_invited_schools).
             # Work under a Special Project is the project's: its schools are
             # counted there, against the capacity its coordinator set.
+            #
+            # One a Partner delivers takes its place too, under the staff
+            # member who follows it (owner, 2026-10-08: a school assigned to
+            # a Partner counts toward the training's capacity).
             from apps.planning.training_ceilings import reserve_for_activity
 
             reserve_for_activity(
                 activity_type=activity_type,
                 meeting_kind=meeting_kind,
-                staff_id=responsible_staff_id,
+                staff_id=(
+                    (monitored_by_staff_id or responsible_staff_id)
+                    if is_partner
+                    else responsible_staff_id
+                ),
                 course_id=scheduled_course.id,
                 fy=fy,
                 school_id=school.id,
@@ -6182,7 +6189,9 @@ def _cancel_or_defer(
     already_authorised: bool = False,
 ) -> dict:
     """Cancel/defer an activity AND withdraw its money from every draft
-    funding surface, atomically.
+    funding surface, atomically. A cancellation also undoes the scheduling of
+    a Partner's work, as it always has staff's own
+    (`partners.services.undo_assignment_scheduling`).
 
     `already_authorised` is for one caller: partner withdrawal. Recalling work
     a partner has committed to a date is a *supervisory* act, and the platform
@@ -6241,8 +6250,14 @@ def _cancel_or_defer(
         # in exactly the cases that need explaining.
         if not str(data.get("reason") or "").strip():
             raise BadRequest("Give a reason this activity is being cancelled.")
+    handover_outcome = ""
     with transaction.atomic():
         a = Activity.objects.select_for_update().get(pk=a.pk)
+        # Read before the status changes: whether the day on a Partner's work
+        # was the Partner's own decides what cancelling it undoes.
+        from apps.partners.dating_policy import partner_has_dated
+
+        partner_dated = a.delivery_type == "partner" and partner_has_dated(a)
         prior_buckets = list(
             ActivityScheduleCostLine.objects.filter(activity=a).values_list(
                 "responsible_user", "fiscal_year", "month", "week_start_date"
@@ -6263,6 +6278,24 @@ def _cancel_or_defer(
         a.status = new_status
         a.last_reason = data.get("reason")
         a.save(update_fields=["status", "last_reason", "updated_at"])
+        if (
+            new_status == "cancelled"
+            and not already_authorised
+            and a.delivery_type == "partner"
+        ):
+            # A cancelled activity undoes the scheduling that made it (owner,
+            # 2026-10-08), a Partner's as staff's own: the hand-over it
+            # belonged to waits for the Partner's date again, or — where
+            # staff had booked it — is closed with it. A withdrawal
+            # (`already_authorised`) decides the hand-over itself.
+            from apps.partners.services import undo_assignment_scheduling
+
+            handover_outcome = undo_assignment_scheduling(
+                a,
+                partner_dated=partner_dated,
+                reason=str(data.get("reason") or ""),
+                actor_id=str(getattr(principal, "id", "") or ""),
+            )
         # Work that has been called off is not achieved work: the milestone
         # credit an already-verified activity earned at ia_confirm is withdrawn
         # with it, exactly as `ia_return` withdraws it on a return (2026-08
@@ -6286,6 +6319,16 @@ def _cancel_or_defer(
     # was telling them: a partner could otherwise travel to a school for work
     # Edify had called off.
     if a.delivery_type == "partner" and a.assigned_partner_id:
+        from apps.partners.services import HANDOVER_REOPENED
+
+        # Told what happens next as well as what stopped: a Partner whose
+        # date was undone still holds the school and schedules it again.
+        still_theirs = (
+            " The school is still assigned to you: schedule it again from "
+            "Assigned Activities."
+            if handover_outcome == HANDOVER_REOPENED
+            else ""
+        )
         _notify_partner_schedule_change(
             a,
             f"partner_booking_{new_status}",
@@ -6297,11 +6340,16 @@ def _cancel_or_defer(
                 f"{(data.get('reason') or '').strip()}".strip()
                 if a.planned_date
                 else f"Work for {_where(a)} has been {new_status}."
-            ),
+            )
+            + still_theirs,
         )
     _resolve_overdue_reminder(a)
     _settle_day_off_notices(a)
-    return _serialize(a)
+    result = _serialize(a)
+    # What became of the hand-over the activity belonged to: "reopened"
+    # (waiting for the Partner's date again), "closed", or "" for none.
+    result["partnerHandover"] = handover_outcome
+    return result
 
 
 def cancel(

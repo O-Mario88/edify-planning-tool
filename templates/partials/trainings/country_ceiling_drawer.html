@@ -35,7 +35,7 @@ again.
     <div><dt>Country</dt><dd>{{ row.country }}</dd></div>
     <div><dt>Fiscal year</dt><dd>FY {{ row.fy }}</dd></div>
     <div><dt>Country Ceiling</dt><dd><strong>{{ row.ceiling|intcomma }}</strong></dd></div>
-    <div><dt>Planned</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.group|intcomma }} group training, {{ current.inSchool|intcomma }} in-school training)</dd></div>
+    <div><dt>Total covered</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.inSchool|intcomma }} staff planned, {{ current.partner|intcomma }} assigned to a partner{% if current.awaitingPartner %}, {{ current.awaitingPartner|intcomma }} of them awaiting the partner's date{% endif %}, {{ current.group|intcomma }} group scheduled)</dd></div>
     <div><dt>Remaining</dt><dd>{{ current.remaining|intcomma }}{% if current.over %} · {{ current.over|intcomma }} above the ceiling{% endif %}</dd></div>
   </dl>
   </div>
@@ -64,7 +64,7 @@ again.
   <div>
   <dl class="project-capacity-line project-capacity-line--stack" data-country-ceiling-current>
     <div><dt>Country</dt><dd>{{ country }}</dd></div>
-    <div><dt>Planned</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.group|intcomma }} group training, {{ current.inSchool|intcomma }} in-school training)</dd></div>
+    <div><dt>Total covered</dt><dd><strong>{{ current.planned|intcomma }}</strong> ({{ current.inSchool|intcomma }} staff planned, {{ current.partner|intcomma }} assigned to a partner{% if current.awaitingPartner %}, {{ current.awaitingPartner|intcomma }} of them awaiting the partner's date{% endif %}, {{ current.group|intcomma }} group scheduled)</dd></div>
     <div><dt>Country Ceiling now</dt><dd>{% if current.ceiling is None %}Not set{% else %}<strong>{{ current.ceiling|intcomma }}</strong>{% endif %}</dd></div>
   </dl>
   </div>
