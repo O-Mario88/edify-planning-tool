@@ -1,11 +1,11 @@
 {
  "summary": {
-  "titled_cards": 672,
-  "templates": 252,
-  "distinct_titles": 638,
+  "titled_cards": 671,
+  "templates": 251,
+  "distinct_titles": 637,
   "with_card_key": 13,
-  "untitled_surfaces": 595,
-  "untitled_chrome": 154,
+  "untitled_surfaces": 594,
+  "untitled_chrome": 153,
   "untitled_nested": 191,
   "untitled_headless": 250,
   "templates_with_same_title_twice": 0,
@@ -2294,14 +2294,14 @@
   },
   {
    "template": "templates/pages/partner/activities.html",
-   "line": 27,
+   "line": 28,
    "title": "Assignments awaiting your schedule",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     3,
+     4,
      0
     ]
    ]
@@ -7481,7 +7481,7 @@
   },
   {
    "template": "templates/partials/trainings/my_summary.html",
-   "line": 20,
+   "line": 33,
    "title": "My training summary FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -7492,15 +7492,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/partials/trainings/team_summary.html",
-   "line": 25,
-   "title": "Training summary",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
-   "branch_path": []
   },
   {
    "template": "templates/partials/upload_result.html",

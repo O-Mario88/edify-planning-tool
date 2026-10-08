@@ -36,7 +36,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-19` | Cross-role security | ✓ | 4 | 54 | 11 | 2 | 2 | 0 | 1 | 86 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 1 | 64 | 17 | 0 | 0 | 1 | 3 | 86 |
+| `journey-22` | Financial-year rollover | ✓ | 1 | 65 | 17 | 0 | 0 | 1 | 3 | 86 |
 
 ## Each requirement in full
 
@@ -445,7 +445,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Permissions checked | — |
 | Page gates checked | `analytics`, `calendar`, `closed_schools`, `clusters`, `core_schools`, `dashboard`, `debriefs_list`, `escalations` _+25 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py` _+54 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/schedule_trail.py`, `apps/admin_ops/detection.py` _+55 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `fund_requests.AdvanceRequest`, `hr.FiscalYearRollover`, `hr.PerformanceCycle`, `hr.PerformancePriority`, `hr.PerformanceReview`, `hr.PerformanceSnapshot`, `hr.StrategicPriorityCycle` _+5 more_ |
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |

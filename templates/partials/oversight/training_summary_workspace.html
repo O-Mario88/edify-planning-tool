@@ -1,4 +1,4 @@
-{% load components %}
+{% load components frontend_filters %}
 {% comment %}
 The Training Summary lens of Planning Oversight (owner, 2026-10-06): staff and
 the summary of all their planned trainings. A Programme Lead reads the
@@ -6,10 +6,21 @@ officers they supervise and sets each one's ceiling from the page header's
 capacity button; the Country Director, Impact Assessment and Admin read every
 officer in the country, or one Programme Lead's team. Admin and Impact
 Assessment set the Country Ceiling; the Country Director sets nothing.
+
+Three tabs on the same schools (owner, 2026-10-08: one training coverage
+picture, "staff, PLs, Acting PLs, CDs ... all looking at the same truth, just
+at different scopes"):
+
+  Summary    each training against the Country Ceiling, a column per route
+             and one per staff member;
+  By staff   each person's trainings, as their own My Training Summary reads;
+  Schools    the school-level coverage table — route, responsible, status and
+             next action — with the schools not yet covered for a training.
 {% endcomment %}
-<div class="space-y-4" data-training-summary-workspace>
+<div class="space-y-4" data-training-summary-workspace data-training-tab="{{ training_tab }}">
   {% filter_bar action=base_url|default:"/team-planning-oversight/" label="Training summary filters" %}
     <input type="hidden" name="view" value="trainings">
+    <input type="hidden" name="tab" value="{{ training_tab }}">
     <label class="block">
       <span class="edify-filter-label">Fiscal year</span>
       <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
@@ -29,7 +40,47 @@ Assessment set the Country Ceiling; the Country Director sets nothing.
       </select>
     </label>
     {% endif %}
+    {% if training_tab == "schools" %}
+    <label class="block">
+      <span class="edify-filter-label">Training</span>
+      <select name="training" aria-label="Training" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All trainings</option>
+        {% for option in coverage_trainings %}
+        <option value="{{ option.id }}"{% if option.id == coverage_training %} selected{% endif %}>{{ option.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-filter-label">Staff</span>
+      <select name="staff" aria-label="Staff" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All staff</option>
+        {% for column in training_summary.columns %}
+        <option value="{{ column.id }}"{% if column.id == coverage_staff %} selected{% endif %}>{{ column.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-filter-label">Show</span>
+      <select name="show" aria-label="Show" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for key, label in coverage_show_options %}
+        <option value="{{ key }}"{% if key == coverage.show %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% endif %}
   {% endfilter_bar %}
 
-  {% include "partials/trainings/summary_matrix.html" with summary=training_summary table_name="training-summary" table_title="Staff and the summary of all their planned trainings" %}
+  <nav class="oversight-entity-tabs" aria-label="Training views" data-training-tabs>
+    <a class="oversight-entity-tabs__link{% if training_tab == 'summary' %} is-active{% endif %}" href="/team-planning-oversight/?view=trainings&amp;fy={{ fy }}&amp;program_lead={{ training_summary.lead }}"{% if training_tab == 'summary' %} aria-current="page"{% endif %}><span>Summary</span></a>
+    <a class="oversight-entity-tabs__link{% if training_tab == 'staff' %} is-active{% endif %}" href="/team-planning-oversight/?view=trainings&amp;tab=staff&amp;fy={{ fy }}&amp;program_lead={{ training_summary.lead }}"{% if training_tab == 'staff' %} aria-current="page"{% endif %}><span>By staff</span></a>
+    <a class="oversight-entity-tabs__link{% if training_tab == 'schools' %} is-active{% endif %}" href="/team-planning-oversight/?view=trainings&amp;tab=schools&amp;fy={{ fy }}&amp;program_lead={{ training_summary.lead }}"{% if training_tab == 'schools' %} aria-current="page"{% endif %}><span>Schools</span></a>
+  </nav>
+
+  {% if training_tab == "staff" %}
+    {% include "partials/trainings/coverage_by_staff.html" with rows=coverage_by_staff totals=coverage_totals %}
+  {% elif training_tab == "schools" %}
+    {% include "partials/trainings/coverage_table.html" %}
+  {% else %}
+    {% include "partials/trainings/summary_matrix.html" with summary=training_summary table_name="training-summary" table_title="Staff and the summary of all their planned trainings" %}
+  {% endif %}
 </div>

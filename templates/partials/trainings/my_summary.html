@@ -1,31 +1,48 @@
 {% load frontend_filters table_pagination %}
 {% comment %}
 My Training Summary (owner, 2026-10-06): the reader's own trainings for the
-year and nobody else's — the ceiling their Programme Lead set for each, the
-schools they have scheduled under it as Group Training and as In-School
-Training, the total, and what is left (Balance) or over (Excess). Each figure
-opens the schools it counts. Figures: apps.planning.training_ceilings
-.own_summary and .summary_totals, counted from the plans themselves. Drawn
-only for someone who has a ceiling or a training scheduled.
+year and nobody else's — the ceiling their Programme Lead set for each and the
+schools they have covered under it.
+
+A school is covered from the moment it is committed (owner, 2026-10-08: "the
+training summary should not wait for partner scheduling"), and the routes are
+never added into one number called Scheduled:
+
+  Staff Planned      in-school trainings the reader has planned
+  Partner Assigned   schools handed to a Partner for the training, dated by
+                     the Partner or not
+  Awaiting Partner   those the Partner has not dated: the ones to follow up
+  Group Scheduled    schools on the reader's group trainings
+  Schools Covered    all of them, each school once
+  Remaining          the ceiling less Schools Covered; it opens the schools
+                     the reader holds that are not covered for the training
+
+Each figure opens the schools it counts; Schools covered on the line above
+the table opens every school of every training in one list. Figures:
+apps.planning.training_ceilings.own_summary and .summary_totals, counted from
+the plans and the hand-overs themselves. Drawn only for someone who has a
+ceiling or a school committed.
 
 Its shape is the Project Capacity section's (owner, 2026-10-06: "use project
 capacity table format, but more compact"): the person's name line with the
-figures added up under it, then a compact table whose rows are the trainings
-— the training in the place the staff member's name has there, Ceiling for
-Maximum, Total Scheduled for Assigned, Balance for Remaining, and the same
-Utilization and Status. One section: on My Plan the person is the reader.
+figures added up under it, then a compact table whose rows are the trainings.
+One section: on My Plan the person is the reader.
 {% endcomment %}
 {% if my_training_summary %}
-{% with totals=my_training_totals %}
+{% with totals=my_training_totals year=selected_fy|default:fy %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="my-training-summary-title" data-training-summary="own">
   <div class="capacity-section-head border-b border-[var(--edify-border)] px-4 py-3">
     <div class="min-w-0">
-      <h2 id="my-training-summary-title" class="text-[15px] font-semibold text-slate-800">My training summary <span class="edify-text-caption edify-text-muted">FY {{ selected_fy|default:fy }}</span></h2>
+      <h2 id="my-training-summary-title" class="text-[15px] font-semibold text-slate-800">My training summary <span class="edify-text-caption edify-text-muted">FY {{ year }}</span></h2>
       <dl class="project-capacity-line" data-training-summary-totals>
         <div><dt>Trainings</dt><dd>{{ totals.trainings }}</dd></div>
-        <div><dt>Schools</dt><dd>{% if totals.ceiling is None %}{{ totals.scheduled|intcomma }} scheduled · no ceiling set{% else %}{{ totals.under_ceiling|intcomma }} / {{ totals.ceiling|intcomma }} scheduled{% if totals.unlimited %} · {{ totals.scheduled|intcomma }} in all{% endif %}{% endif %}</dd></div>
+        <div><dt>Schools covered</dt><dd><a href="/training-summary/schools?staff={{ my_training_summary.0.staff_id }}&amp;fy={{ year }}" hx-get="/training-summary/schools?staff={{ my_training_summary.0.staff_id }}&amp;fy={{ year }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Every school you have covered for a training this year. Show them." data-summary-figure="all">{% if totals.ceiling is None %}{{ totals.scheduled|intcomma }}{% else %}{{ totals.under_ceiling|intcomma }} / {{ totals.ceiling|intcomma }}{% endif %}</a>{% if totals.ceiling is None %} · no ceiling set{% elif totals.unlimited %} · {{ totals.scheduled|intcomma }} in all{% endif %}</dd></div>
+        <div><dt>Staff planned</dt><dd>{{ totals.in_school|intcomma }}</dd></div>
+        <div><dt>Partner assigned</dt><dd>{{ totals.partner|intcomma }}</dd></div>
+        <div><dt>Awaiting partner scheduling</dt><dd>{% if totals.awaiting_partner %}<span class="edify-status-text" data-edify-tone="warning" data-awaiting-partner>{{ totals.awaiting_partner|intcomma }}</span>{% else %}0{% endif %}</dd></div>
+        <div><dt>Group scheduled</dt><dd>{{ totals.group|intcomma }}</dd></div>
         {% if totals.ceiling is not None %}
-        <div><dt>Balance</dt><dd><strong>{{ totals.balance|intcomma }}</strong></dd></div>
+        <div><dt>Remaining</dt><dd><strong>{{ totals.balance|intcomma }}</strong></dd></div>
         <div><dt>Excess</dt><dd>{% if totals.excess %}<span class="edify-status-text" data-edify-tone="danger">{{ totals.excess|intcomma }}</span>{% else %}0{% endif %}</dd></div>
         {% endif %}
         {% if totals.unlimited %}<div><dt>Without a ceiling</dt><dd>{{ totals.unlimited }} training{{ totals.unlimited|pluralize }} · no limit</dd></div>{% endif %}
@@ -34,16 +51,18 @@ Utilization and Status. One section: on My Plan the person is the reader.
   </div>
   <div class="overflow-x-auto overscroll-x-contain">
     {% paginate my_training_summary "my_training_page" as my_training_pager %}
-    <table class="edify-data-table edify-data-table--compact" aria-label="My training summary for FY {{ selected_fy|default:fy }}" data-mobile-table="scroll">
-      <caption class="sr-only">Your trainings this fiscal year: the training ceiling, schools scheduled as group training and as in-school training, the total scheduled, the balance left, any excess, the share of the ceiling used and the status.</caption>
+    <table class="edify-data-table edify-data-table--compact" aria-label="My training summary for FY {{ year }}" data-mobile-table="scroll">
+      <caption class="sr-only">Your trainings this fiscal year: the training ceiling, the schools you have planned an in-school training at, the schools assigned to a partner and those still awaiting the partner's date, the schools on your group trainings, the schools covered in all, what remains under the ceiling, any excess, the share of the ceiling used and the status.</caption>
       <thead>
         <tr>
           <th scope="col">Training</th>
           <th scope="col" class="text-right">Ceiling</th>
-          <th scope="col" class="text-right">Group<br>Training</th>
-          <th scope="col" class="text-right">In-School<br>Training</th>
-          <th scope="col" class="text-right">Total<br>Scheduled</th>
-          <th scope="col" class="text-right">Balance</th>
+          <th scope="col" class="text-right">Staff<br>Planned</th>
+          <th scope="col" class="text-right">Partner<br>Assigned</th>
+          <th scope="col" class="text-right">Awaiting<br>Partner</th>
+          <th scope="col" class="text-right">Group<br>Scheduled</th>
+          <th scope="col" class="text-right">Schools<br>Covered</th>
+          <th scope="col" class="text-right">Remaining</th>
           <th scope="col" class="text-right">Excess</th>
           <th scope="col" class="text-right">Utilization</th>
           <th scope="col">Status</th>
@@ -54,10 +73,12 @@ Utilization and Status. One section: on My Plan the person is the reader.
         <tr data-summary-state="{{ row.state }}">
           <td data-pinned-stack data-record-title title="{{ row.intervention|default:'Not linked to one SSA intervention' }}"><strong class="text-slate-800">{{ row.training_name }}</strong></td>
           <td class="text-right tabular-nums" data-label="Ceiling">{% if row.ceiling is None %}<span class="edify-text-muted">Not set</span>{% else %}{{ row.ceiling|intcomma }}{% endif %}</td>
-          <td class="text-right tabular-nums" data-label="Group Training">{% if row.group %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}&amp;delivery=group" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}&amp;delivery=group" hx-target="#drawer-container" hx-swap="innerHTML" data-summary-figure="group">{{ row.group|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
-          <td class="text-right tabular-nums" data-label="In-School Training">{% if row.in_school %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}&amp;delivery=in_school" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}&amp;delivery=in_school" hx-target="#drawer-container" hx-swap="innerHTML" data-summary-figure="in_school">{{ row.in_school|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
-          <td class="text-right tabular-nums" data-label="Total Scheduled">{% if row.total %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ selected_fy|default:fy }}" hx-target="#drawer-container" hx-swap="innerHTML" data-summary-figure="total">{{ row.total|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
-          <td class="text-right tabular-nums" data-label="Balance">{% if row.balance is None %}<span class="edify-text-muted">—</span>{% else %}<strong>{{ row.balance|intcomma }}</strong>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Staff Planned">{% if row.in_school %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=staff" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=staff" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.in_school }} school{{ row.in_school|pluralize }} you have planned an in-school training at. Show them." data-summary-figure="staff">{{ row.in_school|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Partner Assigned">{% if row.partner %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=partner" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=partner" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.partner }} school{{ row.partner|pluralize }} assigned to a partner, {{ row.partner_scheduled }} scheduled by the partner. Show them." title="{{ row.partner_scheduled }} scheduled by the partner · {{ row.awaiting_partner }} awaiting the partner's date" data-summary-figure="partner">{{ row.partner|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Awaiting Partner">{% if row.awaiting_partner %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=awaiting" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=awaiting" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.awaiting_partner }} school{{ row.awaiting_partner|pluralize }} awaiting the partner's date. Show them." data-summary-figure="awaiting"><span class="edify-status-text" data-edify-tone="warning">{{ row.awaiting_partner|intcomma }}</span></a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Group Scheduled">{% if row.group %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=group" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=group" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.group }} school{{ row.group|pluralize }} on your group trainings. Show them." data-summary-figure="group">{{ row.group|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Schools Covered">{% if row.total %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=covered" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=covered" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.total }} school{{ row.total|pluralize }} covered, each counted once. Show them." data-summary-figure="covered"><strong>{{ row.total|intcomma }}</strong></a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>
+          <td class="text-right tabular-nums" data-label="Remaining"><a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=remaining" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ year }}&amp;figure=remaining" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{% if row.balance is None %}No ceiling set{% else %}{{ row.balance }} place{{ row.balance|pluralize }} left under the ceiling{% endif %}. Show the schools not yet covered." data-summary-figure="remaining">{% if row.balance is None %}View{% else %}<strong>{{ row.balance|intcomma }}</strong>{% endif %}</a></td>
           <td class="text-right tabular-nums" data-label="Excess">{% if row.excess %}<span class="edify-status-text" data-edify-tone="danger">{{ row.excess|intcomma }}</span>{% else %}0{% endif %}</td>
           <td class="text-right tabular-nums" data-label="Utilization">{% if row.utilization is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.utilization }}%{% endif %}</td>
           <td data-label="Status"><span class="edify-status-text" data-edify-tone="{{ row.flag_tone }}" data-summary-flag="{{ row.state }}">{{ row.flag }}</span></td>
@@ -67,7 +88,7 @@ Utilization and Status. One section: on My Plan the person is the reader.
     </table>
     {% include "components/table_pager.html" with pager=my_training_pager param="my_training_page" %}
   </div>
-  <p class="px-4 py-2.5 edify-text-caption edify-text-muted border-t border-[var(--edify-border)]" data-my-training-summary-note>Total scheduled is the schools you have scheduled for the training, in any cluster: a school on two sessions, or with a group and an in-school training, is counted once. Your Programme Lead sets the ceiling; with none set you schedule without a limit.</p>
+  <p class="px-4 py-2.5 edify-text-caption edify-text-muted border-t border-[var(--edify-border)]" data-my-training-summary-note>A school counts from the day it is committed: planned by you, assigned to a partner — before the partner has scheduled it — or on a group training. Schools covered counts each school once, so it can be less than the columns added up. Awaiting partner are the assigned schools the partner has not dated yet. Your Programme Lead sets the ceiling; with none set you schedule without a limit.</p>
 </section>
 {% endwith %}
 {% endif %}

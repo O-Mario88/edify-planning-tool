@@ -179,7 +179,7 @@ def change_training(activity, course_id, principal, *, schools_after=None) -> bo
         else training_ceilings.schools_of(activity)
     )
     training_ceilings.reserve(
-        staff_id=activity.responsible_staff_id,
+        staff_id=training_ceilings.ceiling_staff_of(activity),
         course_id=course.id,
         fy=activity.fy,
         schools=held,

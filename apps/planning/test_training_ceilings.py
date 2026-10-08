@@ -218,9 +218,13 @@ class CeilingFixture(StandardSupportBase):
         return Activity.objects.get(id=result["id"])
 
     def counts(self, staff=None, training=None):
-        return training_ceilings.scheduled_count(
+        """The two deliveries staff plan, and the schools in all. The schools
+        with a Partner are counted beside them
+        (apps.planning.test_training_coverage)."""
+        counted = training_ceilings.scheduled_count(
             staff or self.staff, (training or self.leadership).id, self.fy
         )
+        return {key: counted[key] for key in ("group", "in_school", "total")}
 
     def invited(self, activity) -> set[str]:
         return set(
@@ -1398,9 +1402,11 @@ class WhoSeesTheSummary(CeilingFixture):
             training_ceilings.team_summary(team[:1], self.fy)
 
         self.assertEqual(len(rows), 2)
-        # Ceilings, group schools, in-school trainings, training names, and
-        # the catalogue's intervention links when they are not held in memory.
-        self.assertLessEqual(len(many), 5)
+        # Ceilings, group schools, in-school trainings, the trainings a
+        # Partner has taken on and the hand-overs still waiting for it,
+        # training names, and the catalogue's intervention links when they
+        # are not held in memory.
+        self.assertLessEqual(len(many), 7)
         self.assertEqual(len(many), len(one))
 
     def summary_page(self, user, **query):
@@ -1563,19 +1569,17 @@ class WhoSeesTheSummary(CeilingFixture):
         )
 
         self.assertEqual(len(result["rows"]), 18)
-        by_delivery = {}
+        by_route = {}
         for row in result["rows"]:
-            by_delivery.setdefault(row["delivery"], []).append(row)
-        self.assertEqual(len(by_delivery["Group Training"]), 14)
-        self.assertEqual(len(by_delivery["In-School Training"]), 4)
+            by_route.setdefault(row.route_label, []).append(row)
+        self.assertEqual(len(by_route["Group Training"]), 14)
+        self.assertEqual(len(by_route["In-School · Staff"]), 4)
         self.assertEqual(
-            {r["cluster"] for r in by_delivery["Group Training"]}, {"Standard Cluster"}
+            {r.cluster for r in by_route["Group Training"]}, {"Standard Cluster"}
         )
+        self.assertEqual({r.cluster for r in by_route["In-School · Staff"]}, {""})
         self.assertEqual(
-            {r["cluster"] for r in by_delivery["In-School Training"]}, {""}
-        )
-        self.assertEqual(
-            {r["school_pk"] for r in result["rows"]},
+            {r.school_pk for r in result["rows"]},
             {s.id for s in [*self.members[:14], *self.members[20:24]]},
         )
 
@@ -1696,7 +1700,7 @@ class ASchoolTakesOnePlace(CeilingFixture):
 
         message = str(refused.exception)
         self.assertIn("Training ceiling reached", message)
-        self.assertIn("3 are already scheduled", message)
+        self.assertIn("3 are already covered", message)
         self.assertIn("no more schools can be added", message)
 
     def test_only_the_new_schools_of_a_session_are_asked_for(self):
@@ -1710,7 +1714,7 @@ class ASchoolTakesOnePlace(CeilingFixture):
             # Two counted, two new, and no room for either new one.
             self.group(self.members[2:6], day=2)
 
-        self.assertIn("4 are already scheduled", str(refused.exception))
+        self.assertIn("4 are already covered", str(refused.exception))
 
     def test_the_refusal_names_the_new_schools_not_the_ticks(self):
         self.ceiling(value=4)
@@ -1801,7 +1805,7 @@ class ASchoolTakesOnePlace(CeilingFixture):
         self.assertEqual(len(result["rows"]), 4)
         self.assertEqual(result["school_count"], 2)
         self.assertEqual(
-            [row["repeat"] for row in result["rows"]], [False, True, False, True]
+            [row.repeat for row in result["rows"]], [False, True, False, True]
         )
         self.assertEqual(result["summary"].total, 2)
 
@@ -1814,7 +1818,15 @@ class ASchoolTakesOnePlace(CeilingFixture):
 
         country = training_ceilings.country_scheduled(self.fy, "Uganda")
         self.assertEqual(
-            country[self.leadership.id], {"group": 3, "in_school": 1, "total": 3}
+            country[self.leadership.id],
+            {
+                "group": 3,
+                "in_school": 1,
+                "partner": 0,
+                "partner_scheduled": 0,
+                "awaiting_partner": 0,
+                "total": 3,
+            },
         )
         row = next(
             r
@@ -2139,7 +2151,14 @@ class TheCountryCeiling(CeilingFixture):
         self.assertEqual([cell.schools for cell in row.cells], [15, 5])
         self.assertEqual(
             training_ceilings.country_scheduled(self.fy, "Uganda")[self.leadership.id],
-            {"group": 19, "in_school": 1, "total": 20},
+            {
+                "group": 19,
+                "in_school": 1,
+                "partner": 0,
+                "partner_scheduled": 0,
+                "awaiting_partner": 0,
+                "total": 20,
+            },
         )
 
     def test_planned_is_the_same_whoever_reads_it(self):
@@ -2399,7 +2418,9 @@ class TheCountryCeiling(CeilingFixture):
         self.assertIn("Set Country Ceiling", body)
         self.assertIn("data-country-ceiling-current", body)
         self.assertIn(
-            "<strong>20</strong> (19 group training, 1 in-school training)", body
+            "<strong>20</strong> (1 staff planned, 0 assigned to a partner, "
+            "19 group scheduled)",
+            body,
         )
         self.assertIn("Not set", body)
 

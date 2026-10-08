@@ -477,7 +477,11 @@ def training_country_ceiling_remove_view(request, ceiling_id):
 @require_any_page_permission("my_plan", "team_planning_oversight")
 @require_http_methods(["GET"])
 def training_summary_schools_drawer(request):
-    """The schools one summary figure counts, read-only.
+    """The schools one summary figure counts, read-only: every school an
+    officer has covered for a training, or those of one figure (``figure``:
+    staff planned, partner assigned, partner scheduled, awaiting the partner,
+    group scheduled, or the schools not yet covered). With no training named,
+    every training the officer has a school for.
 
     An officer opens their own; a Programme Lead, a supervised officer's. A
     link edited to name anybody else is refused with the reason.
@@ -492,6 +496,7 @@ def training_summary_schools_drawer(request):
             training_id=(request.GET.get("training") or "").strip(),
             fy=(request.GET.get("fy") or "").strip() or str(get_operational_fy()),
             delivery=(request.GET.get("delivery") or "").strip(),
+            figure=(request.GET.get("figure") or "").strip(),
         )
     except (BadRequest, Forbidden, NotFoundError) as exc:
         return render(

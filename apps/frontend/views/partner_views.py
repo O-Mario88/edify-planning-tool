@@ -6,6 +6,7 @@ Partner directory, partner detail, partner portal pages
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
     NON_FUNDABLE_ACTIVITY_STATUSES,
+    NOT_IN_PLAN_ACTIVITY_STATUSES,
     VISIT_TYPES,
 )
 import csv
@@ -1279,11 +1280,15 @@ def partner_schools_view(request):
     """Partner's assigned schools."""
     user = request.user
     partner_ids = resolve_partner_ids(user)
+    # A school whose only work with the partner was called off is not one it
+    # works with (owner, 2026-10-08: "the cancelled activities should not
+    # remain counting").
     school_ids = (
         Activity.objects.filter(
             assigned_partner_id__in=partner_ids,
             deleted_at__isnull=True,
         )
+        .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
         .values_list("school_id", flat=True)
         .distinct()
     )
@@ -1311,6 +1316,11 @@ def partner_activities_view(request):
     )
     if status_filter:
         activities = activities.filter(status=status_filter)
+    else:
+        # The log is the work the partner holds or has done. Work that was
+        # called off is read by asking for it (`?status=cancelled`), and is
+        # not in the count (owner, 2026-10-08).
+        activities = activities.exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
     activities = list(activities[:60])
     assignments = list(
         PartnerAssignment.objects.filter(

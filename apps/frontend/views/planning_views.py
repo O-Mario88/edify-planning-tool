@@ -335,6 +335,33 @@ def _saved_without_leaving(
     return response
 
 
+def _partner_work_link(user, partner_id=None) -> tuple[str, str]:
+    """Where a hand-over is followed once it is made, and what the link says.
+
+    Partner Oversight, opened on the partner the school went to: the staff
+    page a hand-over is followed on (owner, 2026-09-23). The confirmation
+    used to link to a partner-assignments address that is no page — the
+    Partner's own list is /partner/assignments, and staff cannot open it — so
+    the link had been a 404 since the confirmation stopped leaving the
+    Planning page (2026-09-18).
+
+    A reader who cannot open Partner Oversight is offered no link rather than
+    one that refuses them: the Project Coordinator plans here and does not
+    monitor Partner work.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if not RolePermissionService.can_view_page(user, "partner_oversight"):
+        return "", ""
+    if not has_permission(user, Permission.PARTNER_MONITORING_VIEW.value):
+        return "", ""
+    url = "/partner-oversight/"
+    if partner_id:
+        url += "?" + urlencode({"partner": partner_id})
+    return url, "Open Partner Oversight"
+
+
 def _scoped_project_assignments(request, raw_ids):
     """Resolve selected School Directory → Project assignments in caller scope."""
     from apps.projects.models import ProjectSchoolAssignment
@@ -3393,12 +3420,15 @@ def assign_partner_action_view(request):
         # the page or leaving it: an assigner works through a list of schools,
         # and a full reload costs them their scroll position and their filters
         # after every single one (owner, 2026-09-18).
+        plan_url, plan_link_label = (
+            ("/projects/my-plan", "Open My Plan")
+            if project_id
+            else _partner_work_link(request.user, partner.id)
+        )
         return _saved_without_leaving(
             f"Assigned to {partner.name}. The partner schedules it from here.",
-            plan_url="/projects/my-plan" if project_id else "/partner-assignments",
-            plan_link_label=(
-                "Open My Plan" if project_id else "Open partner assignments"
-            ),
+            plan_url=plan_url,
+            plan_link_label=plan_link_label,
             undo_kind="partner",
             undo_ids=created_ids,
         )
@@ -3561,10 +3591,11 @@ def bulk_action_view(request):
                 f" Not assigned (their support is not open to a partner now): "
                 f"{', '.join(gated)}."
             )
+        plan_url, plan_link_label = _partner_work_link(request.user, partner.id)
         return _saved_without_leaving(
             message,
-            plan_url="/partner-assignments",
-            plan_link_label="Open partner assignments",
+            plan_url=plan_url,
+            plan_link_label=plan_link_label,
             undo_kind="partner",
             undo_ids=created_ids,
         )

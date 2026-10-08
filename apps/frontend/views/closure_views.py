@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.http import Http404
 from django.shortcuts import render
 from django.contrib import messages
@@ -77,6 +77,21 @@ def _scoped_activity(request, activity_id, **extra):
 @require_page_permission("planning")  # Standard planner/admin roles
 def closure_readiness_queue_view(request):
     """Closure Readiness Queue (Filterable Tabs)."""
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest
+
+    # Work that was called off waits for no closure (owner, 2026-10-08: "the
+    # cancelled activities should not remain counting"): a cancelled visit
+    # used to sit under Finance Pending or Analytics Pending for good. The
+    # one that stays is called-off work whose advance was already paid out:
+    # that money still has to be accounted for, and this is where it is
+    # chased.
+    called_off = Q(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
+    money_moved = Exists(
+        AdvanceRequest.objects.filter(
+            activity_id=OuterRef("pk"), status__in=MONEY_MOVED_ADVANCE_STATUSES
+        )
+    )
     base = (
         _in_scope(request, Activity.objects.filter(deleted_at__isnull=True))
         .exclude(
@@ -89,6 +104,7 @@ def closure_readiness_queue_view(request):
                 "partner_scheduled",
             ]
         )
+        .exclude(called_off & ~money_moved)
         .select_related("school", "cluster")
         .order_by("-updated_at", "-id")
     )

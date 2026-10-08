@@ -1,21 +1,31 @@
 {% load components frontend_filters %}
 {% comment %}
 Staff and the summary of all their planned trainings (owner, 2026-10-06). One
-row per training that has a school planned for it in the year — a training
+row per training that has a school committed to it in the year — a training
 nobody has planned is not listed — with its mode of delivery, then the
-country's three columns and one column per staff member:
+country's columns and one column per staff member:
 
-    Country Ceiling | Planned | Remaining | # Schools (staff) …
+    Country Ceiling | Staff Planned | Partner Assigned | Awaiting Partner
+        | Group Scheduled | Total Covered | Remaining | # Schools (staff) …
 
 Country Ceiling is set by Admin or Impact Assessment, who open it from the
-cell; Planned is every school the country has planned for the training, group
-and in-school together; Remaining is the ceiling less that. A staff column is
-the schools that person has planned beside the ceiling their Programme Lead
-set (a Programme Lead has a column too, marked PL, with the ceiling they set
-themselves), red above it, amber below, green at it; the cell opens the schools it
-counts. A project training is fetched from Special Projects: Planned is the
-schools on the project and a cell the schools that person added, beside the
-capacity its coordinator set. Figures: apps.planning.training_summary.
+cell. A school is covered from the day it is committed (owner, 2026-10-08:
+"the training summary should not wait for partner scheduling"): planned by
+staff for an in-school training, assigned to a Partner for one — dated by the
+Partner or not — or on a group training. The routes keep their own columns so
+an assigned school is never read as a scheduled one; Awaiting Partner is the
+assigned schools the Partner has not dated; Total Covered is every school,
+each once; Remaining is the ceiling less that. For a reader of the whole
+country every figure opens the schools it counts, on the Schools tab
+(_country_figure.html).
+
+A staff column is the schools that person has covered beside the ceiling
+their Programme Lead set (a Programme Lead has a column too, marked PL, with
+the ceiling they set themselves), red above it, amber below, green at it; the
+cell opens the schools it counts. A project training is fetched from Special
+Projects: Total Covered is the schools on the project and a cell the schools
+that person added, beside the capacity its coordinator set. Figures:
+apps.planning.training_summary.
 
 `summary` is a training_summary.Summary; `table_name` and `table_title` name
 the card.
@@ -23,10 +33,10 @@ the card.
 {% data_table name=table_name %}
   {% slot title %}{{ table_title }}{% endslot %}
   {% slot summary %}{% if summary.any_flag %}{{ summary.flags.above }} above · {{ summary.flags.below }} below · {{ summary.flags.reached }} at the number set · {% endif %}FY {{ summary.fy }}{% endslot %}
-  {% slot caption %}Each training with a school planned for it: its mode of delivery, the Country Ceiling, the schools the country has planned and how many remain, and the number of schools each staff member has planned against the ceiling set for them.{% endslot %}
-  {% slot empty %}{% if not summary.columns %}{% include "components/empty_state.html" with message="Nobody is in this table yet." hint="Programme Leads and their officers appear here once HR records who supervises them." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No training has been planned yet this year." hint="A training appears here once a school is planned for it as a group training, an in-school training or a cluster meeting that is a training." compact="true" %}{% endif %}{% endslot %}
+  {% slot caption %}Each training with a school committed to it: its mode of delivery, the Country Ceiling, the schools staff have planned, the schools assigned to a partner and those still awaiting the partner's date, the schools on group trainings, the schools covered in all and how many remain, and the number of schools each staff member has covered against the ceiling set for them.{% endslot %}
+  {% slot empty %}{% if not summary.columns %}{% include "components/empty_state.html" with message="Nobody is in this table yet." hint="Programme Leads and their officers appear here once HR records who supervises them." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No training has been planned yet this year." hint="A training appears here once a school is planned for it, assigned to a partner for it, or put on a group training or a cluster meeting that is a training." compact="true" %}{% endif %}{% endslot %}
   {% slot footer %}
-  <p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-training-summary-note>A training is listed once a school is planned for it. Planned is every school invited to its group trainings and cluster meetings or given an in-school training, across the country, each school counted once; Remaining is the Country Ceiling less Planned. Each staff column is that person&rsquo;s schools beside the ceiling their Programme Lead set; a Programme Lead&rsquo;s own column is marked PL, with the ceiling they set themselves. Red is above the ceiling, amber below it and green at it. A training a project delivers is listed once, under its project, and its numbers are the schools added to the project.</p>
+  <p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-training-summary-note>A training is listed once a school is committed to it, and a school counts from that day: planned by staff, assigned to a partner — before the partner has scheduled it — or invited to a group training or cluster meeting. Awaiting Partner is the assigned schools the partner has not dated yet. Total Covered counts each school once across the country, so it can be less than the columns added up; Remaining is the Country Ceiling less Total Covered. Each staff column is that person&rsquo;s schools beside the ceiling their Programme Lead set; a Programme Lead&rsquo;s own column is marked PL, with the ceiling they set themselves. Red is above the ceiling, amber below it and green at it. A training a project delivers is listed once, under its project, and its numbers are the schools added to the project.</p>
   {% endslot %}
   {% if summary.columns and summary.rows %}
       <thead>
@@ -34,7 +44,11 @@ the card.
           <th scope="col" class="px-3 py-2">Training Name</th>
           <th scope="col" class="px-3 py-2">Mode of delivery</th>
           <th scope="col" class="px-3 py-2 text-right">Country<br>Ceiling</th>
-          <th scope="col" class="px-3 py-2 text-right">Planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Staff<br>Planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Partner<br>Assigned</th>
+          <th scope="col" class="px-3 py-2 text-right">Awaiting<br>Partner</th>
+          <th scope="col" class="px-3 py-2 text-right">Group<br>Scheduled</th>
+          <th scope="col" class="px-3 py-2 text-right">Total<br>Covered</th>
           <th scope="col" class="px-3 py-2 text-right">Remaining</th>
           {% for column in summary.columns %}
           <th scope="col" class="px-3 py-2 text-right" data-summary-staff="{{ column.id }}"># Schools<br>({{ column.name }}{% if column.is_lead %} · PL{% endif %})</th>
@@ -47,8 +61,20 @@ the card.
           <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.name }}</th>
           <td class="px-3 py-2" data-label="Mode of delivery">{{ row.mode }}</td>
           <td class="px-3 py-2 text-right tabular-nums" data-label="Country Ceiling" data-country-ceiling>{% include "partials/trainings/_country_ceiling_cell.html" %}</td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Planned" data-country-planned><span{% if row.country_tone %} class="edify-status-text" data-edify-tone="{{ row.country_tone }}"{% endif %} title="{% if row.kind == "project" %}Schools added to {{ row.project_name }}{% else %}{{ row.country_flag }}{% endif %}">{{ row.planned|intcomma }}</span></td>
-          <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining" data-country-remaining>{% if row.remaining is None %}<span class="edify-text-muted" title="{% if row.kind == "project" %}A project's schools are set by its coordinator{% else %}No Country Ceiling set{% endif %}">—</span>{% else %}{{ row.remaining|intcomma }}{% endif %}</td>
+          {% if row.kind == "project" %}
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Staff Planned"><span class="edify-text-muted" title="A project's schools are read from the project">—</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Partner Assigned"><span class="edify-text-muted" title="A project's schools are read from the project">—</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Awaiting Partner"><span class="edify-text-muted" title="A project's schools are read from the project">—</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Group Scheduled"><span class="edify-text-muted" title="A project's schools are read from the project">—</span></td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Total Covered" data-country-planned><a class="no-underline hover:opacity-90" href="/projects/monitoring?project={{ row.project_id }}" title="Schools added to {{ row.project_name }}" data-summary-figure="project-total">{{ row.planned|intcomma }}</a></td>
+          {% else %}
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Staff Planned" data-country-staff>{% include "partials/trainings/_country_figure.html" with value=row.staff_planned show="staff" what="staff have planned" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Partner Assigned" data-country-partner>{% include "partials/trainings/_country_figure.html" with value=row.partner show="partner" what="assigned to a partner" hint=row.partner_hint %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Awaiting Partner" data-country-awaiting>{% include "partials/trainings/_country_figure.html" with value=row.awaiting_partner show="awaiting" what="awaiting the partner's date" tone="warning" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Group Scheduled" data-country-group>{% include "partials/trainings/_country_figure.html" with value=row.group show="group" what="on a group training" %}</td>
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Total Covered" data-country-planned>{% include "partials/trainings/_country_figure.html" with value=row.planned show="covered" what="covered, each counted once," hint=row.country_flag tone=row.country_tone strong=True %}</td>
+          {% endif %}
+          <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining" data-country-remaining>{% if row.kind == "project" %}<span class="edify-text-muted" title="A project's schools are set by its coordinator">—</span>{% elif summary.country_links %}<a class="no-underline hover:opacity-90" href="/team-planning-oversight/?view=trainings&amp;tab=schools&amp;fy={{ summary.fy }}&amp;training={{ row.training_id }}&amp;show=remaining" aria-label="{% if row.remaining is None %}No Country Ceiling set{% else %}{{ row.remaining }} remaining under the Country Ceiling{% endif %} for {{ row.name }}. Show the schools not yet covered." title="Show the schools not yet covered" data-summary-figure="country-remaining">{% if row.remaining is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.remaining|intcomma }}{% endif %}</a>{% elif row.remaining is None %}<span class="edify-text-muted" title="No Country Ceiling set">—</span>{% else %}{{ row.remaining|intcomma }}{% endif %}</td>
           {% for cell in row.cells %}
           <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{% include "partials/trainings/_summary_cell.html" %}</td>
           {% endfor %}
