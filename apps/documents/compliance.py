@@ -76,9 +76,11 @@ def _scope_user_ids(principal) -> set[str] | None:
         profile = getattr(principal, "staff_profile", None)
         if profile is None:
             return set()
+        from apps.core.acting import seat_staff_ids
+
         ids = set()
         for assignment in StaffSupervisorAssignment.objects.filter(
-            supervisor_id=profile.id
+            supervisor_id__in=seat_staff_ids(principal) or [profile.id]
         ).select_related("supervisee"):
             if assignment.supervisee and assignment.supervisee.user_id:
                 ids.add(assignment.supervisee.user_id)

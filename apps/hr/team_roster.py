@@ -67,7 +67,12 @@ def team_members(principal) -> list:
 
     Direct supervisees (StaffSupervisorAssignment) who hold the CCEO role and
     have not left, never the lead themself. A lead covering an absent
-    Programme Lead also leads that lead's officers while the cover is active.
+    Programme Lead also leads that lead's officers while the cover is active,
+    and an officer appointed Acting Programme Lead (apps.acting) leads the
+    officers of the Lead who appointed them for the month of the appointment.
+    The appointing Lead is not an officer of their own team and is not
+    returned here; an acting leader reads the Lead's own work through their
+    scope (apps.core.scoping), which holds the whole seat.
 
     The role an officer HOLDS decides it, not the one their account is
     switched to today (apps.core.role_holding): an officer working in a
@@ -76,21 +81,28 @@ def team_members(principal) -> list:
 
     from apps.core.request_cache import memoize
 
+    from apps.core.acting import SCOPE_PL_TEAM, seat
+
     profile_id = _profile_id(principal)
     if not profile_id:
         return []
+    acting = seat(principal, SCOPE_PL_TEAM)
+    seat_id = acting.seat_staff_id if acting is not None else None
     # One lead's team is asked for by the dashboard, the To-Do builders and the
     # debrief feed in the same request; read it once per request. A roster
     # write in the request drops the memo (_forget_team_members).
     return list(
-        memoize((TEAM_MEMO, profile_id), lambda: _read_team_members(profile_id))
+        memoize(
+            (TEAM_MEMO, profile_id, seat_id),
+            lambda: _read_team_members(profile_id, seat_id),
+        )
     )
 
 
 TEAM_MEMO = "hr.team_roster.team_members"
 
 
-def _read_team_members(profile_id) -> list:
+def _read_team_members(profile_id, seat_id=None) -> list:
     from apps.accounts.models import (
         StaffProfile,
         StaffSupervisorAssignment,
@@ -107,6 +119,8 @@ def _read_team_members(profile_id) -> list:
         status="active",
     ).values_list("original_staff_id", flat=True)
     supervisors = {profile_id}
+    if seat_id:
+        supervisors.add(seat_id)
     supervisors.update(
         StaffProfile.objects.filter(
             holds_role_q(EdifyRole.COUNTRY_PROGRAM_LEAD), id__in=list(covered)

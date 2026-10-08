@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **902**
-- All registered routes: **1374**
+- Routed product surfaces: **907**
+- All registered routes: **1379**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **36**
+- Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **644**
-- Full pages: **263**
-- Partials and drawers: **317**
-- Permission-gated surfaces: **885**
-- Referenced by automated tests: **794**
+- Shared component templates: **650**
+- Full pages: **264**
+- Partials and drawers: **321**
+- Permission-gated surfaces: **890**
+- Referenced by automated tests: **807**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -66,6 +66,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EE25FEFDD0 | /accounts/variance-review/ | Variance Review - Edify Command Center | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6DBDFF8C4E | /accounts/weekly-requests | Weekly Fund Requests - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B19D738D84 | /accounts/weekly-requests/ | Weekly Fund Requests - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-10BDA17FC1 | /acting-leadership | Acting Leadership · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-761BDFAF82 | /acting-leadership/<str:assignment_id> | Acting Record | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6906212B1D | /acting-leadership/<str:assignment_id>/cancel | Acting Cancel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CD71153D39 | /acting-leadership/<str:assignment_id>/reschedule | Acting Reschedule | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-31F2ECF502 | /acting-leadership/appoint | Acting Appoint | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8BB0A3532D | /actions/<str:action_id>/<str:transition> | Action Transition | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0A80841654 | /actions/mine | My Actions | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EF315695FE | /actions/sent | Team Assignments | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -152,7 +157,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-1BACC71B5F | /budget | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-04C3EE0B01 | /budget/ | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F5541CFE7 | /budgets/monthly | Monthly Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-7ABC671B29 | /budgets/overview | Budget Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-7ABC671B29 | /budgets/overview | Budget Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B1D64A4041 | /business-transformation | Business Transformation | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-481A3D9334 | /business-transformation/business-accounting-finance | Business Accounting & Finance | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BE50691B49 | /business-transformation/cases/<str:case_id>/triage | Business Transformation Triage | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -511,13 +516,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-7B2C917E1A | /leave/<str:leave_id>/attachment | Leave Attachment | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-ACA849CE31 | /leave/approvals | Leave Approvals Cockpit | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DD2CC2E8BC | /leave/approvals/ | Leave Approvals Cockpit | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-6536EA8CDB | /leave/approvals/<str:leave_id>/approve | Leave Approve Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-7A1B26BB75 | /leave/approvals/<str:leave_id>/escalate | Leave Escalate Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-68B50C60BF | /leave/approvals/<str:leave_id>/impact | Leave Impact Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-B96B2758DD | /leave/approvals/<str:leave_id>/impact/ | Leave Impact Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-1E6B2566F7 | /leave/approvals/<str:leave_id>/reassign | Leave Reassign Coverage Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-DCAEC2D4CE | /leave/approvals/<str:leave_id>/reject | Leave Reject Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-30B89EE086 | /leave/approvals/<str:leave_id>/return | Leave Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-6536EA8CDB | /leave/approvals/<str:leave_id>/approve | Leave Approve Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-7A1B26BB75 | /leave/approvals/<str:leave_id>/escalate | Leave Escalate Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-68B50C60BF | /leave/approvals/<str:leave_id>/impact | Leave Impact Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B96B2758DD | /leave/approvals/<str:leave_id>/impact/ | Leave Impact Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-1E6B2566F7 | /leave/approvals/<str:leave_id>/reassign | Leave Reassign Coverage Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-DCAEC2D4CE | /leave/approvals/<str:leave_id>/reject | Leave Reject Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-30B89EE086 | /leave/approvals/<str:leave_id>/return | Leave Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B1CD41EF26 | /leave/calendar | Team Availability Calendar | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F0C87A4DD | /leave/calendar/ | Team Availability Calendar | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E2880A64B1 | /leave/calendar/activities | Leave Calendar Activities | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

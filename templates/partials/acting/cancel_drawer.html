@@ -1,0 +1,43 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Cancel an acting appointment (apps.acting). Cancelling ends the delegated
+access at once and keeps the record. The service decides who may cancel and
+checks again on save.
+{% endcomment %}
+
+{% block drawer_title %}{% if missing %}Appointment not found{% else %}Cancel acting appointment{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if missing %}
+<p class="edify-note" data-tone="warning">That acting appointment is not one you can open, or it no longer exists.</p>
+{% else %}
+<form hx-post="/acting-leadership/{{ assignment.id }}/cancel" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-acting-cancel-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+  {% include "partials/acting/_summary.html" %}
+
+  {% if not may_change %}
+  <p class="edify-note" data-tone="warning" data-acting-no-change>This appointment cannot be cancelled: it has ended, was already cancelled, or is not yours to cancel.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+  {% else %}
+  <div class="space-y-1">
+    <label for="acting-cancel-reason" class="block edify-text-caption font-semibold text-slate-600">Reason</label>
+    <textarea id="acting-cancel-reason" name="reason" rows="3" maxlength="500"
+              class="w-full px-3 py-2 rounded-control border border-slate-200 text-[13px]">{{ reason }}</textarea>
+    <p class="edify-text-caption text-slate-500">Kept on the record with your name and the time.</p>
+  </div>
+  <p class="edify-note" data-tone="warning" role="note">{% if assignment.is_active %}{{ assignment.appointee.name }} loses {{ assignment.short_label }} access at once and returns to working as {{ assignment.appointee_role }}.{% else %}{{ assignment.appointee.name }} will not become {{ assignment.short_label }} in {{ assignment.period_label }}.{% endif %} The appointment stays in History.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Keep appointment</button>
+    <button type="submit" class="btn btn-danger h-8" data-acting-cancel>Cancel appointment</button>
+  </div>
+  {% endif %}
+</form>
+{% endif %}
+{% endblock %}

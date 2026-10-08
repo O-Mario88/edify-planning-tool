@@ -532,6 +532,21 @@ def day_off_alerts_job():
     run_tracked_job("day_off_alerts", _do_day_off_alerts)
 
 
+def _do_acting_lifecycle() -> int:
+    """Record the reminder, start and end of acting leadership appointments
+    (apps.acting.lifecycle). Access follows the appointment's dates; this
+    writes the audit entries and the notices."""
+    from apps.acting.lifecycle import sweep
+
+    return sweep()
+
+
+def acting_lifecycle_job():
+    if not _enabled():
+        return
+    run_tracked_job("acting_lifecycle", _do_acting_lifecycle)
+
+
 def _do_activity_reminders() -> int:
     """§33 — 'Activity starts tomorrow' for every responsible person.
 

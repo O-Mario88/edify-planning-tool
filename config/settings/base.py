@@ -138,6 +138,7 @@ INSTALLED_APPS = [
     "apps.autopilot",
     "apps.telemetry",
     "apps.staff_activity",
+    "apps.acting",
     "apps.help_center",
     "apps.frontend",
     # ... (registered as each module is built)
@@ -191,6 +192,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Directly after authentication, before anything reads the role in use:
+    # a person working in an acting appointment is presented in the acting
+    # role for this request, and changes outside what the appointment
+    # delegates are refused (apps/acting/middleware.py). No query for anyone
+    # who has never been appointed.
+    "apps.acting.middleware.ActingCapacityMiddleware",
     # After authentication: a link or hx-get button the signed-in role cannot
     # follow is not drawn (owner, 2026-09-27). apps/core/forbidden_links_middleware.py.
     "apps.core.forbidden_links_middleware.ForbiddenLinksMiddleware",

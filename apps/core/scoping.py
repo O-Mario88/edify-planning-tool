@@ -24,7 +24,7 @@ from typing import Iterable
 
 from django.db.models import F, Lookup, Q
 
-from apps.core.rbac import EdifyRole, Permission, permissions_for_role
+from apps.core.rbac import EdifyRole, Permission
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +154,11 @@ class UserScope:
     # set as a subquery instead of shipping thousands of literal ids.
     assignment_staff_ids: list[str] = field(default_factory=list)
     partner_ids: list[str] = field(default_factory=list)
+    # The acting appointment this scope was resolved under, when the person
+    # is working in one (apps.core.acting); empty in their own role. The
+    # leader whose seat it delegates is `acting_seat_staff_id`.
+    acting_assignment_id: str = ""
+    acting_seat_staff_id: str = ""
 
     # Capability flags.
     can_view_summary_only: bool = False
@@ -329,7 +334,15 @@ def resolve_user_scope(user) -> UserScope:
 
 
 def _scope_memo_key(user) -> tuple:
-    return ("user_scope", getattr(user, "pk", None), user.active_role)
+    from apps.core.acting import acting_context
+
+    context = acting_context(user)
+    return (
+        "user_scope",
+        getattr(user, "pk", None),
+        user.active_role,
+        context.assignment_id if context is not None else "",
+    )
 
 
 def forget_user_scope(user) -> None:
@@ -348,9 +361,22 @@ def forget_user_scope(user) -> None:
 
 
 def _resolve_user_scope_uncached(user) -> UserScope:
+    from apps.core.acting import (
+        SCOPE_COUNTRY,
+        SCOPE_PL_TEAM,
+        acting_context,
+        effective_permissions,
+        seat as acting_seat,
+    )
+
     role = user.active_role
-    perms = permissions_for_role(role)
+    # In an acting appointment: the acting role's keys less the withheld
+    # ones, and the seat of the leader who made the appointment.
+    perms = effective_permissions(user)
     has = lambda p: p in perms  # noqa: E731
+    acting = acting_context(user)
+    team_seat = acting_seat(user, SCOPE_PL_TEAM)
+    country_seat = acting_seat(user, SCOPE_COUNTRY)
 
     country_scope = role in COUNTRY_ROLES
     summary_only = role in SUMMARY_ONLY_ROLES
@@ -499,6 +525,10 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             supervisor_query = Q(supervisor_id=staff_id)
             if covered_staff_ids:
                 supervisor_query |= Q(supervisor_id__in=covered_staff_ids)
+            if team_seat is not None:
+                # An Acting Programme Lead reads the team of the Lead who
+                # appointed them, from the reporting line as it stands today.
+                supervisor_query |= Q(supervisor_id=team_seat.seat_staff_id)
 
             # Departed staff are not supervisees. Offboarding soft-deletes the
             # profile but leaves the supervisor link standing, and this query
@@ -511,6 +541,16 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                 supervisor_query, supervisee__deleted_at__isnull=True
             ).values_list("supervisee_id", flat=True)
             supervised_staff_ids = _uniq(supervisees)
+            if team_seat is not None:
+                # The whole team including the substantive Lead, and never
+                # the acting leader themself: their own work stays their own
+                # (`own_school_ids`), so nobody oversees themselves.
+                supervised_staff_ids = _uniq(
+                    [
+                        *(i for i in supervised_staff_ids if i != staff_id),
+                        team_seat.seat_staff_id,
+                    ]
+                )
             if supervised_staff_ids and StaffSchoolAssignment:
                 team = StaffSchoolAssignment.objects.filter(
                     staff_id__in=supervised_staff_ids
@@ -622,8 +662,12 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     }
     if staff_id and role in management_roles and StaffProfile:
         if role == EdifyRole.COUNTRY_DIRECTOR.value:
+            # An Acting Country Director reads the country of the Director
+            # who appointed them, not whatever their own profile names.
             manager_country = (
-                StaffProfile.objects.filter(id=staff_id)
+                country_seat.country
+                if country_seat is not None
+                else StaffProfile.objects.filter(id=staff_id)
                 .values_list("country", flat=True)
                 .first()
             )
@@ -671,6 +715,11 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             country = (user.staff_profile.country or "").strip()
         except Exception:  # noqa: BLE001 - no profile, no country
             country = ""
+    if country_scope and country_seat is not None:
+        # Bounded to the appointing Director's country, always: an acting
+        # appointment without one resolves no acting capacity at all
+        # (apps.acting.services.still_valid), so this is never blank.
+        country = country_seat.country
 
     return UserScope(
         user_id=user.user_id,
@@ -693,6 +742,8 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         supervised_staff_ids=supervised_staff_ids,
         managed_staff_ids=managed_staff_ids,
         partner_ids=partner_ids,
+        acting_assignment_id=acting.assignment_id if acting is not None else "",
+        acting_seat_staff_id=acting.seat_staff_id if acting is not None else "",
         can_view_summary_only=summary_only,
         rvp_region_scoped=bool(summary_only and region_ids),
         region_scope=role in REGION_ROLES,
@@ -1325,27 +1376,31 @@ def scope_cache_fingerprint(scope: UserScope) -> str:
     import hashlib
     import json
 
-    payload = json.dumps(
-        {
-            "role": scope.active_role,
-            "country": scope.country_scope,
-            "country_name": scope.country,
-            "summary_only": scope.can_view_summary_only,
-            "own": sorted(scope.own_school_ids),
-            "team": sorted(scope.team_school_ids),
-            "own_clusters": sorted(scope.own_cluster_ids),
-            "supervised": sorted(scope.supervised_staff_ids),
-            "coverage": sorted(scope.assignment_staff_ids),
-            "regions": sorted(scope.region_ids),
-            "partners": sorted(scope.partner_ids),
-            # A partner owns no school: what it may reach is the schools
-            # handed to it, which none of the fields above name. Without them
-            # a school withdrawn from a partner stayed in its cached figures
-            # until they lapsed.
-            "held": sorted(scope.school_ids) if scope.partner_ids else [],
-        },
-        sort_keys=True,
-    ).encode("utf-8")
+    inputs = {
+        "role": scope.active_role,
+        "country": scope.country_scope,
+        "country_name": scope.country,
+        "summary_only": scope.can_view_summary_only,
+        "own": sorted(scope.own_school_ids),
+        "team": sorted(scope.team_school_ids),
+        "own_clusters": sorted(scope.own_cluster_ids),
+        "supervised": sorted(scope.supervised_staff_ids),
+        "coverage": sorted(scope.assignment_staff_ids),
+        "regions": sorted(scope.region_ids),
+        "partners": sorted(scope.partner_ids),
+        # A partner owns no school: what it may reach is the schools
+        # handed to it, which none of the fields above name. Without them
+        # a school withdrawn from a partner stayed in its cached figures
+        # until they lapsed.
+        "held": sorted(scope.school_ids) if scope.partner_ids else [],
+    }
+    if scope.acting_assignment_id:
+        # An acting leader reads the seat less what the appointment
+        # withholds, so a snapshot built for them is never the substantive
+        # leader's, nor the other way round. Absent in a person's own role,
+        # which keeps every existing key as it was.
+        inputs["acting"] = scope.acting_assignment_id
+    payload = json.dumps(inputs, sort_keys=True).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()[:16]
 
 

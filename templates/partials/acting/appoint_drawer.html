@@ -1,0 +1,81 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Appoint Acting PL / Appoint Acting CD (apps.acting), in the training ceiling
+drawer's shape. Two steps: choose the person and the month, then read what the
+appointment gives and confirm it. The month is chosen as a month; its first
+and last day are worked out and shown, never typed. The scope is the appointing
+leader's own seat and is stated, not chosen. apps.acting.services checks every
+part of it again when the appointment is saved.
+{% endcomment %}
+
+{% block drawer_title %}{% if entry %}Appoint {{ entry.short_label }}{% else %}Appoint an acting leader{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if not entry %}
+<p class="edify-note" data-tone="warning" data-acting-not-allowed>A Program Lead appoints an Acting Program Lead and a Country Director an Acting Country Director, each working in their own role.</p>
+{% elif not candidates %}
+<p class="edify-note" data-tone="warning" data-acting-no-candidates>{% if entry.scope_type == "pl_team" %}No CCEO is recorded under you yet, so there is nobody to appoint.{% else %}No Program Lead is recorded in your country yet, so there is nobody to appoint.{% endif %}</p>
+{% elif step == "confirm" %}
+<form hx-post="/acting-leadership/appoint" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-acting-confirm-form>
+  {% csrf_token %}
+  <input type="hidden" name="appointee" value="{{ values.appointee }}">
+  <input type="hidden" name="month" value="{{ preview.month_value }}">
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-acting-summary>
+    <div><dt>{{ entry.appointee_role.value }}</dt><dd><strong>{{ preview.appointee.user.name }}</strong></dd></div>
+    <div><dt>Acting role</dt><dd>{{ entry.label }}</dd></div>
+    <div><dt>Acting month</dt><dd>{{ preview.month_label }}</dd></div>
+    <div><dt>Scope</dt><dd>{% if entry.scope_type == "pl_team" %}My PL Team{% else %}{{ preview.seat.country|default:"Country" }}{% endif %}</dd></div>
+    <div><dt>Effective</dt><dd>{{ preview.effective }}</dd></div>
+  </dl>
+  </div>
+  <p class="edify-note" data-tone="info" role="note" data-acting-statement>{{ preview.statement }}</p>
+  <p class="edify-text-caption text-slate-500">Money and leave approvals, performance reviews, targets, accounts and further acting appointments are not part of an appointment. They stay with you.</p>
+  <div class="drawer-footer">
+    <button type="button" hx-get="/acting-leadership/appoint?appointee={{ values.appointee|urlencode }}&amp;month={{ preview.month_value|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8">Back</button>
+    <button type="submit" name="step" value="confirm" class="btn btn-primary h-8" data-acting-confirm>Confirm Appointment</button>
+  </div>
+</form>
+{% else %}
+<form hx-post="/acting-leadership/appoint" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-acting-appoint-form>
+  {% csrf_token %}
+  <input type="hidden" name="step" value="review">
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  <div class="space-y-1">
+    <label for="acting-appointee" class="block edify-text-caption font-semibold text-slate-600">{{ entry.appointee_role.value }} <span class="text-rose-500">*</span></label>
+    <select id="acting-appointee" name="appointee" required
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      <option value="">Choose a {{ entry.appointee_role.value }}</option>
+      {% for person in candidates %}<option value="{{ person.id }}"{% if person.id == values.appointee %} selected{% endif %}>{{ person.user.name }}</option>{% endfor %}
+    </select>
+    <p class="edify-text-caption text-slate-500">{% if entry.scope_type == "pl_team" %}The CCEOs who report to you.{% else %}The Program Leads of your country.{% endif %}</p>
+  </div>
+
+  <div class="space-y-1">
+    <label for="acting-month" class="block edify-text-caption font-semibold text-slate-600">Acting Month <span class="text-rose-500">*</span></label>
+    <select id="acting-month" name="month" required
+            hx-get="/acting-leadership/appoint" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML" hx-include="#acting-appointee"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      {% for month in months %}<option value="{{ month.value }}"{% if month.value == values.month %} selected{% endif %}>{{ month.label }}</option>{% endfor %}
+    </select>
+  </div>
+
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-acting-effective>
+    <div><dt>Scope</dt><dd>{% if entry.scope_type == "pl_team" %}My PL Team{% else %}Country{% endif %}</dd></div>
+    <div><dt>Effective</dt><dd><strong>{{ selected_month.effective }}</strong></dd></div>
+  </dl>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8" data-acting-review>Appoint {{ entry.short_label }}</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

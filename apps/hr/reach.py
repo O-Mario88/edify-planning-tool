@@ -153,7 +153,14 @@ def _people_reach_uncached(principal) -> PeopleReach:
         return PeopleReach(NONE, assigned=False)
 
     if role in _PROGRAMME_LEAD_ROLES and viewer:
-        return PeopleReach(TEAM, viewer_staff_id=viewer.id)
+        # A team is read from its Lead's seat: the reader's own, or as Acting
+        # Programme Lead the appointing Lead's, which holds the Lead and
+        # everyone who reports to them (apps.core.acting).
+        from apps.core.acting import team_lead_staff_id
+
+        return PeopleReach(
+            TEAM, viewer_staff_id=team_lead_staff_id(principal) or viewer.id
+        )
     if country:
         return PeopleReach(COUNTRIES, countries=(country,))
     return PeopleReach(NONE)

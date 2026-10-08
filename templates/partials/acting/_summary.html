@@ -1,0 +1,10 @@
+{% comment %}One acting appointment, in a drawer: `assignment` decorated with `scope_text`.{% endcomment %}
+<div>
+<dl class="project-capacity-line project-capacity-line--stack" data-acting-summary>
+  <div><dt>Person</dt><dd><strong>{{ assignment.appointee.name }}</strong> · {{ assignment.appointee_role }}</dd></div>
+  <div><dt>Acting role</dt><dd>{{ assignment.label }}</dd></div>
+  <div><dt>Scope</dt><dd>{{ assignment.scope_text }}</dd></div>
+  <div><dt>Effective</dt><dd>{{ assignment.effective_label }}</dd></div>
+  <div><dt>Status</dt><dd>{{ assignment.state_label }}</dd></div>
+</dl>
+</div>

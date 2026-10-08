@@ -222,6 +222,11 @@ class OversightScope:
     supervised_ids: set[str] = field(default_factory=set)
     # The regions a "region" scope is bounded to (the Regional Programme Lead).
     region_ids: tuple[str, ...] = ()
+    # The Programme Lead whose team a "pl" lens reads, in both id spaces:
+    # the reader themself, or the Lead who appointed them when they are
+    # working as Acting Programme Lead (apps.acting). Rosters built from the
+    # reporting line find the team by its Lead, so they ask this.
+    lead_ids: set[str] = field(default_factory=set)
 
     @property
     def team_ids(self) -> set[str]:
@@ -306,7 +311,12 @@ def resolve_oversight_scope(principal) -> OversightScope:
     # lets "my work" and "my team's work" stay separate totals rather than one
     # personal-performance number.
     supervised -= own
-    return OversightScope(kind="pl", own_ids=own, supervised_ids=supervised)
+    lead = own
+    if scope.acting_seat_staff_id:
+        lead = _both_id_spaces({scope.acting_seat_staff_id})
+    return OversightScope(
+        kind="pl", own_ids=own, supervised_ids=supervised, lead_ids=set(lead)
+    )
 
 
 # ── Building the items ───────────────────────────────────────────────────────

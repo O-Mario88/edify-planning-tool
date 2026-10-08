@@ -377,9 +377,11 @@ def list_plans(query: dict, principal) -> list[dict]:
         from apps.accounts.models import StaffSupervisorAssignment
 
         if principal.staff_profile_id:
+            from apps.core.acting import seat_staff_ids
+
             supervised_ids = list(
                 StaffSupervisorAssignment.objects.filter(
-                    supervisor_id=principal.staff_profile_id
+                    supervisor_id__in=seat_staff_ids(principal)
                 ).values_list("supervisee_id", flat=True)
             )
             qs = qs.filter(owner_staff_id__in=supervised_ids)

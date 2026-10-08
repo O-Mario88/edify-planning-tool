@@ -85,7 +85,9 @@ def monitor_roster(principal, *, lead_ids_hint=()) -> list[Team]:
     if scope.is_country:
         wanted = None
     elif scope.kind == "pl":
-        wanted = {str(i) for i in scope.own_ids}
+        # The team's Lead: the reader, or the Lead an Acting Programme Lead
+        # was appointed by, whose team is then read whole, the Lead included.
+        wanted = {str(i) for i in (scope.lead_ids or scope.own_ids)}
     else:
         wanted = {str(i) for i in lead_ids_hint if i}
 

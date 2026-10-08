@@ -505,6 +505,81 @@
    "view": "apps.frontend.views.finance_operating_views.weekly_requests_view"
   },
   {
+   "page_permission": "acting_leadership",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/acting-leadership",
+   "route_name": "acting_leadership",
+   "view": "apps.frontend.views.acting_views.acting_leadership_view"
+  },
+  {
+   "page_permission": "acting_leadership",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/acting-leadership/<str:assignment_id>",
+   "route_name": "acting_record",
+   "view": "apps.frontend.views.acting_views.acting_record_view"
+  },
+  {
+   "page_permission": "acting_leadership",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/acting-leadership/<str:assignment_id>/cancel",
+   "route_name": "acting_cancel",
+   "view": "apps.frontend.views.acting_views.acting_cancel_view"
+  },
+  {
+   "page_permission": "acting_leadership",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/acting-leadership/<str:assignment_id>/reschedule",
+   "route_name": "acting_reschedule",
+   "view": "apps.frontend.views.acting_views.acting_reschedule_view"
+  },
+  {
+   "page_permission": "acting_leadership",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/acting-leadership/appoint",
+   "route_name": "acting_appoint",
+   "view": "apps.frontend.views.acting_views.acting_appoint_view"
+  },
+  {
    "page_permission": "my_actions",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19244,26 +19319,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 444,
-  "Admin": 1082,
+  "Admin": 1087,
   "BusinessTransformationOfficer": 238,
-  "CCEO": 564,
-  "CountryDirector": 835,
-  "HumanResources": 336,
+  "CCEO": 569,
+  "CountryDirector": 840,
+  "HumanResources": 341,
   "ImpactAssessment": 693,
   "MfiLoanOfficer": 134,
   "MfiPartnerAdmin": 137,
   "PartnerAdmin": 231,
   "PartnerFieldOfficer": 231,
-  "Program Lead": 669,
+  "Program Lead": 674,
   "ProjectCoordinator": 477,
   "RegionalProgramLead": 343,
   "RegionalVicePresident": 415
  },
  "summary": {
-  "page_keys_declared": 183,
-  "page_keys_in_navigation": 200,
-  "routes_guarded": 1179,
-  "routes_total": 1374,
+  "page_keys_declared": 184,
+  "page_keys_in_navigation": 201,
+  "routes_guarded": 1184,
+  "routes_total": 1379,
   "routes_unguarded": 195,
   "surfaces_no_role_can_reach": 0
  },

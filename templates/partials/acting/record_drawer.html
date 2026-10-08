@@ -1,0 +1,97 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load table_pagination %}
+
+{% comment %}
+One acting appointment's record (apps.acting): who was appointed, to what, by
+whom and for which month; what the appointment gave and what it left with the
+substantive leader; when each step of its life was recorded; and every audited
+act performed in the acting capacity. Read-only. The acts come from the audit
+log, where each carries the appointment it was done under.
+{% endcomment %}
+
+{% block drawer_title %}{% if missing %}Appointment not found{% else %}{{ assignment.label }} · {{ assignment.period_label }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if missing %}
+<p class="edify-note" data-tone="warning">That acting appointment is not one you can open, or it no longer exists.</p>
+{% else %}
+<div class="space-y-4" data-acting-record="{{ assignment.id }}">
+  <div>
+  <dl class="project-capacity-line project-capacity-line--stack" data-acting-summary>
+    <div><dt>Person</dt><dd><strong>{{ assignment.appointee.name }}</strong></dd></div>
+    <div><dt>Permanent role</dt><dd>{{ assignment.appointee_role }}</dd></div>
+    <div><dt>Acting role</dt><dd>{{ assignment.label }}</dd></div>
+    <div><dt>Scope</dt><dd>{{ assignment.scope_text }}</dd></div>
+    <div><dt>Effective</dt><dd>{{ assignment.effective_label }}</dd></div>
+    <div><dt>Appointed by</dt><dd>{{ assignment.appointed_by.name }} · {{ assignment.appointed_by_role }}</dd></div>
+    <div><dt>Appointed on</dt><dd>{{ assignment.created_at|date:"j M Y, H:i" }}</dd></div>
+    <div><dt>Status</dt><dd>{{ assignment.state_label }}</dd></div>
+    {% if started_at %}<div><dt>Started</dt><dd>{{ started_at|date:"j M Y, H:i" }}</dd></div>{% endif %}
+    {% if ended_at %}<div><dt>Ended</dt><dd>{{ ended_at|date:"j M Y, H:i" }}</dd></div>{% endif %}
+    {% if assignment.cancelled_at %}<div><dt>Cancelled</dt><dd>{{ assignment.cancelled_at|date:"j M Y, H:i" }}{% if assignment.cancelled_by %} by {{ assignment.cancelled_by.name }}{% endif %}{% if assignment.cancel_reason %} · {{ assignment.cancel_reason }}{% endif %}</dd></div>{% endif %}
+    {% for revision in assignment.revisions %}<div><dt>First made for</dt><dd>{{ revision.start_date }} to {{ revision.end_date }}</dd></div>{% endfor %}
+  </dl>
+  </div>
+
+  <section aria-labelledby="acting-granted-title" class="space-y-1">
+    <h4 id="acting-granted-title" class="text-[13px] font-semibold">What the appointment gives</h4>
+    <p class="edify-text-caption text-slate-600">{% if assignment.scope_type == "pl_team" %}Program Lead operational access for the whole team, the Program Lead included: planning, execution, calendars, team oversight and follow-up, training oversight, schools, partners, projects, priorities, performance and staff activity.{% else %}Country Director operational access for the country: country planning and execution oversight and follow-up, the country calendar, staff activity, partners, projects, priorities and performance.{% endif %}</p>
+    <p class="edify-text-caption text-slate-600">Left with {{ assignment.seat.user.name }}: money and leave approvals, performance reviews, targets, accounts and roles, governed settings, and appointing acting leaders. {{ assignment.appointee.name }}'s own work, money, leave and targets stay under their {{ assignment.appointee_role }} role.</p>
+    {% if snapshot.seat_members %}
+    <p class="edify-text-caption text-slate-600" data-acting-seat-members>In the seat when appointed: {% for member in snapshot.seat_members %}{{ member.name }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="acting-acts-heading" class="space-y-2">
+    <h4 id="acting-acts-heading" class="text-[13px] font-semibold">Done in the acting capacity</h4>
+    {% paginate actions "page" as acts %}
+    {% if acts.total %}
+    <div class="overflow-x-auto">
+      <table class="edify-data-table edify-data-table--compact w-full text-left text-[12px]" data-mobile-table="scroll" aria-label="Acts performed under this acting appointment">
+        <thead>
+          <tr>
+            <th scope="col" class="px-3 py-2">When</th>
+            <th scope="col" class="px-3 py-2">Who</th>
+            <th scope="col" class="px-3 py-2">Action</th>
+            <th scope="col" class="px-3 py-2">On</th>
+            <th scope="col" class="px-3 py-2">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for act in acts.rows %}
+          <tr>
+            <td class="px-3 py-2 tabular-nums" data-label="When">{{ act.created_at|date:"j M Y, H:i" }}</td>
+            <td class="px-3 py-2" data-label="Who">{{ assignment.appointee.name }} · {{ assignment.appointee_role }} · {{ assignment.short_label }}</td>
+            <td class="px-3 py-2" data-label="Action">{{ act.action }}</td>
+            <td class="px-3 py-2" data-label="On">{{ act.subject_kind|default:"—" }}{% if act.subject_id %} {{ act.subject_id|truncatechars:28 }}{% endif %}</td>
+            <td class="px-3 py-2" data-label="Result">{% if act.success %}Done{% else %}Refused{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if acts.paginated %}
+    {% comment %}Fifty acts a page, like every table: the drawer is asked again for the next.{% endcomment %}
+    <nav class="edify-pagination-scope flex items-center justify-between gap-3 edify-text-caption text-slate-500" aria-label="Pages of acts" data-acting-acts-pager>
+      <span class="tabular-nums">Showing {{ acts.first_index }}–{{ acts.last_index }} of {{ acts.total }}</span>
+      <span class="flex items-center gap-2">
+        {% if acts.has_previous %}<button type="button" class="btn btn-secondary h-8" hx-get="/acting-leadership/{{ assignment.id }}?page={{ acts.previous_page }}" hx-target="#drawer-container" hx-swap="innerHTML">Previous</button>{% endif %}
+        {% if acts.has_next %}<button type="button" class="btn btn-secondary h-8" hx-get="/acting-leadership/{{ assignment.id }}?page={{ acts.next_page }}" hx-target="#drawer-container" hx-swap="innerHTML">Next</button>{% endif %}
+      </span>
+    </nav>
+    {% endif %}
+    {% else %}
+    <p class="edify-text-caption text-slate-500" data-acting-no-actions>Nothing has been recorded under this appointment{% if assignment.is_upcoming %}; it has not begun{% endif %}.</p>
+    {% endif %}
+  </section>
+
+  <div class="drawer-footer">
+    {% if can_manage %}{% if assignment.is_active or assignment.is_upcoming %}
+    <button type="button" hx-get="/acting-leadership/{{ assignment.id }}/cancel" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary h-8">Cancel appointment</button>
+    {% endif %}{% endif %}
+    <button type="button" @click="requestClose()" class="btn btn-primary h-8">Close</button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

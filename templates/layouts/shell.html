@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load frontend_filters %}
+{% load acting %}
 
 {% block content %}
 <a href="#main-content" class="edify-skip-link">Skip to main content</a>
@@ -339,6 +340,17 @@ class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--t
 </svg>
 </button>
 
+{% comment %}
+Acting capacity (apps.acting). A person working in an acting appointment is
+told so beside their account, with their permanent role first: they are still
+that, and act as the other for the month named. Nothing is drawn for anybody
+else.
+{% endcomment %}
+{% acting_identity request.user as acting %}
+{% if acting and acting.working %}
+<a href="/acting-leadership" class="hidden md:inline-flex items-center px-2 py-0.5 edify-text-caption font-semibold rounded-pill border whitespace-nowrap edify-primary-soft edify-primary-text edify-primary-border" title="You are {{ acting.permanent_role }}, working as {{ acting.label }} for {{ acting.period }}" data-acting-indicator>{{ acting.identity }} · {{ acting.period }}</a>
+{% endif %}
+
 <!-- Initials User Avatar Dropdown -->
 <div class="edify-topbar__account relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
 <button
@@ -362,12 +374,31 @@ style="display: none"
 >
 <div class="px-4 py-2 border-b edify-border-bottom">
 <p class="font-semibold edify-text">{{ request.user.name|default:"District Admin" }}</p>
+{% if acting %}
+<p class="edify-text-caption font-semibold edify-text-muted" data-acting-identity>{{ acting.identity }}</p>
+<p class="edify-text-caption font-semibold edify-text-subtle" data-acting-period>{% if acting.working %}{{ acting.period }}{% else %}{{ acting.short_label }} for {{ acting.period }}{% endif %}</p>
+{% else %}
 <p class="edify-text-caption font-semibold edify-text-muted">{{ request.user.active_role|default:"Team member" }}</p>
+{% endif %}
 <p class="edify-text-caption truncate edify-text-subtle mt-0.5">{{ request.user.email|default:"admin@district.edify.org" }}</p>
 </div>
 
-{% if request.user.role_enums|length > 1 %}
+{% if request.user.role_enums|length > 1 or acting %}
 <div class="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider edify-surface-muted edify-text-subtle">Switch Active Role</div>
+{% if acting %}{% if acting.working or acting.can_enter %}
+<form action="/auth/switch-role" method="post" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="role" value="acting">
+<button
+type="submit"
+class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold"
+{% if acting.working %}style="color:var(--edify-accent);" aria-current="true"{% else %}style="color:var(--edify-text-muted);"{% endif %}
+data-acting-switch
+>
+{{ acting.label }} · {{ acting.period }}
+</button>
+</form>
+{% endif %}{% endif %}
 {% for r in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">
 {% csrf_token %}
