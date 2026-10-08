@@ -240,6 +240,55 @@ class AssignedCountsBeforeThePartnerSchedules(CoverageFixture):
         self.assertEqual((john.partner, john.awaiting_partner), (7, 7))
 
 
+class CancelledWorkLeavesTheCoverage(CoverageFixture):
+    """A cancelled activity undoes the scheduling (owner, 2026-10-08): a
+    partner's school goes back to waiting, staff's own leaves the count."""
+
+    REASON = {"reason": "The school asked for another week."}
+
+    def test_a_partner_s_cancelled_date_is_assigned_and_awaiting_again(self):
+        from apps.activities.services import cancel
+
+        handover = self.hand_over(self.members[0])
+        activity = self.partner_dates(handover)
+        self.assertEqual((self.row().partner, self.row().partner_scheduled), (1, 1))
+
+        with self.captureOnCommitCallbacks(execute=True):
+            cancel(activity.id, self.REASON, self.partner_user)
+
+        row = self.row()
+        self.assertEqual(
+            (row.partner, row.partner_scheduled, row.awaiting_partner, row.total),
+            (1, 0, 1, 1),
+        )
+        rows = training_coverage.schools_behind(
+            self.pl,
+            staff_id=self.staff.id,
+            training_id=self.leadership.id,
+            fy=self.fy,
+        )["rows"]
+        self.assertEqual(
+            [(r.status_label, r.next_action) for r in rows],
+            [("Partner Assigned — Awaiting Schedule", "Partner to schedule")],
+        )
+
+    def test_a_cancelled_staff_training_frees_its_place(self):
+        from apps.activities import pairs
+
+        self.ceiling(value=1)
+        training = self.in_school(self.members[0])
+        self.assertEqual(self.row().balance, 0)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            pairs.cancel(training.id, self.REASON, self.user)
+
+        row = self.row()
+        self.assertEqual((row.in_school, row.total, row.balance), (0, 0, 1))
+        # The place is free: another school is planned under the ceiling.
+        self.in_school(self.members[1], day=1)
+        self.assertEqual(self.row().total, 1)
+
+
 class TheCeilingIsHeldByEveryRoute(CoverageFixture):
     def test_schools_with_a_partner_take_places_staff_cannot_plan_past(self):
         self.ceiling(value=3)
