@@ -652,8 +652,13 @@ class CertifiedPartnerAgencyBookingTest(StandardSupportBase):
 
     def test_an_agency_cannot_be_booked_twice_on_one_day(self):
         self.book()
+        # At another of the officer's schools: the same school would be
+        # refused first for a different reason, having its one support visit
+        # of the year (owner, 2026-10-08).
+        second = School.objects.get(school_id="STD-MEM-0")
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=second.id)
         with self.assertRaises(BadRequest) as caught:
-            self.book(schoolId=self.school.school_id, focusIntervention="leadership")
+            self.book(schoolId=second.school_id, focusIntervention="leadership")
         self.assertIn("already has work booked", str(caught.exception))
 
     def test_an_activity_not_approved_for_agency_delivery_is_refused(self):

@@ -1289,6 +1289,9 @@ def create_assignment(**fields):
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.
         with transaction.atomic():
+            # The school's room first (it locks the school's row), then the
+            # place the hand-over takes under a training ceiling.
+            _assert_school_has_room(school, fields)
             _hold_training_ceiling(school, fields)
             assignment = PartnerAssignment.objects.create(
                 status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
@@ -1319,6 +1322,42 @@ def create_assignment(**fields):
             "assigned to this partner and is waiting for the partner to "
             "schedule it. A school is assigned to the same partner only once."
         ) from exc
+
+
+def _assert_school_has_room(school, fields: dict) -> None:
+    """One visit commitment a school a year, and SSA Support only where the
+    year's SSA is still to be collected (owner, 2026-10-08).
+
+    A Client, Core Trained or Core Graduate school with its staff support
+    visit, or already in a partner's hands, is not handed over for another
+    visit; a school that has the year's SSA is not handed over for SSA
+    Support (``apps.planning.eligibility``). Here, at the one creation door,
+    so the Planning drawer, a cluster's ticked schools, a project's
+    hand-over, a replacement and an API client are refused alike.
+
+    The school's row is locked first, and the count read behind the lock: it
+    is the lock a staff schedule takes (``activities.services._create``), so
+    of a staff member scheduling and a Program Lead handing over at the same
+    moment, the second reads the first one's row and is refused.
+    """
+    if school is None:
+        return
+    from apps.planning.eligibility import assert_handover_eligible
+    from apps.schools.models import School
+
+    from .handover_policy import past_school_rules
+
+    School.objects.select_for_update().filter(pk=school.pk).first()
+    assert_handover_eligible(
+        school,
+        purpose_of_visit=fields.get("purpose_of_visit"),
+        expected_activity_type=fields.get("expected_activity_type"),
+        training_course=fields.get("training_course")
+        or fields.get("training_course_id"),
+        past_school_rules=past_school_rules(
+            fields.get("project"), fields.get("project_id")
+        ),
+    )
 
 
 def _hold_training_ceiling(school, fields: dict) -> None:

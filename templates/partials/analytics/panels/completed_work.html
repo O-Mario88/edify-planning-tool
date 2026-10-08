@@ -33,7 +33,7 @@ above (owner, 2026-09-05: one Analytics page, tabs swap only the panel).
 <!-- School -->
 <td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if act.school.id %}{% school_code act.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4" data-label="Owner">

@@ -651,7 +651,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1033,
+      "bytes": 1245,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools",
@@ -673,7 +673,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2441,
+      "bytes": 3433,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -695,6 +695,7 @@
       "tables": 0,
       "template": "components/school_planning_badges.html",
       "variants": [
+        "closed",
         "{{ chip.tone }}"
       ]
     },
@@ -1622,7 +1623,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14079,
+      "bytes": 14131,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/closure-quality"
@@ -1753,7 +1754,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2276,
+      "bytes": 2528,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/drilldown"
@@ -1981,7 +1982,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3625,
+      "bytes": 3680,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2002,7 +2003,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10577,
+      "bytes": 10615,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2149,7 +2150,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3205,
+      "bytes": 3280,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -2302,7 +2303,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1926,
+      "bytes": 1950,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown"
@@ -2324,7 +2325,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1707,
+      "bytes": 1731,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown"
@@ -2549,7 +2550,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3523,
+      "bytes": 3547,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2852,7 +2853,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17120,
+      "bytes": 17142,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/visit-effectiveness"
@@ -2911,7 +2912,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6342,
+      "bytes": 6369,
       "deprecated_alternatives": [],
       "example_pages": [
         "/loans/<str:loan_id>/drawer"
@@ -3018,7 +3019,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5722,
+      "bytes": 5751,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/business-accounting-finance",
@@ -3228,7 +3229,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5863,
+      "bytes": 5998,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/bulk-assign-partner-drawer"
@@ -3255,7 +3256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10768,
+      "bytes": 11740,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-schedule-drawer"
@@ -3449,7 +3450,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10424,
+      "bytes": 10752,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -3962,7 +3963,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11260,
+      "bytes": 11712,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -4204,7 +4205,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4304,
+      "bytes": 4388,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools",
@@ -4227,7 +4228,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7958,
+      "bytes": 7987,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -4507,7 +4508,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1841,
+      "bytes": 1915,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4968,7 +4969,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2450,
+      "bytes": 2471,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -5390,7 +5391,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5380,
+      "bytes": 5404,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/follow-up"
@@ -5564,7 +5565,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5589,
+      "bytes": 5620,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-follow-ups/<str:followup_id>",
@@ -5921,7 +5922,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20662,
+      "bytes": 20691,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6207,7 +6208,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 34570,
+      "bytes": 34594,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6386,7 +6387,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3657,
+      "bytes": 3683,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/past-due-popup"
@@ -6722,7 +6723,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4050,
+      "bytes": 4074,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard/pl-drilldown"
@@ -7530,7 +7531,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2102,
+      "bytes": 2161,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-panel/data-quality-center",
@@ -7850,7 +7851,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7251,
+      "bytes": 7342,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9937,7 +9938,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10636,
+      "bytes": 10662,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -11768,7 +11769,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11452,
+      "bytes": 11480,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11848,7 +11849,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5826,
+      "bytes": 5852,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -11908,7 +11909,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8496,
+      "bytes": 8788,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12005,7 +12006,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6919,
+      "bytes": 7211,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12085,7 +12086,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7138,
+      "bytes": 7499,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12901,7 +12902,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10861,
+      "bytes": 11167,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -13076,7 +13077,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 39870,
+      "bytes": 39873,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -13129,7 +13130,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7869,
+      "bytes": 8466,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -13362,6 +13363,33 @@
       "tables": 0,
       "template": "partials/planning/view_toggle_and_calendar.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2280,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/partials/clusters/<str:cluster_id>/schools",
+        "/planning"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Visit Lock Cell",
+      "purpose": "Reusable visit lock cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/visit_lock_cell.html",
+      "variants": [
+        "{% if school.visitLockState == "
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -13783,7 +13811,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 18216,
+      "bytes": 18258,
       "deprecated_alternatives": [],
       "example_pages": [
         "/programme-rollout"
@@ -13917,7 +13945,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 16224,
+      "bytes": 16251,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -14189,7 +14217,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15351,
+      "bytes": 15655,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/monitoring",
@@ -14320,7 +14348,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 19526,
+      "bytes": 19561,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning"
@@ -14714,7 +14742,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 9427,
+      "bytes": 9462,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools",
@@ -15576,7 +15604,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 20817,
+      "bytes": 20836,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -16068,7 +16096,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11634,
+      "bytes": 11728,
       "deprecated_alternatives": [],
       "example_pages": [
         "/today",
@@ -16487,7 +16515,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8279,
+      "bytes": 8337,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan",
@@ -118831,7 +118859,7 @@
     "activity_states": 24,
     "all_routes": 1382,
     "api_routes": 360,
-    "component_templates": 656,
+    "component_templates": 657,
     "full_pages": 265,
     "mobile_contract_pass": 590,
     "nonvisual_actions": 285,

@@ -41,7 +41,7 @@
 {% for c in champions_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <td class="py-3.5 text-slate-500 font-bold tabular-nums" data-label="School ID">{{ c.school_id|default:"—" }}</td>
-<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{{ c.name }}</td>
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{% school_link c.name c.school_id %}</td>
 <td class="py-3.5 text-slate-500 font-bold" data-label="Region">{{ c.region }}</td>
 <td class="py-3.5 text-slate-500 font-bold" data-label="District">{{ c.district }}</td>
 <td class="py-3.5 text-center font-semibold" data-label="Core Start Fiscal Year">{{ c.onboard_fy }}</td>

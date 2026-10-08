@@ -11,15 +11,19 @@
     </label></td>
   <td data-label="School ID" class="school-plan-table__id">{{ school.schoolId }}</td>
   <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
-    <button type="button" class="school-plan-table__name-toggle" title="{{ school.name }}" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'" aria-controls="planning-school-details-{{ school.id }}">
-  {{ school.name }}
-</button>
+    {% comment %}The school's name is the link to its profile (owner, 2026-10-08:
+    "i need it linked to school names everywhere"); it was the control that
+    opened the row's details. The arrow beside it opens them now, and so does a
+    click anywhere else on the row.{% endcomment %}
+    <button type="button" class="school-plan-table__expander" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'" aria-controls="planning-school-details-{{ school.id }}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+    <span class="school-plan-table__name-text" title="{{ school.name }}">{% school_link school.name school.id %}</span>
 
   </div></td>
   {% comment %}The cluster the school belongs to (owner, 2026-09-29), linked to
   the cluster; a school outside any cluster says so.{% endcomment %}
   <td data-label="Cluster" class="school-plan-table__cluster">{% if school.cluster and school.cluster != "—" and school.clusterName != "Cluster missing" %}<a href="/clusters/{{ school.cluster }}" class="hover:underline" title="{{ school.clusterName }}">{{ school.clusterName }}</a>{% elif school.clusterName == "Cluster missing" %}<span class="edify-text-muted">Cluster missing</span>{% else %}<span class="edify-text-muted">Not clustered</span>{% endif %}</td>
   {% include "components/school_planning_badges.html" with badges=school.planningBadges layout="cells" %}
+  {% include "partials/planning/visit_lock_cell.html" %}
   {% if school.supportRule %}{% include "partials/planning/support_cell.html" %}{% endif %}
   <td data-label="Actions" class="school-plan-table__actions">
       {% comment %}
@@ -63,7 +67,7 @@
 </tr>
 <tr id="planning-school-details-{{ school.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ school.id }}'" x-cloak>
   <td aria-hidden="true"></td>
-  <td colspan="{% if school.supportRule %}7{% else %}6{% endif %}">
+  <td colspan="{% if school.supportRule %}8{% else %}7{% endif %}">
     {% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ school.id }}" class="edify-text-caption hover:underline">Open {{ school.name }} school profile</a>{% endif %}
     <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{% if school.districtId %}<a href="/districts/{{ school.districtId }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% elif school.district and school.district != "—" %}<a href="/schools?q={{ school.district|urlencode }}" class="hover:underline font-medium text-slate-700 edify-primary-text-hover">{{ school.district }}</a>{% else %}—{% endif %}</dd></div>

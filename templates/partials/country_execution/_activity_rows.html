@@ -22,7 +22,7 @@ carries it — whose, due when, at which stage, and who holds the next action.{%
       <tr data-level="1">
         <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.type }}</span></th>
         <td>{{ row.code|default:"—" }}</td>
-        <td>{{ row.where }}</td>
+        <td>{% if row.code %}{% school_link row.where row.code %}{% else %}{{ row.where }}{% endif %}</td>
         <td>{{ row.owner }}</td>
         <td>{{ row.channel }}{% if row.partner %} · {{ row.partner }}{% endif %}</td>
         <td>{{ row.due|date:"j M Y" }}</td>

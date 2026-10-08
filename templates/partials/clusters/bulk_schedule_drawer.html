@@ -15,7 +15,10 @@ submit (apps.planning.cluster_bulk_scheduling):
   * one of the four purposes that is the same errand at every school —
     In-school Training is not among them, because it pairs a governed course
     with a companion visit and the course is a per-school choice;
-  * a school the visit gate has locked cannot be ticked at all, and says why.
+  * a school the visit gate has locked cannot be ticked at all, and says why;
+  * a school that has its support visit for the year, or that a partner
+    holds, cannot be ticked for a Training Follow Up day and says why (owner,
+    2026-10-08). It stays open for the day's other purposes.
 
 And one SSA intervention for the whole day, chosen here (owner, 2026-09-26):
 every school ticked is planned against it. An SSA Support day collects the
@@ -29,6 +32,14 @@ selected: [],
 purpose: '{{ posted.purposeOfVisit|default:''|escapejs }}',
 focusIntervention: '{{ selected_focus|default:''|escapejs }}',
 get collectsTheSsa() { return this.purpose === '{{ collects_the_ssa|escapejs }}'; },
+get isSupportVisit() { return this.purpose === 'training_follow_up'; },
+/* A school closed to a support visit leaves the day when the purpose
+   becomes one; its box is disabled until the purpose changes again. */
+dropClosedSchools() {
+if (!this.isSupportVisit) return;
+document.querySelectorAll('.cluster-bulk-checkbox[data-visit-closed]').forEach(el => { el.checked = false; });
+this.sync();
+},
 get overflow() { return Math.max(0, this.selected.length - this.maximum); },
 get ready() { return this.selected.length > 0 && this.overflow === 0; },
 toggleAll(checked) {
@@ -83,6 +94,7 @@ class="space-y-4"
 id="cluster_bulk_purpose"
 name="purpose_of_visit"
 x-model="purpose"
+@change="dropClosedSchools()"
 required
 aria-describedby="cluster-bulk-purpose-help"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-[13px] font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
@@ -173,21 +185,21 @@ class="rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ri
 
 <div class="space-y-1.5 max-h-[38vh] overflow-y-auto pr-1">
 {% for member in members %}
-<div class="cluster-bulk-row flex items-center justify-between gap-3 p-3 rounded-surface border border-slate-100 edify-surface shadow-sm{% if not member.selectable %} opacity-60{% endif %}">
+<div class="cluster-bulk-row flex items-center justify-between gap-3 p-3 rounded-surface border border-slate-100 edify-surface shadow-sm{% if not member.selectable %} opacity-60{% endif %}"{% if member.visitReason %} :class="{ 'opacity-60': isSupportVisit }"{% endif %}>
 <div class="flex items-center gap-3">
 <input
 type="checkbox"
 name="school_ids"
 value="{{ member.id }}"
 id="cluster-bulk-{{ member.id }}"
-{% if not member.selectable %}disabled title="{{ member.reason }}"{% endif %}
+{% if not member.selectable %}disabled title="{{ member.reason }}"{% elif member.visitReason %}data-visit-closed :disabled="isSupportVisit"{% endif %}
 @change="sync()"
 class="cluster-bulk-checkbox rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)] h-4 w-4{% if member.selectable %} cursor-pointer{% endif %}"
 >
 <label for="cluster-bulk-{{ member.id }}" class="text-[12px] font-semibold text-slate-800{% if member.selectable %} cursor-pointer{% endif %}">
 <span class="block font-semibold text-slate-900 leading-snug">{{ member.name }}</span>
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">{{ member.schoolId }}</span>
-{% if member.reason %}<span class="block edify-text-caption font-medium text-slate-400 mt-0.5">{{ member.reason }}</span>{% endif %}
+{% if member.reason %}<span class="block edify-text-caption font-medium text-slate-400 mt-0.5">{{ member.reason }}</span>{% elif member.visitReason %}<span class="block edify-text-caption font-medium text-slate-500 mt-0.5" data-visit-closed-reason>No Training Follow Up: {{ member.visitReason }}</span>{% endif %}
 </label>
 </div>
 <span class="edify-text-caption px-2 py-0.5 rounded-pill font-semibold border border-slate-200 bg-slate-50 text-slate-600">{{ member.schoolTypeLabel }}</span>

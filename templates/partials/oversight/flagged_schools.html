@@ -71,7 +71,7 @@ is the answer to half the questions this page gets asked.
             <tr class="border-t edify-border">
               <td class="px-3 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_id %}{% school_code row.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
               <td class="px-3 py-2.5">
-                <span class="font-semibold">{{ row.name }}</span>
+                <span class="font-semibold">{% school_link row.name row.school_id %}</span>
                 {% if row.district %}<span class="block edify-text-caption edify-text-muted">{{ row.district }}</span>{% endif %}
               </td>
               <td class="px-3 py-2.5">

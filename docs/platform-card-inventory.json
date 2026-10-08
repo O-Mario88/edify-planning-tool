@@ -4,10 +4,10 @@
   "templates": 251,
   "distinct_titles": 637,
   "with_card_key": 13,
-  "untitled_surfaces": 594,
+  "untitled_surfaces": 593,
   "untitled_chrome": 153,
   "untitled_nested": 191,
-  "untitled_headless": 250,
+  "untitled_headless": 249,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -929,7 +929,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 338,
+   "line": 345,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -938,7 +938,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 373,
+   "line": 380,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 396,
+   "line": 403,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -1086,7 +1086,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     15,
+     16,
      0
     ]
    ]
@@ -1100,7 +1100,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     18,
+     19,
      0
     ]
    ]
@@ -1114,7 +1114,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     21,
+     22,
      0
     ]
    ]
@@ -1128,7 +1128,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     23,
+     24,
      0
     ]
    ]
@@ -1151,7 +1151,7 @@
    "classes": "rounded-surface border p-5 space-y-3 edify-surface edify-border",
    "branch_path": [
     [
-     27,
+     28,
      0
     ]
    ]
@@ -1165,7 +1165,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     30,
+     31,
      0
     ]
    ]
@@ -1179,7 +1179,7 @@
    "classes": "rounded-surface border p-5 space-y-2 edify-surface edify-border",
    "branch_path": [
     [
-     34,
+     35,
      0
     ]
    ]
@@ -1193,7 +1193,7 @@
    "classes": "rounded-surface border p-5 space-y-2 border-amber-500/30 edify-surface",
    "branch_path": [
     [
-     35,
+     36,
      0
     ]
    ]
@@ -1453,7 +1453,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     14,
+     15,
      0
     ]
    ]
@@ -2433,7 +2433,7 @@
    "classes": "edify-surface mobile-home-deferred rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": [
     [
-     10,
+     11,
      0
     ]
    ]
@@ -2801,7 +2801,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 154,
+   "line": 158,
    "title": "School Demographics &amp; Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2810,7 +2810,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 281,
+   "line": 285,
    "title": "SSA change between confirmed assessments",
    "heading_level": 3,
    "has_card_key": false,
@@ -2819,7 +2819,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 288,
+   "line": 292,
    "title": "FY vs FY",
    "heading_level": 4,
    "has_card_key": false,
@@ -2828,35 +2828,35 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 315,
+   "line": 319,
    "title": "School Visit Feedback",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     38,
+     39,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 364,
+   "line": 368,
    "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     42,
+     43,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 402,
+   "line": 406,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2865,7 +2865,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 442,
+   "line": 446,
    "title": "Current confirmed SSA",
    "heading_level": 3,
    "has_card_key": false,
@@ -2874,42 +2874,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 473,
+   "line": 477,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     56,
+     57,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 495,
+   "line": 499,
    "title": "SSA history",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     59,
+     60,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 515,
+   "line": 519,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     62,
+     63,
      0
     ]
    ]

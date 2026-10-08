@@ -2694,11 +2694,22 @@ def bulk_assign_partner_drawer_view(request):
     rows = []
     for school in schools:
         gate = visit_gate(school)
+        # One visit commitment a school a year, and SSA Support only while
+        # the year's SSA is still to be collected (owner, 2026-10-08). A
+        # school closed to one of them is still handed over for the other,
+        # so it stays in the selection and says what it will be left out of.
+        closed_to = []
+        if gate.can_assign_partner:
+            if gate.one_commitment and not gate.can_assign_visit:
+                closed_to.append(f"No visit hand-over: {gate.assign_visit_reason}")
+            if not gate.can_assign_ssa:
+                closed_to.append(f"No SSA Support: {gate.assign_ssa_reason}")
         rows.append(
             {
                 "school": school,
                 "ok": gate.can_assign_partner,
                 "reason": "" if gate.can_assign_partner else gate.assign_reason,
+                "closed_to": closed_to,
             }
         )
     partners = list(assignable_partners())
@@ -2747,8 +2758,7 @@ def assign_partner_modal_view(request):
         return cluster_facilitator_drawer_view(request, cluster_id)
 
     school = None
-    locked_visit_purposes: list[str] = []
-    locked_visit_reason = ""
+    _gate = None
     if school_id:
         school = get_operational_school_or_404(
             request.user, Q(id=school_id) | Q(school_id=school_id)
@@ -2762,14 +2772,15 @@ def assign_partner_modal_view(request):
                 "partials/schools/drawer_error.html",
                 {"error": _gate.assign_reason},
             )
-        from apps.planning.visit_gate import FOLLOW_UP_PURPOSES
-
-        if _gate.rule == "client" and not _gate.can_assign_visit:
-            locked_visit_purposes = list(FOLLOW_UP_PURPOSES)
-            locked_visit_reason = _gate.assign_visit_reason
 
     partners = list(assignable_partners())
     partner_training_options = _partner_training_course_options(school)
+    # One visit commitment a school a year, and SSA Support only where the
+    # year's SSA is still to be collected (owner, 2026-10-08): the reasons a
+    # hand-over would be refused for are greyed here, each with its sentence.
+    purpose_locks, partner_training_options, on_top_training_note = (
+        _handover_purpose_locks(_gate if school else None, partner_training_options)
+    )
     follow_up_options = _school_training_follow_up_options(school) if school else []
 
     context = {
@@ -2780,8 +2791,9 @@ def assign_partner_modal_view(request):
         "drawer_type": "center",
         "recommended_focus_intervention": request.GET.get("focus_intervention", ""),
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
-        "locked_visit_purposes": locked_visit_purposes,
-        "locked_visit_reason": locked_visit_reason,
+        "purpose_locks": purpose_locks,
+        "purpose_lock_reasons": list(dict.fromkeys(purpose_locks.values())),
+        "on_top_training_note": on_top_training_note,
         # Who monitors the partner. Never a field to fill: the school already
         # belongs to somebody, so asking again invites a different answer from
         # the assignment record and two versions of who is accountable.
@@ -2800,6 +2812,44 @@ def assign_partner_modal_view(request):
         "project_handovers": project_handover_routes(request.user, school),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def _handover_purpose_locks(gate, training_options: list[dict]):
+    """Which hand-over reasons a school is closed to, and why.
+
+    Returns ``(locks, training_options, note)``: ``locks`` maps a purpose to
+    the sentence the save would refuse it with, read from the school's gate
+    (``apps.planning.visit_gate``) so the drawer and the save agree.
+
+    A school with its visit for the year — staff's, or another hand-over's —
+    takes no Training Follow Up and no further In-school Training (owner,
+    2026-10-08). A universal training is on top of every school's year
+    (owner, 2026-10-06), so while the catalogue has one that a partner may
+    deliver, In-school Training stays open with only those listed, and
+    ``note`` says so. SSA Support closes once the school has the year's SSA.
+    """
+    locks: dict[str, str] = {}
+    note = ""
+    if gate is None:
+        return locks, training_options, note
+    if gate.one_commitment and not gate.can_assign_visit:
+        from apps.planning.training_entitlement import universal_course_ids
+
+        locks["training_follow_up"] = gate.assign_visit_reason
+        universal = universal_course_ids()
+        on_top = [o for o in training_options if o["id"] in universal]
+        if on_top:
+            training_options = on_top
+            names = ", ".join(o["label"] for o in on_top)
+            note = (
+                f"An In-school Training can still be assigned for {names}, "
+                "which every school takes on top of its year."
+            )
+        else:
+            locks["in_school_training"] = gate.assign_visit_reason
+    if not gate.can_assign_ssa:
+        locks["ssa_support"] = gate.assign_ssa_reason
+    return locks, training_options, note
 
 
 def project_handover_routes(user, school) -> list[dict]:
@@ -3520,7 +3570,7 @@ def bulk_action_view(request):
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
         )
-        from apps.planning.visit_gate import visit_gate
+        from apps.planning.visit_gate import refusal_label, visit_gate
 
         created_ids = []
         skipped = 0
@@ -3567,8 +3617,11 @@ def bulk_action_view(request):
                                     "and cost pending"
                                 ),
                             )
-                    except (BadRequest, ConflictError):
-                        gated.append(s.name)
+                    except (BadRequest, ConflictError) as refused:
+                        # One visit commitment a school a year (owner,
+                        # 2026-10-08): the school is named with its reason.
+                        why = refusal_label(refused)
+                        gated.append(f"{s.name} ({why})" if why else s.name)
                         continue
                     created_ids.append(created.id)
         except Exception as exc:

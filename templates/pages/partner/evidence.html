@@ -16,7 +16,7 @@
     <div class="divide-y divide-amber-100">
       {% for a in pending %}
       <div class="py-2 flex items-center justify-between gap-3">
-        <p class="text-[12px] font-semibold truncate">{{ a.school.name|default:"Activity" }} <span class="text-slate-400 font-medium capitalize">· {{ a.activity_type|cut:"_" }}</span></p>
+        <p class="text-[12px] font-semibold truncate">{% if a.school %}{% school_link a.school.name a.school.id %}{% else %}Activity{% endif %} <span class="text-slate-400 font-medium capitalize">· {{ a.activity_type|cut:"_" }}</span></p>
         <button type="button"
                 hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="inline-flex h-8 items-center rounded-control border border-amber-300 bg-amber-100/60 px-3 edify-text-caption font-bold text-amber-800 hover:bg-amber-100 shrink-0 transition-colors">Upload Evidence</button>
@@ -33,7 +33,7 @@
       {% for e in evidence %}
       <div class="py-2.5 flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[12px] font-semibold truncate">{{ e.activity.school.name|default:"Activity" }}</p>
+          <p class="text-[12px] font-semibold truncate">{% if e.activity.school %}{% school_link e.activity.school.name e.activity.school.id %}{% else %}Activity{% endif %}</p>
           <p class="edify-text-caption text-slate-400">{{ e.created_at|date:"d M Y H:i" }}</p>
         </div>
         <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold shrink-0 {% if e.quarantined %}bg-rose-50 text-rose-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">

@@ -117,6 +117,20 @@
   color: var(--edify-warning-text);
 }
 
+/* The Visit Lock chips (partials/planning/visit_lock_cell.html; owner,
+   2026-10-08). A held visit is the plain grey chip with a shut padlock; an
+   unlocked one loses its fill, so the held schools are the ones that stand
+   out. The padlock sits inline beside the words: inside a table cell the chip
+   is laid out as a block, where a block-level icon would take its own line. */
+.school-planning-badge[data-planning-tone="open"] {
+  background-color: transparent;
+}
+
+.school-planning-badge svg {
+  display: inline-block;
+  margin-inline-end: 0.2rem;
+}
+
 .edify-surface {
   background-color: var(--edify-surface) !important;
 }

@@ -39,7 +39,7 @@ until the partner (or you) dates it.
 
   <ul class="space-y-1 text-sm font-medium text-slate-700">
     {% for row in rows %}
-    <li>{{ row.school.name }} <span class="edify-text-caption text-slate-400">{{ row.school.school_id }}</span>{% if not row.ok %}<span class="block edify-text-caption text-amber-700">Not included: {{ row.reason }}</span>{% endif %}</li>
+    <li>{{ row.school.name }} <span class="edify-text-caption text-slate-400">{{ row.school.school_id }}</span>{% if not row.ok %}<span class="block edify-text-caption text-amber-700">Not included: {{ row.reason }}</span>{% endif %}{% for note in row.closed_to %}<span class="block edify-text-caption text-slate-500" data-handover-closed>{{ note }}</span>{% endfor %}</li>
     {% endfor %}
   </ul>
   {% if outside_scope %}<p class="edify-text-caption text-amber-700">{{ outside_scope }} selected school{{ outside_scope|pluralize }} {% if outside_scope == 1 %}is{% else %}are{% endif %} outside your planning portfolio and left out.</p>{% endif %}

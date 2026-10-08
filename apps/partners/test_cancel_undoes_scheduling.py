@@ -253,7 +253,13 @@ class WorkStaffBookedIsClosedWithItTest(_Fixture):
         the one that is already there."""
         handover = self.hand_over()
         activity = self.partner_dates(handover)
-        other = self.hand_over()
+        # A second hand-over beside the first. At this school the door
+        # refuses it since the one-visit rule (owner, 2026-10-08;
+        # `_assert_school_has_room`); a Core school's package still holds
+        # two, and plans made before the rule are left as they are. Made
+        # here as one of those, the rule's check aside.
+        with patch("apps.partners.services._assert_school_has_room"):
+            other = self.hand_over()
 
         result = self.cancel(activity, self.partner_user)
 

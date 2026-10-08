@@ -40,7 +40,7 @@
 <!-- School -->
 <td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if item.school_id %}{% school_code item.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.school_name }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_link item.school_name item.school_id %}</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4" data-label="CCEO / Staff">

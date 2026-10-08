@@ -22,7 +22,7 @@
 <p class="edify-page-eyebrow">My Work</p>
 <h1 class="edify-page-title edify-page-header__title">Evidence Proof Packet</h1>
 {% if act.school %}
-<p class="edify-page-header__description">School: <strong class="text-slate-700">{{ act.school.name }}</strong> (ID: {{ act.school.school_id }})</p>
+<p class="edify-page-header__description">School: <strong class="text-slate-700">{% school_link act.school.name act.school.id %}</strong> (ID: {{ act.school.school_id }})</p>
 {% endif %}
 </div>
 

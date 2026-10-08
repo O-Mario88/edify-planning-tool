@@ -107,7 +107,7 @@ loses focus mid-interaction.
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ row.school.school_id }}</td>
             <td class="px-4 py-2.5">
-              <span class="font-semibold">{{ row.school.name }}</span>
+              <span class="font-semibold">{% school_link row.school.name row.school.id %}</span>
             </td>
             <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
@@ -138,7 +138,7 @@ loses focus mid-interaction.
     <ul class="hidden divide-y edify-border">
       {% for row in pager.rows %}
       <li class="p-4 space-y-1.5">
-        <p class="font-semibold text-sm">{{ row.school.name }}</p>
+        <p class="font-semibold text-sm">{% school_link row.school.name row.school.id %}</p>
         <p class="edify-text-caption edify-text-muted">
           {{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}
           · closed {{ row.closure.effective_date|date:"j M Y" }}

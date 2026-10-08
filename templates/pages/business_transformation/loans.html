@@ -90,7 +90,7 @@
           {% for application in applications_pager.rows %}
           <tr>
             <td class="whitespace-nowrap tabular-nums" data-label="School ID">{{ application.school.school_id }}</td>
-            <td data-record-title><strong>{{ application.school.name }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.school.account_owner_name_raw|default:"No portfolio owner" }}</small></td>
+            <td data-record-title><strong>{% school_link application.school.name application.school.id %}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.school.account_owner_name_raw|default:"No portfolio owner" }}</small></td>
             <td data-label="Request"><strong>{{ application.requested_amount|ugx }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.purpose.label }} · {{ application.get_repayment_frequency_display }} · {{ application.requested_term_months }} months</small></td>
             <td data-label="Applicant">{{ application.applicant_name }}<small class="block text-[var(--edify-text-muted)]">{{ application.applicant_phone }}</small></td>
             <td data-label="Submitted">{{ application.submitted_at|date:"d M Y" }}</td>

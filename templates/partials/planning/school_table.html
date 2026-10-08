@@ -25,7 +25,7 @@
           <tbody>
           {% for r in schools %}
             {% if group_by_owner %}{% ifchanged r.groupKey %}
-            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="{% if r.supportRule %}8{% else %}7{% endif %}" scope="rowgroup">
+            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="{% if r.supportRule %}9{% else %}8{% endif %}" scope="rowgroup">
               <span class="planning-owner-group__label">{{ r.groupLabel }}</span>
               <span class="planning-owner-group__count">{{ r.groupCount }} school{{ r.groupCount|pluralize }}</span>
             </th></tr>
@@ -50,7 +50,7 @@
           <tbody>
           {% for r in schools %}
             {% if group_by_owner %}{% ifchanged r.groupKey %}
-            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="{% if r.supportRule %}8{% else %}7{% endif %}" scope="rowgroup">
+            <tr class="school-plan-table__group" data-owner-group="{{ r.groupKey }}"><th colspan="{% if r.supportRule %}9{% else %}8{% endif %}" scope="rowgroup">
               <span class="planning-owner-group__label">{{ r.groupLabel }}</span>
               <span class="planning-owner-group__count">{{ r.groupCount }} school{{ r.groupCount|pluralize }}</span>
             </th></tr>

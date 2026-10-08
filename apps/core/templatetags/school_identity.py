@@ -23,8 +23,14 @@ def school_code(context, reference):
 
 
 @register.simple_tag(takes_context=True)
-def school_identity(context, name, reference=None, code=None):
-    """Never infer identity by school name, which is not unique."""
+def school_identity(context, name, reference=None, code=None, link=True):
+    """Never infer identity by school name, which is not unique.
+
+    The name is the link to the school's profile for a reader who may open
+    one (owner, 2026-10-08: school names link to the profile everywhere;
+    `apps.frontend.templatetags.school_links`). ``link=False`` where the tag
+    already sits inside a link, or the page has decided this reader gets none.
+    """
     if not reference and not code:
         return format_html("{}", name or "School not recorded")
     identifier = (
@@ -32,8 +38,13 @@ def school_identity(context, name, reference=None, code=None):
         if code
         else school_code(context, reference)
     )
+    label = name or "School not recorded"
+    if link and name:
+        from apps.frontend.templatetags.school_links import linked_name
+
+        label = linked_name(context, name, reference or code)
     return format_html(
         '<span class="school-list-identity">{} <span class="school-list-name">{}</span></span>',
         identifier,
-        name or "School not recorded",
+        label,
     )

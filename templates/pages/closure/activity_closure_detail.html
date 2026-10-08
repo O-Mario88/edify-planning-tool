@@ -9,7 +9,7 @@
 <div class="edify-page-header__lead">
 {% include "partials/_back_link.html" with back_href="/activities/closure/" back_label="Readiness Workspace" %}
 <h1 class="edify-page-title edify-page-header__title">Closure Workspace</h1>
-<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {{ act.school.name }}{% endif %}. Close it once every readiness check is met.</p>
+<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {% school_link act.school.name act.school.id %}{% endif %}. Close it once every readiness check is met.</p>
 </div>
 
 <!-- Status Badge -->

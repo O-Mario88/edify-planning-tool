@@ -4,10 +4,12 @@ Owner rule, 2026-09-23. These tests hold the rule end to end:
 
 * the school stays on Planning and in the Cluster School List, with its staff
   owner, and a Responsible column naming Staff or Partner from live records;
-* at a Partner-supported school staff plan anything they could plan at any
-  other school (owner, 2026-09-28, lifting the 2026-09-23 lock to Data
-  Gathering, Content Gathering and Donor Visits); the drawer still names the
-  Partner and its live plans;
+* at a Partner-supported school staff plan every visit but the school's
+  support visit of the year: a Training Follow Up and an In-school Training
+  are the Partner's there (owner, 2026-10-08, one visit commitment a school a
+  year; from 2026-09-28 until then nothing was closed, and before that only
+  Data Gathering, Content Gathering and Donor Visits were open). The drawer
+  names the Partner, greys those purposes and says why;
 * Partner-delivered work is the Partner's: never on a staff My Plan, never in
   a staff fund request, never a staff target credit;
 * the shared Visit and Training Status badges count Partner work where the
@@ -21,7 +23,7 @@ import datetime
 from pathlib import Path
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import connection
 from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -110,6 +112,22 @@ class PartnerSchoolFixture(StandardSupportBase):
             catalogue_item=self.item("STANDARD_IN_SCHOOL_TRAINING"),
             expected_activity_type="in_school_training",
             purpose_of_visit="in_school_training",
+        )
+
+    def second_partner_from_before_the_rule(self, partner=None):
+        """A second Partner at the school, as rows made before 2026-10-08
+        hold one: written past the creation door, which no longer hands a
+        client school to two Partners. The row's own save still raises the
+        Multiple Partners review."""
+        return PartnerAssignment.objects.create(
+            school=self.school,
+            partner=partner or self.other_partner,
+            assigning_staff_id=self.staff.id,
+            monitoring_staff_id=self.staff.id,
+            catalogue_item=self.item("STANDARD_IN_SCHOOL_TRAINING"),
+            expected_activity_type="in_school_training",
+            purpose_of_visit="in_school_training",
+            status=PartnerAssignment.STATUS_PENDING_SCHEDULING,
         )
 
     def partner_activity(self, school=None, *, status="partner_scheduled", **kw):
@@ -326,8 +344,12 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
 
     def test_two_partners_are_never_silently_resolved_to_one(self):
         self.hand_to_partner()
-        with self.captureOnCommitCallbacks(execute=True):
+        # The door itself refuses a second Partner now (owner, 2026-10-08);
+        # the review below is for the schools that already hold two.
+        with self.assertRaises(ConflictError):
             self.hand_to_partner(partner=self.other_partner)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.second_partner_from_before_the_rule()
 
         result = SchoolSupportResponsibilityService.for_school(self.school)
 
@@ -349,7 +371,7 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
     def test_the_exception_closes_when_one_partner_lets_go(self):
         self.hand_to_partner()
         with self.captureOnCommitCallbacks(execute=True):
-            second = self.hand_to_partner(partner=self.other_partner)
+            second = self.second_partner_from_before_the_rule()
         with self.captureOnCommitCallbacks(execute=True):
             second.status = PartnerAssignment.STATUS_RETURNED_TO_STAFF
             second.save(update_fields=["status", "updated_at"])
@@ -362,7 +384,7 @@ class OwnershipAndVisibilityTest(PartnerSchoolFixture):
     def test_a_school_save_does_not_close_the_partner_exception(self):
         self.hand_to_partner()
         with self.captureOnCommitCallbacks(execute=True):
-            self.hand_to_partner(partner=self.other_partner)
+            self.second_partner_from_before_the_rule()
 
         self.school.refresh_from_db()
         self.school.save()
@@ -428,63 +450,93 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
             "partner",
         )
 
-    def test_other_direct_school_support_is_planned_too(self):
-        """Owner, 2026-09-28: "yes remove the partner-supported school lock"."""
+    def test_the_schools_support_visit_is_the_partners(self):
+        """Owner, 2026-10-08: one visit commitment a school a year. The
+        support visit is closed to staff while a Partner holds the school;
+        a social visit is planned as at any other school."""
         for code in (
             "STANDARD_SCHOOL_VISIT",
             "STANDARD_IN_SCHOOL_SUPPORT",
-            "STANDARD_SOCIAL_VISIT",
             "STANDARD_IN_SCHOOL_COACHING_VISIT",
         ):
             with self.subTest(code=code):
-                savepoint = transaction.savepoint()
-                result = self.staff_activity(code, focusIntervention="leadership")
-                activity = Activity.objects.get(id=result["id"])
-                self.assertEqual(activity.delivery_type, "staff")
-                self.assertEqual(activity.responsible_staff_id, self.staff.id)
-                transaction.savepoint_rollback(savepoint)
+                with self.assertRaises(BadRequest) as refused:
+                    self.staff_activity(code, focusIntervention="leadership")
+                self.assertEqual(
+                    refused.exception.reason_code, "PARTNER_VISIT_ASSIGNED"
+                )
+                self.assertIn("Ozeki Foundation", str(refused.exception.detail))
+        result = self.staff_activity(
+            "STANDARD_SOCIAL_VISIT", focusIntervention="leadership"
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.delivery_type, "staff")
+        self.assertEqual(activity.responsible_staff_id, self.staff.id)
 
-    def test_in_school_training_is_planned_at_the_partner_school(self):
+    def test_in_school_training_is_the_partners_but_for_a_universal_one(self):
         from apps.activity_catalogue.availability import (
             in_school_training_course_options,
         )
         from apps.planning.services import schedule_in_school_training_pair
+        from apps.planning.training_entitlement import universal_course_ids
 
+        on_top = universal_course_ids()
         courses = in_school_training_course_options(school=self.school)
-        if not courses:
+        ordinary = [c for c in courses if c["id"] not in on_top]
+        if not ordinary:
             self.skipTest("no governed in-school course in this catalogue")
-        result = schedule_in_school_training_pair(
-            {
-                "schoolId": self.school.school_id,
-                "catalogueItemId": courses[0]["id"],
-                "scheduledDate": _at(_schedulable_date()).isoformat(),
-                "responsibleStaffId": self.staff.id,
-            },
-            self.user,
-        )
-        self.assertEqual(
-            Activity.objects.get(id=result["id"]).activity_type,
-            "in_school_training",
-        )
 
-    def test_the_api_plans_any_governed_activity(self):
+        def plan(course):
+            return schedule_in_school_training_pair(
+                {
+                    "schoolId": self.school.school_id,
+                    "catalogueItemId": course["id"],
+                    "scheduledDate": _at(_schedulable_date()).isoformat(),
+                    "responsibleStaffId": self.staff.id,
+                },
+                self.user,
+            )
+
+        with self.assertRaisesMessage(BadRequest, "Ozeki Foundation"):
+            plan(ordinary[0])
+        self.assertFalse(
+            Activity.objects.filter(school=self.school, delivery_type="staff").exists()
+        )
+        # A universal training is on top of every school's year (owner,
+        # 2026-10-06), a Partner-held school's too.
+        universal = [c for c in courses if c["id"] in on_top]
+        if universal:
+            result = plan(universal[0])
+            self.assertEqual(
+                Activity.objects.get(id=result["id"]).activity_type,
+                "in_school_training",
+            )
+
+    def test_the_api_refuses_the_support_visit_with_its_reason(self):
         client = Client()
         client.force_login(self.user)
 
-        response = client.post(
-            "/api/activities",
-            {
-                "catalogueItemId": self.item("STANDARD_SCHOOL_VISIT").id,
-                "schoolId": self.school.school_id,
-                "scheduledDate": _at(_schedulable_date()).isoformat(),
-                "activityPurposeText": "Planned through the API",
-                "focusIntervention": "leadership",
-            },
-            content_type="application/json",
-        )
+        def post(code):
+            return client.post(
+                "/api/activities",
+                {
+                    "catalogueItemId": self.item(code).id,
+                    "schoolId": self.school.school_id,
+                    "scheduledDate": _at(_schedulable_date()).isoformat(),
+                    "activityPurposeText": "Planned through the API",
+                    "focusIntervention": "leadership",
+                },
+                content_type="application/json",
+            )
 
-        self.assertEqual(response.status_code, 201, response.content.decode())
-        self.assertNotIn("supported by Ozeki", response.content.decode())
+        refused = post("STANDARD_SCHOOL_VISIT")
+        self.assertEqual(refused.status_code, 400, refused.content.decode())
+        body = refused.json()
+        self.assertEqual(body["reason"], "PARTNER_VISIT_ASSIGNED")
+        self.assertIn("Ozeki Foundation", body["message"])
+        # A donor visit is not the school's support visit.
+        planned = post("STANDARD_DONOR_VISIT")
+        self.assertEqual(planned.status_code, 201, planned.content.decode())
 
     def test_the_drawer_post_plans_any_purpose(self):
         client = Client()
@@ -509,7 +561,7 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
             ).exists()
         )
 
-    def test_the_drawer_names_the_partner_and_locks_nothing(self):
+    def test_the_drawer_names_the_partner_and_greys_the_support_visit(self):
         client = Client()
         client.force_login(self.user)
 
@@ -519,6 +571,14 @@ class DirectPlanningPolicyTest(PartnerSchoolFixture):
 
         self.assertIn("data-partner-support-notice", html)
         self.assertIn("This school is supported by Ozeki Foundation", html)
+        # The support visit is the Partner's (owner, 2026-10-08), with the
+        # reason; every purpose is still listed, and the rest stay open.
+        self.assertRegex(
+            html, r'value="training_follow_up"[^>]*data-visit-locked="true"'
+        )
+        self.assertIn("is assigned to Ozeki Foundation for its support visit", html)
+        self.assertNotRegex(html, r'value="donor_visit"[^>]*data-visit-locked')
+        self.assertNotRegex(html, r'value="ssa_support"[^>]*data-visit-locked')
         self.assertNotIn("Staff may directly plan", html)
         self.assertNotIn('data-purpose-locked="partner"', html)
         self.assertNotIn("delivered by the Partner", html)

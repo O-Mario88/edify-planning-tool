@@ -82,6 +82,12 @@ def programme_rows(schools, fy, *, user=None, readonly=True):
     )
     work = school_work(schools, fy)
     scope = resolve_user_scope(user) if user and not readonly else None
+    # One visit commitment a school a year (owner, 2026-10-08): a Core
+    # Graduate school with its staff visit, or held by a partner, says so in
+    # its Visit cell, as it does on the Planning page.
+    from apps.planning.visit_gate import visit_gates
+
+    gates = visit_gates(schools, fy)
     return [
         {
             "id": s.id,
@@ -92,6 +98,9 @@ def programme_rows(schools, fy, *, user=None, readonly=True):
             "planning_badges": badges[s.id],
             "work": work[s.id],
             "can_schedule": bool(scope and may_plan_school(scope, s)),
+            "visit_lock": gates[s.id].lock_label,
+            "visit_lock_code": gates[s.id].staff_code,
+            "visit_lock_reason": gates[s.id].staff_reason,
         }
         for s in schools
     ]

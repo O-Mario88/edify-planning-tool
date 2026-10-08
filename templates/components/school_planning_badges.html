@@ -13,11 +13,19 @@
   Optional: layout="cells" renders two <td>s for a table instead of <dl> rows;
   visits_only=True leaves the Training cell out, for Champion and Core
   Graduate schools, which receive no training (owner, 2026-09-25).
+
+  lock / lock_reason: the one thing here that IS a rule (owner, 2026-10-08:
+  one visit commitment a school a year). On a table with no Visit Lock
+  column of its own (Core Schools' lifecycle tables), where the school's
+  staff support visit is closed the Visit cell says so in a few words, with
+  the whole sentence as its title. The Planning list and the cluster school
+  lists carry the column instead (partials/planning/visit_lock_cell.html).
+  The words and the sentence are apps.planning.visit_gate's either way.
 {% endcomment %}
 {% if badges %}
 {% if layout == "cells" %}
 <td class="px-4 py-3" data-label="Visit Plan Status" data-planning-badges="visits">
-  <span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}</span>
+  <span class="school-planning-badges">{% for chip in badges.visit_chips %}<span class="school-planning-badge" data-planning-tone="{{ chip.tone }}">{{ chip.label }}</span>{% endfor %}{% if lock %}<span class="school-planning-badge" data-planning-tone="closed" data-visit-closed="{{ lock_code }}" title="{{ lock_reason }}"><svg aria-hidden="true" viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z"/></svg>{{ lock }}<span class="sr-only">: {{ lock_reason }}</span></span>{% endif %}</span>
 </td>
 {% if not visits_only %}
 <td class="px-4 py-3" data-label="Training Plan Status" data-planning-badges="trainings">

@@ -10,7 +10,7 @@
 <div class="edify-page-header__lead">
 {% include "partials/_back_link.html" with back_href="/completed-activities" back_label="Completed Work" %}
 <h1 class="edify-page-title edify-page-header__title">Completed Activity Record</h1>
-<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {{ act.school.name }}{% endif %}. A permanent record: certified, closed and no longer editable.</p>
+<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {% school_link act.school.name act.school.id %}{% endif %}. A permanent record: certified, closed and no longer editable.</p>
 </div>
 
 <!-- Lock Badge -->
@@ -35,7 +35,7 @@ Archived &amp; Locked
 <p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">Activity ID</span><span class="text-slate-800 text-[14px] font-bold">#{{ act.id }}</span></p>
 <p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">Salesforce Activity ID</span><span class="text-slate-800 text-[14px] font-bold font-mono">{{ act.salesforce_activity_id|default:"Unlinked" }}</span></p>
 <p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">Owner</span><span class="text-slate-800 text-[14px] font-bold">{{ act.responsible_staff_id }}</span></p>
-<p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">School / Cluster</span><span class="text-slate-800 text-[14px] font-bold">{{ act.school.name|default:"Cluster-wide" }}</span></p>
+<p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">School / Cluster</span><span class="text-slate-800 text-[14px] font-bold">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span></p>
 <p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">Delivery Type</span><span class="text-slate-800 text-[14px] font-bold">{{ act.get_delivery_type_display }}</span></p>
 <p class="flex flex-col"><span class="edify-text-caption uppercase font-bold text-slate-400">Actual Date</span><span class="text-slate-800 text-[14px] font-bold">{{ act.planned_date|date:"Y-m-d" }}</span></p>
 </div>

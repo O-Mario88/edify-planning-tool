@@ -239,6 +239,9 @@ TEMPLATES = [
                 "apps.core.context_processors.sidebar_counts",
                 "apps.core.context_processors.sidebar_context",
             ],
+            # Tags every template may use without a {% load %}: a school's
+            # name as the link to its profile (owner, 2026-10-08).
+            "builtins": ["apps.frontend.templatetags.school_links"],
         },
     },
 ]

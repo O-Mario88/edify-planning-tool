@@ -59,6 +59,59 @@ templates render a live button and no tooltip.
 "Live" excludes cancelled, rejected, deferred and not-planned work, which is
 what every other counter here excludes. A completed visit still counts: the
 school has been visited this year.
+
+Owner, 2026-10-08 — one visit commitment a school a year. A Client, Core
+Trained or Core Graduate school takes ONE support visit in a financial year: a
+staff member's, or a partner's. Asked how far that reaches, the owner chose
+"staff and partners, fully", and asked what closes for staff, "support visits
+only". So, at those three school types (``ONE_COMMITMENT_SCHOOL_TYPES``):
+
+* a school a partner holds — a hand-over still waiting for its date, or a
+  visit the partner has dated in the year — is closed to a staff Training
+  Follow Up and In-school Training, by every staff member and from every
+  page. Being assigned is enough: the partner need not have planned it. This
+  puts back, as a rule with a reason, the lock lifted on 2026-09-28;
+* a school with its staff support visit is not handed to a partner for
+  another, and a school one partner holds is not handed to a second (or to
+  the same one twice). This replaces, at these school types, the allowance
+  of two partners kept on 2026-09-30;
+* donor, story, invitation and social visits, staff SSA Support, trainings a
+  school attends in a group and cluster sessions are none of this, and stay
+  as they were.
+
+SSA Support handed to a partner is a different commitment and is kept apart
+(``PartnerAssignment.is_data_collection``, read from the hand-over's own
+purpose and never from the partner's name): it neither closes a school to
+staff nor is closed by a visit. It has one rule of its own, at every school
+type: it is assigned only while the school has no SSA for the financial year
+(``apps.ssa.current_year``). An SSA arriving later closes the school to a NEW
+SSA Support hand-over; the one already made stays as it is.
+
+Every refusal carries a code beside its sentence (``STAFF_VISIT_SCHEDULED``,
+``PARTNER_VISIT_ASSIGNED``, ``CURRENT_FY_SSA_EXISTS`` …), so a page, an export
+or an API client can say why without parsing the sentence.
+``apps.planning.eligibility`` is the question asked in the brief's own words;
+it reads this module and decides nothing itself.
+
+A Core package keeps its 2 + 2 split and a Champion school its donor and story
+visits.
+
+Owner, later the same day, on three readings of mine:
+
+* "Special projects are automatically counted on the training they are
+  assigned to." A Special Project's work is its training's, not the school's
+  visit of the year: a project's hand-over, and the work a partner dates
+  under one, never hold a school against a staff support visit or against
+  another hand-over (``partner_holding`` leaves them out). It goes past the
+  rule when it is made as well (``apps.partners.handover_policy``).
+* A school "has an SSA this year" when it "has completed SSA this year": a
+  confirmed record of the financial year. One still waiting for its verifier
+  is not a completed SSA yet (``apps.ssa.current_year``).
+* "Closed schools are locked completely unless they are reopened." A school
+  that has closed down takes nothing — every door here answers closed, with
+  the closure's own sentence (``SCHOOL_CLOSED``) — until it is reopened. The
+  saving doors already refused it (``lifecycle_service.assert_operating``);
+  now the answer asked before a save says the same.
 """
 
 from __future__ import annotations
@@ -170,6 +223,62 @@ def assert_outreach_activity_allowed(school, activity_type: str) -> None:
         raise BadRequest(outreach_only_refusal(school.name, school.school_type))
 
 
+# Why a school is, or is not, open to a plan — one vocabulary for the greyed
+# control, the refusal and the API (owner, 2026-10-08).
+AVAILABLE = "AVAILABLE"
+STAFF_VISIT_SCHEDULED = "STAFF_VISIT_SCHEDULED"
+PARTNER_VISIT_ASSIGNED = "PARTNER_VISIT_ASSIGNED"
+CURRENT_FY_SSA_EXISTS = "CURRENT_FY_SSA_EXISTS"
+SSA_SUPPORT_ELIGIBLE = "SSA_SUPPORT_ELIGIBLE"
+CORE_PACKAGE_SIDE_COMPLETE = "CORE_PACKAGE_SIDE_COMPLETE"
+STAFF_DELIVERED_ONLY = "STAFF_DELIVERED_ONLY"
+SCHOOL_CLOSED = "SCHOOL_CLOSED"
+
+REASON_LABELS = {
+    AVAILABLE: "Available",
+    STAFF_VISIT_SCHEDULED: "Staff visit scheduled",
+    PARTNER_VISIT_ASSIGNED: "Assigned to partner",
+    CURRENT_FY_SSA_EXISTS: "SSA completed this year",
+    SSA_SUPPORT_ELIGIBLE: "No SSA this year",
+    CORE_PACKAGE_SIDE_COMPLETE: "Package half complete",
+    STAFF_DELIVERED_ONLY: "Staff delivered",
+    SCHOOL_CLOSED: "School closed",
+}
+
+#: The school types that take one support visit a year, staff's or a
+#: partner's (owner, 2026-10-08). Champion is on the client rule too but is
+#: planned for donor and story visits only, and never handed to a partner.
+ONE_COMMITMENT_SCHOOL_TYPES = ("client", "core_trained", "core_graduate")
+
+# What the Visit Lock column says about a school's staff support visit
+# (owner, 2026-10-08: "another column on the planning page and cluster school
+# list containing locked and unlocked school visits (Staff visit scheduled, or
+# partner visit scheduled if the assigned schools are scheduled, if not yet
+# scheduled by partner it should be 'Awaiting schedule from partner')").
+# The partner's two states are one reason to the rule
+# (``PARTNER_VISIT_ASSIGNED``); the column tells them apart because the reader
+# wants to know whether the partner has put a date on it.
+LOCK_UNLOCKED = "unlocked"
+LOCK_STAFF_SCHEDULED = "staff_visit_scheduled"
+LOCK_PARTNER_SCHEDULED = "partner_visit_scheduled"
+LOCK_PARTNER_AWAITING = "awaiting_partner_schedule"
+LOCK_PACKAGE_COMPLETE = "staff_visits_complete"
+#: The school has closed down: locked completely until it is reopened.
+LOCK_SCHOOL_CLOSED = "school_closed"
+#: A school that takes no staff support visit at all (Champion): the column
+#: has nothing to lock or unlock there.
+LOCK_NOT_APPLICABLE = "not_applicable"
+
+LOCK_LABELS = {
+    LOCK_UNLOCKED: "Unlocked",
+    LOCK_STAFF_SCHEDULED: "Staff visit scheduled",
+    LOCK_PARTNER_SCHEDULED: "Partner visit scheduled",
+    LOCK_PARTNER_AWAITING: "Awaiting schedule from partner",
+    LOCK_PACKAGE_COMPLETE: "Staff visits complete",
+    LOCK_SCHOOL_CLOSED: "School closed",
+    LOCK_NOT_APPLICABLE: "",
+}
+
 DEAD_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
 # A visit request a country role has filed and the owner has not decided on
 # (apps.planning.visit_requests) is not a plan yet: it neither uses the
@@ -191,9 +300,21 @@ class VisitGate:
     staff_ssa_visits: int = 0
     partner_ssa_visits: int = 0
     partner_pending: int = 0
+    # What of the two counts above HOLDS a client-rule school's visit of the
+    # year: the partner's dated visits and waiting hand-overs that are not a
+    # Special Project's (owner, 2026-10-08: project work is counted on its
+    # training, not as the school's visit).
+    partner_holding_dated: int = 0
+    partner_holding_pending: int = 0
     partner_name: str = ""
+    # Every partner holding the school's visit, the one above first.
+    partner_names: list = field(default_factory=list)
+    # The school has closed down (owner, 2026-10-08: "locked completely
+    # unless they are reopened").
+    closed: bool = False
     staff_can_schedule: bool = True
     staff_reason: str = ""
+    staff_code: str = AVAILABLE
     ssa_can_schedule: bool = True
     ssa_reason: str = ""
     staff_locked: bool = False
@@ -202,8 +323,16 @@ class VisitGate:
     partner_reason: str = ""
     can_assign_partner: bool = True
     assign_reason: str = ""
+    assign_code: str = AVAILABLE
     can_assign_visit: bool = True
     assign_visit_reason: str = ""
+    assign_visit_code: str = AVAILABLE
+    # SSA Support handed to a partner: open only while the school has no SSA
+    # for the year (owner, 2026-10-08).
+    has_ssa: bool = False
+    can_assign_ssa: bool = True
+    assign_ssa_reason: str = ""
+    assign_ssa_code: str = SSA_SUPPORT_ELIGIBLE
     staff_cap: int = 0
     partner_cap: int = 0
     ssa_cap: int = 0
@@ -227,6 +356,65 @@ class VisitGate:
         return self.partner_trainings + self.partner_pending_trainings
 
     @property
+    def partner_holding(self) -> int:
+        """Partner work that is the school's one support visit of the year."""
+        return self.partner_holding_dated + self.partner_holding_pending
+
+    @property
+    def one_commitment(self) -> bool:
+        """Whether the school takes one support visit a year, staff's or a
+        partner's (owner, 2026-10-08)."""
+        return self.rule == "client" and self.school_type in ONE_COMMITMENT_SCHOOL_TYPES
+
+    @property
+    def holder(self) -> str:
+        """Who holds the school's visit, for a sentence: the partner's name,
+        "two partners" where rows from before the rule left two, or "a
+        partner" where the name is not on record."""
+        if len(self.partner_names) > 1:
+            return " and ".join(self.partner_names)
+        return self.partner_name or "a partner"
+
+    @property
+    def lock_state(self) -> str:
+        """Where the school's staff support visit stands, as the Visit Lock
+        column names it: unlocked, or locked by a staff visit, by a visit
+        the partner has dated, or by a hand-over the partner has still to
+        date. A Core school locks when staff's half of its package is used."""
+        if self.closed:
+            return LOCK_SCHOOL_CLOSED
+        if self.school_type in OUTREACH_ONLY_SCHOOL_TYPES:
+            return LOCK_NOT_APPLICABLE
+        if self.staff_can_schedule:
+            return LOCK_UNLOCKED
+        if self.rule == "core":
+            return LOCK_PACKAGE_COMPLETE
+        if self.staff_code == PARTNER_VISIT_ASSIGNED:
+            return (
+                LOCK_PARTNER_SCHEDULED
+                if self.partner_holding_dated
+                else LOCK_PARTNER_AWAITING
+            )
+        return LOCK_STAFF_SCHEDULED
+
+    @property
+    def is_locked(self) -> bool:
+        return self.lock_state not in (LOCK_UNLOCKED, LOCK_NOT_APPLICABLE)
+
+    @property
+    def lock_state_label(self) -> str:
+        """The column's words for ``lock_state``, "Unlocked" included."""
+        return LOCK_LABELS[self.lock_state]
+
+    @property
+    def lock_label(self) -> str:
+        """The same words where the visit is locked, and blank where it is
+        not: for a page that shows a mark only on a locked school (a school's
+        profile, a Core Schools row). The sentence with the partner's name is
+        ``staff_reason``."""
+        return self.lock_state_label if self.is_locked else ""
+
+    @property
     def staff_trainings_open(self) -> bool:
         """Core only: staff may schedule a core training — while the staff
         half of the package's trainings has room (owner, 2026-09-30)."""
@@ -244,9 +432,13 @@ class VisitGate:
         data = asdict(self)
         data["total_visits"] = self.total_visits
         data["partner_held_visits"] = self.partner_held_visits
+        data["partner_holding"] = self.partner_holding
         data["partner_held_trainings"] = self.partner_held_trainings
         data["staff_trainings_open"] = self.staff_trainings_open
         data["partner_trainings_open"] = self.partner_trainings_open
+        data["lock_label"] = self.lock_label
+        data["lock_state"] = self.lock_state
+        data["lock_state_label"] = self.lock_state_label
         return data
 
 
@@ -388,12 +580,17 @@ def rule_for(school_type: str | None) -> str:
 
 
 def visit_gates(
-    schools, fy: str | None = None, *, exclude_activity_id: str | None = None
+    schools,
+    fy: str | None = None,
+    *,
+    exclude_activity_id: str | None = None,
+    exclude_assignment_id: str | None = None,
 ) -> dict[str, VisitGate]:
     """Gates for many schools in a bounded number of queries, keyed by
     ``School.id``. ``schools`` is any iterable of School rows (id, name,
     school_type are read). ``exclude_activity_id`` leaves one activity out of
-    the count — the one being rescheduled, which must not block itself."""
+    the count — the one being rescheduled, which must not block itself — and
+    ``exclude_assignment_id`` one hand-over, the one being replaced."""
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
     from apps.partners.models import PartnerAssignment
@@ -407,6 +604,7 @@ def visit_gates(
             school_type=s.school_type,
             fy=fy,
             rule=rule_for(s.school_type),
+            closed=_has_closed(s),
         )
         for s in rows
     }
@@ -453,6 +651,29 @@ def visit_gates(
         )
         _tally(counted.filter(_support_visit_q()), "staff_visits", "partner_visits")
         _tally(counted.filter(_ssa_visit_q()), "staff_ssa_visits", "partner_ssa_visits")
+        # Who the partner is, where one has dated the school's visit: the
+        # sentence a closed school reads names them (owner, 2026-10-08).
+        # A Special Project's work is its training's, not the school's visit
+        # (owner, 2026-10-08): it is in the count above, as it was, and holds
+        # nothing.
+        dated_by = list(
+            counted.filter(
+                _support_visit_q(), delivery_type="partner", project_id__isnull=True
+            )
+            .order_by("created_at")
+            .values_list("school_id", "assigned_partner_id")
+        )
+        if dated_by:
+            from apps.partners.models import Partner
+
+            names = dict(
+                Partner.all_objects.filter(
+                    id__in={partner_id for _sid, partner_id in dated_by if partner_id}
+                ).values_list("id", "name")
+            )
+            for school_id, partner_id in dated_by:
+                gates[school_id].partner_holding_dated += 1
+                _name_holder(gates[school_id], names.get(partner_id, ""))
     if core_ids:
         # The package's own split, the one every core door asks
         # (`package_split`), so a row button and its POST agree.
@@ -487,6 +708,10 @@ def visit_gates(
         .select_related("partner")
         .order_by("created_at")
     )
+    if exclude_assignment_id:
+        pending = pending.exclude(id=exclude_assignment_id)
+    from apps.planning.training_entitlement import is_universal
+
     for assignment in pending:
         gate = gates[assignment.school_id]
         if gate.rule == "core":
@@ -500,13 +725,47 @@ def visit_gates(
         if _is_data_collection_assignment(assignment):
             # Assigned on any school; it is not the school's partner visit.
             continue
+        if is_universal(assignment.training_course_id):
+            # On top of the school's entitlement, as the dated training is
+            # (owner, 2026-10-06): it holds nobody's visit.
+            continue
         gate.partner_pending += 1
-        if not gate.partner_name and assignment.partner_id:
-            gate.partner_name = assignment.partner.name
+        if assignment.project_id:
+            # Counted on the project's training, not as the school's visit
+            # (owner, 2026-10-08): it waits beside the school's own support.
+            continue
+        gate.partner_holding_pending += 1
+        if assignment.partner_id:
+            _name_holder(gate, assignment.partner.name)
+
+    # The year's SSA, for the one rule SSA Support has (owner, 2026-10-08).
+    from apps.ssa.current_year import schools_with_ssa
+
+    for school_id in schools_with_ssa(client_ids + core_ids, fy):
+        gates[school_id].has_ssa = True
 
     for gate in gates.values():
         _decide(gate)
     return gates
+
+
+def _has_closed(school) -> bool:
+    """Whether the school has closed down, read from the row as it was
+    loaded: a row fetched without its status is not asked for it again."""
+    from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+    status = school.__dict__.get("operational_status")
+    return bool(status) and status not in OPERATING_STATUSES
+
+
+def _name_holder(gate: VisitGate, name: str) -> None:
+    """Record a partner holding the school's visit, each once, first first."""
+    if not name:
+        return
+    if not gate.partner_name:
+        gate.partner_name = name
+    if name not in gate.partner_names:
+        gate.partner_names.append(name)
 
 
 def _is_data_collection_assignment(assignment) -> bool:
@@ -567,6 +826,7 @@ def _decide(gate: VisitGate) -> None:
     SHOW: a count is information, and only these three are permissions.
     """
     _decide_by_rule(gate)
+    _decide_ssa_support(gate)
     # Core Trained and Core Graduate are planned exactly like a client
     # school, partner work included (owner, 2026-09-28). Champion takes only
     # donor and story visits, which no partner delivers.
@@ -576,9 +836,66 @@ def _decide(gate: VisitGate) -> None:
         gate.partner_reason = refusal
         gate.can_assign_partner = False
         gate.assign_reason = refusal
+        gate.assign_code = STAFF_DELIVERED_ONLY
         gate.can_assign_visit = False
         gate.assign_visit_reason = refusal
+        gate.assign_visit_code = STAFF_DELIVERED_ONLY
+        gate.can_assign_ssa = False
+        gate.assign_ssa_reason = refusal
+        gate.assign_ssa_code = STAFF_DELIVERED_ONLY
         gate.partner_cap = 0
+    if gate.closed:
+        _close_completely(gate)
+
+
+def _close_completely(gate: VisitGate) -> None:
+    """A school that has closed down takes nothing until it is reopened
+    (owner, 2026-10-08: "Closed schools are locked completely unless they are
+    reopened"). Every door answers with the closure's own sentence, the one
+    the saving doors already refuse with."""
+    from apps.schools.lifecycle_service import CLOSED_SCHOOL_MESSAGE
+
+    for door in ("staff", "ssa", "partner", "assign", "assign_visit", "assign_ssa"):
+        setattr(gate, f"{door}_reason", CLOSED_SCHOOL_MESSAGE)
+    gate.staff_can_schedule = False
+    gate.ssa_can_schedule = False
+    gate.staff_locked = True
+    gate.staff_locked_reason = CLOSED_SCHOOL_MESSAGE
+    gate.partner_can_schedule = False
+    gate.can_assign_partner = False
+    gate.can_assign_visit = False
+    gate.can_assign_ssa = False
+    gate.staff_code = gate.assign_code = SCHOOL_CLOSED
+    gate.assign_visit_code = gate.assign_ssa_code = SCHOOL_CLOSED
+
+
+def ssa_support_refusal(school_name: str, fy: str) -> str:
+    """Why SSA Support is not handed to a partner at this school."""
+    return (
+        f"{school_name} has completed its SSA for FY{fy}. SSA Support is "
+        "assigned to a partner only where the year's SSA is still to be "
+        "collected."
+    )
+
+
+def _decide_ssa_support(gate: VisitGate) -> None:
+    """SSA Support handed to a partner, at any school a partner may hold:
+    open while the school has no SSA for the year, closed once it has (owner,
+    2026-10-08). A visit, staff's or a partner's, has no say in it; and on a
+    client-rule school the Assign button stays live while either a visit or
+    SSA Support may still be handed over."""
+    if gate.rule == "none":
+        return
+    if gate.has_ssa:
+        gate.can_assign_ssa = False
+        gate.assign_ssa_reason = ssa_support_refusal(gate.school_name, gate.fy)
+        gate.assign_ssa_code = CURRENT_FY_SSA_EXISTS
+    if gate.rule != "client":
+        return
+    if not gate.can_assign_visit and not gate.can_assign_ssa:
+        gate.can_assign_partner = False
+        gate.assign_code = gate.assign_visit_code
+        gate.assign_reason = f"{gate.assign_visit_reason} {gate.assign_ssa_reason}"
 
 
 def _decide_by_rule(gate: VisitGate) -> None:
@@ -593,16 +910,49 @@ def _decide_by_rule(gate: VisitGate) -> None:
         gate.partner_cap = 0  # counted, never capped
         if gate.staff_visits >= CLIENT_STAFF_VISIT_CAP:
             gate.staff_can_schedule = False
+            gate.staff_code = STAFF_VISIT_SCHEDULED
             gate.staff_reason = (
                 f"{gate.school_name} has had its staff support visit (a Training "
                 f"Follow Up or an In-school Training) for FY{gate.fy} "
                 f"({gate.staff_visits}/{CLIENT_STAFF_VISIT_CAP})."
             )
+        elif gate.one_commitment and gate.partner_holding:
+            # One support visit a year, staff's or a partner's (owner,
+            # 2026-10-08). The hand-over is the commitment: the partner need
+            # not have dated it.
+            gate.staff_can_schedule = False
+            gate.staff_code = PARTNER_VISIT_ASSIGNED
+            gate.staff_reason = (
+                f"{gate.school_name} is assigned to {gate.holder} for its "
+                f"support visit in FY{gate.fy}. Staff plan a Training Follow Up "
+                "or an In-school Training there only once the school is "
+                "withdrawn from the partner."
+            )
+        if gate.one_commitment:
+            # The same commitment, asked from the partner's side: a school
+            # with its visit is not handed over for another.
+            if gate.staff_visits:
+                gate.can_assign_visit = False
+                gate.assign_visit_code = STAFF_VISIT_SCHEDULED
+                gate.assign_visit_reason = (
+                    f"{gate.school_name} already has its staff support visit "
+                    f"for FY{gate.fy}. It is not handed to a partner for "
+                    "another."
+                )
+            elif gate.partner_holding:
+                gate.can_assign_visit = False
+                gate.assign_visit_code = PARTNER_VISIT_ASSIGNED
+                gate.assign_visit_reason = (
+                    f"{gate.school_name} is already assigned to {gate.holder} "
+                    f"for its support visit in FY{gate.fy}. A school is handed "
+                    "to a partner for one visit a year."
+                )
         # Data collection (SSA Support) is counted for the row and never
-        # refused: `ssa_can_schedule` stays open however many the school has
-        # had (owner, 2026-10-02: "allow data collection assignment on every
-        # school irrespective of whether they have the 1 visit by staff or
-        # partner because those visits don't count").
+        # refused to staff: `ssa_can_schedule` stays open however many the
+        # school has had (owner, 2026-10-02: "allow data collection
+        # assignment on every school irrespective of whether they have the 1
+        # visit by staff or partner because those visits don't count").
+        # Handing it to a partner has one rule, in `_decide_ssa_support`.
         return
 
     if gate.rule == "core":
@@ -619,6 +969,7 @@ def _decide_by_rule(gate: VisitGate) -> None:
             return
         if gate.staff_visits >= CORE_STAFF_VISIT_CAP:
             gate.staff_can_schedule = False
+            gate.staff_code = CORE_PACKAGE_SIDE_COMPLETE
             gate.staff_reason = (
                 f"Staff core visits complete on this package "
                 f"({gate.staff_visits}/{CORE_STAFF_VISIT_CAP}). The other "
@@ -626,6 +977,7 @@ def _decide_by_rule(gate: VisitGate) -> None:
             )
         if gate.partner_held_visits >= CORE_PARTNER_VISIT_CAP:
             gate.can_assign_visit = False
+            gate.assign_visit_code = CORE_PACKAGE_SIDE_COMPLETE
             gate.assign_visit_reason = (
                 f"Partner core visits complete on this package "
                 f"({gate.partner_held_visits}/{CORE_PARTNER_VISIT_CAP}). The "
@@ -633,6 +985,7 @@ def _decide_by_rule(gate: VisitGate) -> None:
             )
         if not gate.can_assign_visit and not gate.partner_trainings_open:
             gate.can_assign_partner = False
+            gate.assign_code = CORE_PACKAGE_SIDE_COMPLETE
             gate.assign_reason = (
                 f"The partner's half of this package is taken: "
                 f"{gate.partner_held_visits}/{CORE_PARTNER_VISIT_CAP} visits and "
@@ -661,7 +1014,7 @@ def assert_staff_may_schedule_visit(
         # or a Core one: no count closes it (owner, 2026-10-02).
         return gate
     if not gate.staff_can_schedule:
-        raise BadRequest(gate.staff_reason)
+        raise refusal(BadRequest, gate.staff_reason, gate.staff_code)
     return gate
 
 
@@ -681,3 +1034,62 @@ def assert_may_assign_partner_visit(school, fy=None, **kwargs) -> VisitGate:
     if not gate.can_assign_partner:
         raise BadRequest(gate.assign_reason)
     return gate
+
+
+def handover_years(fy: str | None = None) -> list[str]:
+    """The years a hand-over made now may be dated in: the operational year,
+    and the next once it is open for planning. A hand-over carries no date of
+    its own, so it is a second commitment only where every one of them
+    already holds one."""
+    from apps.core.fy import get_operational_fy
+    from apps.planning.fy_policy import next_open_fy
+
+    if fy:
+        return [str(fy)]
+    years = [str(get_operational_fy())]
+    upcoming = next_open_fy()
+    if upcoming and str(upcoming) not in years:
+        years.append(str(upcoming))
+    return years
+
+
+def assert_may_hand_over_visit(school, fy=None, **kwargs) -> VisitGate:
+    """Refuse handing a school to a partner for a visit it already has —
+    staff's, or another hand-over's (owner, 2026-10-08). The sentence is the
+    one the greyed purpose shows; the school is read under its row lock by
+    the creation doors, so two people cannot both be first."""
+    from apps.core.exceptions import ConflictError
+
+    first = None
+    for year in handover_years(fy):
+        gate = visit_gate(school, year, **kwargs)
+        first = first or gate
+        if gate.can_assign_visit:
+            return gate
+    raise refusal(ConflictError, first.assign_visit_reason, first.assign_visit_code)
+
+
+def assert_may_assign_ssa_support(school, fy=None, **kwargs) -> VisitGate:
+    """Refuse SSA Support for a partner at a school that already has the
+    year's SSA (owner, 2026-10-08)."""
+    from apps.core.exceptions import ConflictError
+
+    gate = visit_gate(school, fy, **kwargs)
+    if not gate.can_assign_ssa:
+        raise refusal(ConflictError, gate.assign_ssa_reason, gate.assign_ssa_code)
+    return gate
+
+
+def refusal(exc_class, sentence: str, code: str):
+    """A refusal that carries its reason code beside its sentence: the API
+    envelope repeats it as ``reason`` (apps.core.exceptions), and a bulk
+    action names it for each school it leaves out."""
+    exc = exc_class(sentence, code=code)
+    exc.reason_code = code
+    return exc
+
+
+def refusal_label(exc) -> str:
+    """The few words for a refusal raised here ("assigned to partner"), or
+    blank for any other error."""
+    return REASON_LABELS.get(getattr(exc, "reason_code", ""), "").lower()

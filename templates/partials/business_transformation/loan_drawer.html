@@ -9,7 +9,7 @@
   <section aria-labelledby="loan-summary-title" class="space-y-2">
     <h4 id="loan-summary-title" class="edify-text-caption font-semibold text-slate-600">Loan summary</h4>
     <dl class="grid grid-cols-2 gap-3 text-[12px]" data-keep-columns>
-      <div><dt class="edify-text-caption text-slate-500">School</dt><dd class="font-medium text-slate-800">{{ loan.school.name }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-500">School</dt><dd class="font-medium text-slate-800">{% school_link loan.school.name loan.school.id %}</dd></div>
       <div><dt class="edify-text-caption text-slate-500">MFI</dt><dd class="font-medium text-slate-800">{{ loan.mfi.name }}</dd></div>
       <div><dt class="edify-text-caption text-slate-500">MFI loan reference</dt><dd class="font-medium text-slate-800">{{ loan.external_loan_reference }}</dd></div>
       <div><dt class="edify-text-caption text-slate-500">Loan purpose</dt><dd class="font-medium text-slate-800">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %} · EdTech{% endif %}</dd></div>

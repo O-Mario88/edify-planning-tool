@@ -57,7 +57,7 @@ class="edify-primary-solid edify-primary-hover edify-primary-on-solid border bor
 {% for c in candidates_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <td class="py-3.5 text-slate-500 font-bold tabular-nums" data-label="School ID">{{ c.school_id|default:"—" }}</td>
-<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{{ c.name }}</td>
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{% school_link c.name c.school_id %}</td>
 <td class="py-3.5 text-slate-500 font-bold" data-label="District">{{ c.district }}</td>
 <td class="py-3.5 text-center text-slate-800 font-semibold" data-label="SSA Avg">{{ c.latest_avg }}</td>
 <td class="py-3.5 text-center text-emerald-600 font-semibold" data-label="Improvement Delta">

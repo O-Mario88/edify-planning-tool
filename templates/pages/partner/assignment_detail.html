@@ -35,7 +35,7 @@
       <div class="edify-data-row"><span class="edify-data-row__label">What you are asked to deliver</span><span class="edify-data-row__value">{{ a.subtype_label }}</span></div>
       <div class="edify-data-row"><span class="edify-data-row__label">Purpose</span><span class="edify-data-row__value">{{ a.purpose_label }}</span></div>
       {% if a.school %}
-      <div class="edify-data-row"><span class="edify-data-row__label">School</span><span class="edify-data-row__value">{{ a.school.name }} ({{ a.school.school_id }})</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">School</span><span class="edify-data-row__value">{% school_link a.school.name a.school.id %} ({{ a.school.school_id }})</span></div>
       <div class="edify-data-row"><span class="edify-data-row__label">Location</span><span class="edify-data-row__value">{% firstof a.school.district.name "—" %}{% if a.school.sub_county %} · {{ a.school.sub_county }}{% endif %}</span></div>
       {% if a.school.headteacher_name or a.school.school_phone %}
       <div class="edify-data-row"><span class="edify-data-row__label">School contact</span><span class="edify-data-row__value">{% firstof a.school.headteacher_name "—" %}{% if a.school.school_phone %} · {{ a.school.school_phone }}{% endif %}</span></div>

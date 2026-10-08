@@ -55,7 +55,7 @@
     {% for link in activity_links %}
     <div class="edify-text-caption py-1">
       <span class="font-bold edify-text">{{ link.activity.get_activity_type_display }}</span>
-      <span class="text-slate-400"> — {{ link.activity.school.name|default:"No school" }}</span>
+      <span class="text-slate-400"> — {% if link.activity.school %}{% school_link link.activity.school.name link.activity.school.id %}{% else %}No school{% endif %}</span>
     </div>
     {% endfor %}
   </div>

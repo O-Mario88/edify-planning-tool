@@ -22,7 +22,7 @@ first open, and on its own when the pager re-fetches the popup's fragment
       <tr data-past-due-row="{{ row.id }}">
         <td class="px-4 py-3 align-top" data-record-title>
           <span class="font-bold">{{ row.activity_type_label }}</span>
-          <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ row.school_name }}</p>
+          <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{% school_link row.school_name row.school_id %}</p>
         </td>
         <td class="px-4 py-3 align-top text-slate-600 font-semibold" data-label="Officer">{{ row.owner }}</td>
         <td class="px-4 py-3 align-top" data-label="Planned date">

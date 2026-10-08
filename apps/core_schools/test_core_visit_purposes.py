@@ -556,6 +556,16 @@ class CorePartnerPurposeTest(_CoreFixture):
             },
         )
 
+    def _the_years_ssa_is_still_to_be_collected(self):
+        """SSA Support goes to a partner only at a school with no SSA for the
+        year (owner, 2026-10-08). The fixture's verified SSA becomes last
+        year's, which is the school SSA Support is for."""
+        from apps.core.fy import get_operational_fy
+        from apps.ssa.models import SsaRecord
+
+        fy = get_operational_fy()
+        SsaRecord.objects.filter(school=self.school, fy=fy).update(fy=str(int(fy) - 1))
+
     def test_the_drawer_asks_for_the_purpose_not_a_support_type(self):
         self._take_first_visit()
         html = (
@@ -581,6 +591,11 @@ class CorePartnerPurposeTest(_CoreFixture):
         self._slot("v", 1).__class__.objects.filter(id=self._slot("v", 1).id).update(
             status="Planned", assigned_partner_id=None, assigned_partner_name=None
         )
+        # With the year's SSA on record there is nothing to collect.
+        refused = self._assign(purpose_of_visit="ssa_support")
+        self.assertEqual(refused.status_code, 400)
+        self.assertIn(b"has completed its SSA", refused.content)
+        self._the_years_ssa_is_still_to_be_collected()
         response = self._assign(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
         pa = PartnerAssignment.objects.get(school=self.school)
@@ -600,6 +615,7 @@ class CorePartnerPurposeTest(_CoreFixture):
             )
         refused = self._assign(purpose_of_visit="training_follow_up")
         self.assertEqual(refused.status_code, 400)
+        self._the_years_ssa_is_still_to_be_collected()
         response = self._assign(purpose_of_visit="ssa_support")
         self.assertEqual(response.status_code, 200, response.content[:300])
         self.assertEqual(

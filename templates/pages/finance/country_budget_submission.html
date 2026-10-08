@@ -121,7 +121,7 @@
             <td class="px-3 py-3 text-slate-600">{{ item.category }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
             <td class="px-3 py-3 whitespace-nowrap tabular-nums" data-label="School ID">{% if item.school_id %}{% school_code item.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
-            <td class="px-3 py-3 text-slate-600">{{ item.school|default:"—" }}</td>
+            <td class="px-3 py-3 text-slate-600">{% if item.school %}{% school_link item.school item.school_id %}{% else %}—{% endif %}</td>
             <td class="px-3 py-3 text-slate-500">{{ item.planned_date|date:"j M Y" }}</td>
 {% if country_envelope.strategicReserveRequested %}            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.reference_amount_fmt }}</td>{% endif %}
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{{ item.operational_amount_fmt }}</td>

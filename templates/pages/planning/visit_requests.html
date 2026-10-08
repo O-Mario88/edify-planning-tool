@@ -41,7 +41,7 @@
     {% for a in visit_requests_mine_pager.rows %}
       <tr class="border-t edify-border" data-visit-request-row="{{ a.id }}">
         <td class="px-4 py-2.5 whitespace-nowrap tabular-nums" data-label="School ID">{% if a.school.id %}{% school_code a.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
-        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{{ a.school.name }}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
+        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{% school_link a.school.name a.school.id %}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
         <td class="px-4 py-2.5 tabular-nums">{% if a.planned_date %}{{ a.planned_date|date:"j M Y" }}{% else %}&mdash;{% endif %}</td>
         <td class="px-4 py-2.5">{{ a.owner_name }}</td>
         <td class="px-4 py-2.5">
@@ -71,7 +71,7 @@
   {% for a in pending %}
   <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-5" data-visit-request-pending="{{ a.id }}">
     <div class="space-y-2 min-w-0 flex-1 text-[12px]">
-      <h3 class="text-[15px] font-semibold text-slate-800">{{ a.requester_name }} asks to visit {% if a.school %}{{ a.school.name }}{% else %}your school{% endif %}</h3>
+      <h3 class="text-[15px] font-semibold text-slate-800">{{ a.requester_name }} asks to visit {% if a.school %}{% school_link a.school.name a.school.id %}{% else %}your school{% endif %}</h3>
       <p class="text-slate-500 font-semibold">{{ a.get_activity_type_display }}{% if a.planned_date %} &bull; {{ a.planned_date|date:"j M Y" }}{% endif %}{% if a.school and a.school.district %} &bull; {{ a.school.district.name }}{% endif %}</p>
       {% if a.activity_purpose_text %}
       <div><p class="edify-text-caption uppercase font-bold text-slate-400">Purpose</p><p class="text-slate-600 leading-normal">{{ a.activity_purpose_text }}</p></div>

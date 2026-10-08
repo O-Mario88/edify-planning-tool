@@ -21,8 +21,8 @@
 {% if rows %}
 {% for row in rows %}
 <tr>
-<td class="px-3 py-2.5 font-semibold text-slate-800">{{ row.col1 }}</td>
-<td class="px-3 py-2.5 text-slate-600">{{ row.col2 }}</td>
+<td class="px-3 py-2.5 font-semibold text-slate-800">{% if headers.0 == "Name / Identifier" %}{% school_link row.col1 row.col4 %}{% else %}{{ row.col1 }}{% endif %}</td>
+<td class="px-3 py-2.5 text-slate-600">{% if headers.0 == "School ID" %}{% school_link row.col2 row.col1 %}{% elif row.school_ref %}{% school_link row.col2 row.school_ref %}{% else %}{{ row.col2 }}{% endif %}</td>
 <td class="px-3 py-2.5 text-slate-500 font-semibold">{{ row.col3 }}</td>
 <td class="px-3 py-2.5">
 {% if "IA" in row.col4 or "Verified" in row.col4 or "OK" in row.col4 or "Confirmed" in row.col4 %}

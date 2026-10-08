@@ -8,11 +8,12 @@ journeys and the Resolve drawer address it by.
     @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
     :class="{ 'is-expanded': openRowId === '{{ row_id }}' }">
   <td data-label="{% if item.school_name %}School{% else %}Cluster{% endif %}" class="school-plan-table__name"><span class="partner-plan-table__identity">
-    <button type="button" class="school-plan-table__name-toggle"
+    <button type="button" class="school-plan-table__expander"
             @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
             :aria-expanded="(openRowId === '{{ row_id }}').toString()"
             aria-controls="partner-row-details-{{ row_id }}"
-            aria-label="Details for {% firstof item.school_name item.cluster_name %}">{% firstof item.school_name item.cluster_name %}</button>
+            aria-label="Details for {% firstof item.school_name item.cluster_name %}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+    <span class="school-plan-table__name-text" title="{% firstof item.school_name item.cluster_name %}">{% if item.school_name %}{% school_link item.school_name item.school_code %}{% else %}{{ item.cluster_name }}{% endif %}</span>
   </span></td>
   <td data-label="Staff member">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
   <td data-label="Activity / purpose">{{ item.activity_type|replace_underscore|title }}</td>

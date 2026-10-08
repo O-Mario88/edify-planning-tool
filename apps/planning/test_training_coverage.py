@@ -16,6 +16,8 @@ status and next action; and the schools not yet covered.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from django.test import Client
 
 from apps.accounts.models import User
@@ -156,7 +158,13 @@ class AssignedCountsBeforeThePartnerSchedules(CoverageFixture):
         school = self.members[0]
         self.in_school(school)
         self.group([school, self.members[1]], day=1)
-        self.hand_over(school)
+        # Staff's own in-school training and a hand-over at one school: the
+        # door refuses that hand-over since the one-visit rule (owner,
+        # 2026-10-08; `_assert_school_has_room`), and plans made before it
+        # are left as they are, so the count still meets them. This is one of
+        # those: the hand-over as the door made it, the rule's check aside.
+        with patch("apps.partners.services._assert_school_has_room"):
+            self.hand_over(school)
 
         row = self.row()
 

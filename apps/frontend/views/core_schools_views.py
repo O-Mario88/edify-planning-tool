@@ -1505,8 +1505,20 @@ def core_assign_partner_drawer(request):
         "partner_visits_open": split.is_open(VISIT, PARTNER),
         "partner_trainings_open": split.is_open(TRAINING, PARTNER),
         "side_cap": SIDE_CAP,
+        # SSA Support goes to a partner only while the school has no SSA for
+        # the year (owner, 2026-10-08); the sentence the save refuses with.
+        "ssa_support_closed": _ssa_support_closed(school),
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
+
+
+def _ssa_support_closed(school) -> str:
+    """Why SSA Support cannot be handed to a partner at this school, or
+    blank while it can (``apps.planning.visit_gate``)."""
+    from apps.planning.visit_gate import visit_gate
+
+    gate = visit_gate(school)
+    return "" if gate.can_assign_ssa else gate.assign_ssa_reason
 
 
 @require_page_permission("core_schools")

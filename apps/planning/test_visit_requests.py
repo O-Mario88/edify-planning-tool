@@ -552,7 +552,10 @@ class VisitRequestSurfacesTest(VisitRequestFixture):
         response = self.client.get(visit_requests.QUEUE_URL)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'data-visit-request-pending="{a.id}"')
-        self.assertContains(response, "Ann Counts asks to visit Owned Primary")
+        # The school's name is the link to its profile (owner, 2026-10-08),
+        # so the sentence is read around it.
+        self.assertContains(response, "Ann Counts asks to visit ")
+        self.assertContains(response, "data-school-link>Owned Primary</a>")
 
         response = self.client.post(
             f"{visit_requests.QUEUE_URL}/{a.id}/approve", {"note": "Fine by me"}

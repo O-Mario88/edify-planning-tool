@@ -83,11 +83,12 @@ View alone (Planning Oversight's Special Projects tab).
           <td data-label="Project Name">{{ school.project_name }}</td>
           <td data-label="School ID"><span class="partner-plan-table__code">{{ school.school_code }}</span></td>
           <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
-            <button type="button" class="school-plan-table__name-toggle"
+            <button type="button" class="school-plan-table__expander"
                     @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
                     :aria-expanded="(openRowId === '{{ row_id }}').toString()"
                     aria-controls="project-row-details-{{ row_id }}"
-                    aria-label="Details for {{ school.school_name }}">{{ school.school_name }}</button>
+                    aria-label="Details for {{ school.school_name }}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+            <span class="school-plan-table__name-text" title="{{ school.school_name }}">{% school_link school.school_name school.school_code %}</span>
           </span></td>
           <td data-label="District">{{ school.district|default:"—" }}</td>
           <td data-label="Training">{{ school.training_name|default:"—" }}</td>

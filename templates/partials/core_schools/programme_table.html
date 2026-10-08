@@ -19,7 +19,7 @@ same three doors as the Core school list above.{% endcomment %}
           <td>{{ row.school_id }}</td>
           <td><a href="/schools/{{ row.school_id }}" class="font-semibold hover:underline">{{ row.name }}</a></td>
           <td>{{ row.district|default:"—" }}</td>
-          {% include "components/school_planning_badges.html" with badges=row.planning_badges layout="cells" visits_only=section.outreach_only %}
+          {% include "components/school_planning_badges.html" with badges=row.planning_badges layout="cells" visits_only=section.outreach_only lock=row.visit_lock lock_code=row.visit_lock_code lock_reason=row.visit_lock_reason %}
           <td>{% for activity in row.work %}<p class="edify-text-caption">{{ activity.name }} · {{ activity.date|date:"j M Y"|default:"Awaiting schedule" }} · {{ activity.status }}</p>{% empty %}<span class="edify-text-muted">None planned</span>{% endfor %}</td>
           <td>{% if row.can_schedule %}<button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ row.school_id|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML">Schedule</button>{% else %}<a href="/schools/{{ row.school_id }}" class="hover:underline">View</a>{% endif %}</td>
         </tr>

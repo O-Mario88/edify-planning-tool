@@ -546,6 +546,9 @@ def analytics_drilldown_view(request):
                 {
                     "col1": a.activity_type.replace("_", " ").title(),
                     "col2": target,
+                    # The school the row names, where it names one, so its
+                    # name opens the profile (owner, 2026-10-08).
+                    "school_ref": a.school.school_id if a.school else "",
                     "col3": staff_map.get(a.responsible_staff_id, "Partner/Staff"),
                     "col4": a.status.replace("_", " ").title(),
                     "col5": a.salesforce_activity_id or "Not Entered",

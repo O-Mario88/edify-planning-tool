@@ -358,7 +358,7 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select a purpose…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}" {% if value in locked_visit_purposes %}{% if value in purposes_locked_every_year %}disabled {% endif %}:disabled="!!lockFor('{{ value }}')" data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in purposes_locked_every_year %} — visit used this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
+    <option value="{{ value }}" {% if value in locked_visit_purposes %}{% if value in purposes_locked_every_year %}disabled {% endif %}:disabled="!!lockFor('{{ value }}')" data-visit-locked="true"{% elif value in package_locked_purposes %}disabled data-purpose-locked="package"{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if value in purposes_locked_every_year %} — not available this year{% elif value in package_locked_purposes %} — scheduled from the Core package{% endif %}</option>
     {% endfor %}
   </select>
   {% if outreach_only_note %}

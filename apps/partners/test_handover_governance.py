@@ -151,6 +151,10 @@ class ProjectPartnerListTest(_Fixture):
             override_reason="Covers the district",
         )
         self.assertEqual(handover.override_reason, "Covers the district")
+        # With the school rules on, a school one partner holds is not handed
+        # to another (owner, 2026-10-08): the outsider lets it go first.
+        handover.status = PartnerAssignment.STATUS_RETURNED_TO_STAFF
+        handover.save(update_fields=["status"])
         self._hand_over(
             self.partner, training_course=self.other_course, project=self.project
         )

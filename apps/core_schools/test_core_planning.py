@@ -708,9 +708,10 @@ class CoreSchoolsPlanningTest(TestCase):
             "/core-schools/assign-partner/action",
             {
                 "school_id": self.school.school_id,
-                # The support is chosen by its purpose (owner, 2026-09-15);
-                # the first Core visit of the year is SSA Support.
-                "purpose_of_visit": "ssa_support",
+                # The support is chosen by its purpose (owner, 2026-09-15).
+                # A follow up: this school has the year's SSA, so SSA
+                # Support is not handed over for it (owner, 2026-10-08).
+                "purpose_of_visit": "training_follow_up",
                 "visit_training_number": "2",
                 "partner_id": self.partner.id,
                 "notes": "core support",

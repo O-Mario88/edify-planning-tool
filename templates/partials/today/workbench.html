@@ -82,7 +82,7 @@ apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
     <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
       <div class="min-w-0">
         <h2 id="next-activity-title" class="text-[15px] font-extrabold text-slate-800">{{ next_activity.name }}</h2>
-        <p class="mt-0.5 text-[12px] text-slate-500">{% if next_activity.school %}{{ next_activity.school.name }} · {% firstof next_activity.school.subCounty next_activity.school.district %}{% else %}Programme activity{% endif %}</p>
+        <p class="mt-0.5 text-[12px] text-slate-500">{% if next_activity.school %}{% school_link next_activity.school.name next_activity.school.id %} · {% firstof next_activity.school.subCounty next_activity.school.district %}{% else %}Programme activity{% endif %}</p>
       </div>
       <a href="/my-plan" class="edify-primary-solid edify-primary-on-solid rounded-control px-4 py-2 text-[12px] font-bold">Open in My Plan</a>
     </div>
@@ -104,7 +104,7 @@ apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
           {% for activity in group.activities %}
           <li class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2">
             <div class="min-w-0">
-              <p class="truncate text-[12px] font-semibold text-slate-700">{% if activity.school %}{{ activity.school.name }}{% else %}{{ activity.name }}{% endif %}</p>
+              <p class="truncate text-[12px] font-semibold text-slate-700">{% if activity.school %}{% school_link activity.school.name activity.school.id %}{% else %}{{ activity.name }}{% endif %}</p>
               <p class="edify-text-caption text-slate-400">{{ activity.name }}{% if activity.plannedParticipants %} · {{ activity.plannedParticipants }} planned participants{% endif %}</p>
             </div>
             <span class="edify-badge" {% if activity.status == 'scheduled' or activity.status == 'planned' %}data-tone="info"{% else %}data-tone="success"{% endif %}>{{ activity.status|replace_underscore|title }}</span>
@@ -154,7 +154,7 @@ apps.command_center.today_actions. `mode` is "lead" (Program Lead), "field"
       {% for item in proposal.items.all %}
       <li class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2">
         <div class="min-w-0">
-          <p class="truncate text-[12px] font-semibold text-slate-700">{{ item.school_name }}</p>
+          <p class="truncate text-[12px] font-semibold text-slate-700">{% school_link item.school_name item.school_id %}</p>
           <p class="edify-text-caption text-slate-400">{{ item.proposed_date|date:"D d M" }} · {{ item.area }} · {{ item.reason }}</p>
         </div>
         <span class="edify-badge">Draft</span>

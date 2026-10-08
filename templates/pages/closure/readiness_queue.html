@@ -87,7 +87,7 @@ Blocked ({{ blocked|length }})
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }} &bull; Owner: {{ act.responsible_staff_id }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %} &bull; Owner: {{ act.responsible_staff_id }}</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -111,7 +111,7 @@ Open Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="edify-text-caption font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded-pill">Awaiting Accountant Payout</span>
@@ -133,7 +133,7 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="edify-text-caption font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded-pill">NetSuite ID Required</span>
@@ -155,7 +155,7 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="edify-text-caption font-semibold edify-primary-text edify-primary-soft px-2 py-0.5 border  rounded-pill">Awaiting Publish</span>
@@ -177,7 +177,7 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span>
 </div>
 <div class="flex items-center gap-2">
 <span class="edify-text-caption font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded-pill">Blocker Present</span>

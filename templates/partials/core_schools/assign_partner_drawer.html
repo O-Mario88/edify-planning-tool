@@ -53,11 +53,16 @@ x-data="{
     {% for value, label in partner_visit_purposes %}
     {% if value == "in_school_training" %}
     <option value="{{ value }}" {% if not partner_trainings_open %}disabled{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if not partner_trainings_open %} (partner trainings complete){% endif %}</option>
+    {% elif value == "ssa_support" and ssa_support_closed %}
+    <option value="{{ value }}" disabled data-visit-locked="true">{{ label }} — not available</option>
     {% else %}
     <option value="{{ value }}" {% if not partner_visits_open %}disabled{% elif value == recommended_visit_purpose %}selected{% endif %}>{{ label }}{% if not partner_visits_open %} (partner visits complete){% endif %}</option>
     {% endif %}
     {% endfor %}
   </select>
+  {% comment %}SSA Support goes to a partner only while the year's SSA is
+  still to be collected (owner, 2026-10-08).{% endcomment %}
+  {% if ssa_support_closed %}<p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ ssa_support_closed }}</p>{% endif %}
   <p class="edify-text-caption text-slate-500">In-school Training fills a Core training slot; the other purposes fill a Core visit slot.</p>
   {% comment %}The partner's half of the package: two visits and two trainings (owner, 2026-09-30).{% endcomment %}
   <p class="edify-text-caption text-slate-500" data-partner-half>Partner's half of this package: visits {{ partner_visits_used }}/{{ side_cap }} · trainings {{ partner_trainings_used }}/{{ side_cap }}.</p>

@@ -94,7 +94,7 @@
 <td class="px-4 py-4 text-rose-600 edify-text-caption leading-relaxed" data-label="Reason">{{ r.reason }}</td>
 <td class="px-4 py-4" data-label="Suggested Match">
 {% if r.suggested_school %}
-<span class="edify-primary-text font-semibold">{{ r.suggested_school.name }}</span>
+<span class="edify-primary-text font-semibold">{% school_link r.suggested_school.name r.suggested_school.id %}</span>
 <span class="edify-text-caption text-slate-400 block font-semibold">ID: {{ r.suggested_school.school_id }} · confidence {{ r.match_confidence|floatformat:2 }}</span>
 {% else %}
 <span class="text-slate-400">None found</span>
