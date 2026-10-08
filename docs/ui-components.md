@@ -201,13 +201,12 @@ What was measured:
   (`rel="expect"` in `base.html`, kept on 2026-10-05 so there is no blank or
   black frame between pages). So the wait is the network, the server and the
   browser added together, with no sign the click was taken.
-- **The server, at production size** (a 16,700-school copy, local machine,
-  under other load): a Programme Lead's pages answer in 0.2 s at the median and
-  0.8 s at the 90th percentile, a CCEO's 0.35 s and 0.9 s, the Country
-  Director's 0.3 s and 2.9 s. The heaviest: Country Director Analytics 4.6 s,
-  Country Map 3.5-4.2 s (3.5 MB of HTML), Clusters 3.6 s, SSA 3.4 s, the
-  portfolio view of Planning Oversight 3.4 s; Core Schools' oversight lens 4.7 s
-  for a Lead; To-Do 1.5-1.8 s for everyone (176 small queries, kept for 15 s).
+- **The server, at production size** (a 16,700-school copy, this machine
+  otherwise idle): a Programme Lead's pages answer in 0.14 s at the median and
+  0.6 s at the 90th percentile, a CCEO's 0.14 s and 0.26 s, the Country
+  Director's 0.11 s and 1.4 s. The first timings written here were two to three
+  times these: they were taken while a test run had the machine, and are
+  withdrawn. The order of the heavy pages was right, and they are below.
 
 `static/js/click-feedback.js` answers the click in the frame after it. It does
 not make the next page arrive sooner.
@@ -229,8 +228,50 @@ Not done, and why:
   (speculation rules). Fetching on hover would save a further 0.2-0.4 s, but a
   page fetched is a page the Staff Activity Log counts as opened, and it was
   turned off for the analytics menus on 2026-09-23 for the renders it started.
-- **The heavy pages themselves.** Each needs its own query work, measured at
-  production size; the list above is where to start.
+
+### The heavy pages
+
+Owner, 2026-10-08: "work on heavy and slow pages first". Server time for one
+view with nothing cached, same data before and after, and the page compared
+byte for byte each time (it did not change on any of them):
+
+| Page, reader | Before | After | What it was |
+| --- | --- | --- | --- |
+| Country Map, Country Director | 1.61 s | 0.60 s | the portfolio built a whole School and District for each of 16,700 schools, and wrote all 16,700 ids into two statements |
+| Planning Oversight, portfolio view, Country Director | 1.27 s | 0.30 s | the same builder |
+| Planning Monitor, Country Director | 0.80 s | 0.49 s | each figure on a row was folded from the row's schools on every read: one row was asked for its Core schools 2,500 times |
+| Core Schools, oversight lens, Programme Lead | 1.86 s | 1.43 s | the Lead's 4,700 team school ids written into 35 statements (165,000 values a view) |
+| Analytics, Programme Lead | 1.52 s | 1.23 s | the same list in two dozen statements |
+| To-Do, Programme Lead | 1.21 s | 1.04 s | the same, in the team figures the To-Dos are derived from |
+| Dashboard, Programme Lead | 0.55 s | 0.46 s | the same |
+| Clusters, Country Director | 1.23 s | 1.07 s | 2,577 cluster ids written into seven statements; each school's latest assessment found twice |
+| Clusters, CCEO | 0.47 s | 0.40 s | the same |
+
+How, for the next page that needs it:
+
+- **A list of ids is one array.** `field__in=id_list(ids)` or
+  `.filter(any_id("field", ids))` (`apps/core/scoping.py`) binds the list as
+  one parameter; `field__in=ids` binds one for each id, and past a few hundred
+  the statement costs more to build, send and parse than to run. The four
+  scope filters (`school_queryset`, `team_oversight_schools`,
+  `scoped_school_queryset`, `cluster_queryset`) do this for everything read
+  through them. An empty list stays `[]`: Django answers that without a
+  statement.
+- **Read the columns, not the model**, when a page reads every school to show
+  fifty: `values_list` of the eight a row is built from.
+- **A figure folded from a list is folded once.** `_folded_once` and `_settle`
+  in `apps/planning/planning_monitor.py`: a finished row remembers each
+  figure; a row still being counted does not.
+
+Still slow, and why they were left: Analytics for the Country Director (1.4 s
+when not cached, kept 30 s: 190 statements on the assessment tables), SSA
+(1.2 s: it reads 170,000 scores, already once), Core Schools' oversight lens
+(1.4 s: a dozen analyses each read the team's schools). Each wants its
+statements put together, not bound differently. One cost recurs on them:
+"each school's latest assessment" sorts the assessments by school id, a text
+key under the database's collation, 80-130 ms a time. The Country Map still
+sends 2 MB of sub-county figures it only needs when a district is opened
+(84 KB on the wire); the map already fetches the opened district's afresh.
 
 ## Tick boxes
 

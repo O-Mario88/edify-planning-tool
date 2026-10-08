@@ -1872,8 +1872,12 @@ class TableReadsInThreeStepsTest(SimpleTestCase):
             ":is(h2, h3, h4).edify-table-titlebar.edify-table-titlebar"
             ".edify-table-titlebar {"
         )
-        self.assertIn("font-size: var(--edify-text-table-title-size) !important;", block)
-        self.assertIn("font-weight: var(--edify-table-header-weight) !important;", block)
+        self.assertIn(
+            "font-size: var(--edify-text-table-title-size) !important;", block
+        )
+        self.assertIn(
+            "font-weight: var(--edify-table-header-weight) !important;", block
+        )
         # The officer panels name their tables in an h5.
         self.assertIn(
             ".edify-table-titlebar.edify-table-titlebar.edify-table-titlebar "

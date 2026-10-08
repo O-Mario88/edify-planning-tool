@@ -28,7 +28,7 @@ from apps.core.enums import ClusterRecordStatus, SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.rbac import Permission
-from apps.core.scoping import cluster_queryset, resolve_user_scope
+from apps.core.scoping import cluster_queryset, id_list, resolve_user_scope
 from apps.geography.models import District, SubCounty
 from apps.planning.visit_gate import OWN_TABLE_SCHOOL_TYPES
 from apps.schools.models import School
@@ -1436,7 +1436,10 @@ def cluster_planning(principal) -> list[dict]:
     TRAINING_KINDS = ["cluster_training", "school_improvement_training"]
     SCHOOL_TRAINING_KINDS = ["school_training", "core_training", "project_activity"]
 
-    cluster_ids = [c.id for c in clusters]
+    # One array for the five statements below, not an id a placeholder: a
+    # country reader has 2,500 clusters, and writing them into each statement
+    # cost more than the statements did.
+    cluster_ids = id_list(c.id for c in clusters)
 
     school_rows = {
         row["cluster_id"]: row
@@ -1627,7 +1630,7 @@ class ClusterDashboardService:
         planning_list = cluster_planning(user)
         planning_map = {p["id"]: p for p in planning_list}
 
-        cluster_ids = [c.id for c in clusters]
+        cluster_ids = id_list(c.id for c in clusters)
         # The partner each cluster is assigned to facilitate (owner,
         # 2026-10-02), named on its card; one query for the page.
         from apps.partners.models import Partner
@@ -1661,7 +1664,11 @@ class ClusterDashboardService:
             if row["account_owner_id"]:
                 staff_by_cluster.setdefault(cid, set()).add(row["account_owner_id"])
 
-        latest_ssa_ids = (
+        # Each school's latest confirmed assessment, found once. As a
+        # subquery it was run inside both statements below, and finding it is
+        # the dear part: a sort of every assessment in scope by school and
+        # date (80 ms of each statement for a country reader).
+        latest_ssa_ids = id_list(
             SsaRecord.objects.filter(
                 school__in=cluster_schools_qs,
                 deleted_at__isnull=True,
@@ -1669,7 +1676,7 @@ class ClusterDashboardService:
             )
             .order_by("school_id", "-date_of_ssa", "-created_at")
             .distinct("school_id")
-            .values("id")
+            .values_list("id", flat=True)
         )
         ssa_avg_by_cluster = {
             row["school__cluster_id"]: row["avg"]

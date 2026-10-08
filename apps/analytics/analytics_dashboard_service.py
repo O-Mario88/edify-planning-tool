@@ -89,8 +89,13 @@ class AnalyticsDashboardService:
             )
         elif not scope.country_scope:
             if scope.school_ids:
-                schools_qs = schools_qs.filter(id__in=scope.school_ids)
-                ssa_qs = ssa_qs.filter(school_id__in=scope.school_ids)
+                # One array, not an id a placeholder: every figure on the page
+                # reads through these two querysets, and a Programme Lead's
+                # 4,700 schools were written into two dozen statements.
+                from apps.core.scoping import any_id
+
+                schools_qs = schools_qs.filter(any_id("id", scope.school_ids))
+                ssa_qs = ssa_qs.filter(any_id("school_id", scope.school_ids))
             else:
                 schools_qs = schools_qs.none()
                 ssa_qs = ssa_qs.none()

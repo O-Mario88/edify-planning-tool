@@ -2054,8 +2054,10 @@ class CDAnalyticsService:
             .values_list("id", "cluster_id")
         ):
             cluster_school.setdefault(cid, set()).add(sid)
+        from apps.core.scoping import id_list
+
         names = dict(
-            Cluster.objects.filter(id__in=list(cluster_school.keys())).values_list(
+            Cluster.objects.filter(id__in=id_list(cluster_school.keys())).values_list(
                 "id", "name"
             )
         )
@@ -2103,8 +2105,12 @@ class CDAnalyticsService:
                 if did is not None:
                     record_district[rec_id] = did
             district_leadership_scores: dict = {}
+            # One array, not 6,700 placeholders: the latest record of every
+            # school in the country.
+            from apps.core.scoping import id_list
+
             for rec_id, score in SsaScore.objects.filter(
-                ssa_record_id__in=list(record_district.keys()),
+                ssa_record_id__in=id_list(record_district.keys()),
                 intervention="leadership",
             ).values_list("ssa_record_id", "score"):
                 did = record_district.get(rec_id)
@@ -2824,6 +2830,7 @@ class CDAnalyticsService:
     @staticmethod
     def filter_options(cd):
         from apps.core.fy import fy_options
+        from apps.core.scoping import id_list as _id_list
         from apps.geography.models import District
         from apps.clusters.models import Cluster
         from apps.partners.models import Partner
@@ -2862,7 +2869,7 @@ class CDAnalyticsService:
                 .order_by("name")
             ),
             "clusters": list(
-                Cluster.objects.filter(id__in=cluster_ids)
+                Cluster.objects.filter(id__in=_id_list(cluster_ids))
                 .values("id", "name")
                 .order_by("name")
             ),

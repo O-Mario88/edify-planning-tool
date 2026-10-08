@@ -205,6 +205,10 @@ def _staff_directory(owner_ids) -> dict[str, dict]:
 def _planning_by_school(school_ids, *, fy: str) -> dict[str, dict]:
     """What each school has planned this fiscal year, in two queries.
 
+    ``school_ids`` is a list of ids or a queryset of them. The country lens
+    passes the queryset: sixteen thousand ids written into each statement
+    cost more to compile and send than the statement cost to run.
+
     The operational year reads forward through the planning horizon
     (``fy_policy.planning_horizon``), as Team Plan does: a school planned in
     September for October is planned, not "Nothing planned all year"
@@ -218,7 +222,7 @@ def _planning_by_school(school_ids, *, fy: str) -> dict[str, dict]:
 
     from apps.planning.fy_policy import planning_horizon
 
-    if not school_ids:
+    if isinstance(school_ids, (list, tuple, set, frozenset)) and not school_ids:
         return {}
     fys = planning_horizon(fy)
     rows = (
@@ -315,29 +319,55 @@ def country_portfolio(
     # A closed school takes no work, so it is never "not planned" — it would
     # be a permanent red row nobody can clear (apps.planning.coverage_service
     # holds the same line).
-    queryset = active_schools(queryset).select_related("district")
+    queryset = active_schools(queryset)
     if district_id and district_id not in ("all", "All"):
         queryset = queryset.filter(district_id=district_id)
 
-    schools = list(queryset.order_by("name"))
-    directory = _staff_directory({s.account_owner_id for s in schools})
-    planning = _planning_by_school([s.id for s in schools], fy=fy)
-    clusters = _cluster_names({s.cluster_id for s in schools})
+    # The eight facts a row is built from, not the school: this lens reads
+    # every school in scope on every view (16,000 for a country role), and a
+    # whole School with its District, built and thrown away for each of them,
+    # was most of the page's time.
+    schools = list(
+        queryset.order_by("name").values_list(
+            "id",
+            "school_id",
+            "name",
+            "school_type",
+            "district_id",
+            "district__name",
+            "cluster_id",
+            "account_owner_id",
+        )
+    )
+    directory = _staff_directory({row[7] for row in schools})
+    planning = (
+        _planning_by_school(queryset.order_by().values("id"), fy=fy) if schools else {}
+    )
+    clusters = _cluster_names({row[6] for row in schools})
 
     rows = []
-    for school in schools:
-        plan = planning.get(school.id)
-        owner = directory.get(str(school.account_owner_id or ""))
+    for (
+        school_pk,
+        school_code,
+        school_name,
+        school_type,
+        school_district_id,
+        district_name,
+        school_cluster_id,
+        account_owner_id,
+    ) in schools:
+        plan = planning.get(school_pk)
+        owner = directory.get(str(account_owner_id or ""))
         rows.append(
             {
-                "school_id": school.id,
-                "school_code": school.school_id,
-                "name": school.name,
-                "school_type": school.school_type,
-                "district": school.district.name if school.district_id else "",
-                "district_id": school.district_id,
-                "cluster_id": school.cluster_id,
-                "cluster_name": clusters.get(school.cluster_id, ""),
+                "school_id": school_pk,
+                "school_code": school_code,
+                "name": school_name,
+                "school_type": school_type,
+                "district": (district_name or "") if school_district_id else "",
+                "district_id": school_district_id,
+                "cluster_id": school_cluster_id,
+                "cluster_name": clusters.get(school_cluster_id, ""),
                 "officer_id": owner["officer_id"] if owner else UNASSIGNED_KEY,
                 "officer_name": owner["officer_name"] if owner else UNASSIGNED_LABEL,
                 "lead_id": owner["lead_id"] if owner else NO_LEAD_KEY,
@@ -355,9 +385,9 @@ def country_portfolio(
                 # never again has been planned for, and belongs in the count
                 # its lead is held to.
                 "is_planned": bool(plan and plan["activities"]),
-                "url": f"/schools/{school.school_id}",
-                "cluster_url": f"/clusters/{school.cluster_id}"
-                if school.cluster_id
+                "url": f"/schools/{school_code}",
+                "cluster_url": f"/clusters/{school_cluster_id}"
+                if school_cluster_id
                 else "",
             }
         )
