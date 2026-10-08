@@ -25,6 +25,13 @@ So what these tests hold:
   planned"): staff hold two visits and two trainings, the partner side two of
   each, and donor, story, invitation and social visits are not package work.
 
+Owner, 2026-10-08: one visit commitment a school a year. At a Client, Core
+Trained or Core Graduate school a partner holding the school closes the staff
+support visit, and a staff visit or one hand-over closes the next hand-over
+(``test_one_visit_commitment`` holds that rule). What these tests said about
+partner work being "counted, never capped" there is rewritten below to say
+what is true now: counted, shown, and the school's one commitment.
+
 The gate (apps.planning.visit_gate) is the one definition the buttons and the
 services share, so the tests drive it directly and then check that both
 readers agree with it.
@@ -185,14 +192,19 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertFalse(gate.staff_can_schedule)
         self.assertIn("staff support visit", gate.staff_reason)
         # The row's Schedule stays live — donor, story, invitation and social
-        # visits and In-school Training never use the visit — and the partner
-        # side is untouched.
+        # visits never use the visit. The school has its one commitment of
+        # the year, so it is not handed to a partner for another (owner,
+        # 2026-10-08); SSA Support may still be, so Assign stays live.
         self.assertFalse(gate.staff_locked)
         self.assertTrue(gate.partner_can_schedule)
-        self.assertTrue(gate.can_assign_visit)
+        self.assertFalse(gate.can_assign_visit)
+        self.assertTrue(gate.can_assign_ssa)
         self.assertTrue(gate.can_assign_partner)
 
-    def test_partner_work_is_counted_and_never_capped(self):
+    def test_partner_work_from_before_the_rule_is_counted_and_holds_the_school(self):
+        """Rows made before 2026-10-08 can hold more than one partner visit.
+        They are counted as they are, the partner may still date what it was
+        handed, and the school is closed to staff and to a further hand-over."""
         school = self._school("VG-2b")
         for _ in range(3):
             self._visit(school, delivery="partner")
@@ -200,9 +212,8 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         gate = visit_gate(school)
         self.assertEqual(gate.partner_visits, 3)
         self.assertTrue(gate.partner_can_schedule)
-        self.assertTrue(gate.can_assign_partner)
-        # A partner's visits are not the staff's one visit.
-        self.assertTrue(gate.staff_can_schedule)
+        self.assertFalse(gate.can_assign_visit)
+        self.assertFalse(gate.staff_can_schedule)
 
     def test_a_partners_visits_are_counted_on_their_own_side(self):
         school = self._school("VG-3")
@@ -210,7 +221,9 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         gate = visit_gate(school)
         self.assertEqual(gate.partner_visits, CLIENT_VISIT_CAP)
         self.assertEqual(gate.staff_visits, 0)
-        self.assertTrue(gate.staff_can_schedule)
+        # Not the staff's count, and still the school's visit of the year.
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertEqual(gate.staff_code, "PARTNER_VISIT_ASSIGNED")
 
     def test_completed_visits_still_count(self):
         school = self._school("VG-4")
@@ -287,35 +300,42 @@ class ClientSchoolVisitAllowanceTest(_GateFixture, TestCase):
         self.assertTrue(gate.ssa_can_schedule)
         self.assertEqual(gate.staff_ssa_visits, 2)
 
-    def test_partner_follow_up_and_ssa_visits_are_counted_not_capped(self):
+    def test_partner_follow_up_and_ssa_visits_are_counted_apart(self):
         school = self._school("VG-6c")
-        self._visit(school, kind="training_follow_up_visit", delivery="partner")
         self._visit(school, kind="school_visit_ssa_collection", delivery="partner")
+        gate = visit_gate(school)
+        self.assertEqual(gate.partner_ssa_visits, 1)
+        # A partner collecting the SSA is not the school's visit.
+        self.assertTrue(gate.staff_can_schedule)
+        self._visit(school, kind="training_follow_up_visit", delivery="partner")
         gate = visit_gate(school)
         self.assertEqual(gate.partner_visits, 1)
         self.assertEqual(gate.partner_ssa_visits, 1)
-        self.assertTrue(gate.staff_can_schedule)
+        self.assertFalse(gate.staff_can_schedule)
         self.assertTrue(gate.ssa_can_schedule)
 
-    def test_a_school_with_a_partner_is_named_not_closed(self):
-        """The partner holding a school is worth SAYING on the row.
+    def test_a_school_with_a_partner_is_named_and_closed_to_a_staff_visit(self):
+        """The partner holding a school is named on the row, and holds its
+        support visit of the year.
 
-        Until 2026-09-21 it also locked staff out of the school until the
-        partner returned it. It no longer does: `partner_pending` and
-        `partner_name` are reported so the row can name who holds it, and
-        the buttons stay live beside that.
+        Until 2026-09-21 a hand-over locked staff out of the whole school; it
+        then closed nothing until 2026-10-08, when the owner asked for one
+        visit commitment a school a year. Now it closes the staff support
+        visit and a further hand-over, with the partner named in the reason,
+        and leaves the row's Schedule live for every other visit.
         """
         school = self._school("VG-7")
         self._assign(school)
         gate = visit_gate(school)
         self.assertEqual(gate.partner_pending, 1)
         self.assertEqual(gate.partner_name, "VG Partner Org")
-        self.assertTrue(gate.staff_can_schedule)
+        self.assertFalse(gate.staff_can_schedule)
+        self.assertIn("VG Partner Org", gate.staff_reason)
         self.assertFalse(gate.staff_locked)
         self.assertEqual(gate.staff_locked_reason, "")
         self.assertTrue(gate.partner_can_schedule)
         self.assertTrue(gate.can_assign_partner)
-        self.assertTrue(gate.can_assign_visit)
+        self.assertFalse(gate.can_assign_visit)
 
     def test_a_returned_school_is_no_longer_pending(self):
         school = self._school("VG-8")
@@ -478,8 +498,12 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         with self.assertRaises(BadRequest) as ctx:
             self._entitlement(school)
         self.assertIn("staff support visit", str(ctx.exception.detail))
-        # A partner's visit, and the next year's, are still open.
-        self._entitlement(school, deliveryType="partner")
+        # Nor is the school handed to a partner for another (owner,
+        # 2026-10-08); the next year's visit is still open.
+        from apps.core.exceptions import ConflictError
+
+        with self.assertRaises(ConflictError):
+            self._entitlement(school, deliveryType="partner")
         from apps.activities.services import _assert_schedule_entitlement
 
         _assert_schedule_entitlement("school_visit", school, str(int(self.fy) + 1), {})
@@ -543,10 +567,19 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         with self.assertRaises(BadRequest):
             visit_requests.approve(second.id, self.cceo_user)
 
-    def test_staff_may_schedule_a_school_that_is_with_a_partner(self):
+    def test_staff_plan_the_other_visits_at_a_school_that_is_with_a_partner(self):
+        from apps.activities.services import _assert_schedule_entitlement
+        from apps.core.exceptions import BadRequest
+
         school = self._school("VG-S3")
         self._assign(school)
-        self._entitlement(school)  # no BadRequest
+        # The support visit is the partner's (owner, 2026-10-08) ...
+        with self.assertRaisesMessage(BadRequest, "VG Partner Org"):
+            self._entitlement(school)
+        # ... and every other visit is planned as at any other school.
+        for kind in ("donor_visit", "story_gathering_visit", "social_visit"):
+            _assert_schedule_entitlement(kind, school, self.fy, {})
+        _assert_schedule_entitlement("school_visit_ssa_collection", school, self.fy, {})
 
     def test_the_planning_row_keeps_its_buttons_live(self):
         from apps.planning.planning_service import PlanningDashboardService
@@ -577,11 +610,13 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
             self.assertTrue(rows[code]["staffCanSchedule"], code)
             self.assertTrue(rows[code]["canAssignPartner"], code)
             self.assertEqual(rows[code]["staffScheduleReason"], "", code)
-        # The spent school's follow-up purposes close, with the reason; the
-        # others stay open.
+        # The spent school's follow-up purposes close, with the reason; so do
+        # the handed school's (owner, 2026-10-08); the third stays open.
         self.assertFalse(rows["VG-S4"]["followUpVisitOpen"])
         self.assertIn("staff support visit", rows["VG-S4"]["followUpVisitReason"])
-        self.assertTrue(rows["VG-S5"]["followUpVisitOpen"])
+        self.assertFalse(rows["VG-S5"]["followUpVisitOpen"])
+        self.assertIn("VG Partner Org", rows["VG-S5"]["followUpVisitReason"])
+        self.assertTrue(rows["VG-S6"]["followUpVisitOpen"])
 
     def test_the_planning_page_opens_the_drawer_for_a_partner_held_school(self):
         handed = self._school("VG-S7")
@@ -641,8 +676,13 @@ class TheServicesScheduleWhatTheButtonsOfferTest(_GateFixture, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertNotIn('value="training_follow_up" disabled', html)
-        self.assertNotIn('value="in_school_training" disabled', html)
+        # A school with its visit is not handed over for another (owner,
+        # 2026-10-08): the Training Follow Up is greyed with the reason. An
+        # In-school Training stays for the universal training, which every
+        # school takes on top of its year; SSA Support stays open too.
+        self.assertIn('value="training_follow_up" disabled', html)
+        self.assertIn("already has its staff support visit", html)
+        self.assertNotIn('value="ssa_support" disabled', html)
 
     def test_the_partner_queue_keeps_schedule_live_once_it_is_spent(self):
         school = self._school("VG-S9")

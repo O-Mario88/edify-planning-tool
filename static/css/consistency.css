@@ -4814,11 +4814,6 @@ main .edify-avatar-neutral {
   white-space: normal !important;
 }
 .school-plan-table :is(.planning-school-row, .cluster-school-row) { cursor: pointer; }
-.school-plan-table .school-plan-table__name-toggle {
-  background: transparent !important; border: 0 !important; padding: 0 !important;
-  text-align: start !important; justify-content: flex-start !important;
-  color: var(--edify-text) !important; font-weight: var(--edify-text-label-weight);
-}
 :root main table.school-plan-table tbody td .school-planning-badges.school-planning-badges {
   display: inline-flex !important; align-items: center !important;
   block-size: auto !important; padding: 0 !important;
@@ -4841,48 +4836,63 @@ main .edify-avatar-neutral {
    buttons (owner, 2026-09-23: "the school name column is being cut off by
    visit planned column. move them to the right to give more space to the
    school name"). */
-:root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 50rem !important; }
+:root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 65rem !important; }
 .school-plan-table--selectable thead th:nth-child(1) { width: 2rem; }
 .school-plan-table--selectable thead th:nth-child(2) { width: 3.75rem; }
 .school-plan-table--selectable thead th:nth-child(3) { width: auto; }
 .school-plan-table--selectable thead th:nth-child(4) { width: 10.25rem; }
 .school-plan-table--selectable thead th:nth-child(5) { width: 11.75rem; }
-.school-plan-table--selectable thead th:nth-child(6) { width: 8rem; }
+/* The columns after the two statuses are sized by name, not by position, so
+   one more column never hands its neighbour's width to the wrong heading.
+   Visit Lock (owner, 2026-10-08) holds its longest value whole, "Awaiting
+   schedule from partner"; the table's least width grew by the same 15rem,
+   so the school name gives nothing up and a narrower screen scrolls. */
+.school-plan-table--selectable thead th.school-plan-table__lock { width: 15rem; }
+.school-plan-table--selectable thead th.school-plan-table__actions { width: 8rem; }
 .school-plan-table .school-plan-table__details > td { white-space: normal !important; overflow: visible !important; }
 /* With the Partner-supported school rule on, the planning table carries a
    Responsible column before Actions (owner, 2026-09-23). It holds one word,
    Staff or Partner, so it is narrow and the name keeps its room: as narrow
    as its own heading allows, which is 6.5rem since the column names went up
-   a step (2026-10-08) — at 6rem "Responsible" was cut by 5px. */
-:root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 56rem !important; }
-.school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6.5rem; }
-.school-plan-table--selectable[data-support-column] thead th:nth-child(7) { width: 8rem; }
+   a step (2026-10-08) — at 6rem "Responsible" was cut by 5px. Sized by its
+   name, like Visit Lock and Actions above. */
+:root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 71.5rem !important; }
+.school-plan-table--selectable thead th.school-plan-table__responsible { width: 6.5rem; }
 /* Where the page is wide enough, Schedule and Assign sit side by side. */
 @media (min-width: 87.5rem) {
-  .school-plan-table--selectable thead th:nth-child(6) { width: 13.25rem; }
-  .school-plan-table--selectable[data-support-column] thead th:nth-child(6) { width: 6.5rem; }
-  .school-plan-table--selectable[data-support-column] thead th:nth-child(7) { width: 13.25rem; }
+  .school-plan-table--selectable thead th.school-plan-table__actions { width: 13.25rem; }
 }
 :root main table.school-plan-table--selectable thead :is(th:nth-child(1), th:nth-child(2)) { padding-inline: .5rem !important; }
 :root main table.school-plan-table--selectable tbody :is(td.school-plan-table__select, td.school-plan-table__id) { padding-inline: .5rem !important; }
-.school-plan-table .school-plan-table__name-toggle { white-space: normal !important; height: auto !important; }
-/* The name is a disclosure toggle, and micro-ux.js marks every button in a
-   cell as a compact row action at its max-content width. That pushed a long
-   name under the Visit Plan Status column. The name now ends at its own
-   column edge, with its full text as the title. */
+/* A long name ends at its own column edge, with its full text as the title:
+   it once ran under the Visit Plan Status column. */
 :root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name,
 :root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__identity {
   min-inline-size: 0 !important; overflow: hidden !important;
 }
-:root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__name-toggle.school-plan-table__name-toggle.school-plan-table__name-toggle {
-  display: block !important; flex: 0 1 auto !important; inline-size: auto !important;
-  min-inline-size: 0 !important; max-inline-size: 100% !important;
-  padding: 0 !important; white-space: nowrap !important; overflow: hidden !important;
-  text-overflow: ellipsis !important; text-align: start !important;
-}
 :root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name { padding-inline: .5rem !important; }
+/* The school's name is the link to its profile (owner, 2026-10-08: "i need it
+   linked to school names everywhere"); the arrow before it opens the row's
+   details, as the name itself did until then. The name still ends at its
+   column's edge, with its full text as the title. */
+:root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name :is(.school-plan-table__identity, .partner-plan-table__identity) {
+  gap: .15rem !important; min-inline-size: 0 !important; max-inline-size: 100% !important;
+}
+:root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__name-text {
+  display: block !important; min-inline-size: 0 !important; overflow: hidden !important;
+  text-overflow: ellipsis !important; white-space: nowrap !important;
+}
+:root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__name-text > a {
+  color: var(--edify-text) !important; font-weight: var(--edify-text-label-weight) !important;
+}
+:root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__expander.school-plan-table__expander {
+  inline-size: 1rem !important; min-inline-size: 1rem !important; padding: 0 !important;
+}
 /* Status chips stay inside their column: two chips stack, each on one line. */
-:root main table.school-plan-table.school-plan-table tbody td[data-planning-badges] {
+/* The Visit Lock chip likewise (owner, 2026-10-08): this table fixes its
+   widths, and the one-line rule forbids a cell to clip unless it says so at
+   this weight. */
+:root main table.school-plan-table.school-plan-table tbody :is(td[data-planning-badges], td.school-plan-table__lock) {
   padding-inline: .5rem !important; overflow: hidden !important;
 }
 :root main table.school-plan-table.school-plan-table tbody td[data-planning-badges] .school-planning-badges.school-planning-badges {
@@ -4941,11 +4951,6 @@ main .edify-avatar-neutral {
 :root main table[data-waiting-table] tbody [data-today-actions] { flex-wrap: nowrap !important; }
 .drawer-header__subtitle:empty { display: none; }
 
-:root main table.school-plan-table .school-plan-table__name-toggle.school-plan-table__name-toggle {
-  min-inline-size: 0 !important; max-inline-size: 100% !important;
-  block-size: auto !important; max-block-size: none !important;
-  overflow-wrap: break-word !important;
-}
 :root main table.school-plan-table .school-plan-table__details .school-record-row__metadata {
   max-inline-size: 100% !important; flex-wrap: wrap !important;
 }

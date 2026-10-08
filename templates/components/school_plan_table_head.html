@@ -10,6 +10,9 @@
     {% if cluster_column %}<th scope="col" class="school-plan-table__cluster">Cluster</th>{% endif %}
     <th scope="col">Visit Plan Status</th>
     <th scope="col">Training Plan Status</th>
+    {% comment %}Whether a staff support visit can still be planned, and what
+    holds it where it cannot (owner, 2026-10-08).{% endcomment %}
+    <th scope="col" class="school-plan-table__lock">Visit Lock</th>
     {% if support %}<th scope="col" class="school-plan-table__responsible">Responsible</th>{% endif %}
     <th scope="col" class="school-plan-table__actions">Actions</th>
   </tr>

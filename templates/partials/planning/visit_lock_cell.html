@@ -1,0 +1,20 @@
+{% comment %}
+The Visit Lock column of the Planning list and the cluster school lists (owner,
+2026-10-08: "another column ... containing locked and unlocked school visits").
+Whether a staff support visit can still be planned at the school: "Unlocked",
+or locked by what holds the visit — "Staff visit scheduled", "Partner visit
+scheduled" once the partner has dated it, "Awaiting schedule from partner"
+while the partner has not. The words, and the sentence in the title, are
+apps.planning.visit_gate's (lock_state): the Schedule drawer greys the same
+purposes and the save refuses with the same sentence. A Champion school takes
+no support visit, so it has nothing to lock.
+
+Drawn as the status chips beside it are (school_planning_badges.html), grey
+with a shut padlock where the visit is held and a plain outline with an open
+one where it is not. One run of text beside the mark: a second span in a
+table cell is drawn with a "·" before it.
+
+Usage: {% include "partials/planning/visit_lock_cell.html" with school=row %}
+Optional: cell_class, for a table that sizes its cells with utilities.
+{% endcomment %}
+<td data-label="Visit Lock" class="{{ cell_class|default:'school-plan-table__lock' }}" data-visit-lock="{{ school.visitLockState }}">{% if school.visitLockLabel %}<span class="school-planning-badge" data-planning-tone="{% if school.visitLockState == 'unlocked' %}open{% else %}closed{% endif %}" data-visit-lock="{{ school.visitLockState }}"{% if school.visitLockReason %} title="{{ school.visitLockReason }}"{% endif %}>{% if school.visitLockState == "unlocked" %}<svg aria-hidden="true" viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M10.5 1.5A3.5 3.5 0 0 0 7 5v2H4a1.5 1.5 0 0 0-1.5 1.5v5A1.5 1.5 0 0 0 4 15h8a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 12 7H8.5V5a2 2 0 1 1 4 0v.25a.75.75 0 0 0 1.5 0V5a3.5 3.5 0 0 0-3.5-3.5Z"/></svg>{% else %}<svg aria-hidden="true" viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z"/></svg>{% endif %}{{ school.visitLockLabel }}</span>{% else %}<span class="edify-text-muted" aria-label="Not applicable">—</span>{% endif %}</td>

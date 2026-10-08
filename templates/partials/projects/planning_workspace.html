@@ -157,7 +157,7 @@
     <section class="spp-card spp-intelligence">
       <header><h2>Selected school</h2></header>
       {% if selected_row %}
-      <div class="spp-selected-school"><strong>{{ selected_row.school_name }}</strong><span>{{ selected_row.school_id }}</span></div>
+      <div class="spp-selected-school"><strong>{% school_link selected_row.school_name selected_row.school_id %}</strong><span>{{ selected_row.school_id }}</span></div>
       <dl><div><dt>Project</dt><dd>{{ selected_row.project_name }}</dd></div><div><dt>District</dt><dd>{{ selected_row.district }}</dd></div><div><dt>Weakest intervention</dt><dd>{{ selected_row.weakest }}</dd></div><div><dt>SSA average</dt><dd>{% if selected_row.average is not None %}{{ selected_row.average }}/10{% else %}Not assessed{% endif %}</dd></div><div><dt>Current partner</dt><dd>{{ selected_row.partner }}</dd></div><div><dt>Planning readiness</dt><dd><span class="spp-status spp-status--{{ selected_row.readiness_tone }}">{{ selected_row.readiness }}</span></dd></div></dl>
       <div class="spp-intelligence__links"><a href="{{ selected_row.school_url }}">View School</a><a href="{{ selected_row.ssa_url }}">View SSA</a></div>
       {% else %}<p class="spp-muted">Select a school to see its project context and next step.</p>{% endif %}

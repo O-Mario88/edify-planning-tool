@@ -48,7 +48,7 @@
     </div>
     <div class="edify-data-list">
       {% if partner_org %}<div class="edify-data-row"><span class="edify-data-row__label">Organisation</span><span class="edify-data-row__value">{{ partner_org.name }} · {{ request.user.name }}</span></div>{% endif %}
-      <div class="edify-data-row"><span class="edify-data-row__label">{% if a.school %}School{% else %}Cluster{% endif %}</span><span class="edify-data-row__value">{% if a.school %}{{ a.school.name }} ({{ a.school.school_id }}) · {% firstof a.school.district.name "" %}{% else %}{{ a.cluster.name }}{% endif %}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">{% if a.school %}School{% else %}Cluster{% endif %}</span><span class="edify-data-row__value">{% if a.school %}{% school_link a.school.name a.school.id %} ({{ a.school.school_id }}) · {% firstof a.school.district.name "" %}{% else %}{{ a.cluster.name }}{% endif %}</span></div>
       <div class="edify-data-row"><span class="edify-data-row__label">Activity</span><span class="edify-data-row__value">{{ a.get_activity_type_display }}</span></div>
       {% if a.activity_purpose_text %}<div class="edify-data-row"><span class="edify-data-row__label">Purpose</span><span class="edify-data-row__value">{{ a.activity_purpose_text }}</span></div>{% endif %}
       <div class="edify-data-row"><span class="edify-data-row__label">Planned date</span><span class="edify-data-row__value">{{ a.planned_date|date:"d M Y" }}</span></div>

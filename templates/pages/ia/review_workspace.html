@@ -114,7 +114,7 @@ Compare Side-by-Side
 <!-- School -->
 <div>
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">School</span>
-<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</span>
 </div>
 <!-- Cluster -->
 <div>
@@ -312,7 +312,7 @@ No evidence uploads available for this activity.
 {% for school in cluster_schools %}
 <div class="p-3 rounded-surface border border-slate-100 bg-slate-50/50 flex items-center justify-between">
 <div>
-<span class="font-bold text-slate-800 block text-[12px] leading-tight">{{ school.name }}</span>
+<span class="font-bold text-slate-800 block text-[12px] leading-tight">{% school_link school.name school.school_id %}</span>
 <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 {% if school.id in act.attended_school_ids %}

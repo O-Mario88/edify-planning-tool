@@ -13,7 +13,7 @@
       {% for s in schools_pager.rows %}
       <tr>
         <td class="py-2 px-3 edify-text-caption text-slate-500 tabular-nums">{{ s.school_id }}</td>
-        <td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ s.name }}</td>
+        <td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{% school_link s.name s.school_id %}</td>
         <td class="py-2 px-3 edify-text-caption text-slate-500">{% if s.district_id %}{{ s.district.name }}{% else %}—{% endif %}</td>
         <td class="py-2 px-3">
           <span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap

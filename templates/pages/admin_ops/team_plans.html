@@ -83,7 +83,7 @@
           <td class="px-3 py-2.5">{{ row.role }}</td>
           <td class="px-3 py-2.5">{{ row.activity }}</td>
           <td class="px-3 py-2.5 whitespace-nowrap tabular-nums">{% if row.schoolRef %}{% school_code row.schoolRef %}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2.5">{{ row.target }}</td>
+          <td class="px-3 py-2.5">{% if row.schoolRef %}{% school_link row.target row.schoolRef %}{% else %}{{ row.target }}{% endif %}</td>
           <td class="px-3 py-2.5 tabular-nums">{% if row.plannedDate %}{{ row.plannedDate|date:"d M" }}{% else %}—{% endif %}</td>
           <td class="px-3 py-2.5">{{ row.status }}</td>
           <td class="px-3 py-2.5">{{ row.nextAction }}</td>

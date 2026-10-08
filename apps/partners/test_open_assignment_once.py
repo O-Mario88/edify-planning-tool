@@ -87,11 +87,15 @@ class OpenAssignmentOnceTest(OpenAssignmentFixture):
         with self.assertRaises(ConflictError):
             self.handover(project=project)
 
-    def test_another_school_or_another_partner_is_fine(self):
+    def test_another_school_is_fine_and_another_partner_is_not(self):
         self.handover()
         self.handover(school=self.other_school)
-        self.handover(partner=self.other_partner)
-        self.assertEqual(self.open_rows().count(), 3)
+        # One visit commitment a school a year (owner, 2026-10-08): a client
+        # school one partner holds is not handed to a second.
+        with self.assertRaises(ConflictError) as refused:
+            self.handover(partner=self.other_partner)
+        self.assertIn("Once Partner", str(refused.exception.detail))
+        self.assertEqual(self.open_rows().count(), 2)
 
     def test_once_scheduled_the_next_piece_of_work_may_follow(self):
         first = self.handover()
@@ -109,10 +113,20 @@ class OpenAssignmentOnceTest(OpenAssignmentFixture):
     def test_core_slots_wait_side_by_side(self):
         """Visit 1 and Visit 2 of a Core package are two slots, not a
         repeat."""
-        self.handover(support_type="Visit", visit_number="1", training_number="")
-        self.handover(support_type="Visit", visit_number="2", training_number="")
+        # A Core school: a package's slots are its own, and a client school
+        # takes one hand-over a year (owner, 2026-10-08).
+        core = School.objects.create(
+            school_id="ONCE-CORE",
+            name="Once Core",
+            region=self.school.region,
+            district=self.school.district,
+            school_type="core",
+        )
+        slot = {"school": core, "support_type": "Visit"}
+        self.handover(**slot, visit_number="1", training_number="")
+        self.handover(**slot, visit_number="2", training_number="")
         with self.assertRaises(ConflictError):
-            self.handover(support_type="Visit", visit_number="2", training_number=None)
+            self.handover(**slot, visit_number="2", training_number=None)
 
     def test_the_database_refuses_what_gets_past_the_check(self):
         """bulk_create skips save(), as a concurrent second submission

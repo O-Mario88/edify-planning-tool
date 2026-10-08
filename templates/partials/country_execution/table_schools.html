@@ -26,7 +26,7 @@ the Planning tab counts, against what is verified — "Visits 3 of 4 · Staff 2 
       {% for row in schools.rows %}
       <tr data-level="1">
         <td>{{ row.code|default:"—" }}</td>
-        <th scope="row" class="cpo-namecell" data-leaf><span>{{ row.name }}</span><span class="cpo-hint"><span>{{ row.type }}</span></span></th>
+        <th scope="row" class="cpo-namecell" data-leaf><span>{% school_link row.name row.code %}</span><span class="cpo-hint"><span>{{ row.type }}</span></span></th>
         <td>{{ row.owner }}</td>
         <td>{{ row.visit_slots }}</td>
         <td>{{ row.visits_planned }}</td>

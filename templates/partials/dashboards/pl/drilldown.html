@@ -43,7 +43,7 @@
         {% for a in activities_pager.rows %}
         <tr><td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ a.type }}</td>
           <td class="py-2 px-3 whitespace-nowrap tabular-nums" data-label="School ID">{% if a.school_id %}{% school_code a.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
-          <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.school }}</td>
+          <td class="py-2 px-3 edify-text-caption text-slate-500">{% school_link a.school a.school_id %}</td>
           <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.owner }}</td>
           <td class="py-2 px-3 edify-text-caption font-semibold text-slate-600">{{ a.status }}</td></tr>
         {% empty %}<tr><td colspan="5" class="py-6 text-center text-[12px] text-slate-500 font-semibold">Nothing here.</td></tr>{% endfor %}

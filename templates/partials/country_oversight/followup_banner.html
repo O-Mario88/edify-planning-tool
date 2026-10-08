@@ -10,7 +10,7 @@ external dependency.{% endcomment %}
   <header class="cpo-banner-head">
     <div>
       <p class="cpo-banner-kicker">Follow-up from {{ followup.assigned_by_name|default:"the Country Director" }} · {{ followup.assigned_at|date:"j M Y" }}{% if followup.reminder_count %} · reminded {{ followup.reminder_count }}×{% endif %}</p>
-      <h2 class="cpo-banner-name" id="cpo-banner-t">{% firstof issue.label followup.issue_type %}{% if followup.cceo_name %} · {{ followup.cceo_name }}{% endif %}{% if followup.school_name %} · {{ followup.school_name }}{% endif %}</h2>
+      <h2 class="cpo-banner-name" id="cpo-banner-t">{% firstof issue.label followup.issue_type %}{% if followup.cceo_name %} · {{ followup.cceo_name }}{% endif %}{% if followup.school_name %} · {% school_link followup.school_name followup.school_id %}{% endif %}</h2>
     </div>
     <span class="cpo-tag" data-tone="{{ card.tone }}">{{ card.status }}</span>
   </header>

@@ -9,7 +9,7 @@
 {% if intelligence %}
 <div class="space-y-4 text-[12px] ">
 <div>
-<h4 class="font-semibold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
+<h4 class="font-semibold text-slate-800 text-[14px] leading-snug">{% school_link intelligence.school.name intelligence.school.id %}</h4>
 <div class="flex flex-wrap items-center gap-2 mt-1.5">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
 {{ intelligence.school.get_school_type_display }}

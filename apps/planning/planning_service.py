@@ -760,6 +760,16 @@ class PlanningDashboardService:
                         "staffScheduleReason": gate.staff_locked_reason,
                         "followUpVisitOpen": gate.staff_can_schedule,
                         "followUpVisitReason": gate.staff_reason,
+                        # One visit commitment a school a year (owner,
+                        # 2026-10-08): the few words the row shows where a
+                        # staff support visit is closed, and why.
+                        "visitLock": gate.lock_label,
+                        "visitLockCode": gate.staff_code,
+                        # The Visit Lock column: the state, its words
+                        # ("Unlocked" included) and the sentence behind it.
+                        "visitLockState": gate.lock_state,
+                        "visitLockLabel": gate.lock_state_label,
+                        "visitLockReason": gate.staff_reason if gate.is_locked else "",
                         "canAssignPartner": gate.can_assign_partner,
                         "assignPartnerReason": gate.assign_reason,
                         "visitGate": gate.as_dict(),

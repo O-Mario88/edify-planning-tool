@@ -425,7 +425,7 @@ Program Leads table, verification, risk, field intelligence and actions.
               {% for p in operations_priority_schools_pager.rows %}
               <tr>
                 <td class="text-left py-2 pl-1 whitespace-nowrap tabular-nums" data-label="School ID">{% if p.school_id %}{% school_code p.school_id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
-                <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{{ p.school }}</td>
+                <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{% school_link p.school p.school_id %}</td>
                 <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ p.region }}</td>
                 <td class="text-left py-2">
                   {% for i in p.issues %}<span class="inline-block px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold mr-1">{{ i }}</span>{% endfor %}

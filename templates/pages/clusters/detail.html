@@ -209,6 +209,7 @@ other two doors take it.{% endcomment %}
 <th scope="col" class="px-4 py-2.5">Last Training</th>
 <th scope="col" class="px-4 py-2.5">Visit Plan Status</th>
 <th scope="col" class="px-4 py-2.5">Training Plan Status</th>
+<th scope="col" class="px-4 py-2.5 whitespace-nowrap">Visit Lock</th>
 <th scope="col" class="px-4 py-2.5">Readiness</th>
 {% if support_rule %}
 <th scope="col" class="px-4 py-2.5 whitespace-nowrap">Responsible</th>
@@ -221,14 +222,20 @@ other two doors take it.{% endcomment %}
 {% for s in schools_pager.rows %}
 <tr class="hover:bg-slate-50/60 transition-colors">
 {% if can_tick %}<td class="school-plan-table__select"><label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label></td>{% endif %}
-<td class="px-4 py-3 font-bold text-[var(--edify-accent)]" data-record-title>{{ s.schoolId }}</td>
-<td class="px-4 py-3" data-label="School Name">
+{% comment %}The school's name is the row's title, and the title is the
+column that takes a table's spare width (consistency.css). The ID carried
+that mark, so the spare width opened between the ID and the name (owner,
+2026-10-08: "fix the gap between the school name and the school ID"). The
+ID is now as wide as it reads, with the name beside it.{% endcomment %}
+<td class="px-4 py-3 font-bold text-[var(--edify-accent)] whitespace-nowrap" data-label="School ID">{{ s.schoolId }}</td>
+<td class="px-4 py-3" data-label="School Name" data-record-title>
 <a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
 </td>
 <td class="px-4 py-3 font-semibold tabular-nums" data-label="SSA Average"><span class="edify-status-text" data-edify-tone="{{ s.ssaAverageTone|default:'neutral' }}">{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:1 }}/10{% else %}Not assessed{% endif %}</span></td>
 <td class="px-4 py-3 font-semibold" data-label="Last Visit"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</span></td>
 <td class="px-4 py-3 font-semibold" data-label="Last Training"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</span></td>
 {% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
+{% include "partials/planning/visit_lock_cell.html" with school=s cell_class="px-4 py-3 whitespace-nowrap" %}
 <td class="px-4 py-3" data-label="Readiness">
 <span class="inline-flex items-center rounded-control px-2 py-0.5 text-xs font-semibold border {% if s.planningStatus == 'ready_for_support_planning' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif s.planningStatus == 'ready_for_baseline_ssa' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-slate-100 text-slate-600 border-slate-200{% endif %}">
 {{ s.planningStatusLabel }}
@@ -305,7 +312,7 @@ aria-label="Remove {{ s.name }} from this cluster"
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="{% if support_rule %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}11{% else %}10{% endif %}{% else %}{% if can_tick %}10{% else %}9{% endif %}{% endif %}{% else %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}10{% else %}9{% endif %}{% else %}{% if can_tick %}9{% else %}8{% endif %}{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
+<td colspan="{% if support_rule %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}12{% else %}11{% endif %}{% else %}{% if can_tick %}11{% else %}10{% endif %}{% endif %}{% else %}{% if can_schedule or can_edit_cluster %}{% if can_tick %}11{% else %}10{% endif %}{% else %}{% if can_tick %}10{% else %}9{% endif %}{% endif %}{% endif %}" class="px-4 py-8 text-center text-slate-400 font-semibold">
   <p>No schools in this cluster.</p>
   {% if can_edit_cluster %}
   <button

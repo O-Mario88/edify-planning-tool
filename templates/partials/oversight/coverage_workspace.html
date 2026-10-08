@@ -43,7 +43,7 @@ quarter inside a year.
           {% for row in group_pager.rows %}
           <tr>
             <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
-            <td data-label="School" data-record-title>{{ row.school_name }}</td>
+            <td data-label="School" data-record-title>{% school_link row.school_name row.school_code %}</td>
             <td data-label="CCEO owner">{{ row.owner_name }}</td>
             <td data-label="District">{{ row.district_name|default:"—" }}</td>
             <td data-label="Cluster">{{ row.cluster_name|default:"—" }}</td>

@@ -645,19 +645,6 @@ main [data-oversight-workspace] .partner-plan-toolbar > form.oversight-period-fi
   color: var(--edify-success-text);
 }
 
-/* A pinned name ends in an ellipsis like any other cut label (the name is a
-   toggle, so the cap on its wrapper alone would clip it mid-letter); the
-   full name stays in its title and accessible name. */
-:root main [data-oversight-workspace] table.partner-plan-table .partner-plan-table__identity > .school-plan-table__name-toggle.school-plan-table__name-toggle.school-plan-table__name-toggle {
-  display: block !important;
-  inline-size: 100% !important;
-  min-inline-size: 0 !important;
-  max-inline-size: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
 /* Cluster Oversight session tables (owner, 2026-09-24): the Status reads in
    the colour of where the work stands — green once verified, blue while it
    waits on the Programme Lead or Impact Assessment. */

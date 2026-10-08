@@ -63,11 +63,11 @@ async function rowAction(row, name) {
   return item;
 }
 
-// A Partner Monitoring row's details, opened from the school's name as on
-// Planning: where the Partner is sending and where the work stands.
+// A Partner Monitoring row's details, opened from the arrow beside the
+// school's name as on Planning (the name itself links to the profile): where the Partner is sending and where the work stands.
 async function monitoringDetails(page, assignmentId) {
   const row = page.locator(`tr[data-assignment="${assignmentId}"]`);
-  await row.locator('.school-plan-table__name-toggle').click();
+  await row.locator('.school-plan-table__expander').click();
   const details = page.locator(`#partner-row-details-a-${assignmentId}`);
   await expect(details).toBeVisible();
   return details;
@@ -152,7 +152,7 @@ test.describe('Partner-supported schools — journeys', () => {
     await expect(responsible).toHaveAttribute('title', new RegExp(hope.partner));
     // The owner is unchanged; like every school's, it sits in the row's
     // details, which the name opens.
-    await row.locator('.school-plan-table__name-toggle').click();
+    await row.locator('.school-plan-table__expander').click();
     await expect(page.locator(`#planning-school-details-${hope.school_pk}`)).toContainText(data.cceo_name);
     const schedule = await rowAction(row, `Schedule activity for ${hope.name}`);
     await expect(schedule).not.toHaveAttribute('aria-disabled', 'true');

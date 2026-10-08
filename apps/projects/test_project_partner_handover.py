@@ -268,6 +268,10 @@ class ProjectPartnerHandoverTest(TestCase):
             project=self.project, partner=self.partner
         )
         outsider = Partner.objects.create(name="PPH Outsider", active_status=True)
+        # With the school rules on, SSA Support is handed over only where the
+        # year's SSA is still to be collected (owner, 2026-10-08): the
+        # fixture's SSA becomes last year's.
+        SsaRecord.objects.filter(school=self.school).update(fy=str(int(self.fy) - 1))
         self.client.force_login(self.coord_user)
         drawer = self.client.get(self._row()["partner_url"])
         self.assertEqual(

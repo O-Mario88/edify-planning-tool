@@ -833,8 +833,15 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
-        self.assertContains(response, 'class="school-plan-table__name-toggle"')
-        # The school name toggles the row; the profile stays one click away.
+        # The school's name is the link to its profile (owner, 2026-10-08);
+        # the arrow beside it opens the row's details.
+        self.assertContains(response, 'class="school-plan-table__expander"')
+        self.assertContains(response, 'class="school-plan-table__name-text"')
+        self.assertContains(
+            response,
+            f'<a href="/schools/{self.school.id}" class="school-link hover:underline" '
+            f"data-school-link>{self.school.name}</a>",
+        )
         self.assertContains(response, f'href="/schools/{self.school.id}"')
         self.assertContains(response, f"Open {self.school.name} school profile")
         self.assertContains(response, "SSA interventions needing urgent attention")
@@ -882,7 +889,8 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, 'class="school-plan-table"')
         # The cluster's own list needs no Cluster column: every row is in it.
         self.assertNotContains(response, "school-plan-table__cluster")
-        self.assertContains(response, 'class="school-plan-table__name-toggle"')
+        self.assertContains(response, 'class="school-plan-table__expander"')
+        self.assertContains(response, "data-school-link")
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@keydown.escape.window="openSchoolId = null"')
         self.assertContains(response, f'href="/schools/{self.school.id}"')
@@ -2030,6 +2038,10 @@ class FrontendViewsTestCase(TestCase):
                 "partner_id": partner.id,
                 "catalogue_item_id": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
                 "purpose": "Teaching environment follow-up",
+                # Named, as the drawer names it: a hand-over that names no
+                # reason is filed as SSA Support, which a school that has
+                # the year's SSA does not take (owner, 2026-10-08).
+                "purpose_of_visit": "training_follow_up",
                 "focus_intervention": "teaching_environment",
                 # Not the SSA's top-ranked need — guidance, not a block, but
                 # the selection now records an authorized reason.

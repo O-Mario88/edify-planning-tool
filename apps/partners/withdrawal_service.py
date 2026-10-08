@@ -894,6 +894,25 @@ def _assert_replacement_eligible(assignment, replacement_partner_id: str) -> Non
             f"{partner.name} already holds this support slot at this school."
         )
 
+    # One visit commitment a school a year, and SSA Support only where the
+    # year's SSA is still to be collected (owner, 2026-10-08). The hand-over
+    # being replaced is left out of the count, so a replacement is refused
+    # only over OTHER work: a staff visit planned since, another hand-over,
+    # or an SSA that has come in. The work then goes back to planning.
+    if assignment.school_id:
+        from apps.partners.handover_policy import past_school_rules
+        from apps.planning.eligibility import assert_handover_eligible
+
+        assert_handover_eligible(
+            assignment.school,
+            purpose_of_visit=assignment.purpose_of_visit,
+            expected_activity_type=assignment.expected_activity_type,
+            training_course=assignment.training_course_id,
+            past_school_rules=past_school_rules(project_id=assignment.project_id),
+            exclude_assignment_id=assignment.id,
+            exclude_activity_id=assignment.scheduled_activity_id,
+        )
+
 
 def _create_replacement(assignment, replacement_partner_id: str, principal):
     """A new assignment for the same support requirement, carrying no cost.

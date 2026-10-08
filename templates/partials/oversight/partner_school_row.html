@@ -18,11 +18,12 @@ hand-back decisions are the project's coordinator's (`item.project_locked`).
   {% if selectable %}<td class="school-plan-table__select">{% if item.withdrawal_label %}<label class="school-record-row__select" for="withdraw-pick-{{ row_id }}"><input type="checkbox" id="withdraw-pick-{{ row_id }}" data-withdraw-pick value="{{ item.partner_assignment_id }}" x-model="selected"><span class="sr-only">Select {{ item.school_name }} to withdraw</span></label>{% endif %}</td>{% endif %}
   <td data-label="School ID"><span class="partner-plan-table__code">{{ item.school_code|default:"—" }}</span></td>
   <td data-label="School Name" class="school-plan-table__name"><span class="partner-plan-table__identity">
-    <button type="button" class="school-plan-table__name-toggle"
+    <button type="button" class="school-plan-table__expander"
             @click="openRowId = openRowId === '{{ row_id }}' ? null : '{{ row_id }}'"
             :aria-expanded="(openRowId === '{{ row_id }}').toString()"
             aria-controls="partner-row-details-{{ row_id }}"
-            aria-label="Details for {{ item.school_name }}">{{ item.school_name }}</button>
+            aria-label="Details for {{ item.school_name }}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+    <span class="school-plan-table__name-text" title="{{ item.school_name }}">{% school_link item.school_name item.school_code %}</span>
   </span></td>
   <td data-label="Staff Name">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
   <td data-label="Training">{{ item.training_name|default:"—" }}</td>

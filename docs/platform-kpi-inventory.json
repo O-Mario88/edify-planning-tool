@@ -41909,7 +41909,7 @@
   {
    "audit_id": "KPI-PAYLOAD-002",
    "module": "apps/clusters/services.py",
-   "line": 1961,
+   "line": 1966,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -42482,7 +42482,7 @@
   {
    "audit_id": "KPI-PAYLOAD-023",
    "module": "apps/planning/planning_service.py",
-   "line": 1027,
+   "line": 1037,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 9,

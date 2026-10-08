@@ -37,12 +37,12 @@
         {% if can_tick %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
         <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
         <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
-          <button type="button" class="school-plan-table__name-toggle" title="{{ s.name }}" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}">
-  {{ s.name }}
-</button>
+          <button type="button" class="school-plan-table__expander" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
+          <span class="school-plan-table__name-text" title="{{ s.name }}">{% school_link s.name s.id %}</span>
 
         </div></td>
         {% include "components/school_planning_badges.html" with badges=s.planningBadges layout="cells" %}
+        {% include "partials/planning/visit_lock_cell.html" with school=s %}
         {% if s.supportRule %}{% include "partials/planning/support_cell.html" with school=s %}{% endif %}
         <td data-label="Actions" class="school-plan-table__actions">
             {% comment %}One Actions menu rather than up to five buttons
@@ -82,7 +82,7 @@
           </td>
       </tr>
       <tr id="cluster-school-details-{{ s.id }}" class="school-plan-table__details" x-show="openSchoolId === '{{ s.id }}'" x-cloak>
-        <td colspan="{% if s.supportRule %}{% if can_tick %}7{% else %}6{% endif %}{% elif can_tick %}6{% else %}5{% endif %}">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
+        <td colspan="{% if s.supportRule %}{% if can_tick %}8{% else %}7{% endif %}{% elif can_tick %}7{% else %}6{% endif %}">{% if request.user|can_open:"/schools/0" %}<a href="/schools/{{ s.id }}" class="edify-text-caption hover:underline">Open {{ s.name }} school profile</a>{% endif %}<dl class="school-record-row__metadata">
                 <div><dt>District:</dt><dd>{{ s.district|default:"—" }}</dd></div>
                 <div><dt>Shipping Address:</dt><dd>{{ s.shippingAddress }}</dd></div>
                 <div><dt>School Type:</dt><dd>{{ s.schoolTypeLabel }}</dd></div>

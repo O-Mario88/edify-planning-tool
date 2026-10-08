@@ -393,7 +393,12 @@ class AProjectHandOverGoesPastTheSchoolRulesForNowTest(_Fixture):
         limit = (
             "apps.partners.support_responsibility.assert_school_accepts_another_partner"
         )
-        with mock.patch(limit, side_effect=ConflictError("two already")):
+        # At a client school one hand-over a year answers before this limit
+        # does (owner, 2026-10-08; `_assert_school_has_room`). It is held
+        # aside here so the limit itself, which a Core school still reaches,
+        # is what is asked.
+        one_visit = mock.patch("apps.partners.services._assert_school_has_room")
+        with one_visit, mock.patch(limit, side_effect=ConflictError("two already")):
             self.assertTrue(self._create(project=self.project).id)
             with self.assertRaisesMessage(ConflictError, "two already"):
                 self._create()

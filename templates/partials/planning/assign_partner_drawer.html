@@ -71,11 +71,15 @@
     <select name="purpose_of_visit" id="purpose_of_visit" required x-model="purposeOfVisit" @change="onPurposeChange()"
       class="h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
       <option value="">Select a reason…</option>
-      {% for value, label in partner_visit_purposes %}<option value="{{ value }}" {% if value in locked_visit_purposes %}disabled data-visit-locked="true"{% endif %}>{{ label }}{% if value in locked_visit_purposes %} — visit used this year{% endif %}</option>{% endfor %}
+      {% for value, label in partner_visit_purposes %}<option value="{{ value }}" {% if value in purpose_locks %}disabled data-visit-locked="true"{% endif %}>{{ label }}{% if value in purpose_locks %} — not available{% endif %}</option>{% endfor %}
     </select>
-    {% if locked_visit_reason %}
-    <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ locked_visit_reason }} An in-school training can still be assigned.</p>
-    {% endif %}
+    {% comment %}Why a reason is greyed (owner, 2026-10-08: one visit
+    commitment a school a year; SSA Support only while the year's SSA is
+    still to be collected). The sentences are the save's own.{% endcomment %}
+    {% for reason in purpose_lock_reasons %}
+    <p class="edify-text-caption text-amber-700" data-visit-locked-reason role="note">{{ reason }}</p>
+    {% endfor %}
+    {% if on_top_training_note %}<p class="edify-text-caption text-slate-500" data-on-top-training role="note">{{ on_top_training_note }}</p>{% endif %}
   </div>
 
   {% include "partials/partners/_project_handover_routes.html" %}

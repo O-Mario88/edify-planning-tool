@@ -29,7 +29,7 @@ The rows and their figures are the ones the summary above is added up from.
           <td class="whitespace-nowrap">{{ r.date_label }}{% if r.day_off %}<span class="mp-dayoff" data-tone="danger" title="{{ r.day_off.advice }}">{{ r.day_off.label }}: reschedule</span>{% endif %}</td>
           <td class="whitespace-nowrap">{{ r.activity_word }}</td>
           <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"—" }}</td>
-          <th scope="row" data-record-title>{{ r.school_name|default:"—" }}</th>
+          <th scope="row" data-record-title>{% if r.school_name %}{% school_link r.school_name r.school_code %}{% else %}—{% endif %}</th>
           <td>{{ r.district_name|default:"—" }}</td>
           <td>{{ r.cluster_name|default:"—" }}</td>
           <td>{{ r.activity_purpose }}</td>

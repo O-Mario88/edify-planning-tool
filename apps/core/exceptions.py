@@ -61,6 +61,12 @@ def edify_exception_handler(exc: Exception, context: dict):
         "correlationId": correlation_id,
         "message": message,
     }
+    # A refusal that knows its own reason says it in a word a client can
+    # switch on (owner, 2026-10-08; apps.planning.visit_gate.refusal):
+    # STAFF_VISIT_SCHEDULED, PARTNER_VISIT_ASSIGNED, CURRENT_FY_SSA_EXISTS.
+    reason = getattr(exc, "reason_code", None)
+    if reason:
+        response.data["reason"] = reason
     return response
 
 

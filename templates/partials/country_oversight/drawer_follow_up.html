@@ -43,7 +43,7 @@ activity or portfolio, and does not notify the CCEO.{% endcomment %}
     </ul>
     {% if affected %}
     <p class="cpo-muted">Affected schools: {{ total_affected }}{% if total_affected > affected|length %} — the first {{ affected|length }}:{% endif %}
-      {% for school in affected %}{{ school.name }} ({{ school.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
+      {% for school in affected %}{% school_link school.name school.code %} ({{ school.code }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
     {% endif %}
     {% if existing %}
     <p class="cpo-muted">Already open for this scope:</p>

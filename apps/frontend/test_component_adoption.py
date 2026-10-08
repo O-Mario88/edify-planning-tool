@@ -49,8 +49,10 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: branches already in flight that day can land. Lower them to the real counts
 #: as those merge, and from then on only downwards. (`!important` fell to 3,953
 #: later that day, when the calendar's event tabs stopped being a grid forced
-#: over the rail; its ceiling keeps the same ten.)
-IMPORTANT_CEILING = 3963
+#: over the rail; its ceiling keeps the same ten. 3,937 on 2026-10-08, when the
+#: school name on the planning tables became a link and the rules that had
+#: forced the old name button into its column went with it.)
+IMPORTANT_CEILING = 3947
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

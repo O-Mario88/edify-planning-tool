@@ -41,7 +41,7 @@
           </td>
           <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if act.schoolId %}{{ act.schoolId }}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <td>
-            <strong class="block">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+            <strong class="block">{% if act.schoolName %}{% school_link act.schoolName act.schoolId %}{% else %}Cluster-wide{% endif %}</strong>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
           </td>
           <td>{{ act.activityType|title|replace_underscore }}</td>

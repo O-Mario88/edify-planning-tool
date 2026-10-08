@@ -133,15 +133,47 @@ ownership columns historically hold either).
   **working-day capacity**: weekdays minus public holidays minus the
   person's approved leave.
 - **Schools**: `school_type` defines the Core package holder (`core`) and
-  everything on the **client entitlement** — `client` plus the three
-  *Programme* types, `core_trained`, `core_graduate` and `champion`. The
-  Programme types take every activity a client school takes (visits and
-  trainings, the same two visits a year) and are **never assigned to a
-  partner**: the visit gate closes the partner side for them and
-  `partners.services.create_assignment` refuses one at the single creation
-  door. **`/programme-schools`** is the combined list of the three.
+  everything on the **client rule** — `client` plus the three *Programme*
+  types, `core_trained`, `core_graduate` and `champion`. A Champion school
+  is planned for donor and story visits only and is **never assigned to a
+  partner**. **`/programme-schools`** is the combined list of the three.
   Operational status (active/reopened/closed) is a separate axis. Schools
   sit in the geography tree and may belong to one cluster.
+- **School visit eligibility** (`apps/planning/visit_gate.py`, asked in one
+  call through `apps/planning/eligibility.py`): whether a school can take a
+  plan in a financial year, and the reason where it cannot. Every Schedule
+  and Assign control, every drawer and every save reads the same answer.
+  - A Client, Core Trained or Core Graduate school takes **one support
+    visit a year** — a Training Follow Up or an In-school Training — by
+    staff **or** by a partner (owner, 2026-10-08). A school a partner holds
+    (assigned is enough; the partner need not have dated it) is closed to a
+    staff support visit; a school with its staff visit, or already held, is
+    not handed to a partner for another. Reasons: `STAFF_VISIT_SCHEDULED`,
+    `PARTNER_VISIT_ASSIGNED`.
+  - **SSA Support handed to a partner** is a separate commitment, recorded
+    on the hand-over (`purpose_of_visit = ssa_support`). It closes nothing
+    and no visit closes it; it is assigned only until the school has
+    completed its SSA for the year (`apps/ssa/current_year.py`: a confirmed
+    record whose `fy` is that year). Reasons: `SSA_SUPPORT_ELIGIBLE`,
+    `CURRENT_FY_SSA_EXISTS`.
+  - **A Special Project's work is counted on its training**, not as the
+    school's visit: a project's hand-over, and what a partner dates under
+    one, hold no school against a staff visit or another hand-over, and go
+    past the rule when made (`apps/partners/handover_policy.py`).
+  - **A school that has closed down is locked completely** until it is
+    reopened: every door answers closed (`SCHOOL_CLOSED`), as the saving
+    doors already refused it (`lifecycle_service.assert_operating`).
+  - Not part of it: donor, story, invitation and social visits, staff SSA
+    Support, group trainings and cluster sessions, and a Core package (two
+    staff + two partner visits and trainings).
+  - The Planning list and the cluster school lists show the answer in a
+    **Visit Lock** column: Unlocked, Staff visit scheduled, Partner visit
+    scheduled (the partner has dated it) or Awaiting schedule from partner
+    (`visit_gate.lock_state`).
+  - The creation doors lock the school's row before they count
+    (`activities.services._create`, `partners.services.create_assignment`),
+    so two people cannot both be first. A refusal's code is also the
+    `reason` field of the API error envelope.
 - **Activity catalogue**: every plannable activity derives from one of 40
   governed catalogue items (stable codes like `STANDARD_SCHOOL_VISIT`,
   `LITERACY_NUMERACY_PROJECT`, `EDTECH_FOUNDATIONS`). The item is the

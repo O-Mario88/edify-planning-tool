@@ -242,7 +242,7 @@ may withdraw it and its project work has not begun.{% endcomment %}
       locked one is greyed with its reason.{% endcomment %}
       {% if can_bulk_withdraw %}<td class="school-plan-table__select">{% if row.can_withdraw %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" value="{{ row.school_id }}" x-model="selected" data-project-leave-pick><span class="sr-only">Select {{ row.school_name }} to withdraw</span></label>{% else %}<label class="school-record-row__select" for="project-leave-{{ row.assignment_id }}" title="{{ row.withdraw_reason }}"><input type="checkbox" id="project-leave-{{ row.assignment_id }}" disabled data-project-leave-locked><span class="sr-only">{{ row.school_name }} cannot be withdrawn: {{ row.withdraw_reason }}</span></label>{% endif %}</td>{% endif %}
       <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
-      <td data-record-title data-label="School">{{ row.school_name }}</td>
+      <td data-record-title data-label="School">{% school_link row.school_name row.school_id %}</td>
       <td data-label="District"{% if row.region %} title="{{ row.region }}"{% endif %}>{{ row.district|default:"—" }}</td>
       <td data-label="School owner">{{ row.school_owner }}</td>
       <td data-label="Added by">{{ row.added_by }}</td>

@@ -116,7 +116,7 @@ class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border 
 {% for act in recent %}
 <li class="px-5 py-3.5 flex items-center justify-between">
 <div>
-<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {% school_link act.school.name act.school.id %}{% endif %}</p>
 <p class="edify-text-caption text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status }}</p>
 </div>
 <a href="/my-plan/{{ act.id }}" class="edify-text-caption text-slate-400 edify-primary-text-hover transition-colors">→</a>

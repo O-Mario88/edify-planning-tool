@@ -9,21 +9,23 @@
    do not hold room for two side-by-side buttons: it goes to the school name.
    Loaded by the Planning page only, outside the render-blocking shell, and
    after the shared sheet in no guaranteed order: hence the :root main weight. */
-:root main table.school-plan-table--selectable[data-cluster-column] { min-inline-size: 57.5rem !important; }
+:root main table.school-plan-table--selectable[data-cluster-column] { min-inline-size: 68.25rem !important; }
+/* With Responsible as well. Named with both marks so it outranks the shared
+   sheet's own least width for a table with Responsible, whichever of the two
+   sheets the page happens to load last. */
+:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] { min-inline-size: 74.75rem !important; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(4) { width: 7.5rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(5) { width: 10.25rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(6) { width: 11.75rem; }
-:root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(7) { width: 8rem; }
-:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6.5rem; }
-/* With both columns the name gets what is left of the table's least width,
-   and on a phone that is all it gets. At 56rem (the Responsible rule in
-   consistency.css, which the cascade preferred to the 57.5rem above: the two
-   weigh the same and load in no fixed order) that was 100px, and "School
-   Name" at the heading's size needs 114: it ran 2px into Cluster (owner,
-   2026-10-05: "make sure the columns are not overlapping"; column names went
-   up a step on 2026-10-08). Both attributes outweigh either rule. */
-:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] { min-inline-size: 58rem !important; }
-:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(8) { width: 8rem; }
+/* Visit Lock, Responsible and Actions follow, sized by name in the shared
+   sheet (owner, 2026-10-08: the Visit Lock column, 15rem; Responsible is
+   6.5rem since the column names went up a step the same day). The least
+   width above is every sized column plus 10rem for the school name, which is
+   what the name had on a 1280px screen before the Visit Lock column, and
+   more than its own heading needs: a screen with less room than that scrolls
+   the table rather than squeezing the name further. Actions keeps one menu's
+   width at every screen here. */
+:root main table.school-plan-table--selectable[data-cluster-column] thead th.school-plan-table__actions { width: 8rem; }
 /* A longer cluster name ends in an ellipsis and reads whole in its title.
    This table fixes its column widths, so a cell cannot grow to fit what it
    holds, and the platform's one-line rule (consistency.css, EVERY TABLE STAYS
@@ -34,8 +36,10 @@
 /* Where the page is wide enough the column holds a cluster's name as they
    are written ("Greater Abako Cluster", "Bata - Amwoma Cluster"); the room
    comes from the school name, which still has the most of any column there.
-   Narrower screens keep the 7.5rem column, so the name gives nothing up. */
-@media (min-width: 90rem) {
+   Narrower screens keep the 7.5rem column, so the name gives nothing up.
+   From 105rem, not 90rem, since the Visit Lock column (2026-10-08): between
+   the two the school name is the column that needs the room. */
+@media (min-width: 105rem) {
   :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(4) { width: 11rem; }
 }
 

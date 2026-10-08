@@ -82,7 +82,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 <td class="px-6 py-4 whitespace-nowrap tabular-nums" data-label="School ID">{% if act.school.id %}{% school_code act.school.id %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
 <td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="School / Cluster">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">School / Cluster</span>
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% if act.school %}{% school_link act.school.name act.school.id %}{% else %}Cluster-wide{% endif %}</div>
 </td>
 <!-- Type -->
 <td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Activity Type">

@@ -1756,6 +1756,8 @@ def _profile_planning_controls(user, school) -> dict:
             "profile_core_routes": False,
             "schedule_block": "",
             "assign_block": "",
+            "visit_lock": "",
+            "visit_lock_reason": "",
         }
     core_routes = school.school_type == "core" and RolePermissionService.can_view_page(
         user, "core_schools"
@@ -1765,12 +1767,18 @@ def _profile_planning_controls(user, school) -> dict:
         "can_schedule": RolePermissionService.can_open_schedule_drawer(user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(user),
         "profile_core_routes": core_routes,
-        # The Core chooser greys the half that is used itself, so its door
-        # is always open; a client school's one staff visit greys the door.
+        # The Core chooser greys the half that is used itself, and the
+        # Planning drawer greys the purposes a school is closed to — its
+        # support visit once it has one or a partner holds it (owner,
+        # 2026-10-08) — while donor, story and SSA Support visits stay open.
+        # So the door closes only where the school's list row closes it.
         "schedule_block": ""
-        if core_routes or gate.staff_can_schedule
-        else gate.staff_reason,
+        if core_routes or not gate.staff_locked
+        else gate.staff_locked_reason,
         "assign_block": "" if gate.can_assign_partner else gate.assign_reason,
+        # Why a staff support visit is closed here, beside the buttons.
+        "visit_lock": gate.lock_label,
+        "visit_lock_reason": gate.staff_reason if gate.lock_label else "",
     }
 
 

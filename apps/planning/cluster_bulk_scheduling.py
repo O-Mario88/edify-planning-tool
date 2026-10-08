@@ -86,6 +86,9 @@ __all__ = [
 #: The bulk purpose whose day collects the SSA rather than moving one of its
 #: interventions — the per-school drawer's "Data Gathering".
 DAY_COLLECTS_THE_SSA = "ssa_support"
+#: The bulk purposes that are a school's support visit of the year: closed at
+#: a school that has one, or that a partner holds (owner, 2026-10-08).
+SUPPORT_VISIT_PURPOSES = ("training_follow_up",)
 
 
 @dataclass
@@ -98,6 +101,10 @@ class BulkMember:
     school_type_label: str
     selectable: bool
     reason: str = ""
+    #: Why a Training Follow Up cannot be planned here although the school
+    #: can be ticked for the day's other purposes: it has its support visit
+    #: for the year, or a partner holds it (owner, 2026-10-08).
+    visit_reason: str = ""
 
     def as_dict(self) -> dict:
         return {
@@ -107,6 +114,7 @@ class BulkMember:
             "schoolTypeLabel": self.school_type_label,
             "selectable": self.selectable,
             "reason": self.reason,
+            "visitReason": self.visit_reason,
         }
 
 
@@ -228,6 +236,11 @@ def schedulable_members(cluster, principal) -> BulkSelection:
                 school_type_label=school.get_school_type_display(),
                 selectable=selectable,
                 reason=reason,
+                visit_reason=(
+                    gate.staff_reason
+                    if selectable and not gate.staff_can_schedule
+                    else ""
+                ),
             )
         )
     return BulkSelection(cluster_id=cluster.id, cluster_name=cluster.name, members=rows)
@@ -351,6 +364,10 @@ def bulk_schedule_cluster_visits(cluster_id: str, data: dict, principal) -> dict
             )
         if not member.selectable:
             raise BadRequest(member.reason)
+        if purpose in SUPPORT_VISIT_PURPOSES and member.visit_reason:
+            # The drawer greys the school for this purpose; a stale drawer or
+            # a typed POST is told why here, before anything is written.
+            raise BadRequest(member.visit_reason)
         chosen.append(member)
 
     # Ticked twice under two ids is still one school, and a school is what the

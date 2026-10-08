@@ -1291,6 +1291,23 @@ def _assert_schedule_entitlement(
     )
     if partner_delivery:
         assert_partner_may_schedule_visit(school, fy)
+        # Work created already carrying a partner is a hand-over made in one
+        # step, and is asked what a hand-over is asked (owner, 2026-10-08):
+        # one visit commitment a school a year, and SSA Support only where
+        # the year's SSA is still to be collected. A partner dating a
+        # hand-over it already holds does not come through here
+        # (`_partner_schedule_from_assignment`).
+        from apps.partners.handover_policy import past_school_rules
+        from apps.planning.eligibility import assert_handover_eligible
+
+        assert_handover_eligible(
+            school,
+            purpose_of_visit=data.get("purposeOfVisit") or data.get("purposeType"),
+            expected_activity_type=activity_type,
+            training_course=training_course,
+            past_school_rules=past_school_rules(project_id=data.get("projectId")),
+            fy=fy,
+        )
     else:
         assert_staff_may_schedule_visit(school, fy, pool=pool)
 
@@ -2333,10 +2350,11 @@ def _create(
             principal=principal,
             owner_id=data.get("responsibleStaffId"),
         )
-    # A Partner-supported school is planned like any other school (owner,
-    # 2026-09-28, lifting the 2026-09-23 lock that let staff plan only Data
-    # Gathering, Content Gathering and Donor Visits there; see
-    # apps.planning.partner_school_policy).
+    # A school a Partner holds takes no staff support visit (owner,
+    # 2026-10-08: one visit commitment a school a year); every other purpose
+    # is planned there like at any other school, as it has been since the
+    # 2026-09-23 lock was lifted on 2026-09-28. `_assert_schedule_entitlement`
+    # below asks, from `apps.planning.visit_gate`.
     # Whose approval this needs, if anyone's. Set only for a request-only role
     # at a school somebody else owns; everything below that reads it is the
     # request path (apps.planning.visit_requests).
@@ -5254,6 +5272,12 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
                 fy=a.fy,
                 exclude_activity_id=a.id,
             )
+            # Nothing is assigned at a school that has closed down until it
+            # is reopened (owner, 2026-09-15, restated 2026-10-08).
+            from apps.schools.lifecycle_service import assert_operating
+
+            assert_operating(a.school)
+            _assert_move_keeps_one_commitment(a, to_partner=delivery == "partner")
         if "expectedParticipants" in data:
             a.expected_participants = data.get("expectedParticipants")
         if delivery == "partner":
@@ -5293,6 +5317,51 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
         if a.scheduled_date and a.status not in ("cancelled", "rejected"):
             _apply_schedule_cost_snapshot(a, data, principal=principal)
     return _serialize(a)
+
+
+def _assert_move_keeps_one_commitment(a: Activity, *, to_partner: bool) -> None:
+    """A support visit moved between staff and a partner stays the school's
+    one visit of the year (owner, 2026-10-08).
+
+    The visit being moved is left out of the count, so the move itself is
+    never the duplicate: it is refused only where the side it lands on is
+    closed by OTHER work — the school already has a staff visit, or another
+    hand-over holds it. Read behind the school's row lock, as a new plan is.
+    """
+    from apps.planning.training_entitlement import never_refused
+    from apps.planning.visit_gate import (
+        assert_staff_may_schedule_visit,
+        client_visit_pool,
+        rule_for,
+    )
+    from apps.projects.models import is_outside_ssa
+
+    school = a.school
+    if rule_for(school.school_type) != "client" or is_outside_ssa(a.project_id):
+        return
+    pool = client_visit_pool(a.activity_type, a.catalogue_item, a.purpose_type)
+    if pool is None or never_refused(
+        a.activity_type, course=a.training_course_id, project_id=a.project_id
+    ):
+        return
+    School.objects.select_for_update().filter(pk=school.pk).first()
+    if not to_partner:
+        assert_staff_may_schedule_visit(
+            school, a.fy, pool=pool, exclude_activity_id=a.id
+        )
+        return
+    from apps.partners.handover_policy import past_school_rules
+    from apps.planning.eligibility import assert_handover_eligible
+
+    assert_handover_eligible(
+        school,
+        purpose_of_visit=a.purpose_type,
+        expected_activity_type=a.activity_type,
+        training_course=a.training_course_id,
+        past_school_rules=past_school_rules(project_id=a.project_id),
+        fy=a.fy,
+        exclude_activity_id=a.id,
+    )
 
 
 def set_facilitator(activity_id: str, partner_id, principal) -> dict:
