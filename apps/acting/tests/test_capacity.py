@@ -161,6 +161,19 @@ class ActingProgramLeadAcceptanceTests(RequestCase):
         for stranger in ("Agnes Officer", "Peter Lead", "Achieng Officer"):
             self.assertNotIn(stranger, text)
 
+    def test_she_opens_the_leads_and_the_officers_calendars_and_no_others(self):
+        for profile in (self.john_sp, self.david_sp, self.michael_sp):
+            response = self.get(
+                self.sarah, f"/calendar?person={profile.id}", OCTOBER_15
+            )
+            self.assertEqual(response.status_code, 200, profile.id)
+        text = self.get(
+            self.sarah, f"/calendar?person={self.john_sp.id}", OCTOBER_15
+        ).content.decode()
+        for name in ("John Lead", "David Officer", "Michael Officer"):
+            self.assertIn(name, text)
+        self.assertNotIn("Agnes Officer", text)
+
     def test_john_remains_a_full_program_lead_throughout(self):
         for day in (SEPTEMBER_30, OCTOBER_15, NOVEMBER_1):
             self.assertOpens(self.john, PL_PAGES[:4], day)

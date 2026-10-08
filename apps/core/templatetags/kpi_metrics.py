@@ -147,8 +147,11 @@ def parse_metric(parser, token):
 
 
 class MetricStripNode(template.Node):
-    def __init__(self, body):
+    def __init__(self, body, live_id=""):
         self.body = body
+        # An id that makes the strip a live region: it reads itself again
+        # when the plan changes (static/js/live-regions.js).
+        self.live_id = live_id
 
     def render(self, context):
         items = []
@@ -162,15 +165,24 @@ class MetricStripNode(template.Node):
             density=None,
             variant="executive",
             drilldown_mode="",
+            live_id=self.live_id,
         )
         return render_to_string("components/context_metrics.html", values)
 
 
 @register.tag("kpi_strip")
 def parse_metric_strip(parser, token):
+    live_id = ""
+    for bit in token.split_contents()[1:]:
+        name, _, value = bit.partition("=")
+        if name != "live_id" or not value:
+            raise template.TemplateSyntaxError(
+                'kpi_strip takes one optional argument: live_id="an-id"'
+            )
+        live_id = value.strip("\"'")
     body = parser.parse(("endkpi_strip",))
     parser.delete_first_token()
-    return MetricStripNode(body)
+    return MetricStripNode(body, live_id)
 
 
 @register.simple_tag

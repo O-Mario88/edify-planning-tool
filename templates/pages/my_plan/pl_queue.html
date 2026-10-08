@@ -23,7 +23,8 @@ Open, Verified and Return are one Actions menu rather than three buttons
   {% endpage_header %}
 
   {% paginate rows "review_page" as pager %}
-  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>
+  {# Reads itself again when an officer sends in a completion or one is decided (static/js/live-regions.js): the number in the heading and the rows. #}
+  <section id="completion-reviews" data-live-region class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="completion-reviews-title" data-review-register>
     <header class="rpl-card__header">
       <div class="rpl-card__heading">
         <h2 id="completion-reviews-title" class="rpl-card__title">Waiting on you</h2>

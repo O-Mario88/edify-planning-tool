@@ -126,6 +126,28 @@ class ActingProgramLeadScopeTests(ActingFixture):
             {"Sarah Officer": 560, "David Officer": 560, "Michael Officer": 560},
         )
 
+    def test_the_calendar_offers_the_teams_calendars_with_the_leads_first(self):
+        from apps.activities.calendar_people import find, teams_for
+
+        teams = teams_for(self.acting(self.sarah))
+        self.assertEqual(
+            [p.name for p in teams[0].people],
+            ["John Lead", "David Officer", "Michael Officer"],
+        )
+        self.assertEqual(
+            teams[0].people[0].ids, frozenset({self.john_sp.id, self.john.id})
+        )
+        # Another team's officer is on nobody's strip but their own Lead's.
+        self.assertEqual(find(teams, self.agnes_sp.id), (None, None))
+        self.assertIsNotNone(find(teams, self.john_sp.id)[1])
+        # In her own role her calendar is the personal page it always was,
+        # and John's strip is his officers, himself not among them.
+        self.assertEqual(teams_for(fresh(self.sarah)), [])
+        self.assertEqual(
+            [p.name for p in teams_for(fresh(self.john))[0].people],
+            ["David Officer", "Michael Officer", "Sarah Officer"],
+        )
+
     def test_the_team_is_read_as_it_stands_today(self):
         """Someone who joins or leaves the team mid-month joins or leaves the
         acting leader's reach with them."""

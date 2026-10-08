@@ -2340,6 +2340,7 @@
         "apps/acting/models.py",
         "apps/acting/services.py",
         "apps/activities/day_off.py",
+        "apps/activities/live.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/clusters/eligibility.py",
@@ -4823,8 +4824,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "e0d526e0e98b0c2e3812d22be1107b4c5617bdd8830089063d96efb382ecf9b7",
-    "sources": "16749d1f4827d615e2da371f5563bf7b50b711f9283b3b515d67abbb38dcfb21",
+    "payload": "0c7fffe8628d3e291e3b42e2361fa3f0a01dd983d4cb0a5142b280e6fe02f8a8",
+    "sources": "0ad115459b28bd9e0fcb448c2fa27935a59435125d1d9a870a21349d2e1e2dc7",
     "sourceCount": 239,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

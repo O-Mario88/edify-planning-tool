@@ -31,7 +31,7 @@ enforce. Nothing here can hold a different opinion of either.
 {% endif %}
   {% endpage_header %}
 
-  {% kpi_strip %}
+  {% kpi_strip live_id="programme-schools-context" %}
     {% kpi_metric %}
       {% kpi_label %}Programme schools{% endkpi_label %}
       {{ result.total|intcomma }}
@@ -92,7 +92,8 @@ enforce. Nothing here can hold a different opinion of either.
 
   {% if rows %}
   {% paginate rows "programme_page" as pager %}
-  <section class="card p-0 overflow-hidden">
+  {# Reads itself again when a visit or a training is planned, moved or handed to a partner (static/js/live-regions.js). #}
+  <section id="programme-schools-table" data-live-region class="card p-0 overflow-hidden">
     <div class="overflow-x-auto">
       <table class="edify-data-table w-full text-left">
         <caption class="sr-only">Core Trained, Core Graduate and Champion schools with their visit entitlement, planned visit and training attachment for FY{{ fy }}</caption>

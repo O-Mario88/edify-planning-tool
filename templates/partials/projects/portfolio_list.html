@@ -8,7 +8,7 @@
    names every project with its number of schools; the open project's card
    sits under it, already open on its schools, and a tab swaps this list in
    place so the page does not reload.{% endcomment %}
-<div id="project-list" class="space-y-4">
+<div id="project-list" data-live-region class="space-y-4">
   {% if portfolio %}
   <nav class="oversight-entity-tabs" aria-label="Projects" data-project-tabs>
     {% for row in portfolio %}
