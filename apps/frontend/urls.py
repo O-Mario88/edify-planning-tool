@@ -55,6 +55,7 @@ from .views import (
     undo_views,
     staff_activity_views,
     training_ceiling_views,
+    acting_views,
 )
 
 app_name = "frontend"
@@ -304,6 +305,33 @@ urlpatterns = [
     ),
     path("logout", auth_views.logout_view, name="logout"),
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),
+    # Acting Leadership (apps.acting): a leader appoints an acting leader for
+    # one month, and the record of who held delegated authority and when.
+    path(
+        "acting-leadership",
+        acting_views.acting_leadership_view,
+        name="acting_leadership",
+    ),
+    path(
+        "acting-leadership/appoint",
+        acting_views.acting_appoint_view,
+        name="acting_appoint",
+    ),
+    path(
+        "acting-leadership/<str:assignment_id>",
+        acting_views.acting_record_view,
+        name="acting_record",
+    ),
+    path(
+        "acting-leadership/<str:assignment_id>/cancel",
+        acting_views.acting_cancel_view,
+        name="acting_cancel",
+    ),
+    path(
+        "acting-leadership/<str:assignment_id>/reschedule",
+        acting_views.acting_reschedule_view,
+        name="acting_reschedule",
+    ),
     path(
         "change-password", auth_views.force_change_password_view, name="change_password"
     ),

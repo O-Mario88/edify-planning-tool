@@ -116,6 +116,8 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "work_plan": (MONTHLY, 15),
     "analytics": (MONTHLY, 20),
     "my_target": (MONTHLY, 25),
+    # Acting leadership is arranged a month at a time (apps.acting).
+    "acting_leadership": (MONTHLY, 27),
     "my_coaching": (MONTHLY, 30),
     "impact_reports": (MONTHLY, 35),
     "cce_reports": (MONTHLY, 40),

@@ -65,6 +65,7 @@ class Command(BaseCommand):
             "verification_sampling": jobs.verification_sampling_job,
             "activity_reminders": jobs.activity_reminders_job,
             "day_off_alerts": jobs.day_off_alerts_job,
+            "acting_lifecycle": jobs.acting_lifecycle_job,
             "target_ledger_sync": jobs.target_ledger_sync_job,
             "pd_reminders": jobs.pd_reminders_job,
             "loan_tracking_notifications": jobs.loan_tracking_notifications_job,

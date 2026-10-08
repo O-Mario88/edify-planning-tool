@@ -84,6 +84,7 @@ EXPECTED_PL_SIDEBAR = [
             ("Work Plan", "/work-plan"),
             ("Analytics", "/analytics/program-lead"),
             ("My Targets", "/my-targets"),
+            ("Acting Leadership", "/acting-leadership"),
         ],
     ),
     (

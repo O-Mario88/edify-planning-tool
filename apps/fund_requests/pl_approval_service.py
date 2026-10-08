@@ -204,6 +204,9 @@ def _require_pl_action(principal):
     Field budget approval is the CCEO→PL chain; an Admin approving into it is
     an approval nobody in the field made, recorded as though they had.
     """
+    from apps.core.acting import FUND_DECISION, refuse_withheld
+
+    refuse_withheld(principal, FUND_DECISION, "Deciding a team fund plan")
     role = getattr(principal, "active_role", None)
     if role not in ("Program Lead", "CountryDirector"):
         raise Forbidden(

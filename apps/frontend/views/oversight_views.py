@@ -2268,12 +2268,20 @@ def _team_roster(user, selected: str) -> list[dict] | None:
     tab about one person does not list everybody else as empty. None for a
     reader who leads no team, which keeps the plain grouping.
     """
-    roster = oversight.program_lead_members(user.id)
+    from apps.core.acting import is_acting, team_lead_user_id
+    from apps.core.scoping import owner_ids
+
+    # As Acting Programme Lead the roster is the appointing Lead's, and "My
+    # Work" is still the reader's own row on it, not the Lead's.
+    roster = oversight.program_lead_members(team_lead_user_id(user))
     if not roster:
         return None
     if selected == WHOLE_TEAM_TAB:
         return roster
     if selected == "mine":
+        if is_acting(user):
+            mine = set(map(str, owner_ids(user)))
+            return [m for m in roster if mine & set(map(str, m["ids"]))] or None
         return roster[:1]
     chosen = [member for member in roster if str(selected) in map(str, member["ids"])]
     return chosen or None
@@ -3089,8 +3097,10 @@ def partner_oversight_view(request):
     team_items = [i for i in team_rows if not isinstance(i, is_training)]
     team_trainings = [i for i in team_rows if isinstance(i, is_training)]
 
+    from apps.core.acting import team_lead_user_id
+
     roster = oversight.program_lead_members(
-        requested_pl if country_lens else request.user.id
+        requested_pl if country_lens else team_lead_user_id(request.user)
     )
     # Partner Monitoring (owner, 2026-09-23): one Partner at a time, never an
     # undifferentiated table of every organisation's work. The Partner tabs

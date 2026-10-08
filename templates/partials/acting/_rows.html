@@ -1,0 +1,45 @@
+{% load row_actions %}
+{% comment %}
+The rows of one Acting Leadership table. `rows` are ActingAssignment records
+decorated by the view (`scope_text`, `can_manage`); `period_heading` is
+"Period" or "Month". The permanent role has its own column, beside the acting
+role, on every table. Current and Upcoming name the scope; History names who
+made the appointment (`names="appointed_by"`). The record drawer has both, so
+each table keeps to the width of a laptop's work area.
+{% endcomment %}
+<thead>
+  <tr>
+    <th scope="col" class="px-3 py-2">Person</th>
+    <th scope="col" class="px-3 py-2">Permanent role</th>
+    <th scope="col" class="px-3 py-2">Acting role</th>
+    <th scope="col" class="px-3 py-2">{{ period_heading }}</th>
+    {% if names == "appointed_by" %}<th scope="col" class="px-3 py-2">Appointed by</th>{% else %}<th scope="col" class="px-3 py-2">Scope</th>{% endif %}
+    <th scope="col" class="px-3 py-2">Status</th>
+    <th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Actions</span></th>
+  </tr>
+</thead>
+<tbody>
+  {% for row in rows %}
+  {% with state=row.state %}
+  <tr data-acting-row="{{ row.id }}" data-acting-state="{{ state }}">
+    <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.appointee.name }}</th>
+    <td class="px-3 py-2" data-label="Permanent role">{{ row.appointee_role }}</td>
+    <td class="px-3 py-2" data-label="Acting role"><span title="{{ row.label }}">{{ row.short_label }}</span></td>
+    <td class="px-3 py-2 tabular-nums" data-label="{{ period_heading }}">{% if period_heading == "Month" %}{{ row.period_label }}{% else %}<span title="{{ row.effective_label }}">{{ row.short_period_label }}</span>{% endif %}</td>
+    {% if names == "appointed_by" %}<td class="px-3 py-2" data-label="Appointed by"><span title="Scope: {{ row.scope_text }}">{{ row.appointed_by.name }}</span></td>{% else %}<td class="px-3 py-2" data-label="Scope"><span title="Appointed by {{ row.appointed_by.name }}">{{ row.scope_text }}</span></td>{% endif %}
+    <td class="px-3 py-2" data-label="Status">{% if state == "active" %}{% include "components/badge.html" with tone="success" label="Active" %}{% elif state == "upcoming" %}{% include "components/badge.html" with tone="info" label="Upcoming" %}{% elif state == "cancelled" %}{% include "components/badge.html" with tone="danger" label="Cancelled" %}{% else %}{% include "components/badge.html" with tone="neutral" label="Expired" %}{% endif %}</td>
+    <td class="px-3 py-2 text-right" data-label="Actions">
+      {% row_actions row.appointee.name %}
+      <button type="button" class="row-menu__item" role="menuitem" hx-get="/acting-leadership/{{ row.id }}" hx-target="#drawer-container" hx-swap="innerHTML">View record</button>
+      {% if row.can_manage and state == "upcoming" and row.appointed_by_id == request.user.id %}
+      <button type="button" class="row-menu__item" role="menuitem" hx-get="/acting-leadership/{{ row.id }}/reschedule" hx-target="#drawer-container" hx-swap="innerHTML">Change month</button>
+      {% endif %}
+      {% if row.can_manage %}{% if state == "upcoming" or state == "active" %}
+      <button type="button" class="row-menu__item" role="menuitem" hx-get="/acting-leadership/{{ row.id }}/cancel" hx-target="#drawer-container" hx-swap="innerHTML">Cancel appointment</button>
+      {% endif %}{% endif %}
+      {% endrow_actions %}
+    </td>
+  </tr>
+  {% endwith %}
+  {% endfor %}
+</tbody>

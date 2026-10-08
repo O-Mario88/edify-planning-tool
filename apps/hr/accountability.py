@@ -403,10 +403,13 @@ def leadership_priority_rows(user, fy=None, *, quarter=None, month=None):
         user__is_active=True, user__deleted_at__isnull=True
     ).select_related("user")
     if user.active_role == "Program Lead":
-        ids = StaffSupervisorAssignment.objects.filter(supervisor=staff).values_list(
-            "supervisee_id", flat=True
-        )
-        profiles = profiles.filter(id__in=[staff.id, *ids])
+        from apps.core.acting import seat_staff_ids
+
+        seats = seat_staff_ids(user) or [staff.id]
+        ids = StaffSupervisorAssignment.objects.filter(
+            supervisor_id__in=seats
+        ).values_list("supervisee_id", flat=True)
+        profiles = profiles.filter(id__in=[*seats, *ids])
     elif user.active_role in {"CountryDirector", "RegionalVicePresident", "Admin"}:
         profiles = profiles.filter(
             country=staff.country, user__active_role__in=["Program Lead", "CCEO"]

@@ -163,12 +163,16 @@ def _plan_owner_ids(user, plan_scope: str) -> set[str]:
         and user.staff_profile_id
     ):
         from apps.accounts.models import StaffSupervisorAssignment
+        from apps.core.acting import seat_leader_ids, seat_staff_ids
 
+        # An Acting Programme Lead consolidates the team of the Lead who
+        # appointed them, that Lead's own plan included (apps.core.acting).
         for staff_id, user_id in StaffSupervisorAssignment.objects.filter(
-            supervisor_id=user.staff_profile_id,
+            supervisor_id__in=seat_staff_ids(user),
             supervisee__deleted_at__isnull=True,
         ).values_list("supervisee_id", "supervisee__user_id"):
             ids.update(value for value in (staff_id, user_id) if value)
+        ids.update(seat_leader_ids(user))
     return ids
 
 

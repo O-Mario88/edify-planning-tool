@@ -1,0 +1,46 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Move an acting appointment that has not begun to another month (apps.acting).
+An appointment that has begun is never edited: it is cancelled and a new one
+made, and both stay on the record. The month it was first made for is kept.
+{% endcomment %}
+
+{% block drawer_title %}{% if missing %}Appointment not found{% else %}Change acting month{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% endblock %}
+
+{% block drawer_body %}
+{% if missing %}
+<p class="edify-note" data-tone="warning">That acting appointment is not one you can open, or it no longer exists.</p>
+{% else %}
+<form hx-post="/acting-leadership/{{ assignment.id }}/reschedule" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4" data-acting-reschedule-form>
+  {% csrf_token %}
+  {% if validation_error %}
+  <div class="edify-note" data-tone="danger" role="alert"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+  {% include "partials/acting/_summary.html" %}
+
+  {% if not may_change %}
+  <p class="edify-note" data-tone="warning" data-acting-no-change>Only the leader who made an appointment can change it, and only before it begins. An appointment that has begun is cancelled and a new one made.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Close</button>
+  </div>
+  {% else %}
+  <div class="space-y-1">
+    <label for="acting-rescheduled-month" class="block edify-text-caption font-semibold text-slate-600">Acting Month <span class="text-rose-500">*</span></label>
+    <select id="acting-rescheduled-month" name="month" required
+            hx-get="/acting-leadership/{{ assignment.id }}/reschedule" hx-trigger="change" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold">
+      {% for option in months %}<option value="{{ option.value }}"{% if option.value == month %} selected{% endif %}>{{ option.label }}</option>{% endfor %}
+    </select>
+    {% if selected_month %}<p class="edify-text-caption text-slate-500">Effective {{ selected_month.effective }}.</p>{% endif %}
+  </div>
+  <p class="edify-text-caption text-slate-500">The month this appointment was first made for stays on its record.</p>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8" data-acting-reschedule>Save month</button>
+  </div>
+  {% endif %}
+</form>
+{% endif %}
+{% endblock %}

@@ -146,6 +146,26 @@ def log(
                     payload.update(acting_for)
             except Exception as e:
                 logger.error("Failed to intercept audit for coverage: %s", e)
+            # An act done in an acting appointment says so, on the row: who
+            # the actor permanently is, the capacity they acted in, whose
+            # seat it was, who appointed them and for which month. The role
+            # in `actor_role` is the capacity; `acting` is why they had it
+            # (apps.core.acting). Inside the hashed payload, so it is as
+            # tamper-evident as the rest of the row.
+            try:
+                from apps.core.acting import audit_stamp_for
+
+                stamp = audit_stamp_for(actor_id)
+                if stamp:
+                    if not payload:
+                        payload = {}
+                    elif not isinstance(payload, dict):
+                        payload = {"original_payload": payload}
+                    else:
+                        payload = dict(payload)
+                    payload["acting"] = stamp
+            except Exception as e:
+                logger.error("Failed to stamp the acting capacity on audit: %s", e)
 
         ctx = get_request_context()
         fields = CanonicalAuditFields(

@@ -8,7 +8,8 @@ still opens on the reader's own. Two readers get more tabs beside it:
 
 * a Programme Lead: one tab for each CCEO on their team
   (`apps.hr.team_roster.team_members`, the officers of a Lead they cover
-  included);
+  included). An Acting Programme Lead (apps.acting) reads the team of the
+  Lead who appointed them, and that Lead's own calendar first;
 * the Country Director: every Programme Lead's team, the Lead first and then
   their CCEOs, and last the CCEOs who report to no Lead
   (`apps.planning.monitor_roster.monitor_roster`, the people the Planning
@@ -82,6 +83,21 @@ def _lead_team(user) -> list[Team]:
         )
         for profile in team_members(user)
     ]
+    # An acting appointment is for the whole team, the Lead included: the
+    # Lead is nobody's officer, so they are not on `team_members`, and their
+    # calendar is read from the seat the appointment delegates.
+    from apps.core.acting import SCOPE_PL_TEAM, seat
+
+    acting = seat(user, SCOPE_PL_TEAM)
+    if acting is not None:
+        people.insert(
+            0,
+            Person(
+                key=str(acting.seat_staff_id),
+                name=acting.seat_name,
+                ids=frozenset((str(acting.seat_staff_id), str(acting.seat_user_id))),
+            ),
+        )
     return [Team(key="", name="", people=people)] if people else []
 
 

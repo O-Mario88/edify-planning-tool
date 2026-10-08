@@ -1,13 +1,13 @@
 {
  "summary": {
   "titled_cards": 671,
-  "templates": 252,
+  "templates": 251,
   "distinct_titles": 637,
   "with_card_key": 13,
-  "untitled_surfaces": 595,
+  "untitled_surfaces": 594,
   "untitled_chrome": 154,
   "untitled_nested": 191,
-  "untitled_headless": 250,
+  "untitled_headless": 249,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
   "ambiguous_titles": 1
@@ -276,21 +276,21 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 122,
+   "line": 121,
    "title": "Awaiting 50% MOU Advance",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden",
    "branch_path": [
     [
-     2,
+     1,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 187,
+   "line": 186,
    "title": "Verified \u2014 Awaiting Clearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -387,14 +387,14 @@
    "classes": "bg-amber-50 border border-amber-200 rounded-surface p-4 flex gap-3 shadow-sm",
    "branch_path": [
     [
-     4,
+     3,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 86,
+   "line": 73,
    "title": "Profile Details",
    "heading_level": 3,
    "has_card_key": false,
@@ -403,21 +403,21 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 213,
+   "line": 198,
    "title": "People Managed",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-overlay border border-[var(--border-card)] shadow-sm p-6",
    "branch_path": [
     [
-     14,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 292,
+   "line": 277,
    "title": "Account Lifecycle",
    "heading_level": 3,
    "has_card_key": false,
@@ -426,7 +426,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 369,
+   "line": 354,
    "title": "Password Management",
    "heading_level": 3,
    "has_card_key": false,
@@ -435,14 +435,14 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 416,
+   "line": 401,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     28,
+     22,
      0
     ]
    ]
@@ -463,21 +463,21 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 360,
+   "line": 347,
    "title": "Delete ?",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface max-w-md w-full p-6 shadow-lg relative border border-rose-200 space-y-5",
    "branch_path": [
     [
-     30,
+     29,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 398,
+   "line": 385,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
@@ -2222,7 +2222,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 236,
+   "line": 224,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2231,7 +2231,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 279,
+   "line": 260,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2385,14 +2385,14 @@
   },
   {
    "template": "templates/pages/partner/my_plan.html",
-   "line": 118,
+   "line": 111,
    "title": "Invoices &amp; Payments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
    "branch_path": [
     [
-     16,
+     14,
      0
     ]
    ]
@@ -2440,7 +2440,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 49,
+   "line": 41,
    "title": "Organisation &amp; Contact",
    "heading_level": 3,
    "has_card_key": false,
@@ -2449,7 +2449,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 81,
+   "line": 60,
    "title": "Schools supported",
    "heading_level": 3,
    "has_card_key": false,
@@ -2458,7 +2458,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 140,
+   "line": 119,
    "title": "Activities",
    "heading_level": 3,
    "has_card_key": false,
@@ -2467,7 +2467,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 162,
+   "line": 141,
    "title": "Staff and volunteers",
    "heading_level": 3,
    "has_card_key": false,
@@ -2622,14 +2622,28 @@
   },
   {
    "template": "templates/pages/profile/index.html",
-   "line": 131,
-   "title": "Switch Active Role",
+   "line": 133,
+   "title": "Acting appointment",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5",
    "branch_path": [
     [
      2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/profile/index.html",
+   "line": 141,
+   "title": "Switch Active Role",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5",
+   "branch_path": [
+    [
+     3,
      0
     ]
    ]
@@ -6538,20 +6552,6 @@
     [
      12,
      0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/partner/invoice_drawer.html",
-   "line": 65,
-   "title": "To Programme Lead: No Programme Lead holds these schools yet",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] overflow-hidden",
-   "branch_path": [
-    [
-     5,
-     1
     ]
    ]
   },

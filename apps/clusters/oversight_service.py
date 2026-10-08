@@ -705,7 +705,11 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         # the chart reads as the team and nobody's colour shifts when a
         # colleague has nothing to show.
         listed = {str(tab["id"]) for tab in officer_tabs}
-        for member in planning.program_lead_members(principal.id):
+        from apps.core.acting import team_lead_user_id
+
+        # The roster of the reader's team: their own, or as Acting Programme
+        # Lead the appointing Lead's, with that Lead on it.
+        for member in planning.program_lead_members(team_lead_user_id(principal)):
             if str(member["id"]) in listed or member["ids"].intersection(
                 user_staff_ids
             ):
