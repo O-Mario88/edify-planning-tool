@@ -2294,14 +2294,14 @@
   },
   {
    "template": "templates/pages/partner/activities.html",
-   "line": 27,
+   "line": 28,
    "title": "Assignments awaiting your schedule",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     3,
+     4,
      0
     ]
    ]

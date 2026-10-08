@@ -30,9 +30,18 @@ The {{ pair_joins.get_activity_type_display }} on the same day is cancelled with
 </p>
 {% endif %}
 
+{% if partner_keeps_school %}
+{% comment %}Cancelling undoes the scheduling, not the assignment (owner,
+2026-10-08): the partner's date goes and the school waits for the partner
+again. Taking the school back is a withdrawal.{% endcomment %}
+<p class="edify-note" data-tone="info" role="status" data-partner-keeps-school>
+The school stays assigned to {{ partner_name|default:"the partner" }}: only this date is cancelled, and the partner schedules the school again. To take the school back from the partner, withdraw it instead.
+</p>
+{% endif %}
+
 <p class="edify-text-caption text-slate-500">
-It stays on the record as Cancelled and leaves your plan. Its cost and any
-undisbursed advance are withdrawn.{% if act.assigned_partner_id %} The assigned
+It stays on the record as Cancelled, leaves your plan and is no longer counted
+anywhere. Its cost and any undisbursed advance are withdrawn.{% if act.assigned_partner_id %} The assigned
 partner is notified.{% endif %}
 </p>
 

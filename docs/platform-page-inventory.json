@@ -10065,7 +10065,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2201,
+      "bytes": 2778,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/cancel-drawer"
@@ -21221,7 +21221,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -21311,7 +21312,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -21397,7 +21399,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -22295,7 +22298,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -23278,7 +23282,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -23451,7 +23456,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -23535,7 +23541,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -23619,7 +23626,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -23704,7 +23712,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -27594,7 +27603,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -27681,7 +27691,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -34177,7 +34188,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -34261,7 +34273,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -34348,7 +34361,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.core.scoping"
+        "apps.core.scoping",
+        "apps.fund_requests.models"
       ],
       "shared_layout": [
         "layouts/shell.html"

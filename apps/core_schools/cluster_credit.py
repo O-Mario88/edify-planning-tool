@@ -154,6 +154,9 @@ def credit_cluster_session(activity) -> None:
     )
 
     touched_plans = {}
+    #: Packages a slot went back to: their trainings are renumbered below, so
+    #: the ones still live read T1, T2 ... (owner, 2026-10-08).
+    released_plans = {}
     holding: set[str] = set()
     for slot in linked:
         if (
@@ -173,6 +176,7 @@ def credit_cluster_session(activity) -> None:
         # slot goes back to its package, open to be scheduled.
         _release(slot)
         touched_plans[slot.core_plan_id] = slot.core_plan
+        released_plans[slot.core_plan_id] = slot.core_plan
 
     wanted = [school for code, school in schools.items() if code not in holding]
     if wanted:
@@ -261,6 +265,11 @@ def credit_cluster_session(activity) -> None:
             open_slot.save()
             touched_plans[plan.id] = plan
 
+    if released_plans:
+        from apps.core_schools.package_credit import close_gaps
+
+        for plan in released_plans.values():
+            close_gaps(plan, "training")
     for plan in touched_plans.values():
         resync_plan_completion(plan)
 

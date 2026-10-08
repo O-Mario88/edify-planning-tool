@@ -357,7 +357,13 @@ def field_debrief_activity_options_view(request):
 
     sp = StaffProfile.objects.filter(user_id=request.user.user_id).first()
     fy = request.GET.get("fy") or get_operational_fy()
-    qs = Activity.objects.filter(fy=fy)
+    from apps.core.activity_types import NOT_IN_PLAN_ACTIVITY_STATUSES
+
+    # Work that was called off never happened: it is not offered to be
+    # debriefed (owner, 2026-10-08).
+    qs = Activity.objects.filter(fy=fy, deleted_at__isnull=True).exclude(
+        status__in=NOT_IN_PLAN_ACTIVITY_STATUSES
+    )
     if sp:
         qs = qs.filter(responsible_staff_id__in=[sp.id, request.user.user_id])
     else:
