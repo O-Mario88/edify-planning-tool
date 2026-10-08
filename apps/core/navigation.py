@@ -2242,12 +2242,16 @@ SIDEBAR_ITEMS = [
                 "visible_to": PAGE_PERMISSIONS["leave_approvals"] - {PL},
             },
             {
-                # The Country Director appoints here; Human Resources reads
-                # the record. The Programme Lead's entry is in TEAM LEADERSHIP.
+                # The Country Director appoints here; Human Resources and
+                # Admin read the record. The Programme Lead's entry is in
+                # TEAM LEADERSHIP. Admin is named, not left to the super-role
+                # override: the page is registered twice, and the override
+                # yields on a page it could offer twice, so with neither
+                # entry naming Admin the sidebar offered it none.
                 "label": "Acting Leadership",
                 "url": "/acting-leadership",
                 "page_key": "acting_leadership",
-                "visible_to": {CD, HR},
+                "visible_to": {CD, HR, ADMIN},
             },
             {
                 # Leave administration: the roster, balances and cover across

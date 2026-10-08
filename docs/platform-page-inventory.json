@@ -20123,7 +20123,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/acting/record_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:acting_leadership"
       ],
       "filters": "none",
@@ -20185,7 +20185,7 @@
       "templates": [
         "partials/acting/record_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -20207,7 +20207,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/acting/cancel_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:acting_leadership"
       ],
       "filters": "none",
@@ -20269,7 +20269,7 @@
       "templates": [
         "partials/acting/cancel_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -20290,7 +20290,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/acting/reschedule_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:acting_leadership"
       ],
       "filters": "none",
@@ -20353,7 +20353,7 @@
       "templates": [
         "partials/acting/reschedule_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -118406,7 +118406,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 588,
-    "test_referenced": 804,
+    "test_referenced": 807,
     "theme_contract_pass": 588
   }
 }

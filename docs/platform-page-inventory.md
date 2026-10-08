@@ -15,7 +15,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Full pages: **264**
 - Partials and drawers: **321**
 - Permission-gated surfaces: **890**
-- Referenced by automated tests: **804**
+- Referenced by automated tests: **807**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -67,9 +67,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-6DBDFF8C4E | /accounts/weekly-requests | Weekly Fund Requests - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B19D738D84 | /accounts/weekly-requests/ | Weekly Fund Requests - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-10BDA17FC1 | /acting-leadership | Acting Leadership · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-761BDFAF82 | /acting-leadership/<str:assignment_id> | Acting Record | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-6906212B1D | /acting-leadership/<str:assignment_id>/cancel | Acting Cancel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-CD71153D39 | /acting-leadership/<str:assignment_id>/reschedule | Acting Reschedule | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-761BDFAF82 | /acting-leadership/<str:assignment_id> | Acting Record | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6906212B1D | /acting-leadership/<str:assignment_id>/cancel | Acting Cancel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CD71153D39 | /acting-leadership/<str:assignment_id>/reschedule | Acting Reschedule | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-31F2ECF502 | /acting-leadership/appoint | Acting Appoint | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8BB0A3532D | /actions/<str:action_id>/<str:transition> | Action Transition | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0A80841654 | /actions/mine | My Actions | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

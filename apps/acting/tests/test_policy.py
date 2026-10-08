@@ -98,6 +98,37 @@ class PolicyCompletenessTests(SimpleTestCase):
         )
 
 
+class SidebarTests(SimpleTestCase):
+    """Who is offered the page. An officer reaches their own appointments
+    from the account menu, so the sidebar does not carry it for them."""
+
+    def _links(self, role) -> list[str]:
+        from apps.core.navigation import build_sidebar_for_user
+
+        return [
+            item["url"]
+            for section in build_sidebar_for_user(_Principal(role), "/dashboard")
+            for item in section["items"]
+            if item.get("page_key") == "acting_leadership"
+        ]
+
+    def test_the_page_is_offered_once_to_those_who_appoint_or_read(self):
+        for role in ("Program Lead", "CountryDirector", "HumanResources", "Admin"):
+            self.assertEqual(self._links(role), ["/acting-leadership"], role)
+
+    def test_nobody_else_is_offered_it(self):
+        for role in (
+            "CCEO",
+            "ImpactAssessment",
+            "Accountant",
+            "RegionalVicePresident",
+            "RegionalProgramLead",
+            "ProjectCoordinator",
+            "PartnerAdmin",
+        ):
+            self.assertEqual(self._links(role), [], role)
+
+
 class WithheldTests(SimpleTestCase):
     """What no acting appointment carries, whatever is added later."""
 
