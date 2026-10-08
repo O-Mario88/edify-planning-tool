@@ -42,9 +42,16 @@ test('a table that wrapping makes fit wraps; one that would still scroll, and an
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto(server.origin + '/page');
 
-    // Natural width, one line per cell.
-    await page.addStyleTag({ content: ':root{--card:1500px}' });
-    const natural = await page.evaluate(() => document.querySelector('table').scrollWidth);
+    // Natural width, one line per cell: read where the card is far too narrow
+    // for wrapping to save, so nothing has wrapped and the table shows its
+    // whole width as scroll. Read from a wide card it was the card's own
+    // width, because a record table fills its card, and "a little narrower
+    // than the table" below was then narrower only while the headings were
+    // wide enough to make it so (they stopped being on 2026-10-08).
+    await page.addStyleTag({ content: ':root{--card:420px}' });
+    await expect.poll(async () => (await measure(page)).overflow).toBeGreaterThan(100);
+    expect((await measure(page)).wrapped).toBe(0);
+    const natural = await page.evaluate(() => document.querySelector('table').parentElement.scrollWidth);
     expect(natural).toBeGreaterThan(900);
 
     // A card a little narrower than the table: the long sentence wraps and the table fits.
