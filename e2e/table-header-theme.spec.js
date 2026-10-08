@@ -14,7 +14,22 @@ test('table title bands and column ink respect theme and viewport',async({page})
    // A quiet band in the table-header tone with ink text since 2026-10-02 (it was solid navy with white text).
    await expect(page.locator('header')).toHaveCSS('background-color','rgb(220, 230, 236)');
    await expect(page.locator('h2')).toHaveCSS('color','rgb(23, 35, 43)');
-   await expect(page.locator('th').first()).toHaveCSS('color','rgb(40, 91, 150)');
+   // Column names are the cells' ink, bold, in Title Case, on a line (owner, 2026-10-08); they were blue capitals.
+   const th=page.locator('th').first(),td=page.locator('td').first();
+   // rgb(35, 56, 68) is --edify-text-muted, what a record table's cells are drawn in.
+   await expect(th).toHaveCSS('color','rgb(35, 56, 68)');
+   await expect(th).toHaveCSS('text-transform','capitalize');
+   await expect(th).toHaveCSS('font-weight','700');
+   await expect(th).toHaveCSS('border-bottom-width','2px');
+   // What a heading holds is the heading: a sort control is not a link's blue.
+   await expect(page.locator('th button')).toHaveCSS('color','rgb(35, 56, 68)');
+   // Three steps, largest first: the table's name, the column names, the cells
+   // ("just slightly bigger not large ... the table name ... should be larger").
+   const px=l=>l.evaluate(e=>parseFloat(getComputedStyle(e).fontSize));
+   const [name,column,cell]=[await px(page.locator('h2')),await px(th),await px(td)];
+   expect(name).toBeGreaterThan(column);expect(column).toBeGreaterThan(cell);
+   expect(column-cell).toBeLessThanOrEqual(1.5);
+   await expect(page.locator('h2')).toHaveCSS('font-weight','700');
    const background=await page.locator('th').first().evaluate(e=>getComputedStyle(e).backgroundColor);
    expect(background).toBe(await page.locator('td').first().evaluate(e=>getComputedStyle(e).backgroundColor));
   }

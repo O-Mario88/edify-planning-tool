@@ -383,6 +383,12 @@ def calendar_view(request):
     # itself stays in context (scoping tests inspect it as a queryset).
     activity_rows = list(activities)
     staff_names = _calendar_staff_names(activity_rows)
+    # A partner's calendar names the team member who delivers each entry
+    # (owner, 2026-10-08: "who is executing them from among the onboarded
+    # partner team member"), and lists today's on top.
+    from apps.core.scoping import resolve_partner_ids
+
+    partner_calendar = bool(resolve_partner_ids(user)) and not shown_person
 
     events_by_date: dict[date, list[dict]] = defaultdict(list)
     event_counts = {"activity": 0, "leave": 0, "holiday": 0, "event": 0}
@@ -434,6 +440,16 @@ def calendar_view(request):
             if activity.school_id not in schools_in_scope
             and not RolePermissionService.can_view_record(user, activity)
         }
+    elif partner_calendar:
+        # A training the organisation facilitates is the officer's record: it
+        # is on the partner's calendar, and a link only where it opens.
+        unopened = {
+            activity.id
+            for activity in activity_rows
+            if activity.delivery_type != "partner"
+            and not RolePermissionService.can_view_record(user, activity)
+        }
+    partner_today_rows: list[dict] = []
 
     for activity in activity_rows:
         if activity.id not in spans:
@@ -492,6 +508,27 @@ def calendar_view(request):
                 }
             )
 
+        who = (activity.delivery_contact_name or "").strip()
+        if partner_calendar:
+            tooltip = f"{tooltip} · {who or 'Nobody named yet'}"
+            if start_date <= today <= end_date:
+                from apps.partners import delivery_team, profile_lists
+
+                stage, tone = profile_lists.stage_of(activity)
+                partner_today_rows.append(
+                    {
+                        "id": activity.id,
+                        "title": title,
+                        "school_id": activity.school_id or "",
+                        "place": place,
+                        "who": who,
+                        "status": stage,
+                        "tone": tone,
+                        "href": href,
+                        "can_name": delivery_team.may_rename(activity),
+                    }
+                )
+
         event_counts["activity"] += 1
         current_date = first_day
         while current_date <= last_day:
@@ -502,6 +539,10 @@ def calendar_view(request):
                 meta = f"{place} · {range_label}"
             else:
                 meta = f"{place} · Day {day_number} of {total_days}"
+            if partner_calendar:
+                # First, because a month cell has room for a few words and
+                # the person is the part this calendar is read for.
+                meta = f"{who or 'Nobody named yet'} · {meta}"
             if day_off:
                 meta = f"Reschedule: {day_off.label.lower()} · {meta}"
             events_by_date[current_date].append(
@@ -707,6 +748,12 @@ def calendar_view(request):
 
     context = {
         "activities": activities,
+        # Today's work, on the month that holds today.
+        **(
+            {"partner_today": {"date": today, "rows": partner_today_rows}}
+            if partner_calendar and month_start <= today <= month_end
+            else {}
+        ),
         "calendar_people_tabs": people_tabs,
         "calendar_member_tabs": member_tabs,
         "calendar_team_name": shown_team.name if shown_team else "",
@@ -1715,7 +1762,20 @@ def admin_users_view(request):
     selected_role = request.GET.get("role", "").strip()
     selected_status = request.GET.get("status", "").strip()
 
-    users = User.objects.filter(deleted_at__isnull=True).order_by("name")
+    from django.db.models import OuterRef, Subquery
+
+    from apps.partners.models import Partner as _Partner
+
+    users = (
+        User.objects.filter(deleted_at__isnull=True)
+        .order_by("name")
+        # A partner login carries a person's name; its row says whose it is.
+        .annotate(
+            partner_org_name=Subquery(
+                _Partner.objects.filter(user_id=OuterRef("pk")).values("name")[:1]
+            )
+        )
+    )
     # Country roles administer their country. Admin and superusers see the
     # deployment; everyone else was seeing every user in every country here
     # while /staff and HR Today scoped them correctly.
@@ -1770,7 +1830,14 @@ def admin_users_view(request):
             # NULL last on ascending, which put the tombstones at the top.
             .order_by(F("deleted_at").asc(nulls_first=True), "-active_status", "name")
         )
+        from apps.partners.services import partner_login
+
         for partner in partners:
+            # The account its people sign in with, which the row's Actions
+            # menu opens to be configured like a member of staff's (owner,
+            # 2026-10-08); None when nothing is linked, or what was linked
+            # has been deleted.
+            partner.login = partner_login(partner)
             # Presentation state only. Do not assign to the model's workflow
             # `status` name: the production-readiness scanner correctly treats
             # direct workflow-state writes in views as unsafe.
@@ -1887,12 +1954,28 @@ def admin_user_detail_view(request, user_id):
         request.user.is_superuser
         or getattr(request.user, "active_role", None) == "Admin"
     )
+    # A partner's login is configured here like a member of staff's (owner,
+    # 2026-10-08: "make sure admin can configure partner account, reset
+    # password just like the staff"). It has no People record, so the staff
+    # parts of the page do not apply to it and reach by country cannot find
+    # it: whoever sets up partner logins reaches it.
+    from apps.partners.services import (
+        is_partner_login,
+        login_organisation,
+        may_manage_partner_users,
+    )
+
+    partner_login = is_partner_login(member)
     if not viewer_is_admin:
         from django.http import Http404
 
         from apps.hr.reach import user_in_reach
 
-        if member.id != request.user.id and not user_in_reach(request.user, member):
+        if (
+            member.id != request.user.id
+            and not user_in_reach(request.user, member)
+            and not (partner_login and may_manage_partner_users(request.user))
+        ):
             raise Http404("User not found.")
 
     if request.method == "POST":
@@ -1949,26 +2032,33 @@ def admin_user_detail_view(request, user_id):
                 return redirect("frontend:admin_user_detail", user_id=user_id)
             member.refresh_from_db()
 
-            from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+            # A partner's login is not a member of staff: saving it must not
+            # give it a People record or a district, which is what puts a
+            # person on the staff pages.
+            if not is_partner_login(member):
+                from apps.accounts.models import (
+                    StaffGeographyAssignment,
+                    StaffProfile,
+                )
 
-            sp, _ = StaffProfile.objects.get_or_create(user=member)
-            sp.primary_district_id = primary_district or None
-            if primary_role:
-                sp.title = primary_role
-            sp.save()
+                sp, _ = StaffProfile.objects.get_or_create(user=member)
+                sp.primary_district_id = primary_district or None
+                if primary_role:
+                    sp.title = primary_role
+                sp.save()
 
-            # Sync assignments
-            selected_districts = []
-            if primary_district:
-                selected_districts.append(primary_district)
-            for ad in additional_districts:
-                if ad:
-                    selected_districts.append(ad)
-            selected_districts = list(dict.fromkeys(selected_districts))
+                # Sync assignments
+                selected_districts = []
+                if primary_district:
+                    selected_districts.append(primary_district)
+                for ad in additional_districts:
+                    if ad:
+                        selected_districts.append(ad)
+                selected_districts = list(dict.fromkeys(selected_districts))
 
-            StaffGeographyAssignment.objects.filter(staff=sp).delete()
-            for d_id in selected_districts:
-                StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
+                StaffGeographyAssignment.objects.filter(staff=sp).delete()
+                for d_id in selected_districts:
+                    StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
 
             messages.success(request, f"User '{member.name}' updated successfully.")
 
@@ -2097,6 +2187,12 @@ def admin_user_detail_view(request, user_id):
     from apps.accounts.models import StaffGeographyAssignment, StaffProfile
 
     roles = [r.value for r in EdifyRole]
+    if partner_login:
+        # The two roles a partner's people sign in with. A staff role is not
+        # offered here: it would open the staff pages to an outside account.
+        from apps.partners.services import partner_login_roles
+
+        roles = [r for r in roles if r in partner_login_roles()]
     districts = District.objects.all().order_by("name")
 
     sp = StaffProfile.objects.filter(user=member).first()
@@ -2122,13 +2218,17 @@ def admin_user_detail_view(request, user_id):
 
     can_configure_management_team = get_user_role_slug(request.user) == "ADMIN"
     management_team = None
-    if can_configure_management_team and sp:
+    if can_configure_management_team and sp and not partner_login:
         from apps.accounts.supervisor_service import managed_people_team
 
         management_team = managed_people_team(sp)
 
     context = {
         "member": member,
+        "partner_login": partner_login,
+        # The organisation it signs in for; None for a partner account that
+        # has not been linked to one yet (the page says so).
+        "partner_org": login_organisation(member),
         "available_roles": roles,
         "districts": districts,
         "primary_district_id": primary_district_id,

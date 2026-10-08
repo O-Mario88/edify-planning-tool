@@ -677,7 +677,11 @@ def partner_user_setup_drawer_view(request, partner_id):
     from django.contrib import messages
 
     from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
-    from apps.partners.services import configure_partner_user, may_manage_partner_users
+    from apps.partners.services import (
+        configure_partner_user,
+        may_manage_partner_users,
+        partner_login,
+    )
 
     if not may_manage_partner_users(request.user):
         return HttpResponseForbidden(
@@ -689,7 +693,12 @@ def partner_user_setup_drawer_view(request, partner_id):
         return render(
             request,
             "partials/partners/user_setup_drawer.html",
-            {"partner": partner, "validation_error": error, "drawer_size": "md"},
+            {
+                "partner": partner,
+                "login": partner_login(partner),
+                "validation_error": error,
+                "drawer_size": "md",
+            },
             status=status,
         )
 
@@ -711,8 +720,19 @@ def partner_user_setup_drawer_view(request, partner_id):
             "not_required": "marked as needing no login yet",
         }.get(updated["userSetupStatus"], "updated")
         messages.success(request, f"{partner.name}: {label}.")
+        # A login that was just linked or invited opens on its own page, where
+        # it is configured like a member of staff's: its status, the
+        # invitation, a password set for it (owner, 2026-10-08). With no
+        # login there is nothing to configure, and the directory is shown.
+        partner.refresh_from_db()
+        login = partner_login(partner)
+        destination = (
+            reverse("frontend:admin_user_detail", args=[login.id])
+            if login is not None
+            else "/admin-panel/users"
+        )
         response = HttpResponse(
-            '<script>window.location.href = "/admin-panel/users";</script>'
+            f'<script>window.location.href = "{destination}";</script>'
         )
         response["HX-Trigger"] = "close-drawer"
         return response
@@ -968,7 +988,17 @@ def partner_detail_view(request, partner_id):
     # run the directory edit any. Same rule services.update() enforces.
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission
-    from apps.partners.services import may_manage_partner_users
+    from apps.partners import profile_lists
+    from apps.partners.services import may_manage_partner_users, partner_login
+
+    onboarded_by_name = ""
+    if partner.onboarded_by_user_id:
+        onboarded_by_name = (
+            User.objects.filter(id=partner.onboarded_by_user_id)
+            .values_list("name", flat=True)
+            .first()
+            or ""
+        )
 
     can_edit = (
         request.user.is_superuser
@@ -1009,6 +1039,14 @@ def partner_detail_view(request, partner_id):
         "can_manage_status": can_manage_status,
         # Partner logins are user administration (owner, 2026-09-15).
         "can_manage_partner_users": may_manage_partner_users(request.user),
+        # The account its people sign in with, configured on the page a
+        # member of staff's account is (owner, 2026-10-08).
+        "partner_login": partner_login(partner),
+        # The schools it has been given to visit and the trainings it is due
+        # to facilitate (owner, 2026-10-08; apps.partners.profile_lists).
+        "visit_schools": profile_lists.visit_schools(partner),
+        "partner_trainings": profile_lists.trainings(partner),
+        "onboarded_by_name": onboarded_by_name,
         # Kept for the older template contract.
         "activities": activities,
         "completed": counts["completed"],
@@ -1325,6 +1363,8 @@ def partner_schedule_assignment_drawer(request, assignment_id):
             {"error": assignment.schedule_blocked_reason},
         )
     assignment.purpose_label = visit_purpose_label(assignment.purpose_of_visit, "")
+    from apps.partners import delivery_team
+
     return render(
         request,
         "partials/partners/schedule_assignment_drawer.html",
@@ -1332,6 +1372,9 @@ def partner_schedule_assignment_drawer(request, assignment_id):
             "assignment": assignment,
             "approved_item": assignment.catalogue_item,
             "cost_preview": _partner_cost_preview(assignment),
+            # Who goes is chosen from the organisation's team (owner,
+            # 2026-10-08), the person signed in among them.
+            "team": delivery_team.team_names(assignment.partner, request.user),
             "drawer_size": "md",
         },
     )
@@ -1382,13 +1425,19 @@ def partner_schedule_assignment_action(request, assignment_id):
         status__in=["assigned", "pending_scheduling"],
     )
     try:
+        from apps.partners import delivery_team
         from apps.partners.services import schedule_activity
 
         schedule_activity(
             assignment.id,
             {
                 "scheduledDate": request.POST.get("scheduled_date"),
-                "deliveryContactName": request.POST.get("delivery_contact_name"),
+                # One of the organisation's team, as the team spells it.
+                "deliveryContactName": delivery_team.on_team(
+                    assignment.partner,
+                    request.POST.get("delivery_contact_name"),
+                    request.user,
+                ),
                 "requireCatalogue": True,
             },
             request.user,
@@ -1404,6 +1453,75 @@ def partner_schedule_assignment_action(request, assignment_id):
         from apps.core.htmx_errors import error_fragment
 
         return error_fragment(exc, status=400)
+
+
+@require_page_permission("partner_activities")
+def partner_delivery_member_view(request, activity_id):
+    """Name, or change, the team member who delivers one of the organisation's
+    activities (owner, 2026-10-08: the calendar "should show ... who is
+    executing them from among the onboarded partner team member"). GET draws
+    the drawer; POST saves and reloads the page it was opened from, which
+    shows the name."""
+    from django.contrib import messages
+
+    from apps.core.htmx_errors import error_fragment
+    from apps.partners import delivery_team
+
+    partner_ids = resolve_partner_ids(request.user)
+    activity = get_object_or_404(
+        Activity.objects.select_related("school", "cluster"),
+        Q(assigned_partner_id__in=partner_ids)
+        | Q(facilitating_partner_id__in=partner_ids),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
+    partner = get_object_or_404(
+        Partner, id=delivery_team.partner_of(activity, partner_ids)
+    )
+    if request.method == "POST":
+        try:
+            result = delivery_team.name_member(
+                activity.id, request.POST.get("delivery_contact_name"), request.user
+            )
+        except Exception as exc:  # noqa: BLE001 - said in the drawer
+            return error_fragment(exc, status=400)
+        messages.success(request, f"{result['deliveredBy']} will deliver this work.")
+        response = HttpResponse(status=200)
+        response["HX-Trigger"] = "close-drawer"
+        response["HX-Refresh"] = "true"
+        return response
+    if not delivery_team.may_rename(activity):
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {
+                "error": "This work is finished or was called off; who "
+                "delivered it is part of its record now."
+            },
+        )
+    from apps.core.activity_types import TRAINING_TYPES
+    from apps.core.clock import local_day
+
+    place = activity.school or activity.cluster
+    return render(
+        request,
+        "partials/partners/delivery_member_drawer.html",
+        {
+            "activity": activity,
+            "partner": partner,
+            "team": delivery_team.team_names(partner, request.user),
+            "work_noun": "training"
+            if activity.activity_type in TRAINING_TYPES
+            else "work",
+            "work_title": activity.activity_name_snapshot
+            or activity.get_activity_type_display(),
+            "work_place": getattr(place, "name", ""),
+            "work_date": local_day(activity.scheduled_date)
+            if activity.scheduled_date
+            else activity.planned_date,
+            "drawer_size": "md",
+        },
+    )
 
 
 @require_page_permission("partner_activities")
@@ -1559,27 +1677,65 @@ def partner_invoice_submit(request):
             (request.POST.get("period_kind") or "month").strip(),
             anchor,
             (request.POST.get("instalment") or "advance").strip(),
+            # The platform totals the invoice; a total is checked only when
+            # an older page still sends one.
             request.POST.get("entered_total"),
             request.FILES.get("invoice_file"),
         )
     except (BadRequest, Forbidden, ValueError) as exc:
+        from django.utils.html import escape
+
         return HttpResponse(
             f'<div class="p-3 rounded-surface bg-rose-50 text-rose-700 '
-            f'text-[12px] font-bold" role="alert">{exc}</div>',
+            f'text-[12px] font-bold" role="alert">{escape(str(exc))}</div>',
             status=400,
         )
-    label = "50% advance" if result["invoiceType"] == "advance" else "clearance"
+    from django.utils.html import escape
+
+    label = "50% advance" if result["invoiceType"] == "advance" else "balance"
+    count = len(result["invoices"])
+    leads = [i["lead"] for i in result["invoices"] if i["lead"]]
+    if count == 1:
+        sent_to = (
+            f"is with {escape(leads[0])}, the Programme Lead, for confirmation"
+            if leads
+            else "is with Edify's finance team for confirmation"
+        )
+        what = f"Invoice for {escape(result['label'])} sent"
+    else:
+        sent_to = "is with each Programme Lead for confirmation"
+        what = f"{count} invoices for {escape(result['label'])} sent"
     response = HttpResponse(
         '<div class="p-3 rounded-surface bg-emerald-50 text-emerald-800 '
-        f'text-[13px] font-bold" role="status">Invoice for {result["label"]} '
-        f"submitted — the {label} of UGX {result['payable']:,} is with your "
-        "Program Lead for confirmation.</div>"
+        f'text-[13px] font-bold" role="status">{what}: the {label} of UGX '
+        f"{result['payable']:,} {sent_to}.</div>"
         "<script>window.setTimeout(function () {"
         'window.location.href = "/my-plan";'
         "}, 1100);</script>"
     )
     response["HX-Trigger"] = "close-drawer"
     return response
+
+
+@require_page_permission("dashboard")
+def partner_invoice_document_view(request, invoice_id):
+    """An invoice as the platform wrote it, to read and to print: for the
+    organisation it belongs to, the Programme Lead it is addressed to, and
+    Finance (apps.fund_requests.partner_invoices.invoice_document)."""
+    from django.http import Http404
+
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests.partner_invoices import invoice_document
+
+    try:
+        doc = invoice_document(invoice_id, request.user)
+    except Forbidden:
+        # The page's own words: what an exception carries is not written
+        # into a response.
+        return HttpResponseForbidden("This invoice is not yours to open.")
+    except BadRequest:
+        raise Http404("Invoice not found.")
+    return render(request, "pages/partner/invoice_document.html", {"doc": doc})
 
 
 @require_page_permission("partner_assignments")
@@ -2181,7 +2337,9 @@ def partner_plan_context(user):
                 ),
                 "evidence_summary": evidence_summary,
                 "return_reason": a.pl_review_note if a.status in _PLAN_RETURNED else "",
-                "actions": actions,
+                # Any row here is unfinished work, so its team member may
+                # still be named or changed (apps.partners.delivery_team).
+                "actions": [*actions, "team"],
             }
         )
     section_list = [

@@ -522,8 +522,30 @@ def _assert_may_execute(activity: Activity, principal) -> None:
     Country roles are handled by `_assert_may_schedule`, which every caller
     still applies where it applied before; this is the supervisor question,
     kept separate so neither answer can quietly absorb the other.
+
+    The Country Director is asked the supervisor question too (owner,
+    2026-10-08: "the CD has the right to edit team activities from the
+    calendar and even cancel planned activities ... give CD and PL strictly
+    read only right ... they can see where the team are operating but they
+    cannot edit, reschedule or cancel any team member scheduled activities").
+    A Director opens every team member's calendar, and each entry on it opens
+    the activity's own page; with country scheduling authority that page
+    offered them Edit, Reschedule and Cancel on an officer's work. They hold
+    what they scheduled for themselves, and read the rest.
     """
+    from apps.core.rbac import EdifyRole
+
     scope = resolve_user_scope(principal)
+    if scope.active_role == EdifyRole.COUNTRY_DIRECTOR.value:
+        mine = owner_ids(principal)
+        if (
+            activity.responsible_staff_id in mine
+            or getattr(activity, "monitored_by_staff_id", None) in mine
+        ):
+            return
+        from apps.core.scoping import TEAM_READ_ONLY_MESSAGE
+
+        raise Forbidden(TEAM_READ_ONLY_MESSAGE)
     if scope.active_role in COUNTRY_SCHEDULING_ROLES or scope.country_scope:
         return
     if not scope.supervised_staff_ids:

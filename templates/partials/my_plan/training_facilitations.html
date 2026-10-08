@@ -35,6 +35,7 @@ partner_facilitations).
 <th class="min-w-[160px]">Cluster / School</th>
 <th class="min-w-[120px]">District</th>
 <th class="min-w-[110px]">Training Date</th>
+<th class="min-w-[140px]">Facilitator</th>
 <th class="min-w-[140px]">Edify Officer</th>
 <th class="min-w-[110px]">Status</th>
 <th class="text-right min-w-[120px]">Facilitation Fee</th>
@@ -49,6 +50,7 @@ partner_facilitations).
 <td class="text-slate-700" data-label="Cluster / School">{{ row.cluster_name|default:"—" }}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
 <td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Training Date">{{ row.training_date|date:"j M Y"|default:"Not dated" }}</td>
+<td class="text-slate-700" data-label="Facilitator">{% if row.facilitator_editable %}<button type="button" class="font-semibold underline decoration-dotted underline-offset-2 hover:decoration-solid" hx-get="/partner/activities/{{ row.activity_id }}/delivered-by" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{% if row.facilitator %}Change{% else %}Name{% endif %} the facilitator of {{ row.training_name|default:'this training' }}">{{ row.facilitator|default:"Name team member" }}</button>{% else %}{{ row.facilitator|default:"—" }}{% endif %}</td>
 <td class="text-slate-700" data-label="Edify Officer">{{ row.responsible_cceo_name|default:"—" }}</td>
 <td data-label="Status" class="whitespace-nowrap"><span class="mp-badge mp-badge--{{ row.badge_color }}">{{ row.status_label }}</span></td>
 <td class="text-right font-semibold tabular-nums whitespace-nowrap text-slate-900" data-label="Facilitation Fee">UGX {{ row.fee|intcomma }}</td>
@@ -58,7 +60,7 @@ partner_facilitations).
 <button type="button" class="btn btn-secondary h-8" data-facilitation-invoice
         hx-get="/partner/invoices/new?period_kind=month&amp;instalment={{ row.invoice_instalment }}&amp;anchor={{ row.training_date|date:'Y-m-d' }}"
         hx-target="#drawer-container" hx-swap="innerHTML">
-{% if row.invoice_instalment == 'clearance' %}Invoice balance{% else %}Invoice 50%{% endif %}
+{% if row.invoice_instalment == 'clearance' %}{% if 'in full' in row.invoice_label %}Invoice in full{% else %}Invoice balance{% endif %}{% else %}Invoice 50%{% endif %}
 </button>
 {% else %}
 <span class="edify-text-caption text-slate-400">—</span>

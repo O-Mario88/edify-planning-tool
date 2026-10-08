@@ -20,7 +20,15 @@ contract every profile page shares.
 <span class="edify-badge" data-tone="{% if partner.active_status %}success{% else %}warning{% endif %}">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
 <span class="edify-badge" data-tone="{% if partner.user_setup_status == 'configured' %}success{% elif partner.user_setup_status == 'not_required' %}neutral{% else %}warning{% endif %}" data-partner-user-setup>{{ partner.get_user_setup_status_display }}</span>
 {% if can_manage_partner_users %}
+{% comment %}With a login, its account page: the one a member of staff's
+Configure opens (owner, 2026-10-08). The drawer gives the organisation a
+login, or a different one.{% endcomment %}
+{% if partner_login %}
+<a href="{% url 'frontend:admin_user_detail' partner_login.id %}" class="btn btn-secondary min-h-9">Configure login</a>
+<button type="button" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9">Change login</button>
+{% else %}
 <button type="button" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9">Set up login</button>
+{% endif %}
 {% endif %}
 {% if can_edit %}
 <button type="button" hx-get="/partners/{{ partner.id }}/edit-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9" aria-label="Edit {{ partner.name }} details">Edit details</button>
@@ -52,9 +60,22 @@ running three kinds of work was described here by one.{% endcomment %}
 <div><p class="edify-profile-field__label">Expertise</p><p class="edify-profile-field__value mt-0.5">{% if partner.expertise_areas %}{{ partner.expertise_areas|join:", " }}{% elif partner.trains_on %}{{ partner.trains_on|join:", " }}{% else %}Not specified{% endif %}</p></div>
 <div><p class="edify-profile-field__label">Contract</p><p class="edify-profile-field__value mt-0.5">{{ partner.contract_status|default:"Not specified"|title }}</p></div>
 <div><p class="edify-profile-field__label">Schools assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school_count }}</p></div>
+{% comment %}The rest of what is on record about the organisation (owner,
+2026-10-08: "profile and basic info or Bio data"): where it works, whether it
+is certified, when it joined and who signs in for it. The record held these
+and the profile showed none of them.{% endcomment %}
+<div class="col-span-2"><p class="edify-profile-field__label">Districts covered</p><p class="edify-profile-field__value mt-0.5">{{ partner.coverage_districts|join:", "|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Certification</p><p class="edify-profile-field__value mt-0.5">{% if partner.is_certified %}Certified{% elif partner.certification_status %}{{ partner.certification_status|title }}{% else %}Not certified{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Onboarded</p><p class="edify-profile-field__value mt-0.5">{% if partner.onboarded_at %}<span class="tabular-nums">{{ partner.onboarded_at|date:"j M Y" }}</span>{% if onboarded_by_name %} by {{ onboarded_by_name }}{% endif %}{% else %}<span class="tabular-nums">{{ partner.created_at|date:"j M Y" }}</span>{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Team</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ members|length }} staff and volunteer{{ members|length|pluralize }}</p></div>
+<div><p class="edify-profile-field__label">Login</p><p class="edify-profile-field__value mt-0.5">{% if partner_login %}{{ partner_login.name }} · {{ partner_login.email }}{% else %}{{ partner.get_user_setup_status_display }}{% endif %}</p></div>
 {% if partner.notes %}<div class="col-span-2"><p class="edify-profile-field__label">Notes</p><p class="edify-profile-field__value mt-0.5">{{ partner.notes }}</p></div>{% endif %}
 </div>
 </div>
+
+<!-- Schools assigned for visits, and trainings to facilitate (owner, 2026-10-08) -->
+{% include "partials/partners/profile_visit_schools.html" %}
+{% include "partials/partners/profile_trainings.html" %}
 
 <!-- Schools supported -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">

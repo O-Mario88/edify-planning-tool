@@ -565,6 +565,20 @@ def delete_user(user_id: str, principal) -> dict:
         if profile:
             profile.soft_delete()
 
+        # An organisation whose login is deleted has no login. Left linked,
+        # its row went on offering to configure an account that is gone, and
+        # the organisation never came back to the user administrators' list
+        # of logins to set up.
+        from apps.partners.models import Partner, PartnerUserSetupStatus
+
+        unlinked = list(
+            Partner.all_objects.filter(user=user).values_list("id", flat=True)
+        )
+        if unlinked:
+            Partner.all_objects.filter(id__in=unlinked).update(
+                user=None, user_setup_status=PartnerUserSetupStatus.PENDING
+            )
+
     # Session purge is defence-in-depth (is_active=False already fails
     # ModelBackend.user_can_authenticate on the next request).
     for session in Session.objects.all():
@@ -577,6 +591,11 @@ def delete_user(user_id: str, principal) -> dict:
         subject_id=user.id,
         actor_id=principal.id,
         actor_role=getattr(principal, "active_role", None),
-        payload={"email": original_email, "name": user.name, "roles": user.roles},
+        payload={
+            "email": original_email,
+            "name": user.name,
+            "roles": user.roles,
+            **({"partnerLoginOf": unlinked} if unlinked else {}),
+        },
     )
     return {"ok": True}

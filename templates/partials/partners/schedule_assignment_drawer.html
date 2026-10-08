@@ -49,11 +49,20 @@
     <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
+  {% comment %}Chosen from the organisation's team (owner, 2026-10-08: the
+  calendar "should show ... who is executing them from among the onboarded
+  partner team member"), the person signed in among them. It was a blank box,
+  so a name could be typed that is on no roster. It can be changed later from
+  My Plan or the calendar (apps.partners.delivery_team).{% endcomment %}
   <div class="space-y-1">
-    <label for="partner-delivery-contact" class="block edify-text-caption font-semibold text-slate-600">Person visiting the school <span class="text-rose-500">*</span></label>
-    <input id="partner-delivery-contact" name="delivery_contact_name" type="text" maxlength="255" required autocomplete="name"
-      value="{{ request.user.name }}"
-      class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    <label for="partner-delivery-contact" class="block edify-text-caption font-semibold text-slate-600">Team member who will go <span class="text-rose-500">*</span></label>
+    <select id="partner-delivery-contact" name="delivery_contact_name" required
+      class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      {% for name in team %}
+      <option value="{{ name }}" {% if name == request.user.name %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <p class="edify-text-caption font-medium text-slate-500">Your team is the Staff and volunteers list on <a href="/partners/{{ assignment.partner_id }}" class="font-semibold underline">your organisation's profile</a>.</p>
   </div>
 
   <div class="drawer-footer">

@@ -1,17 +1,32 @@
 """Partner invoice flow — period invoices through the PL to the accountant.
 
-One invoice sums ALL of the partner's planned activity costs for a chosen
-week, month or quarter, grouped by category (School Visits, Training
-Facilitation Fee). The system fetches the period total; the amount the
-partner enters must EQUAL it — that equality is the link between invoice and
-plan. The payable is derived (50% on the advance invoice; the balance, only
-for IA-cleared work, on the clearance invoice).
+The platform writes the invoice (owner, 2026-10-08: scheduled and completed
+visits "should be able to compute the cost into an invoice to Edify which goes
+to the program lead for that region (The PL own schools, schools of CCEOs
+under him)"). For a chosen week, month or quarter it lists the partner's
+activities with their costs, grouped by category (School Visits, Training
+Facilitation Fee), and totals them; the payable is derived (50% on the advance
+invoice for scheduled work; the balance, only for work completed with its
+evidence and cleared by IA, on the clearance invoice). The partner types no
+total and need attach nothing.
 
-Routing: partner submits → the supervising Program Lead confirms the invoice
-against the plan (or returns it) → the accountant downloads and pays. The
-money still runs per activity through PartnerPaymentService.pay_partner, so
-every instalment guard (exact 50%, balance clamp, IA blockers, idempotency,
-NetSuite proof) keeps holding.
+Work that is already completed with its evidence is payable in full (owner,
+2026-10-08: "if the activity is completed and evidence uploaded, payable
+become full amount"). It is not offered at 50% any more, and its invoice no
+longer waits for an advance to have been paid first: it pays the whole cost,
+or what is left of it where the 50% did go out. "Completed" here is what the
+balance has always required and what the accountant's payment step enforces
+(finance_services.FinanceBlockedReasonService): verified by IA, with evidence
+on file.
+
+One invoice is raised for each Programme Lead whose schools the period's work
+is at (apps.fund_requests.invoice_routing), so a Lead confirms their own
+schools and nobody else's.
+
+Routing: partner sends → the Programme Lead it is addressed to confirms it
+against the plan (or returns it) → the accountant pays. The money still runs
+per activity through PartnerPaymentService.pay_partner, so every instalment
+guard (exact 50%, balance clamp, IA blockers, idempotency) keeps holding.
 """
 
 from __future__ import annotations
@@ -140,8 +155,20 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
             scheduled_date__date__range=(start, end),
         )
         .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-        .select_related("school")
+        .select_related("school", "school__district", "cluster", "cluster__district")
         .order_by("scheduled_date")
+    )
+
+    activities = list(activities)
+    done = _completed_with_evidence(activities)
+    # A 50% that is on an invoice and not yet paid: the rest is invoiced once
+    # that invoice is settled, or the two would ask for 150% between them.
+    advance_in_flight = set(
+        PartnerInvoiceItem.objects.filter(
+            activity_id__in=[a.id for a in activities],
+            instalment="advance",
+            payment__isnull=True,
+        ).values_list("activity_id", flat=True)
     )
 
     items = []
@@ -155,13 +182,16 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
         if instalment == "advance":
             if paid.get("advance") or paid.get("clearance"):
                 continue
+            # Completed with its evidence: invoiced in full, not at 50%.
+            if activity.id in done:
+                continue
             payable = planned // 2
         else:
-            # The balance opens only after IA has cleared the work and the
-            # advance actually moved.
-            if activity.status not in _CLEARED_STATUSES:
+            # Payable in full once the work is completed with its evidence
+            # (and verified): the whole cost, less a 50% already paid.
+            if activity.id not in done:
                 continue
-            if not paid.get("advance"):
+            if activity.id in advance_in_flight:
                 continue
             if paid.get("clearance"):
                 continue
@@ -174,8 +204,22 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
                 "planned": planned,
                 "payable": payable,
                 "category": _category_of(activity),
+                **_line_facts(activity),
             }
         )
+
+    # One invoice for each Programme Lead whose schools the work is at.
+    from .invoice_routing import split_by_lead
+
+    by_lead = [
+        {
+            "lead": lead,
+            "items": rows,
+            "system_total": sum(i["planned"] for i in rows),
+            "payable": sum(i["payable"] for i in rows),
+        }
+        for lead, rows in split_by_lead(items)
+    ]
 
     groups: dict[str, dict] = {}
     for item in items:
@@ -194,22 +238,57 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
         "instalment": instalment,
         "items": items,
         "groups": groups,
+        "by_lead": by_lead,
         "system_total": sum(i["planned"] for i in items),
         "payable": sum(i["payable"] for i in items),
     }
 
 
+def _completed_with_evidence(activities) -> set[str]:
+    """The ids of the activities that are completed with their evidence: IA
+    has verified them and at least one evidence file is on record. One query
+    for the whole period."""
+    from apps.evidence.models import EvidenceRecord
+
+    cleared = [a.id for a in activities if a.status in _CLEARED_STATUSES]
+    if not cleared:
+        return set()
+    return set(
+        EvidenceRecord.objects.filter(activity_id__in=cleared, quarantined=False)
+        .values_list("activity_id", flat=True)
+        .distinct()
+    )
+
+
+def _line_facts(activity) -> dict:
+    """What an invoice says of one activity besides its money: the day, the
+    place, the work and who delivered it."""
+    from apps.core.clock import local_day
+
+    place = activity.school or activity.cluster
+    return {
+        "date": local_day(activity.scheduled_date) if activity.scheduled_date else None,
+        "place": getattr(place, "name", "") or "",
+        "district": getattr(getattr(place, "district", None), "name", "") or "",
+        "work": activity.activity_name_snapshot or activity.get_activity_type_display(),
+        "delivered_by": activity.delivery_contact_name or "",
+    }
+
+
 # ── submit ───────────────────────────────────────────────────────────────────
 def submit_invoice(
-    principal, kind: str, anchor: date, instalment: str, entered_total, file_obj
+    principal,
+    kind: str,
+    anchor: date,
+    instalment: str,
+    entered_total=None,
+    file_obj=None,
 ) -> dict:
-    from apps.evidence.services import _scan_upload
-    from apps.evidence.validation import assert_safe_upload
-    from apps.core.private_storage import (
-        best_effort_delete,
-        materialized_file,
-        save_file,
-    )
+    """Raise the period's invoice: one for each Programme Lead whose schools
+    the work is at. The totals are the plan's. ``entered_total`` is optional
+    and, when given, must be the plan's total; ``file_obj`` is the partner's
+    own document, when it issues one."""
+    from apps.activities.facilitation import paid_partner_id
 
     from .finance_models import PartnerInvoice, PartnerInvoiceItem
 
@@ -217,22 +296,90 @@ def submit_invoice(
     if not basis["items"]:
         raise BadRequest(
             "Nothing is invoiceable for that period — the advance may already "
-            "be invoiced, or the balance opens only after IA has cleared the "
-            "work."
+            "be invoiced, or the work is not yet completed with its evidence "
+            "and verified by IA."
         )
-    try:
-        entered = int(entered_total)
-    except (TypeError, ValueError):
-        raise BadRequest("Enter the period's total cost as a whole number.")
-    if entered != basis["system_total"]:
-        raise BadRequest(
-            "The amount entered must equal the period's total planned cost "
-            f"of {basis['system_total']:,} UGX — that is how the system links "
-            "your invoice to the plan."
-        )
+    if entered_total not in (None, ""):
+        try:
+            entered = int(entered_total)
+        except (TypeError, ValueError):
+            raise BadRequest("Enter the period's total cost as a whole number.")
+        if entered != basis["system_total"]:
+            raise BadRequest(
+                "The amount entered must equal the period's total planned cost "
+                f"of {basis['system_total']:,} UGX — that is how the system links "
+                "your invoice to the plan."
+            )
 
-    if not file_obj:
-        raise BadRequest("Attach the invoice document.")
+    document = _store_document(file_obj) if file_obj else None
+    partner_id = paid_partner_id(basis["items"][0]["activity"])
+    invoices = []
+    try:
+        with transaction.atomic():
+            for group in basis["by_lead"]:
+                lead = group["lead"]
+                invoice = PartnerInvoice.objects.create(
+                    partner_id=partner_id,
+                    invoice_type=instalment,
+                    period_kind=kind,
+                    period_start=basis["start"],
+                    period_end=basis["end"],
+                    system_total=group["system_total"],
+                    # Kept equal: the platform wrote the total from the plan.
+                    entered_total=group["system_total"],
+                    payable_amount=group["payable"],
+                    submitted_by=principal.user_id,
+                    program_lead_staff_id=lead.staff_id if lead else None,
+                    **(document or {}),
+                )
+                PartnerInvoiceItem.objects.bulk_create(
+                    [
+                        PartnerInvoiceItem(
+                            invoice=invoice,
+                            activity=item["activity"],
+                            instalment=instalment,
+                            planned_amount=item["planned"],
+                            payable_amount=item["payable"],
+                            category=item["category"],
+                        )
+                        for item in group["items"]
+                    ]
+                )
+                invoice.lead_name = lead.name if lead else ""
+                invoices.append(invoice)
+    except Exception:
+        if document:
+            from apps.core.private_storage import best_effort_delete
+
+            best_effort_delete(INVOICE_NAMESPACE, document["stored_name"])
+        raise
+
+    for invoice in invoices:
+        _notify_pls_of_invoice(invoice)
+    return {
+        # The first, for a caller that raised one invoice and reads one.
+        "id": invoices[0].id,
+        "invoices": [
+            {"id": i.id, "lead": i.lead_name, "payable": i.payable_amount}
+            for i in invoices
+        ],
+        "invoiceType": instalment,
+        "payable": basis["payable"],
+        "label": basis["label"],
+    }
+
+
+def _store_document(file_obj) -> dict:
+    """Check, scan and keep the partner's own invoice document; the fields
+    the invoice records of it."""
+    from apps.core.private_storage import (
+        best_effort_delete,
+        materialized_file,
+        save_file,
+    )
+    from apps.evidence.services import _scan_upload
+    from apps.evidence.validation import assert_safe_upload
+
     original_name = getattr(file_obj, "name", "invoice")
     mime_type = getattr(file_obj, "content_type", "") or ""
     head = file_obj.read(512)
@@ -256,74 +403,38 @@ def submit_invoice(
             "This file was flagged by the malware scanner and has been "
             f"rejected ({threat}). Contact IT if you believe this is an error."
         )
-
-    partner_id = basis["items"][0]["activity"].assigned_partner_id
-    try:
-        with transaction.atomic():
-            invoice = PartnerInvoice.objects.create(
-                partner_id=partner_id,
-                invoice_type=instalment,
-                period_kind=kind,
-                period_start=basis["start"],
-                period_end=basis["end"],
-                system_total=basis["system_total"],
-                entered_total=entered,
-                payable_amount=basis["payable"],
-                stored_name=stored_name,
-                original_name=original_name,
-                mime_type=mime_type,
-                file_size=size,
-                submitted_by=principal.user_id,
-            )
-            PartnerInvoiceItem.objects.bulk_create(
-                [
-                    PartnerInvoiceItem(
-                        invoice=invoice,
-                        activity=item["activity"],
-                        instalment=instalment,
-                        planned_amount=item["planned"],
-                        payable_amount=item["payable"],
-                        category=item["category"],
-                    )
-                    for item in basis["items"]
-                ]
-            )
-    except Exception:
-        best_effort_delete(INVOICE_NAMESPACE, stored_name)
-        raise
-
-    _notify_pls_of_invoice(invoice)
     return {
-        "id": invoice.id,
-        "invoiceType": invoice.invoice_type,
-        "payable": invoice.payable_amount,
-        "label": basis["label"],
+        "stored_name": stored_name,
+        "original_name": original_name,
+        "mime_type": mime_type,
+        "file_size": size,
     }
 
 
 # ── the PL stage ─────────────────────────────────────────────────────────────
 def _supervising_pl_user_ids(invoice) -> set[str]:
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+    """The Programme Lead(s) who confirm this invoice.
 
-    # Partner-scheduled activities carry responsible_staff_id=None — the
-    # school's CCEO sits on monitored_by_staff_id (the §5 handoff contract).
-    # Resolving through responsible alone left real partner invoices in NO
-    # Program Lead's queue (2026-08-19 audit finding).
-    staff_ids = {
-        item.activity.responsible_staff_id or item.activity.monitored_by_staff_id
-        for item in invoice.items.select_related("activity")
-        if item.activity.responsible_staff_id or item.activity.monitored_by_staff_id
-    }
-    if not staff_ids:
-        return set()
-    profile_ids = set(staff_ids) | set(
-        StaffProfile.objects.filter(user_id__in=staff_ids).values_list("id", flat=True)
-    )
-    return set(
-        StaffSupervisorAssignment.objects.filter(
-            supervisee_id__in=profile_ids
-        ).values_list("supervisor__user_id", flat=True)
-    )
+    One, for an invoice addressed to its Lead. An invoice raised before
+    2026-10-08 names none and may cover two teams: every Lead of its schools
+    reads it, by the same rule that now addresses a new one — which also
+    finds the Lead of a school they hold themselves, where the old rule
+    (the supervisor of the officer on the activity) found nobody.
+    """
+    from apps.accounts.models import StaffProfile
+
+    if invoice.program_lead_staff_id:
+        return set(
+            StaffProfile.objects.filter(id=invoice.program_lead_staff_id).values_list(
+                "user_id", flat=True
+            )
+        )
+    from .invoice_routing import LeadResolver
+
+    activities = [item.activity for item in invoice.items.select_related("activity")]
+    resolver = LeadResolver(activities)
+    leads = {resolver.lead_of(activity) for activity in activities}
+    return {lead.user_id for lead in leads if lead is not None}
 
 
 def _pl_may_act(invoice, principal) -> bool:
@@ -359,6 +470,7 @@ def pl_invoice_queue(principal):
     )
     for invoice in invoices:
         invoice.partner_name = names.get(invoice.partner_id, invoice.partner_id)
+        invoice.reference = invoice_reference(invoice)
         groups: dict[str, int] = {}
         for item in invoice.items.all():
             groups[item.category] = groups.get(item.category, 0) + item.planned_amount
@@ -512,7 +624,139 @@ def invoice_file(invoice_id: str, principal):
         raise BadRequest("Invoice not found.")
     if not _pl_may_act(invoice, principal):
         raise Forbidden("You are not authorized to download this invoice.")
+    if not invoice.stored_name:
+        raise BadRequest(
+            "This invoice was written by the platform and has no attached "
+            "document. Open the invoice to read or print it."
+        )
     return invoice, open_file(INVOICE_NAMESPACE, invoice.stored_name)
+
+
+_STAGES = {
+    "submitted_to_pl": ("With the Programme Lead", "info"),
+    "confirmed_by_pl": ("Confirmed · with the accountant", "info"),
+    "returned_by_pl": ("Returned", "danger"),
+    "paid": ("Paid", "success"),
+}
+
+
+def invoice_reference(invoice) -> str:
+    """The number an invoice is quoted by: the month it was raised and the
+    end of its id."""
+    return f"INV-{invoice.created_at:%Y%m}-{invoice.id[-6:].upper()}"
+
+
+def invoice_document(invoice_id: str, principal) -> dict:
+    """The invoice as it is read and printed: who it is from and to, and each
+    activity on it with its day, who delivered it, the evidence filed for it,
+    its cost and what this instalment pays.
+
+    Open to the organisation it belongs to, the Programme Lead it is
+    addressed to, and Finance.
+    """
+    from django.db.models import Count
+
+    from apps.accounts.models import StaffProfile
+    from apps.core.scoping import resolve_partner_ids
+    from apps.evidence.models import EvidenceRecord
+    from apps.partners.models import Partner
+    from apps.partners.profile_lists import stage_of
+
+    from .finance_models import PartnerInvoice
+
+    invoice = PartnerInvoice.objects.filter(id=invoice_id).first()
+    if invoice is None:
+        raise BadRequest("Invoice not found.")
+    own = invoice.partner_id in set(resolve_partner_ids(principal) or [])
+    if not own and not _pl_may_act(invoice, principal):
+        raise Forbidden("This invoice is not yours to open.")
+
+    items = list(
+        invoice.items.select_related(
+            "activity",
+            "activity__school",
+            "activity__school__district",
+            "activity__cluster",
+            "activity__cluster__district",
+        ).order_by("activity__scheduled_date", "id")
+    )
+    evidence = dict(
+        EvidenceRecord.objects.filter(
+            activity_id__in=[item.activity_id for item in items], quarantined=False
+        )
+        .values("activity_id")
+        .annotate(n=Count("id"))
+        .values_list("activity_id", "n")
+    )
+    lines = []
+    for item in items:
+        activity = item.activity
+        status, tone = stage_of(activity)
+        lines.append(
+            {
+                "activity_id": activity.id,
+                "school_id": activity.school_id or "",
+                "category": item.category,
+                "status": status,
+                "tone": tone,
+                "evidence": evidence.get(activity.id, 0),
+                "planned": item.planned_amount,
+                "payable": item.payable_amount,
+                **_line_facts(activity),
+            }
+        )
+
+    if invoice.program_lead_staff_id:
+        lead_name = (
+            StaffProfile.objects.filter(id=invoice.program_lead_staff_id)
+            .values_list("user__name", flat=True)
+            .first()
+            or ""
+        )
+    else:
+        from .invoice_routing import LeadResolver
+
+        activities = [item.activity for item in items]
+        resolver = LeadResolver(activities)
+        lead_name = ", ".join(
+            sorted(
+                {
+                    lead.name
+                    for lead in (resolver.lead_of(a) for a in activities)
+                    if lead is not None
+                }
+            )
+        )
+
+    partner = Partner.all_objects.filter(id=invoice.partner_id).first()
+    role = getattr(principal, "active_role", "")
+    if own:
+        back = ("/my-plan", "My Plan")
+        file_href = ""
+    elif role == "Program Lead":
+        back = ("/fund-approvals", "Fund Approvals")
+        file_href = f"/fund-approvals/invoices/{invoice.id}/download"
+    else:
+        back = ("/accounts/partner-payments/", "Partner Payments")
+        file_href = f"/accounts/partner-invoices/{invoice.id}/download"
+    status_label, status_tone = _STAGES.get(invoice.status, (invoice.status, "info"))
+    return {
+        "invoice": invoice,
+        "reference": invoice_reference(invoice),
+        "partner": partner,
+        "partner_name": getattr(partner, "name", "") or invoice.partner_id,
+        "lead_name": lead_name,
+        "period_label": period_label(
+            invoice.period_kind, invoice.period_start, invoice.period_end
+        ),
+        "lines": lines,
+        "status_label": status_label,
+        "status_tone": status_tone,
+        "has_file": bool(invoice.stored_name) and bool(file_href),
+        "file_href": file_href,
+        "back_href": back[0],
+        "back_label": back[1],
+    }
 
 
 # ── notifications ────────────────────────────────────────────────────────────
@@ -521,6 +765,16 @@ def _notify_pls_of_invoice(invoice) -> None:
         from apps.notifications.services import WorkflowNotificationService
 
         ids = list(_supervising_pl_user_ids(invoice))
+        if not ids:
+            # No Lead holds these schools: the Country Director confirms it
+            # in the Lead's place (they read every invoice, _FINANCE_ROLES).
+            from apps.accounts.models import User
+
+            ids = list(
+                User.objects.filter(
+                    active_role="CountryDirector", is_active=True
+                ).values_list("id", flat=True)
+            )
         if not ids:
             return
         WorkflowNotificationService.trigger(
@@ -621,6 +875,7 @@ def partner_payment_tracker(principal) -> list[dict]:
         rows.append(
             {
                 "invoice": invoice,
+                "reference": invoice_reference(invoice),
                 "label": period_label(
                     invoice.period_kind, invoice.period_start, invoice.period_end
                 ),

@@ -392,10 +392,14 @@
   --edify-text-tile-label-size: var(--edify-text-label-size);
   --edify-text-tile-helper-size: var(--edify-text-micro-size);
   --edify-text-table-size: var(--edify-text-label-size);
-  /* Headers sit one step below cells — micro semibold and muted against label
-     data. The stronger weight gives dense grids a dependable scanning rail
-     without falling back to shouty all-caps labels. */
-  --edify-text-table-heading-size: var(--edify-text-micro-size);
+  /* A table reads in three steps (owner, 2026-10-08): its name, in the band
+     over it, is the largest — "it is the Table Header (table name) that
+     should be larger since it is not in any column"; the column names are
+     "just slightly bigger not large" than the cells, bold, in the body's ink;
+     the cells are the label step. Column names sat one step BELOW the cells
+     before, and the table's name at the cells' own size. */
+  --edify-text-table-heading-size: var(--edify-text-body-size);
+  --edify-text-table-title-size: var(--edify-text-title-size);
 
   /* ── OPERATIONAL TABLE CONTRACT ─────────────────────────────────────────
      Record grids are compact enough for sustained work, but every row and
@@ -403,10 +407,10 @@
      they inherit the same type, colour, focus and numeric rhythm. */
   --edify-table-cell-padding-block: 0.5rem;
   --edify-table-cell-padding-inline: 0.75rem;
-  /* Headers may be bold; the body never is. Cells sit at a clear medium-light (450) weight in
+  /* Headers are bold (owner, 2026-10-08); the body never is. Cells sit at a clear medium-light (450) weight in
      the reference grid, and the identity column separates itself with ink
      colour plus a half-step of medium — not a second bold rail. */
-  --edify-table-header-weight: 600;
+  --edify-table-header-weight: 700;
   --edify-table-body-weight: 450;
   --edify-table-identity-weight: 550;
   --edify-table-action-size: 2rem;

@@ -53,7 +53,7 @@ from apps.core.fy import (
     get_month_date_range,
     get_operational_fy,
 )
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import id_list, resolve_user_scope
 from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
@@ -294,8 +294,9 @@ def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
     assigned_ids = {school_id for _, school_id in assign}
     # Operating schools: one that has closed is no longer part of anybody's
     # portfolio (apps.schools.lifecycle_service.active_schools).
+    # `id_list`: one array, not an id a placeholder (4,700 for a Lead's team).
     active_ids = set(
-        active_schools(School.objects.filter(id__in=assigned_ids)).values_list(
+        active_schools(School.objects.filter(id__in=id_list(assigned_ids))).values_list(
             "id", flat=True
         )
     )
@@ -328,7 +329,7 @@ def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
     else:
         school_ids = set(
             active_schools(
-                School.objects.filter(id__in=set(scope.school_ids))
+                School.objects.filter(id__in=id_list(set(scope.school_ids)))
             ).values_list("id", flat=True)
         )
 
@@ -1578,7 +1579,7 @@ class PLAnalyticsService:
                 ssa_by_school = {
                     r["school_id"]: (r["s"] or 0, r["n"])
                     for r in SsaRecord.objects.filter(
-                        school_id__in=every_school,
+                        school_id__in=id_list(every_school),
                         verification_status="confirmed",
                         fy=latest_fy,
                         average_score__isnull=False,
@@ -2147,7 +2148,7 @@ class PLAnalyticsService:
 
             assigned = set(
                 TeamAction.objects.filter(
-                    school_id__in=school_ids, fy=fy, state__in=ACTIVE_STATES
+                    school_id__in=id_list(school_ids), fy=fy, state__in=ACTIVE_STATES
                 ).values_list("school_id", flat=True)
             )
             if assigned:
@@ -2307,7 +2308,7 @@ class PLAnalyticsService:
         # portfolio reaches them through their own planning To-Dos.
         team_school_ids = {sid for c in pls.cceos for sid in c["school_ids"]}
         no_ssa = (
-            School.objects.filter(id__in=team_school_ids)
+            School.objects.filter(id__in=id_list(team_school_ids))
             .exclude(current_fy_ssa_status="done")
             .count()
             if team_school_ids

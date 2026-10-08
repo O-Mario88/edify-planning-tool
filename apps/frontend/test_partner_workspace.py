@@ -284,6 +284,12 @@ class PartnerWorkspaceTests(TestCase):
         )
         self.partner.user = user
         self.partner.save(update_fields=["user"])
+        # Who goes is chosen from the organisation's team (owner, 2026-10-08;
+        # apps.partners.delivery_team): the people these tests send are on it.
+        from apps.partners.models import PartnerMember
+
+        for name in ("SSA Field Officer", "Sarah Field Officer"):
+            PartnerMember.objects.get_or_create(partner=self.partner, name=name)
         return user
 
     def test_partner_schedule_drawer_asks_only_for_date_and_visitor(self):

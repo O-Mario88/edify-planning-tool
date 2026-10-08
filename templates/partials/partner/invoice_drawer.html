@@ -1,10 +1,18 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load frontend_filters %}
+{% load frontend_filters school_identity %}
 
-{% block drawer_title %}Submit invoice{% endblock %}
+{% block drawer_title %}Send invoice{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
+{% comment %}
+The platform writes the invoice (owner, 2026-10-08: the work "should be able to
+compute the cost into an invoice to Edify which goes to the program lead for
+that region"). The partner chooses the instalment and the period and reads
+what will be sent: every activity with its cost, under the Programme Lead whose
+schools it is for. Nothing is typed and nothing has to be attached; one invoice
+is raised for each Lead (apps.fund_requests.invoice_routing).
+{% endcomment %}
 <form
   hx-post="/partner/invoices"
   hx-target="#partner-invoice-errors"
@@ -16,22 +24,26 @@
   {% csrf_token %}
   <div id="partner-invoice-errors"></div>
 
-  <p class="edify-text-caption text-slate-500">One invoice covers all your planned work for the period. The payable instalment is calculated for you and sent to your Program Lead.</p>
+  <p class="edify-text-caption text-slate-500">The invoice is written from your plan: every activity in the period with its cost. It goes to the Programme Lead whose schools the work is for.</p>
 
+  {% comment %}These fields are bordered with `border-slate-200`, not
+  `border-[var(--border-card)]`: this drawer opens inside <main> on the
+  partner's My Plan, where a class with "-card" in it is taken for a card and
+  given a card's padding, which cut the chosen option's text in half.{% endcomment %}
   <div class="space-y-1">
     <label for="inv-instalment" class="block edify-text-caption font-semibold text-slate-600">Invoice for</label>
     <select id="inv-instalment" name="instalment"
             hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-            class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
-      <option value="advance" {% if instalment == "advance" %}selected{% endif %}>50% advance — planned work</option>
-      <option value="clearance" {% if instalment == "clearance" %}selected{% endif %}>Balance — IA-cleared work</option>
+            class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+      <option value="advance" {% if instalment == "advance" %}selected{% endif %}>50% advance: scheduled work</option>
+      <option value="clearance" {% if instalment == "clearance" %}selected{% endif %}>Full payment: completed work with evidence</option>
     </select>
   </div>
   <div class="space-y-1">
     <label for="inv-period" class="block edify-text-caption font-semibold text-slate-600">Period</label>
     <select id="inv-period" name="period_kind"
             hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-            class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+            class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
       <option value="week" {% if kind == "week" %}selected{% endif %}>Week</option>
       <option value="month" {% if kind == "month" %}selected{% endif %}>Month</option>
       <option value="quarter" {% if kind == "quarter" %}selected{% endif %}>Quarter</option>
@@ -41,56 +53,65 @@
     <label for="inv-anchor" class="block edify-text-caption font-semibold text-slate-600">Date in the period</label>
     <input id="inv-anchor" type="date" name="anchor" value="{{ anchor }}"
            hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
-           class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px]">
+           class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
   </div>
 
   {% if basis_error %}
   <p class="edify-note" data-tone="danger" role="alert">{{ basis_error }}</p>
   {% elif basis and basis.items %}
-  <div class="space-y-2" aria-live="polite">
-    <p class="edify-text-caption font-semibold text-slate-600">{{ basis.label }} · from your plan</p>
-    {% for category, g in basis.groups.items %}
-    <div class="flex items-center justify-between gap-3">
-      <span class="text-slate-600">{{ category }} <span class="text-slate-500">× {{ g.count }}</span></span>
-      <span class="font-semibold tabular-nums text-slate-800">{{ g.planned|ugx_amount }}</span>
-    </div>
+  <div class="space-y-3" aria-live="polite" data-invoice-preview>
+    <p class="edify-text-caption font-semibold text-slate-600">{{ basis.label }} · {{ basis.items|length }} activit{{ basis.items|length|pluralize:"y,ies" }}{% if basis.by_lead|length > 1 %} · {{ basis.by_lead|length }} invoices, one for each Programme Lead{% endif %}</p>
+    {% for group in basis.by_lead %}
+    <section class="rounded-surface border border-[var(--border-card)] overflow-hidden" data-invoice-lead-group>
+      <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 bg-slate-50 border-b border-[var(--border-card)]">
+        <h3 class="text-[12px] font-semibold text-slate-800">{% if group.lead %}To Programme Lead: {{ group.lead.name }}{% else %}No Programme Lead holds these schools yet{% endif %}</h3>
+        <span class="tabular-nums text-slate-700">{{ group.payable|ugx }}</span>
+      </header>
+      {% if not group.lead %}<p class="px-3 pt-2 edify-text-caption text-amber-700">This invoice goes to Edify's finance team, who confirm it in the Lead's place.</p>{% endif %}
+      <ul class="divide-y divide-slate-100">
+        {% for item in group.items %}
+        <li class="flex items-start justify-between gap-3 px-3 py-2" data-invoice-item="{{ item.activity.id }}">
+          <span class="min-w-0">
+            <span class="block font-semibold text-slate-800">{{ item.place }}</span>
+            <span class="block edify-text-caption font-medium text-slate-500">{{ item.date|date:"j M Y" }} · {{ item.work }}{% if item.delivered_by %} · {{ item.delivered_by }}{% endif %}</span>
+          </span>
+          <span class="shrink-0 text-right tabular-nums">
+            <span class="block font-semibold text-slate-800">{{ item.payable|ugx_amount }}</span>
+            <span class="block edify-text-caption font-medium text-slate-500">{% if item.payable == item.planned %}in full{% else %}of {{ item.planned|ugx_amount }}{% endif %}</span>
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
     {% endfor %}
     <div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
-      <span class="font-semibold text-slate-700">Total planned cost</span>
-      <span class="font-semibold tabular-nums text-slate-800">{{ basis.system_total|ugx_amount }}</span>
+      <span class="font-semibold text-slate-700">Total cost of the work</span>
+      <span class="font-semibold tabular-nums text-slate-800">{{ basis.system_total|ugx }}</span>
     </div>
     <div class="flex items-center justify-between gap-3">
-      <span class="font-semibold edify-primary-text">{% if instalment == "advance" %}Payable now (50%){% else %}Payable balance{% endif %}</span>
-      <span class="font-semibold tabular-nums edify-primary-text">{{ basis.payable|ugx_amount }}</span>
+      <span class="font-semibold edify-primary-text">{% if instalment == "advance" %}Payable now (50%){% else %}Payable in full{% endif %}</span>
+      <span class="font-semibold tabular-nums edify-primary-text" data-invoice-payable>{{ basis.payable|ugx }}</span>
     </div>
   </div>
 
   <div class="space-y-1">
-    <label for="inv-total" class="block edify-text-caption font-semibold text-slate-600">Your invoice total (UGX) <span class="text-rose-500">*</span></label>
-    <input id="inv-total" type="number" name="entered_total" required min="1"
-           aria-describedby="inv-total-help"
-           class="edify-surface min-h-11 block w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] tabular-nums"
-           placeholder="Must equal {{ basis.system_total }}">
-    <p id="inv-total-help" class="edify-text-caption text-slate-500">Must equal the total planned cost; that links your invoice to the plan.</p>
-  </div>
-
-  <div class="space-y-1">
-    <label for="inv-file" class="block edify-text-caption font-semibold text-slate-600">Invoice document <span class="text-rose-500">*</span></label>
-    <input id="inv-file" type="file" name="invoice_file" required accept=".pdf,.png,.jpg,.jpeg"
-           class="edify-surface block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
+    <label for="inv-file" class="block edify-text-caption font-semibold text-slate-600">Your own invoice document (optional)</label>
+    <input id="inv-file" type="file" name="invoice_file" accept=".pdf,.png,.jpg,.jpeg"
+           class="edify-surface block w-full rounded-control border border-slate-200 px-3 py-2">
+    <p class="edify-text-caption text-slate-500">Attach it only if your organisation issues its own numbered invoice. The platform's invoice is what the Programme Lead confirms and the accountant pays.</p>
   </div>
   {% else %}
   <div class="space-y-1">
-    <p class="text-[13px] font-semibold text-slate-700">Nothing invoiceable in this period</p>
+    <p class="text-[13px] font-semibold text-slate-700">Nothing to invoice in this period</p>
     <p class="edify-text-caption text-slate-500">
-      {% if instalment == "advance" %}All planned work here is already invoiced or paid. Try another period.{% else %}The balance opens once IA has cleared your completed work and the 50% advance has been paid.{% endif %}
+      {% if instalment == "advance" %}All scheduled work here is already invoiced or paid, or is completed and invoiced in full instead. Try another period, or choose Full payment.{% else %}Work is paid in full once it is completed with its evidence and IA has verified it. Where a 50% advance is on an invoice still being processed, the rest follows when that invoice is paid.{% endif %}
     </p>
   </div>
   {% endif %}
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
-    {% if not basis_error and basis and basis.items %}<button type="submit" class="btn btn-primary h-8">Send to my Program Lead</button>{% endif %}
+    {% if not basis_error and basis and basis.items %}<button type="submit" class="btn btn-primary h-8">Send invoice{{ basis.by_lead|length|pluralize }}</button>{% endif %}
   </div>
 </form>
 {% endblock %}

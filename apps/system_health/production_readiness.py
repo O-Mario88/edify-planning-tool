@@ -252,6 +252,11 @@ _EXEMPT_VIEW_NAMES = {
     "mfa_verify_view",
     "mfa_resend_view",
     "mfa_settings_view",
+    # Asked by a page untouched for the session's idle window: whether this
+    # browser is still signed in. It answers a signed-out browser too, which
+    # is the answer it is asked for, and tells it nothing but that
+    # (2026-10-08).
+    "session_state_view",
     # Enrolling an authenticator app is the same personal, own-account surface
     # as mfa_settings_view beside it: login_required, acting only on
     # request.user, with no page a role could be granted or refused

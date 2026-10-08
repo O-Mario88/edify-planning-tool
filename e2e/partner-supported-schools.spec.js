@@ -274,9 +274,14 @@ test.describe('Partner-supported schools — journeys', () => {
     } else {
       await dateInput.fill(days[4].date);
     }
-    await drawer.locator('input[name="delivery_contact_name"]').fill('Grace Visitor');
+    // Who goes is chosen from the organisation's team (owner, 2026-10-08),
+    // the person signed in among them and chosen to begin with.
+    const visitor = drawer.locator('select[name="delivery_contact_name"]');
+    await expect(visitor).toBeVisible();
+    await expect(visitor.locator('option:checked')).not.toHaveText('');
+    const visitorName = (await visitor.locator('option:checked').innerText()).trim();
     await drawer.getByRole('button', { name: 'Schedule delivery' }).click();
-    await expect(page.locator('#drawer-container input[name="delivery_contact_name"]')).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.locator('#drawer-container [name="delivery_contact_name"]')).toHaveCount(0, { timeout: 15_000 });
 
     const facts = fixture('inspect', hope.school_id);
     const partnerWork = facts.activities.find(a => a.delivery === 'partner');
@@ -303,7 +308,7 @@ test.describe('Partner-supported schools — journeys', () => {
     await expect(monitored).toContainText('Scheduled');
     // Who the Partner is sending is in the row's details, opened from the
     // school's name as on Planning.
-    await expect(await monitoringDetails(page, hope.assignment_id)).toContainText('Grace Visitor');
+    await expect(await monitoringDetails(page, hope.assignment_id)).toContainText(visitorName);
     await shoot(page, 'j5-monitoring-scheduled', testInfo);
   });
 

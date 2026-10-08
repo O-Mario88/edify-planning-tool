@@ -197,6 +197,13 @@ OVERSIGHT_ONLY_MESSAGE = (
     "You have read-only supervisory oversight of this record. Operational "
     "planning must be completed by the responsible CCEO."
 )
+# The Country Director's answer to the same question (owner, 2026-10-08): the
+# team's calendars and plans are theirs to read, and an officer's scheduled
+# work is the officer's to edit, move or cancel.
+TEAM_READ_ONLY_MESSAGE = (
+    "You can see this activity but not change it: a team member's scheduled "
+    "work is edited, rescheduled or cancelled by the person responsible for it."
+)
 
 
 def _uniq(items: Iterable[str]) -> list[str]:
@@ -977,7 +984,9 @@ def cluster_queryset(scope: UserScope, base=None, *, direct_only: bool = False):
     unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     return qs.filter(
         Q(responsible_staff_id__in=cluster_owner_ids(scope, direct_only=direct_only))
-        | Q(id__in=in_cluster_ids)
+        # One array: an officer's clusters run to a thousand ids, and this
+        # filter is in every statement that reads their clusters.
+        | Q(id__in=id_list(in_cluster_ids))
         | (unassigned & Q(district_id__in=in_district_ids))
     )
 
@@ -1187,9 +1196,9 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     if direct_only:
         # No own_school_ids means no directly-assigned schools, which is an
         # empty directory — not a fall-through to the team's.
-        return qs.filter(id__in=scope.own_school_ids)
+        return qs.filter(_school_ids(scope.own_school_ids))
     if scope.school_ids:
-        return qs.filter(id__in=scope.school_ids)
+        return qs.filter(_school_ids(scope.school_ids))
     return qs.none()
 
 
@@ -1221,6 +1230,18 @@ def id_array(ids):
     return RawSQL("SELECT unnest(%s::varchar[])", [[str(i) for i in ids]])
 
 
+def id_list(ids):
+    """``ids`` for a ``field__in=`` lookup: one array parameter, or ``[]``.
+
+    `id_array` for any list that holds something. An empty list is returned
+    as it is, because Django answers ``field__in=[]`` without a statement and
+    `id_array` of nothing would send one: a person with no clusters would
+    pay for the questions nobody needed asked.
+    """
+    ids = [str(i) for i in ids]
+    return id_array(ids) if ids else ids
+
+
 class _AnyId(Lookup):
     """``lhs = ANY(%s::varchar[])``, built by `any_id`; never registered."""
 
@@ -1246,6 +1267,25 @@ def any_id(field: str, ids):
     `id_array` slightly quicker, so those callers keep it.
     """
     return _AnyId(F(field), [str(i) for i in ids])
+
+
+def _school_ids(ids):
+    """A scope's schools as a filter on ``School.id``, bound as one array.
+
+    A Programme Lead's scope is their own schools and their team's: about
+    4,700 ids at production size. Written as ``id__in=[...]`` that is 4,700
+    placeholders in every statement that reads through the scope, and a page
+    reads through it dozens of times: Core Schools oversight sent 165,000
+    values in 107 statements and spent most of a second building, adapting
+    and parsing them (2026-10-08). The rows are the same.
+
+    An empty list stays ``id__in=[]``: Django answers that without asking
+    the database at all, which a Programme Lead who holds no school of their
+    own relies on four times on the School Directory alone.
+    """
+    if not ids:
+        return Q(id__in=[])
+    return any_id("id", ids)
 
 
 def direct_portfolio_schools(scope: UserScope, base=None):
@@ -1279,7 +1319,7 @@ def team_oversight_schools(scope: UserScope, base=None):
     qs = qs.filter(deleted_at__isnull=True)
     if not scope.team_school_ids:
         return qs.none()
-    return qs.filter(id__in=scope.team_school_ids)
+    return qs.filter(_school_ids(scope.team_school_ids))
 
 
 def may_plan_school(scope: UserScope, school) -> bool:
@@ -1467,7 +1507,7 @@ def scoped_school_queryset(scope: UserScope, base=None):
             return qs.filter(region_id__in=scope.region_ids)
         return qs
     if scope.school_ids:
-        return qs.filter(id__in=scope.school_ids)
+        return qs.filter(_school_ids(scope.school_ids))
     return qs.none()
 
 
@@ -1520,6 +1560,7 @@ def _get_partner_model():
 __all__ = [
     "UserScope",
     "OVERSIGHT_ONLY_MESSAGE",
+    "TEAM_READ_ONLY_MESSAGE",
     "resolve_user_scope",
     "forget_user_scope",
     "cluster_in_scope",

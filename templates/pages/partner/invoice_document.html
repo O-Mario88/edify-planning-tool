@@ -1,0 +1,92 @@
+{% extends "layouts/shell.html" %}
+{% load static components frontend_filters school_identity %}
+{% block title %}Invoice {{ doc.reference }} — Edify{% endblock %}
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/print-page.css' %}?v=20261008invoice1">
+{% endblock %}
+{% block shell_content %}
+{% comment %}
+A partner's invoice as the platform writes it (owner, 2026-10-08: the work
+"should be able to compute the cost into an invoice to Edify which goes to the
+program lead"). Every line is an activity on the plan, with what it costs from
+its own cost lines, who delivered it and the evidence filed for it; the totals
+are sums of the lines, not figures anyone typed. The partner, the Programme
+Lead it is addressed to and Finance open the same page, and it prints.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1200px] mx-auto" data-partner-invoice="{{ doc.invoice.id }}">
+<div data-print-hide>{% include "partials/_back_link.html" with back_href=doc.back_href back_label=doc.back_label %}</div>
+
+{% page_header eyebrow="Partner invoice" element="div" %}
+  {% slot title %}Invoice {{ doc.reference }}{% endslot %}
+  {% slot description %}{{ doc.partner_name }} to Edify · {{ doc.invoice.get_invoice_type_display }} · {{ doc.period_label }}{% endslot %}
+  <span class="edify-badge" data-tone="{{ doc.status_tone }}">{{ doc.status_label }}</span>
+  {% if doc.has_file %}<a href="{{ doc.file_href }}" class="btn btn-secondary min-h-9" data-print-hide>Attached document</a>{% endif %}
+  <button type="button" x-data @click="window.print()" class="btn btn-primary min-h-9" data-print-hide>Print</button>
+{% endpage_header %}
+
+{% if doc.invoice.status == "returned_by_pl" and doc.invoice.pl_note %}
+<p class="edify-note text-[12px] font-semibold" data-tone="danger">Returned by the Programme Lead: {{ doc.invoice.pl_note }}</p>
+{% endif %}
+
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 text-[12px]">
+<div><p class="edify-profile-field__label">From</p><p class="edify-profile-field__value mt-0.5">{{ doc.partner_name }}</p>{% if doc.partner.contact_person %}<p class="edify-text-caption text-slate-500">{{ doc.partner.contact_person }}</p>{% endif %}{% if doc.partner.phone %}<p class="edify-text-caption text-slate-500 tabular-nums">{{ doc.partner.phone }}</p>{% endif %}{% if doc.partner.email %}<p class="edify-text-caption text-slate-500">{{ doc.partner.email }}</p>{% endif %}</div>
+<div><p class="edify-profile-field__label">To</p><p class="edify-profile-field__value mt-0.5">Edify</p><p class="edify-text-caption text-slate-500" data-invoice-lead>{% if doc.lead_name %}Programme Lead: {{ doc.lead_name }}{% else %}No Programme Lead holds these schools yet{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Raised</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ doc.invoice.created_at|date:"j M Y" }}</p></div>
+<div><p class="edify-profile-field__label">Period</p><p class="edify-profile-field__value mt-0.5">{{ doc.period_label }}</p></div>
+<div><p class="edify-profile-field__label">Instalment</p><p class="edify-profile-field__value mt-0.5">{{ doc.invoice.get_invoice_type_display }}</p></div>
+<div><p class="edify-profile-field__label">Activities</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ doc.lines|length }}</p></div>
+<div><p class="edify-profile-field__label">Total cost</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ doc.invoice.system_total|ugx }}</p></div>
+<div><p class="edify-profile-field__label">{% if doc.invoice.invoice_type == "advance" %}Payable now (50%){% elif doc.invoice.payable_amount == doc.invoice.system_total %}Payable in full{% else %}Payable (less advances paid){% endif %}</p><p class="edify-profile-field__value mt-0.5 tabular-nums" data-invoice-payable>{{ doc.invoice.payable_amount|ugx }}</p></div>
+</div>
+</div>
+
+{% data_table name="partner-invoice-lines" %}
+  {% slot title %}Work on this invoice{% endslot %}
+  {% slot summary %}{{ doc.lines|length }} activit{{ doc.lines|length|pluralize:"y,ies" }}{% endslot %}
+  {% slot caption %}Each activity on invoice {{ doc.reference }}, with its date, who delivered it, the evidence filed, its cost and the amount payable on this instalment.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No activities on this invoice." hint="A returned invoice gives its activities back to be invoiced again." %}{% endslot %}
+  {% if doc.lines %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Date</th>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">School / cluster</th>
+      <th scope="col" class="px-3 py-2">District</th>
+      <th scope="col" class="px-3 py-2">Work</th>
+      <th scope="col" class="px-3 py-2">Delivered by</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2">Evidence</th>
+      <th scope="col" class="px-3 py-2 text-right">Cost (UGX)</th>
+      <th scope="col" class="px-3 py-2 text-right">Payable (UGX)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in doc.lines %}
+    <tr data-invoice-line="{{ line.activity_id }}">
+      <td class="px-3 py-2 tabular-nums" data-label="Date">{{ line.date|date:"j M Y"|default:"—" }}</td>
+      <td class="px-3 py-2 tabular-nums" data-label="School ID">{% if line.school_id %}{% school_code line.school_id %}{% else %}—{% endif %}</td>
+      <td class="px-3 py-2 font-semibold" data-record-title>{{ line.place|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="District">{{ line.district|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Work">{{ line.work }}</td>
+      <td class="px-3 py-2" data-label="Delivered by">{{ line.delivered_by|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Status"><span class="edify-status-text" data-edify-tone="{{ line.tone }}">{{ line.status }}</span></td>
+      <td class="px-3 py-2 tabular-nums" data-label="Evidence">{% if line.evidence %}{{ line.evidence }} file{{ line.evidence|pluralize }}{% else %}None yet{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Cost">{{ line.planned|ugx_amount }}</td>
+      <td class="px-3 py-2 text-right tabular-nums font-semibold" data-label="Payable">{{ line.payable|ugx_amount }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="font-semibold">
+      <td class="px-3 py-2" colspan="8">Total</td>
+      <td class="px-3 py-2 text-right tabular-nums">{{ doc.invoice.system_total|ugx_amount }}</td>
+      <td class="px-3 py-2 text-right tabular-nums">{{ doc.invoice.payable_amount|ugx_amount }}</td>
+    </tr>
+  </tfoot>
+  {% endif %}
+{% enddata_table %}
+
+<p class="edify-text-caption text-slate-500">{% if doc.invoice.invoice_type == "advance" %}The 50% advance is paid on scheduled work once the Programme Lead confirms this invoice. The rest is invoiced after each activity is completed with its evidence and verified by Impact Assessment.{% else %}Work completed with its evidence and verified by Impact Assessment is paid in full, less any 50% advance already paid, once the Programme Lead confirms this invoice.{% endif %}</p>
+</div>
+{% endblock %}

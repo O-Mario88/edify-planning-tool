@@ -435,6 +435,46 @@ class SchoolState:
         return True
 
 
+def _folded_once(cls):
+    """Let a finished row work each of its figures out once.
+
+    Every figure on a row is a property folded from the row's schools, and a
+    page reads them thousands of times: the country's monitor asked one row
+    for its Core schools 2,500 times and walked its schools each time, which
+    was most of the page (2.2 million school reads; 2026-10-08).
+
+    A row answers from memory only once `_settle` has marked it finished. The
+    counting functions fill a row in place and read some of its figures while
+    they do, so a row that is still being built answers as it always has.
+    """
+
+    def remembered(name, read):
+        def figure(self):
+            settled = self.__dict__.get("_settled")
+            if settled is None:
+                return read(self)
+            try:
+                return settled[name]
+            except KeyError:
+                value = settled[name] = read(self)
+                return value
+
+        figure.__name__ = name
+        return figure
+
+    for name, attr in list(vars(cls).items()):
+        if isinstance(attr, property) and attr.fset is None and attr.fdel is None:
+            setattr(cls, name, property(remembered(name, attr.fget), doc=attr.__doc__))
+    return cls
+
+
+def _settle(officers) -> None:
+    """Mark these rows finished: every count is in and none will change."""
+    for officer in officers:
+        officer.__dict__["_settled"] = {}
+
+
+@_folded_once
 @dataclass
 class OfficerMonitor:
     """One CCEO's year. Every figure is folded from ``schools``."""
@@ -903,6 +943,7 @@ def planning_monitor(
     _count_planned_visits(officers.values(), fy)
     _count_partner_work(officers.values(), fy)
     _count_project_places(officers.values())
+    _settle(officers.values())
 
     # The roster's order: each Lead, then their CCEOs by name; the country's
     # CCEOs with no Lead, and schools with no officer, last.

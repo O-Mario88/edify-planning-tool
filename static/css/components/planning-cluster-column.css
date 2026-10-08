@@ -14,7 +14,15 @@
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(5) { width: 10.25rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(6) { width: 11.75rem; }
 :root main table.school-plan-table--selectable[data-cluster-column] thead th:nth-child(7) { width: 8rem; }
-:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6rem; }
+:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(7) { width: 6.5rem; }
+/* With both columns the name gets what is left of the table's least width,
+   and on a phone that is all it gets. At 56rem (the Responsible rule in
+   consistency.css, which the cascade preferred to the 57.5rem above: the two
+   weigh the same and load in no fixed order) that was 100px, and "School
+   Name" at the heading's size needs 114: it ran 2px into Cluster (owner,
+   2026-10-05: "make sure the columns are not overlapping"; column names went
+   up a step on 2026-10-08). Both attributes outweigh either rule. */
+:root main table.school-plan-table--selectable[data-cluster-column][data-support-column] { min-inline-size: 58rem !important; }
 :root main table.school-plan-table--selectable[data-cluster-column][data-support-column] thead th:nth-child(8) { width: 8rem; }
 /* A longer cluster name ends in an ellipsis and reads whole in its title.
    This table fixes its column widths, so a cell cannot grow to fit what it
