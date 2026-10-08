@@ -82,16 +82,31 @@ class GroupReschedule(GroupFixture):
         visit = self._visit(self.fresh)
         new_day = _weekday(15)
 
-        outcome = self._move([visit.id, self.started.id], new_day)
+        outcome = self._move([visit.id, self.delivered.id], new_day)
 
         self.assertEqual([p.id for p in outcome.done], [visit.id])
-        self.assertEqual([p.id for p in outcome.refused], [self.started.id])
+        self.assertEqual([p.id for p in outcome.refused], [self.delivered.id])
         self.assertIn("carried out", outcome.refused[0].refusal)
         visit.refresh_from_db()
-        self.started.refresh_from_db()
+        self.delivered.refresh_from_db()
         self.assertEqual(visit.planned_date, new_day)
-        self.assertEqual(self.started.status, "completion_started")
-        self.assertNotEqual(self.started.planned_date, new_day)
+        self.assertEqual(self.delivered.status, "submitted_to_pl")
+        self.assertNotEqual(self.delivered.planned_date, new_day)
+
+    def test_work_started_and_never_submitted_moves_with_the_rest(self):
+        """Opening Complete and leaving it is not delivering (owner,
+        2026-10-07): the activity is still a plan, and moves like one."""
+        begun = self._visit(self.fresh)
+        Activity.objects.filter(id=begun.id).update(status="completion_started")
+        new_day = _weekday(15)
+
+        outcome = self._move([begun.id], new_day)
+
+        self.assertEqual([p.id for p in outcome.done], [begun.id])
+        self.assertEqual(outcome.refused, [])
+        begun.refresh_from_db()
+        self.assertEqual(begun.planned_date, new_day)
+        self.assertEqual(begun.status, "rescheduled")
 
     def test_a_date_the_single_door_refuses_is_reported_per_activity(self):
         """Every date rule is the single reschedule's own: a day that has
@@ -282,15 +297,15 @@ class GroupDrawers(GroupFixture):
         visit = self._visit(self.fresh)
 
         response = self.client.get(
-            RESCHEDULE_URL, {"ids": self._ids(visit, self.started)}
+            RESCHEDULE_URL, {"ids": self._ids(visit, self.delivered)}
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual([p.id for p in response.context["ready"]], [visit.id])
-        self.assertEqual([p.id for p in response.context["left"]], [self.started.id])
+        self.assertEqual([p.id for p in response.context["left"]], [self.delivered.id])
         html = response.content.decode()
         self.assertIn(f'name="activity_ids" value="{visit.id}"', html)
-        self.assertNotIn(f'name="activity_ids" value="{self.started.id}"', html)
+        self.assertNotIn(f'name="activity_ids" value="{self.delivered.id}"', html)
         self.assertIn('name="scheduled_date"', html)
         self.assertIn("Reschedule 1 activity", html)
 
@@ -331,7 +346,7 @@ class GroupDrawers(GroupFixture):
         response = self.client.post(
             RESCHEDULE_URL,
             {
-                "activity_ids": [self.started.id],
+                "activity_ids": [self.delivered.id],
                 "scheduled_date": _weekday(15).isoformat(),
                 "reason": "Holiday week",
             },

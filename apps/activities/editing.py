@@ -1,13 +1,21 @@
-"""Which planned work may still be changed (owner, 2026-10-02).
+"""Which planned work may still be changed (owner, 2026-10-02 and 2026-10-07).
 
 "Only planned activities that are still at scheduled mode should be editable.
 Activities that are already [executed and completed] should have the greyed
 out disabled button."
 
-An activity is a plan until somebody starts delivering it. From then on its
-day, its schools and its purpose are a record of what happened, and the record
-changes only through the workflow that owns it: completion, a reviewer's
-return, a budget amendment, a cancellation with its reason.
+An activity is a plan until it has been delivered. From then on its day, its
+schools and its purpose are a record of what happened, and the record changes
+only through the workflow that owns it: a reviewer's return, a budget
+amendment, a cancellation with its reason.
+
+Opening Complete is not delivering (owner, 2026-10-07: "the activity was just
+clicked complete but it was canceled before completing. It blocks it from
+editing. Can you lift it so that there is no restriction"). The Complete
+drawer marks the activity started the moment it opens, so an officer who
+opened it and closed it again held a plan nobody could change. Work that has
+been started and not submitted is still a plan: it is edited and moved like
+one, and a move puts it back among the scheduled work.
 
 This module is the one place that says where that line is. The Edit drawer,
 the Reschedule drawer and ``apps.activities.services.reschedule`` all ask it,
@@ -21,12 +29,14 @@ from apps.core.exceptions import BadRequest
 #: Still a plan the planner may change: dated, not yet started.
 EDITABLE_STATUSES = frozenset({"planned", "scheduled", "rescheduled"})
 
-#: Started or delivered. ``completed`` is the legacy delivered value; the
-#: rest are the completion and review steps and what follows them.
+#: Started and never submitted: Complete was opened, or the activity marked
+#: started, and nothing has come of it. Still a plan (owner, 2026-10-07).
+BEGUN_STATUSES = frozenset({"in_progress", "completion_started"})
+
+#: Delivered. ``completed`` is the legacy delivered value; the rest are the
+#: completion and review steps and what follows them.
 EXECUTED_STATUSES = frozenset(
     {
-        "in_progress",
-        "completion_started",
         "evidence_uploaded",
         "evidence_accepted",
         "salesforce_id_required",
@@ -40,24 +50,31 @@ EXECUTED_STATUSES = frozenset(
 )
 
 
+def is_begun(activity) -> bool:
+    """Whether this activity was started and has not been submitted."""
+    return (getattr(activity, "status", "") or "") in BEGUN_STATUSES
+
+
 def is_executed(activity) -> bool:
-    """Whether delivery of this activity has started or finished."""
+    """Whether this activity has been delivered."""
     return (getattr(activity, "status", "") or "") in EXECUTED_STATUSES
 
 
 def is_editable(activity) -> bool:
-    """Whether this activity is staff work that is still only a plan.
+    """Whether this activity is staff work that is still only a plan:
+    scheduled, or started and not submitted.
 
     Partner-delivered work is the partner's to date and change, from its own
     plan; it is not edited here.
     """
-    return (getattr(activity, "status", "") or "") in EDITABLE_STATUSES and getattr(
+    status = getattr(activity, "status", "") or ""
+    return (status in EDITABLE_STATUSES or status in BEGUN_STATUSES) and getattr(
         activity, "delivery_type", ""
     ) != "partner"
 
 
 def assert_not_executed(activity, *, action: str = "changed") -> None:
-    """Refuse a change to work that has started or been delivered."""
+    """Refuse a change to work that has been delivered."""
     if is_executed(activity):
         raise BadRequest(
             f"This activity has already been carried out, so it can no longer "
@@ -79,7 +96,8 @@ def assert_editable(activity) -> None:
         raise BadRequest(
             "A partner delivers this activity and changes it from its own plan."
         )
-    if (getattr(activity, "status", "") or "") not in EDITABLE_STATUSES:
+    status = getattr(activity, "status", "") or ""
+    if status not in EDITABLE_STATUSES and status not in BEGUN_STATUSES:
         raise BadRequest(
             "Only an activity that is still scheduled can be edited. This one "
             f"is {str(activity.status or 'not planned').replace('_', ' ')}."
@@ -351,19 +369,50 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             "Change the training in one save, and the school or project in another."
         )
 
-    with transaction.atomic():
+    facilitator_moves = False
+    if "facilitatingPartnerId" in data:
+        from apps.activities.facilitation import takes_facilitator
+
+        facilitator_moves = takes_facilitator(activity.activity_type) and str(
+            data.get("facilitatingPartnerId") or ""
+        ).strip() != (activity.facilitating_partner_id or "")
+    invitations_move = (
+        "invitedSchoolIds" in data
+        and is_cluster_session(activity)
+        and _invitations_change(activity, data.get("invitedSchoolIds"))
+    )
+
+    from apps.fund_requests.plan_changes import planner_change
+
+    with planner_change(principal, activity), transaction.atomic():
+        if (
+            date_moves
+            or end_moves
+            or training_moves
+            or facilitator_moves
+            or invitations_move
+            or new_school is not None
+            or new_project is not None
+        ):
+            # A change that moves money: the week's fund request, where it
+            # has been sent and not paid, comes back to its owner instead of
+            # refusing the change (owner, 2026-10-07).
+            from apps.fund_requests.plan_changes import take_back_for_plan_change
+
+            for member in _priced_together(activity, principal):
+                take_back_for_plan_change(
+                    member, principal, days=(current_day, new_day)
+                )
         if training_moves:
             from apps.activities.training_change import change_training
 
             after = None
             if "invitedSchoolIds" in data and is_cluster_session(activity):
-                after = len(
-                    {
-                        str(i).strip()
-                        for i in (data.get("invitedSchoolIds") or [])
-                        if str(i).strip()
-                    }
-                )
+                after = {
+                    str(i).strip()
+                    for i in (data.get("invitedSchoolIds") or [])
+                    if str(i).strip()
+                }
             change_training(
                 activity, data.get("trainingCourseId"), principal, schools_after=after
             )
@@ -383,14 +432,12 @@ def edit(activity_id: str, data: dict, principal) -> dict:
 
         if patch:
             services.patch_activity(activity.id, patch, principal)
-        if "facilitatingPartnerId" in data:
-            from apps.activities.facilitation import takes_facilitator
-
-            wanted_partner = str(data.get("facilitatingPartnerId") or "").strip()
-            if takes_facilitator(activity.activity_type) and wanted_partner != (
-                activity.facilitating_partner_id or ""
-            ):
-                services.set_facilitator(activity.id, wanted_partner, principal)
+        if facilitator_moves:
+            services.set_facilitator(
+                activity.id,
+                str(data.get("facilitatingPartnerId") or "").strip(),
+                principal,
+            )
         if "invitedSchoolIds" in data and is_cluster_session(activity):
             _set_invited(activity, data.get("invitedSchoolIds"), principal)
         if date_moves or end_moves:
@@ -405,6 +452,29 @@ def edit(activity_id: str, data: dict, principal) -> dict:
             for member in _moves_together(activity, principal):
                 services.reschedule(member.id, payload, principal)
     return services.get_activity(activity.id, principal)
+
+
+def _priced_together(activity, principal) -> list:
+    """The activity and the other half of an in-school Training pair, whether
+    or not that half can still be edited: the pair is priced as one."""
+    from apps.activities import services
+
+    pair = services.in_school_training_pair(activity.id, principal, for_execution=True)
+    return list(pair) if pair else [activity]
+
+
+def _invitations_change(activity, raw_ids) -> bool:
+    """Whether the invitation list a form posted differs from the one saved.
+    The Edit drawer posts the list on every save, changed or not."""
+    from apps.activities.models import ClusterActivityAttendance
+
+    wanted = {str(i).strip() for i in (raw_ids or []) if str(i).strip()}
+    saved = set(
+        ClusterActivityAttendance.objects.filter(
+            activity=activity, invited=True
+        ).values_list("school_id", flat=True)
+    )
+    return wanted != saved
 
 
 def _moves_together(activity, principal) -> list:
@@ -460,7 +530,14 @@ def _set_invited(activity, raw_ids, principal) -> None:
         if "expected_participants" in fields:
             from django.db import transaction
 
-            transaction.on_commit(lambda: _reprice_quietly(activity))
+            from apps.fund_requests.plan_changes import planner_change
+
+            def reprice():
+                # Still the planner's change: the month's request follows it.
+                with planner_change(principal, activity):
+                    _reprice_quietly(activity)
+
+            transaction.on_commit(reprice)
 
 
 def _reprice_quietly(activity) -> None:
@@ -627,12 +704,12 @@ LOCKED_REASON = "Already carried out, so it can no longer be edited."
 def edit_state(activity, principal) -> str:
     """What the Edit button is for this reader: "open", "locked" or "".
 
-    "open" — staff work still scheduled that the reader may run. "locked" —
-    work the reader could have edited, now started or delivered: the button
-    stays, greyed (owner, 2026-10-02). "" — not theirs to edit, or not a
-    plan that is edited here (a partner's delivery, a cancelled or returned
-    activity, a request awaiting its owner): no button, as for every action
-    a role does not hold.
+    "open" — staff work still scheduled, or started and not submitted, that
+    the reader may run. "locked" — work the reader could have edited, now
+    delivered: the button stays, greyed (owner, 2026-10-02). "" — not theirs
+    to edit, or not a plan that is edited here (a partner's delivery, a
+    cancelled or returned activity, a request awaiting its owner): no button,
+    as for every action a role does not hold.
     """
     if getattr(activity, "delivery_type", "") == "partner":
         return ""
@@ -650,12 +727,14 @@ def edit_state(activity, principal) -> str:
 
 
 __all__ = [
+    "BEGUN_STATUSES",
     "EDITABLE_STATUSES",
     "EXECUTED_STATUSES",
     "assert_editable",
     "assert_not_executed",
     "edit",
     "edit_state",
+    "is_begun",
     "is_cluster_session",
     "is_editable",
     "is_executed",

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **649**
+Components and application partials: **650**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -439,6 +439,7 @@ Components and application partials: **649**
 | `partials/my_plan/row_badges.html` | application-partial | Reusable row badges interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/salesforce_id_drawer.html` | application-partial | Reusable salesforce id drawer interface primitive | info; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/salesforce-id | 0 |
 | `partials/my_plan/school_visits.html` | application-partial | Reusable school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/sent_fund_request_note.html` | application-partial | Reusable sent fund request note interface primitive | warning; default | inherits containing page contract | announced dynamic state | /my-plan/<str:activity_id>/edit-drawer<br>/my-plan/<str:activity_id>/reschedule-drawer<br>/planning/schedule-modal | 0 |
 | `partials/my_plan/ssa_upload_drawer.html` | application-partial | Reusable ssa upload drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label | /activities/<str:activity_id>/ssa-upload | 0 |
 | `partials/my_plan/start_drawer.html` | application-partial | Reusable start drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/start | 0 |
 | `partials/my_plan/submit_drawer.html` | application-partial | Reusable submit drawer interface primitive | warning; default, disabled | inherits containing page contract | inherits semantic parent contract | /activities/<str:activity_id>/submit | 0 |

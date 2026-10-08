@@ -68,7 +68,7 @@ get showManualIntervention() { return !this.showSsaDataGathering && (!this.showF
 get showLinkedIntervention() { return this.showTrainingActivityPicker && !(this.selectedTrainingActivity && this.selectedTrainingActivity.plannerChooses); },
 capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
 capacityKey: null,
-get trainingCeilingFull() { return this.showTrainingActivityPicker && !!this.trainingActivityId && this.capacity.managed && this.capacity.remaining <= 0; },
+get trainingCeilingFull() { return this.showTrainingActivityPicker && !!this.trainingActivityId && this.capacity.managed && !this.capacity.counted && this.capacity.remaining <= 0; },
 loadCapacity() {
   const training = this.showTrainingActivityPicker ? this.trainingActivityId : '';
   const query = new URLSearchParams({ training: training, date: this.scheduledDate || '', school: '{{ school.school_id|default:''|escapejs }}' }).toString();
@@ -216,6 +216,8 @@ day (owner, 2026-09-28): moving either moves both
 (apps.activities.pairs).{% endcomment %}
 <p class="edify-note" data-tone="info" role="status" data-pair-joins>The {{ pair_joins.get_activity_type_display }} on the same day moves with it: the two are one piece of work.</p>
 {% endif %}
+
+{% if reschedule_mode %}{% include "partials/my_plan/sent_fund_request_note.html" %}{% endif %}
 
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>

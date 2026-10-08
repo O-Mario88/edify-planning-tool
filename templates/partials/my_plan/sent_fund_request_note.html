@@ -1,0 +1,9 @@
+{% comment %}
+Said before the change is saved (owner, 2026-10-07): a fund request that has
+been sent and not paid no longer refuses a change to the plan under it. It
+comes back to its owner, rebuilt, to be sent again
+(apps.fund_requests.plan_changes).
+{% endcomment %}
+{% if sent_fund_weeks %}
+<p class="edify-note" data-tone="warning" role="status" data-sent-fund-request-note>The fund request for {{ sent_fund_weeks }} has already been sent. If this change moves the activity's date or its cost, that request comes back to you with the new figures, to send for approval again.</p>
+{% endif %}

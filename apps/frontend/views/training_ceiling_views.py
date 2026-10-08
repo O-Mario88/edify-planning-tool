@@ -82,6 +82,11 @@ def training_capacity_view(request):
     training_id = (request.GET.get("training") or "").strip()
     activity_id = (request.GET.get("activity") or "").strip()
     school_key = (request.GET.get("school") or "").strip()
+    # The one school a drawer is scheduling for, where the drawer files the
+    # work under its own reader: only asked so the answer can say whether
+    # that school is already counted and so takes no new place.
+    for_school = (request.GET.get("for_school") or "").strip()
+    named_school_id = None
     exclude = None
     if activity_id:
         # The Edit drawer: the plan's own officer, training and year, with
@@ -117,12 +122,25 @@ def training_capacity_view(request):
         )
         staff_id, _name = visit_owner_for(school, request.user)
         fy = _fy_from(request.GET.get("date"))
+        named_school_id = school.id
     else:
         staff_id = _session_owner(request)
         fy = _fy_from(request.GET.get("date"))
+        if for_school:
+            from apps.schools.models import School
+
+            named_school_id = (
+                School.objects.filter(Q(id=for_school) | Q(school_id=for_school))
+                .values_list("id", flat=True)
+                .first()
+            )
     return JsonResponse(
         training_ceilings.capacity(
-            staff_id, training_id, fy, exclude_activity_id=exclude
+            staff_id,
+            training_id,
+            fy,
+            exclude_activity_id=exclude,
+            school_id=named_school_id,
         )
     )
 
