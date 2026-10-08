@@ -25,6 +25,11 @@ test('core scheduling closes after success and preserves validation errors', asy
     }
     const drawer = page.locator(`#schedule-${kind}-drawer-root`);
     await expect(drawer).toBeVisible();
+    // htmx takes a swapped-in form in hand a moment after it is on the page
+    // (it carries `htmx-added` until then). A submit event sent sooner has
+    // no listener: nothing is posted, and Firefox, which submits a form on
+    // an unhandled submit event, sent this one as a GET and left the page.
+    await expect(page.locator('#drawer-container .htmx-added')).toHaveCount(0);
     let invalid = true;
     await page.route(`**/core-schools/schedule-${kind}/action`, route => route.fulfill({
       status: invalid ? 400 : 200,
