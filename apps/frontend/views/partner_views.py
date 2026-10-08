@@ -1729,10 +1729,12 @@ def partner_invoice_document_view(request, invoice_id):
 
     try:
         doc = invoice_document(invoice_id, request.user)
-    except Forbidden as exc:
-        return HttpResponseForbidden(str(exc))
-    except BadRequest as exc:
-        raise Http404(str(exc))
+    except Forbidden:
+        # The page's own words: what an exception carries is not written
+        # into a response.
+        return HttpResponseForbidden("This invoice is not yours to open.")
+    except BadRequest:
+        raise Http404("Invoice not found.")
     return render(request, "pages/partner/invoice_document.html", {"doc": doc})
 
 
