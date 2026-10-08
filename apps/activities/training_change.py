@@ -126,14 +126,14 @@ def training_options(activity) -> list[dict]:
     return options
 
 
-def change_training(
-    activity, course_id, principal, *, schools_after: int | None = None
-) -> bool:
+def change_training(activity, course_id, principal, *, schools_after=None) -> bool:
     """Set the training this plan delivers. Returns whether it changed.
 
-    Call inside the edit's transaction. ``schools_after`` is how many schools
-    the plan will hold once the same save has finished, when that save also
-    changes its invited schools; left out, the schools it holds now.
+    Call inside the edit's transaction. ``schools_after`` is the ids of the
+    schools the plan will hold once the same save has finished, when that
+    save also changes its invited schools; left out, the schools it holds
+    now. Schools are what a ceiling counts, so the ids are asked for and not
+    how many.
     """
     from apps.activity_catalogue.availability import (
         CLUSTER,
@@ -174,15 +174,15 @@ def change_training(
     # Its schools move under the new training, and must fit under the
     # officer's ceiling for it. None of them was counted there before.
     held = (
-        schools_after
+        set(schools_after)
         if schools_after is not None
-        else training_ceilings.schools_held(activity)
+        else training_ceilings.schools_of(activity)
     )
     training_ceilings.reserve(
         staff_id=activity.responsible_staff_id,
         course_id=course.id,
         fy=activity.fy,
-        requested=held,
+        schools=held,
         exclude_activity_id=activity.id,
     )
 

@@ -134,5 +134,5 @@ with a handful of trainings each.
     {% include "components/empty_state.html" with message="No training ceiling is set and no officer has scheduled a training this year." hint="Set a training ceiling to say how many schools an officer may schedule for a training." compact="true" %}
   </div>
   {% endif %}
-  <div class="rpl-card__footnote">Total scheduled is group training plus in-school training: every school added to a group training, in any cluster, and every in-school training, cancelled plans left out. Balance is what is still to schedule under the ceiling; schools above it are Excess. An officer with no ceiling schedules without a limit.</div>
+  <div class="rpl-card__footnote">Total scheduled is the schools scheduled for the training: every school added to a group training, in any cluster, and every school with an in-school training, each counted once and cancelled plans left out. Balance is what is still to schedule under the ceiling; schools above it are Excess. An officer with no ceiling schedules without a limit.</div>
 </section>

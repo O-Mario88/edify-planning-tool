@@ -355,21 +355,32 @@ changes cannot price an activity on a stale count.
     At the ceiling the unticked schools are greyed and cannot be ticked. The
     save counts again behind a lock; these boxes are the courtesy, not the
     rule.
+
+    A ceiling counts schools (owner, 2026-10-08), so a school this officer
+    has already scheduled for the training on another session takes no new
+    place: `capacity.schoolIds` names those schools, `takes(box)` says
+    whether a box would use a place, and `placesTaken` is how many of the
+    ticked ones do. A school already counted is never greyed.
     {% endcomment %}
     trimmed: 0,
     held: [],
+    placesTaken: 0,
+    takes(box) { return !(this.capacity.schoolIds || []).includes(box.value); },
     get placesHeld() { return this.capacity.managed ? Math.max(this.capacity.remaining, 0) : null; },
-    get ceilingFull() { return this.capacity.managed && this.schoolsInvited >= this.placesHeld; },
-    isHeld(box) { return this.ceilingFull && !box['checked']; },
+    get ceilingFull() { return this.capacity.managed && this.placesTaken >= this.placesHeld; },
+    isHeld(box) { return this.ceilingFull && !box['checked'] && this.takes(box); },
     syncInvited(event) {
       const boxes = this.boxes();
       let ticked = boxes.filter(b => b.checked).length;
-      if (event && event.target.checked && this.capacity.managed && ticked > this.placesHeld) {
+      let taken = boxes.filter(b => b.checked && this.takes(b)).length;
+      if (event && event.target.checked && this.capacity.managed && this.takes(event.target) && taken > this.placesHeld) {
         event.target.checked = false;
         ticked -= 1;
+        taken -= 1;
       }
       if (event) { this.held = []; this.trimmed = 0; }
       this.schoolsInvited = ticked;
+      this.placesTaken = taken;
       this.allChecked = boxes.length > 0 && (ticked === boxes.length || this.ceilingFull);
     },
     fitToCeiling() {
@@ -377,13 +388,15 @@ changes cannot price an activity on a stale count.
       let moved = 0;
       // Schools the ceiling left unticked come back when there is room for
       // them again: another training, another officer, or no training at all.
-      let room = this.capacity.managed ? this.placesHeld - all.filter(b => b.checked).length : Infinity;
+      let room = this.capacity.managed ? this.placesHeld - all.filter(b => b.checked && this.takes(b)).length : Infinity;
       this.held = this.held.filter(b => {
         if (b.checked || !b.isConnected) { return false; }
+        if (!this.takes(b)) { b.checked = true; moved += 1; return false; }
         if (room > 0) { b.checked = true; room -= 1; moved += 1; return false; }
         return true;
       });
-      const ticked = all.filter(b => b.checked);
+      // Only a school that takes a place is unticked to fit the ceiling.
+      const ticked = all.filter(b => b.checked && this.takes(b));
       let over = this.capacity.managed ? ticked.length - this.placesHeld : 0;
       for (let i = ticked.length - 1; i >= 0 && over > 0; i -= 1, over -= 1) {
         ticked[i].checked = false;
@@ -397,7 +410,11 @@ changes cannot price an activity on a stale count.
     toggleAll() {
       const next = !this.allChecked;
       let room = next && this.capacity.managed ? this.placesHeld : Infinity;
-      this.boxes().forEach(b => { b.checked = next && room > 0; room -= 1; });
+      this.boxes().forEach(b => {
+        if (!this.takes(b)) { b.checked = next; return; }
+        b.checked = next && room > 0;
+        room -= 1;
+      });
       this.trimmed = 0;
       this.held = [];
       this.syncInvited();
@@ -471,8 +488,8 @@ changes cannot price an activity on a stale count.
       {% comment %}Scheduled under the ceiling so far, this drawer's ticks
       included: "17 / 20" (owner, 2026-10-06).{% endcomment %}
       <p x-show="isTraining && activityId" style="display:none" class="mt-1 edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
-        <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(capacity.scheduled + schoolsInvited) + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for <span x-text="selectedActivity ? selectedActivity.label : 'this training'"></span><span x-show="capacity.staffName"> by <span x-text="capacity.staffName"></span></span> in FY <span x-text="capacity.fy"></span>.</span></template>
-        <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + schoolsInvited"></strong> schools scheduled for <span x-text="selectedActivity ? selectedActivity.label : 'this training'"></span> in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
+        <template x-if="capacity.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(capacity.scheduled + placesTaken) + ' / ' + capacity.ceiling" data-training-ceiling-count></strong> schools scheduled for <span x-text="selectedActivity ? selectedActivity.label : 'this training'"></span><span x-show="capacity.staffName"> by <span x-text="capacity.staffName"></span></span> in FY <span x-text="capacity.fy"></span>.</span></template>
+        <template x-if="!capacity.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="capacity.scheduled + placesTaken"></strong> schools scheduled for <span x-text="selectedActivity ? selectedActivity.label : 'this training'"></span> in FY <span x-text="capacity.fy"></span>. No training ceiling is set.</span></template>
       </p>
       <p x-show="isTraining && activityId && ceilingFull" style="display:none" class="mt-1 edify-note" data-tone="warning" role="status" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools<span x-show="trimmed"> (<span x-text="trimmed"></span> school<span x-show="trimmed !== 1">s</span> left unticked)</span>.<span x-show="schoolsInvited > 0"> Untick a school to tick another.</span></p>
       <div role="group" aria-labelledby="schools-invited-help" x-ref="invitedList"

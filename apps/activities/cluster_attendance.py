@@ -160,18 +160,21 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
         # a row is written and behind the ceiling's row lock, so the list a
         # browser was allowed to tick is not the authority and two saves
         # cannot share the last places. The session's own schools are left
-        # out of the count, so editing it never counts them twice.
+        # out of the count, so editing it never counts them twice. Schools
+        # are what is counted (owner, 2026-10-08): one already on another
+        # session of this training takes no new place.
         from apps.planning.training_ceilings import reserve_for_session
 
-        kept = {
-            sid
-            for sid, r in rows.items()
-            if r.invited and sid not in wanted and (r.attended or r.is_guest)
+        # What the session holds once this is saved: the schools ticked, and
+        # the rows a change of plan never removes (a school that attended, a
+        # guest still on the list).
+        stays = {
+            sid for sid, r in rows.items() if r.attended or (r.invited and r.is_guest)
         }
         reserve_for_session(
             activity,
-            invited_after=len(wanted | kept),
-            invited_now=sum(1 for r in rows.values() if r.invited),
+            schools_after=wanted | stays,
+            schools_now={sid for sid, r in rows.items() if r.invited or r.attended},
         )
         for school_id in wanted:
             row = rows.get(school_id)

@@ -48,6 +48,18 @@ Two kinds of row, and they are never mixed:
   set for them (``apps.projects``); Planned is every school on the project.
   A project's schools are the Project Coordinator's to control, so it has no
   Country Ceiling here and is not counted under a training ceiling.
+
+A training is one or the other, never both (owner, 2026-10-08: "it is
+repeating the trainings that are already created as project. Can you read
+only project ... so that there are no repeated trainings"). EdTech
+Foundations is a Training Catalogue entry and a training the EdTech project
+delivers; a session of it scheduled from the catalogue, with no project
+named, used to add a second row for the same training above the project's.
+A training a live project delivers is read from the project and is not a
+training row at all (``training_ceilings.project_training_ids``).
+
+Every figure is schools, each counted once: a school on two sessions of one
+training is one school in its officer's cell and one in Planned.
 """
 
 from __future__ import annotations
@@ -393,24 +405,10 @@ def _project_rows(profiles) -> list[Row]:
     training under project should be fetched from special project and their
     numbers added there based on how people have added the schools to
     projects"). A project training is a row once the project has a school."""
-    from apps.activity_catalogue.models import (
-        ActivityProjectMapping,
-        CatalogueActivityType,
-    )
-    from apps.projects.models import (
-        LIVE_PROJECT_STATUSES,
-        ProjectSchoolAssignment,
-        ProjectStaffCapacity,
-    )
+    from apps.projects.models import ProjectSchoolAssignment, ProjectStaffCapacity
 
-    live = [status.value for status in LIVE_PROJECT_STATUSES]
     mappings = list(
-        ActivityProjectMapping.objects.filter(
-            active=True,
-            project__deleted_at__isnull=True,
-            project__status__in=live,
-            catalogue_item__activity_type=CatalogueActivityType.TRAINING,
-        )
+        training_ceilings.project_training_mappings()
         .select_related("project", "catalogue_item")
         .order_by("project__name", "catalogue_item__display_name")
     )

@@ -100,6 +100,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability.py",
@@ -603,6 +604,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability_cache.py",
@@ -1458,6 +1460,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability_cache.py",
@@ -1813,6 +1816,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/views.py",
         "apps/fund_requests/weekly_service.py",
@@ -2094,6 +2098,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability_cache.py",
@@ -2553,6 +2558,7 @@
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
+        "apps/fund_requests/plan_changes.py",
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/accountability.py",
@@ -4724,9 +4730,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "3fc6ad8d9db2ae6912cdce04f8e9dad788a6a27b1a8f7eed1db306d541fdfe02",
-    "sources": "a6a9d5e1ca058b6c5d10dc1a632d30b47ef3b68744b5a936e9580dc0d21fad31",
-    "sourceCount": 234,
+    "payload": "db508131270404b652d59f76d02c3eff0b70401d2723cd5c9ac138d83d828012",
+    "sources": "1a8b4f9fa0ab544a69df472a330482245f02fe8335cf092f9532d92a9b2f6d5d",
+    "sourceCount": 235,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

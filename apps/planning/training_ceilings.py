@@ -31,6 +31,20 @@ as before. The reporting side still reads every state — a ceiling lowered
 below what is scheduled, or rows written by an import, show as Excess rather
 than a negative balance.
 
+A ceiling is a number of schools, so a school is counted once (owner,
+2026-10-08: "some are blocking before hitting the ceiling"). A school on two
+sessions of the same training, or with a group session and an in-school one,
+was counted once for each: three schools trained twice filled six places, and
+an officer was refused with half their ceiling unused. It is one school under
+an officer's ceiling, and one school for the country, however many sessions
+it is on.
+
+A training a live Special Project delivers is the project's (owner,
+2026-10-08: "read only project ... so that there are no repeated trainings").
+Its schools are the schools added to the project, against the capacity its
+coordinator set; it has no training ceiling, counts under none, and is listed
+once, under its project (``project_training_ids``).
+
 "Allocated" is not a word here. It keeps its meaning — a school assigned to a
 partner or to a project — and training uses Scheduled, Ceiling, Balance and
 Excess.
@@ -40,7 +54,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from django.db.models import Case, CharField, Count, F, Q, When
+from django.db.models import Case, CharField, F, Q, When
 from django.db.models.functions import Coalesce
 
 from apps.activities.training_names import MODE_OF_DELIVERY as _MODE_OF_DELIVERY
@@ -78,6 +92,12 @@ __all__ = [
     "own_summary",
     "ceiling_staff_options",
     "training_options",
+    "project_of_training",
+    "project_training_ids",
+    "project_training_mappings",
+    "scheduled_count",
+    "scheduled_schools",
+    "schools_of",
     "COUNTRY_CEILING_ROLES",
     "country_capacity",
     "country_ceilings",
@@ -163,10 +183,61 @@ def _outside_projects_q(prefix: str = "") -> Q:
     return Q(**{f"{prefix}project_id__isnull": True}) | Q(**{f"{prefix}project_id": ""})
 
 
+def project_training_mappings():
+    """The trainings live Special Projects deliver: every active link between
+    a live project and a Training entry of the Activity Catalogue."""
+    from apps.activity_catalogue.models import (
+        ActivityProjectMapping,
+        CatalogueActivityType,
+    )
+    from apps.projects.models import LIVE_PROJECT_STATUSES
+
+    return ActivityProjectMapping.objects.filter(
+        active=True,
+        project__deleted_at__isnull=True,
+        project__status__in=[status.value for status in LIVE_PROJECT_STATUSES],
+        catalogue_item__activity_type=CatalogueActivityType.TRAINING,
+    )
+
+
+def project_training_ids() -> frozenset[str]:
+    """The catalogue ids of those trainings. Each is read from its project
+    and nowhere else: not a row of its own on a summary, and not under a
+    training ceiling (owner, 2026-10-08)."""
+    return frozenset(
+        project_training_mappings().values_list("catalogue_item_id", flat=True)
+    )
+
+
+def project_of_training(course_id: str | None) -> str:
+    """The name of the live project that delivers this training; "" when it
+    is nobody's."""
+    if not course_id:
+        return ""
+    return (
+        project_training_mappings()
+        .filter(catalogue_item_id=course_id)
+        .order_by("project__name")
+        .values_list("project__name", flat=True)
+        .first()
+        or ""
+    )
+
+
+def _not_a_projects(rows):
+    """Leave out the trainings a live project delivers, wherever they were
+    scheduled from: annotated rows, by their ``course``."""
+    return rows.exclude(
+        course__in=project_training_mappings().values("catalogue_item_id")
+    )
+
+
 def under_ceiling(activity) -> bool:
     """Whether this plan's schools count under a training ceiling: a group or
-    in-school training that belongs to no project."""
-    return delivery_of(activity) is not None and not activity.project_id
+    in-school training that belongs to no project and is no project's own."""
+    if delivery_of(activity) is None or activity.project_id:
+        return False
+    return course_id_of(activity) not in project_training_ids()
 
 
 def _course_expr(prefix: str = ""):
@@ -199,6 +270,7 @@ def _in_school_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
         .annotate(course=_course_expr())
         .exclude(course__isnull=True)
     )
+    rows = _not_a_projects(rows)
     if owner_ids is not None:
         rows = rows.filter(responsible_staff_id__in=list(owner_ids))
     if course_id:
@@ -230,6 +302,7 @@ def _group_rows(*, owner_ids, fy, course_id=None, exclude_activity_id=None):
         .annotate(course=_course_expr("activity__"))
         .exclude(course__isnull=True)
     )
+    rows = _not_a_projects(rows)
     if owner_ids is not None:
         rows = rows.filter(activity__responsible_staff_id__in=list(owner_ids))
     if course_id:
@@ -260,11 +333,12 @@ def _owner_ids(profile) -> list[str]:
     return [value for value in (profile.id, profile.user_id) if value]
 
 
-def scheduled_count(
+def scheduled_schools(
     profile, course_id: str, fy: str, *, exclude_activity_id: str | None = None
 ) -> dict:
-    """Schools this staff member has scheduled for one training in one year,
-    by delivery. Two counts, read from the persisted plans."""
+    """The schools this staff member has scheduled for one training in one
+    year, by delivery: two sets of school ids, read from the persisted plans.
+    A school on several sessions is in a set once."""
     ids = _owner_ids(profile)
     kwargs = dict(
         owner_ids=ids,
@@ -272,9 +346,26 @@ def scheduled_count(
         course_id=course_id,
         exclude_activity_id=exclude_activity_id,
     )
-    group = _group_rows(**kwargs).count()
-    in_school = _in_school_rows(**kwargs).count()
-    return {GROUP: group, IN_SCHOOL: in_school, "total": group + in_school}
+    return {
+        GROUP: set(_group_rows(**kwargs).values_list("school_id", flat=True)),
+        IN_SCHOOL: set(_in_school_rows(**kwargs).values_list("school_id", flat=True)),
+    }
+
+
+def scheduled_count(
+    profile, course_id: str, fy: str, *, exclude_activity_id: str | None = None
+) -> dict:
+    """How many schools this staff member has scheduled for one training in
+    one year, by delivery. Each school counts once: ``total`` is the schools,
+    not the sessions, so it can be less than the two deliveries added up."""
+    schools = scheduled_schools(
+        profile, course_id, fy, exclude_activity_id=exclude_activity_id
+    )
+    return {
+        GROUP: len(schools[GROUP]),
+        IN_SCHOOL: len(schools[IN_SCHOOL]),
+        "total": len(schools[GROUP] | schools[IN_SCHOOL]),
+    }
 
 
 # ── The ceiling, held ───────────────────────────────────────────────────────
@@ -302,25 +393,29 @@ def reserve(
     staff_id: str | None,
     course_id: str | None,
     fy: str,
-    requested: int,
-    current: int = 0,
+    schools,
+    held=(),
     exclude_activity_id: str | None = None,
 ) -> None:
     """Hold the ceiling for one write. Call inside the write's transaction.
 
-    ``requested`` is how many schools the plan being written will hold once
-    saved, ``current`` how many it holds now (0 for a new plan), and
+    ``schools`` are the schools the plan being written will hold once saved,
+    ``held`` the ones it holds now (none for a new plan), and
     ``exclude_activity_id`` that plan, so its own schools are never counted
     twice. The ceiling row is locked before anything is counted, which is
     what serialises two people taking the last places.
 
-    A write that does not grow the plan is never refused: with a ceiling
-    lowered below what is scheduled, an officer can still untick a school or
-    swap one for another.
+    What is counted is schools. A school the officer has already scheduled
+    for this training on another session takes no new place, so adding it is
+    never refused. Nor is a write that adds no school: with a ceiling lowered
+    below what is scheduled, an officer can still untick a school or swap one
+    for another.
     """
     from apps.planning.training_ceiling_models import TrainingCeiling
 
-    if not staff_id or not course_id or requested <= current:
+    schools = {str(school_id) for school_id in schools if school_id}
+    held = {str(school_id) for school_id in held if school_id}
+    if not staff_id or not course_id or not (schools - held):
         return
     profile = _profile(staff_id)
     if profile is None:
@@ -331,19 +426,24 @@ def reserve(
         .filter(staff_id=profile.id, training_id=course_id, fy=str(fy))
         .first()
     )
-    if row is None:
+    if row is None or course_id in project_training_ids():
+        # No ceiling, or a project's training: its schools are the project's,
+        # against the capacity its coordinator set.
         return
-    elsewhere = scheduled_count(
+    elsewhere = scheduled_schools(
         profile, course_id, fy, exclude_activity_id=exclude_activity_id
-    )["total"]
-    if elsewhere + requested > row.ceiling:
+    )
+    elsewhere = elsewhere[GROUP] | elsewhere[IN_SCHOOL]
+    before = len(elsewhere | held)
+    after = len(elsewhere | schools)
+    if after > before and after > row.ceiling:
         raise BadRequest(
             _refusal(
                 row.training.display_name,
                 profile.user.name or "This staff member",
                 row.ceiling,
-                elsewhere + current,
-                requested - current,
+                before,
+                after - before,
                 str(fy),
             )
         )
@@ -365,7 +465,7 @@ def reserve_for_activity(
         activity_type in _MEETING_TYPES and meeting_kind == MeetingKind.TRAINING
     ):
         return
-    reserve(staff_id=staff_id, course_id=course_id, fy=fy, requested=1)
+    reserve(staff_id=staff_id, course_id=course_id, fy=fy, schools={school_id})
 
 
 def assert_schools_named(
@@ -384,9 +484,12 @@ def assert_schools_named(
     profile = _profile(staff_id)
     if profile is None or not course_id:
         return
-    if TrainingCeiling.objects.filter(
-        staff_id=profile.id, training_id=course_id, fy=str(fy)
-    ).exists():
+    if (
+        TrainingCeiling.objects.filter(
+            staff_id=profile.id, training_id=course_id, fy=str(fy)
+        ).exists()
+        and course_id not in project_training_ids()
+    ):
         raise BadRequest(
             "Tick the schools this training is for. A training ceiling is set "
             "for it, and a training with no school named cannot be counted "
@@ -394,36 +497,42 @@ def assert_schools_named(
         )
 
 
-def reserve_for_session(activity, *, invited_after: int, invited_now: int) -> None:
-    """A group delivery's invitation list is about to change."""
+def reserve_for_session(activity, *, schools_after, schools_now) -> None:
+    """A group delivery's invitation list is about to change: the schools it
+    will hold once saved, and the ones it holds now."""
     if delivery_of(activity) != GROUP or activity.project_id:
         return
     reserve(
         staff_id=activity.responsible_staff_id,
         course_id=course_id_of(activity),
         fy=activity.fy,
-        requested=invited_after,
-        current=invited_now,
+        schools=schools_after,
+        held=schools_now,
         exclude_activity_id=activity.id,
     )
 
 
-def schools_held(activity) -> int:
-    """How many places a persisted training holds under its ceiling."""
+def schools_of(activity) -> set[str]:
+    """The schools a persisted training holds under its ceiling."""
     if activity.project_id:
-        return 0
+        return set()
     delivery = delivery_of(activity)
     if delivery == IN_SCHOOL:
-        return 1
+        return {activity.school_id}
     if delivery == GROUP:
         from apps.activities.models import ClusterActivityAttendance
 
-        return (
+        return set(
             ClusterActivityAttendance.objects.filter(activity=activity)
             .filter(Q(invited=True) | Q(attended=True))
-            .count()
+            .values_list("school_id", flat=True)
         )
-    return 0
+    return set()
+
+
+def schools_held(activity) -> int:
+    """How many places a persisted training holds under its ceiling."""
+    return len(schools_of(activity))
 
 
 def reserve_for_move(activity, *, staff_id=None, fy=None) -> None:
@@ -438,14 +547,14 @@ def reserve_for_move(activity, *, staff_id=None, fy=None) -> None:
         return
     if activity.status in RELEASED_STATUSES:
         return
-    held = schools_held(activity)
+    held = schools_of(activity)
     if not held:
         return
     reserve(
         staff_id=new_staff,
         course_id=course_id_of(activity),
         fy=new_fy,
-        requested=held,
+        schools=held,
         exclude_activity_id=activity.id,
     )
 
@@ -456,9 +565,16 @@ def capacity(
     fy: str,
     *,
     exclude_activity_id: str | None = None,
+    school_id: str | None = None,
 ) -> dict:
-    """What a drawer shows before a save: the ceiling, what is scheduled
-    under it apart from the plan being edited, and what is left."""
+    """What a drawer shows before a save: the ceiling, the schools scheduled
+    under it apart from the plan being edited, and what is left.
+
+    ``schoolIds`` names those schools, so a drawer can tell a school that
+    takes a new place from one already counted; ``counted`` says whether
+    ``school_id`` — the one school an in-school drawer is for — is among
+    them, and so takes no place.
+    """
     from apps.planning.training_ceiling_models import TrainingCeiling
 
     blank = {
@@ -468,15 +584,23 @@ def capacity(
         "group": 0,
         "inSchool": 0,
         "remaining": None,
+        "schoolIds": [],
+        "counted": False,
+        "project": "",
         "staffName": "",
         "fy": str(fy),
     }
     profile = _profile(staff_id) if staff_id and course_id else None
     if profile is None:
         return blank
-    counts = scheduled_count(
+    project = project_of_training(course_id)
+    if project:
+        # A project's training: read from the project, under no ceiling.
+        return {**blank, "project": project, "staffName": profile.user.name or ""}
+    schools = scheduled_schools(
         profile, course_id, fy, exclude_activity_id=exclude_activity_id
     )
+    counted = schools[GROUP] | schools[IN_SCHOOL]
     ceiling = (
         TrainingCeiling.objects.filter(
             staff_id=profile.id, training_id=course_id, fy=str(fy)
@@ -487,10 +611,13 @@ def capacity(
     return {
         "managed": ceiling is not None,
         "ceiling": ceiling,
-        "scheduled": counts["total"],
-        "group": counts[GROUP],
-        "inSchool": counts[IN_SCHOOL],
-        "remaining": None if ceiling is None else max(ceiling - counts["total"], 0),
+        "scheduled": len(counted),
+        "group": len(schools[GROUP]),
+        "inSchool": len(schools[IN_SCHOOL]),
+        "remaining": None if ceiling is None else max(ceiling - len(counted), 0),
+        "schoolIds": sorted(counted),
+        "counted": bool(school_id) and str(school_id) in counted,
+        "project": "",
         "staffName": profile.user.name or "",
         "fy": str(fy),
     }
@@ -506,12 +633,17 @@ class SummaryRow:
     intervention: str
     ceiling_id: str
     ceiling: int | None
+    #: Schools on a group session, and schools with an in-school training.
     group: int
     in_school: int
+    #: Schools in both, counted once in ``total``.
+    both: int = 0
 
     @property
     def total(self) -> int:
-        return self.group + self.in_school
+        """Schools scheduled for the training: each one once, however it is
+        delivered and on however many sessions."""
+        return self.group + self.in_school - self.both
 
     @property
     def balance(self) -> int | None:
@@ -648,23 +780,26 @@ def summary_for_staff(profiles, fy: str) -> list[SummaryRow]:
             staff_id__in=list(names), fy=fy
         ).values("id", "staff_id", "training_id", "ceiling")
     }
-    group: dict[tuple, int] = {}
-    for row in (
+    # The schools behind each figure, so one on several sessions is one.
+    group: dict[tuple, set] = {}
+    for staff, course, school_id in (
         _group_rows(owner_ids=by_identity, fy=fy)
-        .values("activity__responsible_staff_id", "course")
-        .annotate(n=Count("id"))
+        .values_list("activity__responsible_staff_id", "course", "school_id")
+        .distinct()
     ):
-        key = (by_identity[row["activity__responsible_staff_id"]], row["course"])
-        group[key] = group.get(key, 0) + row["n"]
-    in_school: dict[tuple, int] = {}
-    for row in (
+        group.setdefault((by_identity[staff], course), set()).add(school_id)
+    in_school: dict[tuple, set] = {}
+    for staff, course, school_id in (
         _in_school_rows(owner_ids=by_identity, fy=fy)
-        .values("responsible_staff_id", "course")
-        .annotate(n=Count("id"))
+        .values_list("responsible_staff_id", "course", "school_id")
+        .distinct()
     ):
-        key = (by_identity[row["responsible_staff_id"]], row["course"])
-        in_school[key] = in_school.get(key, 0) + row["n"]
+        in_school.setdefault((by_identity[staff], course), set()).add(school_id)
 
+    # A project's training holds no ceiling here, whatever was set before it
+    # became the project's.
+    projects_own = project_training_ids()
+    ceilings = {key: row for key, row in ceilings.items() if key[1] not in projects_own}
     keys = set(ceilings) | set(group) | set(in_school)
     trainings = dict(
         ActivityCatalogueItem.objects.filter(
@@ -682,8 +817,12 @@ def summary_for_staff(profiles, fy: str) -> list[SummaryRow]:
             intervention=labels.get(fixed.get(training_id, ""), ""),
             ceiling_id=(ceilings.get((staff_id, training_id)) or {}).get("id", ""),
             ceiling=(ceilings.get((staff_id, training_id)) or {}).get("ceiling"),
-            group=group.get((staff_id, training_id), 0),
-            in_school=in_school.get((staff_id, training_id), 0),
+            group=len(group.get((staff_id, training_id), ())),
+            in_school=len(in_school.get((staff_id, training_id), ())),
+            both=len(
+                group.get((staff_id, training_id), set())
+                & in_school.get((staff_id, training_id), set())
+            ),
         )
         for staff_id, training_id in keys
     ]
@@ -780,8 +919,9 @@ def ceiling_staff_options(principal) -> list:
 
 
 def training_options() -> list[dict]:
-    """Every active training in the Training Catalogue, with the SSA
-    intervention it is fixed to."""
+    """Every active training in the Training Catalogue a ceiling can be set
+    for, with the SSA intervention it is fixed to. A training a live project
+    delivers is not one of them: its schools are capped by the project."""
     from apps.activity_catalogue.services import effective_items
     from apps.activity_catalogue.training_intervention import fixed_interventions
     from apps.core.enums import SsaIntervention
@@ -796,9 +936,20 @@ def training_options() -> list[dict]:
         }
         for item_id, name in effective_items()
         .filter(is_training_course=True)
+        .exclude(id__in=project_training_mappings().values("catalogue_item_id"))
         .order_by("display_name", "stable_code")
         .values_list("id", "display_name")
     ]
+
+
+def _assert_not_a_projects(training) -> None:
+    project = project_of_training(training.id)
+    if project:
+        raise BadRequest(
+            f"{training.display_name} is delivered under the {project} project. "
+            "Its schools are the schools added to that project, against the "
+            "capacity its coordinator set, so it takes no training ceiling."
+        )
 
 
 def _clean_ceiling(raw, *, most: int = 5000, noun: str = "training ceiling") -> int:
@@ -858,6 +1009,7 @@ def set_ceiling(
     )
     if training is None:
         raise BadRequest("Choose an active training from the Training Catalogue.")
+    _assert_not_a_projects(training)
     fy = _clean_fy(fy)
     value = _clean_ceiling(ceiling)
     with transaction.atomic():
@@ -987,26 +1139,25 @@ def country_scheduled(fy: str, country: str) -> dict[str, dict]:
     will fetch the schools inivited to attend or planned in-schools"). Only
     trainings with something planned are in it."""
     owners = _country_identities(country)
-    planned: dict[str, dict] = {}
-
-    def add(course, kind, n):
-        row = planned.setdefault(course, {"group": 0, "in_school": 0, "total": 0})
-        row[kind] += n
-        row["total"] += n
-
-    for row in (
-        _group_rows(owner_ids=owners, fy=str(fy))
-        .values("course")
-        .annotate(n=Count("id"))
+    schools: dict[str, dict] = {}
+    for kind, rows in (
+        ("group", _group_rows(owner_ids=owners, fy=str(fy))),
+        ("in_school", _in_school_rows(owner_ids=owners, fy=str(fy))),
     ):
-        add(row["course"], "group", row["n"])
-    for row in (
-        _in_school_rows(owner_ids=owners, fy=str(fy))
-        .values("course")
-        .annotate(n=Count("id"))
-    ):
-        add(row["course"], "in_school", row["n"])
-    return planned
+        for course, school_id in rows.values_list("course", "school_id").distinct():
+            schools.setdefault(course, {"group": set(), "in_school": set()})[kind].add(
+                school_id
+            )
+    # A school is one school for the country, whoever planned it and on
+    # however many sessions.
+    return {
+        course: {
+            "group": len(row["group"]),
+            "in_school": len(row["in_school"]),
+            "total": len(row["group"] | row["in_school"]),
+        }
+        for course, row in schools.items()
+    }
 
 
 def country_ceilings(fy: str, country: str) -> dict[str, dict]:
@@ -1067,6 +1218,7 @@ def set_country_ceiling(
     )
     if training is None:
         raise BadRequest("Choose an active training from the Training Catalogue.")
+    _assert_not_a_projects(training)
     fy = _clean_fy(fy)
     value = _clean_ceiling(ceiling, most=100000, noun="Country Ceiling")
     country = (country or "").strip() or country_of(principal)
@@ -1150,6 +1302,10 @@ def schools_behind(
 ) -> dict:
     """The schools one summary figure counts, one row per school and session.
 
+    The figure is schools; a school on two sessions is two rows here, the
+    second marked ``repeat`` (already counted on the row above it), and
+    ``school_count`` is the figure.
+
     Refuses a staff member the reader may not see rather than listing
     nothing, so an edited link cannot read another officer's schools.
     """
@@ -1224,6 +1380,10 @@ def schools_behind(
             r["activity_id"],
         )
     )
+    seen: set[str] = set()
+    for row in rows:
+        row["repeat"] = row["school_pk"] in seen
+        seen.add(row["school_pk"])
     summary = next(
         (
             row
@@ -1239,5 +1399,6 @@ def schools_behind(
         "delivery": delivery,
         "delivery_label": DELIVERY_LABELS.get(delivery, ""),
         "rows": rows,
+        "school_count": len(seen),
         "summary": summary,
     }

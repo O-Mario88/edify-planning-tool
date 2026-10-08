@@ -480,14 +480,24 @@ class ScheduledIsCountedFromThePlans(CeilingFixture):
         self.assertEqual(self.counts(training=self.improvement)["total"], 2)
         self.assertEqual(self.counts(staff=self.mary_staff)["total"], 2)
 
-    def test_a_school_scheduled_twice_is_two_scheduled_schools(self):
-        """Each scheduled delivery stays its own record; a repeat is not
-        refused and is not merged."""
+    def test_a_school_scheduled_twice_is_one_scheduled_school(self):
+        """Each scheduled delivery stays its own record, and a repeat is not
+        refused; the school is still one school (owner, 2026-10-08: "some
+        are blocking before hitting the ceiling"). It was counted once for
+        each session."""
         first = self.group(self.members[:2])
         second = self.group(self.members[:2], day=1)
 
         self.assertNotEqual(first.id, second.id)
-        self.assertEqual(self.counts()["group"], 4)
+        self.assertEqual(self.counts(), {"group": 2, "in_school": 0, "total": 2})
+
+    def test_a_school_trained_both_ways_is_one_scheduled_school(self):
+        self.group(self.members[:2])
+        self.in_school(self.members[0])
+
+        self.assertEqual(self.counts(), {"group": 2, "in_school": 1, "total": 2})
+        row = training_ceilings.summary_for_staff([self.staff], self.fy)[0]
+        self.assertEqual((row.group, row.in_school, row.both, row.total), (2, 1, 1, 2))
 
     def test_schools_added_in_any_cluster_are_counted_together(self):
         self.group(self.members[:6])
@@ -1638,6 +1648,206 @@ class WhoSeesTheSummary(CeilingFixture):
         self.assertEqual((led["ceiling"], led["scheduled"]), (25, 5))
 
 
+class ASchoolTakesOnePlace(CeilingFixture):
+    """Owner, 2026-10-08: "look into capacity of schools set per training,
+    some are blocking before hitting the ceiling."
+
+    A ceiling is a number of schools, and a school was counted once for each
+    session it was on. An officer who trained the same three schools twice
+    had six places gone from a ceiling of five, and was refused with two
+    schools' room unused. A school is one school, however many sessions of
+    the training it is on and however they are delivered.
+    """
+
+    def capacity(self, **more):
+        return training_ceilings.capacity(
+            self.staff.id, self.leadership.id, self.fy, **more
+        )
+
+    def test_the_same_schools_on_a_second_session_fit_under_the_ceiling(self):
+        self.ceiling(value=5)
+        self.group(self.members[:3])
+
+        # Refused before: three already scheduled and three more "selected".
+        self.group(self.members[:3], day=1)
+
+        capacity = self.capacity()
+        self.assertEqual(
+            (capacity["scheduled"], capacity["group"], capacity["remaining"]),
+            (3, 3, 2),
+        )
+
+    def test_a_full_ceiling_still_takes_a_school_it_already_holds(self):
+        self.ceiling(value=3)
+        self.group(self.members[:3])
+
+        self.group(self.members[1:3], day=1)
+        self.in_school(self.members[0], day=2)
+
+        self.assertEqual(self.capacity()["scheduled"], 3)
+        self.assertEqual(self.capacity()["remaining"], 0)
+
+    def test_a_new_school_is_still_refused_at_the_ceiling(self):
+        self.ceiling(value=3)
+        self.group(self.members[:3])
+
+        with self.assertRaises(BadRequest) as refused:
+            self.group([self.members[0], self.members[5]], day=1)
+
+        message = str(refused.exception)
+        self.assertIn("Training ceiling reached", message)
+        self.assertIn("3 are already scheduled", message)
+        self.assertIn("no more schools can be added", message)
+
+    def test_only_the_new_schools_of_a_session_are_asked_for(self):
+        self.ceiling(value=4)
+        self.group(self.members[:3])
+        # Two of these three are counted already; the third is the fourth.
+        self.group(self.members[1:4], day=1)
+        self.assertEqual(self.capacity()["scheduled"], 4)
+
+        with self.assertRaises(BadRequest) as refused:
+            # Two counted, two new, and no room for either new one.
+            self.group(self.members[2:6], day=2)
+
+        self.assertIn("4 are already scheduled", str(refused.exception))
+
+    def test_the_refusal_names_the_new_schools_not_the_ticks(self):
+        self.ceiling(value=4)
+        self.group(self.members[:3])
+
+        with self.assertRaises(BadRequest) as refused:
+            # Three ticked: one counted already, two new, room for one.
+            self.group(self.members[2:5], day=1)
+
+        message = str(refused.exception)
+        self.assertIn("only 1 more school can be added and 2 were selected", message)
+        self.assertIn("Untick 1 and save again", message)
+
+    def test_growing_a_session_into_schools_already_counted(self):
+        self.ceiling(value=4)
+        self.group(self.members[:4])
+        second = self.group(self.members[:1], day=1)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            editing.edit(
+                second.id,
+                {"invitedSchoolIds": [s.id for s in self.members[:4]]},
+                self.user,
+            )
+
+        self.assertEqual(self.invited(second), {s.id for s in self.members[:4]})
+        self.assertEqual(self.capacity()["scheduled"], 4)
+
+    def test_the_drawer_is_told_which_schools_are_counted(self):
+        self.ceiling(value=5)
+        first = self.group(self.members[:3])
+        second = self.group(self.members[2:4], day=1)
+
+        capacity = self.capacity()
+        self.assertEqual(capacity["schoolIds"], sorted(s.id for s in self.members[:4]))
+        # The Edit drawer of one session: the other's schools, and only they.
+        apart = self.capacity(exclude_activity_id=second.id)
+        self.assertEqual(apart["schoolIds"], sorted(s.id for s in self.members[:3]))
+        self.assertEqual((apart["scheduled"], apart["remaining"]), (3, 2))
+        answer = (
+            self.client_for(self.user)
+            .get("/planning/training-capacity", {"activity": first.id})
+            .json()
+        )
+        self.assertEqual(answer["schoolIds"], sorted(s.id for s in self.members[2:4]))
+
+    def test_a_school_drawer_is_told_its_school_takes_no_place(self):
+        self.ceiling(value=2)
+        self.group(self.members[:2])
+        client = self.client_for(self.user)
+
+        def answer(school):
+            return client.get(
+                "/planning/training-capacity",
+                {
+                    "training": self.leadership.id,
+                    "date": _day().isoformat(),
+                    "school": school.school_id,
+                },
+            ).json()
+
+        counted = answer(self.members[0])
+        self.assertEqual((counted["remaining"], counted["counted"]), (0, True))
+        self.assertEqual(answer(self.members[5])["counted"], False)
+        # The Core Schools drawers name the school without changing whose
+        # ceiling is read.
+        core = client.get(
+            "/planning/training-capacity",
+            {
+                "training": self.leadership.id,
+                "date": _day().isoformat(),
+                "for_school": self.members[1].school_id,
+            },
+        ).json()
+        self.assertEqual((core["scheduled"], core["counted"]), (2, True))
+
+    def test_the_schools_behind_a_figure_say_which_rows_repeat(self):
+        self.group(self.members[:2])
+        self.group(self.members[:2], day=1)
+
+        result = training_ceilings.schools_behind(
+            self.user,
+            staff_id=self.staff.id,
+            training_id=self.leadership.id,
+            fy=self.fy,
+        )
+
+        self.assertEqual(len(result["rows"]), 4)
+        self.assertEqual(result["school_count"], 2)
+        self.assertEqual(
+            [row["repeat"] for row in result["rows"]], [False, True, False, True]
+        )
+        self.assertEqual(result["summary"].total, 2)
+
+    def test_the_summary_and_the_country_count_schools(self):
+        from apps.planning import training_summary
+
+        self.group(self.members[:3])
+        self.group(self.members[:3], day=1)
+        self.in_school(self.members[0], day=2)
+
+        country = training_ceilings.country_scheduled(self.fy, "Uganda")
+        self.assertEqual(
+            country[self.leadership.id], {"group": 3, "in_school": 1, "total": 3}
+        )
+        row = next(
+            r
+            for r in training_summary.build([self.staff], self.fy, country="Uganda")
+            if r.training_id == self.leadership.id
+        )
+        self.assertEqual((row.planned, row.cells[0].schools), (3, 3))
+
+    def test_a_training_moved_onto_counts_its_schools_once(self):
+        """The Edit drawer's Training field: the session's schools move
+        under the new training's ceiling, where one is already counted."""
+        self.ceiling(training=self.improvement, value=3)
+        self.group(self.members[:3], code=IMPROVEMENT)
+        session = self.group(self.members[2:4], day=1)
+
+        with self.assertRaises(BadRequest):
+            with self.captureOnCommitCallbacks(execute=True):
+                editing.edit(
+                    session.id, {"trainingCourseId": self.improvement.id}, self.user
+                )
+        with self.captureOnCommitCallbacks(execute=True):
+            editing.edit(
+                session.id,
+                {
+                    "trainingCourseId": self.improvement.id,
+                    "invitedSchoolIds": [s.id for s in self.members[1:3]],
+                },
+                self.user,
+            )
+
+        self.assertEqual(self.counts(training=self.improvement)["total"], 3)
+
+
 class ProjectTrainingsComeFromSpecialProjects(CeilingFixture):
     """Owner, 2026-10-06: "All training under project should be fetched from
     special project and their numbers added there based on how people have
@@ -1705,14 +1915,32 @@ class ProjectTrainingsComeFromSpecialProjects(CeilingFixture):
         self.assertEqual(
             (row.planned, row.country_ceiling, row.remaining), (5, None, None)
         )
-        # The same training outside the project is its own row, and is not
-        # listed until a school is planned for it there.
         self.assertEqual([r for r in rows if r.kind == "training"], [])
-        self.group(self.members[6:8], code="TAM_I", day=2)
-        plain = next(r for r in self.rows([self.staff]) if r.kind == "training")
-        self.assertEqual((plain.name, plain.planned), ("Teaching as Mission (TAM)", 2))
 
-    def test_project_work_is_not_counted_under_a_training_ceiling(self):
+    def test_a_project_s_training_is_never_a_second_row(self):
+        """Owner, 2026-10-08: "it is repeating the trainings that are already
+        created as project. Can you read only project ... so that there are
+        no repeated trainings." A session of the project's training scheduled
+        from the Training Catalogue, with no project named, added a plain
+        row for the same training above the project's."""
+        session = self.group(self.members[6:8], code="TAM_I", day=2)
+        self.assertFalse(session.project_id)
+
+        rows = self.rows([self.staff, self.mary_staff])
+
+        self.assertEqual(
+            [(r.kind, r.name) for r in rows],
+            [("project", "Teaching as Mission (TAM) (Summary Project)")],
+        )
+        # And the project row still reads the project: the schools added to
+        # it, not the two the stray session invited.
+        self.assertEqual(rows[0].planned, 5)
+        self.assertEqual(rows[0].cells[0].schools, 4)
+
+    def test_a_project_s_training_is_under_no_training_ceiling(self):
+        """Its schools are the project's, against the capacity its
+        coordinator set: a ceiling left on it from before it became a
+        project's training holds nothing back, inside the project or out."""
         tam = self.item("TAM_I")
         self.ceiling(training=tam, value=1)
         session = self.group(self.members[:2], code="TAM_I", projectId=self.project.id)
@@ -1720,11 +1948,50 @@ class ProjectTrainingsComeFromSpecialProjects(CeilingFixture):
         self.assertEqual(session.project_id, self.project.id)
         self.assertFalse(training_ceilings.under_ceiling(session))
         self.assertEqual(self.counts(training=tam)["total"], 0)
-        # Outside the project the ceiling of one still holds.
-        with self.assertRaises(BadRequest):
-            self.group(self.members[4:6], code="TAM_I", day=1)
-        self.group(self.members[4:5], code="TAM_I", day=1)
-        self.assertEqual(self.counts(training=tam)["total"], 1)
+        # Scheduled with no project named, it is the project's all the same.
+        stray = self.group(self.members[4:6], code="TAM_I", day=1)
+        self.assertFalse(training_ceilings.under_ceiling(stray))
+        self.assertEqual(self.counts(training=tam)["total"], 0)
+        capacity = training_ceilings.capacity(self.staff.id, tam.id, self.fy)
+        self.assertFalse(capacity["managed"])
+        self.assertEqual(capacity["project"], "Summary Project")
+        # The officer's own summary does not list it as a training either.
+        self.assertEqual(training_ceilings.own_summary(self.user, self.fy), [])
+
+    def test_no_ceiling_is_set_for_a_project_s_training(self):
+        tam = self.item("TAM_I")
+
+        self.assertNotIn(
+            tam.id, [option["id"] for option in training_ceilings.training_options()]
+        )
+        self.assertIn(
+            self.leadership.id,
+            [option["id"] for option in training_ceilings.training_options()],
+        )
+        with self.assertRaises(BadRequest) as refused:
+            training_ceilings.set_ceiling(
+                self.pl,
+                staff_id=self.staff.id,
+                training_id=tam.id,
+                fy=self.fy,
+                ceiling="5",
+            )
+        self.assertIn("Summary Project", str(refused.exception))
+        self.assertFalse(TrainingCeiling.objects.filter(training=tam).exists())
+
+    def test_a_training_no_live_project_delivers_is_a_training_again(self):
+        """Read from the project only while a live project delivers it."""
+        from apps.activity_catalogue.models import ActivityProjectMapping
+
+        self.group(self.members[6:8], code="TAM_I", day=2)
+        ActivityProjectMapping.objects.filter(project=self.project).update(active=False)
+
+        rows = self.rows([self.staff])
+
+        self.assertEqual(
+            [(r.kind, r.name, r.planned) for r in rows],
+            [("training", "Teaching as Mission (TAM)", 2)],
+        )
 
     def test_an_officers_own_table_carries_their_project_trainings(self):
         from apps.planning import training_summary

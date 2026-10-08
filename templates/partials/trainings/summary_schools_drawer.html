@@ -6,7 +6,9 @@ The schools behind a Training Summary figure (owner, 2026-10-06): every school
 one officer has scheduled for one training this fiscal year, one row per
 school and session, saying how it is delivered — Group Training with its
 cluster, or In-School Training — and where the plan stands, which opens the
-plan it comes from. Read-only. A request for an officer the reader may not
+plan it comes from. The figures above the table are schools, each counted
+once (owner, 2026-10-08): a school on a second session is its own row, marked
+as the same school. Read-only. A request for an officer the reader may not
 see is refused with the reason (apps.planning.training_ceilings.schools_behind).
 {% endcomment %}
 
@@ -46,10 +48,10 @@ see is refused with the reason (apps.planning.training_ceilings.schools_behind).
       </thead>
       <tbody>
         {% for row in training_schools_pager.rows %}
-        <tr data-delivery="{{ row.delivery_key }}">
+        <tr data-delivery="{{ row.delivery_key }}"{% if row.repeat %} data-repeat-school{% endif %}>
           <td class="whitespace-nowrap tabular-nums" data-label="School ID">{% if row.school_pk %}{% school_code row.school_pk %}{% else %}<span class="text-slate-400">—</span>{% endif %}</td>
           <th scope="row" data-record-title><span><a href="/schools/{{ row.school_pk }}">{{ row.school_name }}</a></span></th>
-          <td data-label="Delivery">{{ row.delivery }}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}</td>
+          <td data-label="Delivery">{{ row.delivery }}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}{% if row.repeat %} <span class="rpl-muted">· same school, counted once</span>{% endif %}</td>
           <td data-label="Cluster">{{ row.cluster|default:"—" }}</td>
           <td data-label="Status"><a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training">{{ row.status }}{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a></td>
         </tr>

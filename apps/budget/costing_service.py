@@ -1239,7 +1239,20 @@ def apply_to_activity(
         locked_frs = list(
             FundRequest.objects.select_for_update().filter(id__in=carrying_fr_ids)
         )
-        if any(fr.status not in repriceable_fr_statuses for fr in locked_frs):
+        # A planner's own change to the plan is not refused by a monthly
+        # request in its approval chain: the request follows the plan, and
+        # its items are pointed at the rebuilt lines below (owner,
+        # 2026-10-08; apps.fund_requests.plan_changes). A sweep still is, and
+        # so is anything under a request that is with the accountant or paid.
+        from apps.fund_requests.plan_changes import (
+            carry_monthly_requests,
+            follows_plan_change,
+        )
+
+        if any(
+            fr.status not in repriceable_fr_statuses and not follows_plan_change(fr)
+            for fr in locked_frs
+        ):
             raise BadRequest(
                 "This activity is already included in a submitted or approved "
                 "monthly fund request. Return that request before changing its cost."
@@ -1340,6 +1353,8 @@ def apply_to_activity(
                 )
             )
         ActivityScheduleCostLine.objects.bulk_create(rows)
+        # No monthly request is left naming a line that no longer exists.
+        carry_monthly_requests(activity, locked_frs, line_ids)
         activity.est_cost_cents = int(cost.amount)
         activity.cost_missing = cost.cost_missing or catalogue is None
         activity.save(

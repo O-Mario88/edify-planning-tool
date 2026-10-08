@@ -8385,7 +8385,7 @@
    "audit_id": "KPI-SOURCE-463",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 492,
+   "line": 512,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -8404,7 +8404,7 @@
    "audit_id": "KPI-SOURCE-464",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1577,
+   "line": 1599,
    "label": "SSA basis",
    "keys": [
     "label",
@@ -8421,7 +8421,7 @@
    "audit_id": "KPI-SOURCE-465",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1615,
+   "line": 1637,
    "label": "Officer",
    "keys": [
     "label",
@@ -8438,7 +8438,7 @@
    "audit_id": "KPI-SOURCE-466",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1616,
+   "line": 1638,
    "label": "Activity",
    "keys": [
     "label",
@@ -8455,7 +8455,7 @@
    "audit_id": "KPI-SOURCE-467",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1621,
+   "line": 1643,
    "label": "School or cluster",
    "keys": [
     "label",
@@ -8472,7 +8472,7 @@
    "audit_id": "KPI-SOURCE-468",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1622,
+   "line": 1644,
    "label": "Delivered",
    "keys": [
     "label",
@@ -8489,7 +8489,7 @@
    "audit_id": "KPI-SOURCE-469",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1623,
+   "line": 1645,
    "label": "Intervention",
    "keys": [
     "label",
@@ -8506,7 +8506,7 @@
    "audit_id": "KPI-SOURCE-470",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1628,
+   "line": 1650,
    "label": "Attendance",
    "keys": [
     "label",
@@ -8523,7 +8523,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1629,
+   "line": 1651,
    "label": "Evidence",
    "keys": [
     "label",
@@ -8540,7 +8540,7 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1637,
+   "line": 1659,
    "label": "Salesforce ID",
    "keys": [
     "label",
@@ -8557,7 +8557,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1638,
+   "line": 1660,
    "label": "Purpose",
    "keys": [
     "label",
@@ -8574,7 +8574,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1639,
+   "line": 1661,
    "label": "Outcome",
    "keys": [
     "label",
@@ -8591,7 +8591,7 @@
    "audit_id": "KPI-SOURCE-475",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1640,
+   "line": 1662,
    "label": "Observations",
    "keys": [
     "label",
@@ -8608,7 +8608,7 @@
    "audit_id": "KPI-SOURCE-476",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1641,
+   "line": 1663,
    "label": "Follow-up",
    "keys": [
     "label",
@@ -8625,7 +8625,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3061,
+   "line": 3084,
    "label": null,
    "keys": [
     "count",
@@ -8643,7 +8643,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3178,
+   "line": 3201,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8666,7 +8666,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 499,
+   "line": 519,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -8685,7 +8685,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 509,
+   "line": 529,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -8704,7 +8704,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1539,
+   "line": 1561,
    "label": "Officer",
    "keys": [
     "blank",
@@ -8724,7 +8724,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1581,
+   "line": 1603,
    "label": "Why it departs from the SSA",
    "keys": [
     "label",

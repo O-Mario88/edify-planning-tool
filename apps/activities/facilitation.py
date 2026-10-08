@@ -150,9 +150,19 @@ FACILITATOR_ONLY_MESSAGE = (
 STAFF_FACILITATOR_LABEL = "Staff"
 
 #: A training's facilitator changes only while it is still a plan: once it
-#: has started, the day it happened is on record.
+#: has been delivered, who led it is on record. A training that was started
+#: and never submitted is still a plan (owner, 2026-10-07;
+#: apps.activities.editing.BEGUN_STATUSES).
 FACILITATOR_EDITABLE_STATUSES = frozenset(
-    {"not_planned", "planned", "scheduled", "rescheduled", "deferred"}
+    {
+        "not_planned",
+        "planned",
+        "scheduled",
+        "rescheduled",
+        "deferred",
+        "in_progress",
+        "completion_started",
+    }
 )
 
 

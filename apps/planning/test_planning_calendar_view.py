@@ -243,12 +243,21 @@ class HowAnEntryReads(CalendarFixture):
         self.assertTrue(event["extendedProps"]["pick"])
         self.assertTrue(event["extendedProps"]["reschedule"])
 
-    def test_work_already_under_way_opens_its_own_record(self):
-        under_way = self._activity(
+    def test_work_already_delivered_opens_its_own_record(self):
+        delivered = self._activity(
+            school=self.school, status="submitted_to_pl", day=self._in(-1)
+        )
+
+        self.assertFalse(self._events()[delivered.id]["extendedProps"]["reschedule"])
+
+    def test_work_started_and_never_submitted_still_opens_reschedule(self):
+        """Opening Complete and leaving it is not delivering (owner,
+        2026-10-07)."""
+        begun = self._activity(
             school=self.school, status="completion_started", day=self._in(-1)
         )
 
-        self.assertFalse(self._events()[under_way.id]["extendedProps"]["reschedule"])
+        self.assertTrue(self._events()[begun.id]["extendedProps"]["reschedule"])
 
 
 class ThePage(CalendarFixture):

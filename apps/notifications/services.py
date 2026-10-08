@@ -574,6 +574,14 @@ class NotificationLinkResolver:
             # through to.
             return "/budget", "Review Team Request"
 
+        if event_type == "monthly_fund_request_followed_plan":
+            # A monthly request whose total moved with the plan under it
+            # (apps.fund_requests.plan_changes). Its preparer reads it where
+            # they prepare it; the Country Director where they review it.
+            if role in ("countrydirector", "admin"):
+                return "/budget", "View Team Request"
+            return "/accounts/monthly-request", "View Monthly Request"
+
         if event_type == "annual_budget_submitted":
             # The FY Work Plan and the Country Annual Budget are one envelope
             # (apps/planning/work_plan_approval.py); the RVP approves it from
@@ -716,6 +724,18 @@ class NotificationLinkResolver:
                 else "/fund-requests/weekly"
             )
             label = "View Approved Request"
+
+        elif event_type == "weekly_fund_request_taken_back":
+            # A request that came back to its owner because the plan under
+            # it changed (apps.fund_requests.plan_changes). The owner opens
+            # it to send it again; a reviewer is only told, and is taken to
+            # the list it left.
+            route = (
+                f"/fund-requests/weekly/{context_id}"
+                if context_id
+                else "/fund-requests/weekly"
+            )
+            label = "Send Fund Request" if context_id else "View Fund Requests"
 
         elif event_type in (
             "weekly_fund_request_ready",

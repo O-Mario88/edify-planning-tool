@@ -4093,7 +4093,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11144,
+      "bytes": 11228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -4124,7 +4124,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15303,
+      "bytes": 15387,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -10096,7 +10096,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21174,
+      "bytes": 22136,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -10603,6 +10603,33 @@
       "tables": 1,
       "template": "partials/my_plan/school_visits.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 595,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/<str:activity_id>/edit-drawer",
+        "/my-plan/<str:activity_id>/reschedule-drawer",
+        "/planning/schedule-modal"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Sent Fund Request Note",
+      "purpose": "Reusable sent fund request note interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/sent_fund_request_note.html",
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -12759,7 +12786,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 35615,
+      "bytes": 36499,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -12791,7 +12818,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 39751,
+      "bytes": 39874,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -15945,7 +15972,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7306,
+      "bytes": 7373,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -15969,7 +15996,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5145,
+      "bytes": 5218,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -15998,7 +16025,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3901,
+      "bytes": 4192,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -16023,7 +16050,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12461,
+      "bytes": 12498,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -65075,7 +65102,7 @@
         "test:referenced-by-automated-test",
         "permission:my_plan"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -77168,7 +77195,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -94943,7 +94971,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95036,7 +95065,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95129,7 +95159,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95222,7 +95253,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95315,7 +95347,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95408,7 +95441,8 @@
       ],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "components/drawers/base_drawer.html"
@@ -95492,7 +95526,8 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.activities.models",
-        "apps.planning.models"
+        "apps.planning.models",
+        "apps.schools.models"
       ],
       "shared_layout": [
         "standalone-document-or-fragment"
@@ -117717,7 +117752,7 @@
     "activity_states": 24,
     "all_routes": 1374,
     "api_routes": 360,
-    "component_templates": 643,
+    "component_templates": 644,
     "full_pages": 263,
     "mobile_contract_pass": 583,
     "nonvisual_actions": 285,

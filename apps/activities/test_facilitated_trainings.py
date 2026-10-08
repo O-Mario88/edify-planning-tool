@@ -403,11 +403,22 @@ class FacilitatedTrainingTest(APITestCase):
         self.assertIsNone(activity.facilitating_partner_id)
         self.assertIsNone(self._fee_line(activity).partner_id)
 
-    def test_a_started_training_keeps_its_facilitator(self):
+    def test_a_delivered_training_keeps_its_facilitator(self):
         activity = self._schedule()
-        Activity.objects.filter(id=activity.id).update(status="in_progress")
+        Activity.objects.filter(id=activity.id).update(status="submitted_to_pl")
         with self.assertRaises(BadRequest):
             activity_services.set_facilitator(activity.id, self.partner.id, self.cceo)
+
+    def test_a_training_started_and_never_submitted_is_still_a_plan(self):
+        """Opening Complete and leaving it is not delivering (owner,
+        2026-10-07): who facilitates can still be put right."""
+        activity = self._schedule()
+        Activity.objects.filter(id=activity.id).update(status="completion_started")
+
+        activity_services.set_facilitator(activity.id, self.partner.id, self.cceo)
+
+        activity.refresh_from_db()
+        self.assertEqual(activity.facilitating_partner_id, self.partner.id)
 
     def test_a_partner_login_cannot_change_the_facilitator(self):
         activity = self._schedule()
