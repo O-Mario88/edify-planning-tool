@@ -11,6 +11,10 @@ button."
 What is pinned here: where the line between a plan and a record is, that Edit
 and Reschedule both keep to it, what Edit changes and what it asks for, and
 the button on each screen.
+
+The line is delivery (owner, 2026-10-07): work that was started and never
+submitted is still a plan. Its own tests are in
+``test_begun_work_is_still_a_plan``.
 """
 
 from __future__ import annotations
@@ -102,7 +106,7 @@ class WhatIsStillAPlan(EditingFixture):
     def test_scheduled_staff_work_is_editable_and_executed_work_is_not(self):
         self.assertTrue(editing.is_editable(self.planned))
         self.assertFalse(editing.is_executed(self.planned))
-        for done in (self.started, self.delivered, self.verified):
+        for done in (self.delivered, self.verified):
             with self.subTest(status=done.status):
                 self.assertFalse(editing.is_editable(done))
                 self.assertTrue(editing.is_executed(done))
@@ -110,7 +114,7 @@ class WhatIsStillAPlan(EditingFixture):
     def test_the_button_is_open_locked_or_absent(self):
         self.assertEqual(editing.edit_state(self.planned, self.cceo), "open")
         # Carried out: the button stays, greyed.
-        self.assertEqual(editing.edit_state(self.started, self.cceo), "locked")
+        self.assertEqual(editing.edit_state(self.delivered, self.cceo), "locked")
         self.assertEqual(editing.edit_state(self.verified, self.cceo), "locked")
         # Not theirs to run, or not a plan edited here: no button at all.
         self.assertEqual(editing.edit_state(self.planned, self.pl), "")
@@ -128,9 +132,13 @@ class WhatIsStillAPlan(EditingFixture):
         self.assertFalse(rows[self.planned.id].edit_locked)
         self.assertTrue(rows[self.verified.id].edit_locked)
         self.assertFalse(rows[self.verified.id].may_edit)
-        # Work under way keeps its day: Reschedule goes with Edit.
-        self.assertTrue(rows[self.started.id].edit_locked)
-        self.assertFalse(rows[self.started.id].may_reschedule)
+        self.assertTrue(rows[self.delivered.id].edit_locked)
+        self.assertFalse(rows[self.delivered.id].may_edit)
+        # Started and never submitted is still a plan (owner, 2026-10-07):
+        # Reschedule goes with Edit.
+        self.assertTrue(rows[self.started.id].may_edit)
+        self.assertFalse(rows[self.started.id].edit_locked)
+        self.assertTrue(rows[self.started.id].may_reschedule)
 
         supervisor = self._read(self.pl, profile_acts.for_school(self.school))
         for row in list(supervisor.planned["rows"]) + list(
@@ -144,7 +152,7 @@ class RescheduleKeepsToTheSameLine(EditingFixture):
         """`reschedule` accepted a completed visit and turned it back into
         "rescheduled", under its evidence and its verification."""
         day = _weekday(12).isoformat()
-        for done in (self.started, self.delivered, self.verified):
+        for done in (self.delivered, self.verified):
             with self.subTest(status=done.status):
                 with self.assertRaises(BadRequest) as refused:
                     services.reschedule(
@@ -212,7 +220,7 @@ class EditingAPlan(EditingFixture):
         self.assertEqual(visit.reschedule_count, 0)
 
     def test_work_already_carried_out_is_not_edited(self):
-        for done in (self.started, self.delivered, self.verified):
+        for done in (self.delivered, self.verified):
             with self.subTest(status=done.status):
                 with self.assertRaises(BadRequest) as refused:
                     editing.edit(
@@ -377,10 +385,14 @@ class TheEditScreens(EditingFixture):
         ).content.decode()
 
         self.assertIn(f'hx-get="/my-plan/{self.planned.id}/edit-drawer"', body)
-        self.assertNotIn(f'hx-get="/my-plan/{self.started.id}/edit-drawer"', body)
-        self.assertIn("data-edit-locked", body)
-        self.assertIn("Already carried out, so it can no longer be edited.", body)
-        self.assertNotIn(f"/my-plan/{self.started.id}/reschedule-drawer", body)
+
+        done = self.client.get(
+            f"/schools/{self.school.school_id}?school_acts_tab=completed"
+        ).content.decode()
+        self.assertNotIn(f'hx-get="/my-plan/{self.delivered.id}/edit-drawer"', done)
+        self.assertIn("data-edit-locked", done)
+        self.assertIn("Already carried out, so it can no longer be edited.", done)
+        self.assertNotIn(f"/my-plan/{self.delivered.id}/reschedule-drawer", done)
 
     def test_view_activity_has_the_edit_button(self):
         opened = self.client.get(f"/my-plan/{self.planned.id}", HTTP_HX_REQUEST="true")
@@ -390,20 +402,20 @@ class TheEditScreens(EditingFixture):
         self.assertIn(f"/my-plan/{self.planned.id}/reschedule-drawer", body)
 
         locked = self.client.get(
-            f"/my-plan/{self.started.id}", HTTP_HX_REQUEST="true"
+            f"/my-plan/{self.delivered.id}", HTTP_HX_REQUEST="true"
         ).content.decode()
         self.assertIn("data-edit-locked", locked)
         self.assertIn("disabled", locked)
-        self.assertNotIn(f"/my-plan/{self.started.id}/edit-drawer", locked)
-        self.assertNotIn(f"/my-plan/{self.started.id}/reschedule-drawer", locked)
+        self.assertNotIn(f"/my-plan/{self.delivered.id}/edit-drawer", locked)
+        self.assertNotIn(f"/my-plan/{self.delivered.id}/reschedule-drawer", locked)
 
     def test_the_activity_page_has_the_edit_action(self):
         body = self.client.get(f"/my-plan/{self.planned.id}").content.decode()
         self.assertIn(f'hx-get="/my-plan/{self.planned.id}/edit-drawer"', body)
 
-        locked = self.client.get(f"/my-plan/{self.started.id}").content.decode()
+        locked = self.client.get(f"/my-plan/{self.delivered.id}").content.decode()
         self.assertIn("data-edit-locked", locked)
-        self.assertNotIn(f"/my-plan/{self.started.id}/edit-drawer", locked)
+        self.assertNotIn(f"/my-plan/{self.delivered.id}/edit-drawer", locked)
 
     def test_the_drawer_opens_for_a_plan_and_not_for_work_carried_out(self):
         opened = self.client.get(f"/my-plan/{self.planned.id}/edit-drawer")
@@ -414,7 +426,7 @@ class TheEditScreens(EditingFixture):
         self.assertIn("data-edit-school", body)
         self.assertIn(self.other.name, body)
 
-        refused = self.client.get(f"/my-plan/{self.started.id}/edit-drawer")
+        refused = self.client.get(f"/my-plan/{self.delivered.id}/edit-drawer")
         self.assertEqual(refused.status_code, 400)
         self.assertIn(editing.LOCKED_REASON, refused.content.decode())
 
@@ -466,7 +478,7 @@ class TheEditScreens(EditingFixture):
 
     def test_a_refused_save_says_why_in_the_drawer(self):
         response = self.client.post(
-            f"/my-plan/{self.started.id}/edit",
+            f"/my-plan/{self.delivered.id}/edit",
             {"activity_purpose_text": "Rewritten"},
             HTTP_HX_REQUEST="true",
         )
@@ -478,7 +490,7 @@ class TheEditScreens(EditingFixture):
         opened = self.client.get(f"/my-plan/{self.planned.id}/reschedule-drawer")
         self.assertEqual(opened.status_code, 200)
 
-        refused = self.client.get(f"/my-plan/{self.started.id}/reschedule-drawer")
+        refused = self.client.get(f"/my-plan/{self.delivered.id}/reschedule-drawer")
         self.assertEqual(refused.status_code, 400)
         self.assertIn("already been carried out", refused.content.decode())
 

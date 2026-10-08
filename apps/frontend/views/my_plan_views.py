@@ -358,6 +358,26 @@ def _edit_state(activity, user) -> str:
     return edit_state(activity, user)
 
 
+def _sent_fund_weeks(activity) -> str:
+    """The weeks whose fund request has been sent and not paid and carries
+    this activity, as the Edit and Reschedule drawers name them: the request
+    comes back to its owner when the plan under it changes (owner,
+    2026-10-07; apps.fund_requests.plan_changes)."""
+    from apps.core.clock import local_day
+    from apps.fund_requests.plan_changes import will_take_back
+
+    day = activity.planned_date or (
+        local_day(activity.scheduled_date) if activity.scheduled_date else None
+    )
+    return " and ".join(
+        f"{wfr.week_start_date:%-d %b} – {wfr.week_end_date:%-d %b}"
+        for wfr in will_take_back(activity, days=(day,))
+        # A week set to No Advance has nobody waiting on it: its owner is
+        # told when it reopens, not warned beforehand.
+        if wfr.status != "not_requested"
+    )
+
+
 def _can_reschedule(activity, user) -> bool:
     """Whether Reschedule is offered: never on work already carried out,
     which `services.reschedule` refuses (owner, 2026-10-02), and on a
@@ -1041,8 +1061,9 @@ def reschedule_drawer_view(request, activity_id):
             "Access Denied: You do not have permission to access this activity drawer."
         )
 
-    # Work already carried out keeps its day (owner, 2026-10-02): the service
+    # Work already delivered keeps its day (owner, 2026-10-02): the service
     # refuses the move, so the drawer says so instead of offering a form.
+    # Work that was started and never submitted still moves (2026-10-07).
     from apps.activities.editing import is_executed
 
     if is_executed(a):
@@ -1098,6 +1119,7 @@ def reschedule_drawer_view(request, activity_id):
         # Training pair moves with it.
         "pair_joins": pairs.joins(a, action=pairs.RESCHEDULE),
         "reschedule_action_url": f"/my-plan/{a.id}/reschedule",
+        "sent_fund_weeks": _sent_fund_weeks(a),
         "schedule_subject_name": subject_name,
         "recommended_activity_type": a.activity_type,
         "recommended_activity_label": activity_label,
@@ -1935,6 +1957,7 @@ def _edit_drawer_context(user, a) -> dict:
         "interventions": SsaIntervention.choices,
         "is_cluster_session": editing.is_cluster_session(a),
         "may_move_school": editing.may_move_school(a),
+        "sent_fund_weeks": _sent_fund_weeks(a),
         "drawer_size": "md",
     }
     if context["is_cluster_session"]:

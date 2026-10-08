@@ -56,17 +56,26 @@ run that is still scheduled.
       const query = new URLSearchParams({ activity: '{{ act.id }}', training: this.trainingId }).toString();
       fetch('/planning/training-capacity?' + query, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
         .then((response) => (response.ok ? response.json() : null))
-        .then((data) => { if (data) { this.ceiling = data; } })
+        .then((data) => { if (data) { this.ceiling = data; this.syncInvited(); } })
         .catch(() => {});
     },
     {% comment %}The officer's ceiling for this training, with this session's
     own schools left out of `scheduled` (owner, 2026-10-06): the session may
     keep the schools it has and grow only into what is left.{% endcomment %}
     ceiling: {% if edit_ceiling_json %}{{ edit_ceiling_json }}{% else %}{ managed: false, ceiling: null, scheduled: 0, remaining: null, fy: '' }{% endif %},
-    get placesHeld() { return this.ceiling.managed ? Math.max(this.ceiling.remaining, this.trainingMoved ? 0 : this.firstInvited) : null; },
-    get ceilingFull() { return this.ceiling.managed && this.invitedCount >= this.placesHeld; },
-    get ceilingOver() { return this.ceiling.managed && this.invitedCount > this.placesHeld; },
-    isHeld(box) { return this.ceilingFull && !box['checked']; },
+    {% comment %}A ceiling counts schools (owner, 2026-10-08): a school this
+    officer has already scheduled for the training on another session takes
+    no new place. `ceiling.schoolIds` names those schools; `placesTaken` is
+    how many of the ticked ones are not among them, and `firstTaken` what
+    that was when the drawer opened, which the session may always keep.{% endcomment %}
+    placesTaken: 0,
+    firstTaken: null,
+    init() { this.$nextTick(() => { if (this.$refs.invitedList) { this.syncInvited(); } }); },
+    takes(box) { return !(this.ceiling.schoolIds || []).includes(box.value); },
+    get placesHeld() { return this.ceiling.managed ? Math.max(this.ceiling.remaining, this.trainingMoved ? 0 : (this.firstTaken || 0)) : null; },
+    get ceilingFull() { return this.ceiling.managed && this.placesTaken >= this.placesHeld; },
+    get ceilingOver() { return this.ceiling.managed && this.placesTaken > this.placesHeld; },
+    isHeld(box) { return this.ceilingFull && !box['checked'] && this.takes(box); },
     projectId: '{{ edit_project.id|default:''|escapejs }}',
     firstProjectId: '{{ edit_project.id|default:''|escapejs }}',
     focus: '{{ act.focus_intervention|default:''|escapejs }}',
@@ -85,12 +94,17 @@ run that is still scheduled.
       this.focus = named ? named.code : '';
     },
     syncInvited(event) {
-      let ticked = this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked').length;
-      if (event && event.target.checked && this.ceiling.managed && ticked > this.placesHeld) {
+      const boxes = Array.from(this.$refs.invitedList.querySelectorAll('input[name=invited_school_ids]:checked'));
+      let ticked = boxes.length;
+      let taken = boxes.filter((box) => this.takes(box)).length;
+      if (this.firstTaken === null) { this.firstTaken = taken; }
+      if (event && event.target.checked && this.ceiling.managed && this.takes(event.target) && taken > this.placesHeld) {
         event.target.checked = false;
         ticked -= 1;
+        taken -= 1;
       }
       this.invitedCount = ticked;
+      this.placesTaken = taken;
     }
   }"
 >
@@ -100,6 +114,8 @@ run that is still scheduled.
   {% if other_half %}
   <p class="edify-note" data-tone="info" role="note" data-edit-pair-note>This in-school training and its school visit are one mission: a new date or school moves both.</p>
   {% endif %}
+
+  {% include "partials/my_plan/sent_fund_request_note.html" %}
 
   {% if edit_training %}
   {% comment %}The training this plan delivers (owner, 2026-10-06: "click edit
@@ -143,10 +159,10 @@ run that is still scheduled.
     </div>
     {% if edit_ceiling_json %}
     <p class="mt-1 edify-text-caption text-slate-500" aria-live="polite" data-training-ceiling-counter>
-      <template x-if="ceiling.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(ceiling.scheduled + invitedCount) + ' / ' + ceiling.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY {{ act.fy }}.</span></template>
-      <template x-if="!ceiling.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="ceiling.scheduled + invitedCount"></strong> schools scheduled for this training in FY {{ act.fy }}. No training ceiling is set.</span></template>
+      <template x-if="ceiling.managed"><span>Training ceiling <strong class="font-semibold text-slate-700 tabular-nums" x-text="(ceiling.scheduled + placesTaken) + ' / ' + ceiling.ceiling" data-training-ceiling-count></strong> schools scheduled for this training in FY {{ act.fy }}.</span></template>
+      <template x-if="!ceiling.managed"><span><strong class="font-semibold text-slate-700 tabular-nums" x-text="ceiling.scheduled + placesTaken"></strong> schools scheduled for this training in FY {{ act.fy }}. No training ceiling is set.</span></template>
     </p>
-    <p x-show="ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="danger" role="alert" data-training-ceiling-over>This training's ceiling leaves <span x-text="placesHeld"></span> place<span x-show="placesHeld !== 1">s</span> and <span x-text="invitedCount"></span> schools are ticked. Untick <span x-text="invitedCount - placesHeld"></span> to save.</p>
+    <p x-show="ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="danger" role="alert" data-training-ceiling-over>This training's ceiling leaves <span x-text="placesHeld"></span> place<span x-show="placesHeld !== 1">s</span> and <span x-text="placesTaken"></span> new schools are ticked. Untick <span x-text="placesTaken - placesHeld"></span> to save.</p>
     <p x-show="ceilingFull && !ceilingOver" style="display:none" class="mt-1 edify-note" data-tone="warning" role="status" data-training-ceiling-reached>You have reached the training ceiling and cannot add any more schools.<span x-show="invitedCount > 0"> Untick a school to tick another.</span></p>
     {% endif %}
     {% if member_schools %}<div class="mt-1.5">{% include "partials/components/select_all.html" with boxes="input[name=invited_school_ids]" %}</div>{% endif %}

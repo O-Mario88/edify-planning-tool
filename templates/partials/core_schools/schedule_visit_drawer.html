@@ -34,10 +34,10 @@ in-school training takes one place; the save counts again behind a lock.{% endco
 planDate: '',
 capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
 capacityKey: null,
-get trainingCeilingFull() { return this.showTraining && this.delivery === 'staff' && !!this.trainingCourseId && this.capacity.managed && this.capacity.remaining <= 0; },
+get trainingCeilingFull() { return this.showTraining && this.delivery === 'staff' && !!this.trainingCourseId && this.capacity.managed && !this.capacity.counted && this.capacity.remaining <= 0; },
 loadCapacity() {
   const training = this.showTraining && this.delivery === 'staff' ? this.trainingCourseId : '';
-  const query = new URLSearchParams({ training: training, date: this.planDate || '' }).toString();
+  const query = new URLSearchParams({ training: training, date: this.planDate || '', for_school: '{{ school.school_id|default:''|escapejs }}' }).toString();
   if (query === this.capacityKey) { return; }
   this.capacityKey = query;
   if (!training) { this.capacity = { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' }; return; }

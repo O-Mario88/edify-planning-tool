@@ -4868,11 +4868,13 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
 
     assert_operating(a.school)
     _assert_not_awaiting_owner(a)
-    # Work that has started or been delivered keeps the day it happened on
-    # (owner, 2026-10-02). This accepted a completed visit and turned it back
-    # into "rescheduled": its evidence, its Salesforce ID and its verification
-    # then sat on something the plan said had not happened yet.
-    from apps.activities.editing import assert_not_executed
+    # Work that has been delivered keeps the day it happened on (owner,
+    # 2026-10-02). This accepted a completed visit and turned it back into
+    # "rescheduled": its evidence, its Salesforce ID and its verification
+    # then sat on something the plan said had not happened yet. Work that was
+    # started and never submitted is still a plan, and moves like one (owner,
+    # 2026-10-07).
+    from apps.activities.editing import assert_not_executed, is_begun
 
     assert_not_executed(a, action="rescheduled")
     old_date = a.scheduled_date
@@ -4901,7 +4903,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # budget-impact rewrite of cost lines are 3 separate writes that must all
     # land or all roll back — a crash mid-sequence otherwise leaves the
     # activity's saved schedule out of sync with its budget lines.
-    with transaction.atomic():
+    # A new date is the planner's own change to the plan: a monthly request
+    # in its approval chain follows it (apps.fund_requests.plan_changes).
+    from apps.fund_requests.plan_changes import planner_change
+
+    with planner_change(principal, a), transaction.atomic():
         # Serialise concurrent reschedules of the same activity: without the
         # row lock two simultaneous submissions interleave their cost-line
         # rebuilds and fund-request syncs, and one reschedule_count increment
@@ -4943,6 +4949,17 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             purpose_type=a.purpose_type,
             exclude_activity_id=a.pk,
         )
+        # The week's fund request, where it has been sent and not paid,
+        # comes back to its owner instead of refusing the move (owner,
+        # 2026-10-07): the week this leaves and the week it lands in are both
+        # rebuilt from the changed plan and sent again.
+        from apps.fund_requests.plan_changes import take_back_for_plan_change
+
+        take_back_for_plan_change(
+            a,
+            principal,
+            days=(a.planned_date or (old_date and local_day(old_date)), planned_date),
+        )
         # A multi-day activity keeps its duration when it moves: the end date
         # shifts by the same delta as the start (an explicit endDate in the
         # payload overrides, validated against the new start).
@@ -4966,6 +4983,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             a.expected_participants = data.get("expectedParticipants")
         a.reschedule_count += 1
         a.last_reason = data.get("reason")
+        if is_begun(a):
+            # Moved before anything was submitted: the start is undone with
+            # the day it was made on, and is stamped again when the work is
+            # really begun.
+            a.execution_started_at = None
         if a.status == "assigned_to_partner" or a.delivery_type == "partner":
             from apps.planning.country_oversight.rules import date_author
 
@@ -4995,6 +5017,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "expected_participants",
                 "reschedule_count",
                 "last_reason",
+                "execution_started_at",
                 "status",
                 "updated_at",
             ]
@@ -5283,8 +5306,8 @@ def set_facilitator(activity_id: str, partner_id, principal) -> dict:
         )
     if a.status not in FACILITATOR_EDITABLE_STATUSES:
         raise BadRequest(
-            f"This {noun} has started, happened or been withdrawn; its "
-            "facilitator can no longer change."
+            f"This {noun} has happened or been withdrawn; its facilitator "
+            "can no longer change."
         )
     partner_id = (partner_id or "").strip() or None
     if partner_id:

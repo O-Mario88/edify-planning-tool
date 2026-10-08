@@ -158,8 +158,9 @@ class TheLastPlaceIsTakenOnce(ReferenceDataTransactionTestCase):
         self.assertEqual(self.scheduled(), 20)
 
     def test_several_in_school_places_are_never_oversold(self):
-        """Six saves for one remaining place, through the same reservation an
-        in-school training makes."""
+        """Five saves for one remaining place, through the same reservation
+        an in-school training makes. Each is for a school not yet scheduled:
+        one that is already counted takes no place (owner, 2026-10-08)."""
         from django.db import transaction
 
         def take(index):
@@ -185,7 +186,41 @@ class TheLastPlaceIsTakenOnce(ReferenceDataTransactionTestCase):
 
             return call
 
-        outcomes = _race([take(index) for index in range(18, 24)])
+        outcomes = _race([take(index) for index in range(19, 24)])
 
         self.assertEqual([kind for kind, _ in outcomes].count("saved"), 1)
+        self.assertEqual(self.scheduled(), 20)
+
+    def test_a_school_already_counted_takes_no_place_from_the_race(self):
+        """School 18 is on the held session. Its in-school training and a new
+        school's race for the last place: both are saved, and the ceiling is
+        exactly full, because 18 was one of the twenty all along."""
+        from django.db import transaction
+
+        def take(index):
+            def call():
+                with transaction.atomic():
+                    training_ceilings.reserve_for_activity(
+                        activity_type="in_school_training",
+                        staff_id=self.staff.id,
+                        course_id=self.training.id,
+                        fy=FY,
+                        school_id=self.schools[index].id,
+                    )
+                    return Activity.objects.create(
+                        activity_type="in_school_training",
+                        training_course=self.training,
+                        school=self.schools[index],
+                        responsible_staff_id=self.staff.id,
+                        delivery_type="staff",
+                        status="scheduled",
+                        fy=FY,
+                        quarter="Q1",
+                    ).id
+
+            return call
+
+        outcomes = _race([take(18), take(19)])
+
+        self.assertEqual([kind for kind, _ in outcomes].count("saved"), 2)
         self.assertEqual(self.scheduled(), 20)

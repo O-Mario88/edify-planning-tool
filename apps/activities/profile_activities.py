@@ -374,7 +374,7 @@ def _decorate(principal, activities, *, subject: str, today: date) -> list:
                 row.may_complete = not awaiting and a.status not in (
                     NEEDS_REPLANNING_STATUSES
                 )
-                # Work already under way keeps its day (services.reschedule
+                # Work already delivered keeps its day (services.reschedule
                 # refuses it; owner, 2026-10-02).
                 row.may_reschedule = not awaiting and not row.edit_locked
                 row.may_cancel = True

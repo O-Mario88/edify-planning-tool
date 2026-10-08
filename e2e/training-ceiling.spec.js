@@ -130,6 +130,28 @@ test.describe('Group Training drawer holds the training ceiling', () => {
     await expect(drawer.locator('[data-training-ceiling-reached]')).toContainText('cannot add any more schools');
   });
 
+  test('a school already scheduled for the training takes no place', async ({ page }) => {
+    // A ceiling counts schools (owner, 2026-10-08): the capacity answer names
+    // the ones already scheduled, and such a school can still be ticked at a
+    // full ceiling, taking no place, while every other school is held.
+    await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
+    const drawer = await openGroupDrawer(page);
+    const counted = await boxes(drawer).first().getAttribute('value');
+    await page.route('**/planning/training-capacity**', route =>
+      route.fulfill({ json: { ...capacity(20, 20), schoolIds: [counted] } }));
+    await chooseTraining(page, drawer, 'Leadership');
+
+    const total = await boxes(drawer).count();
+    const first = boxes(drawer).first();
+    await expect(first).toBeEnabled();
+    await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(total - 1);
+    await first.check();
+    await expect(first).toBeChecked();
+    await expect(drawer.locator('input[name=invited_school_ids]:checked')).toHaveCount(1);
+    await expect(drawer.locator('input[name=invited_school_ids]:disabled')).toHaveCount(total - 1);
+    await expect(drawer.locator('[data-training-ceiling-count]')).toHaveText('20 / 20');
+  });
+
   test('a cluster meeting asks for a training only when it is one', async ({ page }) => {
     await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
     await page.route('**/planning/training-capacity**', route =>

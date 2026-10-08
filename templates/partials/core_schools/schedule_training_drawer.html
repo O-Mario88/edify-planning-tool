@@ -28,7 +28,7 @@ plannerChooses: false,
 planDate: '',
 capacity: { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' },
 capacityKey: null,
-get trainingCeilingFull() { return !!this.catalogueItemId && this.capacity.managed && this.capacity.remaining <= 0; },
+get trainingCeilingFull() { return !!this.catalogueItemId && this.capacity.managed && !this.capacity.counted && this.capacity.remaining <= 0; },
 selectTraining(event) {
   const option = event.target.options[event.target.selectedIndex];
   this.catalogueItemId = event.target.value;
@@ -42,7 +42,7 @@ selectTraining(event) {
   this.loadCapacity();
 },
 loadCapacity() {
-  const query = new URLSearchParams({ training: this.catalogueItemId, date: this.planDate || '' }).toString();
+  const query = new URLSearchParams({ training: this.catalogueItemId, date: this.planDate || '', for_school: '{{ school.school_id|default:''|escapejs }}' }).toString();
   if (query === this.capacityKey) { return; }
   this.capacityKey = query;
   if (!this.catalogueItemId) { this.capacity = { managed: false, ceiling: null, scheduled: 0, remaining: null, staffName: '', fy: '' }; return; }

@@ -153,14 +153,14 @@ class TheLeadSetsTheirOwnCeilingTest(CeilingFixture):
                 staff_id=self.pl_staff.id,
                 course_id=self.leadership.id,
                 fy=self.fy,
-                requested=2,
+                schools={"school-a", "school-b"},
             )
         with self.assertRaises(BadRequest), transaction.atomic():
             training_ceilings.reserve(
                 staff_id=self.pl_staff.id,
                 course_id=self.leadership.id,
                 fy=self.fy,
-                requested=3,
+                schools={"school-a", "school-b", "school-c"},
             )
 
 
