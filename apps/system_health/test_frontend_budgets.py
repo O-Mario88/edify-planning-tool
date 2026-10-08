@@ -243,7 +243,27 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #:   desktop page, 2-4 % now (F18, F19, F20).
     #:   e2e/maintained-facts.spec.js holds each attribute to the selector
     #:   it replaced while the page changes under it.
-    JS_GZIP_KB = 146
+    #:
+    #: Raised to 146.5 on 2026-10-08 (145.75 to 146.35 KB) for four faults
+    #: the nightly Browser Matrix had been showing in Safari's engine since
+    #: 1 October, each fixed where it was:
+    #:
+    #: - chart-standard.js (+0.42 KB) draws a chart that was asked for
+    #:   before the chart library had run. The library is a deferred script
+    #:   after Alpine, so a chart an Alpine component draws as it starts
+    #:   could ask too soon; it was given up without a word and its card
+    #:   stayed empty, on a slow first visit in any browser
+    #:   (e2e/chart-library-late.spec.js). alpine-components.js (+0.06 KB)
+    #:   has its two charts that checked for the library themselves wait
+    #:   the same way.
+    #: - date-picker.js (+0.06 KB) leaves a date field that is not drawn on
+    #:   its size watch instead of taking it off and putting it back, which
+    #:   Safari answered on every frame for as long as the page was open
+    #:   (e2e/date-picker.spec.js).
+    #: - live-regions.js (+0.06 KB) opens its stream only once the page has
+    #:   stayed a second and a half, a section that settles sooner included
+    #:   (tests/js/live-regions.test.cjs).
+    JS_GZIP_KB = 146.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod

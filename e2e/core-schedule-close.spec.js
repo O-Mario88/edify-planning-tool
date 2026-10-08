@@ -1,6 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
 
+// The answers below are stubbed. A page the service worker controls has its
+// requests made by the worker, where WebKit does not offer them to the stub:
+// they went to the real server (a 404) and the drawer was judged on that.
+test.use({ serviceWorkers: 'block' });
+
 test('core scheduling closes after success and preserves validation errors', async ({ page }) => {
   await signIn(page, 'cceo@edify.org', 'edify', { acceptRequiredAgreements: false });
   await page.goto('/core-schools');

@@ -1,6 +1,11 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 
+// The answers below are stubbed. A page the service worker controls has its
+// requests made by the worker, where WebKit does not offer them to the stub:
+// they went to the real server (a 404) and the drawer was judged on that.
+test.use({serviceWorkers:'block'});
+
 test('drawer saves close their source; validation, previews and newer drawers remain open',async({page})=>{
   test.setTimeout(180000);
   await signIn(page,'pl1@edify.org','edify',{acceptRequiredAgreements:false});

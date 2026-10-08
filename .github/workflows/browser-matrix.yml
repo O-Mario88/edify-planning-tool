@@ -30,15 +30,33 @@ jobs:
         include:
           - project: firefox-desktop
             browsers: chromium firefox
-          - project: webkit-desktop
-            browsers: chromium webkit
           - project: android-360
             browsers: chromium
+          # WebKit on the runner is about half the speed of the other two
+          # engines: with setup, one job for a whole WebKit project ran into
+          # the suite's thirty minutes and was cancelled before it reported
+          # (all three on 2026-10-08, two of three the day before). Two
+          # shards each, as CI splits Chromium.
+          - project: webkit-desktop
+            browsers: chromium webkit
+            shard: 1/2
+          - project: webkit-desktop
+            browsers: chromium webkit
+            shard: 2/2
           - project: iphone-390
             browsers: chromium webkit
+            shard: 1/2
+          - project: iphone-390
+            browsers: chromium webkit
+            shard: 2/2
           - project: tablet-768
             browsers: chromium webkit
+            shard: 1/2
+          - project: tablet-768
+            browsers: chromium webkit
+            shard: 2/2
     uses: $/.github/workflows/browser-suite.yml
     with:
       project: ${{ matrix.project }}
       browsers: ${{ matrix.browsers }}
+      shard: ${{ matrix.shard || '1/1' }}

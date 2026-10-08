@@ -107,3 +107,52 @@ test('count axes never print fractional ticks',()=>{
  const rate=options({series:[{name:'R',data:[12.5]}],categories:['x'],horizontal:false,axis:{opposite:true}},600);
  assert.equal(rate.yaxis.labels.formatter(12.5),'12.5%');
 });
+
+// A chart asked for before the chart library has run (owner's nightly Browser
+// Matrix, 2026-10-08): it is drawn when the library has, not given up.
+test('a chart asked for before the library has run is drawn once it has', () => {
+  const {whenLibraryRuns, late} = require('../../static/js/chart-standard.js');
+  const before = {document: globalThis.document, ApexCharts: globalThis.ApexCharts};
+  // Every listener the script tag was given; `loaded` is its load event.
+  const listeners = [];
+  const tag = {addEventListener: (type, fn) => { if (type === 'load') listeners.push(fn); }};
+  const loaded = () => listeners.splice(0).forEach((fn) => fn());
+  try {
+    // A page that does not load the library: nothing to wait for.
+    globalThis.document = {querySelector: () => null};
+    assert.equal(whenLibraryRuns(() => assert.fail('drawn without a library')), false);
+    assert.equal(late({}, {isConnected: true}, {}), null);
+
+    // The library is on its way: the caller holds a handle, and the chart is
+    // drawn, once, when the script has loaded.
+    globalThis.document = {querySelector: () => tag};
+    const drawn = [];
+    const system = {renderDetached: (el, opts) => { drawn.push(opts); return {destroy: () => drawn.push('destroyed')}; }};
+    const handle = late(system, {isConnected: true}, {name: 'trend'});
+    assert.equal(typeof handle.destroy, 'function');
+    assert.deepEqual(drawn, []);
+    globalThis.ApexCharts = function ApexCharts() {};
+    loaded();
+    assert.deepEqual(drawn, [{name: 'trend'}]);
+    handle.destroy();
+    assert.deepEqual(drawn, [{name: 'trend'}, 'destroyed']);
+
+    // Destroyed while it waited, or its card gone: never drawn.
+    delete globalThis.ApexCharts;
+    const dropped = late(system, {isConnected: true}, {name: 'dropped'});
+    dropped.destroy();
+    const gone = late(system, {isConnected: false}, {name: 'gone'});
+    globalThis.ApexCharts = function ApexCharts() {};
+    loaded();
+    assert.equal(drawn.length, 2);
+    assert.ok(gone);
+
+    // Already run: drawn at once.
+    let now = 0;
+    assert.equal(whenLibraryRuns(() => { now += 1; }), true);
+    assert.equal(now, 1);
+  } finally {
+    globalThis.document = before.document;
+    if (before.ApexCharts === undefined) delete globalThis.ApexCharts; else globalThis.ApexCharts = before.ApexCharts;
+  }
+});

@@ -18,7 +18,8 @@ function page({ readMs = 300 } = {}) {
   let seq = 0;
   const timers = new Map();
   const reads = [];
-  const state = { ticked: false, source: null, swaps: 0 };
+  const state = { ticked: false, source: null, swaps: 0, opened: 0 };
+  const heard = {};
 
   const schedule = (fn, ms, every) => {
     seq += 1;
@@ -30,7 +31,7 @@ function page({ readMs = 300 } = {}) {
   const document = {
     hidden: false,
     activeElement: null,
-    addEventListener() {},
+    addEventListener(type, fn) { (heard[type] = heard[type] || []).push(fn); },
     dispatchEvent() {},
     getElementById: () => null,
     importNode: () => fresh,
@@ -38,7 +39,7 @@ function page({ readMs = 300 } = {}) {
     // busy(): the one question it asks the page besides the drawer.
     querySelector: (selector) => (state.ticked && selector.includes('td input[type="checkbox"]:checked') ? {} : null),
   };
-  function EventSource() { state.source = this; this.close = () => {}; }
+  function EventSource() { state.source = this; state.opened += 1; this.close = () => {}; }
   const sandbox = {
     document,
     window: { EventSource, addEventListener() {} },
@@ -72,8 +73,23 @@ function page({ readMs = 300 } = {}) {
     }
   }
   const changed = () => state.source.onmessage({ data: JSON.stringify({ type: 'plan.changed', at: String(now) }) });
-  return { reads, state, wait, changed, now: () => now };
+  // What the page hears from the document: a section settling, say.
+  const hear = (type) => (heard[type] || []).forEach((fn) => fn({}));
+  return { reads, state, wait, changed, hear, now: () => now };
 }
+
+test('a page passed through opens no stream, however soon a section of it settles', async () => {
+  const p = page();
+  await p.wait(500);
+  p.hear('htmx:afterSettle'); // a section loaded in the page's first second
+  await p.wait(500);
+  p.hear('htmx:afterSettle');
+  assert.equal(p.state.opened, 0, 'the stream was opened on a page a second old');
+  await p.wait(1000); // the page has stayed
+  assert.equal(p.state.opened, 1);
+  p.hear('htmx:afterSettle'); // and one stream is enough
+  assert.equal(p.state.opened, 1);
+});
 
 test('one change is read about half a second later', async () => {
   const p = page();

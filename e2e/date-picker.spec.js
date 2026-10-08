@@ -63,9 +63,12 @@ test('every date field gets the Edify field and keeps the real one', async ({ pa
 
 test('the visible field is drawn exactly like the fields around it', async ({ page }) => {
   await open(page);
+  // To a hundredth of a pixel: at a phone's device scale two boxes drawn alike
+  // came back 43.999996 and 43.999992 high (iPhone profile, 2026-10-08).
   const look = (selector) => page.locator(selector).evaluate((el) => {
     const s = getComputedStyle(el);
-    return [el.getBoundingClientRect().height, el.getBoundingClientRect().width, s.borderTopWidth, s.borderRadius, s.fontSize, s.backgroundColor];
+    const px = (value) => Math.round(value * 100) / 100;
+    return [px(el.getBoundingClientRect().height), px(el.getBoundingClientRect().width), s.borderTopWidth, s.borderRadius, s.fontSize, s.backgroundColor];
   });
   const peer = await look('#peer');
   const field = await look('#visit + .edify-datepick .edify-datepick__field');
@@ -205,6 +208,41 @@ test('the calendar brings no div into the form', async ({ page }) => {
   await fieldOf(page, 'visit').click();
   await expect(calendar(page)).toBeVisible();
   expect(await page.locator('.edify-datepick div').count()).toBe(0);
+});
+
+test('a field that is not drawn is left alone until it is', async ({ page }) => {
+  // A date field in a closed dialog (the leave page's request drawer) waits to
+  // be measured. Safari reports every newly watched element once, whatever its
+  // size, so a field taken off the watch and put straight back was reported on
+  // every frame, for as long as the page was open (found 2026-10-08).
+  await page.addInitScript(() => {
+    window.__sizeCalls = 0;
+    const Native = window.ResizeObserver;
+    window.ResizeObserver = class extends Native {
+      constructor(callback) {
+        super((entries, observer) => {
+          if (entries.some((entry) => entry.target.classList.contains('edify-datepick'))) window.__sizeCalls += 1;
+          callback(entries, observer);
+        });
+      }
+    };
+  });
+  await open(page, `<dialog id="request"><label for="leave">Leave date</label>
+    <input type="date" id="leave" name="leave" value="2026-10-10"></dialog>`);
+  const frames = (n) => page.evaluate((n) => new Promise((resolve) => {
+    const step = () => { n -= 1; if (n > 0) requestAnimationFrame(step); else resolve(window.__sizeCalls); };
+    requestAnimationFrame(step);
+  }), n);
+  const settled = await frames(10);
+  // Thirty more frames of a page nobody touches: nothing more is heard.
+  expect(await frames(30) - settled).toBe(0);
+
+  // Drawn, it is measured once and is the field it would have been.
+  await page.evaluate(() => document.getElementById('request').showModal());
+  await expect(fieldOf(page, 'leave')).toBeVisible();
+  await expect.poll(() => fieldOf(page, 'leave').evaluate((field) => field.size)).toBeGreaterThan(1);
+  const drawn = await frames(10);
+  expect(await frames(30) - drawn).toBe(0);
 });
 
 test('a field in a closed row is measured when the row opens, not before', async ({ page }) => {

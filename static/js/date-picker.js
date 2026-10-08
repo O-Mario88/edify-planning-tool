@@ -658,16 +658,16 @@
      state, a value written as an attribute, being hidden. */
   var watched = null;
   var WATCHED = ["value", "min", "max", "disabled", "readonly", "required", "hidden", "style"];
-  /* Fields enhanced while hidden, waiting to be measured. Unobserved before
-     measuring, so the measurement cannot re-trigger its own observer. */
+  /* Fields enhanced while hidden, waiting to be measured. One that still
+     cannot be stays watched; taken off and put straight back, Safari reported
+     it again on every frame (it reports each newly watched element once). */
   var sizeWatch =
     typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(function (entries) {
           entries.forEach(function (entry) {
             var native = entry.target.previousElementSibling;
             var field = native && native.__edifyDatePick;
-            sizeWatch.unobserve(entry.target);
-            if (field && !field.fit()) sizeWatch.observe(entry.target);
+            if (!field || field.fit()) sizeWatch.unobserve(entry.target);
           });
         })
       : null;

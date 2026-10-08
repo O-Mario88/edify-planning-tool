@@ -11,6 +11,7 @@
  */
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
+const { watchPageErrors } = require('./helpers/page-errors');
 
 const WIDTHS = [320, 360, 390, 430];
 const PAGES = {
@@ -104,9 +105,7 @@ for (const [email, routes] of Object.entries(PAGES)) {
     test.setTimeout(240_000);
     const context = await browser.newContext({ isMobile: true, hasTouch: true, viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    page.on('console', (message) => { if (message.type() === 'error' && !/Failed to load resource/.test(message.text())) errors.push(message.text()); });
+    const errors = watchPageErrors(page, { console: true, ignore: /Failed to load resource/ });
     await signIn(page, email, 'edify', { acceptRequiredAgreements: false });
     const failures = [];
     for (const width of WIDTHS) {

@@ -104,9 +104,28 @@ for (const [label, viewport] of [['phone', { width: 390, height: 844 }], ['table
         .filter((cell) => { const s = getComputedStyle(cell); return s.position === 'sticky' && (s.left !== 'auto' || s.right !== 'auto'); }).length);
       expect(frozen).toBe(0);
 
-      // Unpinned, a name is not cut to the pinned identity measure.
+      // Unpinned, a name is not cut to the pinned identity measure: its box is
+      // as wide as its words. (Measured as the words against the box. The
+      // name is an inline span, where scrollWidth and clientWidth are both 0
+      // in Chromium and WebKit, so comparing those passed whatever the name
+      // looked like, and failed in Firefox, which gives an inline box its
+      // content's width for the first and 0 for the second.)
       const name = page.locator('#identity tbody tr:first-child > :nth-child(2) > :first-child');
-      expect(await name.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+      const cutBy = (el) => {
+        const words = document.createRange();
+        words.selectNodeContents(el);
+        return words.getBoundingClientRect().width - el.getBoundingClientRect().width;
+      };
+      expect(await name.evaluate(cutBy)).toBeLessThanOrEqual(1);
+      // The measure does see a name that is cut.
+      expect(await name.evaluate((el, cutBy) => {
+        // Over the stylesheet's own rules for a cell's text, which are !important.
+        const clamp = { display: 'block', 'max-width': '6rem', overflow: 'hidden' };
+        Object.entries(clamp).forEach(([name, value]) => el.style.setProperty(name, value, 'important'));
+        const by = new Function('el', `return (${cutBy})(el)`)(el);
+        Object.keys(clamp).forEach((name) => el.style.removeProperty(name));
+        return by;
+      }, cutBy.toString())).toBeGreaterThan(50);
     } finally {
       await context.close();
     }
