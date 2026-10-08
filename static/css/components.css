@@ -5983,7 +5983,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .school-plan-table__identity a:hover { text-decoration: underline; }
 .school-plan-table__expander {
   display: inline-flex; align-items: center; justify-content: center;
-  flex: 0 0 1rem; width: 1rem; height: 1.5rem;
+  flex: 0 0 1.5rem; width: 1.5rem; height: 1.5rem;
   border-radius: var(--edify-radius-control);
   color: var(--edify-text-muted); background: transparent; border: 0;
 }

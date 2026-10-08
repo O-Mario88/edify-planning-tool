@@ -53,18 +53,24 @@ def _user(email):
 
 
 def _cceo_schools(user):
-    """Clustered client schools with no Partner history of their own.
+    """Clustered client schools with no Partner history of their own, whose
+    SSA for the year is still to be collected.
 
     The demo seed hands some schools to Partners already; a journey that starts
-    from one of those would be asserting the seed, not the rule.
+    from one of those would be asserting the seed, not the rule. And SSA
+    Support, which is what these journeys hand over, goes to a Partner only
+    until the school has completed its SSA for the year (owner, 2026-10-08):
+    the seed gives some schools this year's SSA, and a handover there is one
+    the application now refuses.
     """
     from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+    from apps.ssa.current_year import schools_with_ssa
 
     seeded = PartnerAssignment.objects.exclude(notes=MARKER).values("school_id")
     worked = Activity.objects.filter(
         deleted_at__isnull=True, delivery_type="partner"
     ).values("school_id")
-    return list(
+    candidates = list(
         direct_portfolio_schools(resolve_user_scope(user))
         .filter(
             school_type="client",
@@ -75,8 +81,10 @@ def _cceo_schools(user):
         .exclude(cluster_id="")
         .exclude(id__in=seeded)
         .exclude(id__in=worked)
-        .order_by("cluster_id", "school_id")[:12]
+        .order_by("cluster_id", "school_id")
     )
+    assessed = schools_with_ssa([school.id for school in candidates])
+    return [school for school in candidates if school.id not in assessed][:12]
 
 
 def _handover(school, partner, cceo):

@@ -4874,7 +4874,8 @@ main .edify-avatar-neutral {
 /* The school's name is the link to its profile (owner, 2026-10-08: "i need it
    linked to school names everywhere"); the arrow before it opens the row's
    details, as the name itself did until then. The name still ends at its
-   column's edge, with its full text as the title. */
+   column's edge, with its full text as the title. The arrow keeps the 24px
+   a finger needs (WCAG 2.2 target size; e2e/responsive-contract). */
 :root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name :is(.school-plan-table__identity, .partner-plan-table__identity) {
   gap: .15rem !important; min-inline-size: 0 !important; max-inline-size: 100% !important;
 }
@@ -4886,7 +4887,7 @@ main .edify-avatar-neutral {
   color: var(--edify-text) !important; font-weight: var(--edify-text-label-weight) !important;
 }
 :root main table.school-plan-table.school-plan-table tbody td.school-plan-table__name .school-plan-table__expander.school-plan-table__expander {
-  inline-size: 1rem !important; min-inline-size: 1rem !important; padding: 0 !important;
+  inline-size: 1.5rem !important; min-inline-size: 1.5rem !important; padding: 0 !important;
 }
 /* Status chips stay inside their column: two chips stack, each on one line. */
 /* The Visit Lock chip likewise (owner, 2026-10-08): this table fixes its
