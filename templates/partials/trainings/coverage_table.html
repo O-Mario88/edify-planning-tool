@@ -1,0 +1,58 @@
+{% load components frontend_filters school_identity table_pagination %}
+{% comment %}
+Training Coverage (owner, 2026-10-08): the one school-level picture of every
+training. Each row is a school and a training — who follows it, how it is
+covered (in-school by staff, in-school by a Partner, or on a group training),
+who is responsible, where it stands, whether it is on a day yet, and who owns
+the next step. With one training chosen, the schools not yet covered for it
+are listed too, so "which schools have not been planned?" has an answer.
+
+Nothing here is a table of its own: the rows are read from the plans, the
+partner hand-overs and the group-training rosters each time
+(apps.planning.training_coverage). A school on two sessions of one training
+is two rows, the second marked as the same school, and one school in every
+count.
+
+`coverage` is training_coverage.table(...); `fy` the year.
+{% endcomment %}
+{% paginate coverage.rows "coverage_page" as coverage_pager %}
+{% data_table name="training-coverage" %}
+  {% slot title %}Training coverage{% endslot %}
+  {% slot summary %}{{ coverage.school_count|intcomma }} school{{ coverage.school_count|pluralize }}{% for count in coverage.counts %} · {{ count.count|intcomma }} {{ count.label }}{% endfor %} · FY {{ fy }}{% endslot %}
+  {% slot caption %}Every school and training in this view: the staff member who follows it, how it is covered, who is responsible, its status, whether it is on a day, and the next action.{% endslot %}
+  {% slot empty %}{% if coverage.needs_training %}{% include "components/empty_state.html" with message="Choose a training to list the schools not yet covered for it." hint="A school is uncovered for one training at a time." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No school matches this view." hint="A school appears here once it is planned for a training, assigned to a partner for one, or put on a group training." compact="true" %}{% endif %}{% endslot %}
+  {% slot footer %}
+  {% include "components/table_pager.html" with pager=coverage_pager param="coverage_page" %}
+  <p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-coverage-table-note>Assigned is not scheduled, and scheduled is not completed: a school assigned to a partner is covered from that day and reads Partner Assigned — Awaiting Schedule until the partner dates it. Choose a training to add the schools not yet covered for it.</p>
+  {% endslot %}
+  {% if coverage.rows %}
+      <thead>
+        <tr>
+          <th scope="col" class="px-3 py-2">School ID</th>
+          <th scope="col" class="px-3 py-2">School</th>
+          <th scope="col" class="px-3 py-2">Training</th>
+          <th scope="col" class="px-3 py-2">Staff</th>
+          <th scope="col" class="px-3 py-2">Route</th>
+          <th scope="col" class="px-3 py-2">Responsible</th>
+          <th scope="col" class="px-3 py-2">Status</th>
+          <th scope="col" class="px-3 py-2">Scheduled</th>
+          <th scope="col" class="px-3 py-2">Next Action</th>
+        </tr>
+      </thead>
+      <tbody data-training-coverage-table>
+        {% for row in coverage_pager.rows %}
+        <tr data-coverage-row data-route="{{ row.route|default:'none' }}" data-coverage-state="{{ row.status }}"{% if row.repeat %} data-repeat-school{% endif %}>
+          <td class="px-3 py-2 tabular-nums" data-label="School ID">{% school_code row.school_pk %}</td>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title><a href="/schools/{{ row.school_pk }}">{{ row.school_name }}</a></th>
+          <td class="px-3 py-2" data-label="Training">{{ row.training_name }}</td>
+          <td class="px-3 py-2" data-label="Staff">{{ row.staff_name }}</td>
+          <td class="px-3 py-2" data-label="Route">{{ row.route_label }}{% if row.cluster %} · {{ row.cluster }}{% endif %}{% if row.repeat %} · same school, counted once{% endif %}</td>
+          <td class="px-3 py-2" data-label="Responsible">{{ row.responsible|default:"—" }}</td>
+          <td class="px-3 py-2" data-label="Status">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span></a>{% elif row.assignment_id %}<a href="/partner-oversight/" class="no-underline hover:opacity-90" title="Open Partner Oversight, where this hand-over is followed"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span></a>{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% endif %}</td>
+          <td class="px-3 py-2 tabular-nums" data-label="Scheduled">{% if row.scheduled %}{% if row.date %}{{ row.date|date:"j M Y" }}{% else %}Yes{% endif %}{% else %}No{% endif %}</td>
+          <td class="px-3 py-2" data-label="Next Action">{{ row.next_action }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  {% endif %}
+{% enddata_table %}

@@ -1167,6 +1167,7 @@ def create_assignment(**fields):
         # A savepoint of its own, so a lost race leaves the caller's
         # transaction usable for the error it reports.
         with transaction.atomic():
+            _hold_training_ceiling(school, fields)
             assignment = PartnerAssignment.objects.create(
                 status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
             )
@@ -1196,6 +1197,34 @@ def create_assignment(**fields):
             "assigned to this partner and is waiting for the partner to "
             "schedule it. A school is assigned to the same partner only once."
         ) from exc
+
+
+def _hold_training_ceiling(school, fields: dict) -> None:
+    """A school handed to a Partner for a training is committed to that
+    training from this moment, so it takes a place under the training ceiling
+    of the staff member the hand-over is filed under (owner, 2026-10-08:
+    "Assigned must still count toward training coverage/capacity"). Here, at
+    the one creation door, inside the write's transaction. A project's
+    hand-over is the project's: its schools are held by the capacity its
+    coordinator set, never by a training ceiling."""
+    if school is None or fields.get("project") or fields.get("project_id"):
+        return
+    course = fields.get("training_course")
+    course_id = fields.get("training_course_id") or getattr(course, "id", None)
+    if not course_id:
+        item = fields.get("catalogue_item")
+        if item is not None and getattr(item, "is_training_course", False):
+            course_id = item.id
+    if not course_id:
+        return
+    from apps.planning.training_ceilings import reserve_for_handover
+
+    reserve_for_handover(
+        school_id=school.id,
+        course_id=course_id,
+        monitoring_staff_id=fields.get("monitoring_staff_id"),
+        assigning_staff_id=fields.get("assigning_staff_id"),
+    )
 
 
 def _assert_partner_delivers(fields: dict) -> None:

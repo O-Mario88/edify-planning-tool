@@ -4277,7 +4277,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11228,
+      "bytes": 11224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -4308,7 +4308,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15387,
+      "bytes": 15383,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -10280,7 +10280,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22136,
+      "bytes": 22132,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/edit-drawer"
@@ -12358,7 +12358,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1985,
+      "bytes": 5461,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -13044,7 +13044,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 36499,
+      "bytes": 36495,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -13076,7 +13076,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 39874,
+      "bytes": 39870,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -16143,7 +16143,34 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2176,
+      "bytes": 1248,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Country Figure",
+      "purpose": "Reusable  country figure interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/_country_figure.html",
+      "variants": [
+        "{{ tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2243,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -16171,7 +16198,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7322,
+      "bytes": 7618,
       "deprecated_alternatives": [],
       "example_pages": [
         "/training-ceilings/<str:ceiling_id>/edit",
@@ -16201,7 +16228,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6928,
+      "bytes": 7278,
       "deprecated_alternatives": [],
       "example_pages": [
         "/training-ceilings/country/<str:ceiling_id>/edit",
@@ -16227,17 +16254,69 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 7684,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 6,
+      "kind": "application-partial",
+      "name": "Coverage By Staff",
+      "purpose": "Reusable coverage by staff interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/coverage_by_staff.html",
+      "variants": [
+        "danger",
+        "warning",
+        "{{ row.flag_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 5029,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Coverage Table",
+      "purpose": "Reusable coverage table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/trainings/coverage_table.html",
+      "variants": [
+        "{{ row.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7373,
+      "bytes": 11617,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 7,
       "kind": "application-partial",
       "name": "My Summary",
       "purpose": "Reusable my summary interface primitive",
@@ -16249,12 +16328,15 @@
       "template": "partials/trainings/my_summary.html",
       "variants": [
         "danger",
+        "warning",
         "{{ row.flag_tone }}"
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 5218,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 9174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -16274,7 +16356,7 @@
       "tables": 0,
       "template": "partials/trainings/summary_matrix.html",
       "variants": [
-        "{{ row.country_tone }}"
+        "warning"
       ]
     },
     {
@@ -16283,12 +16365,12 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4192,
+      "bytes": 10438,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 7,
       "kind": "application-partial",
       "name": "Summary Schools Drawer",
       "purpose": "Reusable summary schools drawer interface primitive",
@@ -16301,33 +16383,8 @@
       "tables": 1,
       "template": "partials/trainings/summary_schools_drawer.html",
       "variants": [
-        "warning"
-      ]
-    },
-    {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 12498,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 9,
-      "kind": "application-partial",
-      "name": "Team Summary",
-      "purpose": "Reusable team summary interface primitive",
-      "responsive_behavior": "explicit responsive contract",
-      "states": [
-        "default",
-        "selected",
-        "open"
-      ],
-      "tables": 1,
-      "template": "partials/trainings/team_summary.html",
-      "variants": [
-        "danger",
-        "{{ row.flag_tone }}"
+        "warning",
+        "{{ row.tone }}"
       ]
     },
     {
@@ -96385,7 +96442,7 @@
       "permission_key": "my_plan",
       "primary_action": "Training Summary Schools",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "The schools one summary figure counts, read-only.",
+      "purpose": "The schools one summary figure counts, read-only: every school an officer has covered for a training, or those of one figure (``figure``: staff planned, partner assigned, partner scheduled, awaiting the partner, group scheduled, or the schools not yet covered). With no training named, every training the officer has a school for.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -118760,7 +118817,7 @@
     "activity_states": 24,
     "all_routes": 1382,
     "api_routes": 360,
-    "component_templates": 654,
+    "component_templates": 656,
     "full_pages": 265,
     "mobile_contract_pass": 590,
     "nonvisual_actions": 285,

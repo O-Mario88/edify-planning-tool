@@ -3002,7 +3002,6 @@ def _create(
         if (
             school is not None
             and scheduled_course is not None
-            and not is_partner
             and not data.get("projectId")
         ):
             # An in-school training takes one place under the officer's
@@ -3012,12 +3011,20 @@ def _create(
             # schools are named (cluster_attendance.set_invited_schools).
             # Work under a Special Project is the project's: its schools are
             # counted there, against the capacity its coordinator set.
+            #
+            # One a Partner delivers takes its place too, under the staff
+            # member who follows it (owner, 2026-10-08: a school assigned to
+            # a Partner counts toward the training's capacity).
             from apps.planning.training_ceilings import reserve_for_activity
 
             reserve_for_activity(
                 activity_type=activity_type,
                 meeting_kind=meeting_kind,
-                staff_id=responsible_staff_id,
+                staff_id=(
+                    (monitored_by_staff_id or responsible_staff_id)
+                    if is_partner
+                    else responsible_staff_id
+                ),
                 course_id=scheduled_course.id,
                 fy=fy,
                 school_id=school.id,

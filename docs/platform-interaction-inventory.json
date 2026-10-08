@@ -4,23 +4,23 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 833,
-   "none": 296,
-   "page-tested": 1496,
-   "request-tested": 1325
+   "none": 295,
+   "page-tested": 1499,
+   "request-tested": 1343
   },
   "by_kind": {
-   "button": 1375,
+   "button": 1371,
    "disclosure": 75,
-   "field": 1342,
-   "link": 1090,
-   "tab": 68
+   "field": 1345,
+   "link": 1112,
+   "tab": 67
   },
-  "controls": 3950,
+  "controls": 3970,
   "high_consequence": 205,
   "state_changing": 458,
-  "templates_scanned": 666,
+  "templates_scanned": 669,
   "unresolved_destinations": 0,
-  "untested": 296,
+  "untested": 295,
   "untested_state_changing": 22
  },
  "templates": {
@@ -11052,6 +11052,23 @@
     "RVP"
    ]
   },
+  "partials/trainings/_country_figure.html": {
+   "pages": [
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CD",
+    "HR",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
   "partials/trainings/_summary_cell.html": {
    "pages": [
     "/team-planning-oversight/",
@@ -11101,6 +11118,40 @@
     "RVP"
    ]
   },
+  "partials/trainings/coverage_by_staff.html": {
+   "pages": [
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CD",
+    "HR",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
+  "partials/trainings/coverage_table.html": {
+   "pages": [
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CD",
+    "HR",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
+  },
   "partials/trainings/my_summary.html": {
    "pages": [
     "/my-plan"
@@ -11116,11 +11167,24 @@
     "PROJECT_COORDINATOR"
    ]
   },
-  "partials/trainings/summary_schools_drawer.html": {
-   "pages": [],
-   "roles": []
+  "partials/trainings/summary_matrix.html": {
+   "pages": [
+    "/team-planning-oversight/",
+    "/team-targets",
+    "/team-targets/"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "CD",
+    "HR",
+    "IA",
+    "PL",
+    "RPL",
+    "RVP"
+   ]
   },
-  "partials/trainings/team_summary.html": {
+  "partials/trainings/summary_schools_drawer.html": {
    "pages": [],
    "roles": []
   },
@@ -14315,8 +14379,14 @@
   {"accessible_name": "{{ entry.label }} {{ entry.count }}", "destination": "?program_lead={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}                                      &{{ key }}={{ value }}            ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E1C8D2F65F68", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Recovery plan Partner backlog Costing backlog", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-482E6AEC5599", "kind": "field", "line": 51, "method": "", "selector": "#team-issue", "state_changing": false, "tag": "select", "template": "partials/oversight/team_country_workspace.html"},
   {"accessible_name": "Send to PL", "destination": "/country-planning-oversight/send", "destination_route": "/country-planning-oversight/send", "evidence": "request-tested", "high_consequence": true, "id": "INT-95874CA40854", "kind": "button", "line": 56, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/oversight/team_country_workspace.html"},
-  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3CC8D14A7392", "kind": "field", "line": 15, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
-  {"accessible_name": "Programme Lead", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A2E47A28FB03", "kind": "field", "line": 24, "method": "", "selector": "select[name=program_lead]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Fiscal year", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3CC8D14A7392", "kind": "field", "line": 26, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Programme Lead", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A2E47A28FB03", "kind": "field", "line": 35, "method": "", "selector": "select[name=program_lead]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Training", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B545296632C5", "kind": "field", "line": 46, "method": "", "selector": "select[name=training]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Staff", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EEE8B7DF1BB6", "kind": "field", "line": 55, "method": "", "selector": "select[name=staff]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Show", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2030B11145F9", "kind": "field", "line": 64, "method": "", "selector": "select[name=show]", "state_changing": false, "tag": "select", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Summary", "destination": "/team-planning-oversight/?view=trainings&fy={{ fy }}&program_lead={{ training_summary.lead }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-D3D46EBFE863", "kind": "link", "line": 74, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "By staff", "destination": "/team-planning-oversight/?view=trainings&tab=staff&fy={{ fy }}&program_lead={{ training_summary.lead }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-9464C6A469F5", "kind": "link", "line": 75, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/training_summary_workspace.html"},
+  {"accessible_name": "Schools", "destination": "/team-planning-oversight/?view=trainings&tab=schools&fy={{ fy }}&program_lead={{ training_summary.lead }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-92019361A5F5", "kind": "link", "line": 76, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/oversight/training_summary_workspace.html"},
   {"accessible_name": "Choose a reason… {{ label }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-AF038812D6E0", "kind": "field", "line": 133, "method": "", "selector": "#wd-reason-category", "state_changing": false, "tag": "select", "template": "partials/oversight/withdrawal_drawer.html"},
   {"accessible_name": "Why this work is being withdrawn and what happens next", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-047CE6B93AD9", "kind": "field", "line": 148, "method": "", "selector": "#wd-partner-reason", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
   {"accessible_name": "Staff only, never shown to the partner", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-41B1B1FFBADB", "kind": "field", "line": 160, "method": "", "selector": "#wd-internal-note", "state_changing": false, "tag": "textarea", "template": "partials/oversight/withdrawal_drawer.html"},
@@ -15068,9 +15138,10 @@
   {"accessible_name": "{{ t.action_label }}", "destination": "{{ t.action_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-2450C325D227", "kind": "link", "line": 15, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/todos/row.html"},
   {"accessible_name": "Country Ceiling {{ row.country_ceiling }} for {{ row.name }}. Change it.", "destination": "/training-ceilings/country/{{ row.country_ceiling_id }}/edit", "destination_route": "/training-ceilings/country/<str:ceiling_id>/edit", "evidence": "request-tested", "high_consequence": false, "id": "INT-16FD31AAE66F", "kind": "link", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_country_ceiling_cell.html"},
   {"accessible_name": "No Country Ceiling set for {{ row.name }}. Set it.", "destination": "/training-ceilings/country/set?training={{ row.training_id }}&fy={{ summary.fy }}", "destination_route": "/training-ceilings/country/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-61E3A42FF9DC", "kind": "link", "line": 6, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_country_ceiling_cell.html"},
-  {"accessible_name": "{{ cell.schools }} of {{ cell.limit }} schools added to {{ row.project_name }}. {{ cell.flag }}.", "destination": "/projects/monitoring?project={{ row.project_id }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F07CB6DCF89", "kind": "link", "line": 7, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
-  {"accessible_name": "{{ cell.schools }} of {{ cell.limit }} schools scheduled. {{ cell.flag }}.", "destination": "/training-summary/schools?staff={{ cell.staff_id }}&training={{ row.training_id }}&fy={{ summary.fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-A23FF0A07C27", "kind": "link", "line": 7, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
-  {"accessible_name": "No school scheduled of {{ cell.limit }}. {{ cell.flag }}. Change the ceiling.", "destination": "/training-ceilings/{{ cell.ceiling_id }}/edit", "destination_route": "/training-ceilings/<str:ceiling_id>/edit", "evidence": "request-tested", "high_consequence": false, "id": "INT-3B8D3F218968", "kind": "link", "line": 7, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
+  {"accessible_name": "{{ value }} school{{ value|pluralize }} {{ what }} for {{ row.name }}. Show them.", "destination": "/team-planning-oversight/?view=trainings&tab=schools&fy={{ summary.fy }}&training={{ row.training_id }}&show={{ show }}", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-F2913DE9E141", "kind": "link", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_country_figure.html"},
+  {"accessible_name": "{{ cell.schools }} of {{ cell.limit }} schools added to {{ row.project_name }}. {{ cell.flag }}.", "destination": "/projects/monitoring?project={{ row.project_id }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-6F07CB6DCF89", "kind": "link", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
+  {"accessible_name": "{{ cell.schools }} of {{ cell.limit }} schools covered: {{ cell.breakdown }}. {{ cell.flag }}.", "destination": "/training-summary/schools?staff={{ cell.staff_id }}&training={{ row.training_id }}&fy={{ summary.fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-3B7F52BA1420", "kind": "link", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
+  {"accessible_name": "No school covered of {{ cell.limit }}. {{ cell.flag }}. Change the ceiling.", "destination": "/training-ceilings/{{ cell.ceiling_id }}/edit", "destination_route": "/training-ceilings/<str:ceiling_id>/edit", "evidence": "request-tested", "high_consequence": false, "id": "INT-398D171AFA27", "kind": "link", "line": 8, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/_summary_cell.html"},
   {"accessible_name": "Choose a staff member {{ staff.user.name }} (you)", "destination": "/training-ceilings/set", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-92D9CECF8125", "kind": "field", "line": 43, "method": "GET", "selector": "#ceiling-staff", "state_changing": false, "tag": "select", "template": "partials/trainings/ceiling_drawer.html"},
   {"accessible_name": "Choose a training {{ training.name }} · {{ training.intervention }}", "destination": "/training-ceilings/set", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-F3C0E7328262", "kind": "field", "line": 54, "method": "GET", "selector": "#ceiling-training", "state_changing": false, "tag": "select", "template": "partials/trainings/ceiling_drawer.html"},
   {"accessible_name": "FY {{ option }}", "destination": "/training-ceilings/set", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-C81CD729F105", "kind": "field", "line": 65, "method": "GET", "selector": "#ceiling-fy", "state_changing": false, "tag": "select", "template": "partials/trainings/ceiling_drawer.html"},
@@ -15088,21 +15159,34 @@
   {"accessible_name": "Remove Country Ceiling", "destination": "/training-ceilings/country/{{ existing.id }}/remove", "destination_route": "/training-ceilings/country/<str:ceiling_id>/remove", "evidence": "request-tested", "high_consequence": false, "id": "INT-1EE7EED4A67F", "kind": "button", "line": 92, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/country_ceiling_drawer.html"},
   {"accessible_name": "Remove Country Ceiling", "destination": "/training-ceilings/country/{{ row.id }}/remove", "destination_route": "/training-ceilings/country/<str:ceiling_id>/remove", "evidence": "request-tested", "high_consequence": false, "id": "INT-23AB7510DF42", "kind": "button", "line": 94, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/country_ceiling_drawer.html"},
   {"accessible_name": "Save Country Ceiling", "destination": "/training-ceilings/country/set", "destination_route": "/training-ceilings/country/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-597ED11EB9A8", "kind": "button", "line": 96, "method": "POST", "selector": "button[name=save]", "state_changing": true, "tag": "button", "template": "partials/trainings/country_ceiling_drawer.html"},
-  {"accessible_name": "{{ row.group|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ selected_fy|default:fy }}&delivery=group", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-8B51CDE46482", "kind": "link", "line": 57, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
-  {"accessible_name": "{{ row.in_school|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ selected_fy|default:fy }}&delivery=in_school", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-3101E07DD46C", "kind": "link", "line": 58, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
-  {"accessible_name": "{{ row.total|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ selected_fy|default:fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-452225202466", "kind": "link", "line": 59, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
-  {"accessible_name": "{{ row.school_name }}", "destination": "/schools/{{ row.school_pk }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-CF73B77794F3", "kind": "link", "line": 53, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
-  {"accessible_name": "Open this training", "destination": "/my-plan/{{ row.activity_id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9BBF43528F5B", "kind": "link", "line": 56, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
-  {"accessible_name": "{{ section.staff_name }} {{ section.totals.trainings }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-E69C4897622C", "kind": "tab", "line": 37, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "Set a ceiling", "destination": "/training-ceilings/set?staff={{ section.staff_id }}&fy={{ fy }}", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-A8A07630B45A", "kind": "button", "line": 71, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "{{ row.group|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&delivery=group", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-33914ECB796B", "kind": "link", "line": 98, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "{{ row.in_school|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&delivery=in_school", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-EE6E90CCF4DE", "kind": "link", "line": 99, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "{{ row.total|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-3F79D87C509E", "kind": "link", "line": 100, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "Edit ceiling", "destination": "/training-ceilings/{{ row.ceiling_id }}/edit", "destination_route": "/training-ceilings/<str:ceiling_id>/edit", "evidence": "request-tested", "high_consequence": false, "id": "INT-22CBEC35C6C5", "kind": "button", "line": 109, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "Set ceiling", "destination": "/training-ceilings/set?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}", "destination_route": "/training-ceilings/set", "evidence": "request-tested", "high_consequence": false, "id": "INT-2104B11F8F38", "kind": "button", "line": 111, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "View schools", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-20B76DB70E2B", "kind": "link", "line": 113, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "Remove ceiling", "destination": "/training-ceilings/{{ row.ceiling_id }}/remove", "destination_route": "/training-ceilings/<str:ceiling_id>/remove", "evidence": "request-tested", "high_consequence": false, "id": "INT-0362F2E72BDF", "kind": "button", "line": 115, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/trainings/team_summary.html"},
-  {"accessible_name": "Schools", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-06E3320C5400", "kind": "link", "line": 119, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/team_summary.html"},
+  {"accessible_name": "{{ row.in_school|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=staff", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-C54D7F19B771", "kind": "link", "line": 46, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "{{ row.partner_scheduled }} scheduled by the partner · {{ row.awaiting_partner }} awaiting the partner's date", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=partner", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-7F3F4952EA30", "kind": "link", "line": 47, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "{{ row.awaiting_partner|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=awaiting", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-ECA45D6B3075", "kind": "link", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "{{ row.group|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=group", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-B88F5333EF6B", "kind": "link", "line": 49, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "{{ row.total|intcomma }}", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=covered", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-46AE8E75ABF4", "kind": "link", "line": 50, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "Show the schools not yet covered", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ fy }}&figure=remaining", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-DBB6D0F079B6", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_by_staff.html"},
+  {"accessible_name": "{{ row.school_name }}", "destination": "/schools/{{ row.school_pk }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9ACE8DBED963", "kind": "link", "line": 46, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_table.html"},
+  {"accessible_name": "Open this training", "destination": "/my-plan/{{ row.activity_id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-36433CD85AD5", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_table.html"},
+  {"accessible_name": "Open Partner Oversight, where this hand-over is followed", "destination": "/partner-oversight/", "destination_route": "/partner-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-348546D97283", "kind": "link", "line": 51, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/coverage_table.html"},
+  {"accessible_name": "Every school you have covered for a training this year. Show them.", "destination": "/training-summary/schools?staff={{ my_training_summary.0.staff_id }}&fy={{ year }}", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-38D89E709B28", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "{{ row.in_school }} school{{ row.in_school|pluralize }} you have planned an in-school training at. Show them.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=staff", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-207AA172A9C0", "kind": "link", "line": 76, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "{{ row.partner }} school{{ row.partner|pluralize }} assigned to a partner, {{ row.partner_scheduled }} scheduled by the partner. Show them.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=partner", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-6AD5E2728093", "kind": "link", "line": 77, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "{{ row.awaiting_partner }} school{{ row.awaiting_partner|pluralize }} awaiting the partner's date. Show them.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=awaiting", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-02302994C926", "kind": "link", "line": 78, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "{{ row.group }} school{{ row.group|pluralize }} on your group trainings. Show them.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=group", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-AAD27B1672F5", "kind": "link", "line": 79, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "{{ row.total }} school{{ row.total|pluralize }} covered, each counted once. Show them.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=covered", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-767E91C312DC", "kind": "link", "line": 80, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "No ceiling set {{ row.balance }} place{{ row.balance|pluralize }} left under the ceiling . Show the schools not yet covered.", "destination": "/training-summary/schools?staff={{ row.staff_id }}&training={{ row.training_id }}&fy={{ year }}&figure=remaining", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-0D2DD8E31707", "kind": "link", "line": 81, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/my_summary.html"},
+  {"accessible_name": "Schools added to {{ row.project_name }}", "destination": "/projects/monitoring?project={{ row.project_id }}", "destination_route": "/projects/monitoring", "evidence": "request-tested", "high_consequence": false, "id": "INT-93E400151D89", "kind": "link", "line": 69, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_matrix.html"},
+  {"accessible_name": "No Country Ceiling set {{ row.remaining }} remaining under the Country Ceiling for {{ row.name }}. Show the schools not yet covered.", "destination": "/team-planning-oversight/?view=trainings&tab=schools&fy={{ summary.fy }}&training={{ row.training_id }}&show=remaining", "destination_route": "/team-planning-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-34131713C198", "kind": "link", "line": 77, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_matrix.html"},
+  {"accessible_name": "{{ summary.in_school }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=staff", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-D7726252306E", "kind": "link", "line": 38, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ summary.partner }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=partner", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-B739F9EE915D", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ summary.partner_scheduled }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=partner_scheduled", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-0151CD1A12A8", "kind": "link", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ summary.awaiting_partner }} 0", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=awaiting", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-22BD49736D45", "kind": "link", "line": 41, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ summary.group }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=group", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-4FDE8178EC85", "kind": "link", "line": 42, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ summary.total }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=covered", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-58860B6D3176", "kind": "link", "line": 43, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "View {{ summary.balance }}", "destination": "/training-summary/schools?staff={{ staff_id }}&training={{ training_id }}&fy={{ fy }}&figure=remaining", "destination_route": "/training-summary/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-386E94A85DAA", "kind": "link", "line": 44, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "{{ row.school_name }}", "destination": "/schools/{{ row.school_pk }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-CF73B77794F3", "kind": "link", "line": 74, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "Open this training", "destination": "/my-plan/{{ row.activity_id }}", "destination_route": "/my-plan/<str:activity_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-9BBF43528F5B", "kind": "link", "line": 76, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
+  {"accessible_name": "Open Partner Oversight, where this hand-over is followed", "destination": "/partner-oversight/", "destination_route": "/partner-oversight/", "evidence": "request-tested", "high_consequence": false, "id": "INT-3A5280161443", "kind": "link", "line": 76, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/trainings/summary_schools_drawer.html"},
   {"accessible_name": "View School Directory →", "destination": "/schools", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-419C0D5F43EB", "kind": "link", "line": 54, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/upload_result.html"},
   {"accessible_name": "View Upload History", "destination": "/admin-panel/school-upload-history", "destination_route": "/admin-panel/school-upload-history", "evidence": "request-tested", "high_consequence": false, "id": "INT-5FB8F1A9009A", "kind": "link", "line": 57, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/upload_result.html"},
   {"accessible_name": "Breakdown", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-AA40EB419B45", "kind": "disclosure", "line": 46, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/work_plan/detail_tables.html"},
