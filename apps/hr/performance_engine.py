@@ -1212,7 +1212,7 @@ def quarterly_readiness(fy: str | None = None) -> dict:
 
     from apps.hr.models import PerformanceCycle, PerformanceReview
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     fy = fy or get_operational_fy()
     quarter_ends = {
         "Q1": (12, 31),
@@ -1348,8 +1348,8 @@ def flag_performance_support(review, reason: str, principal):
         status="draft",
         cause="capacity",
         action_plan=f"Performance support recommended: {reason}",
-        start_date=timezone.now().date(),
-        end_date=timezone.now().date(),
+        start_date=timezone.localdate(),
+        end_date=timezone.localdate(),
     )
     try:
         from apps.audit.services import log as audit_log
@@ -1940,7 +1940,7 @@ def recommend_pip(staff, reason, principal, cause="capacity", start=None):
         )
     if not (reason or "").strip():
         raise BadRequest("A PIP recommendation needs its reason recorded.")
-    today = timezone.now().date()
+    today = timezone.localdate()
     plan = PerformanceImprovementPlan.objects.create(
         staff=staff,
         plan_type=RecoveryPlanType.FORMAL,

@@ -1260,7 +1260,7 @@ def get_disbursement_dashboard(principal, filters=None):
     _require_accountant(principal)
     filters = filters or {}
     fy = filters.get("fy") or get_operational_fy()
-    month = int(filters.get("month") or timezone.now().month)
+    month = int(filters.get("month") or timezone.localdate().month)
     status_filter = filters.get("status") or ""
     search = (filters.get("q") or "").strip().lower()
     selected_key = filters.get("item")
@@ -1320,7 +1320,7 @@ def get_disbursement_dashboard(principal, filters=None):
     held_amt = _sum("Held")
     returned_amt = _sum("Returned")
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     from .models import FundRequest, WeeklyFundRequest
 
     disb_today = sum(

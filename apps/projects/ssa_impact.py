@@ -367,7 +367,7 @@ def refresh_follow_up(assignment, *, mapping=None, delivered_on: date | None = N
         max_days=max_days,
     )
     window_open = min_days is None or (
-        timezone.now().date() >= delivered_on + timedelta(days=min_days)
+        timezone.localdate() >= delivered_on + timedelta(days=min_days)
     )
     baseline = ScoreReading(
         record_id=assignment.baseline_ssa_id or "",

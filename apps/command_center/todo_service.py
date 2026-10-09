@@ -3065,7 +3065,7 @@ def _field_debrief_todos(principal, role):
                     else "neutral",
                     "due_label": a.due_date.strftime("%d %b") if a.due_date else "—",
                     "due_tone": "danger"
-                    if a.due_date and a.due_date < timezone.now().date()
+                    if a.due_date and a.due_date < timezone.localdate()
                     else "neutral",
                     "linked": a.debrief.title,
                     "action_label": "Resolve",
@@ -3923,7 +3923,7 @@ def _module_todos(principal, role, today) -> list[dict]:
 def _get_todos(principal) -> dict:
     role = getattr(principal, "active_role", None)
     scope = resolve_user_scope(principal)
-    today = timezone.now().date()
+    today = timezone.localdate()
     fy = get_operational_fy()
 
     todos = []

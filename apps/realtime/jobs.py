@@ -132,7 +132,7 @@ def _do_daily_digest() -> int:
     from apps.notifications.models import Notification
     from apps.notifications.services import WorkflowNotificationService
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     unread = (
         Notification.objects.filter(status="unread")
         .values_list("recipient_id", flat=True)
@@ -214,7 +214,7 @@ def _do_ia_verification_digest() -> int:
         role_recipients,
     )
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     cutoff = timezone.now() - timedelta(hours=24)
     created = 0
 
