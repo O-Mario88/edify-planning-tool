@@ -86,7 +86,6 @@
     var link = document.querySelector('[data-session-dialog-sign-in]');
     if (link && (navigator.standalone || matchMedia('(display-mode: standalone)').matches)) {
       link.removeAttribute('target');
-      link.parentNode.previousElementSibling.textContent = link.dataset.installed;
     }
     if (!navigator.onLine) showOffline();
   });

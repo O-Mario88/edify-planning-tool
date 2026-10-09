@@ -1223,11 +1223,13 @@ platform-status.js takes the `target` off and the app signs in where it is.
     </svg>
   </div>
   <h2 id="edify-session-expired-title">Sign in to continue</h2>
-  <p id="edify-session-expired-description">You were signed out after a while away. This page stays open, with anything you typed.</p>
-  {% comment %}data-installed is the sentence the installed app shows instead;
-  the button closes the dialog by itself, being in a dialog's own form.{% endcomment %}
+  <p id="edify-session-expired-description">You were signed out after a while away.</p>
+  {% comment %}One sentence for both: a browser tab keeps this page open behind
+  the sign-in tab ("Stay on this page" says so), the installed app signs in
+  where it is. The button closes the dialog by itself, being in a dialog's
+  own form.{% endcomment %}
   <form method="dialog" class="edify-session-dialog__actions">
-    <a href="/login" target="_blank" rel="noopener" class="edify-session-dialog__primary" data-installed="You were signed out after a while away." data-session-dialog-sign-in>Sign in</a>
+    <a href="/login" target="_blank" rel="noopener" class="edify-session-dialog__primary" data-session-dialog-sign-in>Sign in</a>
     <button data-session-dialog-close class="edify-session-dialog__secondary">Stay on this page</button>
   </form>
 </dialog>
