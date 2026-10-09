@@ -460,7 +460,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 376,
+   "line": 381,
    "title": "Delete ?",
    "heading_level": 3,
    "has_card_key": false,

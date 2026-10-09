@@ -79,7 +79,12 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
   </header>
 
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-[12px] border-collapse">
+    {% comment %}Cells stay on one line (e2e/responsive-contract.spec.js): the
+    table scrolls in its region when it is too wide and never asks for the
+    platform's long-text wrapping (data-table-wrap="off"), which a table a
+    pixel or two over its room took on one load and not on the next, with a
+    heading and a name broken in two.{% endcomment %}
+    <table class="edify-record-table w-full text-[12px] border-collapse" data-table-wrap="off">
       <thead>
         <tr class="bg-slate-50 border-b border-slate-100 text-left">
           <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Organization</th>
@@ -266,7 +271,7 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
 <div class="overflow-x-auto">
 {% paginate users "page" as users_pager %}
-<table class="edify-record-table w-full text-[12px] border-collapse">
+<table class="edify-record-table w-full text-[12px] border-collapse" data-table-wrap="off">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
 <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">User Details</th>
