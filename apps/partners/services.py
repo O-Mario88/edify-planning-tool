@@ -60,9 +60,9 @@ def may_create_partner_organisation(principal) -> bool:
 
 
 def may_manage_partner_users(principal) -> bool:
-    """Partner logins are user administration: Admin and the Country Director
-    (owner, 2026-09-15). Impact Assessment adds organisations and never
-    reaches this."""
+    """Partner logins are user administration, and that is the Admin's alone
+    (owner, 2026-10-09; the Country Director held it from 2026-09-15).
+    Impact Assessment adds organisations and never reaches this."""
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission
 
@@ -309,14 +309,14 @@ def onboard(data: dict, principal) -> dict:
 
 
 def partner_user_administrators(partner: Partner | None = None) -> list:
-    """Who configures a partner's logins: active Admins and Country Directors."""
+    """Who configures a partner's logins: the active Admins (owner,
+    2026-10-09; the Country Director until then)."""
     from apps.accounts.models import User
     from apps.core.rbac import EdifyRole
 
     return list(
         User.objects.filter(
-            Q(roles__contains=[EdifyRole.ADMIN.value])
-            | Q(roles__contains=[EdifyRole.COUNTRY_DIRECTOR.value]),
+            roles__contains=[EdifyRole.ADMIN.value],
             is_active=True,
             deleted_at__isnull=True,
         )
@@ -326,8 +326,8 @@ def partner_user_administrators(partner: Partner | None = None) -> list:
 def _notify_partner_user_setup(partner_id: str, principal) -> None:
     """Tell the user administrators an organisation waits for its logins.
 
-    Only when someone who cannot set them up added it: an Admin or Country
-    Director who adds an organisation is already the person who would act.
+    Only when someone who cannot set them up added it: an Admin who adds an
+    organisation is already the person who would act.
     """
     import logging
 
@@ -367,11 +367,11 @@ def configure_partner_user(partner_id: str, data: dict, principal) -> dict:
 
     * ``link`` — link an existing partner account by email;
     * ``invite`` — create a Partner Admin account through the canonical user
-      service (an invitation, audited as ``admin.user_created``) and link it;
+      service (an invitation, or a first password when ``password`` is given;
+      audited as ``admin.user_created``) and link it;
     * ``not_required`` — record that the organisation needs no login yet.
 
-    Held only by Admin and the Country Director (PARTNER_USER_MANAGE with
-    USER_MANAGE). Every outcome closes the Configure Partner Users condition.
+    Held only by the Admin (PARTNER_USER_MANAGE with USER_MANAGE). Every outcome closes the Configure Partner Users condition.
     """
     from django.utils import timezone
 
@@ -419,6 +419,9 @@ def configure_partner_user(partner_id: str, data: dict, principal) -> dict:
                     or partner.contact_person
                     or partner.name,
                     "role": EdifyRole.PARTNER_ADMIN.value,
+                    # Set by the Admin, to be changed at first sign-in; left
+                    # blank, the person sets their own from the invitation.
+                    "password": (data.get("password") or "").strip() or None,
                 },
                 principal,
             )

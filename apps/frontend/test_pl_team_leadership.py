@@ -251,10 +251,12 @@ class PeopleDirectoryTests(TeamFixture):
         self.assertContains(page, "Officer 1")
         self.assertNotIn("average_coverage_gap", page.context["kpis"])
 
-    def test_readers_who_administer_users_keep_them(self):
+    def test_hr_keeps_its_views_without_the_door_to_user_administration(self):
+        # "New Staff Member" opens the Users page, the Admin's alone since
+        # 2026-10-09; HR keeps the directory's own views.
         self._login(self.hr)
         page = self.client.get("/staff")
-        self.assertContains(page, "New Staff Member")
+        self.assertNotContains(page, "New Staff Member")
         self.assertContains(page, 'aria-label="Staff views"')
         self.assertContains(page, "Pending onboarding")
 

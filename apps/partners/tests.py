@@ -162,7 +162,7 @@ class PartnerDirectoryManagementTests(TestCase):
                 delete_partner(target.id, principal)
         self.assertTrue(Partner.objects.filter(id=target.id).exists())
 
-    def test_users_page_is_the_cd_admin_partner_management_surface(self):
+    def test_users_page_is_the_admin_partner_management_surface(self):
         Partner.objects.create(
             name="Visible Directory Partner",
             contact_person="Partner Contact",
@@ -175,7 +175,9 @@ class PartnerDirectoryManagementTests(TestCase):
         )
         gone.soft_delete()
 
-        for principal in (self.admin, self.cd):
+        # The Admin's alone since 2026-10-09 (the Country Director's too
+        # until then; HR saw the page without the organisations).
+        for principal in (self.admin,):
             self.client.force_login(principal)
             response = self.client.get("/admin-panel/users")
             self.assertEqual(response.status_code, 200)
@@ -214,15 +216,13 @@ class PartnerDirectoryManagementTests(TestCase):
             # The organisation's name opens its profile.
             self.assertContains(response, '<a href="/partners/')
 
-        self.client.force_login(self.hr)
-        response = self.client.get("/admin-panel/users")
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "Partner Organisations")
-        self.assertNotContains(response, "Visible Directory Partner")
-        self.assertNotContains(response, "Add Partner")
+        for principal in (self.cd, self.hr):
+            self.client.force_login(principal)
+            response = self.client.get("/admin-panel/users")
+            self.assertNotEqual(response.status_code, 200)
 
     def test_users_page_create_and_delete_actions_enforce_role(self):
-        self.client.force_login(self.cd)
+        self.client.force_login(self.admin)
         response = self.client.post(
             "/admin-panel/users",
             {
@@ -238,15 +238,13 @@ class PartnerDirectoryManagementTests(TestCase):
         )
         partner = Partner.objects.get(name="Users Page Partner")
 
-        self.client.force_login(self.hr)
-        response = self.client.post(
-            "/admin-panel/users",
-            {"action": "delete_partner", "partner_id": partner.id},
-        )
-        self.assertRedirects(
-            response, "/admin-panel/users", fetch_redirect_response=False
-        )
-        self.assertTrue(Partner.objects.filter(id=partner.id).exists())
+        for outsider in (self.hr, self.cd):
+            self.client.force_login(outsider)
+            self.client.post(
+                "/admin-panel/users",
+                {"action": "delete_partner", "partner_id": partner.id},
+            )
+            self.assertTrue(Partner.objects.filter(id=partner.id).exists())
 
         self.client.force_login(self.admin)
         response = self.client.post(
@@ -339,25 +337,27 @@ class PartnerLifecycleTests(TestCase):
     def test_the_users_page_toggles_and_purges_by_role(self):
         partner = Partner.objects.create(name="Page Partner", active_status=False)
 
+        # The page is the Admin's alone since 2026-10-09: a Country Director
+        # neither toggles nor deletes from it (the organisation's profile
+        # keeps the Director's toggle).
         self.client.force_login(self.cd)
+        for action in ("activate_partner", "purge_partner"):
+            self.client.post(
+                "/admin-panel/users", {"action": action, "partner_id": partner.id}
+            )
+        partner.refresh_from_db()
+        self.assertFalse(partner.active_status)
+        self.assertTrue(Partner.all_objects.filter(id=partner.id).exists())
+
+        self.client.force_login(self.admin)
         self.client.post(
             "/admin-panel/users",
             {"action": "activate_partner", "partner_id": partner.id},
         )
         partner.refresh_from_db()
         self.assertTrue(partner.active_status)
-
-        # A Country Director cannot delete permanently.
-        self.client.post(
-            "/admin-panel/users", {"action": "purge_partner", "partner_id": partner.id}
-        )
-        self.assertTrue(Partner.all_objects.filter(id=partner.id).exists())
         response = self.client.get("/admin-panel/users")
         self.assertContains(response, "Deactivate")
-        self.assertNotContains(response, "Delete Permanently")
-
-        self.client.force_login(self.admin)
-        response = self.client.get("/admin-panel/users")
         self.assertContains(response, "Delete Permanently")
         self.client.post(
             "/admin-panel/users", {"action": "purge_partner", "partner_id": partner.id}

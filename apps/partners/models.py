@@ -859,6 +859,47 @@ class PartnerMember(TimeStampedModel):
         return f"{self.name} ({self.get_role_display()})"
 
 
+class PartnerSchoolMember(TimeStampedModel):
+    """Which of a partner's team members looks after one of its schools.
+
+    Owner, 2026-10-09: "Partner can assign schools assigend to them to the
+    rest of their team members so that the the system can track who supported
+    which schools."
+
+    A school is handed to the ORGANISATION (``PartnerAssignment``); who on its
+    team goes was only a name on each dated activity
+    (``Activity.delivery_contact_name``), so a school not yet dated belonged
+    to nobody in particular. This is the organisation's own split of its
+    schools among its roster: one team member per school, changed by the
+    organisation whenever it likes. It hands nothing over and changes no
+    count; the name on a finished activity stays the record of who went.
+    """
+
+    id = CuidField()
+    partner = models.ForeignKey(
+        Partner, on_delete=models.CASCADE, related_name="school_members"
+    )
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.CASCADE, related_name="partner_team_members"
+    )
+    member = models.ForeignKey(
+        PartnerMember, on_delete=models.CASCADE, related_name="schools"
+    )
+    assigned_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "partner_school_member"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["partner", "school"], name="partner_school_one_team_member"
+            )
+        ]
+        indexes = [models.Index(fields=["partner", "member"])]
+
+    def __str__(self) -> str:
+        return f"{self.school_id} -> {self.member_id}"
+
+
 class PartnerEngagementKind(models.TextChoices):
     REVIEW_MEETING = "review_meeting", "Partner review meeting"
     FRAMEWORK_ORIENTATION = (

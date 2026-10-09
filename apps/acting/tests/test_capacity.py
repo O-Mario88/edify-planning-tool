@@ -76,8 +76,9 @@ PL_DASHBOARD_SECTIONS = (
     "/planning-monitor/?view=execution",
     "/staff-activity",
 )
+# "/admin-panel/users" left this list on 2026-10-09: the Admin's alone, so
+# not the Director's to withhold (apps.acting.tests.test_scope).
 CD_WITHHELD = (
-    "/admin-panel/users",
     "/cost-settings",
     "/planning/fiscal-years",
     "/admin-panel/staff-setup-queue",
@@ -278,7 +279,7 @@ class ActingCountryDirectorAcceptanceTests(RequestCase):
 
     def test_mary_remains_the_director_with_everything_she_had(self):
         self.assertOpens(self.mary, CD_PAGES, OCTOBER_15)
-        self.assertOpens(self.mary, CD_WITHHELD[:4], OCTOBER_15)
+        self.assertOpens(self.mary, CD_WITHHELD[:3], OCTOBER_15)
 
     def test_administration_money_and_people_decisions_stay_with_mary(self):
         self.assertRefused(self.peter, CD_WITHHELD, OCTOBER_15)

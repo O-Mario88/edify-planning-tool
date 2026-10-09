@@ -457,14 +457,15 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.COST_AMENDMENT_REQUEST,
         P.COST_AMENDMENT_APPROVE,
         P.STAFF_MANAGE,
-        P.USER_MANAGE,
+        # No USER_MANAGE and no PARTNER_USER_MANAGE (owner, 2026-10-09:
+        # "Admin should have set up and configure every account. Remove users
+        # from CD role and restrict it to admin"). Sign-in accounts, staff's
+        # and partners', are the Admin's alone.
         P.STAFF_PERFORMANCE_VIEW,
         P.PARTNER_VIEW,
         P.PARTNER_MANAGE,
         P.PARTNER_ORGANISATION_CREATE,
         P.PARTNER_ORGANISATION_EDIT,
-        # The CD already holds USER_MANAGE; partner logins are part of it.
-        P.PARTNER_USER_MANAGE,
         # Review escalated partner cases and hold a partner from new work.
         # PARTNER_ASSIGNMENT_WITHDRAW too, since 2026-09-17 ("The withdraw
         # assignment should work universally for all assignments to partner
@@ -795,9 +796,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.DOCUMENTS_MANAGE_AUDIENCE,
         P.POLICIES_MANAGE_ACKNOWLEDGEMENTS,
         P.POLICIES_REVIEW_COMMENTS,
-        # People surfaces only — no SCHOOL_DIRECTORY_VIEW.
+        # People surfaces only — no SCHOOL_DIRECTORY_VIEW, and no USER_MANAGE:
+        # accounts are set up by the Admin alone (owner, 2026-10-09).
         P.STAFF_MANAGE,
-        P.USER_MANAGE,
         P.ANALYTICS_VIEW,
         P.STAFF_PERFORMANCE_VIEW,
         P.LEAVE_PLANNER_VIEW,

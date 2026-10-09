@@ -293,8 +293,9 @@ class DirectoryTableTest(TestCase):
     every region comma-separated (owner, 2026-09-23)."""
 
     def setUp(self):
-        self.cd = _user("regions-table-cd@edify.test", EdifyRole.COUNTRY_DIRECTOR.value)
-        self.client.force_login(self.cd)
+        # The Users page is the Admin's alone since 2026-10-09.
+        self.admin = _user("regions-table-admin@edify.test", EdifyRole.ADMIN.value)
+        self.client.force_login(self.admin)
 
     def test_every_region_sits_in_its_own_column(self):
         Partner.objects.create(

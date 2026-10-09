@@ -1490,8 +1490,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/admin-panel/users",
@@ -1503,8 +1501,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/admin-panel/users/<str:user_id>",
@@ -2129,8 +2125,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)",
@@ -2144,8 +2138,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>",
@@ -2159,8 +2151,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/disable",
@@ -2174,8 +2164,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/force-password-reset",
@@ -2189,8 +2177,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/reactivate",
@@ -2204,8 +2190,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/resend-invite",
@@ -2219,8 +2203,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/revoke-invite",
@@ -2234,8 +2216,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/admin/users(?:/|)<str:user_id>/suspend",
@@ -5558,7 +5538,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
     "Admin"
    ],
    "route": "/api/partners(?:/|)<str:partner_id>/user-setup",
@@ -6836,8 +6815,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/staff-candidates(?:/|)",
@@ -6851,8 +6828,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/staff-candidates(?:/|)<str:candidate_id>",
@@ -6866,8 +6841,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/staff-candidates(?:/|)<str:candidate_id>/create-user",
@@ -6881,8 +6854,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/staff-candidates(?:/|)<str:candidate_id>/ignore",
@@ -6896,8 +6867,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/api/staff-candidates(?:/|)<str:candidate_id>/match-existing-user",
@@ -15406,6 +15375,31 @@
     "MfiLoanOfficer",
     "Admin"
    ],
+   "route": "/partners/<str:partner_id>/members/<str:member_id>/schools",
+   "route_name": "partner_member_schools",
+   "view": "apps.frontend.views.partner_views.partner_member_schools_view"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
    "route": "/partners/<str:partner_id>/members/drawer",
    "route_name": "partner_member_drawer",
    "view": "apps.frontend.views.partner_views.partner_member_drawer"
@@ -19356,27 +19350,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 445,
-  "Admin": 1089,
-  "BusinessTransformationOfficer": 239,
-  "CCEO": 570,
-  "CountryDirector": 841,
-  "HumanResources": 342,
-  "ImpactAssessment": 694,
-  "MfiLoanOfficer": 135,
-  "MfiPartnerAdmin": 138,
-  "PartnerAdmin": 233,
-  "PartnerFieldOfficer": 233,
-  "Program Lead": 675,
-  "ProjectCoordinator": 478,
-  "RegionalProgramLead": 344,
-  "RegionalVicePresident": 416
+  "Accountant": 446,
+  "Admin": 1090,
+  "BusinessTransformationOfficer": 240,
+  "CCEO": 571,
+  "CountryDirector": 826,
+  "HumanResources": 328,
+  "ImpactAssessment": 695,
+  "MfiLoanOfficer": 136,
+  "MfiPartnerAdmin": 139,
+  "PartnerAdmin": 234,
+  "PartnerFieldOfficer": 234,
+  "Program Lead": 676,
+  "ProjectCoordinator": 479,
+  "RegionalProgramLead": 345,
+  "RegionalVicePresident": 417
  },
  "summary": {
   "page_keys_declared": 184,
   "page_keys_in_navigation": 201,
-  "routes_guarded": 1186,
-  "routes_total": 1382,
+  "routes_guarded": 1187,
+  "routes_total": 1383,
   "routes_unguarded": 196,
   "surfaces_no_role_can_reach": 0
  },

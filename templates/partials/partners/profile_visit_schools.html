@@ -19,6 +19,7 @@ already visited could not show.
       <th scope="col" class="px-3 py-2">School ID</th>
       <th scope="col" class="px-3 py-2">School</th>
       <th scope="col" class="px-3 py-2">District</th>
+      <th scope="col" class="px-3 py-2">Team Member</th>
       <th scope="col" class="px-3 py-2">Visit</th>
       <th scope="col" class="px-3 py-2">Assigned</th>
       <th scope="col" class="px-3 py-2">Visit date</th>
@@ -33,6 +34,7 @@ already visited could not show.
       <td class="px-3 py-2 tabular-nums" data-label="School ID">{% school_code row.school.id %}</td>
       <td class="px-3 py-2" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold hover:underline">{{ row.school.name }}</a></td>
       <td class="px-3 py-2" data-label="District">{{ row.district|default:"—" }}</td>
+      <td class="px-3 py-2" data-label="Team Member" data-team-member>{{ row.team_member|default:"—" }}</td>
       <td class="px-3 py-2" data-label="Visit">{{ row.visit }}</td>
       <td class="px-3 py-2 tabular-nums" data-label="Assigned">{{ row.assigned_on|date:"j M Y"|default:"—" }}</td>
       <td class="px-3 py-2 tabular-nums" data-label="Visit date">{{ row.date|date:"j M Y"|default:"Not dated" }}</td>

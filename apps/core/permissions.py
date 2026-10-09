@@ -717,8 +717,7 @@ class RolePermissionService:
 
     @staticmethod
     def can_manage_users(user) -> bool:
-        role = getattr(user, "active_role", None)
-        return role in ["Admin", "HumanResources"]
+        return has_permission(user, Permission.USER_MANAGE.value)
 
     @staticmethod
     def can_message_recipient(user, recipient) -> bool:

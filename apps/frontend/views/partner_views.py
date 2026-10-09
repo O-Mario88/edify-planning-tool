@@ -711,6 +711,7 @@ def partner_user_setup_drawer_view(request, partner_id):
                     "mode": request.POST.get("mode", "").strip(),
                     "email": request.POST.get("email", "").strip(),
                     "name": request.POST.get("login_name", "").strip(),
+                    "password": request.POST.get("password", "").strip(),
                 },
                 request.user,
             )
@@ -1016,6 +1017,15 @@ def partner_detail_view(request, partner_id):
     )
     can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
 
+    # How the organisation has split its schools among its team (owner,
+    # 2026-10-09; apps.partners.school_team).
+    from apps.partners import school_team
+
+    can_split_schools = school_team.may_split_schools(request.user, partner)
+    member_school_counts = school_team.school_counts(partner)
+    for member in members:
+        member.school_count = member_school_counts.get(member.id, 0)
+
     roster_rows = [{"kind": "member", "member": member} for member in members] + [
         {"kind": "delivery", "name": name, "deliveries": count}
         for name, count in sorted(named_on_deliveries.items(), key=lambda kv: -kv[1])
@@ -1037,6 +1047,7 @@ def partner_detail_view(request, partner_id):
         "supported_schools": supported_schools,
         "can_edit": can_edit,
         "can_manage_roster": can_manage_roster,
+        "can_split_schools": can_split_schools,
         "can_manage_status": can_manage_status,
         # Partner logins are user administration (owner, 2026-09-15).
         "can_manage_partner_users": may_manage_partner_users(request.user),
@@ -1266,6 +1277,70 @@ def partner_member_action(request, partner_id):
     return redirect("frontend:partner_detail", partner_id=partner_id)
 
 
+@require_page_permission("partner_detail")
+def partner_member_schools_view(request, partner_id, member_id):
+    """The schools one team member looks after: the drawer and its save
+    (owner, 2026-10-09; apps.partners.school_team)."""
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.partners import school_team
+    from apps.partners.models import PartnerMember
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    if not school_team.may_split_schools(request.user, partner):
+        return HttpResponseForbidden(
+            "Only the organisation itself or an Admin assigns its schools to "
+            "its team members."
+        )
+    member = get_object_or_404(PartnerMember, id=member_id, partner=partner)
+
+    def drawer(error=None):
+        holders = school_team.members_by_school(partner)
+        rows = []
+        for school in school_team.held_schools(partner):
+            holder = holders.get(school.id)
+            rows.append(
+                {
+                    "school": school,
+                    "mine": holder is not None and holder.id == member.id,
+                    "other": holder.name
+                    if holder is not None and holder.id != member.id
+                    else "",
+                }
+            )
+        return render(
+            request,
+            "partials/partners/member_schools_drawer.html",
+            {
+                "partner": partner,
+                "member": member,
+                "schools": rows,
+                "validation_error": error,
+                "drawer_size": "md",
+            },
+        )
+
+    if request.method == "POST":
+        try:
+            result = school_team.set_member_schools(
+                partner.id, member.id, request.POST.getlist("school_ids"), request.user
+            )
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return drawer(str(getattr(exc, "detail", exc)))
+        messages.success(
+            request,
+            f"{result['member']} now looks after {result['schools']} "
+            f"school{'' if result['schools'] == 1 else 's'}.",
+        )
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = reverse(
+            "frontend:partner_detail", kwargs={"partner_id": partner.id}
+        )
+        return response
+    return drawer()
+
+
 @require_page_permission("partner_today")
 def partner_today_view(request):
     """Retired 2026-08-20: the partner's home is Assigned Activities; their
@@ -1373,7 +1448,7 @@ def partner_schedule_assignment_drawer(request, assignment_id):
             {"error": assignment.schedule_blocked_reason},
         )
     assignment.purpose_label = visit_purpose_label(assignment.purpose_of_visit, "")
-    from apps.partners import delivery_team
+    from apps.partners import delivery_team, school_team
 
     return render(
         request,
@@ -1385,6 +1460,12 @@ def partner_schedule_assignment_drawer(request, assignment_id):
             # Who goes is chosen from the organisation's team (owner,
             # 2026-10-08), the person signed in among them.
             "team": delivery_team.team_names(assignment.partner, request.user),
+            # The member the organisation gave this school to is offered
+            # first (owner, 2026-10-09), else the person signed in.
+            "chosen_member": school_team.member_for(
+                assignment.partner, assignment.school_id
+            )
+            or request.user.name,
             "drawer_size": "md",
         },
     )

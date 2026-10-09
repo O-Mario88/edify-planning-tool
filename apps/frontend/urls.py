@@ -2220,6 +2220,12 @@ urlpatterns = [
         partner_views.partner_member_action,
         name="partner_member_action",
     ),
+    # The schools one team member looks after (owner, 2026-10-09).
+    path(
+        "partners/<str:partner_id>/members/<str:member_id>/schools",
+        partner_views.partner_member_schools_view,
+        name="partner_member_schools",
+    ),
     path("partner/today", partner_views.partner_today_view, name="partner_today"),
     path("partner/schools", partner_views.partner_schools_view, name="partner_schools"),
     path(

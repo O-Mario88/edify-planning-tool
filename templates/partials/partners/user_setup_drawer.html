@@ -24,7 +24,7 @@
 
   <fieldset class="space-y-2">
     <legend class="block edify-text-caption font-semibold text-slate-600">What to do <span class="text-rose-500">*</span></legend>
-    <label class="flex items-start gap-2"><input type="radio" name="mode" value="invite" x-model="mode" class="mt-1"> <span>Invite a new Partner Admin, who sets their own password from the email.</span></label>
+    <label class="flex items-start gap-2"><input type="radio" name="mode" value="invite" x-model="mode" class="mt-1"> <span>Create a new Partner Admin login.</span></label>
     <label class="flex items-start gap-2"><input type="radio" name="mode" value="link" x-model="mode" class="mt-1"> <span>Link an existing partner account.</span></label>
     <label class="flex items-start gap-2"><input type="radio" name="mode" value="not_required" x-model="mode" class="mt-1"> <span>No login required yet.</span></label>
   </fieldset>
@@ -40,6 +40,14 @@
       <label for="pu-name" class="block edify-text-caption font-semibold text-slate-600">Person's name</label>
       <input id="pu-name" type="text" name="login_name" value="{{ partner.contact_person|default:'' }}"
              class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    {% comment %}A first password the Admin sets (owner, 2026-10-09), as Add
+    User offers for staff; blank sends the invitation.{% endcomment %}
+    <div x-show="mode === 'invite'" class="space-y-1">
+      <label for="pu-password" class="block edify-text-caption font-semibold text-slate-600">Password <span class="font-medium text-slate-400">(optional)</span></label>
+      <input id="pu-password" type="password" name="password" autocomplete="new-password" :disabled="mode !== 'invite'"
+             class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <p class="edify-text-caption font-medium text-slate-500">Leave blank to email an invitation and let the person set their own. A password set here must be changed at first sign-in.</p>
     </div>
   </div>
 

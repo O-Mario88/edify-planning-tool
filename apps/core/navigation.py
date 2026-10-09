@@ -440,12 +440,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "reports": {CD, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
     "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD, ACCOUNTANT},
-    # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
-    # (apps/core/rbac.py ROLE_PERMISSIONS) and
-    # RolePermissionService.can_manage_users() already includes
-    # HumanResources — this page-permission entry must match, or those
-    # roles hold a permission they can never reach a page to exercise.
-    "users": {CD, HR, ADMIN},
+    # The Admin's alone (owner, 2026-10-09: "Remove users from CD role and
+    # restrict it to admin"), as USER_MANAGE is in apps/core/rbac.py: a role
+    # must not hold a page whose every action the service refuses.
+    "users": {ADMIN},
     # The Staff Setup Queue: uploaded schools whose account owner did not match
     # a staff profile, and the control that attaches one. It used to be gated
     # on `users`, which made it unreachable for Impact Assessment — the only

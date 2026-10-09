@@ -145,19 +145,17 @@ class UserDeletionPageTest(TestCase):
         listing = client.get("/admin-panel/users")
         self.assertNotContains(listing, "page-cceo@edify.test")
 
-    def test_hr_sees_no_delete_button_and_cannot_delete(self):
+    def test_hr_cannot_open_the_account_or_delete_it(self):
+        # The account page is the Admin's alone since 2026-10-09; the
+        # service still refuses HR by name (UserDeletionServiceTest).
         client = Client()
         client.force_login(self.hr)
         page = client.get(f"/admin-panel/users/{self.cceo.id}")
-        self.assertEqual(page.status_code, 200)
-        self.assertNotContains(page, 'value="delete"')
+        self.assertNotEqual(page.status_code, 200)
 
-        response = client.post(
-            f"/admin-panel/users/{self.cceo.id}", {"action": "delete"}, follow=True
-        )
+        client.post(f"/admin-panel/users/{self.cceo.id}", {"action": "delete"})
         self.cceo.refresh_from_db()
         self.assertIsNone(self.cceo.deleted_at)
-        self.assertContains(response, "Only an Admin can delete users")
 
     def test_admin_sees_delete_button(self):
         client = Client()

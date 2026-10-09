@@ -1943,6 +1943,10 @@ def admin_users_view(request):
             "autosubmit": True,
         },
     }
+    # Add User opens in the platform's drawer, the size of every other one
+    # (owner, 2026-10-09), with the same options the page computed.
+    if request.GET.get("drawer") == "add":
+        return render(request, "partials/admin/add_user_drawer.html", context)
     return render(request, "pages/admin/users.html", context)
 
 
@@ -2187,7 +2191,22 @@ def admin_user_detail_view(request, user_id):
                     f"{result['assignedCount']} staff member(s) assigned.",
                 )
 
+        # Pressed from a row of the Users page: back to the list.
+        if request.POST.get("next") == "users":
+            return redirect("frontend:admin_users")
         return redirect("frontend:admin_user_detail", user_id=user_id)
+
+    if request.GET.get("drawer") == "password":
+        return render(
+            request,
+            "partials/admin/reset_password_drawer.html",
+            {
+                "member": member,
+                "partner_organisation": login_organisation(member)
+                if partner_login
+                else None,
+            },
+        )
 
     # Get available roles & districts
     from apps.core.rbac import EdifyRole

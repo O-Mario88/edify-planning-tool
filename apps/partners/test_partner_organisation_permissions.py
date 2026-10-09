@@ -57,7 +57,8 @@ class PartnerOrganisationPermissionTests(TestCase):
             with self.subTest(role=principal.active_role):
                 self.assertFalse(has_permission(principal, create))
         self.assertTrue(has_permission(self.admin, users))
-        self.assertTrue(has_permission(self.cd, users))
+        # Logins are the Admin's alone since 2026-10-09.
+        self.assertFalse(has_permission(self.cd, users))
         for permission in (
             users,
             Permission.USER_MANAGE.value,
@@ -121,7 +122,7 @@ class PartnerOrganisationPermissionTests(TestCase):
                 context_id=created["id"],
             ).values_list("recipient_id", flat=True)
         )
-        self.assertEqual(recipients, {self.admin.id, self.cd.id})
+        self.assertEqual(recipients, {self.admin.id})
         self.assertNotIn(self.ia.id, recipients)
 
     # ── Logins stay with user administration ─────────────────────────────
@@ -143,7 +144,7 @@ class PartnerOrganisationPermissionTests(TestCase):
         result = configure_partner_user(
             created["id"],
             {"mode": "invite", "email": "lead@invite-me.test", "name": "Lead"},
-            self.cd,
+            self.admin,
         )
         self.assertEqual(result["userSetupStatus"], "configured")
         login = User.objects.get(email="lead@invite-me.test")

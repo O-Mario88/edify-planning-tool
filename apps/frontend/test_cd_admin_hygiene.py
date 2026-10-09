@@ -66,6 +66,8 @@ class CostSettingsFiscalYearTest(TestCase):
 class UsersPageScopeTest(TestCase):
     def setUp(self):
         self.cd = _person("usr-cd@t.org", "Usr CD", EdifyRole.COUNTRY_DIRECTOR.value)
+        # The page is the Admin's alone since 2026-10-09.
+        self.admin = _person("usr-admin@t.org", "Usr Admin", EdifyRole.ADMIN.value)
         from apps.core.pagination import TABLE_PAGE_SIZE
 
         # One more person than a page holds, with the Country Director.
@@ -73,23 +75,24 @@ class UsersPageScopeTest(TestCase):
             _person(f"usr-{i}@t.org", f"Usr Local {i:02d}", EdifyRole.CCEO.value)
         _person("usr-abroad@t.org", "Usr Abroad", EdifyRole.CCEO.value, country="Kenya")
 
-    def test_the_cd_sees_their_country_paginated_and_cannot_grant_admin(self):
+    def test_the_list_is_paginated_and_the_cd_no_longer_opens_it(self):
         from apps.core.pagination import TABLE_PAGE_SIZE
 
         self.client.force_login(self.cd)
+        self.assertNotEqual(self.client.get("/admin-panel/users").status_code, 200)
+
+        self.client.force_login(self.admin)
         response = self.client.get("/admin-panel/users")
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "Usr Abroad")
         self.assertEqual(len(response.context["users_pager"]["rows"]), TABLE_PAGE_SIZE)
         page_two = self.client.get("/admin-panel/users?page=2")
         self.assertEqual(page_two.status_code, 200)
-        self.assertNotIn("Admin", response.context["available_roles"])
 
     def test_partner_summary_uses_the_directory_presentation_status(self):
         Partner.objects.create(name="Active partner", active_status=True)
         Partner.objects.create(name="Inactive partner", active_status=False)
 
-        self.client.force_login(self.cd)
+        self.client.force_login(self.admin)
         response = self.client.get("/admin-panel/users")
 
         self.assertEqual(response.status_code, 200)

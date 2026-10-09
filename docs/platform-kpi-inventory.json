@@ -3905,7 +3905,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2343,
+   "line": 2362,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3925,7 +3925,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3916,
+   "line": 3935,
    "label": null,
    "keys": [
     "label",
@@ -3942,7 +3942,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4730,
+   "line": 4749,
    "label": null,
    "keys": [
     "count",
@@ -4018,7 +4018,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3822,
+   "line": 3841,
    "label": "About",
    "keys": [
     "label",
@@ -4035,7 +4035,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3823,
+   "line": 3842,
    "label": "Raised by",
    "keys": [
     "label",
@@ -4052,7 +4052,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3824,
+   "line": 3843,
    "label": "Flag",
    "keys": [
     "label",
@@ -4069,7 +4069,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3825,
+   "line": 3844,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -42224,7 +42224,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3375,
+   "line": 3394,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42246,7 +42246,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4117,
+   "line": 4136,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

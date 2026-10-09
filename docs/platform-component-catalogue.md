@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **657**
+Components and application partials: **660**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -50,6 +50,8 @@ Components and application partials: **657**
 | `partials/activities/pick_cell.html` | application-partial | Reusable pick cell interface primitive | canonical; default | inherits containing page contract | accessible name and label | /clusters/<str:cluster_id><br>/dashboard<br>/districts/<str:district_id><br>/my-plan<br>/partners/<str:partner_id><br>/projects/<str:project_id><br>/schools/<str:school_id><br>/staff/<str:user_id> | 0 |
 | `partials/activities/pick_head.html` | application-partial | Reusable pick head interface primitive | canonical; default | inherits containing page contract | accessible name and label | /clusters/<str:cluster_id><br>/dashboard<br>/districts/<str:district_id><br>/my-plan<br>/partners/<str:partner_id><br>/projects/<str:project_id><br>/schools/<str:school_id><br>/staff/<str:user_id> | 0 |
 | `partials/activities/selection_bar.html` | application-partial | Reusable selection bar interface primitive | canonical; default | explicit responsive contract | accessible name and label, announced dynamic state | /calendar<br>/clusters/<str:cluster_id><br>/country-planning-oversight/<br>/dashboard<br>/districts/<str:district_id><br>/my-plan<br>/partners/<str:partner_id><br>/planning | 0 |
+| `partials/admin/add_user_drawer.html` | application-partial | Reusable add user drawer interface primitive | canonical; default, empty, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /admin-panel/users | 0 |
+| `partials/admin/reset_password_drawer.html` | application-partial | Reusable reset password drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /admin-panel/users/<str:user_id> | 0 |
 | `partials/analytics/_regional_performance_script.html` | application-partial | Reusable  regional performance script interface primitive | canonical; default, loading, error, open | inherits containing page contract | accessible name and label, keyboard focus visibility | /country-map/<br>/dashboard<br>/ia/dashboard/ | 0 |
 | `partials/analytics/activity_tracking.html` | application-partial | Reusable activity tracking interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/analytics/cd/_target_area_badges.html` | application-partial | Reusable  target area badges interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /analytics/country-director | 0 |
@@ -513,6 +515,7 @@ Components and application partials: **657**
 | `partials/partners/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | danger; default, empty, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/edit-drawer | 0 |
 | `partials/partners/engagement_register.html` | application-partial | Reusable engagement register interface primitive | executive, warning, {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner-oversight/<br>/partners/<str:partner_id> | 0 |
 | `partials/partners/member_drawer.html` | application-partial | Reusable member drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/members/drawer | 0 |
+| `partials/partners/member_schools_drawer.html` | application-partial | Reusable member schools drawer interface primitive | danger; default, error, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/members/<str:member_id>/schools | 0 |
 | `partials/partners/profile_trainings.html` | application-partial | Reusable profile trainings interface primitive | {{ row.tone }}; default | inherits containing page contract | inherits semantic parent contract | /partners/<str:partner_id> | 0 |
 | `partials/partners/profile_visit_schools.html` | application-partial | Reusable profile visit schools interface primitive | {{ row.tone }}; default | inherits containing page contract | inherits semantic parent contract | /partners/<str:partner_id> | 0 |
 | `partials/partners/return_assignment_drawer.html` | application-partial | Reusable return assignment drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner/assignments/<str:assignment_id>/return-drawer | 0 |
