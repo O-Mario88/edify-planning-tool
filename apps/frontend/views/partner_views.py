@@ -1089,6 +1089,19 @@ def partner_detail_view(request, partner_id):
     context["profile_activities"] = profile_acts.profile_activities(
         request, profile_acts.for_partner(partner.id), param="partner_acts"
     )
+    # The Partner's assigned portfolio through the shared profile sections
+    # (owner's brief, 2026-10-09): assigned, awaiting the Partner's date,
+    # scheduled and completed stay four figures, and the work counted is the
+    # work this Partner delivers.
+    from apps.analytics import profile_intelligence
+    from apps.frontend.views.profile_views import profile_context
+
+    context["pi"] = profile_context(
+        request,
+        profile_intelligence.partner_scope(partner),
+        f"/partners/{partner.id}",
+        lead=(("profile", "Profile"),),
+    )
     return render(request, "pages/partners/detail.html", context)
 
 

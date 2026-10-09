@@ -503,6 +503,9 @@ def staff_profile_view(request, user_id):
 
     assigned_schools = active_schools().filter(account_owner_id__in=member_ids)
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
+    from apps.ssa.year_comparison import intervention_comparison
+
+    staff_ssa = intervention_comparison(assigned_schools.values("id"))
     back_href, back_label = _profile_back_link(request)
 
     context = {
@@ -515,6 +518,7 @@ def staff_profile_view(request, user_id):
         "schools_covered": list(schools_covered)[:10],
         "initials": member.name[:2].upper() if member.name else "??",
         "staff_progress": staff_progress,
+        "staff_ssa": staff_ssa,
         "back_href": back_href,
         "back_label": back_label,
         "supervision": _supervision_panel(request, member, profile),
@@ -528,7 +532,36 @@ def staff_profile_view(request, user_id):
         param="staff_acts",
         subject="auto",
     )
+    if profile is not None:
+        context["pi"] = _portfolio_sections(request, member, profile)
     return render(request, "pages/staff/detail.html", context)
+
+
+def _portfolio_sections(request, member, profile) -> dict:
+    """The shared profile sections for a person (owner's brief, 2026-10-09):
+    their own portfolio — or, for a Programme Lead, the whole team's ("the
+    PL's entire portfolio + the entire portfolio of everyone under the PL"),
+    with the team as a tab."""
+    from apps.analytics import profile_intelligence
+    from apps.core.rbac import EdifyRole
+    from apps.frontend.views.profile_views import profile_context
+
+    lead_role = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    is_lead = lead_role in (member.roles or []) or member.active_role == lead_role
+    scope = (
+        profile_intelligence.program_lead_scope(profile)
+        if is_lead
+        else profile_intelligence.staff_scope(profile)
+    )
+    came_from = (request.GET.get("from") or "").strip()
+    return profile_context(
+        request,
+        scope,
+        f"/staff/{member.id}",
+        # The page's own content stays its first tab.
+        lead=(("profile", "Profile"),),
+        keep={"from": came_from} if came_from else None,
+    )
 
 
 # ─── TODAY VIEW ───────────────────────────────────────────────────────────────

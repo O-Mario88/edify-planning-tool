@@ -42,6 +42,17 @@ login, or a different one.{% endcomment %}
 {% endif %}
 {% endpage_header %}
 
+{% comment %}
+The Partner's assigned portfolio through the shared profile sections (owner's
+brief, 2026-10-09): the page's own content is the first tab.
+{% endcomment %}
+{% if pi %}{% include "partials/profiles/_tabs.html" %}{% endif %}
+{% if pi and pi.is_engine_tab %}
+<p class="edify-text-label edify-text-muted" data-profile-scope>{% include "partials/profiles/_scope_line.html" %}</p>
+{% include "partials/profiles/_filters.html" %}
+{% include "partials/profiles/_sections.html" %}
+{% else %}
+
 <div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
 <!-- Left Column: Organisation & Activity history -->
 <div class="lg:col-span-2 space-y-6">
@@ -234,5 +245,6 @@ looks after (owner, 2026-10-09), and Remove.{% endcomment %}
 </div>
 </div>
 </div>
+{% endif %}
 </div>
 {% endblock %}

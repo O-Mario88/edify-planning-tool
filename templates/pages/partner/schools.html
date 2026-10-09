@@ -32,7 +32,7 @@
           <tr>
             <td class="text-left tabular-nums text-slate-500 py-2.5 pl-1">{{ s.school_id }}</td>
             <td class="text-left font-semibold py-2.5">{{ s.name }}</td>
-            <td class="text-left text-slate-500 py-2.5">{{ s.district.name|default:"—" }}</td>
+            <td class="text-left text-slate-500 py-2.5">{% district_link s.district.name s.district.id empty="—" %}</td>
             <td class="text-left text-slate-500 py-2.5">{{ s.sub_county.name|default:"—" }}</td>
             <td class="text-right tabular-nums text-slate-500 py-2.5">{{ s.enrollment|default:0|intcomma }}</td>
             <td class="text-right py-2.5 pr-1">

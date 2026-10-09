@@ -34,7 +34,7 @@
           {% if row.cluster_id %}
           <a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>
           {% else %}
-          {{ row.cluster_name }}
+          {% cluster_link row.cluster_name row.cluster_id %}
           {% endif %}
         </td>
         <td class="px-4 py-2.5 text-center tabular-nums font-medium">

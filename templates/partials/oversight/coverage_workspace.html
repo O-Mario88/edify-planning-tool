@@ -45,12 +45,12 @@ quarter inside a year.
             <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
             <td data-label="School" data-record-title>{% school_link row.school_name row.school_code %}</td>
             <td data-label="CCEO owner">{{ row.owner_name }}</td>
-            <td data-label="District">{{ row.district_name|default:"—" }}</td>
-            <td data-label="Cluster">{{ row.cluster_name|default:"—" }}</td>
+            <td data-label="District">{% district_link row.district_name row.district_id empty="—" %}</td>
+            <td data-label="Cluster">{% cluster_link row.cluster_name row.cluster_id empty="—" %}</td>
             <td data-label="Planned activity">{{ row.activity_label }}</td>
             <td data-label="Category">{{ row.category }}</td>
             <td data-label="Planned date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
-            <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
+            <td data-label="Channel">{{ row.delivery_channel }}{% if row.partner_name %} · {% partner_link row.partner_name row.partner_id %}{% endif %}</td>
             <td data-label="Budget status">{{ row.budget_status }}{% if row.payment_status %} · {{ row.payment_status|status_label }}{% endif %}</td>
             <td data-label="PL status">{% firstof row.pl_status row.ia_status %}</td>
             <td data-label="Status">{% firstof row.activity_status row.stage "—" %}</td>
@@ -83,10 +83,10 @@ quarter inside a year.
           <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
-          <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name|default:"—" }}{% endif %}</td>
+          <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}{% cluster_link row.cluster_name row.cluster_id empty="—" %}{% endif %}</td>
           <td data-label="Activity">{{ row.activity_label|default:"Cluster session" }}</td>
           <td data-label="Date">{{ row.planned_date|date:"j M Y"|default:"Not dated" }}</td>
-          <td data-label="Delivery">{{ row.delivery_channel }}{% if row.partner_name %} · {{ row.partner_name }}{% endif %}</td>
+          <td data-label="Delivery">{{ row.delivery_channel }}{% if row.partner_name %} · {% partner_link row.partner_name row.partner_id %}{% endif %}</td>
           <td data-label="Status">{{ row.status|default:"—" }}</td>
           <td data-label="Visit status"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>
           <td data-label="Training plan"><span class="edify-badge" data-tone="success">{{ row.training_status }}</span></td>
@@ -116,7 +116,7 @@ quarter inside a year.
           <td data-label="School ID" class="tabular-nums">{{ row.school_code|default:"—" }}</td>
           <td data-label="School" data-record-title><a href="{{ row.school_url }}">{{ row.school_name }}</a></td>
           <td data-label="CCEO owner">{{ row.owner_name }}</td>
-          <td data-label="District">{{ row.district_name|default:"—" }}</td>
+          <td data-label="District">{% district_link row.district_name row.district_id empty="—" %}</td>
           <td data-label="Cluster">{% if row.cluster_url %}<a href="{{ row.cluster_url }}">{{ row.cluster_name }}</a>{% else %}Not in a cluster{% endif %}</td>
           <td data-label="Reason">{{ row.reason }}</td>
           <td data-label="Visit status"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>

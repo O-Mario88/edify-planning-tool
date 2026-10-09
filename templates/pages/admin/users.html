@@ -109,7 +109,7 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
         {% for partner in partners_pager.rows %}
         <tr class="hover:bg-slate-50/50 transition-colors{% if partner.presentation_status != "active" %} opacity-70{% endif %}">
           <td class="px-5 py-3.5" data-record-title>
-            {% if partner.presentation_status == "deleted" %}<span class="font-semibold text-slate-500 block line-through">{{ partner.name }}</span>{% else %}<a href="/partners/{{ partner.id }}" class="font-semibold text-slate-800 hover:underline block">{{ partner.name }}</a>{% endif %}
+            {% if partner.presentation_status == "deleted" %}<span class="font-semibold text-slate-500 block line-through">{% partner_link partner.name partner.id %}</span>{% else %}<a href="/partners/{{ partner.id }}" class="font-semibold text-slate-800 hover:underline block">{{ partner.name }}</a>{% endif %}
           </td>
           <td class="px-4 py-3.5 text-slate-600" data-label="Regions" data-partner-regions>{{ partner.region_label|default:"—" }}</td>
           <td class="px-4 py-3.5 font-semibold text-slate-700" data-label="Contact">{{ partner.contact_person|default:"Not recorded" }}</td>

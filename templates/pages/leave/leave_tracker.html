@@ -144,7 +144,7 @@
       {% for row in availability_preview %}
       <div class="flex items-center justify-between edify-text-caption font-semibold">
         <div class="w-1/3 truncate" title="{{ row.staff_name }} · {{ row.role }}">
-          <span class="font-bold text-slate-800 block">{{ row.staff_name }}</span>
+          <span class="font-bold text-slate-800 block">{% staff_link row.staff_name row.staff_id %}</span>
           <span class="edify-text-caption text-slate-500 block uppercase mt-0.5">{{ row.role }}</span>
         </div>
 

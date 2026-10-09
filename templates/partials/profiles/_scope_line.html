@@ -1,0 +1,5 @@
+{% load frontend_filters %}{% comment %}
+What a profile's numbers cover, said on the page so nobody misreads them (the
+brief, point 27): "Portfolio: 42 schools · 6 clusters · 3 projects — Entire
+team portfolio, FY 2026/27".
+{% endcomment %}{% if lead %}{{ lead }} · {% endif %}Portfolio: {{ pi.profile.portfolio.schools|intcomma }} school{{ pi.profile.portfolio.schools|pluralize }} · {{ pi.profile.portfolio.clusters|intcomma }} cluster{{ pi.profile.portfolio.clusters|pluralize }} · {{ pi.profile.projects|length }} project{{ pi.profile.projects|length|pluralize }} — {{ pi.scope.covers }}, {{ pi.profile.fy_label }}{% if pi.profile.period_label %} · work in {{ pi.profile.period_label }}{% endif %}

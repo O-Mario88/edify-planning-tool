@@ -39,7 +39,7 @@ and offers Return instead. The POST is decided again by ia_confirm
     </ul>
     {% else %}
     <div class="edify-note" data-tone="warning" role="status" data-no-evidence>
-      <p class="edify-note__body">No evidence was uploaded with this submission. Return it to {{ partner_name }} with the reason.</p>
+      <p class="edify-note__body">No evidence was uploaded with this submission. Return it to {% partner_link partner_name partner_id %} with the reason.</p>
     </div>
     {% endif %}
     {% if evidence_checklist %}

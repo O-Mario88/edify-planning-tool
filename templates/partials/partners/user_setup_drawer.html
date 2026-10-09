@@ -19,7 +19,7 @@
   page, as a member of staff's are (owner, 2026-10-08); this drawer only says
   which account the organisation signs in with.{% endcomment %}
   {% if login %}
-  <p class="edify-note font-medium" data-tone="info">To reset its password, unlock it or change its details, <a href="{% url 'frontend:admin_user_detail' login.id %}" class="font-semibold underline">configure this login</a>. Use this form to give {{ partner.name }} a different one.</p>
+  <p class="edify-note font-medium" data-tone="info">To reset its password, unlock it or change its details, <a href="{% url 'frontend:admin_user_detail' login.id %}" class="font-semibold underline">configure this login</a>. Use this form to give {% partner_link partner.name partner.id %} a different one.</p>
   {% endif %}
 
   <fieldset class="space-y-2">

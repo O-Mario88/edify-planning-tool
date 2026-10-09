@@ -57,7 +57,7 @@ request for an officer the reader may not see is refused with the reason
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Schools for {{ training_name }}; scroll sideways for more columns">
     {% paginate rows "training_schools_page" as training_schools_pager %}
     <table class="rpl-table" data-mobile-table="scroll">
-      <caption class="sr-only">{{ delivery_label|default:"Schools covered" }} for {{ training_name }} under {{ staff_name }} in FY {{ fy }}: how each school is covered, who is responsible, where it stands and the next action.</caption>
+      <caption class="sr-only">{{ delivery_label|default:"Schools covered" }} for {{ training_name }} under {% staff_link staff_name staff_id %} in FY {{ fy }}: how each school is covered, who is responsible, where it stands and the next action.</caption>
       <thead>
         <tr>
           <th scope="col">School ID</th>
@@ -76,7 +76,7 @@ request for an officer the reader may not see is refused with the reason
           {% if show_training %}<td data-label="Training">{{ row.training_name }}</td>{% endif %}
           <td data-label="Status">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a>{% elif row.assignment_id %}<a href="/partner-oversight/" class="no-underline hover:opacity-90" title="Open Partner Oversight, where this hand-over is followed"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}</a>{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% if row.date %} · {{ row.date|date:"j M Y" }}{% endif %}{% endif %}</td>
           <td data-label="Next Action">{{ row.next_action }}</td>
-          <td data-label="Route">{{ row.route_label }}{% if row.partner_name %} <span class="rpl-muted">· {{ row.partner_name }}</span>{% endif %}{% if row.cluster %} <span class="rpl-muted">· {{ row.cluster }}</span>{% endif %}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}{% if row.repeat %} <span class="rpl-muted">· same school, counted once</span>{% endif %}</td>
+          <td data-label="Route">{{ row.route_label }}{% if row.partner_name %} <span class="rpl-muted">· {% partner_link row.partner_name row.partner_id %}</span>{% endif %}{% if row.cluster %} <span class="rpl-muted">· {{ row.cluster }}</span>{% endif %}{% if row.is_meeting %} <span class="rpl-muted">(cluster meeting)</span>{% endif %}{% if row.repeat %} <span class="rpl-muted">· same school, counted once</span>{% endif %}</td>
         </tr>
         {% empty %}
         <tr>
@@ -90,7 +90,7 @@ request for an officer the reader may not see is refused with the reason
     {% include "components/table_pager.html" with pager=training_schools_pager param="training_schools_page" %}
   </div>
   {% if figure == "remaining" %}
-  <p class="edify-text-caption edify-text-muted" data-coverage-remaining-note>The schools {{ staff_name }} holds that take a training and have no commitment to this one yet: not planned by staff, not assigned to a partner and on no group training for it.{% if summary and summary.ceiling is not None %} {{ summary.balance }} place{{ summary.balance|pluralize }} {{ summary.balance|pluralize:"is,are" }} left under the ceiling of {{ summary.ceiling }}.{% endif %}</p>
+  <p class="edify-text-caption edify-text-muted" data-coverage-remaining-note>The schools {% staff_link staff_name staff_id %} holds that take a training and have no commitment to this one yet: not planned by staff, not assigned to a partner and on no group training for it.{% if summary and summary.ceiling is not None %} {{ summary.balance }} place{{ summary.balance|pluralize }} {{ summary.balance|pluralize:"is,are" }} left under the ceiling of {{ summary.ceiling }}.{% endif %}</p>
   {% endif %}
 </div>
 {% endif %}

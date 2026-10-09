@@ -5070,18 +5070,19 @@ main .core-scope-switch [data-edify-tab] {
     padding-inline: 0;
   }
 
-  /* Same accumulation on the cluster card: the generic card rule pads 14px
-     with !important, and the shared disclosure-row rule pads another 12px
-     with !important on top of it, putting the cluster name 27px inside a
-     card whose own edge is already the inset. The row yields its INLINE
-     padding so the card's gutter is the single one; the block padding stays,
-     because that is the row's height, not its indent.
+  /* The cluster card is flush (data-edify-padding="flush"): its rows carry
+     the card's inset themselves. This rule used to take the row's inline
+     padding away, when the card padded 14px and the row 12px more; since the
+     card went flush that left the name, every fact and the Actions button
+     on the card's border (owner, 2026-10-09: "fix the mobile card padding.
+     look at mobile screen cluster page padding"). The row keeps the one
+     inset, the same line the opened details start on.
 
-     Specificity is deliberate, not decorative: the rule it has to outrank is
+     Specificity is deliberate: the rule it has to outrank is
      `[data-mobile-family="directory"] [data-row-disclosure-summary]` at
      (0,2,0) !important, so this names three classes to reach (0,3,0). */
   .cluster-card .cluster-card__summary[data-row-disclosure-summary] {
-    padding-inline: 0 !important;
+    padding-inline: var(--edify-card-inset) !important;
   }
 
   /* Expanded, the detail list must not stay boxed in the identity column.

@@ -24,7 +24,6 @@ DRILL_DOWN_PAGES = [
     "schools/detail.html",
     "schools/upload.html",
     "clusters/detail.html",
-    "districts/detail.html",
     "partners/detail.html",
     "staff/detail.html",
     "projects/detail.html",
@@ -55,6 +54,14 @@ INCLUDE = re.compile(
 
 
 class BackControlCoverageTest(TestCase):
+    def test_the_shared_profile_page_uses_the_shared_control(self):
+        """A district, a sub-region and the country are one page (owner's
+        brief, 2026-10-09); where each goes back to is the view's to say."""
+        src = (PAGES / "profiles" / "profile.html").read_text()
+        self.assertIn(
+            '{% include "partials/_back_link.html" with back_href=back_href', src
+        )
+
     def test_every_drill_down_page_uses_the_shared_control(self):
         for rel in DRILL_DOWN_PAGES:
             path = PAGES / rel

@@ -231,6 +231,14 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # 2026-09-23: "give them the access"). The data stays scoped by
     # `cluster_queryset`, and the page has no action for them to take.
     "cluster_oversight": {PL, IA, CD, RVP, RPL, ACCOUNTANT, ADMIN},
+    # Cluster Management (owner brief, 2026-10-08): the officers who hold
+    # clusters and the roles that oversee them. Its rows are the reader's own
+    # clusters (`cluster_queryset`), so a CCEO reads theirs and the Country
+    # Director the country's. Setting what the scores weigh is the Country
+    # Director's and Impact Assessment's ("CD/IA should be able to configure
+    # weights").
+    "cluster_management": {CCEO, PL, IA, CD, RVP, RPL, ADMIN},
+    "cluster_scoring": {IA, CD, ADMIN},
     "core_schools_oversight": {PL, IA, CD, RVP, RPL, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
@@ -858,6 +866,7 @@ ICONS.update(
         "country_map": ICONS["coverage"],
         "planning_monitor": ICONS["team_targets"],
         "cluster_oversight": ICONS["clusters"],
+        "cluster_management": ICONS["clusters"],
         "core_schools_oversight": ICONS["core_schools"],
         "partner_oversight": ICONS["partners"],
         "my_actions": ICONS["todos"],
@@ -2022,6 +2031,16 @@ SIDEBAR_ITEMS = [
                 "url": "/cluster-oversight/",
                 "page_key": "cluster_oversight",
                 "visible_to": {PL, IA, CD, RPL, RVP, ACCOUNTANT, ADMIN},
+            },
+            # ONE entry for the whole of Cluster Management (owner brief,
+            # 2026-10-08). Its eighteen sections are tabs on the page, not
+            # eighteen links here: the sidebar keeps the length the owner
+            # set on 2026-10-02.
+            {
+                "label": "Cluster Management",
+                "url": "/cluster-management/",
+                "page_key": "cluster_management",
+                "visible_to": {CCEO, PL, IA, CD, RPL, RVP, ADMIN},
             },
             {
                 "label": "Planning Oversight",
@@ -3638,6 +3657,21 @@ def _regroup_by_visit(sections: list[dict], role: str) -> list[dict]:
         "partner_oversight",
         "project_monitoring",
     )
+    # Cluster Management (owner brief, 2026-10-08) sits beside Cluster
+    # Oversight for a role that has it. An officer, who has no Cluster
+    # Oversight, keeps it under Clusters with their daily work: their
+    # Oversight group stays the partners and project schools they oversee.
+    if any(
+        item["page_key"] == "cluster_oversight"
+        for group in result
+        for item in group["items"]
+    ):
+        at = oversight_keys.index("cluster_oversight") + 1
+        oversight_keys = (
+            *oversight_keys[:at],
+            "cluster_management",
+            *oversight_keys[at:],
+        )
     oversight_items = [
         item
         for group in result

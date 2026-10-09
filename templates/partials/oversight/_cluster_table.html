@@ -9,6 +9,12 @@ Cluster Oversight Table with the 7 required columns:
 6. Least performing intervention
 7. Date of the last activity (training or meeting)
 Responsible CCEO column is excluded (moved to tabs).
+
+Then three columns from the cluster's own records (owner brief, 2026-10-08):
+the share of this year's session invitations its schools kept, how many of
+its schools have missed three or more sessions in a row, and how its schools'
+SSA moved year on year. Each figure links to the tab of the cluster profile
+that lists the schools behind it. A row built without them draws a dash.
 {% endcomment %}
 {% paginate clusters page_param|default:"clusters_page" as cluster_pager %}
 <div class="overflow-x-auto">
@@ -23,6 +29,9 @@ Responsible CCEO column is excluded (moved to tabs).
         <th scope="col" class="px-4 py-2.5 font-semibold text-center min-w-[150px]"># School SSA Scores Avg</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[200px]">Least Performing Intervention</th>
         <th scope="col" class="px-4 py-2.5 font-semibold min-w-[140px]">Date of Last Activity</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center" title="Share of this year's meeting and group training invitations the cluster's schools kept">Attendance</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center" title="Schools that have missed {{ absent_after|default:3 }} or more sessions in a row">Absent {{ absent_after|default:3 }}+ Sessions</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-center" title="Change in the schools' average SSA{% if ssa_movement_fy %}, FY {{ ssa_movement_previous_fy }} to FY {{ ssa_movement_fy }}{% endif %}, for schools with a confirmed SSA in both years">SSA Change</th>
       </tr>
     </thead>
     <tbody class="divide-y edify-border text-sm">
@@ -30,7 +39,7 @@ Responsible CCEO column is excluded (moved to tabs).
       <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
         <td class="px-4 py-2.5 font-semibold">
           {% if can_open_cluster == False %}
-            <span class="font-semibold text-slate-900 dark:text-white">{% if row.cluster %}{{ row.cluster.name }}{% else %}{{ row.name }}{% endif %}</span>
+            <span class="font-semibold text-slate-900 dark:text-white">{% if row.cluster %}{% cluster_link row.cluster.name row.cluster.id %}{% else %}{{ row.name }}{% endif %}</span>
           {% else %}
             {% if row.cluster %}
               <a href="/clusters/{{ row.cluster.id }}" class="hover:underline text-primary edify-primary-text-hover dark:edify-primary-text-hover">
@@ -86,10 +95,35 @@ Responsible CCEO column is excluded (moved to tabs).
             —
           {% endif %}
         </td>
+        {% comment %}A reader who may not open a cluster (the Accountant) reads
+        the figure as text: a link there would answer 403.{% endcomment %}
+        <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-attendance>
+          {% if row.has_engagement and row.attendance_rate is not None %}
+            {% if can_open_cluster == False %}{{ row.attendance_rate }}%{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=attendance&amp;fy={{ row.attendance_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.attendance_rate }}% of invitations attended in FY {{ row.attendance_fy }}">{{ row.attendance_rate }}%</a>{% endif %}
+          {% else %}
+            <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-absent>
+          {% if row.has_engagement and row.absent_schools %}
+            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=attendance&amp;fy={{ row.attendance_fy }}&amp;show=missing" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.absent_schools }} school{{ row.absent_schools|pluralize }} absent from {{ absent_after|default:3 }} or more sessions in a row"><span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span></a>{% endif %}
+          {% elif row.has_engagement %}
+            0
+          {% else %}
+            <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-ssa-change>
+          {% if row.has_engagement and row.ssa_change is not None %}
+            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=ssa&amp;fy={{ row.ssa_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: SSA change {% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }} across {{ row.ssa_compared }} school{{ row.ssa_compared|pluralize }}"><span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span></a>{% endif %}
+          {% else %}
+            <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8" class="p-8 text-center text-slate-400 text-xs">
+        <td colspan="11" class="p-8 text-center text-slate-400 text-xs">
           No clusters found in this view.
         </td>
       </tr>

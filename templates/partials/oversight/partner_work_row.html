@@ -13,7 +13,7 @@ journeys and the Resolve drawer address it by.
             :aria-expanded="(openRowId === '{{ row_id }}').toString()"
             aria-controls="partner-row-details-{{ row_id }}"
             aria-label="Details for {% firstof item.school_name item.cluster_name %}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
-    <span class="school-plan-table__name-text" title="{% firstof item.school_name item.cluster_name %}">{% if item.school_name %}{% school_link item.school_name item.school_code %}{% else %}{{ item.cluster_name }}{% endif %}</span>
+    <span class="school-plan-table__name-text" title="{% firstof item.school_name item.cluster_name %}">{% if item.school_name %}{% school_link item.school_name item.school_code %}{% else %}{% cluster_link item.cluster_name item.cluster_id %}{% endif %}</span>
   </span></td>
   <td data-label="Staff member">{{ item.responsible_cceo_name|default:"Unassigned" }}</td>
   <td data-label="Activity / purpose">{{ item.activity_type|replace_underscore|title }}</td>
@@ -76,7 +76,7 @@ journeys and the Resolve drawer address it by.
       {% if item.assignment_date %}<div><dt>Assigned:</dt><dd>{{ item.assignment_date|date:"j M Y" }}</dd></div>{% endif %}
       {% if item.field_officer %}<div><dt>Partner officer:</dt><dd>{{ item.field_officer }}</dd></div>{% endif %}
       {% if item.district %}<div><dt>District:</dt><dd>{{ item.district }}</dd></div>{% endif %}
-      {% if item.cluster_name and item.school_name %}<div><dt>Cluster:</dt><dd>{{ item.cluster_name }}</dd></div>{% endif %}
+      {% if item.cluster_name and item.school_name %}<div><dt>Cluster:</dt><dd>{% cluster_link item.cluster_name item.cluster_id %}</dd></div>{% endif %}
       {% if item.target_intervention %}<div><dt>Target intervention:</dt><dd>{{ item.target_intervention }}</dd></div>{% endif %}
       {% comment %}Where the Partner's work stands past its schedule (owner,
       2026-09-23): read only — staff never edit these here.{% endcomment %}

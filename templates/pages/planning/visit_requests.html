@@ -72,7 +72,7 @@
   <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-5" data-visit-request-pending="{{ a.id }}">
     <div class="space-y-2 min-w-0 flex-1 text-[12px]">
       <h3 class="text-[15px] font-semibold text-slate-800">{{ a.requester_name }} asks to visit {% if a.school %}{% school_link a.school.name a.school.id %}{% else %}your school{% endif %}</h3>
-      <p class="text-slate-500 font-semibold">{{ a.get_activity_type_display }}{% if a.planned_date %} &bull; {{ a.planned_date|date:"j M Y" }}{% endif %}{% if a.school and a.school.district %} &bull; {{ a.school.district.name }}{% endif %}</p>
+      <p class="text-slate-500 font-semibold">{{ a.get_activity_type_display }}{% if a.planned_date %} &bull; {{ a.planned_date|date:"j M Y" }}{% endif %}{% if a.school and a.school.district %} &bull; {% district_link a.school.district.name a.school.district.id %}{% endif %}</p>
       {% if a.activity_purpose_text %}
       <div><p class="edify-text-caption uppercase font-bold text-slate-400">Purpose</p><p class="text-slate-600 leading-normal">{{ a.activity_purpose_text }}</p></div>
       {% endif %}

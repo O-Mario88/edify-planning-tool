@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load chart_tags %}
 {% load table_pagination %}
 {% load frontend_filters row_actions %}
 
@@ -90,6 +91,45 @@ class="contents"
 </div>
 </div>
 
+{% comment %}
+The profile's sections (owner brief, 2026-10-08: "Clicking a cluster should
+open: Cluster Profile ... Then tabs"). Overview is the page as it has been:
+the record, its schools, its planned and completed work. Each other tab is one
+read of records the platform already keeps (apps.clusters.profile_insights),
+drawn in the Overview's place, never below it (owner, 2026-10-02: tabs, not
+tables one below another). A tab is a link, so it can be bookmarked and sent.
+{% endcomment %}
+<nav class="oversight-entity-tabs" aria-label="{{ cluster.name }} profile sections" data-cluster-profile-tabs>
+{% for entry in profile_tabs %}
+<a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab={{ entry.key }}"{% if entry.is_active %} aria-current="page"{% endif %}><span>{{ entry.label }}</span></a>
+{% endfor %}
+</nav>
+
+{% if pi %}
+{% comment %}A section of the shared profile engine over this cluster's
+schools (apps.analytics.profile_intelligence; owner, 2026-10-09).{% endcomment %}
+<p class="edify-text-label edify-text-muted" data-profile-scope>{% include "partials/profiles/_scope_line.html" %}</p>
+{% include "partials/profiles/_filters.html" %}
+{% include "partials/profiles/_sections.html" %}
+{% elif profile_tab == "ssa" %}
+{% include "partials/clusters/profile_ssa.html" %}
+{% elif profile_tab == "attendance" %}
+{% include "partials/clusters/profile_attendance.html" %}
+{% elif profile_tab == "interventions" %}
+{% include "partials/clusters/profile_interventions.html" %}
+{% elif profile_tab == "scores" %}
+{% include "partials/clusters/profile_scores.html" %}
+{% elif profile_tab == "students" %}
+{% include "partials/clusters/profile_students.html" %}
+{% elif profile_tab == "learning" %}
+{% include "partials/clusters/profile_learning.html" %}
+{% elif profile_tab == "loans" %}
+{% include "partials/clusters/profile_loans.html" %}
+{% elif profile_tab == "stories" %}
+{% include "partials/clusters/profile_stories.html" %}
+{% elif profile_tab == "history" %}
+{% include "partials/clusters/profile_history.html" %}
+{% else %}
 <div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
 <!-- Left Column: Cluster Information & Schools -->
 <div class="lg:col-span-2 space-y-6">
@@ -142,7 +182,7 @@ schools.{% endcomment %}
 <ul class="space-y-2 text-[12px]">
 {% for row in catchment_rows %}
 <li class="flex flex-wrap items-center justify-between gap-2{% if not row.active %} opacity-60{% endif %}">
-<span><strong class="text-slate-800">{{ row.district.name }}</strong> · {{ row.get_relationship_type_display }}{% if row.relationship_type == "neighbouring" %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}{% if row.reason and row.relationship_type == "neighbouring" %}<span class="block edify-text-caption text-slate-500">{{ row.reason }}</span>{% endif %}<span class="block edify-text-caption text-slate-400">From {{ row.effective_from|date:"j M Y" }}{% if row.effective_to %} to {{ row.effective_to|date:"j M Y" }}{% endif %}{% if not row.active %} · Ended{% if row.ended_reason %}: {{ row.ended_reason }}{% endif %}{% endif %}</span></span>
+<span><strong class="text-slate-800">{% district_link row.district.name row.district.id %}</strong> · {{ row.get_relationship_type_display }}{% if row.relationship_type == "neighbouring" %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}{% if row.reason and row.relationship_type == "neighbouring" %}<span class="block edify-text-caption text-slate-500">{{ row.reason }}</span>{% endif %}<span class="block edify-text-caption text-slate-400">From {{ row.effective_from|date:"j M Y" }}{% if row.effective_to %} to {{ row.effective_to|date:"j M Y" }}{% endif %}{% if not row.active %} · Ended{% if row.ended_reason %}: {{ row.ended_reason }}{% endif %}{% endif %}</span></span>
 {% if can_manage_catchments and row.active and row.relationship_type == "neighbouring" %}
 <button type="button" hx-get="/clusters/{{ cluster.id }}/catchment/{{ row.id }}/end" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-ghost h-8">End</button>
 {% endif %}
@@ -154,7 +194,7 @@ schools.{% endcomment %}
 {% if catchment_outside_members %}
 <div class="edify-note" data-tone="warning" data-catchment-review>
 <strong>{{ catchment_outside_members|length }} school{{ catchment_outside_members|length|pluralize }} outside this cluster's catchment.</strong>
-Approve the district, or move the school to a cluster serving it: {% for s in catchment_outside_members %}{{ s.name }} ({{ s.district.name }}){% if not forloop.last %}, {% endif %}{% endfor %}.
+Approve the district, or move the school to a cluster serving it: {% for s in catchment_outside_members %}{{ s.name }} ({% district_link s.district.name s.district.id %}){% if not forloop.last %}, {% endif %}{% endfor %}.
 </div>
 {% endif %}
 </div>
@@ -398,34 +438,18 @@ aria-label="Remove {{ s.name }} from this cluster"
 </div>
 </div>
 
-<!-- Full Intervention Scorecard -->
+<!-- Full Intervention Scorecard: each intervention this year beside last
+     year (owner, 2026-10-09); apps.ssa.year_comparison. -->
+{% if cluster_ssa.has_any %}
+{% ssa_year_chart cluster_ssa "Full Cluster Scorecard" %}
+{% else %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
-<div class="space-y-3.5">
-{% if intervention_summary %}
-{% for item in intervention_summary %}
-{% comment %} cluster_intervention_summary() returns `avg`, not `score` — this panel
-   read `item.score`, so every intervention showed a blank score and a
-   0%-width bar. `avg` is None when no confirmed SSA covers the
-   intervention; show an explicit dash rather than a misleading 0. {% endcomment %}
-<div>
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<span class="truncate">{{ item.label }}</span>
-<span class="font-semibold {% if item.avg == None %}text-slate-300{% endif %}">{% if item.avg == None %}—{% else %}{{ item.avg|floatformat:1 }}{% endif %}</span>
-</div>
-<div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
-{% if item.avg != None %}
-<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg|multiply:10 }}%"></div>
-{% endif %}
-</div>
-</div>
-{% endfor %}
-{% else %}
 <p class="text-[12px] text-slate-400 font-semibold">No scores recorded.</p>
+</div>
 {% endif %}
 </div>
 </div>
-</div>
-</div>
+{% endif %}
 </div>
 {% endblock %}

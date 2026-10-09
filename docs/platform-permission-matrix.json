@@ -7565,6 +7565,53 @@
    "view": "apps.frontend.views.cce_leadership_views.report_start"
   },
   {
+   "page_permission": "cluster_management",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/cluster-management/",
+   "route_name": "cluster_management",
+   "view": "apps.frontend.views.cluster_management_views.cluster_management_view"
+  },
+  {
+   "page_permission": "cluster_management",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/cluster-management/<str:section>",
+   "route_name": "cluster_management_section",
+   "view": "apps.frontend.views.cluster_management_views.cluster_management_view"
+  },
+  {
+   "page_permission": "cluster_scoring",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/cluster-management/scoring",
+   "route_name": "cluster_scoring",
+   "view": "apps.frontend.views.cluster_management_views.cluster_scoring_view"
+  },
+  {
    "page_permission": "cluster_oversight",
    "required_permissions": [],
    "role_exclusive": false,
@@ -8964,6 +9011,20 @@
    "route": "/country-planning-oversight/team/<str:staff_id>",
    "route_name": "country_planning_oversight_team",
    "view": "apps.frontend.views.oversight_views.country_planning_team_view"
+  },
+  {
+   "page_permission": "country_planning_oversight",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/country-profile",
+   "route_name": "country_profile",
+   "view": "apps.frontend.views.profile_views.country_profile_view"
   },
   {
    "page_permission": "coverage",
@@ -18410,6 +18471,23 @@
    "view": "apps.frontend.views.hr_views.strategic_priority_action_view"
   },
   {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/sub-regions/<str:sub_region_id>",
+   "route_name": "sub_region_profile",
+   "view": "apps.frontend.views.profile_views.sub_region_profile_view"
+  },
+  {
    "page_permission": "succession_planning",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19375,27 +19453,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 447,
-  "Admin": 1091,
+  "Accountant": 448,
+  "Admin": 1096,
   "BusinessTransformationOfficer": 241,
-  "CCEO": 572,
-  "CountryDirector": 827,
+  "CCEO": 575,
+  "CountryDirector": 832,
   "HumanResources": 329,
-  "ImpactAssessment": 696,
+  "ImpactAssessment": 701,
   "MfiLoanOfficer": 137,
   "MfiPartnerAdmin": 140,
   "PartnerAdmin": 235,
   "PartnerFieldOfficer": 235,
-  "Program Lead": 677,
-  "ProjectCoordinator": 480,
-  "RegionalProgramLead": 346,
-  "RegionalVicePresident": 418
+  "Program Lead": 680,
+  "ProjectCoordinator": 481,
+  "RegionalProgramLead": 348,
+  "RegionalVicePresident": 421
  },
  "summary": {
-  "page_keys_declared": 184,
-  "page_keys_in_navigation": 201,
-  "routes_guarded": 1188,
-  "routes_total": 1384,
+  "page_keys_declared": 186,
+  "page_keys_in_navigation": 203,
+  "routes_guarded": 1193,
+  "routes_total": 1389,
   "routes_unguarded": 196,
   "surfaces_no_role_can_reach": 0
  },

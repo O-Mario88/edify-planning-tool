@@ -327,7 +327,7 @@
           {% for row in heatmap|slice:":5" %}
             <div class="grid grid-cols-5 items-center edify-text-caption text-center font-bold">
               <div class="text-left edify-text-muted truncate col-span-2 pr-1.5" title="{{ row.staff_name }}">
-                {{ row.staff_name }}
+                {% staff_link row.staff_name row.staff_id %}
               </div>
               {% for week in row.weeks|slice:":3" %}
                 <div class="flex items-center justify-center">

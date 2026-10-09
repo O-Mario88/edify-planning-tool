@@ -259,9 +259,41 @@ class SchoolClusterMembership(TimeStampedModel):
         )
 
 
+class ClusterScoreSetting(TimeStampedModel):
+    """How the cluster scores are weighted (owner brief, 2026-10-08).
+
+    "Not a mysterious AI score. A transparent composite ... CD/IA should be
+    able to configure weights rather than developers hard-coding them", and of
+    the maturity levels, "make the criteria configurable".
+
+    Nothing a score is made of is stored here — only how much each part counts.
+    A change is a new row, never an edit, so who set the weights a past report
+    was read under, and when, stays answerable; the newest row is the one in
+    force. With no row, ``apps.clusters.scores`` uses its defaults, which are
+    the brief's own table.
+    """
+
+    id = CuidField()
+    health_weights = models.JSONField(default=dict, blank=True)
+    impact_weights = models.JSONField(default=dict, blank=True)
+    teacher_weights = models.JSONField(default=dict, blank=True)
+    leader_weights = models.JSONField(default=dict, blank=True)
+    maturity_rules = models.JSONField(default=dict, blank=True)
+    set_by = models.CharField(max_length=30, blank=True, default="")
+    note = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "cluster_score_setting"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Cluster score weights set {self.created_at:%Y-%m-%d}"
+
+
 __all__ = [
     "CatchmentRelationship",
     "Cluster",
+    "ClusterScoreSetting",
     "ClusterServiceDistrict",
     "ClusterSubCounty",
     "SchoolClusterAssignment",

@@ -24,7 +24,7 @@ disagree; every card opens that partner there, where reminders are sent.
   <section class="plwk-box edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm" aria-labelledby="plwk-partner-{{ forloop.counter }}-title" data-pl-week-partner="{{ group.partner_id }}">
     <header class="plwk-box__header plwk-box__header--split">
       <div>
-        <h3 id="plwk-partner-{{ forloop.counter }}-title" class="plwk-box__name">{{ group.partner_name }}</h3>
+        <h3 id="plwk-partner-{{ forloop.counter }}-title" class="plwk-box__name">{% partner_link group.partner_name group.partner_id %}</h3>
         <p class="plwk-box__hint">{{ group.done }} submitted · {{ group.started }} in progress · {% if group.exceptions %}<span data-tone="danger">{{ group.not_delivered }} not delivered · {{ group.late_before }} late from before</span>{% else %}nothing late{% endif %} · {{ group.upcoming }} to come</p>
       </div>
       <a class="rpl-card__link" href="/partner-oversight/{% if group.partner_id %}?partner={{ group.partner_id|urlencode }}{% endif %}">Partner Monitoring <span aria-hidden="true">&rarr;</span></a>
@@ -32,7 +32,7 @@ disagree; every card opens that partner there, where reminders are sent.
     {% paginate group.rows group.page_param week.rows_per_page as partner_pager %}
     <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ group.partner_name }}'s work">
       <table class="rpl-table plwk-table" data-mobile-table="scroll">
-        <caption class="sr-only">{{ group.partner_name }}'s work this week and anything still late from before it, most urgent first.</caption>
+        <caption class="sr-only">{% partner_link group.partner_name group.partner_id %}'s work this week and anything still late from before it, most urgent first.</caption>
         <thead>
           <tr>
             <th scope="col">Day</th>

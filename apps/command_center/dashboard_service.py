@@ -5,13 +5,12 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.clusters.models import Cluster, SchoolClusterAssignment
 from apps.core.clock import local_clock
-from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.command_center.planning_progress import (
     PERIOD_DESCRIPTION,
@@ -21,7 +20,6 @@ from apps.command_center.planning_progress import (
 )
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.partners.models import Partner
-from apps.ssa.models import SsaScore
 
 
 def _ugx_compact_top(val):
@@ -294,29 +292,39 @@ class DashboardMetricsService:
         weekly_progress = planning_progress_series(progress_qs, progress_period, today)
 
         # 5. SSA Interventions Performance
-        ssa_averages = (
-            SsaScore.objects.filter(
-                ssa_record__verification_status="confirmed",
-                ssa_record__deleted_at__isnull=True,
-            )
-            .values("intervention")
-            .annotate(avg_val=Avg("score"))
-            .order_by("-avg_val")
-        )
+        # The latest year with confirmed assessments, each intervention
+        # beside the year before (owner, 2026-10-09: "we shall be comparing
+        # previous FY SSA scores with the current SSA Scores to measure
+        # improvement"). It was one average over every year ever confirmed,
+        # which a good or bad year long past could hold still.
+        from apps.schools.models import School
+        from apps.ssa.year_comparison import intervention_comparison
 
-        interv_map = dict(SsaIntervention.choices)
+        ssa_years = intervention_comparison(
+            School.objects.filter(deleted_at__isnull=True).values("id")
+        )
         best_interventions = []
         weakest_interventions = []
 
-        for item in ssa_averages:
-            code = item["intervention"]
-            label = interv_map.get(code, code)
-            score = round(item["avg_val"], 1)
-            percentage = min(
-                100, round(item["avg_val"] / 10.0 * 100)
-            )  # SSA scores are 0-10
+        # The comparison is the running year against the one before (owner,
+        # 2026-10-09: "fy2026 vs fy2027 not 2025"). Strongest and weakest are
+        # ranked on the newer reading each intervention has: this year's once
+        # it is measured, last year's until then, so the two panels are not
+        # empty for the first weeks of a year.
+        def _reading(row):
+            return row["current"] if row["current"] is not None else row["previous"]
 
-            data_row = {"name": label, "score": score, "percentage": percentage}
+        for item in sorted(
+            (row for row in ssa_years["rows"] if _reading(row) is not None),
+            key=lambda row: (-_reading(row), row["label"]),
+        ):
+            data_row = {
+                "name": item["label"],
+                "score": round(_reading(item), 1),
+                "previous": item["previous"],
+                "current": item["current"],
+                "percentage": min(100, round(_reading(item) * 10)),
+            }
             if len(best_interventions) < 3:
                 best_interventions.append(data_row)
             else:
@@ -925,6 +933,12 @@ class DashboardMetricsService:
             "progress_tabs": planning_progress_tabs(progress_period),
             "progress_description": PERIOD_DESCRIPTION[progress_period],
             "best_interventions": best_interventions,
+            "ssa_years": {
+                "current": ssa_years["label"],
+                "previous": ssa_years["previous_label"]
+                if ssa_years["has_previous"]
+                else "",
+            },
             "weakest_interventions": weakest_interventions,
             "team_targets": team_targets,
             "priority_schools": priority_schools,

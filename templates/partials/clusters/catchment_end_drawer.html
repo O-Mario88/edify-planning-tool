@@ -12,7 +12,7 @@
       class="space-y-4 text-[12px] text-slate-600">
   {% csrf_token %}
   {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
-  <p class="edify-note" data-tone="warning">No new school from {{ row.district.name }} can join {{ cluster.name }} once this ends. Schools already in the cluster stay and are listed for review.</p>
+  <p class="edify-note" data-tone="warning">No new school from {% district_link row.district.name row.district.id %} can join {% cluster_link cluster.name cluster.id %} once this ends. Schools already in the cluster stay and are listed for review.</p>
   <div class="space-y-1">
     <label for="ce-reason" class="block edify-text-caption font-semibold text-slate-600">Reason <span class="text-rose-500">*</span></label>
     <textarea id="ce-reason" name="reason" rows="3" required

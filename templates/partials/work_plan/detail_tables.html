@@ -30,8 +30,8 @@ The rows and their figures are the ones the summary above is added up from.
           <td class="whitespace-nowrap">{{ r.activity_word }}</td>
           <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"—" }}</td>
           <th scope="row" data-record-title>{% if r.school_name %}{% school_link r.school_name r.school_code %}{% else %}—{% endif %}</th>
-          <td>{{ r.district_name|default:"—" }}</td>
-          <td>{{ r.cluster_name|default:"—" }}</td>
+          <td>{% district_link r.district_name r.district_id empty="—" %}</td>
+          <td>{% cluster_link r.cluster_name r.cluster_id empty="—" %}</td>
           <td>{{ r.activity_purpose }}</td>
           <td>{{ r.focus_intervention|default:"Not linked" }}{% include "partials/ssa/plan_verdict.html" with verdict=r.ssa_verdict compact=True %}</td>
           <td class="whitespace-nowrap tabular-nums">{{ r.previous_ssa_score|default:"—" }}</td>

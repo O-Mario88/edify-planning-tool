@@ -1,0 +1,50 @@
+{% load components table_pagination %}
+{% comment %}
+Cluster profile, Membership History (owner brief, 2026-10-08: "maintain a
+proper Cluster Membership relationship ... A school can potentially move
+clusters in a future FY without destroying historical analytics").
+
+The record was already kept (owner, 2026-09-15: every join, change and removal
+opens or closes a row with who did it, why and when); this is where a cluster
+shows it. Current members first, then the schools that have left.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="history">
+{% paginate membership.rows "history_page" as history_pager %}
+{% data_table name="cluster-membership-history" %}
+{% slot title %}Membership History{% endslot %}
+{% slot summary %}{{ membership.current }} current member{{ membership.current|pluralize }} · {{ membership.former }} former{% endslot %}
+{% slot caption %}Every school that has belonged to {{ cluster.name }}: School ID, school, its district when it joined, the date it joined and who added it, the date it left and who removed it, and the reason recorded.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No school has joined this cluster yet." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=history_pager param="history_page" %}{% endslot %}
+{% if membership.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2">District</th>
+<th scope="col" class="px-3 py-2">Joined</th>
+<th scope="col" class="px-3 py-2">Added By</th>
+<th scope="col" class="px-3 py-2">Left</th>
+<th scope="col" class="px-3 py-2">Removed By</th>
+<th scope="col" class="px-3 py-2">Reason</th>
+<th scope="col" class="px-3 py-2">Membership</th>
+</tr>
+</thead>
+<tbody>
+{% for row in history_pager.rows %}
+<tr data-membership-school="{{ row.school_id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.school_id %}</th>
+<td class="px-3 py-2" data-label="District">{{ row.district|default:"—" }}{% if row.cross_district %} {% include "components/badge.html" with tone="info" label="Cross-District" %}{% endif %}</td>
+<td class="px-3 py-2 tabular-nums" data-label="Joined">{{ row.joined|date:"j M Y" }}</td>
+<td class="px-3 py-2" data-label="Added By">{{ row.joined_by|default:"—" }}</td>
+<td class="px-3 py-2 tabular-nums" data-label="Left">{% if row.left %}{{ row.left|date:"j M Y" }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2" data-label="Removed By">{{ row.ended_by|default:"—" }}</td>
+<td class="px-3 py-2" data-label="Reason">{% if row.left %}{{ row.end_reason|default:"—" }}{% else %}{{ row.start_reason|default:"—" }}{% endif %}</td>
+<td class="px-3 py-2" data-label="Membership">{% if row.is_member %}{% include "components/badge.html" with tone="success" label="Current" %}{% else %}{% include "components/badge.html" with tone="neutral" label="Former" %}{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+</div>

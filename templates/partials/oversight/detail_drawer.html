@@ -71,7 +71,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
       <div><dt class="edify-text-caption edify-text-subtle">Supervising PL</dt>
         <dd>{{ item.supervising_pl_name|default:"Unassigned" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Partner</dt>
-        <dd>{{ item.partner_name|default:"—" }}</dd></div>
+        <dd>{% partner_link item.partner_name item.partner_id empty="—" %}</dd></div>
     </dl>
   </section>
 
@@ -141,7 +141,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
   <section aria-labelledby="detail-handover">
     <h3 id="detail-handover" class="text-sm font-semibold mb-2">Partner handover</h3>
     <p class="text-sm">
-      Handed to {{ lineage.assignment.partner.name }} and scheduled by them.
+      Handed to {% partner_link lineage.assignment.partner.name lineage.assignment.partner.id %} and scheduled by them.
       {% if lineage.assignment.created_at %}Assigned {{ lineage.assignment.created_at|date:"j M Y" }}.{% endif %}
     </p>
   </section>

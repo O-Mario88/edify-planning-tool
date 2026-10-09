@@ -549,9 +549,27 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
     # 4. Date of last activity: the last meeting or training delivered.
     last_activities = _last_delivered_dates(cluster_ids)
 
+    # 4b. How each cluster's schools are taking part, and how their SSA has
+    # moved (owner brief, 2026-10-08: the cluster table shows meeting
+    # attendance and SSA change, and "every number should drill into the
+    # underlying data"). The same reads as the cluster profile's Attendance
+    # and SSA Movement tabs, for every cluster in the same few queries, so a
+    # figure here is the figure its link opens.
+    from apps.clusters import profile_insights as insights
+
+    members = insights.member_schools(cluster_ids)
+    attendance = insights.attendance_by_cluster(
+        cluster_ids, fy=page_fy, members=members
+    )
+    ssa_fy, movement = insights.ssa_movement_for_page(
+        cluster_ids, fy=page_fy, members=members
+    )
+
     # 5. Format cluster table rows (excluding Responsible CCEO column)
     formatted_clusters = []
     for cluster in clusters:
+        attended = attendance[cluster.id]
+        moved = movement[cluster.id]["overall"]
         owner = owners.get((cluster.responsible_staff_id or "").strip())
         lead = _supervisor_of(owner)
         c_avg = ssa_avgs.get(cluster.id)
@@ -570,6 +588,13 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
                 "ssa_score_avg": avg_str,
                 "least_performing_intervention": least_str,
                 "last_activity_date": last_act_str,
+                "has_engagement": True,
+                "attendance_rate": attended["rate"],
+                "attendance_fy": page_fy,
+                "absent_schools": len(attended["drifting"]),
+                "ssa_change": moved.change,
+                "ssa_compared": moved.compared,
+                "ssa_fy": ssa_fy,
                 "schools_count": cluster_schools_count.get(cluster.id, 0),
                 "owner_id": getattr(owner, "id", None),
                 "owner_user_id": getattr(owner, "user_id", None),
@@ -910,6 +935,10 @@ def cluster_oversight_table_data(principal, *, fy: str | None = None) -> dict:
         "total_clusters": len(clusters),
         "total_schools": len(schools),
         "perf_totals": perf_totals,
+        "attendance_fy": page_fy,
+        "ssa_movement_fy": ssa_fy,
+        "ssa_movement_previous_fy": str(int(ssa_fy) - 1),
+        "absent_after": insights.MISSED_IN_A_ROW_ALERT,
     }
 
 

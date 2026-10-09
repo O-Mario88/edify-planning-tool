@@ -80,6 +80,9 @@ IA_SIDEBAR = [
             ("Country Oversight", "/country-planning-oversight/"),
             ("Country Map", "/country-map/"),
             ("Cluster Oversight", "/cluster-oversight/"),
+            # One entry for the whole of Cluster Management (owner brief,
+            # 2026-10-08); its sections are tabs on the page.
+            ("Cluster Management", "/cluster-management/"),
             ("Core School Oversight", "/core-schools-oversight/"),
             ("Partner Oversight", "/partner-oversight/"),
             ("Project Monitoring", "/projects/monitoring"),

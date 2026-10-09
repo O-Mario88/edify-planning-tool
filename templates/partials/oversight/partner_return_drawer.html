@@ -39,7 +39,7 @@ who sent the work back.
               placeholder="Exactly what {{ partner_name }} must fix before resubmitting" class="w-full"></textarea>
   </div>
 
-  <p class="edify-text-caption text-slate-500">{{ partner_name }} is told, corrects the evidence and resubmits from the same evidence page.</p>
+  <p class="edify-text-caption text-slate-500">{% partner_link partner_name partner_id %} is told, corrects the evidence and resubmits from the same evidence page.</p>
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>

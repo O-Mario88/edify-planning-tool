@@ -16,6 +16,7 @@ from .views import (
     dashboard_views,
     school_views,
     cluster_views,
+    cluster_management_views,
     planning_views,
     fy_planning_views,
     ownership_views,
@@ -31,6 +32,7 @@ from .views import (
     finance_views,
     partner_views,
     extended_views,
+    profile_views,
     project_capacity_views,
     message_views,
     core_schools_views,
@@ -905,6 +907,24 @@ urlpatterns = [
         "cluster-oversight/",
         oversight_views.cluster_oversight_view,
         name="cluster_oversight",
+    ),
+    # Cluster Management (owner brief, 2026-10-08): one page whose sections
+    # are tabs, and the page where the scores' weights are set. `scoring`
+    # is declared before the section so it is not read as one.
+    path(
+        "cluster-management/",
+        cluster_management_views.cluster_management_view,
+        name="cluster_management",
+    ),
+    path(
+        "cluster-management/scoring",
+        cluster_management_views.cluster_scoring_view,
+        name="cluster_scoring",
+    ),
+    path(
+        "cluster-management/<str:section>",
+        cluster_management_views.cluster_management_view,
+        name="cluster_management_section",
     ),
     path(
         "core-schools-oversight/",
@@ -2400,6 +2420,14 @@ urlpatterns = [
         extended_views.district_detail_view,
         name="district_detail",
     ),
+    # Profiles that are the shared profile sections and nothing else
+    # (apps.analytics.profile_intelligence; owner's brief, 2026-10-09).
+    path(
+        "sub-regions/<str:sub_region_id>",
+        profile_views.sub_region_profile_view,
+        name="sub_region_profile",
+    ),
+    path("country-profile", profile_views.country_profile_view, name="country_profile"),
     path("reports", extended_views.reports_view, name="reports"),
     path("coverage", extended_views.coverage_view, name="coverage"),
     # ── GROUP 6: Admin, Settings, Messages, Leaves & Search ───────────────────

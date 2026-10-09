@@ -37,7 +37,7 @@ since; each opens the record drawer with the observation linked.
     <ul class="partner-engagement-observations__list">
       {% for observation in engagement.observations %}
       <li class="partner-engagement-observations__item">
-        <span class="edify-note__body">{{ observation.partner_name }} · {{ observation.label }} · observed {{ observation.held_on }}</span>
+        <span class="edify-note__body">{% partner_link observation.partner_name observation.partner_id %} · {{ observation.label }} · observed {{ observation.held_on }}</span>
         {% if engagement.can_record %}<button type="button" class="rpl-row-link rounded-control" hx-get="{{ observation.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>{% endif %}
       </li>
       {% endfor %}

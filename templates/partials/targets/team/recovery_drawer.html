@@ -14,7 +14,7 @@
     <li class="py-2.5">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="min-w-0">
-          <p class="text-[12px] font-semibold text-slate-700">{{ p.staff_name }} · {{ p.area.label }}</p>
+          <p class="text-[12px] font-semibold text-slate-700">{% staff_link p.staff_name p.staff_id %} · {{ p.area.label }}</p>
           <p class="edify-text-caption text-slate-500">{{ p.month_label }} · {{ p.activities_proposed }} proposed · {{ p.school_ids|length }} school(s){% if p.planned_dates %} · dated (will be scheduled &amp; costed){% endif %}</p>
           {% if p.note %}<p class="edify-text-caption text-slate-500 mt-1">{{ p.note }}</p>{% endif %}
           {% if p.status == 'returned' and p.return_reason %}<p class="edify-text-caption text-rose-600 font-semibold mt-1">Returned: {{ p.return_reason }}</p>{% endif %}

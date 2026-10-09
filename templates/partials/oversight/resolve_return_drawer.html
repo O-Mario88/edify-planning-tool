@@ -23,7 +23,7 @@ own route (`submit_url`).
 <div class="space-y-3" data-project-locked>
   <p class="text-sm">This school's work belongs to {% firstof item.project_name "a Special Project" %}.</p>
   <p class="edify-text-caption edify-text-muted">
-    Only its Project Coordinator decides what happens to work {{ item.partner_name|default:"the partner" }}
+    Only its Project Coordinator decides what happens to work {% partner_link item.partner_name item.partner_id empty="the partner" %}
     returned. Follow it on Project Monitoring.
   </p>
 </div>

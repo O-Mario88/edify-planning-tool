@@ -57,7 +57,7 @@
           <svg class="h-4 w-4 mt-0.5 shrink-0" style="color: var(--edify-success-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           <span>
             <strong>{{ row.activity.get_activity_type_display }}</strong>
-            — {% if row.activity.school %}{% school_link row.activity.school.name row.activity.school.id %}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
+            — {% if row.activity.school %}{% school_link row.activity.school.name row.activity.school.id %}{% elif row.activity.cluster %}{% cluster_link row.activity.cluster.name row.activity.cluster.id %}{% else %}—{% endif %}
           </span>
         </li>
         {% endif %}{% endfor %}

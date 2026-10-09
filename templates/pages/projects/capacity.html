@@ -90,7 +90,7 @@ rather than in every card (owner, 2026-09-30: show each thing once).{% endcommen
       <tbody>
       {% for a in staff_pager.rows %}
         <tr data-allocation-row="{{ a.capacity_id }}">
-          <td data-pinned-stack><strong class="text-slate-800">{{ a.staff_name }}</strong></td>
+          <td data-pinned-stack><strong class="text-slate-800">{% staff_link a.staff_name a.staff_id %}</strong></td>
           <td class="text-right tabular-nums">{{ a.maximum }}</td>
           <td class="text-right tabular-nums">{{ a.assigned }}</td>
           <td class="text-right tabular-nums"><strong>{{ a.remaining }}</strong></td>

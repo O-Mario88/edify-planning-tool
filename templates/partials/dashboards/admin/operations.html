@@ -85,7 +85,7 @@
                   <table class="admin-table">
                     <caption class="sr-only">Cluster performance by average SSA score</caption>
                     <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
-                    <tbody>{% for cluster in cluster_performance_pager.rows %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{{ cluster.name }}{% endif %}{% endwith %}{% else %}{{ cluster.name }}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><span class="edify-text-muted">History unavailable</span></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+                    <tbody>{% for cluster in cluster_performance_pager.rows %}<tr><td><strong>{% if cluster.id %}{% with cluster_url="/clusters/"|add:cluster.id %}{% if request.user|can_open:cluster_url %}<a href="{{ cluster_url }}" class="hover:underline">{{ cluster.name }}</a>{% else %}{% cluster_link cluster.name cluster.id %}{% endif %}{% endwith %}{% else %}{% cluster_link cluster.name cluster.id %}{% endif %}</strong></td><td>{% if cluster.avg_ssa is not None and cluster.avg_ssa != "—" %}{{ cluster.avg_ssa }}/10{% else %}Not measured{% endif %}</td><td><span class="edify-text-muted">History unavailable</span></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
                   </table>
                   {% include "components/table_pager.html" with pager=cluster_performance_pager param="cluster_performance_page" %}
                 </div>
@@ -125,16 +125,19 @@
       <section class="admin-panel admin-ssa"
                        {% include "components/registered_card_attrs.html" with card=cards.ssa_snapshot %} aria-labelledby="admin-ssa-title">
                 <header class="admin-panel__header"><h2 id="admin-ssa-title">SSA Performance Snapshot</h2><a href="/reports">View Report</a></header>
+                {% comment %}Last year's score in the full colour inside this
+                year's in its tint (owner, 2026-10-09).{% endcomment %}
+                {% if ssa_years.previous %}<p class="admin-ssa-years"><span><i class="edify-cutout__key edify-cutout__key--first"></i>{{ ssa_years.previous }}</span><span><i class="edify-cutout__key edify-cutout__key--second"></i>{{ ssa_years.current }}</span></p>{% elif ssa_years.current %}<p class="admin-ssa-years"><span><i class="edify-cutout__key edify-cutout__key--first"></i>{{ ssa_years.current }}</span></p>{% endif %}
                 <div class="admin-intervention-group">
                   <h3>Best performing interventions</h3>
                   {% for item in best_interventions %}
-                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="success" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span>{% include "components/ssa_cutout_track.html" with current=item.current previous=item.previous extra="admin-ssa-track" %}<strong>{{ item.score }}</strong></div>
                   {% empty %}<div class="admin-empty admin-empty--compact"><span>No verified SSA scores yet.</span></div>{% endfor %}
                 </div>
                 <div class="admin-intervention-group">
                   <h3>Weakest interventions</h3>
                   {% for item in weakest_interventions %}
-                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="warning" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span>{% include "components/ssa_cutout_track.html" with current=item.current previous=item.previous extra="admin-ssa-track" %}<strong>{{ item.score }}</strong></div>
                   {% empty %}<div class="admin-empty admin-empty--compact"><span>No low-performing interventions identified.</span></div>{% endfor %}
                 </div>
               </section>

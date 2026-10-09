@@ -1,0 +1,36 @@
+{% load components %}{% comment %}
+The year a profile reads, and — on its Schools tab — which schools it lists.
+`pi` is frontend.views.profile_views.profile_context.
+{% endcomment %}
+{% filter_bar action=pi.base_url label="Profile year" %}
+  <input type="hidden" name="{{ pi.param }}" value="{{ pi.tab }}">
+  {% for key, value in pi.keep.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+  <label class="block">
+    <span class="edify-filter-label">Fiscal year</span>
+    <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+      {% for option in pi.fy_options %}
+      <option value="{{ option.value }}"{% if option.value == pi.fy %} selected{% endif %}>{{ option.label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% comment %}The part of the year the work is read for: visits, trainings,
+  meetings and project work. SSA is a yearly reading and stays the year's.{% endcomment %}
+  <label class="block">
+    <span class="edify-filter-label">Period</span>
+    <select name="period" aria-label="Period" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+      {% for key, label in pi.period_options %}
+      <option value="{{ key }}"{% if key == pi.period %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if pi.section == "schools" %}
+  <label class="block">
+    <span class="edify-filter-label">Show</span>
+    <select name="show" aria-label="Show" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+      {% for key, label in pi.show_options %}
+      <option value="{{ key }}"{% if key == pi.show %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+{% endfilter_bar %}

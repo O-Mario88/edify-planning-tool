@@ -80,7 +80,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <tr class="">
 <td class="px-6 py-3" data-record-title>
 <div class="font-semibold text-slate-900">{{ inv.get_invoice_type_display }}</div>
-<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ inv.created_at|date:"M d, Y" }} · {{ inv.partner_name }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ inv.created_at|date:"M d, Y" }} · {% partner_link inv.partner_name inv.partner_id %}</div>
 </td>
 <td class="px-6 py-3" data-label="Period">
 <div class="font-semibold text-slate-800">{{ inv.period_start|date:"d M" }} – {{ inv.period_end|date:"d M Y" }}</div>

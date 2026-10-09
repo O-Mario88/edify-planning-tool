@@ -16,7 +16,7 @@ the PL's confirmation follow it.{% endcomment %}
       {% for inv in partner_invoices %}
       <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[13px] font-bold text-slate-800">{{ inv.partner_name }} · {{ inv.get_invoice_type_display }} · {{ inv.reference }}</p>
+          <p class="text-[13px] font-bold text-slate-800">{% partner_link inv.partner_name inv.partner_id %} · {{ inv.get_invoice_type_display }} · {{ inv.reference }}</p>
           <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">
             {{ inv.period_start|date:"d M" }} – {{ inv.period_end|date:"d M Y" }} ·
             {% for category, amount in inv.group_summary.items %}{{ category }} {{ amount|ugx_amount }}{% if not forloop.last %} · {% endif %}{% endfor %}

@@ -1,0 +1,97 @@
+{% load components %}
+{% comment %}
+Cluster profile, Health & Impact (owner brief, 2026-10-08: "Cluster Health:
+is the cluster operating properly? Cluster Impact: is the cluster actually
+changing outcomes? ... Management needs to see both"; "Not a mysterious AI
+score. A transparent composite"; a Teacher and a School Leadership index; a
+maturity level).
+
+One score at a time, as tabs. Each part is a share out of 100 with its basis
+in words beside it, and its weight. A part that cannot be measured is left
+out and the others are scaled up; the title band says how many parts the
+score stands on. What the brief names and the platform does not yet collect
+is listed under the table, so an index never looks more complete than it is.
+The weights are set on the Scoring page by the Country Director and Impact
+Assessment (apps.clusters.scores).
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="scores">
+{% filter_bar label="Scores year" form_id="cluster-scores-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="scores">
+<input type="hidden" name="part" value="{{ score_part }}">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+
+<nav class="oversight-entity-tabs" aria-label="Scores" data-score-parts>
+{% for composite in scorecard.composites %}
+<a class="oversight-entity-tabs__link{% if score_part == composite.key %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=scores&amp;fy={{ profile_fy }}&amp;part={{ composite.key }}"{% if score_part == composite.key %} aria-current="page"{% endif %}><span>{{ composite.label }}</span><span class="oversight-entity-tabs__count">{% if composite.score is None %}—{% else %}{{ composite.score }}{% endif %}</span></a>
+{% endfor %}
+<a class="oversight-entity-tabs__link{% if score_part == 'maturity' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=scores&amp;fy={{ profile_fy }}&amp;part=maturity"{% if score_part == 'maturity' %} aria-current="page"{% endif %}><span>Maturity</span><span class="oversight-entity-tabs__count">{{ scorecard.maturity.level }}</span></a>
+</nav>
+
+{% if score_part == "maturity" %}
+{% data_table name="cluster-maturity" %}
+{% slot title %}Maturity: Level {{ scorecard.maturity.level }}, {{ scorecard.maturity.label }}{% endslot %}
+{% slot summary %}{% if scorecard.maturity.next %}Next: {{ scorecard.maturity.next.label }}{% else %}Every level reached{% endif %}{% endslot %}
+{% slot caption %}The five maturity levels for {{ cluster.name }} in FY {{ profile_fy }}: what each level asks, what the cluster has, and whether the level is reached. A level is reached only when every level below it is.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No maturity levels to show." compact="true" %}{% endslot %}
+{% slot footer %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-score-method>A level is reached only when every level below it is.{% if can_set_weights %} <a href="/cluster-management/scoring" class="edify-primary-text font-semibold hover:underline">Change what each level asks</a>{% endif %}</p>{% endslot %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Level</th>
+<th scope="col" class="px-3 py-2">Name</th>
+<th scope="col" class="px-3 py-2">Asks</th>
+<th scope="col" class="px-3 py-2">This Cluster Has</th>
+<th scope="col" class="px-3 py-2">Reached</th>
+</tr>
+</thead>
+<tbody>
+{% for row in scorecard.maturity.criteria %}
+<tr data-maturity-level="{{ row.level }}">
+<td class="px-3 py-2 tabular-nums" data-label="Level">{{ row.level }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}</th>
+<td class="px-3 py-2" data-label="Asks">{{ row.needs }}</td>
+<td class="px-3 py-2" data-label="This Cluster Has">{{ row.has }}</td>
+<td class="px-3 py-2" data-label="Reached">{% if row.reached %}{% include "components/badge.html" with tone="success" label="Reached" %}{% elif row.met %}{% include "components/badge.html" with tone="warning" label="Met, but a lower level is not" %}{% else %}{% include "components/badge.html" with tone="neutral" label="Not yet" %}{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% enddata_table %}
+
+{% else %}
+{% data_table name="cluster-score" %}
+{% slot title %}{{ score_shown.label }}{% if score_shown.score is None %}: Not Enough Data{% else %}: {{ score_shown.score }} of 100, {{ score_shown.band.0 }}{% endif %}{% endslot %}
+{% slot summary %}{{ score_shown.coverage }} · FY {{ profile_fy }}{% endslot %}
+{% slot caption %}The parts of {{ score_shown.label }} for {{ cluster.name }} in FY {{ profile_fy }}: what each part is read from, its share out of 100 and its weight in the score.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No parts to show." compact="true" %}{% endslot %}
+{% slot footer %}
+<div class="px-4 py-3 space-y-2 edify-text-caption text-slate-500" data-score-method>
+<p>The score is the weighted mean of the parts that could be measured; a part with no figure is left out, not counted as zero. It needs at least {{ score_settings.maturity.min_dimensions|floatformat:0 }} parts. {% if score_settings.is_default %}The weights are the starting weights.{% else %}The weights were last set on {{ score_settings.set_at|date:"j M Y" }}.{% endif %}{% if can_set_weights %} <a href="/cluster-management/scoring" class="edify-primary-text font-semibold hover:underline">Change the weights</a>{% endif %}</p>
+{% if score_not_collected %}<p data-score-not-collected><strong>Not collected on the platform yet, so not in this index:</strong> {% for item in score_not_collected %}{{ item }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>{% endif %}
+</div>
+{% endslot %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Part</th>
+<th scope="col" class="px-3 py-2">Read From</th>
+<th scope="col" class="px-3 py-2 text-right">Score</th>
+<th scope="col" class="px-3 py-2 text-right">Weight</th>
+</tr>
+</thead>
+<tbody>
+{% for part in score_shown.dimensions %}
+<tr data-score-part="{{ part.key }}">
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{{ part.label }}</th>
+<td class="px-3 py-2" data-label="Read From">{{ part.basis }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Score">{{ part.display }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Weight">{{ part.weight|floatformat:0 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% enddata_table %}
+{% endif %}
+</div>

@@ -4,7 +4,7 @@ the shared bar standard (static/js/chart-standard.js) so every chart on the
 platform shares one geometry: a 220px plot, bars no thicker than 22px, one
 hairline grid, values in muted ink, and a data table under the plot.
 {% endcomment %}
-<section class="card edify-data-chart" x-data="{
+<section class="{% if bare %}edify-data-chart edify-data-chart--bare{% else %}card edify-data-chart{% endif %}" x-data="{
  chart: null,
  init() { this.$nextTick(() => { const payload = JSON.parse(this.$el.querySelector('script[type=\'application/json\']').textContent); this.chart = window.EdifyChartSystem.renderDetached(this.$refs.plot, window.EdifyChartSystem.formBase(payload)); }); },
  destroy() { if (this.chart) this.chart.destroy(); }

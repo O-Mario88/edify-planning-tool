@@ -1,0 +1,100 @@
+{% load components table_pagination %}
+{% comment %}
+Cluster profile, SSA Movement (owner brief, 2026-10-08: "Don't only calculate
+Cluster SSA = 7.2 ... Leadership, 16 schools: 9 improved, 4 unchanged, 3
+declined. Clicking '3 declined' opens the actual schools").
+
+One row per SSA area, with last year's and this year's average for the
+schools that have a confirmed SSA in both years, and how many of them
+improved, held or declined. Improved and declined are the platform's one
+definition (apps.ssa.change_rules), so a school counted as declined here is
+the same school the Declining Schools page names. Every count opens its
+schools in this tab's place: one table at a time, never one below another.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="ssa">
+{% filter_bar label="SSA movement year" form_id="cluster-ssa-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="ssa">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+
+{% if ssa_drill %}
+{% paginate ssa_drill.rows "ssa_page" as ssa_pager %}
+{% data_table name="cluster-ssa-schools" %}
+{% slot title %}{{ ssa_drill.area_label }}: {{ ssa_drill.verdict_label }}{% endslot %}
+{% slot summary %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}" class="edify-primary-text font-semibold hover:underline" data-ssa-back>All SSA areas</a> · {{ ssa_drill.rows|length }} school{{ ssa_drill.rows|length|pluralize }}{% endslot %}
+{% slot caption %}Schools of {{ cluster.name }} counted as {{ ssa_drill.verdict_label }} on {{ ssa_drill.area_label }} between FY {{ ssa_movement.previous_fy }} and FY {{ ssa_movement.fy }}: School ID, school, each year's score, the change and the verdict.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No school is in this count." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=ssa_pager param="ssa_page" %}{% endslot %}
+{% if ssa_drill.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ ssa_movement.previous_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ ssa_movement.fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2">Verdict</th>
+</tr>
+</thead>
+<tbody>
+{% for row in ssa_pager.rows %}
+<tr data-ssa-school="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.previous_fy }}">{% if row.before is None %}—{% else %}{{ row.before|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.fy }}">{% if row.after is None %}—{% else %}{{ row.after|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if row.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone }}">{% if row.change > 0 %}+{% endif %}{{ row.change|floatformat:1 }}</span>{% endif %}</td>
+<td class="px-3 py-2" data-label="Verdict">{% include "components/badge.html" with tone=row.tone label=row.verdict_label %}{% if row.note %} <span class="edify-text-caption text-slate-500">{{ row.note }}</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+
+{% else %}
+{% data_table name="cluster-ssa-movement" %}
+{% slot title %}SSA Movement, FY {{ ssa_movement.previous_fy }} to FY {{ ssa_movement.fy }}{% endslot %}
+{% slot summary %}{{ ssa_movement.compared }} of {{ ssa_movement.school_count }} school{{ ssa_movement.school_count|pluralize }} compared{% endslot %}
+{% slot caption %}Each SSA area's average across the schools of {{ cluster.name }} with a confirmed SSA in both years, the change, and how many schools improved, did not change, declined or could not be compared. Each count opens its schools.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="This cluster has no schools to compare." compact="true" %}{% endslot %}
+{% slot footer %}
+<p class="px-4 py-3 edify-text-caption text-slate-500" data-ssa-rule>{{ ssa_movement.rule_sentence }} A school is compared only where it has a confirmed SSA in both years; the others are under Not Compared and are in no average.</p>
+{% endslot %}
+{% if ssa_movement.school_count %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">SSA Area</th>
+<th scope="col" class="px-3 py-2 text-right">Schools Compared</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ ssa_movement.previous_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ ssa_movement.fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2 text-right">Improved</th>
+<th scope="col" class="px-3 py-2 text-right">No Change</th>
+<th scope="col" class="px-3 py-2 text-right">Declined</th>
+<th scope="col" class="px-3 py-2 text-right">Not Compared</th>
+</tr>
+</thead>
+<tbody>
+{% for area in ssa_movement.areas %}
+<tr data-ssa-area="{{ area.key }}">
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{{ area.label }}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Schools Compared">{{ area.compared }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.previous_fy }}">{% if area.before is None %}—{% else %}{{ area.before|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.fy }}">{% if area.after is None %}—{% else %}{{ area.after|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if area.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{% if area.change > 0 %}success{% elif area.change < 0 %}danger{% else %}neutral{% endif %}">{% if area.change > 0 %}+{% endif %}{{ area.change|floatformat:1 }}</span>{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Improved">{% if area.improved %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=improved" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.improved }} school{{ area.improved|pluralize }} improved on {{ area.label }}">{{ area.improved }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="No Change">{% if area.held %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=no_change" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.held }} school{{ area.held|pluralize }} did not change on {{ area.label }}">{{ area.held }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Declined">{% if area.declined %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=declined" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.declined }} school{{ area.declined|pluralize }} declined on {{ area.label }}">{{ area.declined }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Not Compared">{% if area.not_compared %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=not_compared" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.not_compared }} school{{ area.not_compared|pluralize }} not compared on {{ area.label }}">{{ area.not_compared }}</a>{% else %}0{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+{% endif %}
+</div>

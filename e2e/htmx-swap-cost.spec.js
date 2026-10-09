@@ -14,9 +14,14 @@ test('an unrelated HTMX swap redraws no existing chart', async ({ page }, testIn
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Main-thread cost is measured once.');
   await signIn(page, 'pl1@edify.org', 'edify');
   // Tall enough that the trend chart is on screen and renders at once rather
-  // than waiting for the lazy observer.
-  await page.setViewportSize({ width: 1440, height: 2400 });
+  // than waiting for the lazy observer. 2400 was, by two pixels, until the
+  // intervention overview above it became a chart of two years (2026-10-09).
+  await page.setViewportSize({ width: 1440, height: 3600 });
   await page.goto('/ssa', { waitUntil: 'networkidle' });
+  // The page above the trend is as long as its data makes it (the overview
+  // and district charts are two years tall on a seed with last year's SSA):
+  // bring the trend into view rather than trust a viewport height.
+  await page.locator('.sp-trend__chart').scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => document.querySelectorAll('.apexcharts-canvas').length)).toBeGreaterThan(0);
 
   const renders = await page.evaluate(() => new Promise(done => {
@@ -38,9 +43,14 @@ test('a theme switch still redraws the charts', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Measured once.');
   await signIn(page, 'pl1@edify.org', 'edify');
   // Tall enough that the trend chart is on screen and renders at once rather
-  // than waiting for the lazy observer.
-  await page.setViewportSize({ width: 1440, height: 2400 });
+  // than waiting for the lazy observer. 2400 was, by two pixels, until the
+  // intervention overview above it became a chart of two years (2026-10-09).
+  await page.setViewportSize({ width: 1440, height: 3600 });
   await page.goto('/ssa', { waitUntil: 'networkidle' });
+  // The page above the trend is as long as its data makes it (the overview
+  // and district charts are two years tall on a seed with last year's SSA):
+  // bring the trend into view rather than trust a viewport height.
+  await page.locator('.sp-trend__chart').scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => document.querySelectorAll('.apexcharts-canvas').length)).toBeGreaterThan(0);
   const renders = await page.evaluate(() => new Promise(done => {
     let count = 0;

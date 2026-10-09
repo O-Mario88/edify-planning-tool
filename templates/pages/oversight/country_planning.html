@@ -32,6 +32,9 @@ still open — the second Country Oversight tab.{% endcomment %}
   {% page_header eyebrow="Leadership" title="Country Planning Oversight" %}
     {% slot description %}{% if active_oversight_view == "monitor" %}Each CCEO's year against the visits it should hold, the schools planned for training, and the schools nobody has planned for yet — planned and delivered, as it happens.{% elif active_oversight_view == "portfolio" %}Every school in the country portfolio, under the Programme Lead and the CCEO who hold it — with what is planned on each and what that plan costs.{% else %}Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.{% endif %}{% endslot %}
   {% slot aside %}
+    {% comment %}The country read as a profile: its sub-regions, districts,
+    teams, clusters and schools (owner, 2026-10-09).{% endcomment %}
+    <a href="/country-profile" class="edify-action-button h-9" data-country-profile-link>Country Profile</a>
     {% if active_oversight_view == "planning" %}
     {% comment %}CSV and Excel as one Export menu in the header (owner,
     2026-09-25).{% endcomment %}

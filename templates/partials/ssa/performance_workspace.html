@@ -49,7 +49,7 @@
     </div>
     <p class="sp-scope-note">
       <span aria-hidden="true"></span>{{ dashboard.scope.note }}
-      Current view: {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }} · {{ dashboard.filters.region_name }} · {{ dashboard.filters.district_name }}.
+      Current view: {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }} · {{ dashboard.filters.region_name }} · {% district_link dashboard.filters.district_name dashboard.filters.district_id %}.
     </p>
     <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
   </form>
@@ -57,23 +57,9 @@
   {% include "components/context_metrics.html" with items=ssa_kpi_items variant="executive" title="SSA performance key indicators" %}
 
   <div class="sp-dashboard-grid">
-    <section class="sp-card sp-interventions" aria-labelledby="sp-interventions-title">
-      <header class="sp-card__header">
-        <div><span class="sp-card__eyebrow">Eight interventions</span><h2 id="sp-interventions-title">Performance overview</h2></div>
-        <span class="sp-help" title="Average confirmed score for each intervention" aria-label="Average confirmed score for each intervention">i</span>
-      </header>
-      <ol class="sp-intervention-list">
-        {% for intervention in dashboard.interventions %}
-        <li>
-          <span class="sp-rank">{{ forloop.counter }}</span>
-          <span class="sp-intervention-name">{{ intervention.label }}</span>
-          <span class="sp-meter" aria-hidden="true">{% if intervention.width is not None %}<i style="width:{{ intervention.width }}%; background:{{ intervention.band.color }}"></i>{% endif %}</span>
-          <strong{% if intervention.average != None %} style="color: {{ intervention.band.color }}"{% endif %}>{% if intervention.average != None %}{{ intervention.average }}{% else %}—{% endif %}</strong>
-          <span class="sp-band" data-tone="{{ intervention.band.tone }}">{{ intervention.band.label }}</span>
-        </li>
-        {% endfor %}
-      </ol>
-    </section>
+    {% comment %}Each intervention this year beside last year, as cut-out
+    bars (owner, 2026-10-09). It was a list of thin meters of this year alone.{% endcomment %}
+    {% ssa_year_rows_chart dashboard.interventions "label" "previous" "average" dashboard.years.previous dashboard.years.current "Performance overview" "Average confirmed score for each of the eight interventions." %}
 
     <section class="sp-card sp-district-table-card" aria-labelledby="sp-district-title">
       <header class="sp-card__header">
@@ -86,7 +72,7 @@
           <thead><tr><th scope="col">#</th><th scope="col">District</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
           <tbody>
           {% for district in dashboard_districts_pager.rows %}
-          <tr><td>{{ forloop.counter }}</td><th scope="row">{{ district.name }}</th><td>{{ district.schools_assessed }}/{{ district.total_schools }}</td><td><strong data-tone="{{ district.band.tone }}">{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong></td><td>{{ district.weakest }}</td><td><span class="sp-risk-count">{{ district.high_risk }}</span></td><td>{{ district.completion_rate }}%</td></tr>
+          <tr><td>{{ forloop.counter }}</td><th scope="row">{% district_link district.name district.id %}</th><td>{{ district.schools_assessed }}/{{ district.total_schools }}</td><td><strong data-tone="{{ district.band.tone }}">{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong></td><td>{{ district.weakest }}</td><td><span class="sp-risk-count">{{ district.high_risk }}</span></td><td>{{ district.completion_rate }}%</td></tr>
           {% empty %}
           <tr><td colspan="7" class="sp-empty-cell">No districts are available in this scope.</td></tr>
           {% endfor %}
@@ -96,7 +82,7 @@
       </div>
     </section>
 
-    {% score_chart dashboard.districts "name" "average" "District SSA score comparison" %}
+    {% ssa_year_rows_chart dashboard.districts "name" "previous_average" "average" dashboard.years.previous dashboard.years.current "District SSA score comparison" %}
 
     <section class="sp-card sp-matrix-card" aria-labelledby="sp-matrix-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Priority gaps</span><h2 id="sp-matrix-title">Intervention gaps by district</h2></div></header>
@@ -226,7 +212,7 @@
                const cfg = window.EdifyChartSystem.formBase({
                  chart: { type: 'line', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
                  colors: S.comparisonSeries.slice(0, Math.max(1, (payload.series || []).length)),
-                 stroke: { width: 2.25, curve: 'straight', lineCap: 'round' },
+                 stroke: { width: 2.25, curve: 'monotoneCubic', lineCap: 'round' },
                  markers: { size: 4, strokeWidth: 2, hover: { size: 6 } },
                  legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600,
                            markers: { width: 9, height: 9, radius: 9 }, labels: { colors: S.ink.legend } },
