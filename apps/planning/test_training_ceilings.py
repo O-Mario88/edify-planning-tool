@@ -1433,8 +1433,9 @@ class WhoSeesTheSummary(CeilingFixture):
         for heading in (
             "Training Name",
             "Mode of delivery",
-            "Country<br>Ceiling",
-            ">Planned</th>",
+            "Total Covered<br>/ Country Ceiling",
+            "Staff<br>Planned",
+            "Awaiting<br>Partner",
             ">Remaining</th>",
             "# Schools<br>(Mary Officer)",
             "# Schools<br>(Standard CCEO)",
@@ -2328,8 +2329,9 @@ class TheCountryCeiling(CeilingFixture):
         headings = [
             "Training Name",
             "Mode of delivery",
-            "Country<br>Ceiling",
-            ">Planned</th>",
+            "Total Covered<br>/ Country Ceiling",
+            "Staff<br>Planned",
+            "Awaiting<br>Partner",
             ">Remaining</th>",
             "# Schools<br>(Mary Officer)",
             "# Schools<br>(Standard CCEO)",
@@ -2337,6 +2339,13 @@ class TheCountryCeiling(CeilingFixture):
         places = [body.index(heading) for heading in headings]
         self.assertEqual(places, sorted(places))
         self.assertNotIn("Country Target", body)
+        # Owner, 2026-10-09: "get rid of group scheduled, and replace country
+        # ceiling with total covered out of the set ceiling".
+        self.assertNotIn("Group<br>Scheduled", body)
+        # "partner assigned and awaiting partner schedule are duplicate
+        # remove one column and leave one": Awaiting Partner stays.
+        self.assertNotIn("Partner<br>Assigned", body)
+        self.assertNotIn("Country<br>Ceiling", body)
         row = body.split('data-summary-row="training"', 1)[1].split("</tr>", 1)[0]
         for cell, value in (
             ("data-country-ceiling", "30"),
@@ -2344,6 +2353,9 @@ class TheCountryCeiling(CeilingFixture):
             ("data-country-remaining", "10"),
         ):
             self.assertRegex(row, rf"{cell}>(?:<[^>]+>)*{value}<")
+        # "23/1000": the schools covered, then the ceiling, in one cell.
+        cell = row.split("data-country-planned", 1)[1].split("</td>", 1)[0]
+        self.assertRegex(cell, r"20</strong></span>\s*/ <span data-country-ceiling>30<")
 
     def test_admin_and_impact_assessment_are_offered_it_on_the_page(self):
         for principal in (self.admin, self.ia):

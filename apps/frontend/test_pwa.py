@@ -30,6 +30,15 @@ class ManifestTest(TestCase):
         self.assertIn("192x192", sizes)
         self.assertIn("512x512", sizes)
 
+    def test_opening_the_app_again_brings_its_window_forward(self):
+        """Owner, 2026-10-09: "the installed app opens several copies as long
+        as you keep opening from the app icon". A launch with a window
+        already open focuses that window, and leaves its page alone."""
+        data = json.loads(self.client.get("/manifest.webmanifest").content)
+        self.assertEqual(data["launch_handler"]["client_mode"][0], "focus-existing")
+        # Stating the identity must not change it: it was start_url.
+        self.assertEqual(data["id"], data["start_url"])
+
     def test_manifest_includes_maskable_icons(self):
         """Without these Android crops the circle straight through the logo."""
         data = json.loads(self.client.get("/manifest.webmanifest").content)

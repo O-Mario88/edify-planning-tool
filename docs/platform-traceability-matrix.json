@@ -1645,7 +1645,6 @@
         "team_planning_oversight",
         "todos",
         "uploads",
-        "users",
         "work_plan",
         "workforce_planning"
       ],
@@ -3252,7 +3251,6 @@
         "staff_directory",
         "todos",
         "uploads",
-        "users",
         "workforce_planning"
       ],
       "objectGuards": [],
@@ -4854,8 +4852,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "293250871ec67492e127ba39220becc62344e8d7fcca356823d153228669f468",
-    "sources": "222a4f6953278624b8d50045385d8d1d832ab721e07014d1a6b7419aedf226be",
+    "payload": "87235645a26adc8225c8feeef3142e401e9aedbb92e6d12da350ef4238377ddb",
+    "sources": "e373a61faa5e540d737f9e5c59cc744676cb6e6ae72efe0991e8fe8e6f96d374",
     "sourceCount": 244,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

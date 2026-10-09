@@ -42,9 +42,21 @@ def manifest(request):
                 "Plan activities, track field work and monitor school "
                 "performance across Uganda."
             ),
+            # The app's identity, said outright: without it the identity is
+            # whatever start_url happens to be, and changing that would make
+            # an installed copy a different app.
+            "id": "/",
             "start_url": "/",
             "scope": "/",
             "display": "standalone",
+            # One window. Without this, desktop Chrome and Edge answer every
+            # click on the app's icon with another window of the app, so
+            # opening it while it was already running stacked up copies
+            # (owner, 2026-10-09). `focus-existing` brings the open window
+            # forward as it stands -- the page and anything typed in it are
+            # left alone, which `navigate-existing` would replace with
+            # start_url. `auto` is for a browser that knows neither.
+            "launch_handler": {"client_mode": ["focus-existing", "auto"]},
             "orientation": "any",
             "background_color": BRAND,
             "theme_color": BRAND,

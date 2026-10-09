@@ -68,69 +68,62 @@
 }
 
 .edify-session-dialog {
-  inline-size: min(30rem, calc(100vw - 2rem));
-  padding: 1.5rem;
+  inline-size: min(21rem, calc(100vw - 2rem));
+  margin: auto; /* centres it: the reset zeroes margins */
+  padding: 2rem 1.5rem 1.25rem;
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-lg);
   background: var(--edify-surface);
   box-shadow: var(--edify-shadow-lg);
   color: var(--edify-text);
+  text-align: center;
 }
 
 .edify-session-dialog::backdrop {
-  background: rgb(15 23 42 / 0.64);
-  backdrop-filter: blur(6px);
+  background: rgb(15 23 42 / 0.5);
+  backdrop-filter: blur(4px);
 }
 
 .edify-session-dialog[open] {
   display: grid;
-  gap: 1rem;
+  justify-items: center;
+  gap: 0.5rem;
 }
 
 .edify-session-dialog__icon {
   display: grid;
   inline-size: 2.75rem;
   block-size: 2.75rem;
+  margin-block-end: 0.5rem;
   place-items: center;
-  border-radius: var(--edify-radius-md);
-  background: var(--edify-warning-light);
-  color: var(--edify-warning-text);
+  border-radius: 50%;
+  background: var(--edify-surface-muted);
+  color: var(--edify-accent);
 }
 
 .edify-session-dialog__icon svg {
-  inline-size: 1.35rem;
-  block-size: 1.35rem;
-}
-
-.edify-session-dialog__eyebrow {
-  margin: 0 0 0.25rem;
-  color: var(--edify-warning-text);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
 }
 
 .edify-session-dialog h2 {
   margin: 0;
   font-size: var(--edify-text-heading-size);
-  font-weight: 760;
-  letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
-.edify-session-dialog p:not(.edify-session-dialog__eyebrow) {
-  margin: 0.45rem 0 0;
+.edify-session-dialog p {
+  margin: 0;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .edify-session-dialog__actions {
-  display: flex;
-  flex-wrap: wrap-reverse;
-  justify-content: flex-end;
-  gap: 0.625rem;
-  padding-block-start: 0.25rem;
+  display: grid;
+  gap: 0.25rem;
+  inline-size: 100%;
+  padding-block-start: 1rem;
 }
 
 .edify-session-dialog__actions :is(a, button) {
@@ -138,10 +131,9 @@
   min-block-size: 2.75rem;
   align-items: center;
   justify-content: center;
-  padding-inline: 1rem;
   border-radius: var(--edify-radius-sm);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 700;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
 }
 
 .edify-session-dialog__primary {
@@ -150,19 +142,15 @@
 }
 
 .edify-session-dialog__secondary {
-  border: 1px solid var(--edify-border-strong);
-  background: var(--edify-surface);
-  color: var(--edify-text);
+  border: 0;
+  background: transparent;
+  color: var(--edify-text-muted);
 }
 
 @media (max-width: 30rem) {
   .edify-connectivity-status {
     inset-block-start: max(0.5rem, env(safe-area-inset-top));
     inline-size: calc(100vw - 1rem);
-  }
-
-  .edify-session-dialog__actions :is(a, button) {
-    inline-size: 100%;
   }
 }
 

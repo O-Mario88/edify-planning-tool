@@ -121,7 +121,7 @@ other page was relying on them.
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20261008heads2">{% endblock %}
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20261004marks1">
-<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261002tokens2">
+<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261009signin1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -332,7 +332,7 @@ waited for is now kept, so going back to it costs nothing (owner, 2026-09-07).
 Loaded after the chart system, whose teardown it calls before parking a panel.
 {% endcomment %}
 <script defer src="{% static 'js/view-panels.js' %}?v=20260914panels1"></script>
-<script defer src="{% static 'js/platform-status.js' %}?v=20260914states2"></script>
+<script defer src="{% static 'js/platform-status.js' %}?v=20261009signin1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and
@@ -1201,6 +1201,15 @@ data-edify-field-role="{{ request.user|field_role }}"
 <div id="edify-live-polite" class="edify-visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="edify-live-assertive" class="edify-visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
+{% comment %}
+Shown when a request comes back signed out. The page behind it is left as it
+is, so nothing typed is lost.
+
+In a browser tab "Sign in" opens the sign-in page in another tab and this one
+waits. In the installed app a new tab is a second window of the app — every
+expired session left another copy open (owner, 2026-10-09) — so there
+platform-status.js takes the `target` off and the app signs in where it is.
+{% endcomment %}
 <dialog
   id="edify-session-expired-dialog"
   class="edify-session-dialog"
@@ -1208,21 +1217,21 @@ data-edify-field-role="{{ request.user|field_role }}"
   aria-describedby="edify-session-expired-description"
 >
   <div class="edify-session-dialog__icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path stroke-linecap="round" d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
   </div>
-  <div>
-    <p class="edify-session-dialog__eyebrow">Session paused</p>
-    <h2 id="edify-session-expired-title">Sign in to continue</h2>
-    <p id="edify-session-expired-description">
-      Your session expired after inactivity. This page and anything you typed remain open here.
-    </p>
-  </div>
-  <div class="edify-session-dialog__actions">
-    <button type="button" data-session-dialog-close class="edify-session-dialog__secondary">Keep this page open</button>
-    <a href="/login" target="_blank" rel="noopener" class="edify-session-dialog__primary">Open sign in</a>
-  </div>
+  <h2 id="edify-session-expired-title">Sign in to continue</h2>
+  <p id="edify-session-expired-description">You were signed out after a while away.</p>
+  {% comment %}One sentence for both: a browser tab keeps this page open behind
+  the sign-in tab ("Stay on this page" says so), the installed app signs in
+  where it is. The button closes the dialog by itself, being in a dialog's
+  own form.{% endcomment %}
+  <form method="dialog" class="edify-session-dialog__actions">
+    <a href="/login" target="_blank" rel="noopener" class="edify-session-dialog__primary" data-session-dialog-sign-in>Sign in</a>
+    <button data-session-dialog-close class="edify-session-dialog__secondary">Stay on this page</button>
+  </form>
 </dialog>
 
 <!-- Global Flash/Alert Messages -->
