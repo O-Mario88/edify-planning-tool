@@ -29,6 +29,27 @@ class PlatformStatusContractTest(SimpleTestCase):
         self.assertIn('aria-labelledby="edify-session-expired-title"', base)
         self.assertIn('aria-describedby="edify-session-expired-description"', base)
 
+    def test_the_sign_in_dialog_is_centred(self):
+        """The reset zeroes every margin, and a modal dialog is centred by
+        its auto margins: it opened in the top-left corner (owner,
+        2026-10-09: "make sure the popup drawer for sign in is centered")."""
+        styles = _read("static/css/components/platform-status.css")
+        rule = styles.split(".edify-session-dialog {", 1)[1].split("}", 1)[0]
+        self.assertIn("margin: auto;", rule)
+        self.assertIn("text-align: center;", rule)
+
+    def test_the_installed_app_signs_in_without_a_second_window(self):
+        """A link that asks for a new tab opens another window of the
+        installed app, so every expired session left a copy behind (owner,
+        2026-10-09). Installed, the dialog's link loses its target."""
+        base = _read("templates/base.html")
+        behavior = _read("static/js/platform-status.js")
+        self.assertIn("data-session-dialog-sign-in", base)
+        self.assertIn("(display-mode: standalone)", behavior)
+        self.assertIn("navigator.standalone", behavior)
+        self.assertIn("link.removeAttribute('target')", behavior)
+        self.assertNotIn("window.open", behavior)
+
     def test_login_uses_a_real_browser_theme_color(self):
         login = _read("templates/layouts/login.html")
         self.assertIn('<meta name="theme-color" content="#2d4862">', login)

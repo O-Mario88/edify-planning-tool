@@ -81,7 +81,7 @@
   <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261002tabs15">
   <script defer src="{% static 'js/kpi-strips.js' %}?v=20260923strips1"></script>
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260912focus1">
-  <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261002tokens2">
+  <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20261009signin1">
   {% comment %}
     The same synchronizer the application shell loads. Django replaces the
     CSRF token whenever a sign-in completes, and the "Session paused" dialog
@@ -92,7 +92,7 @@
   {% endcomment %}
   <script defer src="{% static 'js/csrf-sync.js' %}?v=20261005focus1"></script>
   <script defer src="{% static 'js/login.js' %}?v=20261005back1"></script>
-  <script defer src="{% static 'js/platform-status.js' %}?v=20260913busy1"></script>
+  <script defer src="{% static 'js/platform-status.js' %}?v=20261009signin1"></script>
 </head>
 <body class="login-page">
 {% include "partials/pwa_launch.html" %}

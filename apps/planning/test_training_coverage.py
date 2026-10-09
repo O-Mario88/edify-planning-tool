@@ -246,6 +246,27 @@ class AssignedCountsBeforeThePartnerSchedules(CoverageFixture):
         john = next(c for c in row.cells if c.staff_id == self.staff.id)
         self.assertEqual((john.schools, john.limit), (18, 20))
         self.assertEqual((john.partner, john.awaiting_partner), (7, 7))
+        # Owner, 2026-10-09: the staff column is "a sum of (staff in-school +
+        # grouped scheduled + Awaiting partner schedule)".
+        self.assertEqual(
+            john.schools, john.in_school + john.group + john.awaiting_partner
+        )
+        # "mode of delivery should be group training, in-school training,
+        # Partner in-school training".
+        self.assertEqual(
+            row.mode,
+            "Group Training · In-School Training · Partner In-School Training",
+        )
+
+    def test_a_training_only_a_partner_holds_is_a_partner_in_school_training(self):
+        self.hand_over(self.members[0])
+
+        summary = training_summary.for_reader(self.pl, self.fy)
+        row = next(r for r in summary.rows if r.training_id == self.leadership.id)
+
+        self.assertEqual(row.mode, "Partner In-School Training")
+        john = next(c for c in row.cells if c.staff_id == self.staff.id)
+        self.assertEqual((john.schools, john.awaiting_partner), (1, 1))
 
 
 class CancelledWorkLeavesTheCoverage(CoverageFixture):
@@ -635,8 +656,12 @@ class ThePagesShowIt(CoverageFixture):
         summary = client.get(f"/team-planning-oversight/?view=trainings&fy={self.fy}")
         self.assertEqual(summary.status_code, 200)
         html = summary.content.decode()
-        for figure in ("staff", "partner", "awaiting", "group", "covered"):
+        for figure in ("staff", "awaiting", "covered"):
             self.assertIn(f'data-summary-figure="country-{figure}"', html)
+        # Group Scheduled has no column of its own (owner, 2026-10-09).
+        self.assertNotIn('data-summary-figure="country-group"', html)
+        # Nor Partner Assigned: Awaiting Partner is the one kept.
+        self.assertNotIn('data-summary-figure="country-partner"', html)
         self.assertIn('data-summary-figure="country-remaining"', html)
 
         # The list is as long as the figure: six still wait for the Partner.
@@ -664,6 +689,6 @@ class ThePagesShowIt(CoverageFixture):
 
         # The country's figures are on the row; the Lead's links are the
         # staff columns, which open their own officers' schools.
-        self.assertIn("data-country-partner", html)
+        self.assertIn("data-country-awaiting", html)
         self.assertNotIn('data-summary-figure="country-', html)
         self.assertIn('data-summary-figure="training"', html)

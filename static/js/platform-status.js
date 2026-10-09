@@ -69,8 +69,7 @@
   function showSessionExpired() {
     var dialog = document.getElementById('edify-session-expired-dialog');
     if (!dialog || dialog.open) return;
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else dialog.setAttribute('open', '');
+    dialog.showModal();
     announce('Your session expired. Sign in to continue. Your current page remains open.', 'assertive');
   }
 
@@ -84,12 +83,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var close = document.querySelector('[data-session-dialog-close]');
-    if (close) close.addEventListener('click', function () {
-      var dialog = document.getElementById('edify-session-expired-dialog');
-      if (dialog && typeof dialog.close === 'function') dialog.close();
-      else if (dialog) dialog.removeAttribute('open');
-    });
+    var link = document.querySelector('[data-session-dialog-sign-in]');
+    if (link && (navigator.standalone || matchMedia('(display-mode: standalone)').matches)) {
+      link.removeAttribute('target');
+    }
     if (!navigator.onLine) showOffline();
   });
 
