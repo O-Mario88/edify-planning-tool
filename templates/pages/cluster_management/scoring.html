@@ -1,0 +1,103 @@
+{% extends "layouts/shell.html" %}
+{% load components %}
+
+{% block title %}Scoring · Cluster Management · Edify{% endblock %}
+
+{% comment %}
+What the cluster scores weigh (owner brief, 2026-10-08: "CD/IA should be able
+to configure weights rather than developers hard-coding them"; of maturity,
+"make the criteria configurable").
+
+Four scores, each a weighted mean of parts read from the platform's records,
+and the thresholds of the five maturity levels. A weight is how much a part
+counts beside the others in its score: they need not add up to 100, and the
+page shows the share each works out to. A part with a weight of 0 is left out.
+Saving writes a new record (who and when), never over the last one, and every
+cluster's scores use it from then on.
+{% endcomment %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto" data-cluster-scoring>
+  {% include "partials/_back_link.html" with back_href="/cluster-management/" back_label="Cluster Management" %}
+
+  {% page_header eyebrow="Cluster Management" title="Scoring" %}
+    {% slot description %}What each cluster score weighs and what each maturity level asks. {% if settings.is_default %}These are the starting weights; nobody has changed them.{% else %}Last set on {{ settings.set_at|date:"j M Y" }}{% if set_by_name %} by {{ set_by_name }}{% endif %}.{% endif %}{% endslot %}
+  {% endpage_header %}
+
+  <form method="post" action="/cluster-management/scoring" class="space-y-4" data-scoring-form>
+    {% csrf_token %}
+    {% for group in groups %}
+    <section class="card p-0 overflow-hidden" aria-labelledby="scoring-{{ group.key }}-title">
+      <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+        <h3 id="scoring-{{ group.key }}-title">{{ group.title }}</h3>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+          <caption class="sr-only">The parts of {{ group.title }}: each part, its weight, the share of the score that weight works out to, and the starting weight.</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="px-3 py-2">Part</th>
+              <th scope="col" class="px-3 py-2">Weight</th>
+              <th scope="col" class="px-3 py-2 text-right">Score Share</th>
+              <th scope="col" class="px-3 py-2 text-right">Starting Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for part in group.parts %}
+            <tr>
+              <th scope="row" class="px-3 py-2 text-left" data-record-title><label for="weight-{{ group.key }}-{{ part.key }}">{{ part.label }}</label></th>
+              <td class="px-3 py-2" data-label="Weight"><input type="number" id="weight-{{ group.key }}-{{ part.key }}" name="{{ group.key }}__{{ part.key }}" value="{{ part.weight|floatformat:0 }}" min="0" max="100" step="1" required class="h-9 w-24 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 tabular-nums"></td>
+              <td class="px-3 py-2 text-right tabular-nums" data-label="Score Share">{{ part.share }}%</td>
+              <td class="px-3 py-2 text-right tabular-nums" data-label="Starting Weight">{{ part.default }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if group.not_collected %}
+      <p class="px-4 py-3 edify-text-caption text-slate-500"><strong>Not collected on the platform yet, so it cannot be weighed:</strong> {% for item in group.not_collected %}{{ item }}{% if not forloop.last %}; {% endif %}{% endfor %}.</p>
+      {% endif %}
+    </section>
+    {% endfor %}
+
+    <section class="card p-0 overflow-hidden" aria-labelledby="scoring-maturity-title">
+      <header class="edify-table-titlebar flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3">
+        <h3 id="scoring-maturity-title">Maturity Levels</h3>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="edify-record-table edify-data-table w-full text-left text-[12px] whitespace-nowrap" data-mobile-table="scroll">
+          <caption class="sr-only">What each maturity level asks: the rule, its value and the starting value.</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="px-3 py-2">Rule</th>
+              <th scope="col" class="px-3 py-2">Value</th>
+              <th scope="col" class="px-3 py-2 text-right">Starting Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rule in maturity %}
+            <tr>
+              <th scope="row" class="px-3 py-2 text-left" data-record-title><label for="maturity-{{ rule.key }}">{{ rule.label }}</label></th>
+              <td class="px-3 py-2" data-label="Value"><input type="number" id="maturity-{{ rule.key }}" name="maturity__{{ rule.key }}" value="{{ rule.value|floatformat:0 }}" min="0" max="100" step="1" required class="h-9 w-24 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 tabular-nums"></td>
+              <td class="px-3 py-2 text-right tabular-nums" data-label="Starting Value">{{ rule.default }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="px-4 py-3 edify-text-caption text-slate-500">A level is reached only when every level below it is. Forming asks only that the cluster has schools.</p>
+    </section>
+
+    <div class="card p-4 space-y-3">
+      <label class="block" for="scoring-note">
+        <span class="edify-filter-label">Why the weights are changing (kept with the record)</span>
+        <textarea id="scoring-note" name="note" rows="2" maxlength="500" class="mt-1 block w-full rounded-control border border-slate-200 bg-slate-50 px-3 py-2 text-[13px]"></textarea>
+      </label>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="submit" class="edify-action-button primary h-9" data-save-weights>Save Weights</button>
+        <a href="/cluster-management/" class="edify-action-button secondary h-9">Cancel</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

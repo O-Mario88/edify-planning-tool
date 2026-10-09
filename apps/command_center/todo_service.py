@@ -3903,6 +3903,9 @@ MODULE_TODO_BUILDERS: tuple[str, ...] = (
     # ── end brief 2026-09-15 ──
     # Country Planning Oversight: the Country Director's "Follow Up with PL".
     "apps.planning.country_oversight.todos:followup_todos",
+    # Cluster Management (owner brief, 2026-10-08): a cluster's schools that
+    # have missed three or more sessions in a row, for the officer who holds it.
+    "apps.clusters.followups:attendance_todos",
 )
 
 

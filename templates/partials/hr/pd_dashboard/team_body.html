@@ -36,7 +36,7 @@ sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
           {% for it in g.items %}
           <div class="flex items-center justify-between gap-1.5 edify-text-caption">
             <div class="min-w-0">
-              <span class="block truncate font-bold edify-text">{{ it.staff_name }}</span>
+              <span class="block truncate font-bold edify-text">{% staff_link it.staff_name it.staff_id %}</span>
               <span class="block truncate text-slate-400">{{ it.course_name }}</span>
               <span class="block truncate text-slate-500 edify-text-caption">{{ it.due_label }}</span>
             </div>
@@ -98,7 +98,7 @@ sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
             <span class="edify-text-caption font-black edify-primary-text">{{ upcoming_30d_count }}</span>
           </div>
           {% for r in upcoming_30d %}
-          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }} · starts {{ r.start_date|date:"d M" }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold edify-text">{% staff_link r.staff_name r.staff_id %}</span> · <span class="text-slate-400">{{ r.course_name }} · starts {{ r.start_date|date:"d M" }}</span></div>
           {% empty %}
           <p class="edify-text-caption text-slate-400 font-semibold">Nothing starting soon.</p>
           {% endfor %}
@@ -109,7 +109,7 @@ sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
             <span class="edify-text-caption font-black text-rose-500">{{ overdue_no_cert_count }}</span>
           </div>
           {% for r in overdue_no_cert %}
-          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }} · ended {{ r.end_date|date:"d M" }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold edify-text">{% staff_link r.staff_name r.staff_id %}</span> · <span class="text-slate-400">{{ r.course_name }} · ended {{ r.end_date|date:"d M" }}</span></div>
           {% empty %}
           <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
           {% endfor %}
@@ -120,7 +120,7 @@ sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
             <span class="edify-text-caption font-black text-rose-400">{{ overdue_accountability_count }}</span>
           </div>
           {% for r in overdue_accountability %}
-          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold edify-text">{% staff_link r.staff_name r.staff_id %}</span> · <span class="text-slate-400">{{ r.course_name }}</span></div>
           {% empty %}
           <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
           {% endfor %}

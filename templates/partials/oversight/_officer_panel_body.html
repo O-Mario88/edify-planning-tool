@@ -99,7 +99,7 @@ and `forloop` from the including context.{% endcomment %}
               </td>
               <td class="px-4 py-2.5">
                 {% if item.is_partner_work %}
-                <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                <span class="pill pill-neutral text-xs">{% partner_link item.partner_name item.partner_id empty="Partner" %}</span>
                 {% else %}
                 <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                 {% endif %}
@@ -195,7 +195,7 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">
-                {{ item.district_name|default:"—" }}
+                {% district_link item.district_name item.district_id empty="—" %}
               </td>
               <td class="px-4 py-2.5">
                 {% if item.activity_id and can_open_activity_record and request.user.active_role != "Accountant" %}
@@ -209,7 +209,7 @@ and `forloop` from the including context.{% endcomment %}
               </td>
               <td class="px-4 py-2.5">
                 {% if item.is_partner_work %}
-                <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                <span class="pill pill-neutral text-xs">{% partner_link item.partner_name item.partner_id empty="Partner" %}</span>
                 {% else %}
                 <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                 {% endif %}
@@ -301,7 +301,7 @@ and `forloop` from the including context.{% endcomment %}
                 {% endif %}
               </td>
               <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400">
-                {{ item.district_name|default:"—" }}
+                {% district_link item.district_name item.district_id empty="—" %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap tabular-nums text-slate-700 dark:text-slate-300">
                 {% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}<span class="text-slate-400">—</span>{% endif %}
@@ -400,7 +400,7 @@ and `forloop` from the including context.{% endcomment %}
                   {% if item.school_id %}
                   <a href="/schools/{{ item.school_id }}" class="hover:underline text-slate-900 dark:text-white">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}{% firstof item.school_code item.school_id %}{% endif %}</a>
                   {% else %}
-                  <span class="text-slate-800 dark:text-slate-200">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{{ item.cluster_name }}{% else %}—{% endif %}</span>
+                  <span class="text-slate-800 dark:text-slate-200">{% if item.school_name and item.school_name != 'Unknown School' %}{{ item.school_name }}{% elif item.cluster_name %}{% cluster_link item.cluster_name item.cluster_id %}{% else %}—{% endif %}</span>
                   {% endif %}
                 </td>
                 <td class="px-4 py-2.5">
@@ -417,7 +417,7 @@ and `forloop` from the including context.{% endcomment %}
                 </td>
                 <td class="px-4 py-2.5">
                   {% if item.is_partner_work %}
-                  <span class="pill pill-neutral text-xs">{{ item.partner_name|default:"Partner" }}</span>
+                  <span class="pill pill-neutral text-xs">{% partner_link item.partner_name item.partner_id empty="Partner" %}</span>
                   {% else %}
                   <span class="text-slate-800 dark:text-slate-200">{% firstof item.executor_name group.name %}</span>
                   {% endif %}

@@ -1492,6 +1492,7 @@ def dashboard_view(request):
         "progress_description": metrics["progress_description"],
         "best_interventions": metrics["best_interventions"],
         "weakest_interventions": metrics["weakest_interventions"],
+        "ssa_years": metrics.get("ssa_years", {}),
         "team_targets": metrics["team_targets"],
         "priority_schools": metrics["priority_schools"],
         "cluster_performance": metrics["cluster_performance"],

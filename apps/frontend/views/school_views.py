@@ -1622,6 +1622,16 @@ def school_detail_view(request, school_id):
     from apps.analytics.ia_workflow import school_progress
 
     ssa_progress = school_progress(school)
+    # The school through the shared profile engine (owner's brief,
+    # 2026-10-09): each intervention last year, this year, the change and
+    # what the change is called, in the latest year the school was assessed;
+    # and what the running year still lacks.
+    from apps.analytics import profile_intelligence
+
+    school_scope = profile_intelligence.school_scope(school)
+    school_profile = profile_intelligence.build(school_scope)
+    school_now = profile_intelligence.build(school_scope, get_operational_fy())
+    ssa_comparison = school_profile["ssa"]
     latest_ssa = ssa_progress["latest"]
     from apps.activities import profile_activities as profile_acts
 
@@ -1724,6 +1734,15 @@ def school_detail_view(request, school_id):
         "business_transformation": business_transformation,
         "latest_ssa": latest_ssa,
         "ssa_progress": ssa_progress,
+        "ssa_comparison": ssa_comparison,
+        "school_profile": school_profile,
+        "school_now": school_now,
+        # Enrolment and learning results against the year before, and the
+        # running year's visits and trainings (owner, 2026-10-09: "Schools
+        # (SSA, students impact, visit, trainings)").
+        "school_students": profile_intelligence.students(school_now),
+        "school_people": profile_intelligence.people(school_now),
+        "school_finance": profile_intelligence.finance(school_now, request.user),
         "profile_activities": activities,
         "visit_feedback": visit_feedback,
         "quality_gauge": quality_gauge,

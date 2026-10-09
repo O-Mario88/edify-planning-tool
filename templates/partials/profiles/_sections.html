@@ -1,0 +1,409 @@
+{% load chart_tags components table_pagination frontend_filters kpi_metrics %}{% comment %}
+The open section of a profile (apps.analytics.profile_intelligence; owner's
+brief, 2026-10-09). `pi` is frontend.views.profile_views.profile_context: the
+same sections whatever the scope, and every figure a link to the section —
+and, for schools, the list — that holds its records.
+{% endcomment %}
+{% if pi.section == "overview" %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Schools{% endkpi_label %}{{ pi.profile.portfolio.schools|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=schools&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}{% for type in pi.profile.portfolio.types %}{{ type.count|intcomma }} {{ type.label }}{% if not forloop.last %} · {% endif %}{% endfor %}{% endkpi_helper %}{% endkpi_metric %}{% if pi.scope.kind != "cluster" %}{% kpi_metric %}{% kpi_label %}Clusters{% endkpi_label %}{{ pi.profile.portfolio.clusters|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=clusters&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}{{ pi.profile.portfolio.clustered_schools|intcomma }} schools in a cluster · {{ pi.profile.portfolio.cluster_coverage }}%{% endkpi_helper %}{% endkpi_metric %}{% endif %}{% kpi_metric %}{% kpi_label %}Average SSA{% endkpi_label %}{% if pi.profile.ssa.current is None %}Not measured{% else %}{{ pi.profile.ssa.current|floatformat:2 }}{% endif %}{% kpi_link %}{{ pi.href }}{{ pi.param }}=ssa&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}{% if pi.profile.ssa.overall.change is not None %}{% if pi.profile.ssa.overall.change > 0 %}+{% endif %}{{ pi.profile.ssa.overall.change|floatformat:2 }} since {{ pi.profile.previous_label }}{% elif pi.profile.ssa.previous is not None %}{{ pi.profile.ssa.previous|floatformat:2 }} in {{ pi.profile.previous_label }}{% else %}No confirmed SSA{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools assessed{% endkpi_label %}{{ pi.profile.portfolio.assessed|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=schools&fy={{ pi.fy }}&show=no_ssa{% endkpi_link %}{% kpi_helper %}of {{ pi.profile.portfolio.schools|intcomma }} · {{ pi.profile.portfolio.no_ssa|intcomma }} without SSA{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Nothing planned{% endkpi_label %}{{ pi.profile.portfolio.unplanned|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=schools&fy={{ pi.fy }}&show=unplanned{% endkpi_link %}{% kpi_helper %}schools with no activity in {{ pi.profile.fy_label }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Enrolment{% endkpi_label %}{{ pi.profile.portfolio.enrollment|intcomma }}{% kpi_helper %}learners in these schools{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+
+{% comment %}What changed for learners in these schools (enrolment and
+learning results, this year against last; a school is compared only with a
+figure in both years).{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Enrolment growth{% endkpi_label %}{% if pi.students.enrolment_growth is None %}Not measured{% else %}{% if pi.students.enrolment_growth > 0 %}+{% endif %}{{ pi.students.enrolment_growth }}%{% endif %}{% kpi_helper %}{% if pi.students.enrolment_compared %}{{ pi.students.enrolment_before|intcomma }} to {{ pi.students.enrolment_after|intcomma }} in {{ pi.students.enrolment_compared|intcomma }} school{{ pi.students.enrolment_compared|pluralize }} with both years{% else %}no school has a figure for both years{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Learning results{% endkpi_label %}{% if pi.students.learning_after is None %}Not measured{% else %}{{ pi.students.learning_after }}%{% endif %}{% kpi_helper %}{% if pi.students.learning_compared %}{% if pi.students.learning_change > 0 %}+{% endif %}{{ pi.students.learning_change }} points · {{ pi.students.learning_improved|intcomma }} improved · {{ pi.students.learning_declined|intcomma }} declined{% else %}no school has confirmed results for both years{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Visits completed{% endkpi_label %}{{ pi.profile.execution.visits.completed|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}={{ pi.work_tab }}&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}of {{ pi.profile.execution.visits.planned|intcomma }} in the plan · {{ pi.profile.execution.visits.expected|intcomma }} expected this year{% if pi.profile.execution.visits.coverage is not None %} · {{ pi.profile.execution.visits.coverage }}% of schools due a visit reached{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Trainings completed{% endkpi_label %}{{ pi.profile.execution.trainings.completed|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}={{ pi.work_tab }}&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}of {{ pi.profile.execution.trainings.planned|intcomma }} in the plan · {{ pi.profile.execution.trainings.expected|intcomma }} expected this year{% if pi.profile.execution.trainings.coverage is not None %} · {{ pi.profile.execution.trainings.coverage }}% of schools due a training reached{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Cluster meetings held{% endkpi_label %}{{ pi.profile.execution.meetings.completed|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}={{ pi.work_tab }}&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}of {{ pi.profile.execution.meetings.planned|intcomma }} in the plan{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+
+{% comment %}Teachers and school leaders trained (recorded at completed
+in-school trainings and, for these schools, at group trainings), with those
+met at cluster meetings kept apart: a meeting is not a training.{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Teachers trained{% endkpi_label %}{{ pi.people.teachers_trained|intcomma }}{% kpi_helper %}{{ pi.people.teachers_in_school|intcomma }} in school · {{ pi.people.teachers_group|intcomma }} at group trainings{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}School leaders trained{% endkpi_label %}{{ pi.people.leaders_trained|intcomma }}{% kpi_helper %}{{ pi.people.leaders_in_school|intcomma }} in school · {{ pi.people.leaders_group|intcomma }} at group trainings{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools trained{% endkpi_label %}{{ pi.people.schools_trained|intcomma }}{% kpi_helper %}of {{ pi.profile.execution.trainings.schools_due|intcomma }} due a training this year{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}At cluster meetings{% endkpi_label %}{{ pi.people.teachers_at_meetings|add:pi.people.leaders_at_meetings|intcomma }}{% kpi_helper %}{{ pi.people.teachers_at_meetings|intcomma }} teachers · {{ pi.people.leaders_at_meetings|intcomma }} leaders · {{ pi.people.schools_at_meetings|intcomma }} school{{ pi.people.schools_at_meetings|pluralize }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}SSA target{% endkpi_label %}{{ pi.profile.ssa.target|floatformat:1 }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=ssa&fy={{ pi.fy }}{% endkpi_link %}{% kpi_helper %}{% if pi.profile.ssa.to_target is None %}no confirmed SSA yet{% elif pi.profile.ssa.to_target %}{{ pi.profile.ssa.to_target|floatformat:2 }} to go · {{ pi.profile.ssa.at_target|intcomma }} school{{ pi.profile.ssa.at_target|pluralize }} there{% else %}reached · {{ pi.profile.ssa.at_target|intcomma }} school{{ pi.profile.ssa.at_target|pluralize }} there{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+
+{% if pi.finance %}
+{% comment %}Loans and Business Transformation, for a reader of the loan
+register (hidden from a role the register is closed to).{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}School loans{% endkpi_label %}{{ pi.finance.loans|intcomma }}{% kpi_helper %}{{ pi.finance.loan_schools|intcomma }} school{{ pi.finance.loan_schools|pluralize }} · {{ pi.finance.edtech_loans|intcomma }} for EdTech{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Schools funded{% endkpi_label %}{{ pi.finance.funded_schools|intcomma }}{% kpi_helper %}with a loan disbursed, active or repaid{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Disbursed{% endkpi_label %}UGX {{ pi.finance.disbursed|floatformat:0|intcomma }}{% kpi_helper %}{% for label, count in pi.finance.by_status %}{{ count }} {{ label }}{% if not forloop.last %} · {% endif %}{% empty %}no loan recorded{% endfor %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Business Transformation cases{% endkpi_label %}{{ pi.finance.open_cases|intcomma }}{% kpi_helper %}open, of {{ pi.finance.cases|intcomma }} in {{ pi.finance.case_schools|intcomma }} school{{ pi.finance.case_schools|pluralize }}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+{% endif %}
+
+{% if pi.summary %}
+{% data_table name="profile-summary" %}
+  {% slot title %}What this profile covers{% endslot %}
+  {% slot summary %}{{ pi.scope.covers }} · {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}Each level beneath this profile: how many there are, how many have a confirmed SSA in {{ pi.profile.fy_label }}, how many improved and declined since {{ pi.profile.previous_label }}, the best and the lowest by average SSA score, and the visits and trainings completed of those in the plan.{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Level</th>
+      <th scope="col" class="px-3 py-2 text-right">Total</th>
+      <th scope="col" class="px-3 py-2 text-right">With SSA</th>
+      <th scope="col" class="px-3 py-2 text-right">Improved</th>
+      <th scope="col" class="px-3 py-2 text-right">Declined</th>
+      <th scope="col" class="px-3 py-2">Best</th>
+      <th scope="col" class="px-3 py-2">Lowest</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">Trainings Completed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in pi.summary %}
+    <tr data-profile-level="{{ line.level }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if line.tab %}<a href="{{ pi.href }}{{ pi.param }}={{ line.tab }}&amp;fy={{ pi.fy }}">{{ line.label }}</a>{% else %}{{ line.label }}{% endif %}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Total"><strong>{{ line.count|intcomma }}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="With SSA">{{ line.measured|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Improved">{% if line.improved %}<span class="edify-status-text" data-edify-tone="success">{{ line.improved|intcomma }}</span>{% else %}0{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Declined">{% if line.declined %}<span class="edify-status-text" data-edify-tone="danger">{{ line.declined|intcomma }}</span>{% else %}0{% endif %}</td>
+      <td class="px-3 py-2" data-label="Best">{% if line.best %}{{ line.best.name }} · {{ line.best.current|floatformat:2 }}{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+      <td class="px-3 py-2" data-label="Lowest">{% if line.lowest %}{{ line.lowest.name }} · {{ line.lowest.current|floatformat:2 }}{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Visits Completed">{{ line.visits_done|intcomma }} / {{ line.visits|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings Completed">{{ line.trainings_done|intcomma }} / {{ line.trainings|intcomma }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% enddata_table %}
+{% endif %}
+
+{% if pi.scope.partner_id %}
+{% comment %}Assigned is not scheduled is not completed (the brief, point 15).{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Assigned{% endkpi_label %}{{ pi.profile.portfolio.handovers.assigned|intcomma }}{% kpi_helper %}hand-overs the partner holds{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Awaiting the partner's date{% endkpi_label %}{{ pi.profile.portfolio.handovers.awaiting|intcomma }}{% kpi_link %}{{ pi.href }}{{ pi.param }}=schools&fy={{ pi.fy }}&show=awaiting_partner{% endkpi_link %}{% kpi_helper %}assigned, not yet scheduled{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Scheduled{% endkpi_label %}{{ pi.profile.portfolio.handovers.scheduled|intcomma }}{% kpi_helper %}dated by the partner{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Completed{% endkpi_label %}{{ pi.profile.portfolio.handovers.completed|intcomma }}{% kpi_helper %}delivered{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <section class="card p-4 space-y-2" aria-labelledby="profile-attention-title" data-profile-attention>
+    <h2 id="profile-attention-title" class="edify-data-chart__title">Needs attention</h2>
+    {% if pi.profile.attention %}
+    <ul class="space-y-1.5 edify-text-label">
+      {% for item in pi.profile.attention %}
+      <li><a class="font-semibold text-[var(--edify-accent)] hover:underline" href="{{ pi.href }}{{ pi.param }}={{ item.tab }}&amp;fy={{ pi.fy }}{% if item.show %}&amp;show={{ item.show }}{% endif %}" data-profile-attention-item="{% firstof item.show item.tab %}">{{ item.text }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="edify-text-label edify-text-muted">Nothing needs attention in {{ pi.profile.fy_label }}.</p>
+    {% endif %}
+    {% if pi.profile.ssa.most_improved or pi.profile.ssa.most_declined %}
+    <dl class="edify-text-label space-y-1 pt-2" data-profile-highlights>
+      {% if pi.profile.ssa.most_improved %}<div><dt class="inline edify-text-muted">Most improved intervention:</dt> <dd class="inline font-semibold">{{ pi.profile.ssa.most_improved.label }} <span class="edify-status-text" data-edify-tone="success">+{{ pi.profile.ssa.most_improved.change|floatformat:2 }}</span></dd></div>{% endif %}
+      {% if pi.profile.ssa.most_declined %}<div><dt class="inline edify-text-muted">Struggling intervention:</dt> <dd class="inline font-semibold">{{ pi.profile.ssa.most_declined.label }} <span class="edify-status-text" data-edify-tone="danger">{{ pi.profile.ssa.most_declined.change|floatformat:2 }}</span></dd></div>{% endif %}
+    </dl>
+    {% endif %}
+  </section>
+  {% if pi.profile.ssa.has_any %}
+  {% ssa_year_chart pi.profile.ssa "SSA score by intervention" %}
+  {% else %}
+  <section class="card p-4 space-y-2"><h2 class="edify-data-chart__title">SSA score by intervention</h2><p class="edify-text-label edify-text-muted">No confirmed SSA in {{ pi.profile.fy_label }} or {{ pi.profile.previous_label }}.</p></section>
+  {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  {% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.profile.rankings.best_schools kind="school" name="profile-best-schools" title="Best performing schools" empty="No school has a confirmed SSA in this year." %}
+  {% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.profile.rankings.worst_schools kind="school" name="profile-worst-schools" title="Schools needing the most support" empty="No further school has a confirmed SSA in this year." %}
+{% if pi.scope.kind != "cluster" %}
+  {% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.profile.rankings.best_clusters kind="cluster" name="profile-best-clusters" title="Best performing clusters" empty="No cluster has a confirmed SSA in this year." %}
+  {% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.profile.rankings.worst_clusters kind="cluster" name="profile-worst-clusters" title="Clusters needing the most support" empty="No further cluster has a confirmed SSA in this year." %}
+  {% endif %}
+</div>
+<p class="edify-text-caption edify-text-muted" data-profile-method>{{ pi.profile.rankings.method }}</p>
+
+{% elif pi.section == "ssa" %}
+{% data_table name="profile-ssa-interventions" %}
+  {% slot title %}SSA by intervention{% endslot %}
+  {% slot summary %}{{ pi.profile.ssa.previous_schools|intcomma }} school{{ pi.profile.ssa.previous_schools|pluralize }} in {{ pi.profile.previous_label }} · {{ pi.profile.ssa.schools|intcomma }} in {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}Each SSA intervention's average confirmed score in {{ pi.profile.previous_label }} and in {{ pi.profile.fy_label }}, the change and what the change is called, and what is left to the target of {{ pi.profile.ssa.target|floatformat:1 }}.{% endslot %}
+  {% slot footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">{{ pi.profile.ssa.at_target|intcomma }} school{{ pi.profile.ssa.at_target|pluralize }} {{ pi.profile.ssa.at_target|pluralize:"is,are" }} at or above the target of {{ pi.profile.ssa.target|floatformat:1 }}. A school's score for a year is its latest confirmed SSA of that year. {{ pi.profile.ssa.rule }}</p>{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Intervention</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2 text-right">Target</th>
+      <th scope="col" class="px-3 py-2 text-right">To Target</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in pi.profile.ssa.rows %}
+    <tr data-profile-intervention="{{ row.key }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2" data-label="Status">{{ row.status_label }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{{ pi.profile.ssa.target|floatformat:1 }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="To Target">{% if row.to_target is None %}<span class="edify-text-muted">—</span>{% elif row.to_target %}{{ row.to_target|floatformat:2 }}{% else %}<span class="edify-status-text" data-edify-tone="success">Reached</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    <tr data-profile-intervention="overall">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>All interventions</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=pi.profile.ssa.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=pi.profile.ssa.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" with row=pi.profile.ssa.overall %}</td>
+      <td class="px-3 py-2" data-label="Status">{{ pi.profile.ssa.overall.status_label }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Target">{{ pi.profile.ssa.target|floatformat:1 }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="To Target">{% if pi.profile.ssa.to_target is None %}<span class="edify-text-muted">—</span>{% elif pi.profile.ssa.to_target %}{{ pi.profile.ssa.to_target|floatformat:2 }}{% else %}<span class="edify-status-text" data-edify-tone="success">Reached</span>{% endif %}</td>
+    </tr>
+  </tbody>
+{% enddata_table %}
+{% if pi.profile.ssa.has_any %}{% ssa_year_chart pi.profile.ssa "SSA score by intervention" %}{% endif %}
+{% if pi.progress %}{% ssa_progress_chart pi.progress "Annual SSA Progress" "Average confirmed SSA score of these schools, by financial year." %}{% endif %}
+
+{% elif pi.section == "clusters" %}
+{% comment %}
+The scope's clusters with what Cluster Management knows of each (owner,
+2026-10-09: "Integrate cluster management into all the profiles that has
+anything to do with cluster"): attendance at the year's sessions, the schools
+that have missed three in a row, Cluster Health, Cluster Impact and maturity —
+the cluster profile's own reads, so a figure here is the figure its link
+opens. The SSA columns are the cluster's schools in this portfolio.
+{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Clusters{% endkpi_label %}{{ pi.profile.portfolio.clusters|intcomma }}{% kpi_helper %}{{ pi.profile.portfolio.clustered_schools|intcomma }} of {{ pi.profile.portfolio.schools|intcomma }} schools · {{ pi.profile.portfolio.cluster_coverage }}%{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Sessions held{% endkpi_label %}{{ pi.cluster_totals.sessions|intcomma }}{% kpi_helper %}cluster meetings and trainings, {{ pi.profile.fy_label }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Attendance{% endkpi_label %}{% if pi.cluster_totals.rate is None %}Not recorded{% else %}{{ pi.cluster_totals.rate }}%{% endif %}{% kpi_helper %}{{ pi.cluster_totals.attended|intcomma }} of {{ pi.cluster_totals.invited|intcomma }} invitations attended{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Absent {{ pi.cluster_totals.alert_after }}+ sessions{% endkpi_label %}{{ pi.cluster_totals.absent|intcomma }}{% kpi_helper %}schools missing sessions in a row{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Teachers reached{% endkpi_label %}{{ pi.cluster_totals.teachers|intcomma }}{% kpi_helper %}recorded at cluster sessions{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}School leaders reached{% endkpi_label %}{{ pi.cluster_totals.leaders|intcomma }}{% kpi_helper %}recorded at cluster sessions{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+{% if pi.cluster_totals.impact %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Enrolment growth{% endkpi_label %}{% if pi.cluster_totals.impact.enrolment_growth is None %}Not measured{% else %}{% if pi.cluster_totals.impact.enrolment_growth > 0 %}+{% endif %}{{ pi.cluster_totals.impact.enrolment_growth }}%{% endif %}{% kpi_helper %}{{ pi.cluster_totals.impact.enrolment_schools|intcomma }} cluster schools with a figure in both years{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Learning results improved{% endkpi_label %}{{ pi.cluster_totals.impact.learning_improved|intcomma }}{% kpi_helper %}of {{ pi.cluster_totals.impact.learning_schools|intcomma }} schools compared · {{ pi.cluster_totals.impact.learning_declined|intcomma }} declined{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Change stories{% endkpi_label %}{{ pi.cluster_totals.impact.stories|intcomma }}{% kpi_helper %}approved stories from cluster schools{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+{% endif %}
+{% paginate pi.profile.clusters "clusters_page" as clusters_pager %}
+{% data_table name="profile-clusters" %}
+  {% slot title %}Clusters{% endslot %}
+  {% slot summary %}{{ pi.profile.portfolio.clusters|intcomma }} cluster{{ pi.profile.portfolio.clusters|pluralize }} · {{ pi.profile.fy_label }}{% if pi.may_open_cluster_management %} · <a href="/cluster-management/">Cluster Management</a>{% endif %}{% endslot %}
+  {% slot caption %}Each cluster with schools in this portfolio: its schools here, how many have a confirmed SSA in {{ pi.profile.fy_label }}, the average score in {{ pi.profile.previous_label }} and in {{ pi.profile.fy_label }} and the change; then the whole cluster's attendance at its sessions, the schools absent {{ pi.cluster_totals.alert_after }} sessions in a row, Cluster Health, Cluster Impact and maturity.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No school of this portfolio is in a cluster." compact="true" %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=clusters_pager param="clusters_page" %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">Schools, Assessed and the SSA columns count the cluster's schools in this portfolio. Attendance, Absent, Health, Impact and Maturity are the whole cluster's, as on its own profile. A score is left blank when too few of its parts can be measured.</p>{% endslot %}
+  {% if pi.profile.clusters %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Cluster</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Assessed</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits</th>
+      <th scope="col" class="px-3 py-2 text-right">Meetings</th>
+      <th scope="col" class="px-3 py-2 text-right">Group Trainings</th>
+      <th scope="col" class="px-3 py-2 text-right">Sessions Held</th>
+      <th scope="col" class="px-3 py-2 text-right">Attendance</th>
+      <th scope="col" class="px-3 py-2 text-right">Absent {{ pi.cluster_totals.alert_after }}+</th>
+      <th scope="col" class="px-3 py-2 text-right">Health</th>
+      <th scope="col" class="px-3 py-2 text-right">Impact</th>
+      <th scope="col" class="px-3 py-2">Maturity</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in clusters_pager.rows %}
+    <tr data-profile-cluster="{{ row.id }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title><a href="/clusters/{{ row.id }}">{{ row.name }}</a></th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ row.schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Assessed">{{ row.assessed|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2" data-label="Status">{{ row.status_label }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Visits" title="Visits at its schools here: completed of those in the plan">{{ row.visits_done|intcomma }} / {{ row.visits|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Meetings" title="Cluster meetings: held of those in the plan">{{ row.meetings_done|intcomma }} / {{ row.meetings|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Group Trainings" title="Group trainings: held of those in the plan">{{ row.group_trainings_done|intcomma }} / {{ row.group_trainings|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Sessions Held"><a href="/clusters/{{ row.id }}?tab=attendance&amp;fy={{ pi.fy }}">{{ row.sessions|intcomma }}</a></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Attendance">{% if row.attendance_rate is None %}<span class="edify-text-muted" title="No register recorded">—</span>{% else %}<a href="/clusters/{{ row.id }}?tab=attendance&amp;fy={{ pi.fy }}">{{ row.attendance_rate }}%</a>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Absent">{% if row.absent %}<a href="/clusters/{{ row.id }}?tab=attendance&amp;fy={{ pi.fy }}&amp;show=missing"><span class="edify-status-text" data-edify-tone="danger">{{ row.absent|intcomma }}</span></a>{% else %}0{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Health">{% if row.health is None %}<span class="edify-text-muted" title="Too few parts measured">—</span>{% else %}<a href="/clusters/{{ row.id }}?tab=scores&amp;fy={{ pi.fy }}" title="{{ row.health_band }}">{{ row.health }}</a>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Impact">{% if row.impact is None %}<span class="edify-text-muted" title="Too few parts measured">—</span>{% else %}<a href="/clusters/{{ row.id }}?tab=scores&amp;fy={{ pi.fy }}" title="{{ row.impact_band }}">{{ row.impact }}</a>{% endif %}</td>
+      <td class="px-3 py-2" data-label="Maturity">{% if row.maturity %}{{ row.maturity }} · {{ row.maturity_label }}{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}
+
+{% elif pi.section == "schools" %}
+{% paginate pi.school_rows "schools_page" as schools_pager %}
+{% data_table name="profile-schools" %}
+  {% slot title %}{{ pi.show_label }}{% endslot %}
+  {% slot summary %}{{ schools_pager.total|intcomma }} school{{ schools_pager.total|pluralize }} · {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}Schools of this portfolio with their type, cluster, enrolment, the visits and trainings completed of those in the plan, and average confirmed SSA score in {{ pi.profile.previous_label }} and {{ pi.profile.fy_label }}.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No school is in this list." compact="true" %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}{% endslot %}
+  {% if pi.school_rows %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">School ID</th>
+      <th scope="col" class="px-3 py-2">School</th>
+      <th scope="col" class="px-3 py-2">Type</th>
+      {% if pi.many_districts %}<th scope="col" class="px-3 py-2">District</th>{% endif %}
+      <th scope="col" class="px-3 py-2">Cluster</th>
+      <th scope="col" class="px-3 py-2 text-right">Enrolment</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits</th>
+      <th scope="col" class="px-3 py-2 text-right">Trainings</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in schools_pager.rows %}
+    <tr data-profile-school="{{ row.id }}">
+      <td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.school_id }}</td>
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+      <td class="px-3 py-2" data-label="Type">{{ row.type }}</td>
+      {% if pi.many_districts %}<td class="px-3 py-2" data-label="District">{% district_link row.district row.district_id empty="—" %}</td>{% endif %}
+      <td class="px-3 py-2" data-label="Cluster">{% cluster_link row.cluster row.cluster_id empty="—" %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Enrolment">{% if row.enrollment is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.enrollment|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Visits" title="Completed of those in the plan, {{ pi.profile.fy_label }}">{{ row.visits_done }} / {{ row.visits }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings" title="Completed of those in the plan, {{ pi.profile.fy_label }}">{{ row.trainings_done }} / {{ row.trainings }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2" data-label="Status">{{ row.status_label }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}
+
+{% elif pi.section == "activities" %}
+{% data_table name="profile-execution" %}
+  {% slot title %}Visits, trainings and cluster meetings{% endslot %}
+  {% slot summary %}{{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}Work in this portfolio's schools and clusters in {{ pi.profile.fy_label }}: in the plan, completed, still to do, upcoming, past its date, by staff and by partners, and the schools reached.{% endslot %}
+  {% slot footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">In the plan leaves out work that was cancelled, rejected or deferred. Completed is work verified or closed. Past its date is work not yet started whose day has gone. Schools is the schools with that work at the school itself; a group training or a cluster meeting is counted as a session. Expected This Year is what each school's type is due in the year (a Core school two visits and two trainings from staff and two of each from a partner; a Client, Core Trained or Core Graduate school one of each; a Champion none). Schools Due is the schools due any; Coverage is the share of them with one completed, Planned Coverage with one in the plan.{% if pi.profile.period_label %} The work counted is {{ pi.profile.period_label }}'s; what is expected is the whole year's.{% endif %}</p>{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Work</th>
+      <th scope="col" class="px-3 py-2 text-right">Expected This Year</th>
+      <th scope="col" class="px-3 py-2 text-right">In The Plan</th>
+      <th scope="col" class="px-3 py-2 text-right">Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">Outstanding</th>
+      <th scope="col" class="px-3 py-2 text-right">Upcoming</th>
+      <th scope="col" class="px-3 py-2 text-right">Past Its Date</th>
+      <th scope="col" class="px-3 py-2 text-right">By Staff</th>
+      <th scope="col" class="px-3 py-2 text-right">By Partners</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools Due</th>
+      <th scope="col" class="px-3 py-2 text-right">Planned Coverage</th>
+      <th scope="col" class="px-3 py-2 text-right">Coverage</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for label, row in pi.execution_rows %}
+    <tr data-profile-work="{{ label|slugify }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ label }}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Expected This Year">{% if row.expected is None %}<span class="edify-text-muted" title="No yearly requirement">—</span>{% else %}{{ row.expected|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="In The Plan">{{ row.planned|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Completed">{{ row.completed|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Outstanding">{{ row.outstanding|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Upcoming">{{ row.upcoming|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Past Its Date">{% if row.overdue %}<span class="edify-status-text" data-edify-tone="danger">{{ row.overdue|intcomma }}</span>{% else %}0{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="By Staff">{{ row.by_staff|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="By Partners">{{ row.by_partner|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ row.schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Completed">{{ row.schools_done|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Due">{% if row.schools_due is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.schools_due|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Planned Coverage">{% if row.plan_coverage is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.plan_coverage }}%{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Coverage">{% if row.coverage is None %}<span class="edify-text-muted">—</span>{% else %}<strong>{{ row.coverage }}%</strong>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% enddata_table %}
+{% if pi.activities %}
+<!-- Planned and completed activities (owner, 2026-09-28) -->
+{% include "partials/components/profile_activities.html" with acts=pi.activities caption=pi.activities_caption %}
+{% endif %}
+
+{% elif pi.section == "projects" %}
+{% paginate pi.profile.projects "projects_page" as projects_pager %}
+{% data_table name="profile-projects" %}
+  {% slot title %}Projects{% endslot %}
+  {% slot summary %}{{ pi.profile.projects|length }} project{{ pi.profile.projects|length|pluralize }} · {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}Each project with schools in this portfolio: its status, these schools on it, the project's schools against the capacity set for it, the project's work at these schools in the plan and completed, and how these schools' SSA has moved.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No project has a school in this portfolio." compact="true" %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=projects_pager param="projects_page" %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">Project Schools is every school on the project, wherever it is; Capacity is the schools its coordinator allows the people who add schools to it, added up, and blank where none is set. Work is the project's activities at this portfolio's schools.</p>{% endslot %}
+  {% if pi.profile.projects %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Project</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools Here</th>
+      <th scope="col" class="px-3 py-2 text-right">Project Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Capacity</th>
+      <th scope="col" class="px-3 py-2 text-right">Capacity Left</th>
+      <th scope="col" class="px-3 py-2 text-right">Work Planned</th>
+      <th scope="col" class="px-3 py-2 text-right">Work Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2 text-right">Improved</th>
+      <th scope="col" class="px-3 py-2 text-right">Declined</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in projects_pager.rows %}
+    <tr data-profile-project="{{ row.id }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if pi.may_open_projects %}<a href="/projects/monitoring?project={{ row.id }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</th>
+      <td class="px-3 py-2" data-label="Status">{{ row.project_status }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Here">{{ row.schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Project Schools">{{ row.project_schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Capacity">{% if row.capacity is None %}<span class="edify-text-muted" title="No capacity set">—</span>{% else %}{{ row.capacity|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Capacity Left">{% if row.capacity_left is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.capacity_left|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Work Planned">{{ row.planned|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Work Completed">{{ row.completed|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Improved">{{ row.improved|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Declined">{{ row.declined|intcomma }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}
+{% elif pi.group %}
+{% comment %}The scope read by one kind of part — sub-regions, districts or the
+people who hold its schools — with the parts at the top and the bottom by
+the ranking rule; a part's name opens its own profile.{% endcomment %}
+{% paginate pi.group.rows "parts_page" as parts_pager %}
+{% data_table name="profile-parts" %}
+  {% slot title %}{{ pi.group_label }}{% endslot %}
+  {% slot summary %}{{ pi.group.rows|length|intcomma }} · {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}{{ pi.group_label }} of this portfolio: the schools of each, how many have a confirmed SSA in {{ pi.profile.fy_label }}, the schools with nothing planned, its clusters and enrolment, the visits and trainings completed of those in the plan, the average score in {{ pi.profile.previous_label }} and in {{ pi.profile.fy_label }}, and the change.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="Nothing to list here." compact="true" %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=parts_pager param="parts_page" %}{% if pi.group.unplaced %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">{{ pi.group.unplaced|intcomma }} school{{ pi.group.unplaced|pluralize }} of this portfolio {{ pi.group.unplaced|pluralize:"is,are" }} in no row here: {% if pi.section == "staff" %}nobody holds {{ pi.group.unplaced|pluralize:"it,them" }}{% else %}{{ pi.group.unplaced|pluralize:"it has,they have" }} none recorded{% endif %}. {{ pi.group.unplaced|pluralize:"It is,They are" }} still counted in every total of the profile.</p>{% endif %}{% endslot %}
+  {% if pi.group.rows %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">{{ pi.group_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools</th>
+      <th scope="col" class="px-3 py-2 text-right">Assessed</th>
+      <th scope="col" class="px-3 py-2 text-right">Nothing Planned</th>
+      <th scope="col" class="px-3 py-2 text-right">Clusters</th>
+      <th scope="col" class="px-3 py-2 text-right">Enrolment</th>
+      <th scope="col" class="px-3 py-2 text-right">Visits</th>
+      <th scope="col" class="px-3 py-2 text-right">Trainings</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ pi.profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in parts_pager.rows %}
+    <tr data-profile-part="{{ row.id }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if pi.may_open_group %}<a href="{{ pi.group_url }}{{ row.id }}?fy={{ pi.fy }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools">{{ row.schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Assessed">{{ row.assessed|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Nothing Planned">{{ row.unplanned|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Clusters">{{ row.clusters|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Enrolment">{{ row.enrollment|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Visits" title="Completed of those in the plan">{{ row.visits_done|intcomma }} / {{ row.visits|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Trainings" title="Completed of those in the plan">{{ row.trainings_done|intcomma }} / {{ row.trainings|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ pi.profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2" data-label="Status">{{ row.status_label }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}
+{% if pi.group.rows|length > 1 %}
+{% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.group.best kind="part" name="profile-best-parts" title=pi.group_best_title empty="Nothing has a confirmed SSA in this year." %}
+{% include "partials/profiles/_ranking.html" with profile=pi.profile rows=pi.group.worst kind="part" name="profile-worst-parts" title=pi.group_worst_title empty="Nothing further has a confirmed SSA in this year." %}
+<p class="edify-text-caption edify-text-muted" data-profile-method>{{ pi.profile.rankings.method }}</p>
+{% endif %}
+{% endif %}
+

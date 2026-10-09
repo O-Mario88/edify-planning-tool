@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **909**
-- All registered routes: **1382**
+- Routed product surfaces: **914**
+- All registered routes: **1387**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **657**
-- Full pages: **265**
+- Shared component templates: **674**
+- Full pages: **270**
 - Partials and drawers: **322**
-- Permission-gated surfaces: **892**
-- Referenced by automated tests: **809**
+- Permission-gated surfaces: **897**
+- Referenced by automated tests: **814**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -194,6 +194,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-01E1012D38 | /cce-leadership/reports/new | Cce Report New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-86BCA6686D | /cce-leadership/reports/start | Cce Report Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-D3BB0CD510 | /change-password | Set a new password | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-85CDA82483 | /cluster-management/ | · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-58D1EBBE03 | /cluster-management/<str:section> | · Cluster Management · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EFB5DF0B83 | /cluster-management/scoring | Scoring · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-273FCBD571 | /cluster-oversight/ | Cluster Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster details | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -288,6 +291,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-21F78251D8 | /country-planning-oversight/table-export/<str:key> | Cpo Table Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5E9536B255 | /country-planning-oversight/table/<str:key> | · Country Planning Oversight · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9960305561 | /country-profile | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E4DAD286B | /cpd-learning | CPD & Learning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-442BF26C2E | /cpd-learning/action | Pd Dashboard Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -326,7 +330,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-99ACD5614E | /disbursements/detail | Disbursements Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66250CABB0 | /disbursements/drawer | Disbursements Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3E7346BCB9 | /districts | Districts | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-A6FCE7EB16 | /districts/<str:district_id> | District | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A6FCE7EB16 | /districts/<str:district_id> | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B49AB1186E | /documents/<slug:slug>/ | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6A16EB2B5D | /documents/<slug:slug>/<str:action> | Document Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E27995BCBE | /documents/<slug:slug>/manage | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -871,6 +875,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-7F963ACD27 | /staff/<str:user_id> | Staff Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-37C6B437D7 | /strategic-priorities | Priority Setting Dashboard · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8EA7B066B3 | /strategic-priorities/action | Strategic Priority Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-243A1FB782 | /sub-regions/<str:sub_region_id> | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CC14ABFA81 | /succession-planning | · Edify | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FCFA103796 | /support | Report a Problem | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BE2BCC13AA | /support/client-defect | Client Defect Beacon | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

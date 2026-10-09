@@ -147,6 +147,13 @@ def _previous_period(fy: str, quarter: str) -> tuple[str, str | None, str]:
     return previous_fy, "Q4", f"Q4 {_fy_label(previous_fy)}"
 
 
+def _year_before(fy: str) -> str | None:
+    try:
+        return str(int(fy) - 1)
+    except (TypeError, ValueError):
+        return None
+
+
 def _scoped_schools(principal):
     """Resolve the dashboard's aggregate scope before any SSA query runs.
 
@@ -884,6 +891,39 @@ def build_dashboard(principal, query: dict, *, export_only: bool = False) -> dic
     district_rows.sort(
         key=lambda row: (row["average"] is None, -(row["average"] or 0), row["name"])
     )
+
+    # Last year beside this year (owner, 2026-10-09: "we shall be comparing
+    # previous FY SSA scores with the current SSA Scores to measure
+    # improvement"): each school's latest confirmed record of the year before
+    # the one selected, whatever period is selected within it, averaged the
+    # way this year's are. A year with nothing confirmed is not measured.
+    year_before = _year_before(selected_fy)
+    before_rows = []
+    if year_before:
+        before_records = reads.latest(year_before)
+        before_scores = reads.scores([row["id"] for row in before_records])
+        for record in before_records:
+            school = schools_by_id.get(record["school_id"])
+            if school:
+                score_map = before_scores.get(record["id"], {})
+                before_rows.append(
+                    {
+                        "district_id": school["district_id"],
+                        "average": _resolved_average(record, score_map),
+                        "scores": score_map,
+                    }
+                )
+    _before_averages, before_columns = _finite_columns(before_rows)
+    for row in intervention_rows:
+        row["previous"] = _round(mean_of_floats(before_columns.get(row["key"], ())))
+    before_by_district: dict[str, list[float]] = defaultdict(list)
+    for row in before_rows:
+        if row["district_id"] and row["average"] is not None:
+            before_by_district[row["district_id"]].append(row["average"])
+    for row in district_rows:
+        row["previous_average"] = _round(
+            mean_of_floats(before_by_district.get(row["id"], ()))
+        )
     breakdowns = _breakdowns(assessed, schools)
     matrix_by_id = {row["id"]: row for row in matrix_rows}
     matrix_rows = [matrix_by_id[row["id"]] for row in district_rows]
@@ -1100,6 +1140,11 @@ def build_dashboard(principal, query: dict, *, export_only: bool = False) -> dic
         },
         "interventions": intervention_rows,
         "districts": district_rows,
+        # The two years every comparison chart on the page names.
+        "years": {
+            "current": _fy_label(selected_fy),
+            "previous": _fy_label(year_before) if year_before else "",
+        },
         # The same confirmed results, grouped by the staff member who holds
         # the school (under their Programme Lead), by cluster and by the
         # partner that collected them (owner, 2026-09-12).

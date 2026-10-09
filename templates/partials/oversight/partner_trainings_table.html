@@ -36,7 +36,7 @@ drawer, so this page stays read-only (no write from the table itself).
       </tr></thead>
       <tbody>{% for item in page.rows %}
         <tr class="partner-plan-row" data-facilitated-training="{{ item.activity_id }}"{% if item.is_overdue %} data-overdue{% endif %}>
-          <td data-label="Cluster Name">{{ item.cluster_name|default:"—" }}</td>
+          <td data-label="Cluster Name">{% cluster_link item.cluster_name item.cluster_id empty="—" %}</td>
           <td data-label="District">{{ item.district|default:"—" }}</td>
           <td data-label="Training Name">{{ item.training_name|default:"Group training" }}</td>
           <td data-label="SSA Intervention">{{ item.intervention_label|default:"—" }}</td>

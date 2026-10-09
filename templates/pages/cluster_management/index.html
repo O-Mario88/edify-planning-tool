@@ -1,0 +1,97 @@
+{% extends "layouts/shell.html" %}
+{% load components table_pagination frontend_filters %}
+
+{% block title %}{{ section.label }} · Cluster Management · Edify{% endblock %}
+
+{% comment %}
+Cluster Management (owner brief, 2026-10-08): ONE page behind one sidebar
+entry, whose sections — Command Center, My Clusters, Clusters, Meetings,
+Training, Attendance, Schools, SSA Performance, Teacher Impact, Leader Impact,
+Student Impact, Academic Impact, Loans & BT, MSCS, Impact Analytics, Planning,
+Evidence, Reports — are its tabs. A long strip scrolls sideways (owner,
+2026-10-02); the sidebar stays the length the owner set it to.
+
+Each section is one table, described by apps.clusters.workspace and drawn
+here: the page has no figure of its own. A figure that has schools behind it
+is a link to the cluster profile tab that lists them, shown only to a reader
+that page lets in. A dash is a figure the records cannot give yet, never a
+zero.
+{% endcomment %}
+
+{% block shell_content %}
+{% with can_open_cluster=request.user|can_open:"/clusters/0" %}
+{% paginate table.rows "rows_page" as rows_pager %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-cluster-management="{{ section.key }}">
+
+  {% page_header eyebrow="Cluster Management" title=section.label description=section.description %}
+    {% if can_export and section.key != "reports" %}
+    <a href="/cluster-management/{{ section.key }}?fy={{ fy }}&amp;area={{ ssa_area }}&amp;view={{ impact_view }}&amp;format=csv" class="edify-action-button secondary h-9" data-cluster-management-download>Download CSV</a>
+    {% endif %}
+    {% if can_set_weights %}
+    <a href="/cluster-management/scoring" class="edify-action-button secondary h-9">Scoring</a>
+    {% endif %}
+  {% endpage_header %}
+
+  <nav class="oversight-entity-tabs" aria-label="Cluster Management sections" data-cluster-management-sections>
+    {% for entry in sections %}
+    {% if entry.is_door %}
+    <a class="oversight-entity-tabs__link" href="/clusters" title="{{ entry.description }}"><span>{{ entry.label }}</span></a>
+    {% else %}
+    <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}" href="/cluster-management/{{ entry.key }}?fy={{ fy }}" title="{{ entry.description }}"{% if entry.is_active %} aria-current="page"{% endif %}><span>{{ entry.label }}</span></a>
+    {% endif %}
+    {% endfor %}
+  </nav>
+
+  {% filter_bar label="Cluster Management filters" form_id="cluster-management-filters" extra_class="flex flex-wrap items-end gap-3" %}
+    <label class="block">
+      <span class="edify-filter-label">Fiscal year</span>
+      <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        {% for year in fy_options %}<option value="{{ year }}"{% if year == fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if section.key == "ssa" %}
+    <label class="block">
+      <span class="edify-filter-label">SSA area</span>
+      <select name="area" aria-label="SSA area" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+        <option value="">All SSA areas</option>
+        {% for value, label in ssa_areas %}<option value="{{ value }}"{% if value == ssa_area %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if section.key == "impact" %}<input type="hidden" name="view" value="{{ impact_view }}">{% endif %}
+  {% endfilter_bar %}
+
+  {% if section.key == "impact" %}
+  <nav class="oversight-entity-tabs" aria-label="Impact Analytics views" data-impact-views>
+    <a class="oversight-entity-tabs__link{% if impact_view == 'clusters' %} is-active{% endif %}" href="/cluster-management/impact?fy={{ fy }}&amp;view=clusters"{% if impact_view == 'clusters' %} aria-current="page"{% endif %}><span>Clusters Compared</span></a>
+    <a class="oversight-entity-tabs__link{% if impact_view == 'courses' %} is-active{% endif %}" href="/cluster-management/impact?fy={{ fy }}&amp;view=courses"{% if impact_view == 'courses' %} aria-current="page"{% endif %}><span>SSA Movement After Each Training</span></a>
+  </nav>
+  {% endif %}
+
+  {% data_table name=table.name %}
+    {% slot title %}{{ table.title }}{% endslot %}
+    {% slot summary %}{{ table.summary }}{% endslot %}
+    {% slot caption %}{{ table.caption }}{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message=table.empty compact="true" %}{% endslot %}
+    {% slot footer %}{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}{% if table.note %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-cluster-management-note>{{ table.note }}</p>{% endif %}{% endslot %}
+    {% if table.rows %}
+    <thead>
+      <tr>
+        {% for column in table.columns %}<th scope="col" class="px-3 py-2{% if column.numeric %} text-right{% endif %}">{{ column.label }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows_pager.rows %}
+      <tr data-cluster-management-row="{{ row.key }}">
+        {% for c in row.cells %}
+        {% if forloop.first %}<th scope="row" class="px-3 py-2 text-left" data-record-title>{% else %}<td class="px-3 py-2{% if c.numeric %} text-right tabular-nums{% endif %}" data-label="{{ c.label }}">{% endif %}{% if c.tone %}<span class="edify-status-text" data-edify-tone="{{ c.tone }}">{% endif %}{% if c.cluster and can_open_cluster %}<a href="/clusters/{{ c.cluster }}{{ c.query }}" class="hover:underline font-semibold">{{ c.text }}</a>{% elif c.school %}{% school_link c.text c.school %}{% elif c.download %}{% if can_export %}<a href="/cluster-management/{{ c.download }}?fy={{ fy }}&amp;format=csv" class="edify-primary-text font-semibold hover:underline" aria-label="Download {{ row.cells.0.text }} as CSV">{{ c.text }}</a>{% else %}Your role does not include downloads{% endif %}{% else %}{{ c.text }}{% endif %}{% if c.tone %}</span>{% endif %}{% if forloop.first %}</th>{% else %}</td>{% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+
+</div>
+{% endwith %}
+{% endblock %}

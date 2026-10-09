@@ -155,7 +155,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: footer (0.011 KB), and #239 its table and link rules. Together they
     #: were eight bytes over, main's suite failed and nothing deployed. Half
     #: a kilobyte, as the script budget moves: this is a ratchet.
-    CSS_GZIP_KB = 247
+    #:
+    #: Raised to 247.5 on 2026-10-09 (246.51 to 247.03 KB) for the owner's
+    #: chart and profile briefs of that day, which reach every page's sheets
+    #: together: the cut-out bars every horizontal chart is now drawn with
+    #: (components.css, +0.33 KB, cut back once already), and the utility
+    #: classes of the profile pages and of Cluster Management, which the
+    #: Tailwind sheet carries for the whole platform. Half a kilobyte: this
+    #: is a ratchet.
+    CSS_GZIP_KB = 247.5
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
@@ -293,7 +301,21 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: - live-regions.js (+0.06 KB) opens its stream only once the page has
     #:   stayed a second and a half, a section that settles sooner included
     #:   (tests/js/live-regions.test.cjs).
-    JS_GZIP_KB = 148
+    #:
+    #: Raised to 151.5 on 2026-10-09 for two things the owner asked of every
+    #: chart, both in chart-standard.js, the one place every chart passes:
+    #: - every horizontal bar chart of one or two series is drawn by the
+    #:   shell itself, as cut-out bars (owner, with a reference chart: "use
+    #:   the graph format ... for all horizontal bar graphs"; +2.1 KB). Two
+    #:   bars from zero on one line is not a form the chart library has, and
+    #:   the profile pages that now carry these charts load no chart library
+    #:   at all;
+    #: - every line chart keeps all of its labels ("fix the labels"): long
+    #:   names break between words and each edge has room for half a label
+    #:   (+0.7 KB).
+    #: Measured 150.72 KB. Under a kilobyte of room, as this budget has
+    #: always been given, not an invitation.
+    JS_GZIP_KB = 151.5
     INLINE_SCRIPT_KB = 40
 
     @classmethod
@@ -382,9 +404,15 @@ class PagePayloadBudgetTest(TestCase):
     #: (measured 485 / 2512), /my-plan 265 / 1760 (262 / 1787), /schools
     #: 265 / 2270 (329 / 3088) and /notifications 265 / 1390 (331 / 1706).
     #: The rows are the cost; nothing else on these pages grew.
+    #:
+    #: /my-plan was 290 KB / 1970. Raised on 2026-10-09 (measured 279 KB /
+    #: 1973) for the Cluster Management sidebar entry (owner brief,
+    #: 2026-10-08): one entry is five elements and the shell draws the
+    #: sidebar twice (desktop and the phone's menu), so every page gained
+    #: ten. /my-plan stood at 1963 before it; the other pages had the room.
     CCEO_PAGES = (
         ("/dashboard", 535, 2765),
-        ("/my-plan", 290, 1970),
+        ("/my-plan", 290, 1985),
         ("/schools", 362, 3400),
         ("/planning", 175, 950),
         ("/notifications", 365, 1880),

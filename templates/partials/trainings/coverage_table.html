@@ -45,7 +45,7 @@ count.
           <td class="px-3 py-2 tabular-nums" data-label="School ID">{% school_code row.school_pk %}</td>
           <th scope="row" class="px-3 py-2 text-left" data-record-title><a href="/schools/{{ row.school_pk }}">{{ row.school_name }}</a></th>
           <td class="px-3 py-2" data-label="Training">{{ row.training_name }}</td>
-          <td class="px-3 py-2" data-label="Staff">{{ row.staff_name }}</td>
+          <td class="px-3 py-2" data-label="Staff">{% staff_link row.staff_name row.staff_id %}</td>
           <td class="px-3 py-2" data-label="Route">{{ row.route_label }}{% if row.cluster %} · {{ row.cluster }}{% endif %}{% if row.repeat %} · same school, counted once{% endif %}</td>
           <td class="px-3 py-2" data-label="Responsible">{{ row.responsible|default:"—" }}</td>
           <td class="px-3 py-2" data-label="Status">{% if row.activity_id %}<a href="/my-plan/{{ row.activity_id }}" class="no-underline hover:opacity-90" title="Open this training"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span></a>{% elif row.assignment_id %}<a href="/partner-oversight/" class="no-underline hover:opacity-90" title="Open Partner Oversight, where this hand-over is followed"><span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span></a>{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone }}">{{ row.status_label }}</span>{% endif %}</td>

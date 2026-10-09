@@ -74,7 +74,7 @@ Confirm & Import
 <td class="px-4 py-4 font-mono font-bold" data-label="School ID">{{ r.school_id|default:"-" }}</td>
 <td class="px-4 py-4 font-semibold text-slate-900" data-label="School Name">{{ r.name|default:"-" }}</td>
 <td class="px-4 py-4 text-slate-500 font-semibold" data-label="District / Sub-county">
-{{ r.district_name|default:"-" }} / {{ r.sub_county_name|default:"-" }}
+{% district_link r.district_name r.district_id empty="-" %} / {{ r.sub_county_name|default:"-" }}
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold" data-label="Proprietor / Phone">
 {{ r.director_name|default:"-" }} / {{ r.phone|default:"-" }}

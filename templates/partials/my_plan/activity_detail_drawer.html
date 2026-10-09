@@ -23,7 +23,7 @@ calls on close; the actions below swap the next drawer into
 <div>
 <dt class="edify-text-caption text-slate-500">School or cluster</dt>
 <dd class="font-medium text-slate-800">
-{% if act.school %}{% school_link act.school.name act.school.id %} (ID: {{ act.school.school_id }}){% elif act.cluster %}{{ act.cluster.name }}{% else %}—{% endif %}
+{% if act.school %}{% school_link act.school.name act.school.id %} (ID: {{ act.school.school_id }}){% elif act.cluster %}{% cluster_link act.cluster.name act.cluster.id %}{% else %}—{% endif %}
 </dd>
 </div>
 <div>

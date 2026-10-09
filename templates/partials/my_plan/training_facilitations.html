@@ -47,7 +47,7 @@ partner_facilitations).
 {% for row in facilitations_pager.rows %}
 <tr data-facilitation="{{ row.activity_id }}">
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{{ row.training_name|default:"Training" }}</td>
-<td class="text-slate-700" data-label="Cluster / School">{{ row.cluster_name|default:"—" }}</td>
+<td class="text-slate-700" data-label="Cluster / School">{% cluster_link row.cluster_name row.cluster_id empty="—" %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
 <td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Training Date">{{ row.training_date|date:"j M Y"|default:"Not dated" }}</td>
 <td class="text-slate-700" data-label="Facilitator">{% if row.facilitator_editable %}<button type="button" class="font-semibold underline decoration-dotted underline-offset-2 hover:decoration-solid" hx-get="/partner/activities/{{ row.activity_id }}/delivered-by" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{% if row.facilitator %}Change{% else %}Name{% endif %} the facilitator of {{ row.training_name|default:'this training' }}">{{ row.facilitator|default:"Name team member" }}</button>{% else %}{{ row.facilitator|default:"—" }}{% endif %}</td>

@@ -40,7 +40,7 @@ Lead and an officer read one number. Every figure opens the schools it counts.
       <tbody data-training-coverage-by-staff>
         {% for row in by_staff_pager.rows %}
         <tr data-summary-state="{{ row.state }}">
-          <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.staff_name }}</th>
+          <th scope="row" class="px-3 py-2 text-left" data-record-title>{% staff_link row.staff_name row.staff_id %}</th>
           <td class="px-3 py-2" data-label="Training">{{ row.training_name }}</td>
           <td class="px-3 py-2 text-right tabular-nums" data-label="Ceiling">{% if row.ceiling is None %}<span class="edify-text-muted">Not set</span>{% else %}{{ row.ceiling|intcomma }}{% endif %}</td>
           <td class="px-3 py-2 text-right tabular-nums" data-label="Staff Planned">{% if row.in_school %}<a class="no-underline hover:opacity-90" href="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ fy }}&amp;figure=staff" hx-get="/training-summary/schools?staff={{ row.staff_id }}&amp;training={{ row.training_id }}&amp;fy={{ fy }}&amp;figure=staff" hx-target="#drawer-container" hx-swap="innerHTML" data-summary-figure="staff">{{ row.in_school|intcomma }}</a>{% else %}<span class="edify-text-muted">0</span>{% endif %}</td>

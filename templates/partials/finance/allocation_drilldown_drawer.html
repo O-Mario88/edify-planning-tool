@@ -40,7 +40,7 @@
 {% if line.activity.school %}
 {% school_identity line.activity.school.name line.activity.school.id %}
 {% elif line.activity.cluster %}
-{{ line.activity.cluster.name }}
+{% cluster_link line.activity.cluster.name line.activity.cluster.id %}
 {% else %}
 -
 {% endif %}

@@ -300,7 +300,7 @@
           <thead><tr><th>Partner</th><th>Region</th><th>Assigned</th><th>Scheduled</th><th>Valid done</th><th>Achievement</th><th>SF ID</th><th>Risk</th></tr></thead>
           <tbody>
             {% for partner in body_partners_pager.rows %}
-            <tr><td><strong>{{ partner.name }}</strong></td><td>{{ partner.region }}</td><td>{{ partner.assigned }}</td><td>{{ partner.scheduled }}</td><td>{{ partner.valid }}</td><td>{{ partner.pct }}%</td><td>{{ partner.sf }}%</td><td><span class="tt-status" data-tone="{{ partner.tone }}">{{ partner.risk }}</span></td></tr>
+            <tr><td><strong>{% partner_link partner.name partner.id %}</strong></td><td>{{ partner.region }}</td><td>{{ partner.assigned }}</td><td>{{ partner.scheduled }}</td><td>{{ partner.valid }}</td><td>{{ partner.pct }}%</td><td>{{ partner.sf }}%</td><td><span class="tt-status" data-tone="{{ partner.tone }}">{{ partner.risk }}</span></td></tr>
             {% endfor %}
           </tbody>
         </table>

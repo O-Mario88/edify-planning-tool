@@ -40,7 +40,7 @@ completed work at the bottom, with the Salesforce ID and Evidence (owner,
           <td class="font-mono text-xs" data-label="School ID">{{ item.school_code|default:"—" }}</td>
           <td class="font-semibold" data-record-title>{% if item.school_id %}<a href="/schools/{{ item.school_id }}" class="hover:underline">{{ item.school_name }}</a>{% else %}{{ item.school_name|default:"—" }}{% endif %}</td>
           <td data-label="Package">{% if item.package_label %}<span class="pill pill-neutral text-xs font-medium">{{ item.package_label }}</span>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
-          <td data-label="Activity">{{ item.activity_type|status_label }}{% if item.via_cluster %} <span class="edify-text-caption edify-text-muted">· {{ item.cluster_name|default:"cluster" }}</span>{% endif %}</td>
+          <td data-label="Activity">{{ item.activity_type|status_label }}{% if item.via_cluster %} <span class="edify-text-caption edify-text-muted">· {% cluster_link item.cluster_name item.cluster_id empty="cluster" %}</span>{% endif %}</td>
           <td class="tabular-nums" data-label="Planned Date">{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
           <td data-label="Delivered by">{{ item.executor_name|default:"—" }}</td>
           {% include "components/completion_cells.html" with row=item %}

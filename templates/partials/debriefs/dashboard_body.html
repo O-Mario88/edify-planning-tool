@@ -28,7 +28,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              ];
              cfg.chart.type = 'line';
              cfg.chart.height = 260;
-             cfg.stroke = { width: [2.25, 2, 2, 2], curve: 'straight' };
+             cfg.stroke = { width: [2.25, 2, 2, 2], curve: 'monotoneCubic' };
              cfg.colors = ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
              cfg.markers = { size: 4, strokeWidth: 2 };
              cfg.xaxis.categories = {{ trend.labels|escape }};

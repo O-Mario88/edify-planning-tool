@@ -33,7 +33,7 @@ team view); HR's page includes this only when a request waits on the viewer.
       <tbody class="divide-y edify-border">
         {% for r in queue_pager.rows %}
         <tr>
-          <td class="py-2.5 pr-3 edify-text">{{ r.staff_name }}{% if r.covering %} <span class="text-slate-400">· you are covering</span>{% endif %}</td>
+          <td class="py-2.5 pr-3 edify-text">{% staff_link r.staff_name r.staff_id %}{% if r.covering %} <span class="text-slate-400">· you are covering</span>{% endif %}</td>
           <td class="py-2.5 pr-3">
             <span class="block edify-text">{{ r.course_name }}</span>
             <span class="edify-text-caption text-slate-400">{{ r.course_type }} · FY {{ r.fy }}</span>

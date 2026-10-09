@@ -542,7 +542,7 @@ already; the planner may still name Staff or another partner for one session.{% 
 <input type="hidden" name="executor_type" value="staff">
 <input type="hidden" name="delivery_type" value="staff">
 {% include "partials/activities/facilitated_by_field.html" with field_id="cluster_facilitating_partner_id" selected=cluster_facilitator_id session_noun=session_noun %}
-{% if cluster_facilitator_id %}<p class="edify-text-caption text-slate-500" data-cluster-facilitator-note>{{ cluster.name }} is assigned to <strong>{{ cluster_facilitator_name }}</strong> to facilitate.</p>{% endif %}
+{% if cluster_facilitator_id %}<p class="edify-text-caption text-slate-500" data-cluster-facilitator-note>{% cluster_link cluster.name cluster.id %} is assigned to <strong>{{ cluster_facilitator_name }}</strong> to facilitate.</p>{% endif %}
 <p class="edify-text-caption text-slate-500">Staff run the {{ session_noun }}, carry its meals, venue, materials and transport, and complete it with the attendance and the Salesforce ID. A partner facilitator is told the date and is paid the facilitation fee only.</p>
 
 

@@ -60,8 +60,16 @@ class SsaScorePresentationContractTest(SimpleTestCase):
         self.assertIn("cell.score", self._template(score_templates[0]))
         self.assertIn("cell.score", self._template(score_templates[1]))
         self.assertIn("cell.score", self._template(score_templates[2]))
-        self.assertIn("r.bar_pct", self._template(score_templates[3]))
-        self.assertIn("r.bar_pct", self._template(score_templates[4]))
+        # The two intervention panels draw last cycle's score inside this
+        # cycle's (owner, 2026-10-09): the shared track takes the two scores
+        # and works the widths out itself, so no percentage is in the panel.
+        for path in score_templates[3:]:
+            source = self._template(path)
+            self.assertIn("components/ssa_cutout_track.html", source, path)
+            self.assertIn("current=r.score previous=r.previous", source, path)
+        track = self._template("components/ssa_cutout_track.html")
+        self.assertIn("current|multiply:10", track)
+        self.assertIn("previous|multiply:10", track)
 
     def test_cd_heatmap_and_priority_school_table_are_separate_cards(self):
         # The two cards live in the operations view since 2026-09-19, and the

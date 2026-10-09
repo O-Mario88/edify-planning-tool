@@ -1,0 +1,8 @@
+{% comment %}
+The tab strip of a profile: the page's own tabs, then the engine's sections.
+{% endcomment %}
+<nav class="oversight-entity-tabs" aria-label="Profile sections" data-profile-tabs>
+  {% for key, label in pi.tabs %}
+  <a class="oversight-entity-tabs__link{% if key == pi.tab %} is-active{% endif %}" href="{{ pi.href }}{{ pi.param }}={{ key }}&amp;fy={{ pi.fy }}"{% if key == pi.tab %} aria-current="page"{% endif %}><span>{{ label }}</span></a>
+  {% endfor %}
+</nav>

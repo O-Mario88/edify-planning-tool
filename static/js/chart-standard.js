@@ -120,6 +120,113 @@
     return `${share}%`;
   }
 
+  const isPercent = panel => !!(panel.axis?.opposite || panel.axis?.title?.text?.includes('%') || panel.axis?.title?.text === 'Percent');
+  const formatterFor = panel => isPercent(panel) ? value => value == null ? format(value) : `${format(value)}%` : format;
+
+  /* ── Horizontal bars: the cut-out ────────────────────────────────────────
+   * Owner, 2026-10-09, with a reference chart ("Top 10 States By Hispanic
+   * Population"): "use the graph format (Horizontal Cut out bar graph) above
+   * for all horizontal bar graphs ... if it is comparing for example previous
+   * performance with current performance it should be formatted exactly like
+   * the reference image".
+   *
+   * One row per category on one scale. With two series both bars start at
+   * zero on the same line: the first series in the full colour, the second
+   * in its tint, the shorter of the two on top — so a part reads against its
+   * whole, and last year against this year, as one bar with a piece cut out
+   * of it. The shorter bar's value sits inside its end, the longer one's
+   * after the bar; when the shorter bar has no room for a number both are
+   * written after the bar with their names ("1.6 Hispanic, 8.8 Total"). The
+   * legend is a ruled box, the axis one rule with its unit under it.
+   *
+   * Drawn in the page, not by the chart library: two bars on one line is not
+   * a form the library has, and marks made of elements take the theme from
+   * the stylesheet with nothing to redraw. */
+  const CUT_OUT_LABEL_PX = 34;
+  const cutsOut = panel => panel.horizontal && !panel.trend && panel.series.length <= 2
+    && panel.series.some(s => s.data.some(v => v != null)) && panel.series.every(s => s.data.every(v => v == null || v >= 0));
+
+  /* A round scale end at or above the largest value, in five steps at most. */
+  function cutOutScale(panel) {
+    const top = Math.max(0, ...panel.series.flatMap(s => s.data).filter(v => v != null));
+    const fixed = number(panel.axis?.max);
+    if (fixed != null && fixed >= top) return {max: fixed, step: fixed / (fixed % 5 === 0 ? 5 : 4)};
+    if (!top) return {max: 1, step: 1};
+    const rough = top / 4;
+    const power = 10 ** Math.floor(Math.log10(rough));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * power).find(m => m >= rough);
+    return {max: Math.ceil(top / step) * step, step};
+  }
+
+  function cutOut(slot, panel) {
+    const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
+    const say = formatterFor(panel);
+    const mark = value => value == null ? format(value) : say === format ? formatMark(value) : say(value);
+    const scale = cutOutScale(panel);
+    const share = value => `${Math.min(100, (value / scale.max) * 100)}%`;
+    const pair = panel.series.length === 2;
+    // A series with no value anywhere (this year, in its first weeks) says so
+    // once, in the legend, instead of "Not measured" on every row.
+    const unmeasured = pair ? panel.series.findIndex(series => series.data.every(v => v == null)) : -1;
+    const root = el('div', 'edify-cutout');
+    root.dataset.series = String(panel.series.length);
+    if (pair) {
+      const legend = el('ul', 'edify-cutout__legend');
+      panel.series.forEach((series, i) => { const item = el('li', '', unmeasured === i ? `${series.name} · not measured` : series.name); item.prepend(el('i', `edify-cutout__key edify-cutout__key--${i ? 'second' : 'first'}`)); legend.appendChild(item); });
+      root.appendChild(legend);
+    }
+    const rows = el('ol', 'edify-cutout__rows');
+    const fit = [];
+    panel.categories.forEach((category, index) => {
+      const row = el('li', 'edify-cutout__row');
+      const name = el('span', 'edify-cutout__name', String(category)); name.title = String(category); row.appendChild(name);
+      const track = el('span', 'edify-cutout__track');
+      const values = panel.series.map(series => series.data[index]);
+      const measured = values.filter(v => v != null);
+      const longest = measured.length ? Math.max(...measured) : null;
+      const end = el('span', 'edify-cutout__end');
+      // Drawn longest first, so the shorter bar lies on top of it.
+      values.map((value, i) => ({value, i})).filter(bar => bar.value != null).sort((a, b) => b.value - a.value || a.i - b.i)
+        .forEach((bar, order, drawn) => {
+          const node = el('span', `edify-cutout__bar edify-cutout__bar--${bar.i ? 'second' : 'first'}`);
+          node.style.width = share(bar.value);
+          if (order === drawn.length - 1 && drawn.length === 2) {
+            const inside = el('b', '', mark(bar.value)); node.appendChild(inside);
+            fit.push({node, inside, end, text: mark(longest), spelled: values.map((v, i) => `${mark(v)} ${panel.series[i].name}`).join(', ')});
+          }
+          track.appendChild(node);
+        });
+      end.style.insetInlineStart = longest == null ? '0' : share(longest);
+      end.dataset.over = pair && values[1] === longest && values[0] !== longest ? 'second' : 'first';
+      end.textContent = !pair ? mark(values[0])
+        : measured.length === 2 ? mark(longest)
+        : !measured.length ? format(null)
+        : unmeasured >= 0 ? mark(measured[0])
+        : values.map((v, i) => `${mark(v)} ${panel.series[i].name}`).join(', ');
+      track.appendChild(end);
+      row.appendChild(track);
+      rows.appendChild(row);
+    });
+    root.appendChild(rows);
+    const axis = el('div', 'edify-cutout__axis');
+    axis.setAttribute('aria-hidden', 'true');
+    for (let tick = 0; tick <= scale.max + scale.step / 1000; tick += scale.step) {
+      const label = el('span', '', say(Number(tick.toFixed(6)))); label.style.insetInlineStart = share(tick); axis.appendChild(label);
+    }
+    root.appendChild(axis);
+    const unit = panel.axis?.title?.text;
+    if (unit) root.appendChild(el('p', 'edify-cutout__unit', unit));
+    slot.appendChild(root);
+    // A number goes inside its bar only where the bar holds it; a value after
+    // a bar that runs off the plot is written inside the end of the bar.
+    fit.forEach(row => { if (row.node.offsetWidth && row.node.offsetWidth < Math.max(CUT_OUT_LABEL_PX, row.inside.offsetWidth + 12)) { row.inside.remove(); row.end.textContent = row.spelled; } });
+    const edge = root.getBoundingClientRect().right;
+    rows.querySelectorAll('.edify-cutout__end').forEach(end => {
+      if (edge && end.getBoundingClientRect().right > edge) end.classList.add('edify-cutout__end--inside');
+    });
+    return {destroy() { root.remove(); }};
+  }
+
   function options(panel, width) {
     const ink = token('--edify-text-muted', '#5b6472');
     const axisInk = token('--edify-text-subtle', ink);
@@ -128,14 +235,31 @@
     const values = panel.series.flatMap(s => s.data).filter(v => v != null);
     const horizontal = panel.horizontal;
     const trend = panel.trend === true;
-    const percent = !!(panel.axis?.opposite || panel.axis?.title?.text?.includes('%') || panel.axis?.title?.text === 'Percent');
-    const formatter = percent ? value => value == null ? format(value) : `${format(value)}%` : format;
+    const percent = isPercent(panel);
+    const formatter = formatterFor(panel);
     const wholeNumbers = values.every(v => Number.isInteger(v));
     const colors = panel.series.map(s => colorFor(s.colorIndex ?? 0));
     const axis = {...panel.axis, opposite: false, show: true, seriesName: undefined, forceNiceScale: true, tickAmount: 4,
       min: Math.min(0, ...values), labels: {style: {colors: axisInk, fontSize: '12px'},
         formatter: horizontal ? value => String(value) : value => (wholeNumbers && !Number.isInteger(value) ? '' : formatter(value))}};
     if (axis.max != null && Math.max(0, ...values) > axis.max) delete axis.max;
+    // A trend's first and last points sit on the plot's edges with their
+    // labels centred under them, so half of each fell outside the card
+    // ("stlike Behaviour"), and a label that overlapped its neighbour was
+    // dropped. Every label is kept: a name too long for its share of the
+    // axis breaks onto lines between words, each edge is given half its
+    // label's width, and only a single word wider than its share tilts.
+    const fits = trend && width ? Math.max(3, Math.floor(((width - 64) / Math.max(1, panel.categories.length) - 10) / 6.8)) : 0;
+    const lines = label => String(label ?? '').split(/\s+/).reduce((rows, word) => {
+      const last = rows[rows.length - 1];
+      if (last !== undefined && `${last} ${word}`.length <= fits) rows[rows.length - 1] = `${last} ${word}`; else rows.push(word);
+      return rows;
+    }, []);
+    const broken = fits ? panel.categories.map(lines) : null;
+    const crowded = !!broken && broken.some(rows => rows.some(row => row.length > fits + 1));
+    const labels = broken && !crowded ? broken.map(rows => rows.length > 1 ? rows : rows[0]) : panel.categories;
+    const deepest = broken && !crowded ? Math.max(1, ...broken.map(rows => rows.length)) : 1;
+    const edge = label => 10 + Math.min(72, Math.max(...[].concat(label ?? '').map(row => String(row).length)) * 3.3);
     const perBar = horizontal ? panel.series.length * 16 + 12 : 0;
     // The legend wraps when six names do not fit one row; each extra row is
     // paid for above the plot rather than taken out of it.
@@ -164,12 +288,16 @@
     return {
       _edifyStandard: true,
       chart: {type: trend ? 'area' : 'bar',
-        height: horizontal ? Math.max(150, panel.categories.length * perBar + 56) : PLOT_HEIGHT + legendRows * 24,
+        height: horizontal ? Math.max(150, panel.categories.length * perBar + 56) : PLOT_HEIGHT + legendRows * 24 + (deepest - 1) * 14,
         stacked: false, toolbar: {show: false}, fontFamily: 'inherit', animations: {enabled: false}, parentHeightOffset: 0},
       series: panel.series.map(s => ({name: s.name, data: s.data})), colors,
       fill: trend ? {type: 'gradient', gradient: {shadeIntensity: 0, opacityFrom: 0.12, opacityTo: 0.015, stops: [0, 100]}} : {type: 'solid', opacity: 1},
       /* A 2px surface-coloured stroke is the gap between neighbouring bars. */
-      stroke: trend ? {width: 2, curve: 'straight', lineCap: 'round'} : {show: true, width: 2, colors: [surface]},
+      /* A trend is a wave, not a zigzag (owner, 2026-10-09: "the line should be
+         wave like"). The monotone curve bends between points without ever
+         passing below the lower of two neighbours, so a line that starts at
+         zero never dips under the axis the way a plain spline does. */
+      stroke: trend ? {width: 2, curve: 'monotoneCubic', lineCap: 'round'} : {show: true, width: 2, colors: [surface]},
       markers: {size: trend ? 3 : 0, colors: [surface], strokeColors: colors, strokeWidth: 2, hover: {sizeOffset: 2}},
       plotOptions: {bar: {horizontal, borderRadius: 0, columnWidth: barShare(panel, width), barHeight: '64%', distributed: false,
         dataLabels: {position: 'top'}}},
@@ -178,9 +306,9 @@
         formatter: (value, opts) => value == null ? (missingFits(opts) ? format(value) : '')
           : labelFits(opts) ? (formatter === format ? formatMark(value) : formatter(value)) : '',
         style: {fontSize: '12px', fontWeight: 500, colors: [ink]}, background: {enabled: false}},
-      xaxis: {crosshairs: {show: trend, stroke: {color: colors[0], width: 1, dashArray: 0}}, categories: panel.categories, type: 'category',
+      xaxis: {crosshairs: {show: trend, stroke: {color: colors[0], width: 1, dashArray: 0}}, categories: labels, type: 'category',
         title: horizontal ? (panel.axis?.title || {}) : {},
-        labels: {trim: false, maxHeight: 72, rotate: -30, rotateAlways: false, hideOverlappingLabels: true, ...(horizontal ? {formatter} : {}),
+        labels: {trim: false, maxHeight: 72, rotate: -30, rotateAlways: crowded, hideOverlappingLabels: !trend, ...(horizontal ? {formatter} : {}),
           style: {colors: axisInk, fontSize: '12px'}},
         axisBorder: {show: true, color: gridInk}, axisTicks: {show: false}},
       // A panel already named by its title does not repeat it down the axis.
@@ -189,7 +317,7 @@
         offsetY: -2, itemMargin: {horizontal: 8, vertical: 2}, labels: {colors: ink},
         markers: {width: 8, height: 8, radius: trend ? 8 : 1, offsetX: -3}},
       grid: {show: true, borderColor: gridInk, strokeDashArray: 0,
-        xaxis: {lines: {show: horizontal || trend}}, yaxis: {lines: {show: !horizontal}}, padding: {top: 8, right: horizontal ? 48 : 8, bottom: 0, left: 4}},
+        xaxis: {lines: {show: horizontal || trend}}, yaxis: {lines: {show: !horizontal}}, padding: {top: 8, right: horizontal ? 48 : trend ? edge(labels[labels.length - 1]) : 8, bottom: 0, left: trend ? edge(labels[0]) : 4}},
       tooltip: {theme: isDark() ? 'dark' : 'light', shared: true, intersect: false, style: {fontSize: '12px'}, y: {formatter}},
       noData: {text: 'No measured data for this selection'},
     };
@@ -238,7 +366,9 @@
       const bars = panel.categories.length * panel.series.length;
       slot.style.minWidth = `${panel.horizontal ? 300 : Math.max(300, bars * BAR_MIN_PX + PLOT_INSET)}px`;
       viewport.appendChild(slot); wrap.appendChild(viewport);
-      if (panel.series.some(series => series.data.some(value => value != null))) {
+      if (cutsOut(panel)) {
+        currentChart = cutOut(slot, panel);
+      } else if (panel.series.some(series => series.data.some(value => value != null))) {
         const width = viewport.clientWidth || el.clientWidth || 0;
         currentChart = draw(slot, options(panel, width));
       } else {
@@ -309,7 +439,10 @@
       waiting.destroy = () => chart?.destroy?.();
     }) ? waiting : null;
   }
-  const api = {panels, options, render, palette, pageSize, barShare, colorFor, initialPage, whenLibraryRuns, late};
+  /* Cut-out bars need no chart library, so a page that loads none (a school
+   * or cluster profile) still draws them; anything else waits for it. */
+  const needsLibrary = input => input._edifyStandard || panels(input, 0).some(panel => !cutsOut(panel) && panel.series.some(s => s.data.some(v => v != null)));
+  const api = {panels, options, render, needsLibrary, palette, pageSize, barShare, colorFor, initialPage, whenLibraryRuns, late, cutsOut, cutOutScale};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EdifyBarStandard = api;
 })(typeof window !== 'undefined' ? window : globalThis);

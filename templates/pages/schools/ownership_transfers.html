@@ -84,7 +84,7 @@ reconciled through the amendment workflow.
   <div class="rounded-surface border border-[var(--border-card)] p-3 space-y-1" data-district-preview>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What would move</p>
     <ul class="text-[12px] text-slate-700 space-y-0.5">
-      <li><strong>{{ preview.school_count }}</strong> school{{ preview.school_count|pluralize }} in {{ preview.district_name }} from {{ preview.current_owner_name }}{% if preview.new_owner_name %} to {{ preview.new_owner_name }}{% endif %}</li>
+      <li><strong>{{ preview.school_count }}</strong> school{{ preview.school_count|pluralize }} in {% district_link preview.district_name preview.district_id %} from {{ preview.current_owner_name }}{% if preview.new_owner_name %} to {{ preview.new_owner_name }}{% endif %}</li>
       <li>{{ preview.open_activities }} open activit{{ preview.open_activities|pluralize:"y,ies" }} ({{ preview.scheduled_activities }} scheduled) · {{ preview.settled_activities }} settled and never moved</li>
       <li>{{ preview.partner_assignments }} live partner assignment{{ preview.partner_assignments|pluralize }} · {{ preview.project_memberships }} project membership{{ preview.project_memberships|pluralize }} · {{ preview.open_team_actions }} open team action{{ preview.open_team_actions|pluralize }}</li>
       <li>School geography: unchanged</li>
@@ -124,7 +124,7 @@ reconciled through the amendment workflow.
       <tbody>
       {% for batch in batches %}
       <tr>
-        <td data-label="What moved" data-record-title>{{ batch.school_count }} school{{ batch.school_count|pluralize }} · {{ batch.district.name }}</td>
+        <td data-label="What moved" data-record-title>{{ batch.school_count }} school{{ batch.school_count|pluralize }} · {% district_link batch.district.name batch.district.id %}</td>
         <td data-label="From">{{ batch.from_staff.user.name|default:"Unassigned" }}</td>
         <td data-label="To">{{ batch.to_staff.user.name }}</td>
         <td data-label="Effective">{{ batch.effective_date|date:"j M Y" }}</td>

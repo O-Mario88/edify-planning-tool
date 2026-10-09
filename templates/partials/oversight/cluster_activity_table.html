@@ -36,7 +36,7 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
         {% for item in activity_pager.rows %}
         <tr data-session-row="{% firstof item.activity_id item.partner_assignment_id %}">
           <td class="font-semibold" data-record-title>{% if can_open_cluster == False or not item.cluster_id %}{% firstof item.cluster_name item.context_label %}{% else %}<a href="/clusters/{{ item.cluster_id }}" class="hover:underline">{% firstof item.cluster_name item.context_label %}</a>{% endif %}</td>
-          <td data-label="District">{{ item.district_name|default:"—" }}</td>
+          <td data-label="District">{% district_link item.district_name item.district_id empty="—" %}</td>
           <td class="tabular-nums" data-label="Planned Date">{{ item.planned_date|date:"j M Y"|default:"Awaiting schedule" }}</td>
           <td data-label="Executor">{% firstof item.executor_name member.name %}</td>
           <td class="whitespace-normal text-xs" data-label="Purpose (Meeting Topic)">{{ item.topic|default:"—" }}</td>

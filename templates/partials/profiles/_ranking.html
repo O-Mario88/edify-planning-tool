@@ -1,0 +1,37 @@
+{% load components %}{% comment %}
+One ranking of a profile: `rows` in order, each with the figures it was
+ranked by, so nobody has to ask why it is first (owner's brief, point 7).
+`kind` is "school", "cluster" or "part" (a district, a sub-region, a person:
+`pi.group_label` names the column and `pi.group_url` opens the row); `name`
+names the table.
+{% endcomment %}
+{% data_table name=name %}
+  {% slot title %}{{ title }}{% endslot %}
+  {% slot summary %}{{ profile.fy_label }}{% endslot %}
+  {% slot caption %}{{ title }} by average confirmed SSA score in {{ profile.fy_label }}, with the score of {{ profile.previous_label }} and the change.{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message=empty compact="true" %}{% endslot %}
+  {% if rows %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2 text-right">#</th>
+      {% if kind == "school" %}<th scope="col" class="px-3 py-2">School ID</th>{% endif %}
+      <th scope="col" class="px-3 py-2">{% if kind == "school" %}School{% elif kind == "part" %}{{ pi.group_label }}{% else %}Cluster{% endif %}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ profile.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ profile.fy_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr data-profile-ranked="{{ kind }}">
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Rank">{{ row.rank }}</td>
+      {% if kind == "school" %}<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.school_id }}</td>{% endif %}
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if kind == "school" %}{% school_link row.name row.id %}{% elif kind == "part" %}{% if pi.may_open_group %}<a href="{{ pi.group_url }}{{ row.id }}?fy={{ pi.fy }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}{% else %}<a href="/clusters/{{ row.id }}">{{ row.name }}</a>{% endif %}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ profile.previous_label }}">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="{{ profile.fy_label }}"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}

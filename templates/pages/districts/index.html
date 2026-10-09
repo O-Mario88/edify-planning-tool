@@ -8,6 +8,10 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 {% page_header eyebrow="Schools & Field" title="Districts" description="Edify Operations · Districts" element="div" %}
+  {% comment %}The widest profile: every district, sub-region, team and
+  cluster at once (owner, 2026-10-09). Offered to the roles that read the
+  whole country.{% endcomment %}
+  {% if may_open_country_profile %}<a href="/country-profile" class="edify-action-button h-9" data-country-profile-link>Country Profile</a>{% endif %}
 {% endpage_header %}
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">

@@ -330,7 +330,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                 <span>{% firstof row.school_name row.cluster_name %}</span>
                 {% endif %}
               </td>
-              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_name|default:"—" }}</td>
+              <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{% cluster_link row.cluster_name row.cluster_id empty="—" %}</td>
               <td class="px-3 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                 <span class="inline-flex items-center gap-1.5">
                   {{ row.owner }}
@@ -496,7 +496,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
                 {% if row.cluster_id %}
                 <a href="/clusters/{{ row.cluster_id }}" class="hover:underline edify-primary-text-hover">{{ row.cluster_name }}</a>
                 {% else %}
-                <span>{{ row.cluster_name }}</span>
+                <span>{% cluster_link row.cluster_name row.cluster_id %}</span>
                 {% endif %}
               </td>
               <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400">{{ row.cluster_district|default:"—" }}</td>

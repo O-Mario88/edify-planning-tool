@@ -79,7 +79,7 @@ listed. The page never changes a locked row; a revision is a new one.{% endcomme
         {% for owner in lead.owners %}
         <tr data-level="2"><th scope="row" class="cpo-namecell" data-leaf><span>{{ owner.name }}</span></th><td>{{ owner.figures.due }}</td><td>{{ owner.figures.executed }}</td><td>{{ owner.figures.verified }}</td><td>{{ owner.figures.closed }}</td><td>{{ owner.figures.overdue }}</td></tr>
         {% for partner in owner.partners %}
-        <tr data-level="3"><th scope="row" class="cpo-namecell" data-leaf><span>{{ partner.name }}</span></th><td>{{ partner.figures.due }}</td><td>{{ partner.figures.executed }}</td><td>{{ partner.figures.verified }}</td><td>{{ partner.figures.closed }}</td><td>{{ partner.figures.overdue }}</td></tr>
+        <tr data-level="3"><th scope="row" class="cpo-namecell" data-leaf><span>{% partner_link partner.name partner.id %}</span></th><td>{{ partner.figures.due }}</td><td>{{ partner.figures.executed }}</td><td>{{ partner.figures.verified }}</td><td>{{ partner.figures.closed }}</td><td>{{ partner.figures.overdue }}</td></tr>
         {% endfor %}
         {% endfor %}
         {% empty %}

@@ -22,7 +22,7 @@
       {% for r in tracker_rows_pager.rows %}
       <tr class="hover:bg-slate-50/5">
         <td class="py-2.5 pr-3">
-          <span class="block edify-text">{{ r.staff_name }}</span>
+          <span class="block edify-text">{% staff_link r.staff_name r.staff_id %}</span>
           <span class="edify-text-caption text-slate-400">{{ r.role }}</span>
         </td>
         <td class="py-2.5 pr-3 text-slate-400">{{ r.supervisor }}</td>

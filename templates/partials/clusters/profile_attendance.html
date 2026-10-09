@@ -1,0 +1,116 @@
+{% load components table_pagination %}
+{% comment %}
+Cluster profile, Attendance (owner brief, 2026-10-08: "Meeting attendance
+intelligence ... School | Meetings Invited | Attended | Attendance % | Last
+Attended | Consecutive Misses ... 4 schools have missed 3+ consecutive cluster
+meetings").
+
+The register the person who ran each meeting or group training filled in,
+read school by school. Invited and Attended count the sessions of the year
+shown; Consecutive Misses counts back from the school's latest invitation across
+years. A session that was delivered with nobody ticked has no register and is
+counted against no school; the note under the table says how many there are.
+
+The views are tabs with their counts (owner, 2026-10-02: lists are tabs, not
+tables one below another).
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="attendance">
+{% filter_bar label="Attendance year" form_id="cluster-attendance-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="attendance">
+<input type="hidden" name="show" value="{{ attendance_show }}">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+
+<nav class="oversight-entity-tabs" aria-label="Attendance views" data-attendance-views>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'all' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=all"{% if attendance_show == 'all' %} aria-current="page"{% endif %}><span>All Schools</span><span class="oversight-entity-tabs__count">{{ attendance.schools|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'missing' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=missing"{% if attendance_show == 'missing' %} aria-current="page"{% endif %}><span>Missed {{ attendance.alert_after }} or More in a Row</span><span class="oversight-entity-tabs__count">{{ attendance.drifting|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'never' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=never"{% if attendance_show == 'never' %} aria-current="page"{% endif %}><span>Invited, Never Attended</span><span class="oversight-entity-tabs__count">{{ attendance.never|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'sessions' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=sessions"{% if attendance_show == 'sessions' %} aria-current="page"{% endif %}><span>Sessions Held</span><span class="oversight-entity-tabs__count">{{ attendance.sessions|length }}</span></a>
+</nav>
+
+{% if attendance_show == "sessions" %}
+{% paginate attendance.sessions "sessions_page" as sessions_pager %}
+{% data_table name="cluster-attendance-sessions" %}
+{% slot title %}Sessions Held, FY {{ attendance.fy }}{% endslot %}
+{% slot summary %}{{ attendance.sessions|length }} session{{ attendance.sessions|length|pluralize }} with a register{% endslot %}
+{% slot caption %}Meetings and group trainings {{ cluster.name }} held in FY {{ attendance.fy }} that have a register: the date, the kind of session, its name, schools invited and attended, and the teachers and school leaders who came.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No meeting or group training with a register in this year." hint="A session appears here once it has been completed and the schools that came are ticked." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=sessions_pager param="sessions_page" %}{% if attendance.without_register %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-attendance-no-register>{{ attendance.without_register }} delivered session{{ attendance.without_register|pluralize }} of this cluster {{ attendance.without_register|pluralize:"has,have" }} no register (nobody was ticked as attending), so {{ attendance.without_register|pluralize:"it is,they are" }} counted against no school.</p>{% endif %}{% endslot %}
+{% if attendance.sessions %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Date</th>
+<th scope="col" class="px-3 py-2">Session</th>
+<th scope="col" class="px-3 py-2">Name</th>
+<th scope="col" class="px-3 py-2 text-right">Schools Invited</th>
+<th scope="col" class="px-3 py-2 text-right">Schools Attended</th>
+<th scope="col" class="px-3 py-2 text-right">Attendance</th>
+<th scope="col" class="px-3 py-2 text-right">Teachers</th>
+<th scope="col" class="px-3 py-2 text-right">School Leaders</th>
+</tr>
+</thead>
+<tbody>
+{% for session in sessions_pager.rows %}
+<tr data-attendance-session="{{ session.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="Date">{% if session.held_on %}{{ session.held_on|date:"j M Y" }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2" data-label="Session">{{ session.kind }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title><a href="/activities/{{ session.id }}" class="font-semibold text-slate-800 hover:underline">{{ session.name }}</a></th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Schools Invited">{{ session.invited }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Schools Attended">{{ session.attended }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Attendance">{% if session.rate is None %}—{% else %}{{ session.rate }}%{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Teachers">{{ session.teachers }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="School Leaders">{{ session.leaders }}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+
+{% else %}
+{% paginate attendance_rows "attendance_page" as attendance_pager %}
+{% data_table name="cluster-attendance-schools" %}
+{% slot title %}{% if attendance_show == "missing" %}Schools That Missed {{ attendance.alert_after }} or More Sessions in a Row{% elif attendance_show == "never" %}Schools Invited in FY {{ attendance.fy }} That Have Not Attended{% else %}School Attendance, FY {{ attendance.fy }}{% endif %}{% endslot %}
+{% slot summary %}{% if attendance.rate is None %}No invitations recorded in FY {{ attendance.fy }}{% else %}{{ attendance.rate }}% of invitations attended · {{ attendance.represented }} of {{ attendance.schools|length }} school{{ attendance.schools|length|pluralize }} represented{% endif %}{% endslot %}
+{% slot caption %}Each school of {{ cluster.name }} with the sessions it was invited to and attended in FY {{ attendance.fy }}, its attendance rate, the date it last attended, how many sessions in a row it has missed, the teachers and school leaders who came, and where it stands.{% endslot %}
+{% slot empty %}{% if attendance_show == "missing" %}{% include "components/empty_state.html" with message="No school has missed that many sessions in a row." compact="true" %}{% elif attendance_show == "never" %}{% include "components/empty_state.html" with message="Every school invited this year has attended at least once." compact="true" %}{% else %}{% include "components/empty_state.html" with message="No schools in this cluster." compact="true" %}{% endif %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=attendance_pager param="attendance_page" %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-attendance-method>Invited and Attended count the sessions of FY {{ attendance.fy }}. Consecutive Misses counts back from the school's latest invitation, across years.{% if attendance.without_register %} {{ attendance.without_register }} delivered session{{ attendance.without_register|pluralize }} with no register {{ attendance.without_register|pluralize:"is,are" }} counted against no school.{% endif %}</p>{% endslot %}
+{% if attendance_rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2 text-right">Invited</th>
+<th scope="col" class="px-3 py-2 text-right">Attended</th>
+<th scope="col" class="px-3 py-2 text-right">Attendance</th>
+<th scope="col" class="px-3 py-2">Last Attended</th>
+<th scope="col" class="px-3 py-2 text-right">Consecutive Misses</th>
+<th scope="col" class="px-3 py-2 text-right">Teachers</th>
+<th scope="col" class="px-3 py-2 text-right">School Leaders</th>
+<th scope="col" class="px-3 py-2">Standing</th>
+</tr>
+</thead>
+<tbody>
+{% for row in attendance_pager.rows %}
+<tr data-attendance-school="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Invited">{{ row.invited }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Attended">{{ row.attended }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Attendance">{% if row.rate is None %}—{% else %}{{ row.rate }}%{% endif %}</td>
+<td class="px-3 py-2 tabular-nums" data-label="Last Attended">{% if row.last_attended %}{{ row.last_attended|date:"j M Y" }}{% else %}Never{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Consecutive Misses">{{ row.missed_in_a_row }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Teachers">{{ row.teachers }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="School Leaders">{{ row.leaders }}</td>
+<td class="px-3 py-2" data-label="Standing">{% include "components/badge.html" with tone=row.standing.1 label=row.standing.0 %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+{% endif %}
+</div>

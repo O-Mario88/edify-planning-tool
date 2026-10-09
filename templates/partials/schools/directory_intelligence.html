@@ -70,7 +70,7 @@ Save
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">District</p>
-<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name|default:"Not specified" }}</p>
+<p class="font-bold text-slate-700 mt-0.5">{% district_link intelligence.school.district.name intelligence.school.district.id empty="Not specified" %}</p>
 </div>
 </div>
 
@@ -94,7 +94,7 @@ Save
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Cluster</p>
-<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.cluster_name }}</p>
+<p class="font-bold text-slate-700 mt-0.5">{% cluster_link intelligence.cluster_name intelligence.cluster_id %}</p>
 </div>
 </div>
 

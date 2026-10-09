@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load chart_tags %}
 {% load kpi_metrics %}
 {% load frontend_filters %}
 
@@ -34,6 +35,17 @@
 </div>
 </div>
 
+{% comment %}
+The person's portfolio through the shared profile sections (owner's brief,
+2026-10-09): the page's own content is the first tab, then the engine's — for
+a Programme Lead over the whole team's schools.
+{% endcomment %}
+{% if pi %}{% include "partials/profiles/_tabs.html" %}{% endif %}
+{% if pi and pi.is_engine_tab %}
+<p class="edify-text-label edify-text-muted" data-profile-scope>{% include "partials/profiles/_scope_line.html" %}</p>
+{% include "partials/profiles/_filters.html" %}
+{% include "partials/profiles/_sections.html" %}
+{% else %}
 {% legacy_kpi_item "Overdue activities" overdue_count helper="Needs recovery" tone="danger" icon="warning" as overdue_kpi %}
 {% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" as completed_kpi %}
 {% collect_kpi_items overdue_kpi completed_kpi as staff_activity_kpis %}
@@ -69,25 +81,9 @@ definitions My Team uses, and links to the pages where each action is taken.
 </section>
 {% endif %}
 
-<!-- Annual SSA Progress (Assigned Schools) -->
-{% if staff_progress %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-<h2 class="text-[14px] font-semibold">Annual SSA Progress (Assigned Schools)</h2>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-{% for item in staff_progress %}
-<div class="space-y-1">
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<span>FY{{ item.fy }} ({{ item.school_count }} School{{ item.school_count|pluralize }})</span>
-<span class="font-semibold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
-</div>
-<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
-<div class="h-full edify-primary-solid rounded-pill" style="width: {{ item.avg_score|multiply:10 }}%"></div>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
+<!-- SSA of the assigned schools: this year beside last year, then every year (owner, 2026-10-09) -->
+{% if staff_ssa.has_any %}{% ssa_year_chart staff_ssa "SSA score by intervention (Assigned Schools)" %}{% endif %}
+{% if staff_progress %}{% ssa_progress_chart staff_progress "Annual SSA Progress (Assigned Schools)" %}{% endif %}
 
 <!-- Planned and completed activities (owner, 2026-09-28) -->
 {% include "partials/components/profile_activities.html" with acts=profile_activities %}
@@ -104,6 +100,7 @@ definitions My Team uses, and links to the pages where each action is taken.
 {% endfor %}
 </div>
 </div>
+{% endif %}
 {% endif %}
 </div>
 {% endblock %}

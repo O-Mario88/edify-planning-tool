@@ -1,0 +1,2 @@
+{% comment %}The change between two SSA scores and what the one rule calls
+it (apps.ssa.change_rules), in the tone of the verdict.{% endcomment %}{% if row.change is None %}<span class="edify-text-muted">—</span>{% else %}<span{% if row.tone %} class="edify-status-text" data-edify-tone="{{ row.tone }}"{% endif %}>{% if row.change > 0 %}+{% endif %}{{ row.change|floatformat:2 }}</span>{% endif %}

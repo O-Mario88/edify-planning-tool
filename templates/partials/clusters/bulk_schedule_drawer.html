@@ -65,7 +65,7 @@ document.querySelectorAll('.cluster-bulk-checkbox:checked')
 {% if not selection.members %}
 <div class="edify-note" data-tone="info" role="status">
 <p class="edify-note__title">No schools in this cluster yet</p>
-<p class="edify-note__body">Add member schools to {{ cluster.name }} before planning a day of visits across it.</p>
+<p class="edify-note__body">Add member schools to {% cluster_link cluster.name cluster.id %} before planning a day of visits across it.</p>
 </div>
 {% elif not selection.any_schools %}
 <div class="edify-note" data-tone="warning" role="alert">

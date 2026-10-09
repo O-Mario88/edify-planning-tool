@@ -1,0 +1,57 @@
+{% load components table_pagination frontend_filters %}
+{% comment %}
+Cluster profile, Learning Results (owner brief, 2026-10-08: "Exam performance
+... Baseline, Current, Change ... Schools improving, unchanged, declining").
+
+Confirmed learning results only (Impact Assessment's School Evidence): a
+school's score for a year is the mean of its class results as a share of the
+marks available, weighted by learners tested. A school is compared where it
+has a confirmed result in both years. The wording is "schools that took part
+... recorded", never "the cluster caused": the brief's own rule on
+attribution.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="learning">
+{% filter_bar label="Learning results year" form_id="cluster-learning-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="learning">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+{% paginate learning.rows "learning_page" as learning_pager %}
+{% data_table name="cluster-learning" %}
+{% slot title %}Learning Results, FY {{ learning.previous_fy }} to FY {{ learning.fy }}{% endslot %}
+{% slot summary %}{% if learning.compared %}{{ learning.before|floatformat:1 }}% to {{ learning.after|floatformat:1 }}% mean score · {{ learning.improved }} improved, {{ learning.unchanged }} unchanged, {{ learning.declined }} declined · {{ learning.compared }} of {{ learning.school_count }} school{{ learning.school_count|pluralize }} compared{% else %}No school has a confirmed result in both years{% endif %}{% endslot %}
+{% slot caption %}Each school of {{ cluster.name }} with its mean learning score in FY {{ learning.previous_fy }} and FY {{ learning.fy }} as a share of the marks available, the change in percentage points, and the learners tested and results recorded in FY {{ learning.fy }}.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No schools in this cluster." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=learning_pager param="learning_page" %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-learning-method>Confirmed learning results only. A school's score is the mean of its class results as a share of the marks available, weighted by learners tested; the change is in percentage points. These are the results the schools recorded, not a measure of what any one activity caused.</p>{% endslot %}
+{% if learning.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ learning.previous_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ learning.fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2 text-right">Learners Tested</th>
+<th scope="col" class="px-3 py-2 text-right">Results</th>
+</tr>
+</thead>
+<tbody>
+{% for row in learning_pager.rows %}
+<tr data-learning-school="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ learning.previous_fy }}">{% if row.before is None %}—{% else %}{{ row.before|floatformat:1 }}%{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ learning.fy }}">{% if row.after is None %}—{% else %}{{ row.after|floatformat:1 }}%{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if row.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{% if row.change > 0 %}success{% elif row.change < 0 %}danger{% else %}neutral{% endif %}">{% if row.change > 0 %}+{% endif %}{{ row.change|floatformat:1 }}</span>{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Learners Tested">{% if row.learners %}{{ row.learners|intcomma }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Results">{{ row.results }}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+</div>
