@@ -155,7 +155,16 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: footer (0.011 KB), and #239 its table and link rules. Together they
     #: were eight bytes over, main's suite failed and nothing deployed. Half
     #: a kilobyte, as the script budget moves: this is a ratchet.
-    CSS_GZIP_KB = 247
+    #:
+    #: Lowered to 246 the same day (246.51 to 245.67 KB). Nothing #239 or
+    #: #240 added was taken back. The room came from the old sign-in
+    #: screen's 27 `.auth-*` rules in components.css, which no page has drawn
+    #: since the sign-in screens moved to layouts/login.html and login.css:
+    #: 0.84 KB, and the classes leave the pattern index with them. The third
+    #: of a kilobyte now under the ceiling is deliberate. A ceiling with no
+    #: room fails on the next two honest changes that land on the same day,
+    #: not on growth.
+    CSS_GZIP_KB = 246
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

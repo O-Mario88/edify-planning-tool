@@ -76,7 +76,7 @@ def open_onboarding(staff_profile, principal, *, application=None, start_date=No
     if existing:
         return existing
 
-    start = start_date or timezone.now().date()
+    start = start_date or timezone.localdate()
     plan = OnboardingPlan.objects.create(
         staff=staff_profile,
         status=OnboardingStatus.IN_PROGRESS,
@@ -214,7 +214,7 @@ def close_onboarding(plan_id: str, principal, *, force: bool = False):
 def start_probation(staff_profile, principal, *, due_date=None) -> PerformanceReview:
     """Open the probation review. Probation had no representation at all —
     Confirm / Extend / End Employment existed nowhere in the schema."""
-    due = due_date or (timezone.now().date() + timedelta(days=90))
+    due = due_date or (timezone.localdate() + timedelta(days=90))
     existing = PerformanceReview.objects.filter(
         staff=staff_profile, review_type=ReviewType.PROBATION
     ).first()
@@ -275,7 +275,7 @@ def decide_probation(
             staff=review.staff,
             defaults={
                 "status": "Initiated",
-                "last_working_day": timezone.now().date(),
+                "last_working_day": timezone.localdate(),
             },
         )
 
@@ -294,7 +294,7 @@ def decide_probation(
 
 def overdue_onboarding(scope_qs=None):
     """Plans past their target date, and open tasks past theirs."""
-    today = timezone.now().date()
+    today = timezone.localdate()
     plans = OnboardingPlan.objects.exclude(status=OnboardingStatus.CLOSED).filter(
         target_completion_date__lt=today
     )
@@ -304,7 +304,7 @@ def overdue_onboarding(scope_qs=None):
 
 
 def overdue_tasks(scope_qs=None):
-    today = timezone.now().date()
+    today = timezone.localdate()
     tasks = OnboardingTask.objects.filter(
         is_completed=False, due_date__lt=today
     ).exclude(plan__status=OnboardingStatus.CLOSED)

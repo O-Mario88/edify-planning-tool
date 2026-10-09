@@ -204,7 +204,7 @@ class OnboardingPlan(TimeStampedModel):
         return bool(
             self.target_completion_date
             and self.status != OnboardingStatus.CLOSED
-            and self.target_completion_date < _tz.now().date()
+            and self.target_completion_date < _tz.localdate()
         )
 
     class Meta:
@@ -237,7 +237,7 @@ class OnboardingTask(TimeStampedModel):
         from django.utils import timezone as _tz
 
         return bool(
-            self.due_date and not self.is_completed and self.due_date < _tz.now().date()
+            self.due_date and not self.is_completed and self.due_date < _tz.localdate()
         )
 
     class Meta:
