@@ -147,7 +147,15 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: The selectors are 0.4 KB longer; one element added to a page restyles
     #: 2-4 % of it at every width, where it was a fifth to a quarter (the
     #: same report, F19 and F20).
-    CSS_GZIP_KB = 246.5
+    #:
+    #: Raised to 247 on 2026-10-09 (246.497 to 246.508 KB). Two pull requests
+    #: merged twelve minutes apart on 2026-10-08, each inside the ceiling on
+    #: its own: #240 added one declaration to drawers.css, the scroll padding
+    #: that keeps a field a drawer brings into view clear of its pinned
+    #: footer (0.011 KB), and #239 its table and link rules. Together they
+    #: were eight bytes over, main's suite failed and nothing deployed. Half
+    #: a kilobyte, as the script budget moves: this is a ratchet.
+    CSS_GZIP_KB = 247
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:
