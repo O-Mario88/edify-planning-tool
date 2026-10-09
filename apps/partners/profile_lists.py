@@ -149,6 +149,11 @@ def visit_schools(partner) -> list[dict]:
 
     handovers = [a for a in _handovers(partner) if a.school_id and not _is_training(a)]
     names = _names(a.monitoring_staff_id or a.assigning_staff_id for a in handovers)
+    # The organisation's own split of its schools among its team (owner,
+    # 2026-10-09): who looks after the school, beside who went.
+    from apps.partners.school_team import members_by_school
+
+    team = members_by_school(partner)
     rows = []
     for assignment in handovers:
         activity = assignment.scheduled_activity
@@ -158,6 +163,7 @@ def visit_schools(partner) -> list[dict]:
             {
                 "school": school,
                 "district": school.district.name if school.district_id else "",
+                "team_member": getattr(team.get(school.id), "name", ""),
                 "visit": visit_purpose_label(assignment.purpose_of_visit, "")
                 or getattr(assignment.catalogue_item, "display_name", "")
                 or "School visit",

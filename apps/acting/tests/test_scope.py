@@ -245,8 +245,12 @@ class ActingCountryDirectorScopeTests(ActingFixture):
     def test_administration_money_and_governance_are_not_held(self):
         peter = self.acting(self.peter)
         mary = fresh(self.mary)
+        # Accounts and partner logins are not the Director's either since
+        # 2026-10-09: the Admin's alone, so nothing there to withhold.
+        for nobodys in (P.USER_MANAGE, P.PARTNER_USER_MANAGE):
+            self.assertFalse(has_permission(mary, nobodys.value), nobodys)
+            self.assertFalse(has_permission(peter, nobodys.value), nobodys)
         for withheld in (
-            P.USER_MANAGE,
             P.STAFF_MANAGE,
             P.COST_SETTINGS_MANAGE,
             P.COUNTRY_BUDGET_SUBMIT,
@@ -254,7 +258,6 @@ class ActingCountryDirectorScopeTests(ActingFixture):
             P.PLANNING_POLICY_MANAGE,
             P.STRATEGIC_PRIORITIES_APPROVE,
             P.MILESTONES_DEFINE,
-            P.PARTNER_USER_MANAGE,
             P.DOCUMENTS_PUBLISH,
             P.PARTNER_HOLD,
             P.PARTNER_ASSIGNMENT_WITHDRAW,
@@ -271,8 +274,10 @@ class ActingCountryDirectorScopeTests(ActingFixture):
     def test_withheld_pages_are_refused_and_delegated_ones_open(self):
         peter = self.acting(self.peter)
         can = RolePermissionService.can_view_page
+        # The Users page is the Admin's alone since 2026-10-09.
+        self.assertFalse(can(peter, "users"))
+        self.assertFalse(can(fresh(self.mary), "users"))
         for page in (
-            "users",
             "cost_settings",
             "country_budget",
             "fund_approvals",

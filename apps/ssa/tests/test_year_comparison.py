@@ -103,26 +103,29 @@ class YearComparisonTest(TestCase):
         self.assertIsNone(result["previous"])
         self.assertEqual({row["previous"] for row in result["rows"]}, {None})
 
-    def test_with_no_year_named_it_is_the_latest_year_with_a_record(self):
-        """The weeks after 1 October have no confirmed record of the new year:
-        the chart compares the last measured year with the one before, as
-        the Programme Lead's and Country Director's analytics do."""
+    def test_with_no_year_named_it_is_the_running_year_against_the_last(self):
+        """Owner, 2026-10-09: "fy2026 vs fy2027 not 2025". The weeks after
+        1 October have no confirmed record of the new year: it reads "not
+        measured" beside last year's scores, and the year before last is not
+        brought in to fill the chart."""
         self.record(self.schools[0], self.before_fy, 4.0)
         self.record(self.schools[0], self.last_fy, 5.5)
 
         result = intervention_comparison(self.ids())
 
         self.assertEqual(
-            (result["fy"], result["previous_fy"]), (self.last_fy, self.before_fy)
+            (result["fy"], result["previous_fy"]), (self.this_fy, self.last_fy)
         )
-        self.assertEqual((result["previous"], result["current"]), (4.0, 5.5))
+        self.assertEqual((result["previous"], result["current"]), (5.5, None))
+        self.assertFalse(result["has_current"])
 
-        # The first confirmed record of the running year moves it on.
+        # The first confirmed record of the running year fills its side.
         self.record(self.schools[1], self.this_fy, 7.0)
         moved = intervention_comparison(self.ids())
         self.assertEqual(
             (moved["fy"], moved["previous_fy"]), (self.this_fy, self.last_fy)
         )
+        self.assertEqual(moved["current"], 7.0)
 
     def test_no_school_and_no_record_are_empty_not_an_error(self):
         for schools in ([], self.ids()):
@@ -143,5 +146,7 @@ class YearComparisonTest(TestCase):
                 School.objects.filter(id__in=self.ids()).values("id")
             )
 
+        # The same two queries named or not: the year a page does not name
+        # is the running one, which costs no query to find (2026-10-09).
         self.assertEqual(len(named), 2)
-        self.assertEqual(len(found), 3)
+        self.assertEqual(len(found), 2)

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **914**
-- All registered routes: **1387**
+- Routed product surfaces: **916**
+- All registered routes: **1389**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **674**
-- Full pages: **270**
-- Partials and drawers: **322**
-- Permission-gated surfaces: **897**
-- Referenced by automated tests: **814**
+- Shared component templates: **678**
+- Full pages: **268**
+- Partials and drawers: **326**
+- Permission-gated surfaces: **899**
+- Referenced by automated tests: **816**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -129,8 +129,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-38914F73C2 | /admin-panel/roles-permissions | Roles & Permissions | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0529F1E7E7 | /admin-panel/school-upload-history | Upload History | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F016E31E19 | /admin-panel/staff-setup-queue | Staff Setup Queue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-9D4E8D9905 | /admin-panel/users | User Management | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-91F4AA5CD6 | /admin-panel/users/<str:user_id> | Manage User: | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9D4E8D9905 | /admin-panel/users | Users | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-91F4AA5CD6 | /admin-panel/users/<str:user_id> | Manage User: | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8D0400A928 | /admin-panel/workflow-rules | Workflow Rules | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D2B38D8D70 | /analytics | Overview | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6D56DC65A1 | /analytics/ | Overview | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -681,6 +681,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-68972438CC | /partners/<str:partner_id> | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E3651EDE84 | /partners/<str:partner_id>/edit-drawer | Partner Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D79E38D41C | /partners/<str:partner_id>/members | Partner Member Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-E8FD51670B | /partners/<str:partner_id>/members/<str:member_id>/login | Partner Member Login | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-64D75FAFAE | /partners/<str:partner_id>/members/<str:member_id>/schools | Partner Member Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4E3422B820 | /partners/<str:partner_id>/members/drawer | Partner Member Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-748EB16E46 | /partners/<str:partner_id>/status | Partner Status | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7FF4CF6F26 | /partners/<str:partner_id>/user-setup | Partner User Setup | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

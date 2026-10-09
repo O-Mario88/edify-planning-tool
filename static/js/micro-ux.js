@@ -1001,10 +1001,11 @@
   function fillPhoneRows(root) {
     if (!phoneRows.matches) {
       if (root === document) {
-        document.querySelectorAll('[data-edify-fill], [data-edify-fill-path]').forEach(function (element) {
+        document.querySelectorAll('[data-edify-fill], [data-edify-fill-path], [data-edify-head-stack]').forEach(function (element) {
           if (element.getAttribute('data-edify-fill') === 'off') return;
           element.removeAttribute('data-edify-fill');
           element.removeAttribute('data-edify-fill-path');
+          element.removeAttribute('data-edify-head-stack');
         });
       }
       return;
@@ -1028,6 +1029,11 @@
       plans.forEach(function (plan) {
         plan.row.setAttribute('data-edify-fill', plan.rowContext);
         plan.path.forEach(function (entry) { entry[0].setAttribute('data-edify-fill-path', entry[1]); });
+        // A title with this group under it keeps its own line (interactions.css).
+        [plan.row].concat(plan.path.map(function (entry) { return entry[0]; })).forEach(function (box) {
+          var line = box.parentElement;
+          if (line && line.classList.contains('edify-head-row') && !box.classList.contains('edify-head-row__title')) line.setAttribute('data-edify-head-stack', '');
+        });
       });
     });
   }

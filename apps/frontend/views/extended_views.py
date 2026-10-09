@@ -397,6 +397,16 @@ def calendar_view(request):
     from apps.core.scoping import resolve_partner_ids
 
     partner_calendar = bool(resolve_partner_ids(user)) and not shown_person
+    # Who delivers is the Partner Admin's to change (owner, 2026-10-09).
+    partner_leads_team = False
+    if partner_calendar:
+        from apps.partners.member_logins import leads_team
+        from apps.partners.models import Partner as _TeamPartner
+
+        partner_leads_team = any(
+            leads_team(user, org)
+            for org in _TeamPartner.objects.filter(id__in=resolve_partner_ids(user))
+        )
 
     events_by_date: dict[date, list[dict]] = defaultdict(list)
     event_counts = {"activity": 0, "leave": 0, "holiday": 0, "event": 0}
@@ -533,7 +543,8 @@ def calendar_view(request):
                         "status": stage,
                         "tone": tone,
                         "href": href,
-                        "can_name": delivery_team.may_rename(activity),
+                        "can_name": delivery_team.may_rename(activity)
+                        and partner_leads_team,
                     }
                 )
 
@@ -1787,6 +1798,7 @@ def admin_users_view(request):
     selected_status = request.GET.get("status", "").strip()
 
     from django.db.models import OuterRef, Subquery
+    from django.db.models.functions import Coalesce
 
     from apps.partners.models import Partner as _Partner
 
@@ -1795,8 +1807,16 @@ def admin_users_view(request):
         .order_by("name")
         # A partner login carries a person's name; its row says whose it is.
         .annotate(
-            partner_org_name=Subquery(
-                _Partner.objects.filter(user_id=OuterRef("pk")).values("name")[:1]
+            # The organisation's own login, or a team member's (2026-10-09).
+            partner_org_name=Coalesce(
+                Subquery(
+                    _Partner.objects.filter(user_id=OuterRef("pk")).values("name")[:1]
+                ),
+                Subquery(
+                    _Partner.objects.filter(members__user_id=OuterRef("pk")).values(
+                        "name"
+                    )[:1]
+                ),
             )
         )
     )
@@ -1959,6 +1979,10 @@ def admin_users_view(request):
             "autosubmit": True,
         },
     }
+    # Add User opens in the platform's drawer, the size of every other one
+    # (owner, 2026-10-09), with the same options the page computed.
+    if request.GET.get("drawer") == "add":
+        return render(request, "partials/admin/add_user_drawer.html", context)
     return render(request, "pages/admin/users.html", context)
 
 
@@ -2203,7 +2227,22 @@ def admin_user_detail_view(request, user_id):
                     f"{result['assignedCount']} staff member(s) assigned.",
                 )
 
+        # Pressed from a row of the Users page: back to the list.
+        if request.POST.get("next") == "users":
+            return redirect("frontend:admin_users")
         return redirect("frontend:admin_user_detail", user_id=user_id)
+
+    if request.GET.get("drawer") == "password":
+        return render(
+            request,
+            "partials/admin/reset_password_drawer.html",
+            {
+                "member": member,
+                "partner_organisation": login_organisation(member)
+                if partner_login
+                else None,
+            },
+        )
 
     # Get available roles & districts
     from apps.core.rbac import EdifyRole

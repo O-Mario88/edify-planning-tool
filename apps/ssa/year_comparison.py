@@ -13,12 +13,10 @@ the mean of the records' averages. A year with no confirmed record is not
 measured, which is never a zero.
 
 The year compared is the one a page names (a page with a year filter passes
-its own). With none named it is the latest year, up to the running one, in
-which any of the schools has a confirmed record — the "latest verified cycle"
-the Programme Lead's and Country Director's analytics already compare
-(`PLAnalyticsService._cycle_fys`) — so a chart is not empty for the weeks
-between 1 October and the year's first confirmed assessment. The year before
-it is the baseline.
+its own). With none named it is the running financial year, and the year
+before it is the baseline (owner, 2026-10-09: FY2026 against FY2027, never
+FY2025). Until the running year has a confirmed assessment it is "not
+measured" beside last year's scores.
 """
 
 from __future__ import annotations
@@ -55,25 +53,22 @@ def _mean(values) -> float | None:
     return round(sum(values) / len(values), 2) if values else None
 
 
-def latest_measured_fy(schools) -> str:
-    """The latest year, up to the running one, in which any of ``schools``
-    has a confirmed record; the running year when none has."""
-    from django.db.models import Max
+def latest_measured_fy(schools=None) -> str:
+    """The year an SSA comparison reads when a page names none: the running
+    financial year, compared with the one before it.
 
+    Owner, 2026-10-09: "SSA scores being used for comparison is fy2026 and
+    2025 ... i mean fy2026 vs fy2027 not 2025". It used to be the latest year
+    in which any of ``schools`` had a confirmed record, so that a chart was
+    not empty between 1 October and the year's first confirmed assessment;
+    in October 2026 that put FY2025 beside FY2026 on the staff profile, the
+    cluster scorecard and the Admin snapshot while the profiles beside them
+    compared FY2026 with FY2027. The current year is the current year: until
+    it has a confirmed SSA it reads "not measured" beside last year's scores.
+    ``schools`` is kept for the callers that pass it."""
     from apps.core.fy import get_operational_fy
-    from apps.ssa.current_year import CURRENT_SSA_STATUSES
-    from apps.ssa.models import SsaRecord
 
-    running = str(get_operational_fy())
-    return str(
-        SsaRecord.objects.filter(
-            school_id__in=schools,
-            fy__lte=running,
-            deleted_at__isnull=True,
-            verification_status__in=CURRENT_SSA_STATUSES,
-        ).aggregate(latest=Max("fy"))["latest"]
-        or running
-    )
+    return str(get_operational_fy())
 
 
 def school_year_scores(schools, fy) -> dict[str, dict]:

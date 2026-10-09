@@ -579,25 +579,19 @@ def ssa_movement_by_cluster(cluster_ids, *, fy: str, members=None) -> dict[str, 
 
 
 def ssa_movement_for_page(cluster_ids, *, fy: str, members=None) -> tuple[str, dict]:
-    """(year, movement) for a table of clusters read in fiscal year ``fy``.
+    """(year, movement) for a table of clusters read in fiscal year ``fy``:
+    the movement into ``fy`` from the year before it.
 
-    The movement into ``fy`` where any of these clusters has a school compared
-    in it, else the movement into the year before: on 1 October the new year
-    holds no SSA yet, and a column that stayed blank for a quarter would be
-    read as "nothing changed". The year is returned so the column can say
-    which two years it compares.
+    It fell back to the movement into the year before when no school had been
+    compared in ``fy`` yet, so that a column did not stay blank for the first
+    quarter; in October 2026 that showed FY2025 to FY2026 on a page read for
+    FY2027 (owner, 2026-10-09: "fy2026 vs fy2027 not 2025"). The year is
+    still returned, so the column says which two years it compares.
     """
     cluster_ids = list(cluster_ids)
     fy = str(fy)
     members = members if members is not None else member_schools(cluster_ids)
-    movement = ssa_movement_by_cluster(cluster_ids, fy=fy, members=members)
-    if any(m["compared"] for m in movement.values()):
-        return fy, movement
-    earlier = str(int(fy) - 1)
-    fallback = ssa_movement_by_cluster(cluster_ids, fy=earlier, members=members)
-    if any(m["compared"] for m in fallback.values()):
-        return earlier, fallback
-    return fy, movement
+    return fy, ssa_movement_by_cluster(cluster_ids, fy=fy, members=members)
 
 
 def cluster_ssa_movement(cluster, *, fy: str) -> dict:

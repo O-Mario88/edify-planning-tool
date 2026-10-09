@@ -3,22 +3,22 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 850,
+   "browser-rendered": 823,
    "none": 295,
-   "page-tested": 1503,
-   "request-tested": 1387
+   "page-tested": 1544,
+   "request-tested": 1395
   },
   "by_kind": {
-   "button": 1375,
+   "button": 1391,
    "disclosure": 75,
-   "field": 1359,
+   "field": 1365,
    "link": 1159,
    "tab": 67
   },
-  "controls": 4035,
-  "high_consequence": 205,
-  "state_changing": 459,
-  "templates_scanned": 683,
+  "controls": 4057,
+  "high_consequence": 209,
+  "state_changing": 467,
+  "templates_scanned": 687,
   "unresolved_destinations": 0,
   "untested": 295,
   "untested_state_changing": 22
@@ -633,6 +633,8 @@
     "/activities/<str:activity_id>/start",
     "/activities/<str:activity_id>/submit",
     "/activities/<str:activity_id>/timeline",
+    "/admin-panel/users",
+    "/admin-panel/users/<str:user_id>",
     "/analytics/country-director/drilldown",
     "/analytics/customize-dashboard",
     "/analytics/drilldown",
@@ -759,6 +761,8 @@
     "/partner/assignments/<str:assignment_id>/schedule-drawer",
     "/partner/invoices/new",
     "/partners/<str:partner_id>/edit-drawer",
+    "/partners/<str:partner_id>/members/<str:member_id>/login",
+    "/partners/<str:partner_id>/members/<str:member_id>/schools",
     "/partners/<str:partner_id>/members/drawer",
     "/partners/<str:partner_id>/user-setup",
     "/partners/create",
@@ -959,6 +963,7 @@
     "/partner/evidence",
     "/partner/schools",
     "/partners/<str:partner_id>",
+    "/partners/<str:partner_id>/members/<str:member_id>/schools",
     "/pl/review-queue",
     "/planning-monitor/",
     "/planning/recent-changes",
@@ -2542,9 +2547,7 @@
     "/admin-panel/users/<str:user_id>"
    ],
    "roles": [
-    "ADMIN",
-    "CD",
-    "HR"
+    "ADMIN"
    ]
   },
   "pages/admin/users.html": {
@@ -2552,9 +2555,7 @@
     "/admin-panel/users"
    ],
    "roles": [
-    "ADMIN",
-    "CD",
-    "HR"
+    "ADMIN"
    ]
   },
   "pages/admin_ops/_work_section.html": {
@@ -5228,6 +5229,22 @@
     "RVP"
    ]
   },
+  "partials/admin/add_user_drawer.html": {
+   "pages": [
+    "/admin-panel/users"
+   ],
+   "roles": [
+    "ADMIN"
+   ]
+  },
+  "partials/admin/reset_password_drawer.html": {
+   "pages": [
+    "/admin-panel/users/<str:user_id>"
+   ],
+   "roles": [
+    "ADMIN"
+   ]
+  },
   "partials/analytics/cd/body.html": {
    "pages": [
     "/analytics/country-director"
@@ -6187,6 +6204,7 @@
     "/my-plan/<str:activity_id>/edit-drawer",
     "/partner/activities/<str:activity_id>/evidence",
     "/partners/<str:partner_id>/edit-drawer",
+    "/partners/<str:partner_id>/members/<str:member_id>/schools",
     "/partners/create",
     "/priorities/ssa-mapping/<str:item_id>/drawer",
     "/projects/<str:project_id>",
@@ -9884,6 +9902,48 @@
     "RVP"
    ]
   },
+  "partials/partners/member_login_drawer.html": {
+   "pages": [
+    "/partners/<str:partner_id>/members/<str:member_id>/login"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
+  },
+  "partials/partners/member_schools_drawer.html": {
+   "pages": [
+    "/partners/<str:partner_id>/members/<str:member_id>/schools"
+   ],
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN",
+    "BUSINESS_TRANSFORMATION",
+    "CCEO",
+    "CD",
+    "HR",
+    "IA",
+    "MFI_ADMIN",
+    "MFI_OFFICER",
+    "PARTNER",
+    "PL",
+    "PROJECT_COORDINATOR",
+    "RPL",
+    "RVP"
+   ]
+  },
   "partials/partners/profile_trainings.html": {
    "pages": [
     "/partners/<str:partner_id>"
@@ -11707,38 +11767,29 @@
   {"accessible_name": "Activate User Account", "destination": "                                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A23F6F20970D", "kind": "button", "line": 356, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/user_detail.html"},
   {"accessible_name": "Enter new password for user", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-469E8CF2C687", "kind": "field", "line": 395, "method": "", "selector": "input[name=new_password]", "state_changing": false, "tag": "input", "template": "pages/admin/user_detail.html"},
   {"accessible_name": "Reset Password", "destination": "                                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-E77C135E47BD", "kind": "button", "line": 404, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/user_detail.html"},
-  {"accessible_name": "Add Partner", "destination": "/partners/create", "destination_route": "/partners/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-073FFDF45252", "kind": "button", "line": 27, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Add User", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F4DCB44E364E", "kind": "button", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "{{ partner.name }}", "destination": "/partners/{{ partner.id }}", "destination_route": "/partners/<str:partner_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-3E0CDE01240A", "kind": "link", "line": 113, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
-  {"accessible_name": "{{ partner.email }}", "destination": "mailto:{{ partner.email }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D5AE2E55CD6B", "kind": "link", "line": 118, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
-  {"accessible_name": "Delete {{ partner.name }} permanently", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F1F2B54C35A3", "kind": "button", "line": 138, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Deactivate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": true, "id": "INT-92EBEAC8E5A4", "kind": "button", "line": 161, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Activate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-218FD124F7C5", "kind": "button", "line": 164, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Configure the login of {{ partner.name }}", "destination": "                                                       ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-7882BD0EFEBF", "kind": "link", "line": 175, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
-  {"accessible_name": "Change the login of {{ partner.name }}", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-BF7E6FD23CC4", "kind": "button", "line": 176, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Set up login for {{ partner.name }}", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-FCF5C6C288E2", "kind": "button", "line": 178, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Deactivate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": true, "id": "INT-11CCCDC6DD17", "kind": "button", "line": 187, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Activate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-70A713173BFD", "kind": "button", "line": 190, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Delete {{ partner.name }} permanently", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5C37AF0E6DC1", "kind": "button", "line": 195, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "All Roles {{ r }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F7533B0E4915", "kind": "field", "line": 241, "method": "", "selector": "select[name=role]", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
-  {"accessible_name": "All Statuses Active Inactive", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-6EEAF6D2712F", "kind": "field", "line": 250, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
-  {"accessible_name": "Clear filters", "destination": "/admin-panel/users               ?q={{ search }}           ", "destination_route": "/admin-panel/users", "evidence": "request-tested", "high_consequence": false, "id": "INT-E57E10E84ED5", "kind": "link", "line": 257, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
-  {"accessible_name": "Configure", "destination": "                                           ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-FBEC3F606D17", "kind": "link", "line": 321, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-893229FAD800", "kind": "button", "line": 375, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Delete Permanently", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": true, "id": "INT-FEE7CB5EC9F7", "kind": "button", "line": 376, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Close create user dialog", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-012475017D9C", "kind": "button", "line": 408, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "e.g. John Doe", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D6AE5591FFC3", "kind": "field", "line": 422, "method": "", "selector": "#new-user-name", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "johndoe@edify.org", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-EE1BB96ADED1", "kind": "field", "line": 434, "method": "", "selector": "#new-user-email", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "+256...", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9C62F3B4A4DA", "kind": "field", "line": 446, "method": "", "selector": "#new-user-phone", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "Leave blank to send an invitation instead", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-8253FE39B3FD", "kind": "field", "line": 457, "method": "", "selector": "#new-user-password", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "Supervisor staff ID", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-65E2DF02EB65", "kind": "field", "line": 469, "method": "", "selector": "#new-user-supervisor", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
-  {"accessible_name": "Role", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E697B9717B68", "kind": "field", "line": 485, "method": "", "selector": "#new-user-role", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
-  {"accessible_name": "Primary district", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-95DAD09E8F82", "kind": "field", "line": 501, "method": "", "selector": "#new-user-primary-district", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
-  {"accessible_name": "{{ person.id }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-CED35F2D7901", "kind": "field", "line": 531, "method": "", "selector": "input[name=managed_staff_ids]", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "{{ d.id }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-C76F41B9C9C4", "kind": "field", "line": 558, "method": "", "selector": "input[name=additional_districts]", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "{{ r }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B95871511F71", "kind": "field", "line": 575, "method": "", "selector": "input[name=additional_roles]", "state_changing": false, "tag": "input", "template": "pages/admin/users.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-5C8BAD68CAAC", "kind": "button", "line": 588, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
-  {"accessible_name": "Provision & Set Password", "destination": "                                ", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-EFA4118D1CE6", "kind": "button", "line": 595, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Add Partner", "destination": "/partners/create", "destination_route": "/partners/create", "evidence": "request-tested", "high_consequence": false, "id": "INT-073FFDF45252", "kind": "button", "line": 24, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Add User", "destination": "                                ?drawer=add", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A7A69BC90567", "kind": "button", "line": 37, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "{{ partner.name }}", "destination": "/partners/{{ partner.id }}", "destination_route": "/partners/<str:partner_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-3E0CDE01240A", "kind": "link", "line": 117, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
+  {"accessible_name": "{{ partner.email }}", "destination": "mailto:{{ partner.email }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D5AE2E55CD6B", "kind": "link", "line": 122, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
+  {"accessible_name": "Delete {{ partner.name }} permanently", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F1F2B54C35A3", "kind": "button", "line": 142, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Deactivate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-92EBEAC8E5A4", "kind": "button", "line": 165, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Activate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-218FD124F7C5", "kind": "button", "line": 168, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Configure the login of {{ partner.name }}", "destination": "                                                       ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7882BD0EFEBF", "kind": "link", "line": 179, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
+  {"accessible_name": "Reset the password of {{ partner.name }}", "destination": "                                                       ?drawer=password", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-385F9042AB07", "kind": "button", "line": 180, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Change the login of {{ partner.name }}", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-BF7E6FD23CC4", "kind": "button", "line": 181, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Configure the login of {{ partner.name }}", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-36B55E730EF3", "kind": "button", "line": 183, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Deactivate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-11CCCDC6DD17", "kind": "button", "line": 192, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Activate {{ partner.name }}", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-70A713173BFD", "kind": "button", "line": 195, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Delete {{ partner.name }} permanently", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5C37AF0E6DC1", "kind": "button", "line": 200, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "All Roles {{ r }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F7533B0E4915", "kind": "field", "line": 246, "method": "", "selector": "select[name=role]", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
+  {"accessible_name": "All Statuses Active Inactive", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-6EEAF6D2712F", "kind": "field", "line": 255, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/admin/users.html"},
+  {"accessible_name": "Clear filters", "destination": "/admin-panel/users               ?q={{ search }}           ", "destination_route": "/admin-panel/users", "evidence": "request-tested", "high_consequence": false, "id": "INT-E57E10E84ED5", "kind": "link", "line": 262, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
+  {"accessible_name": "Configure the account of {{ u.name }}", "destination": "                                           ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-670263AE0D23", "kind": "link", "line": 329, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin/users.html"},
+  {"accessible_name": "Reset the password of {{ u.name }}", "destination": "                                           ?drawer=password", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-07563575DFB6", "kind": "button", "line": 330, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Deactivate {{ u.name }}", "destination": "                                           ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-CB3C61913ABC", "kind": "button", "line": 340, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Activate {{ u.name }}", "destination": "                                           ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-0D91ECBFD478", "kind": "button", "line": 343, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-893229FAD800", "kind": "button", "line": 396, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/admin/users.html"},
+  {"accessible_name": "Delete Permanently", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-FEE7CB5EC9F7", "kind": "button", "line": 397, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin/users.html"},
   {"accessible_name": "Incident", "destination": "/admin-ops/incidents/{{ item.incident_id }}", "destination_route": "/admin-ops/incidents/<str:incident_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-E9AF76220317", "kind": "link", "line": 24, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/admin_ops/_work_section.html"},
   {"accessible_name": "{{ item.next_action|default:\"Start\" }}", "destination": "/admin-ops/work-items/{{ item.id }}/start", "destination_route": "/admin-ops/work-items/<str:item_id>/start", "evidence": "request-tested", "high_consequence": false, "id": "INT-BE333C9AFD95", "kind": "button", "line": 31, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/admin_ops/_work_section.html"},
   {"accessible_name": "How was this verified?", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-3890F7035A35", "kind": "field", "line": 37, "method": "", "selector": "input[name=verification_note]", "state_changing": false, "tag": "input", "template": "pages/admin_ops/_work_section.html"},
@@ -12606,9 +12657,14 @@
   {"accessible_name": "{{ partner.email }}", "destination": "mailto:{{ partner.email }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B3F8ED1E76E1", "kind": "link", "line": 65, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partners/detail.html"},
   {"accessible_name": "{{ row.school.name }}", "destination": "/schools/{{ row.school.id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-8E2E0A4B8159", "kind": "link", "line": 117, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partners/detail.html"},
   {"accessible_name": "Add person", "destination": "/partners/{{ partner.id }}/members/drawer", "destination_route": "/partners/<str:partner_id>/members/drawer", "evidence": "page-tested", "high_consequence": false, "id": "INT-B9A818321979", "kind": "button", "line": 179, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
-  {"accessible_name": "{{ m.email }}", "destination": "mailto:{{ m.email }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5ED548937D8C", "kind": "link", "line": 200, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partners/detail.html"},
-  {"accessible_name": "Remove {{ m.name }} from the roster", "destination": "/partners/{{ partner.id }}/members", "destination_route": "/partners/<str:partner_id>/members", "evidence": "request-tested", "high_consequence": true, "id": "INT-130C978BC954", "kind": "button", "line": 201, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/partners/detail.html"},
-  {"accessible_name": "Add", "destination": "/partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}", "destination_route": "/partners/<str:partner_id>/members/drawer", "evidence": "page-tested", "high_consequence": false, "id": "INT-2A112B2E7525", "kind": "button", "line": 208, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "{{ m.email }}", "destination": "mailto:{{ m.email }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-5ED548937D8C", "kind": "link", "line": 202, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Assign schools to {{ m.name }}", "destination": "/partners/{{ partner.id }}/members/{{ m.id }}/schools", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-9A060C425BE9", "kind": "button", "line": 209, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Reset the password of {{ m.name }}", "destination": "/partners/{{ partner.id }}/members/{{ m.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-A644C185DAC1", "kind": "button", "line": 214, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Deactivate the login of {{ m.name }}", "destination": "/partners/{{ partner.id }}/members/{{ m.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": true, "id": "INT-CF540B9F8E0F", "kind": "button", "line": 217, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Activate the login of {{ m.name }}", "destination": "/partners/{{ partner.id }}/members/{{ m.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-E6A5BD01ACDE", "kind": "button", "line": 218, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Set up a login for {{ m.name }}", "destination": "/partners/{{ partner.id }}/members/{{ m.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-0516C98C23F5", "kind": "button", "line": 222, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Remove {{ m.name }} from the roster", "destination": "/partners/{{ partner.id }}/members", "destination_route": "/partners/<str:partner_id>/members", "evidence": "request-tested", "high_consequence": true, "id": "INT-130C978BC954", "kind": "button", "line": 225, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/partners/detail.html"},
+  {"accessible_name": "Add", "destination": "/partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}", "destination_route": "/partners/<str:partner_id>/members/drawer", "evidence": "page-tested", "high_consequence": false, "id": "INT-2A112B2E7525", "kind": "button", "line": 234, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/partners/detail.html"},
   {"accessible_name": "Financial Year", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-4486B52CE217", "kind": "field", "line": 22, "method": "", "selector": "select[name=fy]", "state_changing": false, "tag": "select", "template": "pages/partners/index.html"},
   {"accessible_name": "Partner", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-418034C9F566", "kind": "field", "line": 28, "method": "", "selector": "select[name=partner]", "state_changing": false, "tag": "select", "template": "pages/partners/index.html"},
   {"accessible_name": "Activity status", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-D39E36474FE6", "kind": "field", "line": 35, "method": "", "selector": "select[name=status]", "state_changing": false, "tag": "select", "template": "pages/partners/index.html"},
@@ -13004,6 +13060,21 @@
   {"accessible_name": "Cancel", "destination": "/activity-selection/cancel", "destination_route": "/activity-selection/cancel", "evidence": "request-tested", "high_consequence": false, "id": "INT-D1047290E0EE", "kind": "button", "line": 31, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/activities/selection_bar.html"},
   {"accessible_name": "Assign to partner", "destination": "/planning/bulk-assign-partner-drawer", "destination_route": "/planning/bulk-assign-partner-drawer", "evidence": "request-tested", "high_consequence": false, "id": "INT-FA069B3A1CEB", "kind": "button", "line": 44, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/activities/selection_bar.html"},
   {"accessible_name": "Clear", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-07D1D4E28B3B", "kind": "button", "line": 48, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/activities/selection_bar.html"},
+  {"accessible_name": "e.g. John Doe", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-060694682040", "kind": "field", "line": 19, "method": "", "selector": "#new-user-name", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "johndoe@edify.org", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-E26422F2C993", "kind": "field", "line": 31, "method": "", "selector": "#new-user-email", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "+256...", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-EF982B110855", "kind": "field", "line": 43, "method": "", "selector": "#new-user-phone", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Leave blank to send an invitation instead", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-BF41BF8476F8", "kind": "field", "line": 54, "method": "", "selector": "#new-user-password", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Supervisor staff ID", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-FA74FBB450ED", "kind": "field", "line": 66, "method": "", "selector": "#new-user-supervisor", "state_changing": false, "tag": "select", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Role", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1C6A142F8314", "kind": "field", "line": 82, "method": "", "selector": "#new-user-role", "state_changing": false, "tag": "select", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Primary district", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D7D1D42BA252", "kind": "field", "line": 98, "method": "", "selector": "#new-user-primary-district", "state_changing": false, "tag": "select", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "{{ person.id }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-2B78784BC553", "kind": "field", "line": 128, "method": "", "selector": "input[name=managed_staff_ids]", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "{{ d.id }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-F738AFFF9136", "kind": "field", "line": 155, "method": "", "selector": "input[name=additional_districts]", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "{{ r }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-469C4BC031DB", "kind": "field", "line": 172, "method": "", "selector": "input[name=additional_roles]", "state_changing": false, "tag": "input", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1757C396C2F9", "kind": "button", "line": 185, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "Add user", "destination": "                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-652EE24FA1A7", "kind": "button", "line": 186, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/admin/add_user_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-345C0C028BBC", "kind": "field", "line": 19, "method": "", "selector": "#rp-password", "state_changing": false, "tag": "input", "template": "partials/admin/reset_password_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-C8D3F627E3AA", "kind": "button", "line": 24, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/admin/reset_password_drawer.html"},
+  {"accessible_name": "Reset password", "destination": "                                                ", "destination_route": "", "evidence": "page-tested", "high_consequence": true, "id": "INT-62D7F5C93694", "kind": "button", "line": 25, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/admin/reset_password_drawer.html"},
   {"accessible_name": "Performance driversTarget delivery, SSA, Program Leads and district signals", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-9118CB16A28C", "kind": "disclosure", "line": 23, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
   {"accessible_name": "Impact and delivery networkVerified impact, partner delivery, clusters and regional context", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-705F8A6CF026", "kind": "disclosure", "line": 40, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
   {"accessible_name": "People and portfolio oversightPL accountability and CCEO execution detail", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-E87538847071", "kind": "disclosure", "line": 57, "method": "", "selector": "", "state_changing": false, "tag": "summary", "template": "partials/analytics/cd/body.html"},
@@ -14747,8 +14818,18 @@
   {"accessible_name": "name@partner.org", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-2B179E3DA66D", "kind": "field", "line": 41, "method": "", "selector": "#member-email", "state_changing": false, "tag": "input", "template": "partials/partners/member_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-8C1DA4F15ADB", "kind": "button", "line": 44, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/member_drawer.html"},
   {"accessible_name": "Add to roster", "destination": "/partners/{{ partner.id }}/members", "destination_route": "/partners/<str:partner_id>/members", "evidence": "request-tested", "high_consequence": false, "id": "INT-0E23BB692689", "kind": "button", "line": 45, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/member_drawer.html"},
+  {"accessible_name": "{{ member.email }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B096E6678CC0", "kind": "field", "line": 27, "method": "", "selector": "#ml-email", "state_changing": false, "tag": "input", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-4F00D7BA9D09", "kind": "field", "line": 32, "method": "", "selector": "#ml-password", "state_changing": false, "tag": "input", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-689331572C4E", "kind": "button", "line": 37, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "Create login", "destination": "/partners/{{ partner.id }}/members/{{ member.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": false, "id": "INT-230C328ED0A8", "kind": "button", "line": 38, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-73DD9D5B71AA", "kind": "field", "line": 54, "method": "", "selector": "#ml-new-password", "state_changing": false, "tag": "input", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DD2D2C2AB6A0", "kind": "button", "line": 59, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "Reset password", "destination": "/partners/{{ partner.id }}/members/{{ member.id }}/login", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/login", "evidence": "request-tested", "high_consequence": true, "id": "INT-93225731A737", "kind": "button", "line": 60, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/member_login_drawer.html"},
+  {"accessible_name": "{{ row.school.id }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-B9629AAE1049", "kind": "field", "line": 33, "method": "", "selector": "input[name=school_ids]", "state_changing": false, "tag": "input", "template": "partials/partners/member_schools_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-1C68AC563F55", "kind": "button", "line": 46, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/member_schools_drawer.html"},
+  {"accessible_name": "Save schools", "destination": "/partners/{{ partner.id }}/members/{{ member.id }}/schools", "destination_route": "/partners/<str:partner_id>/members/<str:member_id>/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-E40E0DF519E2", "kind": "button", "line": 47, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/member_schools_drawer.html"},
   {"accessible_name": "{{ row.place }}", "destination": "{{ row.place_href }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-44A0D309EF5B", "kind": "link", "line": 36, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/partners/profile_trainings.html"},
-  {"accessible_name": "{{ row.school.name }}", "destination": "/schools/{{ row.school.id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-E41718FF21AD", "kind": "link", "line": 34, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/partners/profile_visit_schools.html"},
+  {"accessible_name": "{{ row.school.name }}", "destination": "/schools/{{ row.school.id }}", "destination_route": "/schools/<str:school_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-E41718FF21AD", "kind": "link", "line": 35, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/partners/profile_visit_schools.html"},
   {"accessible_name": "Select a reason… {{ label }}", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-A45886CE98DF", "kind": "field", "line": 23, "method": "", "selector": "#reason_category", "state_changing": false, "tag": "select", "template": "partials/partners/return_assignment_drawer.html"},
   {"accessible_name": "For example: distance, schedule conflict or school unavailable.", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-90EA3EBA3BB0", "kind": "field", "line": 34, "method": "", "selector": "#reason", "state_changing": false, "tag": "textarea", "template": "partials/partners/return_assignment_drawer.html"},
   {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-37C059151BBF", "kind": "button", "line": 50, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/return_assignment_drawer.html"},
@@ -14764,8 +14845,9 @@
   {"accessible_name": "not_required", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-D1940CD922F7", "kind": "field", "line": 29, "method": "", "selector": "input[name=mode]", "state_changing": false, "tag": "input", "template": "partials/partners/user_setup_drawer.html"},
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-DA8DFE7B2405", "kind": "field", "line": 35, "method": "", "selector": "#pu-email", "state_changing": false, "tag": "input", "template": "partials/partners/user_setup_drawer.html"},
   {"accessible_name": "{{ partner.contact_person|default:'' }}", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-950E7EA62C49", "kind": "field", "line": 41, "method": "", "selector": "#pu-name", "state_changing": false, "tag": "input", "template": "partials/partners/user_setup_drawer.html"},
-  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7018AE6439E0", "kind": "button", "line": 47, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/user_setup_drawer.html"},
-  {"accessible_name": "Save login setup", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-CEB093BBF1B3", "kind": "button", "line": 48, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/user_setup_drawer.html"},
+  {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A342C40F6FE2", "kind": "field", "line": 48, "method": "", "selector": "#pu-password", "state_changing": false, "tag": "input", "template": "partials/partners/user_setup_drawer.html"},
+  {"accessible_name": "Cancel", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-7018AE6439E0", "kind": "button", "line": 55, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/partners/user_setup_drawer.html"},
+  {"accessible_name": "Save login setup", "destination": "/partners/{{ partner.id }}/user-setup", "destination_route": "/partners/<str:partner_id>/user-setup", "evidence": "request-tested", "high_consequence": false, "id": "INT-CEB093BBF1B3", "kind": "button", "line": 56, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "partials/partners/user_setup_drawer.html"},
   {"accessible_name": "Select {{ school.name }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-EEE42AA4B027", "kind": "field", "line": 6, "method": "", "selector": "", "state_changing": false, "tag": "input", "template": "partials/planning/_list_pick_cell.html"},
   {"accessible_name": "Schedule activity for {{ school.name }}", "destination": "{{ school.acts.schedule_url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B243B46A922B", "kind": "button", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/_list_row_actions.html"},
   {"accessible_name": "Schedule unavailable: {{ school.acts.schedule_reason }}", "destination": "", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-8FB0B9A831CA", "kind": "button", "line": 11, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/planning/_list_row_actions.html"},

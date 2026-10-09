@@ -59,7 +59,7 @@
     <select id="partner-delivery-contact" name="delivery_contact_name" required
       class="min-h-11 block w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
       {% for name in team %}
-      <option value="{{ name }}" {% if name == request.user.name %}selected{% endif %}>{{ name }}</option>
+      <option value="{{ name }}" {% if name == chosen_member %}selected{% endif %}>{{ name }}</option>
       {% endfor %}
     </select>
     <p class="edify-text-caption font-medium text-slate-500">Your team is the Staff and volunteers list on <a href="/partners/{{ assignment.partner_id }}" class="font-semibold underline">your organisation's profile</a>.</p>

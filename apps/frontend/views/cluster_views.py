@@ -970,12 +970,13 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
 
     operational_fy = get_operational_fy()
     if tab == "ssa":
-        # Opens on the latest year the cluster has a confirmed SSA in: on
-        # 1 October the new year has none yet, and a tab that opened empty
-        # for a quarter would be read as "no SSA".
+        # Opens on the running year against the one before it (owner,
+        # 2026-10-09: "fy2026 vs fy2027 not 2025"). It opened on the latest
+        # year the cluster had a confirmed SSA in, which in October compared
+        # FY2025 with FY2026; an earlier year is still a choice in the list.
         recorded = insights.ssa_years_with_records(cluster)
         options = sorted(set(fy_options()) | set(recorded), reverse=True)
-        fy = _profile_fy(request, options, recorded[0] if recorded else operational_fy)
+        fy = _profile_fy(request, options, operational_fy)
         movement = insights.cluster_ssa_movement(cluster, fy=fy)
         return {
             "profile_fy": fy,

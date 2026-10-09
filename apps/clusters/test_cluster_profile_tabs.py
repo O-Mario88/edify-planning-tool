@@ -383,14 +383,16 @@ class SsaMovementTest(_ClusterCase):
         self.assertIn(f'href="/schools/{self.down.id}"', drill)
         self.assertIn("data-ssa-back", drill)
 
-    def test_the_tab_opens_on_the_latest_year_with_a_confirmed_ssa(self):
-        """On 1 October the new year has no SSA yet; a tab that opened on it
-        would read as "no SSA" for a quarter."""
+    def test_the_tab_opens_on_the_running_year_against_the_last(self):
+        """Owner, 2026-10-09: "fy2026 vs fy2027 not 2025". With no SSA yet in
+        the new year the tab still opens on it; an earlier year is a choice
+        in its list."""
         SsaRecord.objects.filter(fy=self.fy).delete()
 
         response = self._page(tab="ssa")
 
-        self.assertEqual(response.context["profile_fy"], self.last_fy)
+        self.assertEqual(response.context["profile_fy"], self.fy)
+        self.assertIn(self.last_fy, response.context["profile_fy_options"])
         self.assertEqual(insights.ssa_years_with_records(self.cluster), [self.last_fy])
 
 

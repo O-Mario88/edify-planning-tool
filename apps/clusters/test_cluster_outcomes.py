@@ -340,9 +340,10 @@ class OversightColumnsTest(_Sessions):
         self.assertEqual(row["ssa_fy"], self.fy)
         self.assertEqual(data["ssa_movement_fy"], self.fy)
 
-    def test_ssa_change_reads_last_years_movement_until_this_year_has_one(self):
-        """On 1 October the new year has no SSA: the column says what moved
-        into the year before, and which years it compares."""
+    def test_ssa_change_compares_the_pages_year_with_the_one_before(self):
+        """Owner, 2026-10-09: "fy2026 vs fy2027 not 2025". On 1 October the
+        new year has no SSA: the column is this year against last and has
+        nothing to say yet, never last year against the year before."""
         before = str(int(self.last_fy) - 1)
         self._ssa(self.keeps, before, 6.0)
         self._ssa(self.keeps, self.last_fy, 5.0)
@@ -350,9 +351,9 @@ class OversightColumnsTest(_Sessions):
         data = cluster_oversight_table_data(self.cd, fy=self.fy)
         row = self._row(data)
 
-        self.assertEqual(row["ssa_change"], -1.0)
-        self.assertEqual(row["ssa_fy"], self.last_fy)
-        self.assertEqual(data["ssa_movement_previous_fy"], before)
+        self.assertIsNone(row["ssa_change"])
+        self.assertEqual(row["ssa_fy"], self.fy)
+        self.assertEqual(data["ssa_movement_previous_fy"], self.last_fy)
 
     def test_the_page_draws_the_columns_and_each_figure_opens_its_tab(self):
         self._ssa(self.keeps, self.last_fy, 5.0)

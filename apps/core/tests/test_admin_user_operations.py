@@ -693,6 +693,8 @@ class UpdateUserPrivilegeEscalationTest(TestCase):
         self.assertEqual(self.staffer.active_role, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
 
     def test_frontend_edit_action_enforces_same_guard(self):
+        # HR no longer reaches the page at all (2026-10-09): refused before
+        # the guard, and the role still does not change.
         self.client.force_login(self.hr)
         detail_url = reverse(
             "frontend:admin_user_detail", kwargs={"user_id": self.staffer.id}
@@ -706,7 +708,7 @@ class UpdateUserPrivilegeEscalationTest(TestCase):
                 "role": EdifyRole.ADMIN.value,
             },
         )
-        self.assertEqual(res.status_code, 302)
+        self.assertIn(res.status_code, (302, 403))
         self.staffer.refresh_from_db()
         self.assertEqual(self.staffer.active_role, EdifyRole.CCEO.value)
 
@@ -767,15 +769,19 @@ class UsersConsoleReachTest(TestCase):
     def _detail(self, user):
         return reverse("frontend:admin_user_detail", kwargs={"user_id": user.id})
 
-    def test_a_record_outside_the_reach_does_not_exist(self):
-        self.assertEqual(self.client.get(self._detail(self.foreign)).status_code, 404)
-        res = self.client.post(self._detail(self.foreign), {"action": "deactivate"})
-        self.assertEqual(res.status_code, 404)
-        self.foreign.refresh_from_db()
-        self.assertTrue(self.foreign.is_active)
+    def test_no_record_opens_for_hr_inside_its_reach_or_outside(self):
+        # The account page is the Admin's alone since 2026-10-09; until then
+        # HR opened the records in its reach and was told 404 for the rest.
+        for person in (self.foreign, self.local):
+            self.assertNotEqual(self.client.get(self._detail(person)).status_code, 200)
+            self.client.post(self._detail(person), {"action": "deactivate"})
+            person.refresh_from_db()
+            self.assertTrue(person.is_active)
 
-    def test_a_record_inside_the_reach_opens(self):
-        self.assertEqual(self.client.get(self._detail(self.local)).status_code, 200)
+    def test_the_admin_opens_every_record(self):
+        self.client.force_login(self.local_admin)
+        for person in (self.foreign, self.local):
+            self.assertEqual(self.client.get(self._detail(person)).status_code, 200)
 
     def test_hr_cannot_deactivate_or_lock_an_admin(self):
         for action in ("deactivate", "lock", "reset_password"):

@@ -306,16 +306,24 @@ class DashboardMetricsService:
         best_interventions = []
         weakest_interventions = []
 
+        # The comparison is the running year against the one before (owner,
+        # 2026-10-09: "fy2026 vs fy2027 not 2025"). Strongest and weakest are
+        # ranked on the newer reading each intervention has: this year's once
+        # it is measured, last year's until then, so the two panels are not
+        # empty for the first weeks of a year.
+        def _reading(row):
+            return row["current"] if row["current"] is not None else row["previous"]
+
         for item in sorted(
-            (row for row in ssa_years["rows"] if row["current"] is not None),
-            key=lambda row: (-row["current"], row["label"]),
+            (row for row in ssa_years["rows"] if _reading(row) is not None),
+            key=lambda row: (-_reading(row), row["label"]),
         ):
             data_row = {
                 "name": item["label"],
-                "score": round(item["current"], 1),
+                "score": round(_reading(item), 1),
                 "previous": item["previous"],
                 "current": item["current"],
-                "percentage": min(100, round(item["current"] * 10)),
+                "percentage": min(100, round(_reading(item) * 10)),
             }
             if len(best_interventions) < 3:
                 best_interventions.append(data_row)

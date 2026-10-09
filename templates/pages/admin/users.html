@@ -8,13 +8,10 @@
 <div data-mobile-family="settings"
 class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
 x-data="{
-  showAddModal: false,
   showPartnerDeleteModal: false,
   partnerToDelete: '',
   partnerToDeleteName: '',
-  partnerToDeleteHasHistory: false,
-  tempPassword: '',
-  newUserRole: 'CCEO'
+  partnerToDeleteHasHistory: false
 }"
 >
 
@@ -39,7 +36,9 @@ class="btn btn-secondary min-h-9"
 {% endif %}
 <button
 type="button"
-@click="showAddModal = true"
+hx-get="{% url 'frontend:admin_users' %}?drawer=add"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
 class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -80,7 +79,12 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
   </header>
 
   <div class="overflow-x-auto">
-    <table class="edify-record-table w-full text-[12px] border-collapse">
+    {% comment %}Cells stay on one line (e2e/responsive-contract.spec.js): the
+    table scrolls in its region when it is too wide and never asks for the
+    platform's long-text wrapping (data-table-wrap="off"), which a table a
+    pixel or two over its room took on one load and not on the next, with a
+    heading and a name broken in two.{% endcomment %}
+    <table class="edify-record-table w-full text-[12px] border-collapse" data-table-wrap="off">
       <thead>
         <tr class="bg-slate-50 border-b border-slate-100 text-left">
           <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Organization</th>
@@ -173,9 +177,10 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
               {% if partner.presentation_status != "deleted" and can_manage_partner_users %}
               {% if partner.login %}
               <a class="row-menu__item" role="menuitem" href="{% url 'frontend:admin_user_detail' partner.login.id %}" aria-label="Configure the login of {{ partner.name }}">Configure login</a>
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="{% url 'frontend:admin_user_detail' partner.login.id %}?drawer=password" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Reset the password of {{ partner.name }}">Reset password</button>
               <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Change the login of {{ partner.name }}">Change login</button>
               {% else %}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Set up login for {{ partner.name }}">Set up login</button>
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/partners/{{ partner.id }}/user-setup" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Configure the login of {{ partner.name }}">Configure login</button>
               {% endif %}
               {% endif %}
               {% if partner.presentation_status != "deleted" %}
@@ -266,7 +271,7 @@ class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
 <div class="overflow-x-auto">
 {% paginate users "page" as users_pager %}
-<table class="edify-record-table w-full text-[12px] border-collapse">
+<table class="edify-record-table w-full text-[12px] border-collapse" data-table-wrap="off">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
 <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">User Details</th>
@@ -318,12 +323,28 @@ Needs Real Email
 {% endif %}
 </td>
 <td class="px-5 py-3.5 text-right space-x-1.5" data-record-action>
-<a
-href="{% url 'frontend:admin_user_detail' u.id %}"
-class="btn btn-secondary h-8"
->
-Configure
-</a>
+{% comment %}Configure and Reset password on every account, staff's and
+partners' alike (owner, 2026-10-09).{% endcomment %}
+{% row_actions u.name %}
+<a class="row-menu__item" role="menuitem" href="{% url 'frontend:admin_user_detail' u.id %}" aria-label="Configure the account of {{ u.name }}">Configure</a>
+<button type="button" class="row-menu__item" role="menuitem" hx-get="{% url 'frontend:admin_user_detail' u.id %}?drawer=password" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Reset the password of {{ u.name }}">Reset password</button>
+{% comment %}Deactivate on an active account, Activate on one that is not
+(owner, 2026-10-09). Nobody deactivates the account they are signed in
+with.{% endcomment %}
+{% if u.id != request.user.id %}
+<form role="none" method="post" action="{% url 'frontend:admin_user_detail' u.id %}">
+{% csrf_token %}
+<input type="hidden" name="next" value="users">
+{% if u.is_active %}
+<input type="hidden" name="action" value="deactivate">
+<button type="submit" class="row-menu__item row-menu__item--danger" role="menuitem" aria-label="Deactivate {{ u.name }}">Deactivate</button>
+{% else %}
+<input type="hidden" name="action" value="activate">
+<button type="submit" class="row-menu__item" role="menuitem" aria-label="Activate {{ u.name }}">Activate</button>
+{% endif %}
+</form>
+{% endif %}
+{% endrow_actions %}
 </td>
 </tr>
 {% empty %}
@@ -379,230 +400,6 @@ aria-describedby="delete-partner-description"
   </div>
 </div>
 {% endif %}
-
-<!-- Create User Dialog Modal -->
-<div
-x-show="showAddModal"
-@keydown.escape.window="showAddModal = false"
-class="fixed inset-0 z-50 overflow-y-auto select-none"
-style="display: none;"
->
-<!-- Backdrop -->
-<div
-class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
-@click="showAddModal = false"
-></div>
-
-<!-- Modal Content -->
-<div class="flex items-center justify-center min-h-screen p-4">
-<div
-class="edify-form-dialog__surface edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
-@click.away="showAddModal = false"
-x-transition
-role="dialog"
-aria-modal="true"
-aria-labelledby="create-user-dialog-title"
->
-<div class="flex items-center justify-between border-b  pb-3">
-<h3 id="create-user-dialog-title" class="text-[22px] font-extrabold tracking-tight text-slate-900 tracking-tight">Provision New System User</h3>
-<button type="button" aria-label="Close create user dialog"
-@click="showAddModal = false"
-class="text-slate-400 hover:p-1 rounded-control hover:bg-slate-100 transition-colors"
->
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-</button>
-</div>
-
-<form method="POST" action="{% url 'frontend:admin_users' %}" class="space-y-4 font-semibold text-[12px] text-slate-600">
-{% csrf_token %}
-<input type="hidden" name="action" value="create">
-
-<div>
-<label for="new-user-name" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Full Name</label>
-<input
-id="new-user-name"
-type="text"
-name="name"
-required
-placeholder="e.g. John Doe"
-class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface edify-primary-focus transition-all"
->
-</div>
-
-<div>
-<label for="new-user-email" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Email Address</label>
-<input
-id="new-user-email"
-type="email"
-name="email"
-required
-placeholder="johndoe@edify.org"
-class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface edify-primary-focus transition-all"
->
-</div>
-
-<div>
-<label for="new-user-phone" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Phone Number</label>
-<input
-id="new-user-phone"
-type="text"
-name="phone"
-placeholder="+256..."
-class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface edify-primary-focus transition-all"
->
-</div>
-
-<div>
-<label for="new-user-password" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Password <span class="text-slate-400 normal-case font-medium">— optional</span></label>
-<input
-id="new-user-password"
-type="password"
-name="password"
-placeholder="Leave blank to send an invitation instead"
-class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface edify-primary-focus transition-all"
->
-<p class="edify-text-caption text-slate-400 mt-1">Leave blank and the new user sets their own password from a one-time invitation link — nobody else ever knows it.</p>
-</div>
-
-<div>
-<label for="new-user-supervisor" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Supervisor</label>
-<select aria-label="Supervisor staff ID"
-id="new-user-supervisor"
-name="supervisor_staff_id"
-class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
->
-<option value="">No supervisor yet</option>
-{% for s in supervisor_options %}
-<option value="{{ s.id }}">{{ s.name }} — {{ s.role }}</option>
-{% endfor %}
-</select>
-<p class="edify-text-caption text-slate-400 mt-1">Without a supervisor this person has no leave approver, no team scope, and no development-request routing.</p>
-</div>
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-<label for="new-user-role" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary Role</label>
-<select aria-label="Role"
-id="new-user-role"
-name="role"
-required
-x-model="newUserRole"
-class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
->
-{% for r in available_roles %}
-<option value="{{ r }}">{{ r }}</option>
-{% endfor %}
-</select>
-</div>
-
-<div>
-<label for="new-user-primary-district" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary District Assignment</label>
-<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share daily transport and lunch.</p>
-<select aria-label="Primary district"
-id="new-user-primary-district"
-name="primary_district"
-class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
->
-<option value="">None (HQ / Regional)</option>
-{% for d in districts %}
-<option value="{{ d.id }}">{{ d.name }}</option>
-{% endfor %}
-</select>
-</div>
-</div>
-
-{% if can_configure_management_team %}
-<fieldset
-x-show="['Program Lead', 'CountryDirector', 'ImpactAssessment', 'RegionalVicePresident'].includes(newUserRole)"
-class="rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4"
-aria-describedby="new-user-managed-people-hint"
->
-<legend class="px-1 text-[12px] font-bold uppercase tracking-wider text-slate-600">People this user will manage</legend>
-<p id="new-user-managed-people-hint" class="mt-1 edify-text-caption font-medium text-slate-500" x-text="newUserRole === 'CountryDirector' ? 'Country Directors automatically manage all PLs, IAs, Accountants, and CCEOs in Uganda.' : newUserRole === 'Program Lead' ? 'Select the CCEOs who will report to this Program Lead.' : 'Select the Uganda staff members this user will manage. Their direct reporting lines stay unchanged.'"></p>
-
-{% if management_candidates %}<div x-show="newUserRole !== 'CountryDirector'" class="mt-3">{% include "partials/components/select_all.html" with boxes="input[name=managed_staff_ids]" %}</div>{% endif %}
-<div x-show="newUserRole !== 'CountryDirector'" class="mt-3 max-h-56 space-y-1.5 overflow-y-auto rounded-control border border-slate-200 bg-[var(--edify-surface-muted)] p-2">
-{% for person in management_candidates %}
-<label
-x-show="newUserRole !== 'Program Lead' || '{{ person.role|escapejs }}' === 'CCEO'"
-for="new-manager-person-{{ person.id }}"
-class="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border border-transparent px-3 py-2 hover:border-slate-200 hover:bg-slate-50"
->
-<input
-id="new-manager-person-{{ person.id }}"
-type="checkbox"
-name="managed_staff_ids"
-value="{{ person.id }}"
-:disabled="!['Program Lead', 'ImpactAssessment', 'RegionalVicePresident'].includes(newUserRole) || (newUserRole === 'Program Lead' && '{{ person.role|escapejs }}' !== 'CCEO')"
-class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-primary-focus"
->
-<span class="min-w-0 flex-1">
-<span class="block truncate text-[12px] font-bold text-slate-700">{{ person.name }}</span>
-<span class="block truncate edify-text-caption font-medium text-slate-400">{{ person.role }} · {{ person.email }}</span>
-</span>
-</label>
-{% empty %}
-<p class="px-3 py-4 text-center text-[12px] font-semibold text-slate-500">No eligible Uganda staff profiles are available yet.</p>
-{% endfor %}
-</div>
-</fieldset>
-{% endif %}
-
-<div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Secondary District Assignments</label>
-<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
-<div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=additional_districts]" %}</div>
-<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
-{% for d in districts %}
-<label class="flex items-center gap-2 cursor-pointer select-none">
-<input
-type="checkbox"
-name="additional_districts"
-value="{{ d.id }}"
-class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
->
-<span>{{ d.name }}</span>
-</label>
-{% endfor %}
-</div>
-</div>
-
-<div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
-<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
-{% for r in available_roles %}
-<label class="flex items-center gap-2 cursor-pointer select-none">
-<input
-type="checkbox"
-name="additional_roles"
-value="{{ r }}"
-class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
->
-<span>{{ r }}</span>
-</label>
-{% endfor %}
-</div>
-</div>
-
-<div class="pt-3 border-t  flex justify-end gap-3.5">
-<button
-type="button"
-@click="showAddModal = false"
-class="btn btn-secondary h-8"
->
-Cancel
-</button>
-<button
-type="submit"
-class="btn btn-primary h-8"
->
-Provision & Set Password
-</button>
-</div>
-</form>
-</div>
-</div>
-</div>
 
 </div>
 {% endblock %}

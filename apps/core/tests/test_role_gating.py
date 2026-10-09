@@ -327,8 +327,9 @@ class PermissionsSecurityAuditFixesTest(RoleGatingPermissionTest):
         followed_messages = [str(m) for m in followed.context["messages"]]
         self.assertTrue(any("Access Denied" in m for m in followed_messages))
 
-    def test_hr_can_reach_users_page(self):
-        """RBAC matrix grants HR USER_MANAGE; the users page must match."""
+    def test_hr_cannot_reach_users_page(self):
+        """Accounts are the Admin's alone (owner, 2026-10-09); HR held the
+        page until then."""
         hr_user = User.objects.create_user(
             email="hr-users@edify.test",
             name="HR Manager",
@@ -339,13 +340,14 @@ class PermissionsSecurityAuditFixesTest(RoleGatingPermissionTest):
         )
         self.client.force_login(hr_user)
         response = self.client.get("/admin-panel/users")
-        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 200)
 
-    def test_cd_can_reach_users_page(self):
-        """RBAC matrix grants CD USER_MANAGE; the users page must match."""
+    def test_cd_cannot_reach_users_page(self):
+        """Owner, 2026-10-09: "Remove users from CD role and restrict it to
+        admin"."""
         self.client.force_login(self.cd_user)
         response = self.client.get("/admin-panel/users")
-        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 200)
 
     def test_ia_can_reach_upload_history_page(self):
         """IA generates school/SSA upload batches — it must reach the

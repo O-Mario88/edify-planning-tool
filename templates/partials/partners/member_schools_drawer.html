@@ -1,0 +1,50 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load school_identity %}
+
+{% block drawer_title %}Schools for {{ member.name }}{% endblock %}
+{% block drawer_subtitle %}{{ partner.name }} · {{ schools|length }} school{{ schools|length|pluralize }} assigned to the organisation{% endblock %}
+
+{% block drawer_body %}
+{% comment %}
+The organisation's own split of its schools among its team (owner, 2026-10-09:
+"Partner can assign schools assigend to them to the rest of their team members
+so that the the system can track who supported which schools"). Tick the
+schools this person looks after; a school another member has moves to this
+one, and an unticked school of theirs goes back to nobody
+(apps.partners.school_team).
+{% endcomment %}
+<form method="post"
+      action="/partners/{{ partner.id }}/members/{{ member.id }}/schools"
+      hx-post="/partners/{{ partner.id }}/members/{{ member.id }}/schools"
+      hx-target="#drawer-container"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600"
+      data-member-schools-form>
+  {% csrf_token %}
+  {% if validation_error %}<p role="alert" class="edify-note" data-tone="danger">{{ validation_error }}</p>{% endif %}
+  {% if schools %}
+  <p class="font-medium text-slate-600">Tick the schools {{ member.name }} looks after. Their name goes on the work at each school that names nobody yet, and is offered first when a visit is dated.</p>
+  <fieldset class="space-y-2">
+    <legend class="sr-only">Schools assigned to {{ partner.name }}</legend>
+    {% include "partials/components/select_all.html" with boxes="input[name=school_ids]" %}
+    <div class="max-h-[42vh] space-y-1 overflow-y-auto rounded-control border border-[var(--border-card)] p-2">
+      {% for row in schools %}
+      <label for="ms-{{ row.school.id }}" class="flex min-h-11 cursor-pointer items-center gap-3 rounded-control px-2 py-1.5 hover:bg-slate-50">
+        <input id="ms-{{ row.school.id }}" type="checkbox" name="school_ids" value="{{ row.school.id }}" {% if row.mine %}checked{% endif %} class="h-4 w-4 shrink-0">
+        <span class="min-w-0 flex-1">
+          <span class="block truncate font-semibold text-slate-800">{{ row.school.name }}</span>
+          <span class="block truncate edify-text-caption font-medium text-slate-500">{% school_code row.school.id %}{% if row.school.district_id %} · {{ row.school.district.name }}{% endif %}{% if row.other %} · now with {{ row.other }}{% elif not row.mine %} · no team member yet{% endif %}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% else %}
+  {% include "components/empty_state.html" with message="No schools assigned to this organisation yet." hint="A school can be given to a team member once it has been handed to the organisation." %}
+  {% endif %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {% if schools %}<button type="submit" class="btn btn-primary h-8">Save schools</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

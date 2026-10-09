@@ -1,0 +1,189 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Add user{% endblock %}
+{% block drawer_subtitle %}A sign-in account for a member of staff{% endblock %}
+
+{% block drawer_body %}
+{% comment %}
+The platform's drawer, the size of every other one (owner, 2026-10-09). It was
+a dialog of its own on the Users page, wider and taller than the window's
+drawers, and its dimming layer was drawn over it: pressing Add User showed a
+blurred page and nothing else.
+{% endcomment %}
+<form method="post" action="{% url 'frontend:admin_users' %}" class="space-y-4 font-semibold text-[12px] text-slate-600" x-data="{ newUserRole: 'CCEO' }" data-add-user-form>
+{% csrf_token %}
+<input type="hidden" name="action" value="create">
+
+<div>
+<label for="new-user-name" class="block edify-text-caption font-semibold text-slate-600 mb-1">Full Name</label>
+<input
+id="new-user-name"
+type="text"
+name="name"
+required
+placeholder="e.g. John Doe"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+</div>
+
+<div>
+<label for="new-user-email" class="block edify-text-caption font-semibold text-slate-600 mb-1">Email Address</label>
+<input
+id="new-user-email"
+type="email"
+name="email"
+required
+placeholder="johndoe@edify.org"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+</div>
+
+<div>
+<label for="new-user-phone" class="block edify-text-caption font-semibold text-slate-600 mb-1">Phone Number</label>
+<input
+id="new-user-phone"
+type="text"
+name="phone"
+placeholder="+256..."
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+</div>
+
+<div>
+<label for="new-user-password" class="block edify-text-caption font-semibold text-slate-600 mb-1">Password <span class="text-slate-400 normal-case font-medium">— optional</span></label>
+<input
+id="new-user-password"
+type="password"
+name="password"
+placeholder="Leave blank to send an invitation instead"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+<p class="edify-text-caption text-slate-400 mt-1">Leave blank and the new user sets their own password from a one-time invitation link — nobody else ever knows it.</p>
+</div>
+
+<div>
+<label for="new-user-supervisor" class="block edify-text-caption font-semibold text-slate-600 mb-1">Supervisor</label>
+<select aria-label="Supervisor staff ID"
+id="new-user-supervisor"
+name="supervisor_staff_id"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+<option value="">No supervisor yet</option>
+{% for s in supervisor_options %}
+<option value="{{ s.id }}">{{ s.name }} — {{ s.role }}</option>
+{% endfor %}
+</select>
+<p class="edify-text-caption text-slate-400 mt-1">Without a supervisor this person has no leave approver, no team scope, and no development-request routing.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label for="new-user-role" class="block edify-text-caption font-semibold text-slate-600 mb-1">Primary Role</label>
+<select aria-label="Role"
+id="new-user-role"
+name="role"
+required
+x-model="newUserRole"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+{% for r in available_roles %}
+<option value="{{ r }}">{{ r }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label for="new-user-primary-district" class="block edify-text-caption font-semibold text-slate-600 mb-1">Primary District Assignment</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share daily transport and lunch.</p>
+<select aria-label="Primary district"
+id="new-user-primary-district"
+name="primary_district"
+class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"
+>
+<option value="">None (HQ / Regional)</option>
+{% for d in districts %}
+<option value="{{ d.id }}">{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
+{% if can_configure_management_team %}
+<fieldset
+x-show="['Program Lead', 'CountryDirector', 'ImpactAssessment', 'RegionalVicePresident'].includes(newUserRole)"
+class="rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4"
+aria-describedby="new-user-managed-people-hint"
+>
+<legend class="px-1 text-[12px] font-bold uppercase tracking-wider text-slate-600">People this user will manage</legend>
+<p id="new-user-managed-people-hint" class="mt-1 edify-text-caption font-medium text-slate-500" x-text="newUserRole === 'CountryDirector' ? 'Country Directors automatically manage all PLs, IAs, Accountants, and CCEOs in Uganda.' : newUserRole === 'Program Lead' ? 'Select the CCEOs who will report to this Program Lead.' : 'Select the Uganda staff members this user will manage. Their direct reporting lines stay unchanged.'"></p>
+
+{% if management_candidates %}<div x-show="newUserRole !== 'CountryDirector'" class="mt-3">{% include "partials/components/select_all.html" with boxes="input[name=managed_staff_ids]" %}</div>{% endif %}
+<div x-show="newUserRole !== 'CountryDirector'" class="mt-3 max-h-56 space-y-1.5 overflow-y-auto rounded-control border border-slate-200 bg-[var(--edify-surface-muted)] p-2">
+{% for person in management_candidates %}
+<label
+x-show="newUserRole !== 'Program Lead' || '{{ person.role|escapejs }}' === 'CCEO'"
+for="new-manager-person-{{ person.id }}"
+class="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border border-transparent px-3 py-2 hover:border-slate-200 hover:bg-slate-50"
+>
+<input
+id="new-manager-person-{{ person.id }}"
+type="checkbox"
+name="managed_staff_ids"
+value="{{ person.id }}"
+:disabled="!['Program Lead', 'ImpactAssessment', 'RegionalVicePresident'].includes(newUserRole) || (newUserRole === 'Program Lead' && '{{ person.role|escapejs }}' !== 'CCEO')"
+class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-primary-focus"
+>
+<span class="min-w-0 flex-1">
+<span class="block truncate text-[12px] font-bold text-slate-700">{{ person.name }}</span>
+<span class="block truncate edify-text-caption font-medium text-slate-400">{{ person.role }} · {{ person.email }}</span>
+</span>
+</label>
+{% empty %}
+<p class="px-3 py-4 text-center text-[12px] font-semibold text-slate-500">No eligible Uganda staff profiles are available yet.</p>
+{% endfor %}
+</div>
+</fieldset>
+{% endif %}
+
+<div>
+<label class="block edify-text-caption font-semibold text-slate-600 mb-1">Secondary District Assignments</label>
+<p class="edify-text-caption edify-text-muted mb-2">Staff visits here share transport, breakfast, lunch, dinner and accommodation.</p>
+<div class="mb-2">{% include "partials/components/select_all.html" with boxes="input[name=additional_districts]" %}</div>
+<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
+{% for d in districts %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input
+type="checkbox"
+name="additional_districts"
+value="{{ d.id }}"
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
+>
+<span>{{ d.name }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+
+<div>
+<label class="block edify-text-caption font-semibold text-slate-600 mb-1">Additional/Secondary Roles</label>
+<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
+{% for r in available_roles %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input
+type="checkbox"
+name="additional_roles"
+value="{{ r }}"
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
+>
+<span>{{ r }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+
+<div class="drawer-footer">
+<button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+<button type="submit" class="btn btn-primary h-8">Add user</button>
+</div>
+</form>
+{% endblock %}

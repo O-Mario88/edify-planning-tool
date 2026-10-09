@@ -5,12 +5,9 @@
  * and "make sure the dropdown is actually dropping down".
  *
  * A `position: fixed` box is placed against the window only while no ancestor
- * has a transform, filter, containment or container type; otherwise it is
- * placed against that ancestor, scrolls with it and is cut off by its
- * overflow. Container queries give main, tables, cards and every Core School
- * row a container type, so the Core Schools Actions list landed offset by its
- * row, clipped by its card, or off screen in a scrolled workspace — and every
- * modal or bar written inside a page was held to the workspace's scroll.
+ * has a transform, filter, containment or container type; otherwise against
+ * that ancestor, cut off by its overflow. Main, tables, cards and rows have
+ * a container type.
  *
  * So whatever floats is shown in the browser's top layer (Popover API): above
  * the page, against the window, clipped by nothing, yet still in place in the
@@ -439,11 +436,17 @@
       if (trap) holding = true;
       seen.push({ el: el, lifted: lifted, fixed: isFixed, appeared: appeared, trap: trap });
     });
+    // Inside an overlay that goes up: lifted alone, a backdrop covers its dialog.
+    function carried(item) {
+      return seen.some(function (o) {
+        return o.el !== item.el && o.fixed && (o.lifted || o.appeared) && (o.trap || holding) && o.el.contains(item.el);
+      });
+    }
     var liftedAny = false;
     seen.forEach(function (item) {
       if (item.lifted) {
-        if (!item.fixed || (!item.trap && !holding)) drop(item.el);
-      } else if (item.appeared && (item.trap || holding)) {
+        if (!item.fixed || (!item.trap && !holding) || carried(item)) drop(item.el);
+      } else if (item.appeared && (item.trap || holding) && !carried(item)) {
         if (lift(item.el, item.trap ? "trapped" : "stacked")) liftedAny = true;
       }
     });

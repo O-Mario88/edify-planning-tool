@@ -792,6 +792,22 @@ def resolve_partner_ids(user) -> list[str]:
     )
     if linked:
         return [linked.id]
+    # 1b) a team member the organisation gave a login of their own (owner,
+    # 2026-10-09) signs in as that organisation.
+    # Asked only of a partner role: staff pay no query for it.
+    membership = None
+    if getattr(user, "active_role", "") in ("PartnerAdmin", "PartnerFieldOfficer"):
+        from apps.partners.models import PartnerMember
+
+        membership = (
+            PartnerMember.objects.filter(
+                user_id=user.user_id, active=True, partner__active_status=True
+            )
+            .values_list("partner_id", flat=True)
+            .first()
+        )
+    if membership:
+        return [membership]
     if getattr(settings, "PARTNER_ROLE_BRIDGE", False):
         first = (
             partner_model.objects.filter(active_status=True)

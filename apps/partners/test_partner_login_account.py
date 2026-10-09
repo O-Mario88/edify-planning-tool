@@ -79,9 +79,15 @@ class PartnerLoginAccountTests(TestCase):
             page,
         )
         self.assertIn('aria-label="Change the login of Literacy Works"', page)
-        # An organisation with no login has nothing to configure yet.
-        self.assertIn('aria-label="Set up login for No Login Org"', page)
-        self.assertNotIn("Configure the login of No Login Org", page)
+        # An organisation with no login: Configure opens the drawer that
+        # gives it one (owner, 2026-10-09), and there is no password to reset.
+        self.assertIn(
+            f'hx-get="/partners/{self.bare.id}/user-setup" '
+            'hx-target="#drawer-container" hx-swap="innerHTML" '
+            'aria-label="Configure the login of No Login Org"',
+            page,
+        )
+        self.assertNotIn("Reset the password of No Login Org", page)
 
     def test_the_staff_list_says_whose_login_a_partner_account_is(self):
         """It carries a person's name; the directory lists organisations."""
@@ -286,11 +292,10 @@ class PartnerLoginAccountTests(TestCase):
         self.assertTrue(StaffProfile.objects.filter(user=cceo).exists())
 
     # ── Who reaches it ───────────────────────────────────────────────────
-    def test_the_country_director_reaches_a_login_with_no_people_record(self):
+    def test_the_admin_reaches_a_login_with_no_people_record(self):
         """Reach is by the country on a People record, and a linked partner
-        login has none: the Country Director set the login up and was then
-        told it did not exist."""
-        self.client.force_login(self.cd)
+        login has none; the Admin reaches every account."""
+        self.client.force_login(self.admin)
         self.assertEqual(self.client.get(self.account_url).status_code, 200)
         self.client.post(
             self.account_url,
@@ -299,26 +304,22 @@ class PartnerLoginAccountTests(TestCase):
         self.login.refresh_from_db()
         self.assertTrue(self.login.check_password(NEW_PASSWORD))
 
-    def test_someone_who_does_not_set_up_partner_logins_does_not(self):
-        """HR holds the Users page for staff; partner logins are the Admin's
-        and the Country Director's (owner, 2026-09-15)."""
-        self.client.force_login(self.hr)
-        self.assertEqual(self.client.get(self.account_url).status_code, 404)
-        response = self.client.post(
-            self.account_url,
-            {"action": "reset_password", "new_password": NEW_PASSWORD},
-        )
-        self.assertEqual(response.status_code, 404)
-        self.login.refresh_from_db()
-        self.assertTrue(self.login.check_password(PASSWORD))
-
-    def test_staff_out_of_reach_stay_out_of_reach(self):
-        """The partner rule widens nothing for staff accounts."""
+    def test_nobody_but_the_admin_reaches_an_account(self):
+        """Accounts are the Admin's alone (owner, 2026-10-09). The Country
+        Director set partner logins up from 2026-09-15 and HR held the Users
+        page for staff; neither opens an account now, a partner's or a
+        member of staff's."""
         elsewhere = _user("pla-kenya@edify.test", EdifyRole.CCEO.value, country="Kenya")
-        self.client.force_login(self.cd)
-        self.assertEqual(
-            self.client.get(f"/admin-panel/users/{elsewhere.id}").status_code, 404
-        )
+        for reader in (self.cd, self.hr):
+            self.client.force_login(reader)
+            for url in (self.account_url, f"/admin-panel/users/{elsewhere.id}"):
+                self.assertNotEqual(self.client.get(url).status_code, 200)
+            self.client.post(
+                self.account_url,
+                {"action": "reset_password", "new_password": NEW_PASSWORD},
+            )
+            self.login.refresh_from_db()
+            self.assertTrue(self.login.check_password(PASSWORD))
 
     # ── A deleted login ──────────────────────────────────────────────────
     def test_deleting_the_login_leaves_the_organisation_without_one(self):
@@ -333,8 +334,13 @@ class PartnerLoginAccountTests(TestCase):
 
         self.client.force_login(self.admin)
         page = self.client.get("/admin-panel/users").content.decode()
-        self.assertIn('aria-label="Set up login for Literacy Works"', page)
-        self.assertNotIn("Configure the login of Literacy Works", page)
+        self.assertIn(
+            f'hx-get="/partners/{self.org.id}/user-setup" '
+            'hx-target="#drawer-container" hx-swap="innerHTML" '
+            'aria-label="Configure the login of Literacy Works"',
+            page,
+        )
+        self.assertNotIn("Reset the password of Literacy Works", page)
 
     def test_deleting_a_member_of_staff_touches_no_organisation(self):
         cceo = _user("pla-gone@edify.test", EdifyRole.CCEO.value)

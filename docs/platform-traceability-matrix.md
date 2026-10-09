@@ -151,7 +151,7 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CountryDirector`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalProgramLead`, `RegionalVicePresident` |
 | Routes / API | `GET /projects/{id}` |
 | Permissions checked | `data.export`, `fundRequest.approveEscalated`, `payment.act`, `project.configurePriorities` |
-| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_management`, `cluster_oversight` _+52 more_ |
+| Page gates checked | `acting_leadership`, `actions_sent`, `calendar`, `cce_training_feedback`, `cd_analytics`, `closed_schools`, `cluster_management`, `cluster_oversight` _+51 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py`, `apps/activities/models.py` _+119 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `evidence.EvidenceRecord` _+17 more_ |
@@ -291,7 +291,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Roles that hold the checked permissions | — |
 | Routes / API | `GET /recovery-plans` |
 | Permissions checked | — |
-| Page gates checked | `acting_leadership`, `analytics`, `calendar`, `candidate_pipeline`, `compensation_benefits`, `compliance_register`, `cpd_learning`, `dashboard` _+33 more_ |
+| Page gates checked | `acting_leadership`, `analytics`, `calendar`, `candidate_pipeline`, `compensation_benefits`, `compliance_register`, `cpd_learning`, `dashboard` _+32 more_ |
 | Object-level guards | — |
 | Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/acting.py`, `apps/core/audit_hash.py` _+37 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |
