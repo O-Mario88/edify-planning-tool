@@ -1384,7 +1384,7 @@ def country_budget_return_drawer_view(request):
     from apps.fund_requests.pl_approval_service import MONTHS
 
     fy = request.GET.get("fy") or get_operational_fy()
-    month = int(request.GET.get("month") or timezone.now().month)
+    month = int(request.GET.get("month") or timezone.localdate().month)
     return render(
         request,
         "partials/finance/country_budget/return_drawer.html",

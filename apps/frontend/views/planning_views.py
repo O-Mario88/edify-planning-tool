@@ -976,7 +976,7 @@ def planning_dashboard_view(request):
     filters = {
         "fy": request.GET.get("fy", fy),
         "quarter": request.GET.get(
-            "quarter", get_quarter_for_date(timezone.now().date())
+            "quarter", get_quarter_for_date(timezone.localdate())
         ),
         "district": request.GET.get("district", "All"),
         "sub_county": request.GET.get("sub_county", "All"),

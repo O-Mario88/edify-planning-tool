@@ -1405,7 +1405,7 @@ class LeaveImpactAnalysisService:
         try:
             balance_year = date.fromisoformat(start_date_str).year
         except (TypeError, ValueError):
-            balance_year = timezone.now().year
+            balance_year = timezone.localdate().year
         balance = LeaveBalance.objects.filter(
             staff=staff,
             leave_type=leave_type,

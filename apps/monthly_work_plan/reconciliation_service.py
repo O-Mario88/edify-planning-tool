@@ -391,7 +391,7 @@ def quarter_forecast(fy: str, country_id: str | None = None) -> dict | None:
     if not phasing:
         return None
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     quarter = _fy_quarter(today.month)
     ceiling = _phasing_value(phasing, quarter)
     if not ceiling:
