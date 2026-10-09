@@ -42169,7 +42169,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1181,
+   "line": 1184,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -42195,7 +42195,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1605,
+   "line": 1608,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

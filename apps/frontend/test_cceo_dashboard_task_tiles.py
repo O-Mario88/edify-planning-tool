@@ -13,7 +13,9 @@ under way; not started with its date ahead; not started with its date passed.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from datetime import timezone as dt_timezone
+from unittest import mock
 
 from django.test import TestCase
 from django.utils import timezone
@@ -77,12 +79,8 @@ class TheFourTilesTest(TestCase):
         cls.staff = StaffProfile.objects.create(user=cls.user, title="CCEO")
 
     def activity(self, status, *, days):
-        # The day the dashboard counts from (`timezone.now().date()`, UTC).
-        # `date.today()` is the process's day, which Django sets to
-        # Africa/Nairobi: from 21:00 to midnight UTC it is already tomorrow,
-        # and an activity dated from it fell into the next tile (main's CI,
-        # 2026-10-08 21:11 UTC: (2, 2, 4, 1) for (2, 2, 3, 2)).
-        when = timezone.now().date() + timedelta(days=days)
+        # The platform's day, which is the day the dashboard counts from.
+        when = timezone.localdate() + timedelta(days=days)
         return Activity.objects.create(
             activity_type="school_visit",
             school=self.school,
@@ -128,6 +126,21 @@ class TheFourTilesTest(TestCase):
             (2, 2, 3, 2),
         )
         self.assertEqual(sum(tiles.values()), 9)
+
+    def test_the_day_is_kampalas_not_utcs(self):
+        """Half past midnight in Kampala is 21:30 UTC the day before. Work
+        planned for today is planned, and yesterday's is overdue; counted
+        from the UTC date, today's was still tomorrow's and yesterday's was
+        not overdue yet (owner, 2026-10-09: "yes fix it")."""
+        night = datetime(2026, 10, 14, 21, 30, tzinfo=dt_timezone.utc)
+        with mock.patch("django.utils.timezone.now", return_value=night):
+            self.assertEqual(timezone.localdate(), date(2026, 10, 15))
+            self.activity("scheduled", days=0)
+            self.activity("scheduled", days=-1)
+
+            tiles = self.tiles()
+
+        self.assertEqual((tiles["Planned Tasks"], tiles["Overdue Tasks"]), (1, 1))
 
     def test_verified_work_is_never_overdue(self):
         self.activity("ia_verified", days=-20)
