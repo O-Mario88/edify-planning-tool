@@ -66,7 +66,7 @@ def personal_time_off_view(request):
     if not LeaveTypePolicy.objects.exists():
         LeaveBalanceService.seed_default_policies()
 
-    year = timezone.now().year
+    year = timezone.localdate().year
     LeaveBalanceService.recalculate_balances(sp, year)
 
     balances = LeaveBalance.objects.filter(staff=sp, year=year).select_related(
@@ -553,7 +553,7 @@ def leave_tracker_view(request):
             | Q(title__icontains=q)
         )
 
-    year = timezone.now().year
+    year = timezone.localdate().year
     team_data = []
 
     # Was a severe N+1: initialize_balances_for_staff() alone ran up to ~7
@@ -801,7 +801,7 @@ def _leave_approvals_page(request):
 
     # 6. Leave Balance Alerts (remaining PTO < 5)
     balance_scope = LeaveBalance.objects.filter(
-        leave_type="personal_time_off", remaining__lt=5, year=timezone.now().year
+        leave_type="personal_time_off", remaining__lt=5, year=timezone.localdate().year
     )
     reviewer_profile = getattr(user, "staff_profile", None)
     if role != "Admin":

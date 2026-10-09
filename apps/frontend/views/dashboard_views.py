@@ -918,7 +918,7 @@ def dashboard_view(request):
             )
         # CCEO Field Officer Dashboard Context — all figures are scoped to
         # this CCEO's own activities/fund requests, no fabricated fallbacks.
-        today = timezone.now().date()
+        today = timezone.localdate()
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 

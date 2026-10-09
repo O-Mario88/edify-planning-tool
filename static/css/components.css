@@ -3894,35 +3894,6 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 .apexcharts-xaxistooltip::after {
   border-block-start-color: var(--edify-chart-tooltip);
 }
-/* Authentication layout: presentation lives here so every auth screen shares
-   the same token-driven composition without static inline declarations. */
-.auth-shell { background: radial-gradient(ellipse at top right, var(--edify-info-light) 0%, var(--edify-info-light) 45%, var(--edify-info-light) 100%); font-family: var(--edify-font-sans); }
-.auth-orb-primary { background: var(--edify-primary-active); }
-.auth-spark-surface { background: var(--edify-surface-raised); opacity: .7; }
-.auth-orb-accent { background: var(--edify-sky-400); opacity: .55; }
-.auth-spark-navy { background: var(--edify-navy-800); opacity: .35; }
-.auth-card { box-shadow: 0 30px 70px -20px color-mix(in srgb, var(--edify-primary) 40%, transparent); }
-.auth-brand-panel { background: linear-gradient(160deg, var(--edify-primary-active) 0%, var(--edify-navy-800) 55%, var(--edify-steel-600) 100%); }
-.auth-dot-grid--primary { opacity: .35; }
-.auth-dot-grid--muted { opacity: .25; }
-.auth-dot--primary { background: var(--edify-sky-400); }
-.auth-dot--muted { background: var(--edify-sky-100); }
-.auth-inverse-logo { filter: brightness(0) invert(1); }
-.auth-title { color: var(--edify-surface-raised); font-size: var(--edify-text-display-size); font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
-.auth-subtitle { color: var(--edify-sky-100); font-size: var(--edify-text-label-size); font-weight: 500; line-height: 1.5; margin-top: 10px; }
-.auth-feature-icon { background: color-mix(in srgb, var(--edify-on-accent) 12%, transparent); }
-.auth-feature-icon--primary { color: var(--edify-sky-400); }
-.auth-feature-icon--muted { color: var(--edify-sky-100); }
-.auth-feature-label { color: var(--edify-surface-raised); font-size: var(--edify-text-label-size); font-weight: 600; }
-.auth-stat-label { color: var(--edify-sky-400); font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.auth-stat-value { color: var(--edify-surface-raised); font-size: var(--edify-text-heading-size); font-weight: 800; margin-top: 2px; }
-.auth-stat-divider { background: color-mix(in srgb, var(--edify-on-accent) 15%, transparent); height: 32px; width: 1px; }
-.auth-form-logo { background: linear-gradient(135deg, var(--edify-navy-800), var(--edify-steel-600)); box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--edify-primary) 35%, transparent); }
-.auth-security { border: 1px solid var(--edify-info-light); }
-.auth-security-icon { color: var(--edify-navy-800); }
-.auth-security-title { font-size: var(--edify-text-micro-size); font-weight: 700; }
-.auth-security-copy { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); margin-top: 1px; }
-.auth-footer { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); font-weight: 500; }
 
 
 /* ════════════════════════════════════════════════════════════════════════════

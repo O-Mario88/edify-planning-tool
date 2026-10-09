@@ -216,7 +216,7 @@ def accounts_past_last_working_day():
     """
     from apps.hr.models import OffboardingPlan
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     return (
         OffboardingPlan.objects.filter(
             last_working_day__isnull=False,

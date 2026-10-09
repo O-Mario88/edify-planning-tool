@@ -9,6 +9,16 @@ date. "Planned Tasks" was every scheduled activity, the overdue ones included,
 so one activity sat in two tiles, and the agenda called verified work
 "Overdue". The four now come from one split (apps.core.activity_types): done;
 under way; not started with its date ahead; not started with its date passed.
+
+"Its date passed" is by the calendar in Kampala. The dashboard took today
+from ``timezone.now().date()``, which is the day in UTC: from midnight until
+03:00 East Africa Time that is still yesterday, so yesterday's unstarted work
+was "Planned" for three more hours and the page's "today" was the day before.
+This file's first test built its dates from the local day and so failed every
+night in those hours (first seen 2026-10-09, 01:20). The day is now the local
+one (``timezone.localdate()``, the rule in apps.core.clock), a test pins the
+clock inside those hours, and apps/core/tests/test_local_day.py keeps the UTC
+day out of the application code.
 """
 
 from __future__ import annotations
@@ -17,6 +27,7 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
@@ -76,17 +87,14 @@ class TheFourTilesTest(TestCase):
         )
         cls.staff = StaffProfile.objects.create(user=cls.user, title="CCEO")
 
-    def activity(self, status, *, days):
-        # The day the dashboard counts from (`timezone.now().date()`, UTC).
-        # `date.today()` is the process's day, which Django sets to
-        # Africa/Nairobi: from 21:00 to midnight UTC it is already tomorrow,
-        # and an activity dated from it fell into the next tile (main's CI,
-        # 2026-10-08 21:11 UTC: (2, 2, 4, 1) for (2, 2, 3, 2)).
-        when = timezone.now().date() + timedelta(days=days)
+    def activity(self, status, *, days, fy=None):
+        # The day as the platform reads it: the calendar in Kampala, which is
+        # also the frozen clock's day when a test pins the time.
+        when = timezone.localdate() + timedelta(days=days)
         return Activity.objects.create(
             activity_type="school_visit",
             school=self.school,
-            fy=self.fy,
+            fy=fy or self.fy,
             quarter="Q1",
             planned_date=when,
             planned_month=when.month,
@@ -145,8 +153,22 @@ class TheFourTilesTest(TestCase):
 
         self.assertEqual((tiles["Planned Tasks"], tiles["Overdue Tasks"]), (0, 1))
 
+    def test_yesterdays_work_is_overdue_from_midnight_in_kampala(self):
+        """00:30 on 9 October in Kampala is 21:30 on the 8th in UTC. Work
+        dated the 8th is a day late and work dated the 9th is today's; by the
+        UTC day the first was still "Planned" and neither was due yet."""
+        with freeze_time("2026-10-08 21:30:00"):
+            self.assertEqual(timezone.localdate(), date(2026, 10, 9))
+            fy = get_operational_fy()
+            self.activity("scheduled", days=-1, fy=fy)
+            self.activity("rescheduled", days=0, fy=fy)
+
+            tiles = self.tiles()
+
+        self.assertEqual((tiles["Planned Tasks"], tiles["Overdue Tasks"]), (1, 1))
+
     def test_the_agenda_pill_says_the_same(self):
-        today = date.today()
+        today = timezone.localdate()
 
         def pill(status, days):
             activity = Activity(

@@ -52,7 +52,7 @@ LINE_TYPE_LABELS = {
 
 def month_bounds(fy_year: int | None, month: int) -> tuple[date, date]:
     """First and last day of `month` in the calendar year it falls in."""
-    year = fy_year or timezone.now().year
+    year = fy_year or timezone.localdate().year
     start = date(year, month, 1)
     end = (
         date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)

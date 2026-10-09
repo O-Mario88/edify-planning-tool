@@ -631,7 +631,7 @@ def get_country_monthly_budget(principal, filters=None):
     _require_read(principal)
     filters = filters or {}
     fy = filters.get("fy") or get_operational_fy()
-    month_num = int(filters.get("month") or timezone.now().month)
+    month_num = int(filters.get("month") or timezone.localdate().month)
     search = (filters.get("q") or "").strip().lower()
 
     budget = _get_or_create_budget(fy, month_num)
@@ -1659,7 +1659,7 @@ def get_plan_sources(principal, filters=None):
     _require_read(principal)
     filters = filters or {}
     fy = filters.get("fy") or get_operational_fy()
-    month_num = int(filters.get("month") or timezone.now().month)
+    month_num = int(filters.get("month") or timezone.localdate().month)
     source = _program_source(fy, month_num)
     lines = source["lines"]
     names = _user_names([li.responsible_user for li in lines])

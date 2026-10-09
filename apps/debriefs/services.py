@@ -42,7 +42,7 @@ def list_debriefs(principal, query: dict) -> list[dict]:
 
 
 def today(principal) -> list[dict]:
-    today = timezone.now().date()
+    today = timezone.localdate()
     qs = DailyDebrief.objects.filter(
         deleted_at__isnull=True,
         date__date=today,
