@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
@@ -76,7 +77,12 @@ class TheFourTilesTest(TestCase):
         cls.staff = StaffProfile.objects.create(user=cls.user, title="CCEO")
 
     def activity(self, status, *, days):
-        when = date.today() + timedelta(days=days)
+        # The day the dashboard counts from (`timezone.now().date()`, UTC).
+        # `date.today()` is the process's day, which Django sets to
+        # Africa/Nairobi: from 21:00 to midnight UTC it is already tomorrow,
+        # and an activity dated from it fell into the next tile (main's CI,
+        # 2026-10-08 21:11 UTC: (2, 2, 4, 1) for (2, 2, 3, 2)).
+        when = timezone.now().date() + timedelta(days=days)
         return Activity.objects.create(
             activity_type="school_visit",
             school=self.school,
