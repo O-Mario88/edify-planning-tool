@@ -18,6 +18,10 @@ test('an unrelated HTMX swap redraws no existing chart', async ({ page }, testIn
   // intervention overview above it became a chart of two years (2026-10-09).
   await page.setViewportSize({ width: 1440, height: 3600 });
   await page.goto('/ssa', { waitUntil: 'networkidle' });
+  // The page above the trend is as long as its data makes it (the overview
+  // and district charts are two years tall on a seed with last year's SSA):
+  // bring the trend into view rather than trust a viewport height.
+  await page.locator('.sp-trend__chart').scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => document.querySelectorAll('.apexcharts-canvas').length)).toBeGreaterThan(0);
 
   const renders = await page.evaluate(() => new Promise(done => {
@@ -43,6 +47,10 @@ test('a theme switch still redraws the charts', async ({ page }, testInfo) => {
   // intervention overview above it became a chart of two years (2026-10-09).
   await page.setViewportSize({ width: 1440, height: 3600 });
   await page.goto('/ssa', { waitUntil: 'networkidle' });
+  // The page above the trend is as long as its data makes it (the overview
+  // and district charts are two years tall on a seed with last year's SSA):
+  // bring the trend into view rather than trust a viewport height.
+  await page.locator('.sp-trend__chart').scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => document.querySelectorAll('.apexcharts-canvas').length)).toBeGreaterThan(0);
   const renders = await page.evaluate(() => new Promise(done => {
     let count = 0;
