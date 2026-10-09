@@ -62,7 +62,19 @@ class TableBoundsTest(SimpleTestCase):
     #:   Completion tab's "Verified Against the Requirement by School Type"
     #:   (owner, 2026-10-02): the same rows, read for what is verified.
     #:   Bounded by the SchoolType enum, as the table above is.
-    UNBOUNDED_CEILING = 8
+    #: * `pages/cluster_management/scoring.html` (two tables, owner brief,
+    #:   2026-10-08) — the form where the Country Director and Impact
+    #:   Assessment set what the cluster scores weigh. One table lists the
+    #:   parts of a score and the other the maturity rules: both are lists
+    #:   written in apps/clusters/scores.py (at most nine rows each), not
+    #:   records, and every row is a field of one form that is saved whole,
+    #:   which a pager would break.
+    #: * `pages/schools/detail.html` — the school profile's "SSA score by
+    #:   intervention" (owner's profile brief, 2026-10-09): one row per SSA
+    #:   intervention with last year, this year, the change and its status.
+    #:   Bounded by the SsaIntervention enum (eight), and read as one table:
+    #:   the best and the struggling intervention are found by comparing them.
+    UNBOUNDED_CEILING = 11
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

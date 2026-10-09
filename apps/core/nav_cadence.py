@@ -35,6 +35,9 @@ DEFAULT_RANK: dict[str, tuple[int, int]] = {
     "my_plan": (DAILY, 4),
     "schools": (DAILY, 6),
     "clusters": (DAILY, 8),
+    # Directly under Clusters for an officer; a role with an Oversight group
+    # reads it beside Cluster Oversight (navigation._regroup_by_visit).
+    "cluster_management": (DAILY, 9),
     "cluster_oversight": (DAILY, 10),
     "team_planning_oversight": (DAILY, 12),
     "calendar": (DAILY, 14),

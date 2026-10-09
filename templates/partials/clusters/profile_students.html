@@ -1,0 +1,58 @@
+{% load components table_pagination frontend_filters %}
+{% comment %}
+Cluster profile, Students (owner brief, 2026-10-08: "Enrollment baseline,
+current, growth % ... Drill: Cluster → School → Enrollment history").
+
+The yearly figure is the one recorded when the school's SSA visit was
+completed; Latest is the school record's own figure and its date. Growth is
+like for like: only a school with a figure in both years is in it, and the
+summary says how many that is, so a school that joined the cluster is never
+read as growth.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="students">
+{% filter_bar label="Enrolment year" form_id="cluster-students-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="students">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+{% paginate enrolment.rows "students_page" as students_pager %}
+{% data_table name="cluster-enrolment" %}
+{% slot title %}Enrolment, FY {{ enrolment.previous_fy }} to FY {{ enrolment.fy }}{% endslot %}
+{% slot summary %}{% if enrolment.compared %}{{ enrolment.before|intcomma }} to {{ enrolment.after|intcomma }} learners{% if enrolment.growth_pct is not None %} ({% if enrolment.growth_pct > 0 %}+{% endif %}{{ enrolment.growth_pct|floatformat:1 }}%){% endif %} · {{ enrolment.compared }} of {{ enrolment.school_count }} school{{ enrolment.school_count|pluralize }} compared{% else %}No school has an enrolment figure in both years · {{ enrolment.latest_total|intcomma }} learners on the latest figures{% endif %}{% endslot %}
+{% slot caption %}Each school of {{ cluster.name }} with its enrolment recorded in FY {{ enrolment.previous_fy }} and FY {{ enrolment.fy }}, the change and growth between them, and the latest figure on the school record with its date.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No schools in this cluster." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=students_pager param="students_page" %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-enrolment-method>A year's figure is the enrolment recorded when the school's SSA visit was completed in that year. Growth counts only the schools with a figure in both years. Latest is the figure on the school record: {{ enrolment.latest_total|intcomma }} learners across {{ enrolment.with_latest }} school{{ enrolment.with_latest|pluralize }}.</p>{% endslot %}
+{% if enrolment.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ enrolment.previous_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ enrolment.fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2 text-right">Growth</th>
+<th scope="col" class="px-3 py-2 text-right">Latest Enrolment</th>
+<th scope="col" class="px-3 py-2">Recorded</th>
+</tr>
+</thead>
+<tbody>
+{% for row in students_pager.rows %}
+<tr data-enrolment-school="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ enrolment.previous_fy }}">{% if row.before is None %}—{% else %}{{ row.before|intcomma }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ enrolment.fy }}">{% if row.after is None %}—{% else %}{{ row.after|intcomma }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if row.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{% if row.change > 0 %}success{% elif row.change < 0 %}danger{% else %}neutral{% endif %}">{% if row.change > 0 %}+{% endif %}{{ row.change|intcomma }}</span>{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Growth">{% if row.growth_pct is None %}—{% else %}{% if row.growth_pct > 0 %}+{% endif %}{{ row.growth_pct|floatformat:1 }}%{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Latest Enrolment">{% if row.latest %}{{ row.latest|intcomma }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2 tabular-nums" data-label="Recorded">{% if row.latest_on %}{{ row.latest_on|date:"j M Y" }}{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+</div>

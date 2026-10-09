@@ -1,0 +1,2 @@
+{% comment %}An SSA score out of 10, or a dash when the year has no confirmed
+record: a year that is not measured is never a zero.{% endcomment %}{% if value is None %}<span class="edify-text-muted" title="No confirmed SSA">—</span>{% else %}{{ value|floatformat:2 }}{% endif %}

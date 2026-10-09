@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load chart_tags %}
 {% load kpi_metrics table_pagination %}
 
 {% load frontend_filters %}
@@ -213,11 +214,11 @@ Not specified
 {% endif %}
 <div data-school-training-status>
 <p class="edify-profile-field__label">Cluster training (FY{{ status_fy }})</p>
-<p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {{ training_coverage.cluster_name }}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>
+<p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {% cluster_link training_coverage.cluster_name training_coverage.cluster_id %}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>
 </div>
 <div data-school-cluster>
 <p class="edify-profile-field__label">Cluster</p>
-<p class="edify-profile-field__value mt-0.5">{% if current_cluster %}<a href="/clusters/{{ current_cluster.id }}" class="hover:underline">{{ current_cluster.name }}</a>{% if current_cluster.district_id != school.district_id %} · {{ current_cluster.district.name }}{% endif %}{% else %}Not in a cluster{% endif %}</p>
+<p class="edify-profile-field__value mt-0.5">{% if current_cluster %}<a href="/clusters/{{ current_cluster.id }}" class="hover:underline">{{ current_cluster.name }}</a>{% if current_cluster.district_id != school.district_id %} · {% district_link current_cluster.district.name current_cluster.district.id %}{% endif %}{% else %}Not in a cluster{% endif %}</p>
 {% if current_cluster_cross_district %}<span class="edify-badge mt-1" data-tone="info">Cross-District Cluster</span>{% elif current_cluster_outside_catchment %}<span class="edify-badge mt-1" data-tone="warning">Outside the cluster's catchment</span>{% endif %}
 </div>
 </div>
@@ -374,7 +375,7 @@ would read as free work rather than unpriced work.
 {% for item in partner_support %}
 <div class="p-4 flex flex-wrap justify-between gap-3">
 <div class="min-w-0">
-<h4 class="font-semibold text-slate-800">{{ item.partner_name|default:"Partner" }} &mdash; {{ item.activity_type|replace_underscore|title|default:"Support" }}</h4>
+<h4 class="font-semibold text-slate-800">{% partner_link item.partner_name item.partner_id empty="Partner" %} &mdash; {{ item.activity_type|replace_underscore|title|default:"Support" }}</h4>
 <p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">
 {% if item.is_scheduled %}Scheduled for {{ item.scheduled_date|date:"j M Y"|default:"—" }}
 {% elif item.is_returned %}Returned to staff{% if item.return_reason %} &mdash; {{ item.return_reason }}{% endif %}
@@ -442,6 +443,13 @@ would read as free work rather than unpriced work.
 {% endif %}
 </div>
 
+{% comment %}The school's year at a glance (owner, 2026-10-09: "Schools (SSA,
+students impact, visit, trainings)"), from the shared profile engine: this
+year's visits and trainings, and enrolment and learning results against the
+year before.{% endcomment %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Visits completed{% endkpi_label %}{{ school_now.execution.visits.completed }}{% kpi_helper %}of {{ school_now.execution.visits.planned }} in the plan · {{ school_now.execution.visits.expected }} expected in {{ school_now.fy_label }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Trainings completed{% endkpi_label %}{{ school_now.execution.trainings.completed }}{% kpi_helper %}of {{ school_now.execution.trainings.planned }} in the plan · {{ school_now.execution.trainings.expected }} expected in {{ school_now.fy_label }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Enrolment growth{% endkpi_label %}{% if school_students.enrolment_growth is None %}Not measured{% else %}{% if school_students.enrolment_growth > 0 %}+{% endif %}{{ school_students.enrolment_growth }}%{% endif %}{% kpi_helper %}{% if school_students.enrolment_compared %}{{ school_students.enrolment_before|intcomma }} to {{ school_students.enrolment_after|intcomma }} learners{% else %}no figure for both years yet{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Learning results{% endkpi_label %}{% if school_students.learning_after is None %}Not measured{% else %}{{ school_students.learning_after }}%{% endif %}{% kpi_helper %}{% if school_students.learning_compared %}{% if school_students.learning_change > 0 %}+{% endif %}{{ school_students.learning_change }} points since last year{% else %}no confirmed results for both years yet{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Average SSA{% endkpi_label %}{% if ssa_comparison.current is None %}Not measured{% else %}{{ ssa_comparison.current|floatformat:2 }}{% endif %}{% kpi_helper %}{% if school_profile.ssa.overall.change is not None %}{% if school_profile.ssa.overall.change > 0 %}+{% endif %}{{ school_profile.ssa.overall.change|floatformat:2 }} since {{ ssa_comparison.previous_label }}{% else %}{{ ssa_comparison.label }}{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}SSA target{% endkpi_label %}{{ school_profile.ssa.target|floatformat:1 }}{% kpi_helper %}{% if school_profile.ssa.to_target is None %}no confirmed SSA yet{% elif school_profile.ssa.to_target %}{{ school_profile.ssa.to_target|floatformat:2 }} to go{% else %}reached{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Teachers trained{% endkpi_label %}{{ school_people.teachers_trained }}{% kpi_helper %}{{ school_people.teachers_in_school }} in school · {{ school_people.teachers_group }} at group trainings · {{ school_now.fy_label }}{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}School leaders trained{% endkpi_label %}{{ school_people.leaders_trained }}{% kpi_helper %}{{ school_people.leaders_in_school }} in school · {{ school_people.leaders_group }} at group trainings{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}At cluster meetings{% endkpi_label %}{{ school_people.teachers_at_meetings|add:school_people.leaders_at_meetings }}{% kpi_helper %}{{ school_people.teachers_at_meetings }} teachers · {{ school_people.leaders_at_meetings }} leaders{% endkpi_helper %}{% endkpi_metric %}{% if school_finance %}{% kpi_metric %}{% kpi_label %}School loans{% endkpi_label %}{{ school_finance.loans }}{% kpi_helper %}UGX {{ school_finance.disbursed|floatformat:0|intcomma }} disbursed{% endkpi_helper %}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Business Transformation cases{% endkpi_label %}{{ school_finance.open_cases }}{% kpi_helper %}open, of {{ school_finance.cases }}{% endkpi_helper %}{% endkpi_metric %}{% endif %}{% endkpi_strip %}
+
 <!-- Latest confirmed SSA (IA review, owner, 2026-09-13) -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4" id="ssa-timeline" data-school-ssa-latest>
 <div class="border-b border-slate-100 pb-3 flex items-center justify-between gap-2">
@@ -454,45 +462,49 @@ would read as free work rather than unpriced work.
 {% if ssa_progress.newer_unconfirmed %}
 <p class="edify-note" data-tone="warning" role="note">{{ ssa_progress.newer_unconfirmed|length }} newer assessment{{ ssa_progress.newer_unconfirmed|length|pluralize }} {{ ssa_progress.newer_unconfirmed|length|pluralize:"is,are" }} not confirmed yet and {{ ssa_progress.newer_unconfirmed|length|pluralize:"is,are" }} not counted.</p>
 {% endif %}
-{% if ssa_progress.latest_scores %}
-<div class="space-y-3">
-{% for sc in ssa_progress.latest_scores %}
-<div>
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<span class="truncate">{{ sc.label }}</span>
-<span class="font-semibold tabular-nums">{{ sc.score }}</span>
-</div>
-<div class="h-4 w-full bg-slate-100 rounded-none mt-1 overflow-hidden">
-<div class="h-full bg-[var(--edify-series-1)] rounded-none" style="width: {{ sc.score|multiply:10 }}%"></div>
-</div>
-</div>
-{% endfor %}
-</div>
+{% comment %}Each intervention this year beside last year (owner, 2026-10-09),
+drawn by the shared cut-out bars; apps.ssa.year_comparison.{% endcomment %}
+{% if ssa_comparison.has_any %}
+{% comment %}What the school's SSA says and what the running year still lacks
+(the brief, points 17, 18 and 31), from the shared profile engine.{% endcomment %}
+<ul class="edify-text-label space-y-1" data-school-ssa-highlights>
+  {% if ssa_comparison.most_improved %}<li><span class="edify-text-muted">Best performing intervention:</span> <strong>{{ ssa_comparison.most_improved.label }}</strong> <span class="edify-status-text" data-edify-tone="success">+{{ ssa_comparison.most_improved.change|floatformat:2 }}</span></li>{% elif ssa_comparison.strongest %}<li><span class="edify-text-muted">Strongest intervention:</span> <strong>{{ ssa_comparison.strongest.label }}</strong> {{ ssa_comparison.strongest.current|floatformat:1 }}</li>{% endif %}
+  {% if ssa_comparison.most_declined %}<li><span class="edify-text-muted">Struggling intervention:</span> <strong>{{ ssa_comparison.most_declined.label }}</strong> <span class="edify-status-text" data-edify-tone="danger">{{ ssa_comparison.most_declined.change|floatformat:2 }}</span></li>{% elif ssa_comparison.weakest %}<li><span class="edify-text-muted">Weakest intervention:</span> <strong>{{ ssa_comparison.weakest.label }}</strong> {{ ssa_comparison.weakest.current|floatformat:1 }}</li>{% endif %}
+  {% if school_now.portfolio.no_ssa %}<li><span class="edify-status-text" data-edify-tone="warning">No confirmed SSA yet in {{ school_now.fy_label }}.</span></li>{% endif %}
+  {% if school_now.portfolio.unplanned %}<li><span class="edify-status-text" data-edify-tone="warning">Nothing is planned for this school in {{ school_now.fy_label }}.</span></li>{% endif %}
+  {% if school_now.portfolio.awaiting_partner %}<li><span class="edify-status-text" data-edify-tone="warning">Waiting for a partner's date.</span></li>{% endif %}
+</ul>
+<table class="edify-record-table w-full text-[12px] border-collapse" data-school-ssa-interventions>
+  <caption class="sr-only">Each SSA intervention's score in {{ ssa_comparison.previous_label }} and {{ ssa_comparison.label }}, the change and its status</caption>
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2 text-left">Intervention</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ ssa_comparison.previous_label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">{{ ssa_comparison.label }}</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2 text-left">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in ssa_comparison.rows %}
+    <tr>
+      <th scope="row" class="px-3 py-2 text-left">{{ row.label }}</th>
+      <td class="px-3 py-2 text-right tabular-nums">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+      <td class="px-3 py-2 text-right tabular-nums"><strong>{% include "partials/profiles/_score.html" with value=row.current %}</strong></td>
+      <td class="px-3 py-2 text-right tabular-nums">{% include "partials/profiles/_change.html" %}</td>
+      <td class="px-3 py-2">{{ row.status_label }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% ssa_year_chart ssa_comparison "SSA score by intervention" bare=True %}
 {% else %}
 <p class="text-[12px] text-slate-400 font-semibold py-2">No confirmed SSA scores for this school yet.</p>
 {% endif %}
 </div>
 
 {% if ssa_progress.progress_by_fy %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
-<h3 class="text-[15px] font-semibold text-slate-800">Annual SSA Progress</h3>
-<p class="edify-text-caption text-slate-400 font-semibold">Latest confirmed assessment of each financial year.</p>
-<div class="space-y-3">
-{% for item in ssa_progress.progress_by_fy %}
-<div class="space-y-1">
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<span>FY{{ item.fy }}</span>
-<span class="font-bold text-slate-800">{% if item.avg_score is not None %}{{ item.avg_score|floatformat:1 }} / 10.0{% else %}Not measured{% endif %}</span>
-</div>
-{% if item.avg_score is not None %}
-<div class="h-4 w-full bg-slate-100 rounded-none overflow-hidden">
-<div class="h-full bg-[var(--edify-series-1)] rounded-none" style="width: {{ item.avg_score|multiply:10 }}%"></div>
-</div>
-{% endif %}
-</div>
-{% endfor %}
-</div>
-</div>
+{% ssa_progress_chart ssa_progress.progress_by_fy "Annual SSA Progress" "Latest confirmed assessment of each financial year." %}
 {% endif %}
 
 {% if ssa_progress.history %}

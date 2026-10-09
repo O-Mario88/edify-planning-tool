@@ -1116,6 +1116,8 @@ class PLAnalyticsService:
                     "label": label,
                     "code": code,
                     "score": current_score,
+                    # Last cycle's score, drawn inside this cycle's bar.
+                    "previous": previous_score,
                     "bar_pct": _ssa_bar_pct(current_score),
                     "delta": delta,
                     "band": band[0],

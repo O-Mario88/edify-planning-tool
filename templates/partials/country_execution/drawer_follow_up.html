@@ -25,7 +25,7 @@ or achievement, and does not contact the CCEO.{% endcomment %}
     <dl class="cpo-facts">
       <div><dt>Program Lead</dt><dd>{{ lead_name|default:"—" }}</dd></div>
       <div><dt>CCEO</dt><dd>{% if cceo_name %}{{ cceo_name }}{% else %}The Lead's whole team{% endif %}</dd></div>
-      {% if partner_name %}<div><dt>Partner</dt><dd>{{ partner_name }}</dd></div>{% endif %}
+      {% if partner_name %}<div><dt>Partner</dt><dd>{% partner_link partner_name partner_id %}</dd></div>{% endif %}
       <div><dt>Period</dt><dd>{{ window.label }}</dd></div>
     </dl>
     {% else %}

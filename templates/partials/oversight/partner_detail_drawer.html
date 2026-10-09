@@ -69,7 +69,7 @@ accountability record, because the CCEO is not the one who is late.
     <h3 id="partner-handover" class="text-sm font-semibold mb-2">The handover</h3>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
       <div><dt class="edify-text-caption edify-text-subtle">Partner</dt>
-        <dd>{{ item.partner_name|default:"—" }}</dd></div>
+        <dd>{% partner_link item.partner_name item.partner_id empty="—" %}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Managing CCEO</dt>
         <dd>{{ item.responsible_cceo_name|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle">Supervising PL</dt>
@@ -100,7 +100,7 @@ accountability record, because the CCEO is not the one who is late.
     </dl>
     {% else %}
     <p class="text-sm edify-text-muted">
-      {{ item.partner_name|default:"The partner" }} has not set a date yet.
+      {% partner_link item.partner_name item.partner_id empty="The partner" %} has not set a date yet.
       Until they do this assignment has no activity, and therefore no cost.
     </p>
     {% endif %}

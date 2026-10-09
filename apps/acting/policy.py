@@ -351,6 +351,11 @@ ACTING_COUNTRY_DIRECTOR = ActingRole(
             "country_budget",
             "consolidated_fund_allocation",
             "monthly_request",
+            # What the cluster scores weigh (owner brief, 2026-10-08). The
+            # Acting Country Director reads every cluster's scores through
+            # Cluster Management, which a Programme Lead already holds;
+            # changing the weights is a decision that outlasts the month.
+            "cluster_scoring",
             # People and accounts.
             "users",
             "staff_setup_queue",

@@ -46,8 +46,15 @@ def _split(csv: str) -> list[str]:
     return [part.strip() for part in csv.split(",")]
 
 
-def _card(title, subtitle, payload):
-    return {"title": title, "subtitle": subtitle or "", "chart_payload": payload}
+def _card(title, subtitle, payload, bare=False):
+    """``bare`` draws the chart without a card of its own, for a section
+    that already is one."""
+    return {
+        "title": title,
+        "subtitle": subtitle or "",
+        "chart_payload": payload,
+        "bare": bare,
+    }
 
 
 @register.inclusion_tag("components/bar_chart.html")
@@ -154,5 +161,114 @@ def team_chart(rows, name_key, keys, labels, title, subtitle=""):
                 for row in rows
             ],
             "xaxis": {"categories": labels},
+        },
+    )
+
+
+SSA_SCORE_AXIS = {"min": 0, "max": 10, "title": {"text": "SSA score (0–10)"}}
+
+
+def _year_payload(labels, previous, current, previous_label, current_label):
+    """Last year's bar under this year's on one line (the cut-out the shared
+    standard draws for two horizontal series). With nothing confirmed last
+    year there is one series: a second, empty one would say "Not measured"
+    on every row."""
+    series = [{"name": current_label, "data": current}]
+    if any(value is not None for value in previous):
+        series.insert(0, {"name": previous_label, "data": previous})
+    return {
+        "chart": {"type": "bar"},
+        "plotOptions": {"bar": {"horizontal": True}},
+        "series": series,
+        "xaxis": {"categories": labels},
+        "yaxis": SSA_SCORE_AXIS,
+    }
+
+
+@register.inclusion_tag("components/bar_chart.html")
+def ssa_year_chart(comparison, title, subtitle="", bare=False):
+    """Each SSA intervention this year beside last year
+    (`apps.ssa.year_comparison.intervention_comparison`)."""
+    comparison = comparison or {}
+    rows = list(comparison.get("rows") or [])
+    return _card(*_year_card(comparison, rows, title, subtitle), bare=bare)
+
+
+def _year_card(comparison, rows, title, subtitle):
+    return (
+        title,
+        subtitle
+        or (
+            f"{comparison.get('previous_label')} and {comparison.get('label')}"
+            if comparison.get("has_previous")
+            else comparison.get("label", "")
+        ),
+        _year_payload(
+            [row["label"] for row in rows],
+            [_number(row.get("previous")) for row in rows],
+            [_number(row.get("current")) for row in rows],
+            comparison.get("previous_label") or "Previous FY",
+            comparison.get("label") or "This FY",
+        ),
+    )
+
+
+@register.inclusion_tag("components/bar_chart.html")
+def ssa_year_rows_chart(
+    rows,
+    label_key,
+    previous_key,
+    current_key,
+    previous_label,
+    current_label,
+    title,
+    subtitle="",
+):
+    """Any SSA grouping — districts, staff, clusters — this year beside
+    last year, from rows that carry both scores."""
+    rows = list(rows or [])
+    return _card(
+        title,
+        subtitle,
+        _year_payload(
+            [str(row.get(label_key) or "Unnamed") for row in rows],
+            [_number(row.get(previous_key)) for row in rows],
+            [_number(row.get(current_key)) for row in rows],
+            previous_label,
+            current_label,
+        ),
+    )
+
+
+@register.inclusion_tag("components/bar_chart.html")
+def ssa_progress_chart(rows, title, subtitle=""):
+    """The average confirmed SSA score of each financial year, one bar a
+    year (`apps.ssa.services.get_ssa_progress_by_fy`, or a school's own
+    `progress_by_fy`)."""
+    from apps.ssa.year_comparison import fy_label
+
+    rows = list(rows or [])
+
+    def name(row):
+        label = fy_label(row.get("fy"))
+        count = row.get("school_count")
+        if count is None:
+            return label
+        return f"{label} ({count} school{'' if count == 1 else 's'})"
+
+    return _card(
+        title,
+        subtitle,
+        {
+            "chart": {"type": "bar"},
+            "plotOptions": {"bar": {"horizontal": True}},
+            "series": [
+                {
+                    "name": "Average SSA score",
+                    "data": [_number(row.get("avg_score")) for row in rows],
+                }
+            ],
+            "xaxis": {"categories": [name(row) for row in rows]},
+            "yaxis": SSA_SCORE_AXIS,
         },
     )

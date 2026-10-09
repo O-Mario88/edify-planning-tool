@@ -72,7 +72,7 @@ and without the counts and the empty state below that read as a broken control
           <div class="analytics-district-row__main">
             <span class="analytics-district-row__rank">{{ forloop.counter }}</span>
             <span>
-              <strong>{{ district.name }}</strong>
+              <strong>{% district_link district.name district.id %}</strong>
               <small># Schools {{ district.schools }} · # Planned {{ district.schools_planned }} · # Achieved {{ district.schools_achieved }} · % Achieved {{ district.schools_pct }}% · {{ district.achieved }}/{{ district.planned }} activities delivered</small>
             </span>
           </div>

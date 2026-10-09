@@ -1,0 +1,143 @@
+{% load components table_pagination %}
+{% comment %}
+Cluster profile, Interventions (owner brief, 2026-10-08: "Cluster →
+Intervention → Activity → School → ... → Outcome → SSA ... Why did SSA
+improve? ... Which schools have not benefited? ... Plan next action").
+
+One row is one delivered thing: a group training or cluster meeting with the
+schools the register says came, a visit or training at a member school, a
+loan disbursed to one. It is read from the activity, the loan and the SSA
+records themselves (apps.clusters.interventions); nothing is entered twice.
+The outcome is how the SSA area the work was aimed at moved at the schools it
+reached, on their confirmed SSA records. It is not a claim that the work
+caused it.
+
+Three views, as tabs: every intervention, the same folded by SSA area, and the
+member schools nothing reached this year, each with a Schedule door.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="interventions">
+{% filter_bar label="Interventions year" form_id="cluster-interventions-year" extra_class="flex flex-wrap items-end gap-3" %}
+<input type="hidden" name="tab" value="interventions">
+<input type="hidden" name="view" value="{{ interventions_view }}">
+<label class="block">
+<span class="edify-filter-label">Fiscal year</span>
+<select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
+{% for year in profile_fy_options %}<option value="{{ year }}"{% if year == profile_fy %} selected{% endif %}>FY {{ year }}</option>{% endfor %}
+</select>
+</label>
+{% endfilter_bar %}
+
+<nav class="oversight-entity-tabs" aria-label="Intervention views" data-intervention-views>
+<a class="oversight-entity-tabs__link{% if interventions_view == 'all' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=interventions&amp;fy={{ profile_fy }}&amp;view=all"{% if interventions_view == 'all' %} aria-current="page"{% endif %}><span>All Interventions</span><span class="oversight-entity-tabs__count">{{ interventions.all_rows|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if interventions_view == 'areas' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=interventions&amp;fy={{ profile_fy }}&amp;view=areas"{% if interventions_view == 'areas' %} aria-current="page"{% endif %}><span>By SSA Area</span><span class="oversight-entity-tabs__count">{{ interventions.areas|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if interventions_view == 'unreached' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=interventions&amp;fy={{ profile_fy }}&amp;view=unreached"{% if interventions_view == 'unreached' %} aria-current="page"{% endif %}><span>Schools Not Reached</span><span class="oversight-entity-tabs__count">{{ interventions.unreached|length }}</span></a>
+</nav>
+
+{% if interventions_view == "areas" %}
+{% data_table name="cluster-intervention-areas" %}
+{% slot title %}What Was Done on Each SSA Area, FY {{ interventions.fy }}{% endslot %}
+{% slot summary %}SSA movement FY {{ interventions.ssa_previous_fy }} to FY {{ interventions.ssa_fy }}{% endslot %}
+{% slot caption %}Each SSA area with the interventions {{ cluster.name }} delivered on it in FY {{ interventions.fy }}, the schools they reached, and how those schools' confirmed SSA on the area moved from FY {{ interventions.ssa_previous_fy }} to FY {{ interventions.ssa_fy }}.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No SSA areas to show." compact="true" %}{% endslot %}
+{% slot footer %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-intervention-method>The schools counted are those an intervention on the area reached and that have a confirmed SSA in both years. This shows what happened at the schools that took part; it does not show that the intervention caused it.</p>{% endslot %}
+{% if interventions.areas %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">SSA Area</th>
+<th scope="col" class="px-3 py-2 text-right">Interventions</th>
+<th scope="col" class="px-3 py-2 text-right">Schools Reached</th>
+<th scope="col" class="px-3 py-2 text-right">Schools Compared</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ interventions.ssa_previous_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">FY {{ interventions.ssa_fy }}</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2 text-right">Rose</th>
+<th scope="col" class="px-3 py-2 text-right">Fell</th>
+</tr>
+</thead>
+<tbody>
+{% for area in interventions.areas %}
+<tr data-intervention-area="{{ area.key }}">
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{{ area.label }}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Interventions">{% if area.interventions %}<a href="/clusters/{{ cluster.id }}?tab=interventions&amp;fy={{ profile_fy }}&amp;view=all&amp;area={{ area.key }}" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.interventions }} intervention{{ area.interventions|pluralize }} on {{ area.label }}">{{ area.interventions }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Schools Reached">{{ area.reached_count }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Schools Compared">{{ area.compared }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ interventions.ssa_previous_fy }}">{% if area.before is None %}—{% else %}{{ area.before|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ interventions.ssa_fy }}">{% if area.after is None %}—{% else %}{{ area.after|floatformat:1 }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if area.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{% if area.change > 0 %}success{% elif area.change < 0 %}danger{% else %}neutral{% endif %}">{% if area.change > 0 %}+{% endif %}{{ area.change|floatformat:1 }}</span>{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Rose">{{ area.better }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Fell">{{ area.worse }}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+
+{% elif interventions_view == "unreached" %}
+{% paginate interventions.unreached "unreached_page" as unreached_pager %}
+{% data_table name="cluster-interventions-unreached" %}
+{% slot title %}Schools Not Reached in FY {{ interventions.fy }}{% endslot %}
+{% slot summary %}{{ interventions.reached_count }} of {{ interventions.school_count }} school{{ interventions.school_count|pluralize }} reached{% endslot %}
+{% slot caption %}Schools of {{ cluster.name }} that attended no meeting or group training, received no visit or training of their own and had no loan disbursed in FY {{ interventions.fy }}.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="Every school in this cluster was reached this year." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=unreached_pager param="unreached_page" %}{% endslot %}
+{% if interventions.unreached %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+{% if can_schedule %}<th scope="col" class="px-3 py-2 text-right">Actions</th>{% endif %}
+</tr>
+</thead>
+<tbody>
+{% for row in unreached_pager.rows %}
+<tr data-unreached-school="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+{% if can_schedule %}<td class="px-3 py-2 text-right" data-label="Actions"><button type="button" class="btn btn-secondary h-8" hx-get="/planning/schedule-modal?school_id={{ row.code }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule support for {{ row.name }}">Schedule</button></td>{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+
+{% else %}
+{% paginate interventions.rows "interventions_page" as interventions_pager %}
+{% data_table name="cluster-interventions" %}
+{% slot title %}{% if interventions.area %}Interventions on {{ interventions.area_label }}, FY {{ interventions.fy }}{% else %}Interventions Delivered, FY {{ interventions.fy }}{% endif %}{% endslot %}
+{% slot summary %}{% if interventions.area %}<a href="/clusters/{{ cluster.id }}?tab=interventions&amp;fy={{ profile_fy }}&amp;view=all" class="edify-primary-text font-semibold hover:underline" data-interventions-all>All SSA areas</a> · {% endif %}{{ interventions.rows|length }} delivered · {{ interventions.reached_count }} of {{ interventions.school_count }} school{{ interventions.school_count|pluralize }} reached{% endslot %}
+{% slot caption %}Interventions delivered to {{ cluster.name }} and its schools in FY {{ interventions.fy }}: the date, the kind of intervention and its name, the SSA area it was aimed at, the school or the schools reached, who delivered it, the evidence files on it, and how that SSA area moved at the schools it reached.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No intervention was delivered in this year." hint="A meeting, training or visit appears here once it is completed." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=interventions_pager param="interventions_page" %}<p class="px-4 py-3 edify-text-caption text-slate-500" data-intervention-method>SSA Outcome is how the area the work was aimed at moved, FY {{ interventions.ssa_previous_fy }} to FY {{ interventions.ssa_fy }}, at the schools it reached, on their confirmed SSA records. It is what happened at those schools, not a measure of what the work caused.</p>{% endslot %}
+{% if interventions.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Date</th>
+<th scope="col" class="px-3 py-2">Intervention</th>
+<th scope="col" class="px-3 py-2">Name</th>
+<th scope="col" class="px-3 py-2">SSA Area</th>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School / Cluster</th>
+<th scope="col" class="px-3 py-2">Delivered By</th>
+<th scope="col" class="px-3 py-2 text-right">Evidence</th>
+<th scope="col" class="px-3 py-2">SSA Outcome</th>
+</tr>
+</thead>
+<tbody>
+{% for row in interventions_pager.rows %}
+<tr data-intervention="{{ row.key }}">
+<td class="px-3 py-2 tabular-nums" data-label="Date">{% if row.held_on %}{{ row.held_on|date:"j M Y" }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2" data-label="Intervention">{{ row.kind }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% if row.activity_id %}<a href="/activities/{{ row.activity_id }}" class="font-semibold text-slate-800 hover:underline">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</th>
+<td class="px-3 py-2" data-label="SSA Area">{{ row.area_label|default:"—" }}</td>
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.school_code|default:"—" }}</td>
+<td class="px-3 py-2" data-label="School / Cluster">{% if row.school_pk %}{% school_link row.school_name row.school_pk %}{% else %}{{ row.reach }}{% endif %}</td>
+<td class="px-3 py-2" data-label="Delivered By">{{ row.owner|default:"—" }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Evidence">{% if row.evidence is None %}—{% else %}{{ row.evidence }} file{{ row.evidence|pluralize }}{% endif %}</td>
+<td class="px-3 py-2" data-label="SSA Outcome"><span class="edify-status-text" data-edify-tone="{{ row.outcome_tone }}">{{ row.outcome }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+{% endif %}
+</div>

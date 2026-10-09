@@ -48,7 +48,7 @@ class BarChartSystemContractTest(SimpleTestCase):
         self.assertIn("borderRadius: 4", base)
         self.assertIn("borderRadiusApplication: 'end'", base)
         self.assertIn("backgroundBarOpacity: 0", base)
-        self.assertIn("stroke: { curve: 'straight', width: 2", base)
+        self.assertIn("stroke: { curve: 'monotoneCubic', width: 2", base)
         self.assertIn("size: 4", base)
         self.assertIn("strokeWidth: 2", base)
 
@@ -56,7 +56,7 @@ class BarChartSystemContractTest(SimpleTestCase):
         self.assertIn("--edify-chart-blue: var(--brand-primary);", tokens)
         self.assertIn("--edify-chart-tooltip: #111827;", tokens)
 
-    def test_line_charts_use_direct_segments_instead_of_smoothed_curves(self):
+    def test_line_charts_are_waves_that_never_dip_below_their_points(self):
         line_charts = (
             "templates/partials/analytics/cd/performance_vs_target.html",
             "templates/partials/analytics/performance_overview.html",
@@ -73,11 +73,15 @@ class BarChartSystemContractTest(SimpleTestCase):
         )
         for relative_path in line_charts:
             source = _read(relative_path)
-            self.assertNotIn(
-                "curve: 'smooth'",
-                source,
-                f"{relative_path} should use the reference's direct line segments",
-            )
+            # Owner, 2026-10-09: "the line should be wave like". The monotone
+            # curve, never the plain spline, which swings below zero between
+            # a zero and a rise; and no straight segments (reverses the
+            # earlier reference).
+            for curve in ("curve: 'smooth'", "curve: 'straight'"):
+                self.assertNotIn(curve, source, relative_path)
+        standard = _read("static/js/chart-standard.js")
+        self.assertIn("curve: 'monotoneCubic'", standard)
+        self.assertNotIn("curve: 'straight'", standard)
 
     def test_comparison_charts_use_the_shared_ordered_palette(self):
         for relative_path in self.COMPARISON_CHARTS:

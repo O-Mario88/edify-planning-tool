@@ -1040,35 +1040,51 @@ def districts_list_view(request):
             "action": "/districts",
         },
     }
+    from apps.core.permissions import RolePermissionService
+
+    context["may_open_country_profile"] = RolePermissionService.can_view_page(
+        request.user, "country_planning_oversight"
+    )
     return render(request, "pages/districts/index.html", context)
 
 
 @require_page_permission("planning")
 def district_detail_view(request, district_id):
-    """District detail — schools, SSA, and activities."""
-    district = get_object_or_404(District, id=district_id)
-    schools = active_schools().filter(district=district).order_by("name")
-    from apps.ssa.services import get_ssa_progress_by_fy
-
-    district_progress = get_ssa_progress_by_fy(schools)
-
-    context = {
-        "district": district,
-        "schools": schools,
-        "total_schools": schools.count(),
-        "district_progress": district_progress,
-    }
-    # Planned and completed work with its actions (owner, 2026-09-28), as far
-    # as the reader's scope reaches.
+    """The District profile: the shared profile sections over the district's
+    schools (apps.analytics.profile_intelligence; owner's brief, 2026-10-09)."""
     from apps.activities import profile_activities as profile_acts
+    from apps.analytics import profile_intelligence
+    from apps.frontend.views.profile_views import profile_context
 
-    context["profile_activities"] = profile_acts.profile_activities(
+    district = get_object_or_404(District, id=district_id)
+    scope = profile_intelligence.district_scope(district)
+    pi = profile_context(
         request,
-        profile_acts.visible_to(profile_acts.for_district(district.id), request.user),
-        param="district_acts",
-        subject="auto",
+        scope,
+        f"/districts/{district.id}",
+        # Planned and completed work with its actions (owner, 2026-09-28),
+        # as far as the reader's scope reaches.
+        activities=profile_acts.visible_to(
+            profile_acts.for_district(district.id), request.user
+        ),
+        activities_param="district_acts",
+        activities_caption=(
+            "Visits, trainings and cluster sessions in this district that "
+            "your role oversees."
+        ),
     )
-    return render(request, "pages/districts/detail.html", context)
+    return render(
+        request,
+        "pages/profiles/profile.html",
+        {
+            "pi": pi,
+            "district": district,
+            "profile_title": scope.name,
+            "profile_lead": district.region.name if district.region_id else "",
+            "back_href": "/districts",
+            "back_label": "Districts",
+        },
+    )
 
 
 def _reports_pct_class(pct):

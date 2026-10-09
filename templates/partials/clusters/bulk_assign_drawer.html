@@ -156,7 +156,7 @@ class="btn btn-primary h-8"
 {% else %}
 <div class="edify-note" data-tone="info" role="status">
 <p class="edify-note__title">All schools are clustered</p>
-<p class="edify-note__body">Every candidate school in {{ cluster.district.name }} district already belongs to a cluster.</p>
+<p class="edify-note__body">Every candidate school in {% district_link cluster.district.name cluster.district.id %} district already belongs to a cluster.</p>
 </div>
 {% endif %}
 </div>

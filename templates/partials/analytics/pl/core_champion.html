@@ -18,7 +18,7 @@
          cfg.chart.type = 'line';
          cfg.chart.height = 210;
          cfg.colors = window.EdifyChartSystem.comparisonSeries.slice(0, 2);
-         cfg.stroke = { width: 2.25, curve: 'straight', lineCap: 'round' };
+         cfg.stroke = { width: 2.25, curve: 'monotoneCubic', lineCap: 'round' };
          cfg.markers = { size: 4, strokeWidth: 2, hover: { size: 6 } };
          cfg.dataLabels = { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Number(v).toFixed(1) };
          cfg.labels = labels;

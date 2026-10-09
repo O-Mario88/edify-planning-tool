@@ -233,7 +233,7 @@ class EveryProfileShowsTheSection(ProfileActivitiesFixture):
             (f"/schools/{self.school.school_id}", "school_acts"),
             (f"/clusters/{self.cluster.id}", "cluster_acts"),
             (f"/partners/{self.partner.id}", "partner_acts"),
-            (f"/districts/{self.district.id}", "district_acts"),
+            (f"/districts/{self.district.id}?tab=activities", "district_acts"),
         ):
             with self.subTest(url=url):
                 response = self.client.get(url)

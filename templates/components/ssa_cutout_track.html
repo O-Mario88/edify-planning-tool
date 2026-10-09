@@ -1,0 +1,8 @@
+{% load frontend_filters %}{% comment %}
+One row's bars in the cut-out form (static/js/chart-standard.js `cutOut`;
+owner's reference, 2026-10-09), for a row a template writes itself — a link, a
+ranked list — where the chart card does not fit: last year's SSA score in the
+full colour and this year's in its tint, both from zero on one line, the
+shorter on top. With no score last year the one bar wears the full colour.
+`current` and `previous` are scores out of 10, or None when not measured.
+{% endcomment %}<span class="edify-cutout__track{% if extra %} {{ extra }}{% endif %}" data-ssa-years="{% if previous != None %}2{% else %}1{% endif %}">{% if previous == None %}{% if current != None %}<span class="edify-cutout__bar edify-cutout__bar--first" style="width: {{ current|multiply:10 }}%"></span>{% endif %}{% elif current == None %}<span class="edify-cutout__bar edify-cutout__bar--first" style="width: {{ previous|multiply:10 }}%"></span>{% elif previous > current %}<span class="edify-cutout__bar edify-cutout__bar--first" style="width: {{ previous|multiply:10 }}%"></span><span class="edify-cutout__bar edify-cutout__bar--second" style="width: {{ current|multiply:10 }}%"></span>{% else %}<span class="edify-cutout__bar edify-cutout__bar--second" style="width: {{ current|multiply:10 }}%"></span><span class="edify-cutout__bar edify-cutout__bar--first" style="width: {{ previous|multiply:10 }}%"></span>{% endif %}</span>

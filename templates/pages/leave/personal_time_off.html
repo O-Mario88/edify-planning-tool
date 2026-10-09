@@ -320,7 +320,7 @@
         <div class="pto-heatmap">
           {% for row in availability_preview %}
           <div class="pto-heatmap__row">
-            <div><strong>{{ row.staff_name }}</strong><span>{{ row.role }}</span></div>
+            <div><strong>{% staff_link row.staff_name row.staff_id %}</strong><span>{{ row.role }}</span></div>
             <div class="pto-heatmap__weeks">
               {% for wk in row.weeks %}
               <span class="is-{{ wk.status|lower|cut:' ' }}" aria-label="Week starting {{ wk.start }}: {{ wk.status }}{% if wk.status != 'Blocked' %}, {{ wk.act_count }} activities{% endif %}">
@@ -360,7 +360,7 @@
         <tbody>
           {% for tl in tracker_leaves_pager.rows %}
           <tr>
-            <td><strong>{{ tl.staff_name }}</strong><small>{{ tl.supervisor_name }}</small></td>
+            <td><strong>{% staff_link tl.staff_name tl.staff_id %}</strong><small>{{ tl.supervisor_name }}</small></td>
             <td>{{ tl.role }}</td>
             <td>{{ tl.type_label }}</td>
             <td><span class="pto-nowrap">{{ tl.start_date }} – {{ tl.end_date }}</span></td>

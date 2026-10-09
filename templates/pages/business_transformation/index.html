@@ -54,7 +54,7 @@
           <tr>
             <td class="tabular-nums" data-label="School ID">{{ case.school.school_id }}</td>
             <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{{ case.school.name }}</a></td>
-            <td data-label="Location">{{ case.school.district.name|default:"District not set" }} · {{ case.school.region.name|default:"Region not set" }}</td>
+            <td data-label="Location">{% district_link case.school.district.name case.school.district.id empty="District not set" %} · {{ case.school.region.name|default:"Region not set" }}</td>
             <td data-label="Recommendation">
               {% for recommendation in case.recommendations.all|slice:":2" %}<span class="block text-xs">{{ recommendation.get_kind_display }}</span>{% empty %}<span class="text-slate-500">No open recommendation</span>{% endfor %}
             </td>

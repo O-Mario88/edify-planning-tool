@@ -94,7 +94,7 @@ whole, and nothing about the settled page changes. Browsers that do not know
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20261008heads2">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261002tabs15">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20261009cutout1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20261002tokens2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20261005bar2">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20261002tokens2">
@@ -188,7 +188,7 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/chart-standard.js' %}?v=20261008late1"></script>
+    <script src="{% static 'js/chart-standard.js' %}?v=20261009wave1"></script>
     {% comment %}Whatever floats opens in the top layer, dropdowns down from
     their button (owner, 2026-09-27). Deferred, and ahead of Alpine and the
     deferred enhancers that use it, so it runs before all of them.{% endcomment %}
@@ -496,7 +496,7 @@ behave as before.
       return S.formBase({
         chart: { type: 'area', toolbar: { show: false }, fontFamily: 'inherit' },
         colors: S.singleSeries.slice(),
-        stroke: { curve: 'smooth', width: 2, lineCap: 'round' },
+        stroke: { curve: 'monotoneCubic', width: 2, lineCap: 'round' },
         fill: {
           type: 'gradient',
           gradient: { shadeIntensity: 0, opacityFrom: 0.18, opacityTo: 0.02, stops: [0, 100] },
@@ -644,7 +644,7 @@ behave as before.
       return S.formBase({
         chart: { type: 'line', toolbar: { show: false }, fontFamily: 'inherit' },
         colors: S.mixedSeries.slice(),
-        stroke: { width: widths, curve: 'straight', lineCap: 'round' },
+        stroke: { width: widths, curve: 'monotoneCubic', lineCap: 'round' },
         markers: { size: markers, strokeWidth: 2, hover: { size: 6 } },
         /* Month names never trim. The global `labels.trim` exists for long
            category names; on a twelve-month axis it measured one three-letter
@@ -736,7 +736,7 @@ behave as before.
       return S.formBase({
         chart: { type: 'line', toolbar: { show: false }, fontFamily: 'inherit' },
         colors: (count > 1 ? S.comparisonSeries : S.singleSeries).slice(0, Math.max(1, count)),
-        stroke: { width: 2.25, curve: 'straight', lineCap: 'round' },
+        stroke: { width: 2.25, curve: 'monotoneCubic', lineCap: 'round' },
         markers: { size: 4, strokeWidth: 2, hover: { size: 6 } },
         legend: { show: count > 1, position: 'top', horizontalAlign: 'left', fontSize: '12px',
                   fontWeight: 600, itemMargin: { vertical: 3 },
@@ -822,7 +822,7 @@ behave as before.
        destroy(); the render itself completes asynchronously, as it always did. */
     renderDetached: function (el, options) {
       if (!el) { return null; }
-      if (typeof ApexCharts !== 'function') { return window.EdifyBarStandard.late(this, el, options); }
+      if (typeof ApexCharts !== 'function' && window.EdifyBarStandard.needsLibrary(options)) { return window.EdifyBarStandard.late(this, el, options); }
       if (!options._edifyStandard) {
         var standard = window.EdifyBarStandard.render(el, options, function (slot, normalized) {
           return window.EdifyChartSystem.renderDetached(slot, normalized);
@@ -1129,7 +1129,7 @@ behave as before.
         },
       },
     },
-    stroke: { curve: 'straight', width: 2, lineCap: 'round' },
+    stroke: { curve: 'monotoneCubic', width: 2, lineCap: 'round' },
     markers: {
       size: 4,
       strokeWidth: 2,

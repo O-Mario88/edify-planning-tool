@@ -34,7 +34,7 @@
             <td class="px-5 py-3.5 max-xl:px-0" data-record-title>
               <a href="/ia/partner-evidence/{{ row.a.id }}/" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
             </td>
-            <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Partner">{{ row.partner_name }}{% if row.partner_officer %}<p class="edify-text-caption text-slate-400 mt-0.5">{{ row.partner_officer }}</p>{% endif %}</td>
+            <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Partner">{% partner_link row.partner_name row.partner_id %}{% if row.partner_officer %}<p class="edify-text-caption text-slate-400 mt-0.5">{{ row.partner_officer }}</p>{% endif %}</td>
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Activity">{{ row.a.get_activity_type_display }}</td>
             <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0" data-label="Submitted">{% if row.submitted %}{{ row.submitted|date:"d M Y" }}{% if row.age_days %} <span class="edify-text-caption {% if row.age_days > 5 %}text-rose-600{% else %}text-slate-400{% endif %}">({{ row.age_days }}d)</span>{% endif %}{% else %}&mdash;{% endif %}</td>
             <td class="px-5 py-3.5 max-xl:px-0" data-label="Evidence"><span class="edify-status-text" data-edify-tone="{% if row.evidence_complete %}success{% else %}warning{% endif %}">{{ row.evidence_label }}</span></td>

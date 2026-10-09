@@ -271,7 +271,7 @@ class DesignSystemContractTest(SimpleTestCase):
         profile_templates = (
             "templates/pages/schools/detail.html",
             "templates/pages/clusters/detail.html",
-            "templates/pages/districts/detail.html",
+            "templates/pages/profiles/profile.html",
             "templates/pages/projects/detail.html",
             "templates/pages/partners/detail.html",
             "templates/pages/staff/detail.html",

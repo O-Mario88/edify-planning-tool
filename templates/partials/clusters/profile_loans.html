@@ -1,0 +1,50 @@
+{% load components table_pagination frontend_filters %}
+{% comment %}
+Cluster profile, Loans (owner brief, 2026-10-08: "Loan activity should become
+one of the cluster's transformation indicators ... Schools receiving loans,
+Total loans, Loan value, Active, Repaid, Defaulted, Purpose, MFI").
+
+The loan register's own records for this cluster's schools, read through the
+register's scope: a reader sees here exactly the loans the register would
+show them. A cancelled loan is not listed. A row opens the loan's record.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="loans">
+{% paginate loans.rows "loans_page" as loans_pager %}
+{% data_table name="cluster-loans" %}
+{% slot title %}School Loans{% endslot %}
+{% slot summary %}{{ loans.loan_count }} loan{{ loans.loan_count|pluralize }} at {{ loans.school_count }} school{{ loans.school_count|pluralize }} · UGX {{ loans.disbursed|ugx_amount }} disbursed to {{ loans.funded_school_count }} school{{ loans.funded_school_count|pluralize }}{% for label, count in loans.status_counts %} · {{ count }} {{ label }}{% endfor %}{% endslot %}
+{% slot caption %}Loans to the schools of {{ cluster.name }}: School ID, school, lender, purpose, amount approved and disbursed in Uganda shillings, the disbursement date and the loan's status.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No loan is recorded for a school in this cluster." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=loans_pager param="loans_page" %}{% endslot %}
+{% if loans.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2">Lender</th>
+<th scope="col" class="px-3 py-2">Purpose</th>
+<th scope="col" class="px-3 py-2 text-right">Approved (UGX)</th>
+<th scope="col" class="px-3 py-2 text-right">Disbursed (UGX)</th>
+<th scope="col" class="px-3 py-2">Disbursed On</th>
+<th scope="col" class="px-3 py-2">Status</th>
+<th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Record</span></th>
+</tr>
+</thead>
+<tbody>
+{% for row in loans_pager.rows %}
+<tr data-loan="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.school_pk %}</th>
+<td class="px-3 py-2" data-label="Lender">{{ row.lender|default:"—" }}</td>
+<td class="px-3 py-2" data-label="Purpose">{{ row.purpose|default:"—" }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Approved (UGX)">{% if row.approved is None %}—{% else %}{{ row.approved|ugx_amount }}{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Disbursed (UGX)">{% if row.disbursed is None %}—{% else %}{{ row.disbursed|ugx_amount }}{% endif %}</td>
+<td class="px-3 py-2 tabular-nums" data-label="Disbursed On">{% if row.disbursed_on %}{{ row.disbursed_on|date:"j M Y" }}{% else %}—{% endif %}</td>
+<td class="px-3 py-2" data-label="Status">{% include "components/badge.html" with tone=row.tone label=row.status_label %}</td>
+<td class="px-3 py-2 text-right" data-label="Record"><button type="button" class="btn btn-ghost h-8" hx-get="/loans/{{ row.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the loan record for {{ row.name }}">Open</button></td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+</div>

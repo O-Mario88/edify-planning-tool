@@ -98,7 +98,7 @@ test('trend reference uses a zero baseline without fabricating initial or missin
  const o=options(panels(input)[0]);
  assert.equal(o.chart.type,'area');assert.equal(o.yaxis.min,0);
  assert.deepEqual(o.series[0].data,[5,null,12]);
- assert.equal(o.stroke.curve,'straight');assert.equal(o.markers.size,3);
+ assert.equal(o.stroke.curve,'monotoneCubic');assert.equal(o.yaxis.min,0);assert.equal(o.xaxis.labels.hideOverlappingLabels,false);assert.equal(o.markers.size,3);
  assert.equal(o.dataLabels.enabled,false);assert.equal(o.grid.xaxis.lines.show,true);
 });
 test('count axes never print fractional ticks',()=>{
@@ -155,4 +155,66 @@ test('a chart asked for before the library has run is drawn once it has', () => 
     globalThis.document = before.document;
     if (before.ApexCharts === undefined) delete globalThis.ApexCharts; else globalThis.ApexCharts = before.ApexCharts;
   }
+});
+// Owner, 2026-10-09, with a reference chart: "use the graph format (Horizontal
+// Cut out bar graph) above for all horizontal bar graphs".
+test('a horizontal chart of one or two series is cut-out bars; anything else keeps the library', () => {
+  const {cutsOut, cutOutScale, needsLibrary} = require('../../static/js/chart-standard.js');
+  const years = {chart: {type: 'bar'}, plotOptions: {bar: {horizontal: true}},
+    series: [{name: 'FY 2024/25', data: [4.9, 5]}, {name: 'FY 2025/26', data: [5.9, 4.2]}],
+    xaxis: {categories: ['Leadership', 'Enrolment']}, yaxis: {min: 0, max: 10, title: {text: 'SSA score (0–10)'}}};
+  const panel = panels(years)[0];
+  assert.equal(cutsOut(panel), true);
+  // The scale is the axis the chart names, in five steps.
+  assert.deepEqual(cutOutScale(panel), {max: 10, step: 2});
+  // No library on the page is no reason to leave the card empty.
+  assert.equal(needsLibrary(years), false);
+  // With no scale named, a round one at or above the longest bar.
+  assert.deepEqual(cutOutScale({series: [{data: [37.7, 14.4]}], axis: {}}), {max: 40, step: 10});
+  assert.deepEqual(cutOutScale({series: [{data: [83]}], axis: {}}), {max: 100, step: 25});
+
+  // Vertical bars, three series and a value below zero are not this form.
+  assert.equal(cutsOut(panels({...years, plotOptions: {}})[0]), false);
+  const three = {...years, series: [...years.series, {name: 'Target', data: [7, 7]}]};
+  assert.equal(cutsOut(panels(three)[0]), false);
+  assert.equal(needsLibrary(three), true);
+  const signed = {...years, series: [{name: 'Change', data: [1, -0.8]}]};
+  assert.equal(cutsOut(panels(signed)[0]), false);
+  // Nothing measured draws the "no data" line, which needs no library either.
+  const empty = {...years, series: [{name: 'FY 2025/26', data: [null, null]}]};
+  assert.equal(cutsOut(panels(empty)[0]), false);
+  assert.equal(needsLibrary(empty), false);
+  // A chart a page built for the library itself still waits for it.
+  assert.equal(needsLibrary({...years, _edifyStandard: true}), true);
+});
+// Owner, 2026-10-09: "fix all the line graph with starting point 0 and fix
+// the labels the line should be wave like".
+test('a trend keeps every label: long names break between words, each edge has room, one long word tilts', () => {
+  const names = ['Christlike Behaviour', 'Exposure to the Word of God', 'Financial Health', 'Leadership',
+    'Government Requirements', 'Learning Environment', "Teacher's Environment", 'Enrolment'];
+  const panel = panels({chart: {type: 'line'}, series: [{name: 'FY2026', data: [5, 6, 5, 6, 5, 6, 5, 6]}], xaxis: {categories: names}})[0];
+  const wide = options(panel, 1100);
+  assert.equal(wide.xaxis.labels.hideOverlappingLabels, false);
+  // 27 letters do not fit an eighth of 1100px: the name is two lines, level.
+  assert.deepEqual(wide.xaxis.categories[1], ['Exposure to the', 'Word of God']);
+  assert.equal(wide.xaxis.categories[3], 'Leadership');
+  assert.equal(wide.xaxis.labels.rotateAlways, false);
+  // The card grows by the extra line, so the plot keeps its height.
+  assert.equal(wide.chart.height, 220 + 14);
+  // Half of the first and of the last label fits inside the card.
+  assert.ok(wide.grid.padding.left >= 40 && wide.grid.padding.right >= 35);
+  // The panel's own names are untouched: the data table prints them whole.
+  assert.equal(panel.categories[1], 'Exposure to the Word of God');
+
+  const months = panels({chart: {type: 'line'}, series: [{name: 'Visits', data: [0, 4, 9]}], labels: ['Oct', 'Nov', 'Dec']})[0];
+  const level = options(months, 700);
+  assert.deepEqual(level.xaxis.categories, ['Oct', 'Nov', 'Dec']);
+  assert.equal(level.chart.height, 220);
+  // A single word wider than its share cannot break: those labels tilt.
+  const long = panels({chart: {type: 'line'}, series: [{name: 'Visits', data: Array(12).fill(1)}], labels: Array(12).fill('September')})[0];
+  assert.equal(options(long, 360).xaxis.labels.rotateAlways, true);
+  // Bars are untouched: their labels sit under a band, not on its edge.
+  const bars = options(panels({chart: {type: 'bar'}, series: [{name: 'Visits', data: [1, 2]}], labels: ['Oct', 'Nov']})[0], 700);
+  assert.equal(bars.grid.padding.left, 4);
+  assert.equal(bars.xaxis.labels.hideOverlappingLabels, true);
 });

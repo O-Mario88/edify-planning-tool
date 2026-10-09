@@ -76,7 +76,7 @@ changes the school's district, sub-county, parish or village.
           :required="actionType === 'new'"
           class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]">
       </div>
-      <p class="edify-text-caption text-slate-500">A new cluster is created in {{ school.district.name|default:"the school's district" }}, covering {{ school.sub_county.name|default:"the district" }}.</p>
+      <p class="edify-text-caption text-slate-500">A new cluster is created in {% district_link school.district.name school.district.id empty="the school's district" %}, covering {{ school.sub_county.name|default:"the district" }}.</p>
     </div>
 
     <div x-show="needsReason" x-cloak class="space-y-1">

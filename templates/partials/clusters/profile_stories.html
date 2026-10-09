@@ -1,0 +1,49 @@
+{% load components table_pagination %}
+{% comment %}
+Cluster profile, Stories (owner brief, 2026-10-08: "Most Significant Change
+Story ... Don't let MSCS become purely anecdotal storytelling").
+
+The change stories staff filed against this cluster or one of its schools
+(My Targets), with where each stands with its reviewer. Only an approved story
+counts as evidence, so the summary keeps approved apart from those waiting.
+A draft is its author's own and is not listed. A reviewer opens the story's
+record from its title.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="stories">
+{% paginate stories.rows "stories_page" as stories_pager %}
+{% data_table name="cluster-stories" %}
+{% slot title %}Most Significant Change Stories{% endslot %}
+{% slot summary %}{{ stories.approved }} approved · {{ stories.waiting }} with a reviewer · {{ stories.story_count }} in all{% endslot %}
+{% slot caption %}Change stories about {{ cluster.name }} and its schools: the story's date and title, the school it is about, who wrote it, the SSA area the reviewer tagged, whether evidence is attached and where it stands.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="No change story has been submitted for this cluster or its schools." hint="Staff submit a story from My Targets; it appears here once submitted." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=stories_pager param="stories_page" %}{% endslot %}
+{% if stories.rows %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Date</th>
+<th scope="col" class="px-3 py-2">Story</th>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2">Written By</th>
+<th scope="col" class="px-3 py-2">SSA Area</th>
+<th scope="col" class="px-3 py-2">Evidence</th>
+<th scope="col" class="px-3 py-2">Status</th>
+</tr>
+</thead>
+<tbody>
+{% for row in stories_pager.rows %}
+<tr data-story="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="Date">{{ row.date|date:"j M Y" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% if can_review_stories %}<button type="button" class="font-semibold text-slate-800 hover:underline text-left" hx-get="/ia/stories/{{ row.id }}/" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the story {{ row.title }}">{{ row.title }}</button>{% else %}{{ row.title }}{% endif %}</th>
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<td class="px-3 py-2" data-label="School Name">{% if row.school_pk %}{% school_link row.school row.school_pk %}{% else %}The cluster{% endif %}</td>
+<td class="px-3 py-2" data-label="Written By">{{ row.author|default:"—" }}</td>
+<td class="px-3 py-2" data-label="SSA Area">{{ row.area|default:"Not tagged" }}</td>
+<td class="px-3 py-2" data-label="Evidence">{% if row.has_evidence %}Attached{% else %}None{% endif %}</td>
+<td class="px-3 py-2" data-label="Status">{% include "components/badge.html" with tone=row.tone label=row.status_label %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+</div>
