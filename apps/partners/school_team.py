@@ -12,7 +12,10 @@ takes the member's name, and the scheduling drawer offers the member first,
 so the record of who went (``Activity.delivery_contact_name``) follows the
 split without anyone retyping it.
 
-The organisation makes the split itself; the Admin may make it for it.
+The organisation's Partner Admin makes the split and changes it (owner,
+2026-10-09: "Partner admin can re-assign the school and activities to the
+team members"); the Admin may make it for it. A member's own Field Officer
+login does not (apps.partners.member_logins.leads_team).
 """
 
 from __future__ import annotations
@@ -29,15 +32,11 @@ from .models import Partner, PartnerAssignment, PartnerMember, PartnerSchoolMemb
 
 
 def may_split_schools(principal, partner) -> bool:
-    """The organisation's own login, or the Admin."""
-    from apps.core.navigation import get_user_role_slug
-    from apps.core.scoping import resolve_user_scope
+    """Whoever leads the organisation's team: its Partner Admin, or the
+    Admin."""
+    from .member_logins import leads_team
 
-    if getattr(principal, "is_superuser", False):
-        return True
-    if get_user_role_slug(principal) == "ADMIN":
-        return True
-    return partner.id in (resolve_user_scope(principal).partner_ids or [])
+    return leads_team(principal, partner)
 
 
 def held_schools(partner) -> list:
@@ -91,9 +90,11 @@ def member_for(partner, school_id) -> str:
     return row.member.name if row else ""
 
 
-def _name_open_work(partner, school_ids, name: str) -> int:
+def _name_open_work(partner, school_ids, name: str, was=("",)) -> int:
     """Put the member's name on this organisation's unfinished work at these
-    schools that names nobody yet. A name already chosen is left alone."""
+    schools that names nobody yet, or names the member the school is moving
+    from (``was``). A name chosen for one activity on purpose is left alone,
+    and finished work keeps the name it was delivered under."""
     from apps.activities.models import Activity
 
     if not school_ids:
@@ -103,7 +104,7 @@ def _name_open_work(partner, school_ids, name: str) -> int:
             deleted_at__isnull=True,
             assigned_partner_id=partner.id,
             school_id__in=list(school_ids),
-            delivery_contact_name="",
+            delivery_contact_name__in=list(was),
         )
         .exclude(status__in=COMPLETED_WORK_STATUSES)
         .exclude(status__in=NOT_IN_PLAN_ACTIVITY_STATUSES)
@@ -126,8 +127,8 @@ def set_member_schools(partner_id: str, member_id: str, school_ids, principal) -
         raise NotFoundError("Partner organisation not found.")
     if not may_split_schools(principal, partner):
         raise Forbidden(
-            "Only the organisation itself or an Admin assigns its schools to "
-            "its team members."
+            "Only the organisation's Partner Admin or an Edify Admin assigns "
+            "its schools to its team members."
         )
     member = PartnerMember.objects.filter(
         id=member_id, partner=partner, active=True
@@ -152,8 +153,12 @@ def set_member_schools(partner_id: str, member_id: str, school_ids, principal) -
             partner=partner
         )
     }
+    names = dict(
+        PartnerMember.objects.filter(partner=partner).values_list("id", "name")
+    )
     before = sorted(sid for sid, row in current.items() if row.member_id == member.id)
     given, moved, cleared = [], [], []
+    named = 0
     for school_id in sorted(wanted):
         row = current.get(school_id)
         if row is None:
@@ -165,6 +170,13 @@ def set_member_schools(partner_id: str, member_id: str, school_ids, principal) -
             )
             given.append(school_id)
         elif row.member_id != member.id:
+            # The school's unfinished work moves with it.
+            named += _name_open_work(
+                partner,
+                [school_id],
+                member.name,
+                was=("", names.get(row.member_id, "")),
+            )
             row.member = member
             row.assigned_by_user_id = actor
             row.save(update_fields=["member", "assigned_by_user_id", "updated_at"])
@@ -174,7 +186,7 @@ def set_member_schools(partner_id: str, member_id: str, school_ids, principal) -
             current[school_id].delete()
             cleared.append(school_id)
 
-    named = _name_open_work(partner, given + moved, member.name)
+    named += _name_open_work(partner, given, member.name)
     if given or moved or cleared:
         audit_log(
             action="partner.school_team_member_set",

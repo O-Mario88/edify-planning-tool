@@ -102,6 +102,11 @@ def name_member(activity_id: str, name: str, principal) -> dict:
             "part of its record now."
         )
     partner = Partner.objects.get(id=partner_id)
+    # Who goes is the Partner Admin's to change (owner, 2026-10-09), not a
+    # team member's own Field Officer login.
+    from apps.partners.member_logins import assert_leads_team
+
+    assert_leads_team(principal, partner)
     chosen = on_team(partner, name, principal)
     previous = activity.delivery_contact_name or ""
     if chosen != previous:

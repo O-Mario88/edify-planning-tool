@@ -1,0 +1,64 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}{% if login %}Login of {{ member.name }}{% else %}Set up a login for {{ member.name }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{{ partner.name }}{% if login %} · {{ login.email }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% comment %}
+A team member's own sign-in, set up by the organisation's Partner Admin
+(owner, 2026-10-09: "partner admin onbosrd their thea members and configure
+their logins"). It signs in as the organisation; it cannot run the team
+(apps.partners.member_logins).
+{% endcomment %}
+{% if validation_error %}<p role="alert" class="edify-note mb-4" data-tone="danger">{{ validation_error }}</p>{% endif %}
+{% if not login %}
+<form method="post"
+      action="/partners/{{ partner.id }}/members/{{ member.id }}/login"
+      hx-post="/partners/{{ partner.id }}/members/{{ member.id }}/login"
+      hx-target="#drawer-container"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600"
+      data-member-login-form>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="create">
+  <p class="font-medium text-slate-600">{{ member.name }} will sign in to see and deliver {{ partner.name }}'s work. Adding people, their logins and who looks after which school stay with the Partner Admin.</p>
+  <div class="space-y-1">
+    <label for="ml-email" class="block edify-text-caption font-semibold text-slate-600">Login email <span class="text-rose-500">*</span></label>
+    <input id="ml-email" type="email" name="email" required value="{{ member.email }}" autocomplete="off"
+           class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+  <div class="space-y-1">
+    <label for="ml-password" class="block edify-text-caption font-semibold text-slate-600">Password <span class="font-medium text-slate-400">(optional)</span></label>
+    <input id="ml-password" type="password" name="password" autocomplete="new-password"
+           class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    <p class="edify-text-caption font-medium text-slate-500">Leave blank to email an invitation and let them set their own. A password set here must be changed at first sign-in.</p>
+  </div>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Create login</button>
+  </div>
+</form>
+{% else %}
+<form method="post"
+      action="/partners/{{ partner.id }}/members/{{ member.id }}/login"
+      hx-post="/partners/{{ partner.id }}/members/{{ member.id }}/login"
+      hx-target="#drawer-container"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600"
+      data-member-password-form>
+  {% csrf_token %}
+  <input type="hidden" name="action" value="reset_password">
+  <p class="font-medium text-slate-600">Status: <span class="font-semibold text-slate-800">{% if login.is_active %}Active{% elif login.status == "pending_invited" %}Invited, password not set yet{% else %}Deactivated{% endif %}</span></p>
+  <div class="space-y-1">
+    <label for="ml-new-password" class="block edify-text-caption font-semibold text-slate-600">New password <span class="text-rose-500">*</span></label>
+    <input id="ml-new-password" type="password" name="new_password" required autocomplete="new-password"
+           class="min-h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    <p class="edify-text-caption font-medium text-slate-500">{{ member.name }} signs in with it once and is then asked to choose their own. Any session they have open is signed out.</p>
+  </div>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Reset password</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

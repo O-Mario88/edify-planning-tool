@@ -10,7 +10,9 @@ their team members. Partner can assign schools assigend to them to the rest of
 their team members so that the the system can track who supported which
 schools." Then: "can you reduce the drawer size to match the system drawer"
 and "Add deactivate option too for active users and activate for inactive
-users".
+users". And, the same day, on what I had read into it: "partner admin onbosrd
+their thea members and configure their logins" and "Partner admin can
+re-assign the school and activities to the team members".
 """
 
 from __future__ import annotations
@@ -25,7 +27,9 @@ from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.permissions import RolePermissionService, has_permission
 from apps.core.rbac import EdifyRole, Permission
 from apps.geography.models import District, Region
-from apps.partners import profile_lists, school_team
+from apps.core.exceptions import ConflictError
+from apps.core.scoping import resolve_partner_ids
+from apps.partners import delivery_team, member_logins, profile_lists, school_team
 from apps.partners.models import (
     Partner,
     PartnerAssignment,
@@ -417,3 +421,266 @@ class PartnerSplitsItsSchoolsTests(TestCase):
             self.client.post(url, {"school_ids": self._ids(0)}).status_code, 403
         )
         self.assertFalse(PartnerSchoolMember.objects.exists())
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
+class TeamMemberLoginTests(TestCase):
+    """The Partner Admin gives its team members logins of their own and
+    decides who looks after what; a member's login does neither."""
+
+    def setUp(self):
+        self.region = Region.objects.create(name="ML Region")
+        self.district = District.objects.create(
+            name="ML District", region=self.region, district_type="primary"
+        )
+        self.lead = _user(
+            "ml-grace@literacy.test",
+            EdifyRole.PARTNER_ADMIN.value,
+            staff=False,
+            name="Grace Nakato",
+        )
+        self.partner = Partner.objects.create(
+            name="Literacy Works", active_status=True, user=self.lead
+        )
+        self.other_lead = _user(
+            "ml-other@other.test", EdifyRole.PARTNER_ADMIN.value, staff=False
+        )
+        self.other = Partner.objects.create(
+            name="Other Org", active_status=True, user=self.other_lead
+        )
+        self.admin = _user("ml-admin@edify.test", EdifyRole.ADMIN.value)
+        self.cd = _user("ml-cd@edify.test", EdifyRole.COUNTRY_DIRECTOR.value)
+        self.peter = PartnerMember.objects.create(
+            partner=self.partner, name="Peter Okello", role="staff"
+        )
+        self.mary = PartnerMember.objects.create(
+            partner=self.partner, name="Mary Akello", role="staff"
+        )
+        self.school = School.objects.create(
+            school_id="ML-A",
+            name="ML School A",
+            region=self.region,
+            district=self.district,
+        )
+        PartnerAssignment.objects.create(
+            school=self.school, partner=self.partner, status="assigned"
+        )
+        self.url = f"/partners/{self.partner.id}/members/{self.peter.id}/login"
+
+    def _login_for(self, member, email="ml-peter@literacy.test"):
+        member_logins.create_login(
+            self.partner.id,
+            member.id,
+            {"email": email, "password": NEW_PASSWORD},
+            self.lead,
+        )
+        member.refresh_from_db()
+        return member.user
+
+    # ── Setting the login up ─────────────────────────────────────────────
+    def test_the_partner_admin_gives_a_member_a_login_with_a_first_password(self):
+        account = self._login_for(self.peter)
+        self.assertEqual(account.name, "Peter Okello")
+        self.assertEqual(account.roles, [EdifyRole.PARTNER_FIELD_OFFICER.value])
+        self.assertTrue(account.is_active)
+        self.assertTrue(account.must_change_password)
+        self.assertIsNotNone(
+            authenticate(email="ml-peter@literacy.test", password=NEW_PASSWORD)
+        )
+        # Not a member of staff.
+        self.assertFalse(StaffProfile.objects.filter(user=account).exists())
+        # It signs in as the organisation.
+        self.assertEqual(resolve_partner_ids(account), [self.partner.id])
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="partner.member_login_created", subject_id=self.partner.id
+            ).exists()
+        )
+
+    def test_left_blank_the_member_is_invited_to_set_their_own(self):
+        result = member_logins.create_login(
+            self.partner.id, self.peter.id, {"email": "ml-p2@literacy.test"}, self.lead
+        )
+        self.assertTrue(result["invited"])
+        self.peter.refresh_from_db()
+        self.assertEqual(self.peter.user.status, "pending_invited")
+        self.assertFalse(self.peter.user.is_active)
+
+    def test_one_login_each_and_no_email_twice(self):
+        self._login_for(self.peter)
+        with self.assertRaises(ConflictError):
+            member_logins.create_login(
+                self.partner.id,
+                self.peter.id,
+                {"email": "ml-again@literacy.test"},
+                self.lead,
+            )
+        with self.assertRaises(ConflictError):
+            member_logins.create_login(
+                self.partner.id,
+                self.mary.id,
+                {"email": "ml-peter@literacy.test"},
+                self.lead,
+            )
+
+    def test_the_admin_may_and_others_may_not(self):
+        member_logins.create_login(
+            self.partner.id,
+            self.peter.id,
+            {"email": "ml-by-admin@literacy.test"},
+            self.admin,
+        )
+        for outsider in (self.other_lead, self.cd):
+            with self.assertRaises(Forbidden):
+                member_logins.create_login(
+                    self.partner.id,
+                    self.mary.id,
+                    {"email": "ml-no@literacy.test"},
+                    outsider,
+                )
+        self.assertFalse(User.objects.filter(email="ml-no@literacy.test").exists())
+
+    # ── Configuring it afterwards ────────────────────────────────────────
+    def test_reset_password_deactivate_and_activate(self):
+        account = self._login_for(self.peter)
+        member_logins.reset_password(
+            self.partner.id, self.peter.id, "Another-Pass!77x", self.lead
+        )
+        account.refresh_from_db()
+        self.assertTrue(account.check_password("Another-Pass!77x"))
+
+        member_logins.set_active(self.partner.id, self.peter.id, False, self.lead)
+        account.refresh_from_db()
+        self.assertFalse(account.is_active)
+        member_logins.set_active(self.partner.id, self.peter.id, True, self.lead)
+        account.refresh_from_db()
+        self.assertTrue(account.is_active)
+
+    def test_removing_the_member_stops_their_login(self):
+        from apps.partners.services import remove_member
+
+        account = self._login_for(self.peter)
+        remove_member(self.partner.id, self.peter.id, self.lead)
+        account.refresh_from_db()
+        self.assertFalse(account.is_active)
+        self.assertEqual(resolve_partner_ids(account), [])
+
+    # ── What a member's own login cannot do ──────────────────────────────
+    def test_a_members_login_does_not_run_the_team(self):
+        account = self._login_for(self.peter)
+        self.assertFalse(member_logins.leads_team(account, self.partner))
+        with self.assertRaises(Forbidden):
+            add_member(self.partner.id, {"name": "A Friend"}, account)
+        with self.assertRaises(Forbidden):
+            member_logins.create_login(
+                self.partner.id, self.mary.id, {"email": "ml-m@literacy.test"}, account
+            )
+        with self.assertRaises(Forbidden):
+            school_team.set_member_schools(
+                self.partner.id, self.peter.id, [self.school.id], account
+            )
+        activity = Activity.objects.create(
+            school=self.school,
+            assigned_partner_id=self.partner.id,
+            delivery_type="partner",
+            activity_type="school_visit",
+            status="scheduled",
+            delivery_contact_name="Mary Akello",
+        )
+        with self.assertRaises(Forbidden):
+            delivery_team.name_member(activity.id, "Peter Okello", account)
+        # The Partner Admin re-assigns the activity.
+        delivery_team.name_member(activity.id, "Peter Okello", self.lead)
+        activity.refresh_from_db()
+        self.assertEqual(activity.delivery_contact_name, "Peter Okello")
+
+    def test_a_school_moved_to_another_member_takes_its_open_work_with_it(self):
+        school_team.set_member_schools(
+            self.partner.id, self.peter.id, [self.school.id], self.lead
+        )
+        theirs = Activity.objects.create(
+            school=self.school,
+            assigned_partner_id=self.partner.id,
+            delivery_type="partner",
+            activity_type="school_visit",
+            status="scheduled",
+            delivery_contact_name="Peter Okello",
+        )
+        done = Activity.objects.create(
+            school=self.school,
+            assigned_partner_id=self.partner.id,
+            delivery_type="partner",
+            activity_type="school_visit",
+            status="ia_verified",
+            delivery_contact_name="Peter Okello",
+        )
+        school_team.set_member_schools(
+            self.partner.id, self.mary.id, [self.school.id], self.lead
+        )
+        theirs.refresh_from_db()
+        done.refresh_from_db()
+        self.assertEqual(theirs.delivery_contact_name, "Mary Akello")
+        # Finished work keeps the name it was delivered under.
+        self.assertEqual(done.delivery_contact_name, "Peter Okello")
+
+    # ── The screens ──────────────────────────────────────────────────────
+    def test_the_roster_offers_the_login_actions_to_the_partner_admin(self):
+        self._login_for(self.peter)
+        self.client.force_login(self.lead)
+        page = self.client.get(f"/partners/{self.partner.id}").content.decode()
+        self.assertIn('aria-label="Reset the password of Peter Okello"', page)
+        self.assertIn('aria-label="Deactivate the login of Peter Okello"', page)
+        self.assertIn('aria-label="Set up a login for Mary Akello"', page)
+        self.assertIn("ml-peter@literacy.test · Active", page)
+
+    def test_the_drawer_creates_the_login_and_then_resets_its_password(self):
+        self.client.force_login(self.lead)
+        drawer = self.client.get(self.url, HTTP_HX_REQUEST="true").content.decode()
+        self.assertIn("data-member-login-form", drawer)
+        response = self.client.post(
+            self.url,
+            {
+                "action": "create",
+                "email": "ml-drawer@literacy.test",
+                "password": NEW_PASSWORD,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 204)
+        self.peter.refresh_from_db()
+        self.assertEqual(self.peter.user.email, "ml-drawer@literacy.test")
+
+        drawer = self.client.get(self.url, HTTP_HX_REQUEST="true").content.decode()
+        self.assertIn("data-member-password-form", drawer)
+        self.client.post(
+            self.url,
+            {"action": "reset_password", "new_password": "Another-Pass!77x"},
+            HTTP_HX_REQUEST="true",
+        )
+        self.peter.user.refresh_from_db()
+        self.assertTrue(self.peter.user.check_password("Another-Pass!77x"))
+
+        self.client.post(self.url, {"action": "deactivate"})
+        self.peter.user.refresh_from_db()
+        self.assertFalse(self.peter.user.is_active)
+
+    def test_a_members_login_sees_the_roster_without_the_controls(self):
+        account = self._login_for(self.peter)
+        # Past the forced change of the password the Partner Admin set.
+        User.objects.filter(id=account.id).update(must_change_password=False)
+        self.client.force_login(account)
+        page = self.client.get(f"/partners/{self.partner.id}")
+        self.assertEqual(page.status_code, 200)
+        body = page.content.decode()
+        self.assertNotIn("Set up a login for", body)
+        self.assertNotIn("Assign schools to", body)
+        self.assertNotIn("/members/drawer", body)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+
+    def test_the_admin_configures_a_members_login_like_any_account(self):
+        account = self._login_for(self.peter)
+        self.client.force_login(self.admin)
+        listing = self.client.get("/admin-panel/users?q=ml-peter").content.decode()
+        self.assertIn('title="Partner login for Literacy Works"', listing)
+        page = self.client.get(f"/admin-panel/users/{account.id}")
+        self.assertEqual(page.status_code, 200)

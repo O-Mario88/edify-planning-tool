@@ -3867,7 +3867,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 851,
+   "line": 862,
    "label": null,
    "keys": [
     "count",
@@ -3886,7 +3886,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 859,
+   "line": 870,
    "label": null,
    "keys": [
     "count",
@@ -3905,7 +3905,7 @@
    "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2362,
+   "line": 2382,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3925,7 +3925,7 @@
    "audit_id": "KPI-SOURCE-207",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3935,
+   "line": 3955,
    "label": null,
    "keys": [
     "label",
@@ -3942,7 +3942,7 @@
    "audit_id": "KPI-SOURCE-208",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4749,
+   "line": 4769,
    "label": null,
    "keys": [
     "count",
@@ -3961,7 +3961,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 873,
+   "line": 884,
    "label": null,
    "keys": [
     "count",
@@ -3980,7 +3980,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1332,
+   "line": 1343,
    "label": null,
    "keys": [
     "achieved",
@@ -4001,7 +4001,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1439,
+   "line": 1450,
    "label": null,
    "keys": [
     "label",
@@ -4018,7 +4018,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3841,
+   "line": 3861,
    "label": "About",
    "keys": [
     "label",
@@ -4035,7 +4035,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3842,
+   "line": 3862,
    "label": "Raised by",
    "keys": [
     "label",
@@ -4052,7 +4052,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3843,
+   "line": 3863,
    "label": "Flag",
    "keys": [
     "label",
@@ -4069,7 +4069,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3844,
+   "line": 3864,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -42224,7 +42224,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3394,
+   "line": 3414,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42246,7 +42246,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4136,
+   "line": 4156,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

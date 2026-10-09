@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **660**
+Components and application partials: **661**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -515,6 +515,7 @@ Components and application partials: **660**
 | `partials/partners/edit_drawer.html` | application-partial | Reusable edit drawer interface primitive | danger; default, empty, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/edit-drawer | 0 |
 | `partials/partners/engagement_register.html` | application-partial | Reusable engagement register interface primitive | executive, warning, {{ cell.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partner-oversight/<br>/partners/<str:partner_id> | 0 |
 | `partials/partners/member_drawer.html` | application-partial | Reusable member drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/members/drawer | 0 |
+| `partials/partners/member_login_drawer.html` | application-partial | Reusable member login drawer interface primitive | danger; default, error, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /partners/<str:partner_id>/members/<str:member_id>/login | 0 |
 | `partials/partners/member_schools_drawer.html` | application-partial | Reusable member schools drawer interface primitive | danger; default, error, disabled | inherits containing page contract | accessible name and label, announced dynamic state | /partners/<str:partner_id>/members/<str:member_id>/schools | 0 |
 | `partials/partners/profile_trainings.html` | application-partial | Reusable profile trainings interface primitive | {{ row.tone }}; default | inherits containing page contract | inherits semantic parent contract | /partners/<str:partner_id> | 0 |
 | `partials/partners/profile_visit_schools.html` | application-partial | Reusable profile visit schools interface primitive | {{ row.tone }}; default | inherits containing page contract | inherits semantic parent contract | /partners/<str:partner_id> | 0 |

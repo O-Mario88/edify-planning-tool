@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **910**
-- All registered routes: **1383**
+- Routed product surfaces: **911**
+- All registered routes: **1384**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **660**
+- Shared component templates: **661**
 - Full pages: **263**
-- Partials and drawers: **325**
-- Permission-gated surfaces: **893**
-- Referenced by automated tests: **810**
+- Partials and drawers: **326**
+- Permission-gated surfaces: **894**
+- Referenced by automated tests: **811**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -677,6 +677,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-68972438CC | /partners/<str:partner_id> | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E3651EDE84 | /partners/<str:partner_id>/edit-drawer | Partner Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D79E38D41C | /partners/<str:partner_id>/members | Partner Member Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-E8FD51670B | /partners/<str:partner_id>/members/<str:member_id>/login | Partner Member Login | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-64D75FAFAE | /partners/<str:partner_id>/members/<str:member_id>/schools | Partner Member Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4E3422B820 | /partners/<str:partner_id>/members/drawer | Partner Member Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-748EB16E46 | /partners/<str:partner_id>/status | Partner Status | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

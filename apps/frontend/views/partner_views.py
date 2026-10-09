@@ -1010,21 +1010,24 @@ def partner_detail_view(request, partner_id):
         )
         or partner.id in scope.partner_ids
     )
-    can_manage_roster = (
-        request.user.is_superuser
-        or scope.country_scope
-        or partner.id in scope.partner_ids
-    )
+    from apps.partners.services import manages_roster
+
+    can_manage_roster = manages_roster(request.user, partner)
     can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
 
     # How the organisation has split its schools among its team (owner,
     # 2026-10-09; apps.partners.school_team).
     from apps.partners import school_team
 
+    from apps.partners import member_logins
+
+    # Whoever leads the team splits its schools and gives its people logins
+    # (owner, 2026-10-09; apps.partners.member_logins).
     can_split_schools = school_team.may_split_schools(request.user, partner)
     member_school_counts = school_team.school_counts(partner)
     for member in members:
         member.school_count = member_school_counts.get(member.id, 0)
+        member.login = member_logins.member_login(member)
 
     roster_rows = [{"kind": "member", "member": member} for member in members] + [
         {"kind": "delivery", "name": name, "deliveries": count}
@@ -1048,6 +1051,7 @@ def partner_detail_view(request, partner_id):
         "can_edit": can_edit,
         "can_manage_roster": can_manage_roster,
         "can_split_schools": can_split_schools,
+        "can_configure_member_logins": can_split_schools,
         "can_manage_status": can_manage_status,
         # Partner logins are user administration (owner, 2026-09-15).
         "can_manage_partner_users": may_manage_partner_users(request.user),
@@ -1278,6 +1282,93 @@ def partner_member_action(request, partner_id):
 
 
 @require_page_permission("partner_detail")
+def partner_member_login_view(request, partner_id, member_id):
+    """A team member's own sign-in: set it up, reset its password, stop it
+    or let it sign in again (owner, 2026-10-09: "partner admin onbosrd their
+    thea members and configure their logins"; apps.partners.member_logins)."""
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners import member_logins
+    from apps.partners.models import PartnerMember
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    if not member_logins.leads_team(request.user, partner):
+        return HttpResponseForbidden(
+            "Only the organisation's Partner Admin or an Edify Admin manages "
+            "its team's logins."
+        )
+    member = get_object_or_404(PartnerMember, id=member_id, partner=partner)
+
+    def drawer(error=None):
+        member.refresh_from_db()
+        return render(
+            request,
+            "partials/partners/member_login_drawer.html",
+            {
+                "partner": partner,
+                "member": member,
+                "login": member_logins.member_login(member),
+                "validation_error": error,
+                "drawer_size": "md",
+            },
+        )
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip()
+        try:
+            if action == "create":
+                result = member_logins.create_login(
+                    partner.id,
+                    member.id,
+                    {
+                        "email": request.POST.get("email", ""),
+                        "password": request.POST.get("password", ""),
+                    },
+                    request.user,
+                )
+                said = (
+                    f"{result['member']} was emailed an invitation to set a password."
+                    if result["invited"]
+                    else f"{result['member']} can sign in with {result['email']} "
+                    "and will be asked to choose a new password."
+                )
+            elif action == "reset_password":
+                result = member_logins.reset_password(
+                    partner.id,
+                    member.id,
+                    request.POST.get("new_password", ""),
+                    request.user,
+                )
+                said = f"Password reset for {result['member']}."
+            elif action in ("activate", "deactivate"):
+                result = member_logins.set_active(
+                    partner.id, member.id, action == "activate", request.user
+                )
+                said = (
+                    f"{result['member']} can sign in again."
+                    if result["active"]
+                    else f"{result['member']} can no longer sign in."
+                )
+            else:
+                raise BadRequest("Choose what to do with this login.")
+        except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+            if request.headers.get("HX-Request") == "true":
+                return drawer(str(getattr(exc, "detail", exc)))
+            messages.error(request, str(getattr(exc, "detail", exc)))
+            return redirect("frontend:partner_detail", partner_id=partner.id)
+        messages.success(request, said)
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse(
+                "frontend:partner_detail", kwargs={"partner_id": partner.id}
+            )
+            return response
+        return redirect("frontend:partner_detail", partner_id=partner.id)
+    return drawer()
+
+
+@require_page_permission("partner_detail")
 def partner_member_schools_view(request, partner_id, member_id):
     """The schools one team member looks after: the drawer and its save
     (owner, 2026-10-09; apps.partners.school_team)."""
@@ -1290,8 +1381,8 @@ def partner_member_schools_view(request, partner_id, member_id):
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
     if not school_team.may_split_schools(request.user, partner):
         return HttpResponseForbidden(
-            "Only the organisation itself or an Admin assigns its schools to "
-            "its team members."
+            "Only the organisation's Partner Admin or an Edify Admin assigns "
+            "its schools to its team members."
         )
     member = get_object_or_404(PartnerMember, id=member_id, partner=partner)
 
@@ -1569,6 +1660,18 @@ def partner_delivery_member_view(request, activity_id):
     partner = get_object_or_404(
         Partner, id=delivery_team.partner_of(activity, partner_ids)
     )
+    from apps.partners.member_logins import leads_team
+
+    if not leads_team(request.user, partner):
+        return render(
+            request,
+            "partials/schools/drawer_error.html",
+            {
+                "error": "Your organisation's Partner Admin chooses who "
+                "delivers each piece of work."
+            },
+            status=403 if request.method == "POST" else 200,
+        )
     if request.method == "POST":
         try:
             result = delivery_team.name_member(
@@ -2367,6 +2470,11 @@ def partner_plan_context(user):
     today = timezone.localdate()
     week_end = today + timedelta(days=6 - today.weekday())
     partner_ids = resolve_partner_ids(user)
+    from apps.partners.member_logins import leads_team
+
+    leads_the_team = any(
+        leads_team(user, org) for org in Partner.objects.filter(id__in=partner_ids)
+    )
     acts = list(
         Activity.objects.filter(
             assigned_partner_id__in=partner_ids,
@@ -2429,8 +2537,9 @@ def partner_plan_context(user):
                 "evidence_summary": evidence_summary,
                 "return_reason": a.pl_review_note if a.status in _PLAN_RETURNED else "",
                 # Any row here is unfinished work, so its team member may
-                # still be named or changed (apps.partners.delivery_team).
-                "actions": [*actions, "team"],
+                # still be named or changed (apps.partners.delivery_team),
+                # by whoever leads the team (owner, 2026-10-09).
+                "actions": [*actions, "team"] if leads_the_team else actions,
             }
         )
     section_list = [

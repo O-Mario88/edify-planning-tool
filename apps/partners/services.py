@@ -89,10 +89,14 @@ def is_partner_login(user) -> bool:
 
 
 def login_organisation(user) -> Partner | None:
-    """The organisation this account is the login for, if it is one's."""
+    """The organisation this account is the login for, if it is one's: its
+    own login, or a team member's (owner, 2026-10-09)."""
     if user is None:
         return None
-    return Partner.objects.filter(user_id=user.pk).first()
+    return (
+        Partner.objects.filter(user_id=user.pk).first()
+        or Partner.objects.filter(members__user_id=user.pk).first()
+    )
 
 
 def partner_login(partner: Partner):
@@ -645,6 +649,22 @@ def purge_partner(partner_id: str, principal) -> dict:
     return {**snapshot, "purged": True}
 
 
+def manages_roster(principal, partner) -> bool:
+    """Country staff who run the directory, and whoever leads the
+    organisation's team: its Partner Admin, never a member's own Field
+    Officer login (owner, 2026-10-09; apps.partners.member_logins)."""
+    from .member_logins import leads_team
+
+    if _is_admin(principal) or resolve_user_scope(principal).country_scope:
+        return True
+    return leads_team(principal, partner)
+
+
+def _assert_manages_roster(principal, partner) -> None:
+    if not manages_roster(principal, partner):
+        raise Forbidden("You may only manage the roster of a partner in your scope.")
+
+
 def add_member(partner_id: str, data: dict, principal) -> "PartnerMember":
     """Add a person to a partner's roster — staff or volunteer."""
 
@@ -653,11 +673,7 @@ def add_member(partner_id: str, data: dict, principal) -> "PartnerMember":
     partner = Partner.objects.filter(id=partner_id).first()
     if partner is None:
         raise NotFoundError("Partner organisation not found.")
-    scope = resolve_user_scope(principal)
-    if not (
-        _is_admin(principal) or scope.country_scope or partner.id in scope.partner_ids
-    ):
-        raise Forbidden("You may only manage the roster of a partner in your scope.")
+    _assert_manages_roster(principal, partner)
     name = (data.get("name") or "").strip()
     if not name:
         raise BadRequest("A name is required.")
@@ -683,13 +699,16 @@ def remove_member(partner_id: str, member_id: str, principal) -> None:
     member = PartnerMember.objects.filter(id=member_id, partner_id=partner_id).first()
     if member is None:
         raise NotFoundError("Roster entry not found.")
-    scope = resolve_user_scope(principal)
-    if not (
-        _is_admin(principal)
-        or scope.country_scope
-        or member.partner_id in scope.partner_ids
-    ):
-        raise Forbidden("You may only manage the roster of a partner in your scope.")
+    _assert_manages_roster(principal, member.partner)
+    # A login of their own stops signing in with them: left active, it would
+    # be an account that belongs to no organisation.
+    from .member_logins import member_login
+
+    login = member_login(member)
+    if login is not None and login.is_active:
+        from apps.admin_users.services import disable
+
+        disable(login.id, principal)
     member.delete()
 
 

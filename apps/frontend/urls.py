@@ -2220,6 +2220,12 @@ urlpatterns = [
         partner_views.partner_member_action,
         name="partner_member_action",
     ),
+    # A team member's own sign-in (owner, 2026-10-09).
+    path(
+        "partners/<str:partner_id>/members/<str:member_id>/login",
+        partner_views.partner_member_login_view,
+        name="partner_member_login",
+    ),
     # The schools one team member looks after (owner, 2026-10-09).
     path(
         "partners/<str:partner_id>/members/<str:member_id>/schools",

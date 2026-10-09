@@ -849,6 +849,17 @@ class PartnerMember(TimeStampedModel):
     email = models.EmailField(blank=True, default="")
     active = models.BooleanField(default=True)
     added_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    # The member's own sign-in, when the organisation has given them one
+    # (owner, 2026-10-09: "partner admin onbosrd their thea members and
+    # configure their logins"). Most volunteers never have one. It signs in
+    # as the organisation (apps.core.scoping.resolve_partner_ids).
+    user = models.OneToOneField(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="partner_membership",
+    )
 
     class Meta:
         db_table = "partner_member"

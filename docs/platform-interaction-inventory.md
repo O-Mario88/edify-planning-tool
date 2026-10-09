@@ -6,19 +6,19 @@ Static scan of every template control (button, link, input, select, textarea, su
 
 | Measure | Count |
 |---|---:|
-| Templates with controls | 672 |
-| Control declarations | 3981 |
-| State-changing | 462 |
-| High-consequence (state-changing) | 207 |
+| Templates with controls | 673 |
+| Control declarations | 3992 |
+| State-changing | 466 |
+| High-consequence (state-changing) | 209 |
 | No automated evidence | 295 |
 | State-changing with no automated evidence | 22 |
 | Destination path that resolves to no route | 0 |
 
 | Kind | Count |
 |---|---:|
-| button | 1379 |
+| button | 1387 |
 | disclosure | 75 |
-| field | 1348 |
+| field | 1351 |
 | link | 1112 |
 | tab | 67 |
 
@@ -26,8 +26,8 @@ Static scan of every template control (button, link, input, select, textarea, su
 |---|---:|
 | browser-rendered | 806 |
 | none | 295 |
-| page-tested | 1536 |
-| request-tested | 1344 |
+| page-tested | 1541 |
+| request-tested | 1350 |
 
 ## State-changing controls with no automated evidence
 
