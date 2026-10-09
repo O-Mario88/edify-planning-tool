@@ -1257,6 +1257,8 @@ def planning_dashboard_view(request):
             request.user, "planning"
         ),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        # Schedule in the selection bar: the group Schedule drawer's own check.
+        "can_bulk_schedule": RolePermissionService.can_schedule_activity(request.user),
         "planning_priority": planning_priority,
         "priority_allocation_id": priority_allocation_id,
     }
@@ -1426,7 +1428,7 @@ def _schedule_modal(request):
     # meeting) scheduling is uniform irrespective of where the user is
     # planning from"), so the picker appears exactly when the caller did not
     # bring a cluster.
-    wants_cluster = request.GET.get("action") in ("training", "meeting")
+    wants_cluster = request.GET.get("action") in ("training", "meeting", "online")
     if cluster_id or wants_cluster:
         if not RolePermissionService.can_schedule_activity(request.user):
             from apps.planning.visit_requests import CLUSTER_REFUSED
@@ -1459,6 +1461,11 @@ def _schedule_modal(request):
         # which necessarily arrives WITH a cluster_id.
         fixed_cluster = bool(cluster_id) and not request.GET.get("pick")
         action = request.GET.get("action", "training")
+        # The drawer's third delivery mode (owner, 2026-10-09): a Group
+        # Training delivered online, free (apps.activities.online_training).
+        online_delivery = action == "online"
+        if online_delivery:
+            action = "training"
         partners = assignable_partners()
         from apps.clusters.services import active_school_count, active_schools
         from apps.activity_catalogue.availability import (
@@ -1537,6 +1544,7 @@ def _schedule_modal(request):
             .select_related("user")
             .order_by("user__name"),
             "action": action,
+            "online_delivery": online_delivery,
             "session_noun": "meeting" if action == "meeting" else "training",
             # The partner this cluster is assigned to facilitate (owner,
             # 2026-10-02), already chosen in "Facilitated by".
@@ -2329,6 +2337,13 @@ def schedule_action_view(request):
             payload["trainingCourseId"] = meeting_training_id
     if cluster_id:
         payload["clusterId"] = cluster_id
+        # A Group Training delivered online (owner, 2026-10-09): free, and
+        # read by the one cost writer (apps.activities.online_training).
+        if (
+            activity_type == "cluster_training"
+            and request.POST.get("delivery_mode", "").strip() == "online"
+        ):
+            payload["programmeDeliveryMode"] = "online"
         # Who the cluster session belongs to. The drawer offers this only to a
         # Programme Lead or Admin (the roles the Clusters drawer offered it
         # to), and it is honoured only for those roles here, so a crafted POST
@@ -2529,6 +2544,12 @@ def _bulk_schedule_focus(plan: dict, school):
 
     if plan["focus"] or plan["purpose"] in INTERVENTION_FREE_PURPOSES:
         return plan["focus"]
+    # One intervention for the whole selection when the planner names it in
+    # the drawer (owner, 2026-09-26: "for group scheduling, SSA intervention
+    # should be the same. it should be chosen from group visit scheduling
+    # drawer"); left open, each school's own first need.
+    if plan.get("day_focus"):
+        return plan["day_focus"]
     from apps.ssa.plan_alignment import school_need
 
     need = school_need(school)
@@ -2551,6 +2572,8 @@ def bulk_schedule_drawer_view(request):
         in_school_training_course_options,
     )
 
+    from apps.partners.purposes import INTERVENTION_FREE_PURPOSES
+
     codes, schools = _ticked_schools(request)
     follow_up_named = _follow_up_requires_training()
     # Trainings are the owner's programme; the portfolio-less country roles
@@ -2570,6 +2593,10 @@ def bulk_schedule_drawer_view(request):
             ],
             "follow_up_named_per_school": follow_up_named,
             "training_courses_json": json.dumps(in_school_training_course_options()),
+            "interventions": SsaIntervention.choices,
+            "intervention_free_purposes_json": json.dumps(
+                sorted(INTERVENTION_FREE_PURPOSES)
+            ),
             "drawer_size": "md",
         },
     )
@@ -2603,6 +2630,9 @@ def bulk_schedule_action_view(request):
 
     try:
         plan = _staff_schedule_plan(request)
+        day_focus = request.POST.get("focus_intervention", "").strip()
+        if day_focus in SsaIntervention.values:
+            plan["day_focus"] = day_focus
         purpose_label = visit_purpose_label(plan["purpose"])
         scheduled = 0
         refused: list[str] = []
@@ -3654,20 +3684,16 @@ def bulk_action_view(request):
         )
 
     elif action == "schedule":
-        # Retired to the cluster (owner, 2026-09-21: bulk scheduling "should
-        # only happen from cluster"). The rules a day of visits has to obey —
-        # at least five schools, one of four purposes, never an In-school
-        # Training — are cluster rules, and a second bulk door on this page
-        # would be a second answer to the same question. The button is gone;
-        # this refusal is for a stale tab or a typed POST, and it says where
+        # The bar's own Schedule opens the group Schedule drawer
+        # (/planning/bulk-schedule-drawer; owner, 2026-10-09), which asks
+        # for the purpose and the date this action never carried. This
+        # refusal is for a stale tab or a typed POST, and it says where
         # the act lives now.
         return HttpResponse(
             '<div class="edify-note" data-tone="warning" role="alert">'
-            '<p class="edify-note__body">Bulk scheduling happens from a '
-            "cluster. Open the cluster these schools belong to and use "
-            "&ldquo;Schedule a Day of Visits&rdquo; &mdash; a bulk day needs "
-            "at least five member schools. A single school is scheduled from "
-            "its own Schedule button.</p></div>",
+            '<p class="edify-note__body">Reload this page, tick the schools '
+            "and use &ldquo;Schedule visit&rdquo; in the bar that appears."
+            "</p></div>",
             status=400,
         )
 

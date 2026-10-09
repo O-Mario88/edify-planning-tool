@@ -43,6 +43,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
@@ -552,6 +553,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
@@ -1434,6 +1436,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/profile_activities.py",
         "apps/activities/salesforce.py",
@@ -1817,6 +1820,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
@@ -2103,6 +2107,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/pairs.py",
         "apps/activities/schedule_trail.py",
@@ -2569,6 +2574,7 @@
         "apps/activities/facilitation.py",
         "apps/activities/live.py",
         "apps/activities/models.py",
+        "apps/activities/online_training.py",
         "apps/activities/pair_costing.py",
         "apps/activities/salesforce.py",
         "apps/activities/schedule_trail.py",
@@ -4861,9 +4867,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "694cf48ad88f25c2c66f5310c39d9b37bc8dc672253ec72d852e2ddb2e5486a2",
-    "sources": "60561588110c9e94d12d972f1f204276bc81c30cd30eb60044bcce25e6f3da58",
-    "sourceCount": 244,
+    "payload": "d007a2dfcad0cdb08cf4c7b9e8fb22acf949be7020eceb818bcc69fb33bd09fd",
+    "sources": "147cb03b14d11a3569beea1232ce2f23919cf7f797e617f9e3b07493b7cb254a",
+    "sourceCount": 245,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

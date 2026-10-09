@@ -321,13 +321,11 @@ class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
         super().setUp()
         self.client.force_login(self.user)
 
-    def test_the_planning_page_no_longer_bulk_schedules(self):
-        """Owner, 2026-09-21: bulk scheduling "should only happen from
-        cluster". A day of visits obeys rules that are the cluster's — five
-        member schools, four purposes, never an In-school Training — and a
-        second bulk door here would be a second answer to the same question.
-        The refusal names where the act lives now; a single school is still
-        scheduled from its own row."""
+    def test_the_old_bulk_schedule_post_points_at_the_new_button(self):
+        """Owner, 2026-10-09: the Planning page schedules its ticked schools
+        again, through the group Schedule drawer (purpose, date), reversing
+        2026-09-21's "should only happen from cluster". The old post, which
+        carried neither, still writes nothing and says where to go."""
         response = self.client.post(
             "/planning/bulk-action",
             {
@@ -338,7 +336,7 @@ class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
         )
         self.assertEqual(response.status_code, 400)
         body = response.content.decode()
-        self.assertIn("Bulk scheduling happens from a cluster", body)
+        self.assertIn("Schedule visit", body)
         self.assertFalse(Activity.objects.filter(school=self.school).exists())
 
     def test_bulk_actions_refuse_schools_outside_the_portfolio(self):

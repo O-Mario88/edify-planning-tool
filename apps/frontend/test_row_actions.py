@@ -149,12 +149,13 @@ class ClusterActionsAreOneMenuTest(SimpleTestCase):
             [
                 "Schedule Group Training",
                 "Schedule Cluster Meeting",
-                "Schedule a Day of Visits",
                 "Partner to Facilitate",
                 "Add Schools",
             ],
         )
-        self.assertIn('hx-get="/clusters/c1/bulk-schedule-drawer"', html)
+        # A day of visits is planned by ticking its schools (owner,
+        # 2026-10-09), not from the menu.
+        self.assertNotIn("bulk-schedule-drawer", html)
         self.assertIn('hx-get="/clusters/c1/bulk-assign-drawer"', html)
 
     def test_a_role_that_may_only_add_schools_gets_that_one_item(self):

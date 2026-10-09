@@ -1,6 +1,6 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}{% if action == 'meeting' %}Schedule cluster meeting{% else %}Schedule group training{% endif %} for {{ cluster.name }}{% endblock %}
+{% block drawer_title %}{% if action == 'meeting' %}Schedule cluster meeting{% elif online_delivery %}Schedule online training{% else %}Schedule group training{% endif %} for {{ cluster.name }}{% endblock %}
 {% block drawer_subtitle %}{% endblock %}
 
 {% block drawer_body %}
@@ -19,37 +19,28 @@ invites leaders instead of teachers. The controls sit outside the form so they
 are never posted with it, and the swap replaces the whole drawer — the same
 mechanism the cluster planner's own type switch uses.
 {% endcomment %}
-<fieldset class="mb-4">
-<legend class="block edify-text-caption font-semibold text-slate-600 mb-1.5">Activity type <span class="text-rose-500">*</span></legend>
-<div class="cluster-activity-type-options">
-<label for="planning-activity-training" class="cluster-activity-type-option text-[12px] font-semibold text-slate-700">
-<input
-id="planning-activity-training"
-type="radio"
-name="cluster_activity_type"
-value="training"
-{% if action != 'meeting' %}checked{% endif %}
-hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
->
-<span>Group Training</span>
-</label>
-<label for="planning-activity-meeting" class="cluster-activity-type-option text-[12px] font-semibold text-slate-700">
-<input
-id="planning-activity-meeting"
-type="radio"
-name="cluster_activity_type"
-value="meeting"
-{% if action == 'meeting' %}checked{% endif %}
-hx-get="/planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
->
-<span>Cluster Meeting</span>
-</label>
+{% comment %}One dropdown, not two radio buttons (owner, 2026-10-09: "remove
+Group training and Cluster meeting radio button and then add them as dropdown
+on delivery mode ... and the costs are fetched accordingly"). Online Training
+is the third mode: a Group Training delivered online, free, so it has no
+printing or photocopying fields and its cost preview is UGX 0
+(apps.activities.online_training).{% endcomment %}
+<div class="space-y-1 mb-4" data-cluster-delivery-mode>
+<label for="cluster-delivery-mode" class="block edify-text-caption font-semibold text-slate-600">Delivery mode <span class="text-rose-500">*</span></label>
+<select id="cluster-delivery-mode" name="action"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none cursor-pointer"
+        hx-get="/planning/schedule-modal"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        hx-include="#training_activity"
+        hx-vals='{"cluster_id": "{{ cluster.id }}"{% if priority_allocation_id %}, "priority_allocation": "{{ priority_allocation_id }}"{% endif %}{% if not fixed_cluster %}, "pick": "1"{% endif %}}'>
+<option value="training"{% if action != 'meeting' and not online_delivery %} selected{% endif %}>Group Training</option>
+<option value="meeting"{% if action == 'meeting' %} selected{% endif %}>Cluster Meeting</option>
+<option value="online"{% if online_delivery %} selected{% endif %}>Online Training</option>
+</select>
+{% if online_delivery %}<p class="edify-text-caption text-slate-500" data-online-training-note>Delivered online: this training is free and carries no cost.</p>{% endif %}
 </div>
-</fieldset>
 
 <form
 id="cluster-planner-form"
@@ -125,6 +116,7 @@ x-init="ensureActivity()"
 >
 {% csrf_token %}
 {% if fixed_cluster %}<input type="hidden" name="cluster_id" value="{{ cluster.id }}">{% endif %}
+{% if online_delivery %}<input type="hidden" name="delivery_mode" value="online">{% endif %}
 {% if priority_allocation_id %}<input type="hidden" name="priority_allocation_id" value="{{ priority_allocation_id }}">{% endif %}
 <input type="hidden" name="activity_type" value="{% if action == 'meeting' %}cluster_meeting{% else %}cluster_training{% endif %}">
 {% comment %}The checklist below was shown, so no tick is an answer: a training
@@ -261,7 +253,7 @@ value is always the cluster the drawer is drawn for.
         hx-trigger="change"
         hx-include="#training_activity, #meeting_kind, #meeting_training_course"
         name="cluster_id"
-        hx-vals='{"action": "{{ action }}", "pick": "1"}'>
+        hx-vals='{"action": "{% if online_delivery %}online{% else %}{{ action }}{% endif %}", "pick": "1"}'>
   {% for c in clusters %}
   <option value="{{ c.id }}" {% if c.id == cluster.id %}selected{% endif %}>{{ c.name }}</option>
   {% endfor %}
@@ -523,9 +515,13 @@ changes cannot price an activity on a stale count.
       <span class="text-[14px] font-bold edify-text tabular-nums" x-text="total.toLocaleString()"></span>
     </div>
 
+    {% comment %}An online training prints and photocopies nothing: it is
+    completely free (owner, 2026-10-09).{% endcomment %}
+    {% if not online_delivery %}
     <div class="mt-3">
       {% include "partials/clusters/training_materials_fields.html" %}
     </div>
+    {% endif %}
   </div>
 </div>
 
@@ -542,8 +538,10 @@ already; the planner may still name Staff or another partner for one session.{% 
 <input type="hidden" name="executor_type" value="staff">
 <input type="hidden" name="delivery_type" value="staff">
 {% include "partials/activities/facilitated_by_field.html" with field_id="cluster_facilitating_partner_id" selected=cluster_facilitator_id session_noun=session_noun %}
-{% if cluster_facilitator_id %}<p class="edify-text-caption text-slate-500" data-cluster-facilitator-note>{% cluster_link cluster.name cluster.id %} is assigned to <strong>{{ cluster_facilitator_name }}</strong> to facilitate.</p>{% endif %}
-<p class="edify-text-caption text-slate-500">Staff run the {{ session_noun }}, carry its meals, venue, materials and transport, and complete it with the attendance and the Salesforce ID. A partner facilitator is told the date and is paid the facilitation fee only.</p>
+{% if cluster_facilitator_id %}<p class="edify-text-caption text-slate-500" data-cluster-facilitator-note>{{ cluster.name }} is assigned to <strong>{{ cluster_facilitator_name }}</strong> to facilitate.</p>{% endif %}
+{% if online_delivery %}<p class="edify-text-caption text-slate-500">Staff run the online training and complete it with the attendance and the Salesforce ID. It is free: no meals, venue, materials, transport or facilitation fee is budgeted.</p>
+{% else %}<p class="edify-text-caption text-slate-500">Staff run the {{ session_noun }}, carry its meals, venue, materials and transport, and complete it with the attendance and the Salesforce ID. A partner facilitator is told the date and is paid the facilitation fee only.</p>
+{% endif %}
 
 
 {% if action == 'meeting' %}

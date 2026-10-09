@@ -521,31 +521,45 @@ class ClusterDrawerDeliveryTest(TestCase):
         training = self._drawer_for("training")
         meeting = self._drawer_for("meeting")
 
-        for html in (training, meeting):
-            # Both choices are offered, from either mode.
-            self.assertIn('id="planning-activity-training"', html)
-            self.assertIn('id="planning-activity-meeting"', html)
-            # Each reopens the whole drawer rather than hiding half a form.
-            self.assertEqual(html.count('hx-target="#drawer-container"'), 2)
-            self.assertIn(
-                f"/planning/schedule-modal?cluster_id={self.cluster.id}"
-                "&amp;action=meeting",
-                html,
-            )
+        online = self._drawer_for("online")
+
+        for html in (training, meeting, online):
+            # One Delivery mode dropdown offers every mode, from any of them
+            # (owner, 2026-10-09: "remove Group training and Cluster meeting
+            # radio button and then add them as dropdown on delivery mode").
+            self.assertIn('id="cluster-delivery-mode"', html)
+            self.assertNotIn('name="cluster_activity_type"', html)
+            for value, label in (
+                ("training", "Group Training"),
+                ("meeting", "Cluster Meeting"),
+                ("online", "Online Training"),
+            ):
+                self.assertRegex(html, rf'<option value="{value}"[^>]*>{label}<')
+            # It reopens the whole drawer rather than hiding half a form.
+            self.assertEqual(html.count('hx-target="#drawer-container"'), 1)
+            self.assertIn(f'"cluster_id": "{self.cluster.id}"', html)
             # The switch is outside the form, so it is never posted with it.
             self.assertLess(
-                html.index('name="cluster_activity_type"'),
+                html.index('id="cluster-delivery-mode"'),
                 html.index('hx-post="/planning/schedule-action"'),
             )
+        self.assertIn('<option value="training" selected>', training)
+        self.assertIn('<option value="meeting" selected>', meeting)
+        self.assertIn('<option value="online" selected>', online)
+        # Online is a Group Training that posts its mode and asks for no
+        # printing or photocopying: it is completely free.
+        self.assertIn('value="cluster_training"', online)
+        self.assertIn('name="delivery_mode" value="online"', online)
+        self.assertNotIn('name="printing_pages"', online)
+        self.assertNotIn('name="photocopy_pages"', online)
+        self.assertIn('name="printing_pages"', training)
+        self.assertNotIn('name="delivery_mode"', training)
 
         # The mode that is open is the one ticked, and the one the form posts.
         self.assertIn('value="cluster_training"', training)
         self.assertNotIn('value="cluster_meeting"', training)
         self.assertIn('value="cluster_meeting"', meeting)
         self.assertNotIn('value="cluster_training"', meeting)
-        # Exactly one radio carries `checked`, in either mode.
-        self.assertEqual(training.count("\nchecked\n"), 1)
-        self.assertEqual(meeting.count("\nchecked\n"), 1)
 
     def test_a_meeting_asks_who_facilitates_it(self):
         """Owner, 2026-10-02: a cluster meeting takes a facilitator "just
@@ -993,6 +1007,89 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(activity.leaders_per_school, 1)
         self.assertEqual(activity.participants_per_school, 4)
         self.assertEqual(activity.expected_participants, 8)
+
+    def _post_group_training(self, **extra):
+        client = Client()
+        client.force_login(self.user)
+        scheduled = timezone.localdate() + datetime.timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += datetime.timedelta(days=1)
+        return client.post(
+            "/planning/schedule-action",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "cluster_training",
+                "catalogue_item_id": self.literacy_cluster_training.id,
+                "focus_intervention": SsaIntervention.LEARNING_ENVIRONMENT,
+                "scheduled_date": scheduled.isoformat(),
+                "teachers_per_school": "3",
+                "leaders_per_school": "1",
+                "other_per_school": "0",
+                "schools_invited": "2",
+                "delivery_type": "staff",
+                "override_reason": "Drawer seam test fixture has no SSA records.",
+                **extra,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    def test_an_online_group_training_is_saved_free(self):
+        """Owner, 2026-10-09: "add schedule for online training on the cluster
+        training schedule ... online training fetches no cost it is free"."""
+        from apps.activities.online_training import ONLINE_TRAINING
+        from apps.activities.pair_costing import pair_cost_notes
+        from apps.activities.services import reprice_activity
+
+        response = self._post_group_training(delivery_mode="online")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(catalogue_item=self.literacy_cluster_training)
+        self.assertEqual(activity.activity_type, "cluster_training")
+        self.assertEqual(activity.programme_delivery_mode, "online")
+        # The same training for the same people; only the price differs.
+        self.assertEqual(activity.expected_participants, 8)
+        self.assertEqual(activity.schedule_cost_lines.count(), 0)
+        self.assertFalse(activity.est_cost_cents)
+        self.assertFalse(activity.cost_missing)
+        self.assertTrue(Activity.objects.filter(ONLINE_TRAINING, id=activity.id))
+        # Free by rule, and said so, rather than read as unpriced.
+        self.assertEqual(
+            pair_cost_notes([activity]), {activity.id: "(online training: no cost)"}
+        )
+        # Its rows say how it is delivered, and count it as a group training.
+        from apps.activities import training_names
+        from apps.frontend.work_plan_tables import delivery_mode
+
+        self.assertEqual(training_names.mode_of_delivery(activity), "Online Training")
+        self.assertEqual(training_names.delivery_of(activity), "group")
+        self.assertEqual(delivery_mode(activity, None), "Online Training")
+        # A later re-pricing leaves it free.
+        reprice_activity(activity)
+        activity.refresh_from_db()
+        self.assertEqual(activity.schedule_cost_lines.count(), 0)
+        self.assertFalse(activity.cost_missing)
+
+    def test_an_in_person_group_training_is_still_costed(self):
+        response = self._post_group_training(delivery_mode="in_person")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(catalogue_item=self.literacy_cluster_training)
+        self.assertIsNone(activity.programme_delivery_mode)
+        self.assertGreater(activity.schedule_cost_lines.count(), 0)
+
+    def test_the_online_cost_preview_is_zero(self):
+        client = Client()
+        client.force_login(self.user)
+        preview = client.get(
+            "/clusters/cost-preview",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "cluster_training",
+                "delivery_mode": "online",
+            },
+        )
+        self.assertContains(preview, "data-online-training-free")
+        self.assertContains(preview, "UGX 0")
 
     def test_the_ticked_schools_are_recorded_as_invitations(self):
         """The Planning cluster drawer ticks schools by name; the view used to

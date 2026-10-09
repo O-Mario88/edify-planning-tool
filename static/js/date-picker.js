@@ -206,6 +206,7 @@
     var placement = [];
     var look = [];
     Array.prototype.forEach.call(native.classList, function (name) {
+      if (name === "edify-datepick__native") return;
       if (PLACEMENT.test(name)) {
         placement.push(name);
         return;
@@ -384,6 +385,7 @@
   };
 
   Field.prototype.sync = function () {
+    if (!this.native.matches(".edify-datepick__native")) this.native.classList.add("edify-datepick__native");
     var day = parseIso(this.native.value);
     this.display.value = day ? shortLabel(day) : "";
     this.display.disabled = this.native.disabled;
@@ -657,7 +659,7 @@
   /* What code can change on a date field without an event: its limits, its
      state, a value written as an attribute, being hidden. */
   var watched = null;
-  var WATCHED = ["value", "min", "max", "disabled", "readonly", "required", "hidden", "style"];
+  var WATCHED = ["value", "min", "max", "disabled", "readonly", "required", "hidden", "style", "class"];
   /* Fields enhanced while hidden, waiting to be measured. One that still
      cannot be stays watched; taken off and put straight back, Safari reported
      it again on every frame (it reports each newly watched element once). */

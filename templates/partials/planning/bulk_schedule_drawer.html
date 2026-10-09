@@ -18,7 +18,9 @@ package slot; a school the scheduling rules refuse is named and left out.
         purposeOfVisit: '',
         trainingCourseId: '',
         trainingCourses: {{ training_courses_json|default:'[]' }},
+        interventionFree: {{ intervention_free_purposes_json|default:'[]' }},
         get isTraining() { return this.purposeOfVisit === 'in_school_training'; },
+        get namesIntervention() { return this.purposeOfVisit && !this.isTraining && !this.interventionFree.includes(this.purposeOfVisit); },
         onPurposeChange() { if (!this.isTraining) { this.trainingCourseId = ''; } }
       }"
       data-school-bulk-schedule>
@@ -43,6 +45,19 @@ package slot; a school the scheduling rules refuse is named and left out.
         <option value="">Select a training…</option>
         <template x-for="course in trainingCourses" :key="course.id"><option :value="course.id" x-text="course.label"></option></template>
       </select>
+    </div>
+  </template>
+  {% comment %}One SSA intervention for every school ticked (owner,
+  2026-09-26), as the cluster's day of visits asked; left open, each school
+  is planned against its own first need.{% endcomment %}
+  <template x-if="namesIntervention">
+    <div class="space-y-1" data-day-focus>
+      <label for="bulk-schedule-focus" class="block edify-text-caption font-semibold text-slate-600">SSA intervention</label>
+      <select id="bulk-schedule-focus" name="focus_intervention" class="w-full h-10 rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px]">
+        <option value="">Each school's own weakest area</option>
+        {% for code, label in interventions %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+      </select>
+      <p class="edify-text-caption text-slate-500">Choose one and every school ticked is planned against it.</p>
     </div>
   </template>
   <div class="space-y-1">

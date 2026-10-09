@@ -1061,8 +1061,27 @@ def _apply_schedule_cost_snapshot(
         batch_poolable,
         remove_school,
     )
+    from apps.activities.online_training import is_online_training
     from apps.activities.pair_costing import is_uncosted_pair_training
 
+    if is_online_training(activity):
+        # Free, and outside every day pool: nobody travels to it
+        # (apps.activities.online_training). Written through the same
+        # writer as any price, so its finance locks still hold.
+        from apps.budget.costing import ActivityCost
+
+        if activity.daily_visit_batch_id:
+            remove_school(activity_id=activity.id)
+            activity.refresh_from_db(fields=["daily_visit_batch"])
+        apply_to_activity(
+            activity,
+            _costing_input(activity, data),
+            responsible_user_id=responsible,
+            precomputed_cost=ActivityCost(),
+        )
+        sync_weekly_requests_for_activities([activity], prior_buckets=prior_buckets)
+        sync_monthly_drafts_for_activities([activity], prior_buckets=prior_buckets)
+        return
     if is_uncosted_pair_training(activity):
         _price_pair_training_at_zero(
             activity,
@@ -2897,7 +2916,12 @@ def _create(
     # fake cost. (Daily Visit Batch members are pool-priced after creation;
     # that path validates its own pool keys and raises with the exact missing
     # rate names, so it is exempt here.)
-    if scheduled_date and not skip_cost_snapshot:
+    from apps.activities.online_training import asked_for_online
+
+    # An online Group Training is free (owner, 2026-10-09): there is no rate
+    # it could be missing, so the funded gate has nothing to ask of it.
+    online_training = asked_for_online(activity_type, data)
+    if scheduled_date and not skip_cost_snapshot and not online_training:
         from apps.budget.costing_service import preview as _cost_preview
 
         _check = _cost_preview(
@@ -3159,7 +3183,10 @@ def _create(
                 data.get("programmeActivityType") if non_school else None
             ),
             programme_delivery_mode=(
-                data.get("programmeDeliveryMode") if non_school else None
+                data.get("programmeDeliveryMode")
+                if non_school
+                # A Group Training delivered online (owner, 2026-10-09).
+                else ("online" if online_training else None)
             ),
             planned_school_count=(planned_school_count if non_school else None),
             event_district_id=event_district_id,

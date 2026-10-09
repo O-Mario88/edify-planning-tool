@@ -917,7 +917,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 136,
+   "line": 137,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -931,7 +931,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 203,
+   "line": 204,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
@@ -945,7 +945,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 385,
+   "line": 384,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -959,7 +959,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 420,
+   "line": 419,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -973,7 +973,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 447,
+   "line": 446,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -984,7 +984,7 @@
      10
     ],
     [
-     59,
+     58,
      1
     ]
    ]

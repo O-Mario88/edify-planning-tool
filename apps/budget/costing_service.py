@@ -1074,6 +1074,12 @@ def apply_to_activity(
     dual = calculate_dual({**input, "fy": fy})
     catalogue = dual["operationalCard"]
     rates, settings_by_key = _rate_card(catalogue)
+    from apps.activities.online_training import is_online_training
+
+    if precomputed_cost is None and is_online_training(activity):
+        # A Group Training delivered online is free whoever asks for its
+        # price (owner, 2026-10-09; apps.activities.online_training).
+        precomputed_cost = ActivityCost()
     cost = precomputed_cost if precomputed_cost is not None else dual["operational"]
     reference_card = dual["referenceCard"]
     reference_cost = dual["reference"]

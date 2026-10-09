@@ -279,3 +279,20 @@ test('a field in a closed row is measured when the row opens, not before', async
   await expect.poll(() => sized('late')).toEqual(await sized('early'));
   expect(await page.evaluate(() => window.__widthReads)).toBeGreaterThan(0);
 });
+
+test('a date field whose attributes are written again stays off screen', async ({ page }) => {
+  // htmx settles a redrawn element by writing its attributes again when the
+  // element before the swap had the same id: the cluster drawer's Delivery
+  // mode redraw showed the date field beside the calendar (owner,
+  // 2026-10-09: "the scheduled date field seems to have two").
+  await open(page);
+  await page.locator('#visit').evaluate((el) => el.setAttribute('class', 'w-full'));
+  await expect(page.locator('#visit')).toHaveClass(/edify-datepick__native/);
+  await expect(fieldOf(page, 'visit')).toHaveValue('Oct 6, 2026');
+  // And the redrawn field itself arrives wearing the old one's mark, which
+  // the visible field must not take as its look.
+  await page.locator('form').evaluate((form) => form.insertAdjacentHTML('beforeend',
+    '<input type="date" id="redrawn" name="redrawn" class="w-full edify-datepick__native">'));
+  await expect(fieldOf(page, 'redrawn')).not.toHaveClass(/edify-datepick__native/);
+  await expect(fieldOf(page, 'redrawn')).toBeVisible();
+});
