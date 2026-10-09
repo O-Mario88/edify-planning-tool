@@ -471,6 +471,12 @@ def cluster_cost_preview_partial(request):
     activity_type = request.GET.get("activity_type", "training").strip()
     if activity_type.startswith("cluster_"):
         activity_type = activity_type[len("cluster_") :]
+    if (
+        activity_type == "training"
+        and request.GET.get("delivery_mode", "").strip() == "online"
+    ):
+        # An online Group Training is free (owner, 2026-10-09).
+        return render(request, "partials/cost_preview.html", {"online_free": True})
     participants = _cost_preview_participants(request, activity_type)
     cluster_id = request.GET.get("cluster_id", "").strip()
 

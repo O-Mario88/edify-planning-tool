@@ -278,6 +278,36 @@ class TheBulkScheduleTest(_Portfolio):
         self.assertEqual(client_visit.delivery_type, "staff")
         self.assertFalse(Activity.objects.filter(school=self.champion).exists())
 
+    def test_one_intervention_named_in_the_drawer_is_every_school_s(self):
+        """Owner, 2026-09-26: "for group scheduling, SSA intervention should
+        be the same. it should be chosen from group visit scheduling
+        drawer"."""
+        from unittest import mock
+
+        drawer = self.client.get(SCHEDULE_DRAWER, {"school_ids": "SBE-CLIENT"})
+        self.assertContains(drawer, 'name="focus_intervention"')
+        # In-school Training is on the list of purposes too (owner,
+        # 2026-10-09: "add in-school training to it too").
+        self.assertContains(drawer, 'value="in_school_training"')
+
+        with mock.patch(
+            "apps.frontend.views.planning_views._follow_up_requires_training",
+            return_value=False,
+        ):
+            response = self.client.post(
+                SCHEDULE,
+                {
+                    "school_ids": self._codes("SBE-CLIENT"),
+                    "purpose_of_visit": "training_follow_up",
+                    "focus_intervention": "learning_environment",
+                    "scheduled_date": _delivery_day().isoformat(),
+                },
+            )
+
+        self.assertEqual(response.status_code, 200, response.content[:600])
+        visit = Activity.objects.get(school=self.client_school, deleted_at__isnull=True)
+        self.assertEqual(visit.focus_intervention, "learning_environment")
+
     def test_a_colleague_s_school_is_left_out_not_scheduled(self):
         response = self.client.post(
             SCHEDULE,
@@ -318,6 +348,37 @@ class TheBulkScheduleTest(_Portfolio):
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "purpose", status_code=400)
         self.assertFalse(Activity.objects.filter(school=self.client_school).exists())
+
+
+class ThePlanningPageSchedulesTheTickTest(_Portfolio):
+    """Owner, 2026-10-09: "allow group scheduling direct from the planning
+    page by using checkbox and alongside assign to partner, the button for
+    schedule for visit"."""
+
+    def test_the_selection_bar_opens_the_group_schedule(self):
+        response = self.client.get("/planning", {"fy": self.fy})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["can_bulk_schedule"])
+        html = response.content.decode()
+        self.assertIn("data-planning-assign-selected", html)
+        self.assertIn("data-planning-schedule-selected", html)
+        self.assertIn('hx-get="/planning/bulk-schedule-drawer"', html)
+        # The save lets the ticks go and re-reads the list in place.
+        self.assertIn('@planning-saved.window="selectedSchools = []"', html)
+
+    def test_a_reader_who_cannot_schedule_has_no_button(self):
+        from unittest import mock
+
+        from apps.core.permissions import RolePermissionService
+
+        with mock.patch.object(
+            RolePermissionService, "can_schedule_activity", return_value=False
+        ):
+            response = self.client.get("/planning", {"fy": self.fy})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "data-planning-schedule-selected")
 
 
 class TheBulkAddToProjectTest(_Portfolio):

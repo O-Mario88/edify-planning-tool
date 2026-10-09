@@ -44,9 +44,10 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     # An in-school Training is part of its paired School Visit, which carries
     # the visit cost (apps.activities.pair_costing). The Training is not
     # independently fundable and must not be treated as costless.
+    from apps.activities.online_training import ONLINE_TRAINING
     from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
 
-    qs = qs.exclude(UNCOSTED_PAIR_TRAINING)
+    qs = qs.exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
     qs = _filter_period(qs, period, period_key, data).prefetch_related(
         "schedule_cost_lines"
     )

@@ -1249,6 +1249,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     # An in-school Training is done during its School Visit and stays at
     # UGX 0: the visit carries the day's cost (owner, 2026-09-28). Its row
     # says so (owner, 2026-10-05) unless the visit has no price either.
+    from apps.activities.online_training import is_online_training
     from apps.activities.pair_costing import pair_cost_notes
 
     pair_notes = pair_cost_notes(activities)
@@ -1981,6 +1982,10 @@ def get_frontend_context(principal, query: dict) -> dict:
                 else:
                     pps = 2
             per_school_meal_cost = pps * 5000
+            # An online training is free: no meal is served at any school
+            # (owner, 2026-10-09; apps.activities.online_training).
+            if act_obj and is_online_training(act_obj):
+                per_school_meal_cost = 0
 
             if _target_schools:
                 for _school in _target_schools:

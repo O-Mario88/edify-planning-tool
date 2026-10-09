@@ -4,26 +4,37 @@
     <h4 class="text-[12px] font-semibold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
     <p class="edify-text-caption text-slate-400 mt-0.5">Click a school to see its SSA intervention scores.</p>
   </div>
-  {% comment %}Schedule a Day of Visits and Add Schools were two buttons here;
-  they are items in the cluster card's one Actions menu now (owner,
-  2026-09-26), above this table.{% endcomment %}
+  {% comment %}Add Schools is an item in the cluster card's one Actions menu
+  (owner, 2026-09-26), above this table. A day of visits is planned by
+  ticking its schools below: Schedule visit appears for the tick (owner,
+  2026-10-09).{% endcomment %}
 </div>
 
 {% if schools %}
   {% comment %}Tick the schools, then Assign to partner (owner, 2026-09-29: "On
   Cluster School list, add checkbox on the first column so that the staff can
-  be able to select the schools they want to assign to partners"). A school
-  its gate keeps from a partner has no box; its row menu says why.{% endcomment %}
-  {% if can_assign_partner and schools|any_attr:"canAssignPartner" %}{% firstof "1" as can_tick %}{% endif %}
+  be able to select the schools they want to assign to partners"), or Schedule
+  visit (owner, 2026-10-09). A planner who schedules has a box on every
+  school, and the drawers name a school they leave out; one who can only
+  hand over has none on a school its gate keeps from a partner.{% endcomment %}
+  {% if can_bulk_schedule %}{% firstof "1" as can_tick %}{% elif can_assign_partner and schools|any_attr:"canAssignPartner" %}{% firstof "1" as can_tick %}{% endif %}
   <div{% if can_tick %} x-data="{ selectedSchools: [] }" @planning-saved.window="selectedSchools = []" data-cluster-selectable{% endif %}>
   {% if can_tick %}
   <div class="school-directory-listbar" x-cloak x-show="selectedSchools.length > 0">
     <div class="school-directory-listbar__bulk" aria-live="polite">
       <strong><span x-text="selectedSchools.length"></span> selected</strong>
+      {% if can_assign_partner %}
       <form hx-get="/planning/bulk-assign-partner-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
         <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
         <button type="submit" data-cluster-assign-selected>Assign to partner</button>
       </form>
+      {% endif %}
+      {% if can_bulk_schedule %}
+      <form hx-get="/planning/bulk-schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
+        <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
+        <button type="submit" data-cluster-schedule-selected>Schedule visit</button>
+      </form>
+      {% endif %}
       <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
     </div>
   </div>
@@ -34,7 +45,7 @@
     <tbody>
     {% for s in schools %}
       <tr class="cluster-school-row" @click="if (!$event.target.closest('a, button, input, select, textarea, label, .row-menu')) openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :class="{ 'is-expanded': openSchoolId === '{{ s.id }}' }">
-        {% if can_tick %}<td class="school-plan-table__select">{% if s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
+        {% if can_tick %}<td class="school-plan-table__select">{% if can_bulk_schedule or s.canAssignPartner %}<label class="school-record-row__select" for="cluster-pick-{{ s.id }}"><input type="checkbox" id="cluster-pick-{{ s.id }}" value="{{ s.schoolId }}" x-model="selectedSchools" data-cluster-pick><span class="sr-only">Select {{ s.name }}</span></label>{% endif %}</td>{% endif %}
         <td data-label="School ID" class="school-plan-table__id">{{ s.schoolId }}</td>
         <td data-label="School Name" class="school-plan-table__name"><div class="school-plan-table__identity">
           <button type="button" class="school-plan-table__expander" @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'" :aria-expanded="(openSchoolId === '{{ s.id }}').toString()" :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'" aria-controls="cluster-school-details-{{ s.id }}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg></button>
