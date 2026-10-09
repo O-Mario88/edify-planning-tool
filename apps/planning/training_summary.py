@@ -12,6 +12,23 @@ columns with their #schools".
     Training Name | Mode of delivery | Country Ceiling | Planned | Remaining
         | # Schools (Staff) …
 
+Owner, 2026-10-09, on the same table: "add 'awaiting partner' numbers to the
+staff {name} directly just like you added in-school and group scheduled and
+keep the column for awaiting partner schedule, get rid of group scheduled, and
+replace country ceiling with total covered out of the set ceiling for the
+country (23/1000) ... mode of delivery should be group training, in-school
+training, Partner in-school training". So the country's columns are now
+
+    Total Covered / Country Ceiling | Staff Planned | Awaiting Partner
+        | Remaining
+
+(Partner Assigned had a column of its own for an hour; the owner, the same
+day: "partner assigned and awaiting partner schedule are duplicate remove one
+column and leave one".)
+
+and a staff column is that person's in-school schools, the schools on their
+group trainings and the schools they have with a Partner, each school once.
+
 A training is a row only once a school has been planned for it in the year:
 invited to a group training, invited to a cluster meeting that is a training,
 or given an in-school training. Until then it is not on the table, whatever
@@ -19,14 +36,17 @@ ceilings have been set for it.
 
 The three country columns are the country's own, the same for every reader:
 
-* **Country Ceiling** — set by Admin or Impact Assessment
-  (``training_ceilings.set_country_ceiling``); "Not set" until it is.
-* **Total Covered** — every school the country has committed to the
-  training, each once: planned by staff for an in-school training, assigned
-  to a Partner for one — whether or not the Partner has dated it (owner,
-  2026-10-08: "the training summary should not wait for partner scheduling")
-  — or on a group training. Each route has its own column beside it, so a
-  school that is *assigned* is never read as *scheduled*.
+* **Total Covered / Country Ceiling** — every school the country has
+  committed to the training, each once, out of the ceiling Admin or Impact
+  Assessment set (``training_ceilings.set_country_ceiling``; "Not set" until
+  it is): "23 / 1,000". A school is covered once it is planned by staff for
+  an in-school training, assigned to a Partner for one — whether or not the
+  Partner has dated it (owner, 2026-10-08: "the training summary should not
+  wait for partner scheduling") — or on a group training. Staff Planned
+  and Awaiting Partner have their own columns beside it, so a school that
+  is *assigned* is never read as *scheduled*; the schools on group trainings
+  and those a Partner has dated are in the total and in the staff columns,
+  with no column of their own.
 * **Remaining** — the ceiling less what is covered, never below zero; what
   is covered past the ceiling shows on Total Covered.
 
@@ -75,7 +95,7 @@ from django.db.models import Count, Q
 from apps.core.exceptions import Forbidden
 from apps.core.rbac import EdifyRole
 from apps.planning import training_ceilings
-from apps.planning.training_ceilings import GROUP, IN_SCHOOL
+from apps.planning.training_ceilings import DELIVERY_LABELS, GROUP, IN_SCHOOL
 
 __all__ = [
     "COUNTRY_READER_ROLES",
@@ -105,9 +125,11 @@ COUNTRY_READER_ROLES = frozenset(
 #: Roles that hold the summary on Planning Oversight.
 SUMMARY_ROLES = COUNTRY_READER_ROLES | {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
 
-#: "Cluster Group Training" and "In-School Training": the two modes, in the
-#: words My Plan's Mode of Delivery column uses.
-MODE_LABELS = dict(training_ceilings.MODE_OF_DELIVERY)
+#: The summary's Mode of delivery, in the owner's words for this table
+#: (2026-10-09): "group training, in-school training, Partner in-school
+#: training". The third says who delivers the in-school one.
+PARTNER_IN_SCHOOL = "Partner In-School Training"
+MODE_LABELS = dict(DELIVERY_LABELS)
 #: How a catalogue entry says it is delivered, in the summary's two modes.
 _CATALOGUE_MODES = {
     "in_school_training": MODE_LABELS[IN_SCHOOL],
@@ -143,15 +165,15 @@ class Cell:
 
     @property
     def breakdown(self) -> str:
-        """How the schools are covered, route by route."""
-        waiting = (
-            f" ({self.awaiting_partner} awaiting the partner)"
-            if self.awaiting_partner
+        """What the number adds up: in-school, group and with a Partner."""
+        dated = (
+            f", {self.partner_scheduled} scheduled by the partner"
+            if self.partner_scheduled
             else ""
         )
         return (
-            f"{self.in_school} staff planned, {self.partner} partner "
-            f"assigned{waiting}, {self.group} group scheduled"
+            f"{self.in_school} staff in-school, {self.group} group scheduled, "
+            f"{self.awaiting_partner} awaiting the partner's schedule{dated}"
         )
 
     @property
@@ -426,16 +448,17 @@ def _training_rows(profiles, fy: str, *, country: str) -> list[Row]:
                     ceiling_id=figure.ceiling_id if figure else "",
                 )
             )
-        # How the country is delivering it: both modes when it is planned
-        # both ways. A Partner's training is an in-school one.
+        # How the country is delivering it: every way it is planned.
         country_row = planned[item.id]
-        in_school = country_row["in_school"] or country_row["partner"]
-        if country_row["group"] and in_school:
-            mode = f"{MODE_LABELS[GROUP]} · {MODE_LABELS[IN_SCHOOL]}"
-        elif in_school:
-            mode = MODE_LABELS[IN_SCHOOL]
-        else:
-            mode = MODE_LABELS[GROUP]
+        mode = " · ".join(
+            label
+            for label, schools in (
+                (MODE_LABELS[GROUP], country_row["group"]),
+                (MODE_LABELS[IN_SCHOOL], country_row["in_school"]),
+                (PARTNER_IN_SCHOOL, country_row["partner"]),
+            )
+            if schools
+        )
         ceiling = ceilings.get(item.id) or {}
         rows.append(
             Row(
