@@ -539,6 +539,7 @@ def _schools_held_by_one_person_and_assigned_to_another() -> dict:
 def _scheduled_activities_without_a_cost() -> dict:
     """Scheduled work that cannot enter a fund request."""
     from apps.activities.models import Activity, ActivityScheduleCostLine
+    from apps.activities.online_training import ONLINE_TRAINING
     from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
 
     # An undated plan is not priced yet by design: the costing writer prices
@@ -549,7 +550,7 @@ def _scheduled_activities_without_a_cost() -> dict:
             Q(status__in=("scheduled", "rescheduled", "partner_scheduled"))
             | Q(status="planned", planned_date__isnull=False)
         )
-        .exclude(UNCOSTED_PAIR_TRAINING)
+        .exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
     )
     costed = set(
         ActivityScheduleCostLine.objects.filter(

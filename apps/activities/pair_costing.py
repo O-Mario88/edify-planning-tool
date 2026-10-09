@@ -75,6 +75,8 @@ def pair_cost_notes(activities) -> dict[str, str]:
     ``activities`` are read with ``schedule_cost_lines`` prefetched, as the
     Work Plan and My Plan load them. Nothing is queried unless a pair's
     other half is outside the list, or a School Visit in it has no lines.
+
+    An online Group Training with no lines is noted too: free by rule.
     """
     from django.db.models import Exists, OuterRef
 
@@ -109,8 +111,17 @@ def pair_cost_notes(activities) -> dict[str, str]:
                 deleted_at__isnull=True,
             ).values_list("paired_school_visit_id", "id")
         )
+    # A Group Training delivered online is free by rule, not unpriced
+    # (apps.activities.online_training).
+    from apps.activities.online_training import ONLINE_FREE_NOTE, is_online_training
+
+    online = {
+        activity.id: ONLINE_FREE_NOTE
+        for activity in activities
+        if is_online_training(activity) and not has_lines(activity)
+    }
     if not pairs:
-        return {}
+        return online
 
     priced = {
         activity.id
@@ -136,7 +147,7 @@ def pair_cost_notes(activities) -> dict[str, str]:
             notes[training_id] = CAPTURED_IN_VISIT_NOTE
         elif visit is not None and not has_lines(visit) and training_id in priced:
             notes[visit_id] = CAPTURED_IN_TRAINING_NOTE
-    return notes
+    return {**notes, **online}
 
 
 def find_pair_trainings_carrying_cost(apps=None) -> list[str]:

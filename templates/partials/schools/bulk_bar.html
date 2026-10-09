@@ -36,7 +36,7 @@ so the bar shows only once a school is ticked (the cluster profile).
     {% if can_bulk_schedule %}
     <form hx-get="/planning/bulk-schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="contents">
       <template x-for="sid in selectedSchools" :key="sid"><input type="hidden" name="school_ids" :value="sid"></template>
-      <button type="submit" data-school-schedule-selected>Schedule</button>
+      <button type="submit" data-school-schedule-selected>Schedule visit</button>
     </form>
     {% endif %}
     {% if can_assign_project %}

@@ -27,6 +27,9 @@ IN_SCHOOL = "in_school"
 #: The two modes, as My Plan's Mode of Delivery column says them.
 MODE_OF_DELIVERY = {GROUP: "Cluster Group Training", IN_SCHOOL: "In-School Training"}
 
+#: A Group Training delivered online (apps.activities.online_training).
+ONLINE_TRAINING_LABEL = "Online Training"
+
 _TRAINING_TYPES = frozenset(getattr(t, "value", t) for t in TRAINING_TYPES)
 
 
@@ -61,5 +64,11 @@ def delivery_of(activity) -> str | None:
 
 
 def mode_of_delivery(activity) -> str:
-    """ "Cluster Group Training" or "In-School Training"; blank otherwise."""
+    """ "Cluster Group Training", "Online Training" or "In-School Training";
+    blank otherwise. An online training is a group training for every count
+    (``delivery_of``); only what its row says differs (owner, 2026-10-09)."""
+    from apps.activities.online_training import is_online_training
+
+    if is_online_training(activity):
+        return ONLINE_TRAINING_LABEL
     return MODE_OF_DELIVERY.get(delivery_of(activity), "")
