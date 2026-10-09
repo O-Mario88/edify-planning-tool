@@ -441,6 +441,7 @@ def missing_cost_lines_count() -> int:
     can surface this exact real count without running the full ``report()``.
     """
     from apps.activities.models import Activity
+    from apps.activities.online_training import ONLINE_TRAINING
     from apps.activities.pair_costing import UNCOSTED_PAIR_TRAINING
 
     active = Activity.objects.filter(deleted_at__isnull=True)
@@ -454,7 +455,7 @@ def missing_cost_lines_count() -> int:
             "rejected",
             "awaiting_owner_approval",
         ]
-    ).exclude(UNCOSTED_PAIR_TRAINING)
+    ).exclude(UNCOSTED_PAIR_TRAINING | ONLINE_TRAINING)
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
         .filter(cost_line_count=0)

@@ -270,6 +270,27 @@ Assign to partner
 </form>
 {% endif %}
 
+{% if can_bulk_schedule %}
+{% comment %}Schedule for the ticked schools, beside Assign to partner (owner,
+2026-10-09: "allow group scheduling direct from the planning page by using
+checkbox"). The one group Schedule drawer the Core school list and a
+cluster's roster open: one purpose and date, an activity per school, a
+school the rules refuse named and left out.{% endcomment %}
+<form hx-get="/planning/bulk-schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="flex items-center gap-2">
+<template x-for="sid in selectedSchools" :key="sid">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<button
+type="submit"
+data-planning-schedule-selected
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Schedule visit
+</button>
+</form>
+{% endif %}
+
 <form
 hx-post="/planning/bulk-action"
 hx-target="body"
@@ -280,11 +301,6 @@ class="flex items-center gap-2"
 <input type="hidden" name="school_ids" :value="sid">
 </template>
 
-{% comment %}Bulk Schedule was here. It moved to the cluster (owner,
-2026-09-21: bulk scheduling "should only happen from cluster"), where a day
-of visits obeys the rules a day has — at least five member schools, one of
-four purposes, never an In-school Training. A single school is still
-scheduled from its own row.{% endcomment %}
 <button
 type="submit"
 name="action"

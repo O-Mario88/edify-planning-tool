@@ -1,5 +1,14 @@
 {% load frontend_filters %}
-{% if not success %}
+{% if online_free %}
+<div class="space-y-2 text-[12px] text-slate-500" data-online-training-free>
+<div class="edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Cost Preview (Online Group Training)</div>
+<div class="flex justify-between items-center text-[14px]">
+<span class="font-semibold text-slate-600">Cost</span>
+<span class="font-semibold text-[var(--edify-accent-text)]">UGX 0</span>
+</div>
+<p>An online training is free: no meals, venue, transport or facilitation fee is budgeted.</p>
+</div>
+{% elif not success %}
 <div class="bg-rose-50 border border-rose-200 rounded-surface p-3 edify-text-caption font-semibold text-rose-700 space-y-1">
 <div class="font-semibold text-[12px] uppercase">Cost Catalogue Error</div>
 <p>{{ error_msg }}</p>

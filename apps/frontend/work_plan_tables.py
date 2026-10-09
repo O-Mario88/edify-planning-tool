@@ -8,6 +8,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
+from apps.activities.training_names import ONLINE_TRAINING_LABEL
 from apps.ssa.plan_alignment import verdict_display
 
 NOT_RECORDED = "—"
@@ -111,6 +112,9 @@ def delivery_mode(activity, summary_group) -> str:
     if kind == "in_school":
         return IN_SCHOOL_TRAINING
     if kind == "training":
+        # A Group Training delivered online (owner, 2026-10-09).
+        if getattr(activity, "programme_delivery_mode", None) == "online":
+            return ONLINE_TRAINING_LABEL
         return GROUP_TRAINING
     if kind == "meeting":
         return CLUSTER_MEETING

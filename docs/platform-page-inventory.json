@@ -3379,7 +3379,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 7250,
+      "bytes": 6983,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters",
@@ -3387,7 +3387,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 6,
+      "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Cluster Card",
       "purpose": "Reusable cluster card interface primitive",
@@ -3450,14 +3450,14 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10752,
+      "bytes": 11477,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 7,
+      "forms": 2,
+      "htmx_controls": 8,
       "kind": "application-partial",
       "name": "Cluster Schools Table",
       "purpose": "Reusable cluster schools table interface primitive",
@@ -4414,7 +4414,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1835,
+      "bytes": 2361,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/cost-preview",
@@ -12929,7 +12929,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5097,
+      "bytes": 6207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/bulk-schedule-drawer"
@@ -13045,14 +13045,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 36495,
+      "bytes": 37459,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 5,
+      "htmx_controls": 4,
       "kind": "application-partial",
       "name": "Schedule Cluster Drawer",
       "purpose": "Reusable schedule cluster drawer interface primitive",
@@ -14663,7 +14663,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3165,
+      "bytes": 3171,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -31878,7 +31878,6 @@
         "GET /clusters/{{ cluster.id }}/facilitator-drawer",
         "GET /clusters/{{ cluster.id }}/catchment-drawer",
         "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
-        "GET /clusters/{{ cluster.id }}/bulk-schedule-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training&amp;school_id={{ s.schoolId }}",
@@ -69424,6 +69423,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /planning/bulk-assign-partner-drawer",
+        "GET /planning/bulk-schedule-drawer",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}",
         "GET /planning/assign-partner-modal?school_id={{ s.schoolId }}",
         "GET /planning/schedule-modal?cluster_id={{ cluster_id }}&amp;action=meeting&amp;school_id={{ s.schoolId }}",
@@ -76442,6 +76442,7 @@
         "GET /planning/recent-changes",
         "GET /planning",
         "GET /planning/bulk-assign-partner-drawer",
+        "GET /planning/bulk-schedule-drawer",
         "POST /planning/bulk-action"
       ],
       "implementation_status": "existing-routed-surface",
@@ -77937,10 +77938,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=training{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
-        "GET /planning/schedule-modal?cluster_id={{ cluster.id }}&amp;action=meeting{% if priority_allocation_id %}&amp;priority_allocation={{ priority_allocation_id }}{% endif %}{% if not fixed_cluster %}&amp;pick=1{% endif %}",
-        "POST /planning/schedule-action",
         "GET /planning/schedule-modal",
+        "POST /planning/schedule-action",
         "GET /clusters/cost-preview",
         "POST {% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
       ],
