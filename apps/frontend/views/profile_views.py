@@ -246,6 +246,7 @@ def profile_context(
 
     profile = engine.build(scope, fy, period)
     context["profile"] = profile
+    context["rail"] = rail_for(context, profile)
     may_open_staff = RolePermissionService.can_view_page(request.user, "staff")
     context["identity"] = profile_records.identity(
         profile, subject, may_open_staff=may_open_staff
@@ -280,7 +281,21 @@ def profile_context(
         context["people"] = engine.people(profile)
         context["finance"] = engine.finance(profile, request.user)
         context["stories"] = profile_records.stories(profile)
-        context["online"] = profile_records.channels(profile)[-1]
+        channels = profile_records.channels(profile)
+        context["online"] = channels[-1]
+        if scope.kind == "cluster":
+            # A cluster's Executive Summary (owner's brief, 2026-10-10):
+            # attendance at the trainings a school is invited to — group and
+            # online, an in-school training has no invitation list — and at
+            # the cluster's meetings.
+            invited = sum(c["invited"] or 0 for c in channels)
+            attended = sum(c["attended"] or 0 for c in channels)
+            context["training_attendance"] = {
+                "invited": invited,
+                "attended": attended,
+                "rate": round(attended * 100 / invited) if invited else 0,
+            }
+            context["meetings"] = profile_records.meetings(profile)
         context["focus_work"] = profile_records.focus_work(profile)
         # How many of each geographic part the scope has.
         context["levels"] = {
@@ -360,6 +375,27 @@ def profile_context(
             )
             context["activities_caption"] = activities_caption
     return context
+
+
+def rail_for(context: dict, profile: dict, *, lead: tuple = ()) -> dict:
+    """The insight rail of ``profile`` (`apps.analytics.profile_rail`), its
+    lines opening the tabs and records of the page ``context`` describes
+    (owner, 2026-10-10: the short reads sit in a column beside the tables)."""
+    from apps.analytics import profile_rail
+
+    href, param, fy, at = (context[k] for k in ("href", "param", "fy", "at"))
+
+    def tab_url(section: str, show: str = "") -> str:
+        url = f"{href}{param}={at.get(section, section)}&fy={fy}"
+        return f"{url}&show={show}" if show else url
+
+    def records_url(what: str, key: str = "") -> str:
+        url = f"{context['records']}{what}"
+        return f"{url}&key={quote(str(key))}" if key else url
+
+    return profile_rail.build(
+        profile, tab_url=tab_url, records_url=records_url, lead=lead
+    )
 
 
 # ── Pages that are a profile and nothing else ───────────────────────────────

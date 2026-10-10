@@ -1,140 +1,45 @@
 {% extends "layouts/shell.html" %}
 {% load chart_tags %}
 {% load table_pagination %}
-{% load frontend_filters row_actions %}
+{% load frontend_filters row_actions kpi_metrics %}
 
-{% block title %}{{ cluster.name }} - Cluster details{% endblock %}
+{% block title %}{{ cluster.name }} - Cluster{% endblock %}
+
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
 
 {% block shell_content %}
-<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
-<!-- Back Nav & Header -->
-<div>
+{% comment %}
+The Cluster Page: the operational workspace (owner's brief, 2026-10-10: "The
+Cluster Page manages the cluster. The Cluster Profile explains the cluster.").
+What its holder acts on now: the running year's work, what is waiting, the
+record and its contacts, the roster with its tick boxes, and the planned and
+completed activities. SSA movement, attendance history, impact, loans,
+stories and the rankings are the Cluster Profile's, one press away.
+{% endcomment %}
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-cluster-page>
 {% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}
-<div class="mt-2 edify-page-header">
-<div class="edify-page-header__lead">
-<h1 class="edify-page-title edify-page-header__title">{{ cluster.name }}</h1>
-<p class="edify-page-header__description">
-District: {% if cluster.district.id %}<a href="/districts/{{ cluster.district.id }}" class="hover:underline font-medium text-slate-800">{{ cluster.district.name }}</a>{% elif cluster.district_id %}<a href="/districts/{{ cluster.district_id }}" class="hover:underline font-medium text-slate-800">{% firstof cluster.district.name cluster.district %}</a>{% else %}{% firstof cluster.district.name cluster.district %}{% endif %} &bull; Sub-county: {% if cluster.subCounty.id %}<a href="/schools?sub_county={{ cluster.subCounty.id }}" class="hover:underline font-medium text-slate-800">{{ cluster.subCounty.name }}</a>{% elif cluster.sub_county_id %}<a href="/schools?sub_county={{ cluster.sub_county_id }}" class="hover:underline font-medium text-slate-800">{% firstof cluster.subCounty.name cluster.subCounty %}</a>{% else %}{% firstof cluster.subCounty.name cluster.subCounty %}{% endif %}
-</p>
-</div>
+{% include "partials/clusters/_page_header.html" with on="page" %}
 
-<!-- Actions -->
-<div class="edify-page-header__controls">
-{% comment %}
-Separate buttons, in two groups (owner, 2026-09-26: "keep them up as separate
-buttons but organize them in a professional way"). One primary action; the
-rest are outline buttons of the same height; a rule divides planning the
-cluster's sessions from managing the record, and Delete comes last. Adding
-schools sits on the schools table below, where it acts; a day of visits is
-planned by ticking its schools there (owner, 2026-10-09).
-
-Each button keeps the gate of the endpoint behind it, so none answers 403:
-* Group Training and Cluster Meeting open `/planning/schedule`, which reads
-  both `action` and `cluster` — never `/planning`, the dashboard, which reads
-  neither (owner, §12). Cluster sessions are the cluster owner's programme.
-* Edit Details and Delete are can_edit_cluster, the check the edit drawer
-  enforces. A cluster that has hosted a meeting or training is kept (owner,
-  2026-09-11): Delete is then inert with the reason on it, rather than
-  discovered after the press.
-{% endcomment %}
-{% if can_plan_clusters %}
-<a href="/planning/schedule?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9">
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 3.5v4M16 3.5v4M4 10h16"/></svg> Schedule Group Training
-</a>
-<a href="/planning/schedule?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9">
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg> Schedule Cluster Meeting
-</a>
+{% if ops %}
+{% comment %}The running year's work, each figure opening the list it
+counted (apps.clusters.page_summary; the profile engine's own numbers).{% endcomment %}
+{% kpi_strip title="This Year's Work" %}{% kpi_metric %}{% kpi_label %}Schools{% endkpi_label %}{{ ops.schools|intcomma }}{% kpi_link %}#cluster-schools{% endkpi_link %}{% kpi_helper %}{{ ops.school_types }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}In The Plan{% endkpi_label %}{{ ops.planned|intcomma }}{% kpi_link %}{{ ops.profile_url }}?tab=work&fy={{ ops.fy }}{% endkpi_link %}{% kpi_helper %}{{ ops.planned_parts }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Completed{% endkpi_label %}{{ ops.completed|intcomma }}{% kpi_link %}?cluster_acts_tab=completed#cluster_acts-activities{% endkpi_link %}{% kpi_helper %}{{ ops.completed_parts }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Upcoming{% endkpi_label %}{{ ops.upcoming|intcomma }}{% kpi_link %}?cluster_acts_tab=planned#cluster_acts-activities{% endkpi_link %}{% kpi_helper %}{{ ops.upcoming_parts }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Past Their Date{% endkpi_label %}{{ ops.overdue|intcomma }}{% kpi_link %}#cluster-attention{% endkpi_link %}{% kpi_helper %}{{ ops.overdue_parts }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Outstanding Actions{% endkpi_label %}{{ ops.outstanding|intcomma }}{% kpi_link %}#cluster-attention{% endkpi_link %}{% kpi_helper %}lines under Needs Attention Now{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}SSA Score{% endkpi_label %}{{ ops.ssa_current|default_if_none:0|floatformat:2 }}{% kpi_link %}{{ ops.profile_url }}?tab=ssa&fy={{ ops.fy }}{% endkpi_link %}{% kpi_helper %}{{ ops.assessed|intcomma }} of {{ ops.schools|intcomma }} assessed · baseline {{ ops.ssa_previous|default_if_none:0|floatformat:2 }}{% if ops.ssa_change is not None %} · {% if ops.ssa_change > 0 %}+{% endif %}{{ ops.ssa_change|floatformat:2 }}{% endif %}{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
 {% endif %}
-{% if can_edit_cluster %}
-{% if can_plan_clusters %}<span class="edify-page-header__sep" aria-hidden="true"></span>{% endif %}
-<button
-type="button"
-hx-get="/clusters/{{ cluster.id }}/edit-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-aria-label="Edit {{ cluster.name }} cluster details"
-class="edify-action-button {% if can_plan_clusters %}secondary{% else %}primary{% endif %} h-9"
->
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
-</button>
-{% if delete_block %}
-<button
-type="button"
-disabled
-aria-disabled="true"
-title="{{ delete_block }}"
-aria-label="Delete {{ cluster.name }} cluster unavailable: {{ delete_block }}"
-data-cluster-delete-blocked
-class="edify-action-button edify-destructive-outline h-9"
->
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4h6v3"/></svg> Delete cluster
-</button>
-{% else %}
-<form
-method="post"
-action="/clusters/{{ cluster.id }}/delete"
-hx-post="/clusters/{{ cluster.id }}/delete"
-hx-target="#cluster-delete-errors"
-hx-swap="innerHTML"
-hx-confirm="Delete {{ cluster.name }}? Its schools are released and can be added to a new cluster."
-class="contents"
->
-{% csrf_token %}
-<button type="submit" aria-label="Delete {{ cluster.name }} cluster" class="edify-action-button edify-destructive-outline h-9">
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4h6v3"/></svg> Delete cluster
-</button>
-</form>
-{% endif %}
-<div id="cluster-delete-errors" class="basis-full"></div>
-{% endif %}
-</div>
-</div>
-</div>
 
-{% comment %}
-The profile's sections (owner brief, 2026-10-08: "Clicking a cluster should
-open: Cluster Profile ... Then tabs"). Overview is the page as it has been:
-the record, its schools, its planned and completed work. Each other tab is one
-read of records the platform already keeps (apps.clusters.profile_insights),
-drawn in the Overview's place, never below it (owner, 2026-10-02: tabs, not
-tables one below another). A tab is a link, so it can be bookmarked and sent.
-{% endcomment %}
-<nav class="oversight-entity-tabs" aria-label="{{ cluster.name }} profile sections" data-cluster-profile-tabs>
-{% for entry in profile_tabs %}
-<a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab={{ entry.key }}"{% if entry.is_active %} aria-current="page"{% endif %}><span>{{ entry.label }}</span></a>
-{% endfor %}
-</nav>
+{% comment %}The record, the roster and the work in the main column; the
+short reads in the rail beside them (owner, 2026-10-10: "I like the second
+column"), each line opening the Cluster Profile.{% endcomment %}
+<div class="edify-rail-layout" data-rail-layout><div class="edify-rail-layout__main">
 
-{% if pi %}
-{% comment %}A section of the shared profile engine over this cluster's
-schools (apps.analytics.profile_intelligence; owner, 2026-10-09).{% endcomment %}
-<p class="edify-text-label edify-text-muted" data-profile-scope>{% include "partials/profiles/_scope_line.html" %}</p>
-{% include "partials/profiles/_filters.html" %}
-{% include "partials/profiles/_sections.html" %}
-{% elif profile_tab == "ssa" %}
-{% include "partials/clusters/profile_ssa.html" %}
-{% elif profile_tab == "attendance" %}
-{% include "partials/clusters/profile_attendance.html" %}
-{% elif profile_tab == "interventions" %}
-{% include "partials/clusters/profile_interventions.html" %}
-{% elif profile_tab == "scores" %}
-{% include "partials/clusters/profile_scores.html" %}
-{% elif profile_tab == "students" %}
-{% include "partials/clusters/profile_students.html" %}
-{% elif profile_tab == "learning" %}
-{% include "partials/clusters/profile_learning.html" %}
-{% elif profile_tab == "loans" %}
-{% include "partials/clusters/profile_loans.html" %}
-{% elif profile_tab == "stories" %}
-{% include "partials/clusters/profile_stories.html" %}
-{% elif profile_tab == "history" %}
-{% include "partials/clusters/profile_history.html" %}
-{% else %}
-<div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
-<!-- Left Column: Cluster Information & Schools -->
-<div class="lg:col-span-2 space-y-6">
-<!-- Cluster Info Card -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<!-- Cluster record and contacts -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6" data-cluster-logistics>
 <h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
@@ -199,9 +104,9 @@ Approve the district, or move the school to a cluster serving it: {% for s in ca
 {% endif %}
 </div>
 </div>
-
 <!-- Schools in Cluster Table -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" data-no-titlebar>
+<!-- Schools in Cluster Table -->
+<div id="cluster-schools" class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" data-no-titlebar>
 <div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-wrap items-center justify-between gap-3 edify-surface-raised" data-card-header>
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Schools in This Cluster</h3>
@@ -379,77 +284,8 @@ aria-label="Remove {{ s.name }} from this cluster"
 <!-- Planned and completed activities (owner, 2026-09-28) -->
 {% include "partials/components/profile_activities.html" with acts=profile_activities caption="Group trainings and cluster meetings, and the visits and trainings at member schools." %}
 {% endif %}
-
-<!-- Activity and Impact History -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--edify-border)]">
-<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
 </div>
-<div class="divide-y divide-[var(--edify-border)] text-[12px]">
-{% if activity_impact %}
-{% for act in activity_impact %}
-<div class="p-4 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
-<div>
-<h4 class="font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
+{% if ops %}<div id="cluster-attention">{% include "partials/profiles/_rail.html" with rail=ops.rail %}</div>{% endif %}
 </div>
-<div class="text-right flex items-center gap-4">
-<div class="text-[12px] font-semibold">
-<span class="text-slate-400">Delta:</span>
-<span class="font-semibold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
-{% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
-</span>
-</div>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
-{{ act.impact.status }}
-</span>
-</div>
-</div>
-{% endfor %}
-{% else %}
-<div class="p-8 text-center text-slate-400 font-semibold">No activity impact logs recorded.</div>
-{% endif %}
-</div>
-</div>
-</div>
-
-<!-- Right Column: Weakest interventions and scorecard -->
-<div class="space-y-6">
-<!-- Weakest 4 Interventions -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
-<div class="space-y-3">
-{% if weakest_interventions %}
-{% for item in weakest_interventions|slice:":4" %}
-{% comment %} cluster_weakest_interventions() returns `avg`, not `score` — this panel
-   read `item.score` and so rendered a blank value and a neutral dot for
-   every intervention, on every cluster, since it was written. {% endcomment %}
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<div class="flex items-center gap-2">
-<span class="h-2 w-2 rounded-pill {% if item.avg < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
-<span class="truncate">{{ item.label }}</span>
-</div>
-<span class="font-semibold text-slate-800">{{ item.avg|floatformat:1 }}</span>
-</div>
-{% endfor %}
-{% else %}
-<p class="text-[12px] text-slate-400 font-semibold">No confirmed SSA scores for this cluster yet.</p>
-{% endif %}
-</div>
-</div>
-
-<!-- Full Intervention Scorecard: each intervention this year beside last
-     year (owner, 2026-10-09); apps.ssa.year_comparison. -->
-{% if cluster_ssa.has_any %}
-{% ssa_year_chart cluster_ssa "Full Cluster Scorecard" %}
-{% else %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
-<p class="text-[12px] text-slate-400 font-semibold">No scores recorded.</p>
-</div>
-{% endif %}
-</div>
-</div>
-{% endif %}
 </div>
 {% endblock %}

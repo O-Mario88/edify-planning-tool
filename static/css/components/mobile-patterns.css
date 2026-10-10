@@ -29,7 +29,7 @@
   margin: 0 0 0.25rem;
   color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -127,7 +127,7 @@
   margin: 0;
   color: var(--edify-text);
   font-size: var(--edify-text-body-size);
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
@@ -272,7 +272,7 @@
   margin: 0;
   color: var(--edify-text);
   font-size: var(--edify-text-heading-size);
-  font-weight: 760;
+  font-weight: 700;
 }
 
 .mobile-sheet__header p {
@@ -435,7 +435,7 @@
 .mobile-agenda-card__time small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
 .mobile-agenda-card__body { min-inline-size: 0; }
 .mobile-agenda-card__body p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
-.mobile-agenda-card__body h3 { margin: 0; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-agenda-card__body h3 { margin: 0; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-agenda-card__body small { display: block; margin-block-start: 0.15rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); text-overflow: ellipsis; white-space: nowrap; }
 
 .mobile-agenda-card__status,
@@ -485,14 +485,14 @@
 
 .mobile-record-card > header > div { min-inline-size: 0; }
 .mobile-record-card > header p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
-.mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: var(--edify-text-body-size); font-weight: 740; line-height: 1.25; }
+.mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: var(--edify-text-body-size); font-weight: 700; line-height: 1.25; }
 .mobile-record-card > header small { display: block; margin-block-start: 0.2rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 
 .mobile-record-card dl,
 .mobile-record-card dl > div { margin: 0; }
 .mobile-record-card dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding-block-start: 0.6rem; border-block-start: 1px solid var(--edify-border); }
 .mobile-record-card dt { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
-.mobile-record-card dd { margin: 0; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 720; font-variant-numeric: tabular-nums; }
+.mobile-record-card dd { margin: 0; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .mobile-record-card__action {
   display: flex;

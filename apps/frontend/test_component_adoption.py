@@ -60,7 +60,17 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: utilities templates write on cells), and compact rows (the tick box's
 #: touch size). The desktop text-wrapping rules they replace are gone. No
 #: headroom: from here only downwards.
-IMPORTANT_CEILING = 3958
+#: Raised to the count, 3,980, later the same day for two more things the
+#: owner asked for. The one type standard ("everything should have the
+#: consistent size and font weight across the platform"): ten declarations in
+#: consistency.css for what the tokens cannot reach, each over a rule that is
+#: itself `!important` (the table body's one weight, the form-control and
+#: utility-weight bridges). And the insight rail beside every profile ("I
+#: like the second column"): twelve in components/insight-rail.css, because
+#: the shell stamps any card with a heading as a title band and hands its
+#: type to everything inside with `!important`, so the rail has to state its
+#: own. Four more were written and cut. No headroom.
+IMPORTANT_CEILING = 3980
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

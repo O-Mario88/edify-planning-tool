@@ -214,7 +214,7 @@ class LoansTest(_ClusterCase):
         self.assertIn("1 loan at 1 school", body)
         self.assertIn("UGX 5,000,000 disbursed", body)
         self.assertIn("Cluster MFI", body)
-        self.assertIn(f'href="/clusters/{self.cluster.id}?tab=loans"', body)
+        self.assertIn(f'href="/clusters/{self.cluster.id}/profile?tab=loans"', body)
 
         lead = _create_user("lead@loans.test", EdifyRole.COUNTRY_PROGRAM_LEAD)
         cceo = _create_user("cceo@loans.test", EdifyRole.CCEO)
@@ -225,9 +225,11 @@ class LoansTest(_ClusterCase):
             responsible_staff_id=cceo.staff_profile.id
         )
         self.client.force_login(lead)
-        response = self.client.get(f"/clusters/{self.cluster.id}", {"tab": "loans"})
+        response = self.client.get(
+            f"/clusters/{self.cluster.id}/profile", {"tab": "loans"}
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["profile_tab"], "overview")
+        self.assertEqual(response.context["profile_tab"], "portfolio")
         self.assertNotIn("?tab=loans", response.content.decode())
 
 
@@ -364,7 +366,7 @@ class OversightColumnsTest(_Sessions):
 
         for heading in ("Attendance", "Absent 3+ Sessions", "SSA Change"):
             self.assertIn(f">{heading}</th>", body)
-        base = f"/clusters/{self.cluster.id}?tab="
+        base = f"/clusters/{self.cluster.id}/profile?tab="
         self.assertIn(f"{base}attendance&amp;fy={self.fy}", body)
         self.assertIn(f"{base}attendance&amp;fy={self.fy}&amp;show=missing", body)
         self.assertIn(f"{base}ssa&amp;fy={self.fy}", body)
@@ -396,7 +398,7 @@ class AbsentSchoolsTodoTest(_Sessions):
         self.assertIn("Tabs school 1", todo["description"])
         self.assertEqual(
             todo["action_url"],
-            f"/clusters/{self.cluster.id}?tab=attendance&show=missing",
+            f"/clusters/{self.cluster.id}/profile?tab=attendance&show=missing",
         )
         self.assertEqual(todo["priority"], "high")
         # Nobody else is asked to follow up a cluster they do not hold.

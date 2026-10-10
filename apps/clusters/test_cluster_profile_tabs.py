@@ -57,8 +57,10 @@ class _ClusterCase(TestCase):
         )
 
     def _page(self, **query):
+        """The Cluster Profile at a tab; with no tab, the Cluster Page."""
         self.client.force_login(self.cd)
-        response = self.client.get(f"/clusters/{self.cluster.id}", query)
+        path = f"/clusters/{self.cluster.id}" + ("/profile" if query else "")
+        response = self.client.get(path, query)
         self.assertEqual(response.status_code, 200)
         return response
 
@@ -230,7 +232,7 @@ class AttendanceTest(_ClusterCase):
         ):
             self.assertIn(f">{heading}</th>", body)
         self.assertIn("Missed 3 in a row", body)
-        base = f"/clusters/{self.cluster.id}?tab=attendance&amp;fy={self.fy}&amp;show="
+        base = f"/clusters/{self.cluster.id}/profile?tab=attendance&amp;fy={self.fy}&amp;show="
         for view in insights.ATTENDANCE_VIEWS:
             self.assertIn(base + view, body)
         # The schools it lists link to their profiles.
@@ -367,7 +369,7 @@ class SsaMovementTest(_ClusterCase):
         self.assertIn("3 of 5 schools compared", body)
         self.assertEqual(body.count("data-ssa-area="), 9)
         link = (
-            f"/clusters/{self.cluster.id}?tab=ssa&amp;fy={self.fy}"
+            f"/clusters/{self.cluster.id}/profile?tab=ssa&amp;fy={self.fy}"
             "&amp;area=leadership&amp;verdict=declined"
         )
         self.assertIn(link, body)
@@ -431,19 +433,52 @@ class MembershipHistoryTest(_ClusterCase):
 
 
 class ProfileTabsTest(_ClusterCase):
-    def test_the_overview_is_the_page_as_it_was_with_the_tabs_over_it(self):
+    def test_the_cluster_page_keeps_the_roster_and_opens_the_profile(self):
+        """Owner, 2026-10-10: "The Cluster Page manages the cluster. The
+        Cluster Profile explains the cluster." The page has no profile tabs;
+        it has one door to the profile."""
         self._school(0)
 
         response = self._page()
         body = response.content.decode()
 
-        self.assertEqual(response.context["profile_tab"], "overview")
-        self.assertIn("data-cluster-profile-tabs", body)
-        for key in ("overview", "ssa", "attendance", "history"):
-            self.assertIn(f'href="/clusters/{self.cluster.id}?tab={key}"', body)
+        self.assertIn("data-cluster-page", body)
+        self.assertNotIn("data-cluster-profile-tabs", body)
+        self.assertIn(
+            f'href="/clusters/{self.cluster.id}/profile" '
+            'class="edify-action-button secondary h-9" data-cluster-profile-link',
+            body,
+        )
         self.assertIn("Schools in This Cluster", body)
         self.assertIn("Cluster Logistics", body)
         self.assertNotIn("data-cluster-profile-panel", body)
+
+    def test_the_profile_has_the_tabs_and_not_the_roster(self):
+        self._school(0)
+        self.client.force_login(self.cd)
+
+        response = self.client.get(f"/clusters/{self.cluster.id}/profile")
+        body = response.content.decode()
+
+        self.assertEqual(response.context["profile_tab"], "portfolio")
+        self.assertIn("data-cluster-profile-tabs", body)
+        for key in ("portfolio", "ssa", "attendance", "history", "sources"):
+            self.assertIn(f'href="/clusters/{self.cluster.id}/profile?tab={key}', body)
+        self.assertNotIn("Schools in This Cluster", body)
+        self.assertIn("data-cluster-page-link", body)
+
+    def test_an_address_from_before_the_two_were_parted_is_sent_on(self):
+        self.client.force_login(self.cd)
+
+        response = self.client.get(
+            f"/clusters/{self.cluster.id}", {"tab": "attendance", "fy": self.fy}
+        )
+
+        self.assertRedirects(
+            response,
+            f"/clusters/{self.cluster.id}/profile?tab=attendance&fy={self.fy}",
+            fetch_redirect_response=False,
+        )
 
     def test_a_tab_does_not_build_the_overviews_roster(self):
         self._school(0)
@@ -454,14 +489,15 @@ class ProfileTabsTest(_ClusterCase):
         self.assertNotIn("schools", response.context)
         self.assertNotIn("Schools in This Cluster", body)
         self.assertIn(
-            f'href="/clusters/{self.cluster.id}?tab=attendance" aria-current="page"',
+            f'href="/clusters/{self.cluster.id}/profile?tab=attendance&amp;fy={self.fy}" '
+            'aria-current="page"',
             body,
         )
 
-    def test_an_unknown_tab_opens_the_overview(self):
+    def test_an_unknown_tab_opens_the_summary(self):
         response = self._page(tab="nonsense")
 
-        self.assertEqual(response.context["profile_tab"], "overview")
+        self.assertEqual(response.context["profile_tab"], "portfolio")
 
     def test_a_year_the_page_does_not_offer_falls_back(self):
         response = self._page(tab="attendance", fy="1066")

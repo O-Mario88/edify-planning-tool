@@ -171,7 +171,7 @@ button {
 .login-brand__product {
   color: #b9d4e9;
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.23;
 }
 
@@ -213,7 +213,7 @@ button {
   margin: 0;
   color: #edf7ff;
   font-size: 1.05rem;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.58;
 }
 
@@ -302,7 +302,7 @@ button {
   margin: 0;
   color: #b9d2e5;
   font-size: var(--edify-text-micro-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.52;
 }
 
@@ -543,7 +543,7 @@ button {
   margin: .3rem 0 0;
   color: var(--login-muted);
   font-size: .94rem;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .login-form {
@@ -594,7 +594,7 @@ button {
   background: rgba(255, 255, 255, .76);
   box-shadow: inset 0 1px 2px rgba(7, 38, 65, .025);
   font-size: var(--edify-text-body-size);
-  font-weight: 400;
+  font-weight: 500;
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
@@ -677,7 +677,7 @@ button {
   color: var(--login-muted);
   cursor: pointer;
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .remember-control input {
@@ -1362,7 +1362,7 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
   padding: 2.75rem clamp(1.5rem, 3vw, 2.75rem);
 }
 .login-card__logo { width: 7rem; margin-bottom: 1.25rem; }
-.login-heading h1 { font-size: 1.75rem; font-weight: 650; letter-spacing: -.025em; }
+.login-heading h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -.025em; }
 .login-heading p { margin-top: .5rem; font-size: var(--edify-text-body-size); line-height: 1.5; }
 .login-form { margin-top: 1.75rem; }
 .login-field + .login-field { margin-top: 1.25rem; }

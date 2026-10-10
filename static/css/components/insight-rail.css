@@ -1,0 +1,69 @@
+/* The insight rail: a profile's short reads in a column beside its tables.
+   Owner, 2026-10-10, of the Staff Activity Log's Team Insights: "I like the
+   second column, can you apply on the profiles majorly ... ssa performance
+   and other short and small cards can use the second right column."
+
+   The same measure as that page (a table beside an 18rem column from 80rem
+   up). On a tablet the rail lies above the content as a row of its parts, so
+   what needs attention is not pushed under a long table. */
+.edify-rail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.edify-rail-layout__main { min-inline-size: 0; display: grid; gap: 1rem; align-content: start; }
+.edify-rail-layout__main > * { min-inline-size: 0; }
+/* On a tablet the rail is a short row above the content; on a phone it would
+   be a screen and a half before the page's own figures, so it follows them. */
+@media (min-width: 48rem) {
+  .edify-rail-layout > :not(.edify-rail-layout__main) { order: -1; }
+}
+@media (min-width: 80rem) {
+  .edify-rail-layout { grid-template-columns: minmax(0, 1fr) 19rem; }
+  .edify-rail-layout > :not(.edify-rail-layout__main) { order: 0; position: sticky; inset-block-start: 4.5rem; }
+}
+
+/* The shell reads any card with a heading as a title band and hands its
+   type down; the rail states its own, the reading size at medium. */
+main .edify-rail:not(#edify-none) { display: grid; gap: 1rem; min-inline-size: 0; align-content: start; }
+main .edify-rail:not(#edify-none),
+main .edify-rail :is(li, a, span, p, small, dt, dd):not(#edify-none) { font-size: var(--edify-text-label-size) !important; font-weight: 500 !important; line-height: 1.4 !important; }
+main .edify-rail .edify-rail__head:not(#edify-none) { display: block; padding: 0; margin: 0; min-block-size: 0; background: none; border: 0; }
+main .edify-rail .edify-rail__head h2:not(#edify-none) { margin: 0; font-size: var(--edify-text-title-size) !important; font-weight: 700 !important; }
+main .edify-rail .edify-rail__part > h3:not(#edify-none) { margin: 0 0 0.5rem; font-size: var(--edify-text-lead-size) !important; font-weight: 700 !important; }
+main .edify-rail :is(.edify-rail__head p, .edify-rail__note, .edify-rail__figure small):not(#edify-none, #edify-nil) { font-size: var(--edify-text-micro-size) !important; color: var(--edify-text-subtle); }
+main .edify-rail :is(.edify-rail__value, .edify-rail__value a, .edify-rail__links a, dd):not(#edify-none, #edify-nil) { font-weight: 600 !important; }
+main .edify-rail .edify-rail__figure > :is(a, span):not(#edify-none, #edify-nil) { font-size: var(--edify-text-display-size) !important; font-weight: 700 !important; line-height: 1.1 !important; }
+/* Stacked: the parts side by side, as many as fit. */
+@media (max-width: 79.99rem) {
+  main .edify-rail:not(#edify-none) { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.85rem 1.5rem; }
+  .edify-rail__head { grid-column: 1 / -1; }
+}
+.edify-rail__head p { margin: 0.1rem 0 0; }
+.edify-rail__part { min-inline-size: 0; }
+.edify-rail__part + .edify-rail__part { border-block-start: 1px solid var(--edify-border); padding-block-start: 0.85rem; }
+@media (max-width: 79.99rem) {
+  .edify-rail__part + .edify-rail__part { border-block-start: 0; padding-block-start: 0; }
+}
+.edify-rail__figure { margin: 0 0 0.6rem; display: grid; gap: 0.1rem; }
+.edify-rail__figure > :is(a, span) { font-size: var(--edify-text-display-size); font-weight: 700; line-height: 1.1; color: var(--edify-text); font-variant-numeric: tabular-nums; text-decoration: none; }
+.edify-rail__figure > a:hover { text-decoration: underline; }
+.edify-rail__figure small { font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--edify-text-subtle); }
+.edify-rail :is(.edify-rail__meters, .edify-rail__rows, .edify-rail__links) { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; font-size: var(--edify-text-label-size); }
+.edify-rail__meters li { display: grid; grid-template-columns: minmax(5rem, 1fr) minmax(2.5rem, 4.5rem) auto; align-items: center; gap: 0.5rem; }
+.edify-rail__rows li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.edify-rail__name { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--edify-text); font-weight: 500; text-decoration: none; }
+a.edify-rail__name:hover, .edify-rail__links a:hover { text-decoration: underline; }
+.edify-rail__value { text-align: end; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--edify-text); white-space: nowrap; }
+.edify-rail__value a { color: inherit; }
+.edify-rail__value[data-edify-tone="success"] { color: var(--edify-success, #15803d); }
+.edify-rail__value[data-edify-tone="danger"] { color: var(--edify-danger, #b91c1c); }
+.edify-rail__meter { display: block; block-size: 0.4rem; border-radius: var(--edify-radius-pill); background: color-mix(in srgb, var(--edify-text-subtle) 18%, transparent); overflow: hidden; }
+.edify-rail__meter > span { display: block; block-size: 100%; border-radius: inherit; background: var(--edify-accent, #285b96); }
+.edify-rail__links a { color: var(--brand-primary-text, var(--edify-accent)); font-weight: 600; text-decoration: none; }
+.edify-rail__note { margin: 0.5rem 0 0; font-size: var(--edify-text-micro-size); color: var(--edify-text-subtle); }
+.edify-rail__fields { margin: 0; display: grid; gap: 0.4rem; font-size: var(--edify-text-label-size); }
+.edify-rail__fields > div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.edify-rail__fields dt { color: var(--edify-text-subtle); font-weight: 500; }
+.edify-rail__fields dd { margin: 0; text-align: end; font-weight: 600; color: var(--edify-text); min-inline-size: 0; overflow-wrap: anywhere; }

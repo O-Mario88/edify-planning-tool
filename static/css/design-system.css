@@ -374,10 +374,18 @@
      figure fits the card instead of overflowing it — and never above 24px,
      the ceiling the executive strip was built to. */
   --edify-text-hero-size: clamp(1.25rem, 1.19rem + 0.256vw, 1.5rem);
-  --edify-text-heading-size: clamp(1rem, 0.942rem + 0.256vw, 1.25rem);
   --edify-text-title-size: clamp(0.9375rem, 0.909rem + 0.128vw, 1.0625rem);
-  --edify-text-body-size: clamp(0.875rem, 0.861rem + 0.064vw, 0.9375rem);
+  /* A section's heading is a table's name: one size for the title over any
+     block of the page (owner, 2026-10-10). It was a step larger (18.8px). */
+  --edify-text-heading-size: var(--edify-text-title-size);
+  /* One reading size (owner, 2026-10-10: "everything should have the
+     consistent size and font weight across the platform ... use [the Staff
+     Activity table] as a gold standard"): a paragraph, a field's value and a
+     table cell are the same 13.7px. Body copy was a step above the cells. */
   --edify-text-label-size: clamp(0.8125rem, 0.798rem + 0.064vw, 0.875rem);
+  --edify-text-body-size: var(--edify-text-label-size);
+  /* The step column names and emphasised lines are set in (14.7px). */
+  --edify-text-lead-size: clamp(0.875rem, 0.861rem + 0.064vw, 0.9375rem);
   /* No rendered interface text may fall below this floor. Keep the micro tier
      semantic so charts and compact controls share the same 12px contract. */
   --edify-text-floor: 0.75rem;
@@ -386,7 +394,7 @@
   /* Component roles are aliases of the scale, so a card, a tile and a table
      can never drift onto a private size of their own. Container queries still
      own layout changes (columns, icon visibility and stacking). */
-  --edify-text-card-heading-size: var(--edify-text-heading-size);
+  --edify-text-card-heading-size: var(--edify-text-title-size);
   --edify-text-card-title-size: var(--edify-text-title-size);
   --edify-text-tile-value-size: clamp(1.125rem, 1.038rem + 0.385vw, 1.5rem);
   --edify-text-tile-label-size: var(--edify-text-label-size);
@@ -398,7 +406,7 @@
      "just slightly bigger not large" than the cells, bold, in the body's ink;
      the cells are the label step. Column names sat one step BELOW the cells
      before, and the table's name at the cells' own size. */
-  --edify-text-table-heading-size: var(--edify-text-body-size);
+  --edify-text-table-heading-size: var(--edify-text-lead-size);
   --edify-text-table-title-size: var(--edify-text-title-size);
 
   /* ── OPERATIONAL TABLE CONTRACT ─────────────────────────────────────────
@@ -416,16 +424,21 @@
      consistent"). Body text was 450 and the record's name 550, and a table
      outside the record-table contract kept whatever its template wrote. */
   --edify-table-body-weight: 500;
-  --edify-table-identity-weight: 500;
+  --edify-table-identity-weight: 600;
   --edify-table-action-size: 2rem;
   --edify-table-radius: 0.5rem;
 
+  /* Three weights, the Staff Activity table's (owner, 2026-10-10): text is
+     medium (500) like a cell, a name or a label semibold (600) like the
+     staff name, a heading bold (700) like a column name. There were six
+     (400, 450, 500, 550, 600, 700), so the same line read lighter or heavier
+     from one page to the next. */
   --edify-text-display-weight: 700;
-  --edify-text-heading-weight: 600;
-  --edify-text-title-weight:   600;
-  --edify-text-body-weight:    450;
-  --edify-text-label-weight:   550;
-  --edify-text-micro-weight:   450;
+  --edify-text-heading-weight: 700;
+  --edify-text-title-weight:   700;
+  --edify-text-body-weight:    500;
+  --edify-text-label-weight:   600;
+  --edify-text-micro-weight:   500;
 
   --edify-text-display-leading: 1.15;
   --edify-text-heading-leading: 1.3;
@@ -461,8 +474,8 @@
 
   /* Convenience composed shorthands (use as: font: var(--edify-font-body)) */
   --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
-  --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
-  --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
+  --edify-font-heading: 700 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
+  --edify-font-title:   700 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
   --edify-font-body:    var(--edify-text-body-weight) var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
   --edify-font-label:   500 var(--edify-text-label-size)/var(--edify-text-label-leading) var(--edify-font-sans);
   --edify-font-micro:   600 var(--edify-text-micro-size)/var(--edify-text-micro-leading) var(--edify-font-sans);
@@ -655,9 +668,8 @@
   :root {
     --edify-text-display-size: 1.25rem;
     --edify-text-hero-size: 1.25rem;
-    --edify-text-heading-size: 1rem;
     --edify-text-title-size: 0.9375rem;
-    --edify-text-body-size: 0.875rem;
+    --edify-text-lead-size: 0.875rem;
     --edify-text-label-size: 0.8125rem;
     --edify-text-micro-size: var(--edify-text-floor);
     --edify-text-tile-value-size: 1.125rem;
@@ -666,9 +678,8 @@
 @media (min-width: 150rem) and (max-resolution: 1.5dppx) {
   :root {
     --edify-text-display-size: 1.6875rem;
-    --edify-text-heading-size: 1.3125rem;
     --edify-text-title-size: 1.125rem;
-    --edify-text-body-size: 1rem;
+    --edify-text-lead-size: 1rem;
     --edify-text-label-size: 0.9375rem;
     --edify-text-micro-size: 0.875rem;
   }

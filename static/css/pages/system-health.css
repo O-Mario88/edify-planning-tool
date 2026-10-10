@@ -29,7 +29,7 @@ main .platform-hero p {
   max-inline-size: 68ch;
   color: rgba(232, 244, 252, 0.76);
   font-size: var(--edify-text-body-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.55;
 }
 

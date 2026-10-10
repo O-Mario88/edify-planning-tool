@@ -52,11 +52,15 @@ def _size(css: str, name: str, width: int) -> float:
 
 
 class FluidTypeScaleTest(SimpleTestCase):
+    #: The rungs of the scale. Owner, 2026-10-10 ("everything should have the
+    #: consistent size and font weight across the platform"): body copy is the
+    #: label rung, a table cell's, and a section heading the title rung, a
+    #: table name's — both are aliases now (`test_body_and_heading_...`). The
+    #: 14px rung body copy had is the lead rung, for column names.
     STEPS = (
         "--edify-text-display-size",
-        "--edify-text-heading-size",
         "--edify-text-title-size",
-        "--edify-text-body-size",
+        "--edify-text-lead-size",
         "--edify-text-label-size",
         "--edify-text-micro-size",
     )
@@ -138,14 +142,34 @@ class FluidTypeScaleTest(SimpleTestCase):
 
     def test_component_roles_alias_the_scale(self):
         for role, step in (
-            ("--edify-text-card-heading-size", "var(--edify-text-heading-size)"),
+            ("--edify-text-card-heading-size", "var(--edify-text-title-size)"),
             ("--edify-text-card-title-size", "var(--edify-text-title-size)"),
             ("--edify-text-table-size", "var(--edify-text-label-size)"),
-            ("--edify-text-table-heading-size", "var(--edify-text-body-size)"),
+            ("--edify-text-table-heading-size", "var(--edify-text-lead-size)"),
             ("--edify-text-table-title-size", "var(--edify-text-title-size)"),
         ):
             with self.subTest(role=role):
                 self.assertEqual(_token(self.css, role), step)
+
+    def test_body_and_heading_are_rungs_the_scale_already_has(self):
+        """One reading size and one title size: a paragraph is a cell's size
+        and a section heading a table name's, at every width, because each
+        is the other's token and no breakpoint re-declares it."""
+        self.assertEqual(
+            _token(self.css, "--edify-text-body-size"), "var(--edify-text-label-size)"
+        )
+        self.assertEqual(
+            _token(self.css, "--edify-text-heading-size"),
+            "var(--edify-text-title-size)",
+        )
+        for query in (
+            "(orientation: landscape) and (max-height: 30rem)",
+            "(min-width: 150rem) and (max-resolution: 1.5dppx)",
+        ):
+            with self.subTest(query=query):
+                declared = self._media(query)
+                self.assertNotIn("--edify-text-body-size", declared)
+                self.assertNotIn("--edify-text-heading-size", declared)
 
     def test_no_stylesheet_redeclares_the_scale_per_breakpoint(self):
         """One scale: a breakpoint that re-declares a step is a second scale."""

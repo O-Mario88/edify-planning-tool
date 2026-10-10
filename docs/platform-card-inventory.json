@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 669,
-  "templates": 254,
-  "distinct_titles": 635,
+  "titled_cards": 664,
+  "templates": 253,
+  "distinct_titles": 631,
   "with_card_key": 13,
-  "untitled_surfaces": 595,
+  "untitled_surfaces": 596,
   "untitled_chrome": 153,
   "untitled_nested": 192,
-  "untitled_headless": 250,
+  "untitled_headless": 251,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
   "ambiguous_titles": 1
@@ -54,8 +54,7 @@
   ],
   "needs attention": [
    "templates/partials/analytics/closure_quality_workspace.html",
-   "templates/partials/ia/operations.html",
-   "templates/partials/profiles/_sections.html"
+   "templates/partials/ia/operations.html"
   ],
   "operational risk / attention needed": [
    "templates/partials/analytics/cd/operational_risk.html",
@@ -908,77 +907,21 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 137,
+   "line": 42,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6",
-   "branch_path": [
-    [
-     9,
-     10
-    ]
-   ]
+   "branch_path": []
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 204,
+   "line": 109,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": [
-    [
-     9,
-     10
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/clusters/detail.html",
-   "line": 384,
-   "title": "Cluster Activity &amp; Improvement Impact",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": [
-    [
-     9,
-     10
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/clusters/detail.html",
-   "line": 419,
-   "title": "Struggling Interventions",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": [
-    [
-     9,
-     10
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/clusters/detail.html",
-   "line": 446,
-   "title": "Full Cluster Scorecard",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": [
-    [
-     9,
-     10
-    ],
-    [
-     58,
-     1
-    ]
-   ]
+   "branch_path": []
   },
   {
    "template": "templates/pages/core_schools/champion_candidates.html",
@@ -2452,7 +2395,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 60,
+   "line": 62,
    "title": "Organisation &amp; Contact",
    "heading_level": 3,
    "has_card_key": false,
@@ -2466,7 +2409,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 92,
+   "line": 94,
    "title": "Schools supported",
    "heading_level": 3,
    "has_card_key": false,
@@ -2480,7 +2423,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 151,
+   "line": 153,
    "title": "Activities",
    "heading_level": 3,
    "has_card_key": false,
@@ -2494,7 +2437,7 @@
   },
   {
    "template": "templates/pages/partners/detail.html",
-   "line": 173,
+   "line": 175,
    "title": "Staff and volunteers",
    "heading_level": 3,
    "has_card_key": false,
@@ -3112,7 +3055,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 64,
+   "line": 66,
    "title": "Supervision",
    "heading_level": 2,
    "has_card_key": false,
@@ -3130,7 +3073,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 97,
+   "line": 99,
    "title": "Schools Covered",
    "heading_level": 2,
    "has_card_key": false,
@@ -6620,38 +6563,6 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
-  },
-  {
-   "template": "templates/partials/profiles/_sections.html",
-   "line": 41,
-   "title": "Needs Attention",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-4 space-y-2",
-   "branch_path": [
-    [
-     0,
-     3
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/profiles/_sections.html",
-   "line": 56,
-   "title": "SSA score by intervention",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card p-4 space-y-2",
-   "branch_path": [
-    [
-     0,
-     3
-    ],
-    [
-     27,
-     1
-    ]
-   ]
   },
   {
    "template": "templates/partials/programme_rollout/spiritual.html",

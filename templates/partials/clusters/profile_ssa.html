@@ -1,4 +1,4 @@
-{% load components table_pagination %}
+{% load components table_pagination kpi_metrics chart_tags frontend_filters %}
 {% comment %}
 Cluster profile, SSA Movement (owner brief, 2026-10-08: "Don't only calculate
 Cluster SSA = 7.2 ... Leadership, 16 schools: 9 improved, 4 unchanged, 3
@@ -14,6 +14,7 @@ schools in this tab's place: one table at a time, never one below another.
 <div class="space-y-4" data-cluster-profile-panel="ssa">
 {% filter_bar label="SSA movement year" form_id="cluster-ssa-year" extra_class="flex flex-wrap items-end gap-3" %}
 <input type="hidden" name="tab" value="ssa">
+<input type="hidden" name="view" value="{{ ssa_view }}">
 <label class="block">
 <span class="edify-filter-label">Fiscal year</span>
 <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">
@@ -22,11 +23,65 @@ schools in this tab's place: one table at a time, never one below another.
 </label>
 {% endfilter_bar %}
 
-{% if ssa_drill %}
+{% comment %}The cluster's score this year against its baseline, the year
+before (owner, 2026-10-09), read from the schools' confirmed records
+(ssa.year_comparison). Each figure opens the list under it.{% endcomment %}
+{% kpi_strip title="Cluster SSA" %}{% kpi_metric %}{% kpi_label %}Current Score{% endkpi_label %}{{ ssa_headline.current|default_if_none:0|floatformat:2 }}{% kpi_link %}{{ profile_url }}?fy={{ profile_fy }}&what=ssa{% endkpi_link %}{% kpi_helper %}{{ ssa_headline.label }} · confirmed records{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Baseline{% endkpi_label %}{{ ssa_headline.previous|default_if_none:0|floatformat:2 }}{% kpi_link %}{{ profile_url }}?tab=ssa&fy={{ ssa_movement.previous_fy }}{% endkpi_link %}{% kpi_helper %}{{ ssa_headline.previous_label }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Change{% endkpi_label %}{% if ssa_change is None %}0{% else %}{% if ssa_change > 0 %}+{% endif %}{{ ssa_change|floatformat:2 }}{% endif %}{% kpi_link %}{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&view=schools{% endkpi_link %}{% kpi_helper %}current score less the baseline{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Schools Compared{% endkpi_label %}{{ ssa_movement.compared|intcomma }}{% kpi_link %}{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&view=schools{% endkpi_link %}{% kpi_helper %}of {{ ssa_movement.school_count|intcomma }} · a confirmed SSA in both years{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ ssa_movement.overall.improved|intcomma }}{% kpi_link %}{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&area=overall&verdict=improved{% endkpi_link %}{% kpi_helper %}of the schools compared{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ ssa_movement.overall.declined|intcomma }}{% kpi_link %}{{ profile_url }}?tab=ssa&fy={{ profile_fy }}&area=overall&verdict=declined{% endkpi_link %}{% kpi_helper %}of the schools compared{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
+
+<nav class="oversight-entity-tabs" aria-label="SSA Performance views" data-ssa-views>
+<a class="oversight-entity-tabs__link{% if ssa_view == "areas" and not ssa_drill %} is-active{% endif %}" href="{{ profile_url }}?tab=ssa&amp;fy={{ profile_fy }}"{% if ssa_view == "areas" and not ssa_drill %} aria-current="page"{% endif %}><span>By Intervention</span></a>
+<a class="oversight-entity-tabs__link{% if ssa_view == "schools" %} is-active{% endif %}" href="{{ profile_url }}?tab=ssa&amp;fy={{ profile_fy }}&amp;view=schools"{% if ssa_view == "schools" %} aria-current="page"{% endif %}><span>By School</span></a>
+</nav>
+
+{% if ssa_view == "schools" %}
+{% paginate ssa_standing "standing_page" as standing_pager %}
+{% data_table name="cluster-ssa-standing" %}
+{% slot title %}School SSA Performance, FY {{ ssa_movement.fy }}{% endslot %}
+{% slot summary %}{{ ssa_standing|length }} school{{ ssa_standing|length|pluralize }} · baseline FY {{ ssa_movement.previous_fy }}{% endslot %}
+{% slot caption %}Each school of {{ cluster.name }} with its average confirmed SSA in FY {{ ssa_movement.previous_fy }} and FY {{ ssa_movement.fy }}, the change, what the change is called, and the intervention it scores highest and lowest in on this year's record.{% endslot %}
+{% slot empty %}{% include "components/empty_state.html" with message="This cluster has no schools." compact="true" %}{% endslot %}
+{% slot footer %}{% include "components/table_pager.html" with pager=standing_pager param="standing_page" %}<p class="px-4 py-3 edify-text-caption text-slate-500">A school's score is the average on its latest confirmed SSA of the year; Strongest and Struggling are the interventions scored highest and lowest on that same record, so the row is the record its own profile shows. A school with no confirmed SSA this year is listed with 0 and no intervention named.</p>{% endslot %}
+{% if ssa_standing %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">School ID</th>
+<th scope="col" class="px-3 py-2">School Name</th>
+<th scope="col" class="px-3 py-2 text-right">Baseline</th>
+<th scope="col" class="px-3 py-2 text-right">SSA</th>
+<th scope="col" class="px-3 py-2 text-right">Change</th>
+<th scope="col" class="px-3 py-2">Status</th>
+<th scope="col" class="px-3 py-2">Strongest Intervention</th>
+<th scope="col" class="px-3 py-2">Struggling Intervention</th>
+</tr>
+</thead>
+<tbody>
+{% for row in standing_pager.rows %}
+<tr data-ssa-standing="{{ row.id }}">
+<td class="px-3 py-2 tabular-nums" data-label="School ID">{{ row.code|default:"—" }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title>{% school_link row.name row.id %}</th>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Baseline">{{ row.previous|default_if_none:0|floatformat:2 }}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="SSA"><strong>{{ row.current|default_if_none:0|floatformat:2 }}</strong></td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if row.change is None %}0{% else %}<span class="edify-status-text" data-edify-tone="{{ row.tone|default:"neutral" }}">{% if row.change > 0 %}+{% endif %}{{ row.change|floatformat:2 }}</span>{% endif %}</td>
+<td class="px-3 py-2" data-label="Status">{% include "components/badge.html" with tone=row.tone|default:"neutral" label=row.verdict_label %}{% if row.note %} <span class="edify-text-caption text-slate-500">{{ row.note }}</span>{% endif %}</td>
+<td class="px-3 py-2" data-label="Strongest Intervention">{% if row.strongest %}{{ row.strongest }} · {{ row.strongest_score|floatformat:1 }}{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+<td class="px-3 py-2" data-label="Struggling Intervention">{% if row.struggling %}{{ row.struggling }} · {{ row.struggling_score|floatformat:1 }}{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+{% endif %}
+{% enddata_table %}
+
+{% elif ssa_drill %}
 {% paginate ssa_drill.rows "ssa_page" as ssa_pager %}
 {% data_table name="cluster-ssa-schools" %}
 {% slot title %}{{ ssa_drill.area_label }}: {{ ssa_drill.verdict_label }}{% endslot %}
-{% slot summary %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}" class="edify-primary-text font-semibold hover:underline" data-ssa-back>All SSA areas</a> · {{ ssa_drill.rows|length }} school{{ ssa_drill.rows|length|pluralize }}{% endslot %}
+{% slot summary %}<a href="/clusters/{{ cluster.id }}/profile?tab=ssa&amp;fy={{ profile_fy }}" class="edify-primary-text font-semibold hover:underline" data-ssa-back>All SSA areas</a> · {{ ssa_drill.rows|length }} school{{ ssa_drill.rows|length|pluralize }}{% endslot %}
 {% slot caption %}Schools of {{ cluster.name }} counted as {{ ssa_drill.verdict_label }} on {{ ssa_drill.area_label }} between FY {{ ssa_movement.previous_fy }} and FY {{ ssa_movement.fy }}: School ID, school, each year's score, the change and the verdict.{% endslot %}
 {% slot empty %}{% include "components/empty_state.html" with message="No school is in this count." compact="true" %}{% endslot %}
 {% slot footer %}{% include "components/table_pager.html" with pager=ssa_pager param="ssa_page" %}{% endslot %}
@@ -87,14 +142,17 @@ schools in this tab's place: one table at a time, never one below another.
 <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.previous_fy }}">{% if area.before is None %}—{% else %}{{ area.before|floatformat:1 }}{% endif %}</td>
 <td class="px-3 py-2 text-right tabular-nums" data-label="FY {{ ssa_movement.fy }}">{% if area.after is None %}—{% else %}{{ area.after|floatformat:1 }}{% endif %}</td>
 <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% if area.change is None %}—{% else %}<span class="edify-status-text" data-edify-tone="{% if area.change > 0 %}success{% elif area.change < 0 %}danger{% else %}neutral{% endif %}">{% if area.change > 0 %}+{% endif %}{{ area.change|floatformat:1 }}</span>{% endif %}</td>
-<td class="px-3 py-2 text-right tabular-nums" data-label="Improved">{% if area.improved %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=improved" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.improved }} school{{ area.improved|pluralize }} improved on {{ area.label }}">{{ area.improved }}</a>{% else %}0{% endif %}</td>
-<td class="px-3 py-2 text-right tabular-nums" data-label="No Change">{% if area.held %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=no_change" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.held }} school{{ area.held|pluralize }} did not change on {{ area.label }}">{{ area.held }}</a>{% else %}0{% endif %}</td>
-<td class="px-3 py-2 text-right tabular-nums" data-label="Declined">{% if area.declined %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=declined" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.declined }} school{{ area.declined|pluralize }} declined on {{ area.label }}">{{ area.declined }}</a>{% else %}0{% endif %}</td>
-<td class="px-3 py-2 text-right tabular-nums" data-label="Not Compared">{% if area.not_compared %}<a href="/clusters/{{ cluster.id }}?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=not_compared" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.not_compared }} school{{ area.not_compared|pluralize }} not compared on {{ area.label }}">{{ area.not_compared }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Improved">{% if area.improved %}<a href="/clusters/{{ cluster.id }}/profile?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=improved" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.improved }} school{{ area.improved|pluralize }} improved on {{ area.label }}">{{ area.improved }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="No Change">{% if area.held %}<a href="/clusters/{{ cluster.id }}/profile?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=no_change" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.held }} school{{ area.held|pluralize }} did not change on {{ area.label }}">{{ area.held }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Declined">{% if area.declined %}<a href="/clusters/{{ cluster.id }}/profile?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=declined" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.declined }} school{{ area.declined|pluralize }} declined on {{ area.label }}">{{ area.declined }}</a>{% else %}0{% endif %}</td>
+<td class="px-3 py-2 text-right tabular-nums" data-label="Not Compared">{% if area.not_compared %}<a href="/clusters/{{ cluster.id }}/profile?tab=ssa&amp;fy={{ profile_fy }}&amp;area={{ area.key }}&amp;verdict=not_compared" class="edify-primary-text font-semibold hover:underline" aria-label="{{ area.not_compared }} school{{ area.not_compared|pluralize }} not compared on {{ area.label }}">{{ area.not_compared }}</a>{% else %}0{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
 {% endif %}
 {% enddata_table %}
 {% endif %}
+{% comment %}Each intervention this year beside last year (owner,
+2026-10-09): the scorecard that was on the cluster's page.{% endcomment %}
+{% if ssa_headline.has_any %}{% ssa_year_chart ssa_headline "Full Cluster Scorecard" %}{% endif %}
 </div>

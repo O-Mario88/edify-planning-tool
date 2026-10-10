@@ -1,4 +1,4 @@
-{% load components table_pagination frontend_filters %}
+{% load components table_pagination frontend_filters kpi_metrics %}
 {% comment %}
 Cluster profile, Loans (owner brief, 2026-10-08: "Loan activity should become
 one of the cluster's transformation indicators ... Schools receiving loans,
@@ -9,6 +9,11 @@ register's scope: a reader sees here exactly the loans the register would
 show them. A cancelled loan is not listed. A row opens the loan's record.
 {% endcomment %}
 <div class="space-y-4" data-cluster-profile-panel="loans">
+{% kpi_strip title="Loans And Business Transformation" %}{% kpi_metric %}{% kpi_label %}School Loans{% endkpi_label %}{{ loans.loan_count|intcomma }}{% kpi_link %}{{ profile_url }}?what=loans{% endkpi_link %}{% kpi_helper %}at {{ loans.school_count|intcomma }} school{{ loans.school_count|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Schools Funded{% endkpi_label %}{{ loans.funded_school_count|intcomma }}{% kpi_link %}{{ profile_url }}?what=loans{% endkpi_link %}{% kpi_helper %}with a loan disbursed, active or repaid{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Disbursed{% endkpi_label %}UGX {{ loans.disbursed|ugx_amount }}{% kpi_link %}{{ profile_url }}?what=loans{% endkpi_link %}{% kpi_helper %}confirmed disbursements{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Business Transformation Cases{% endkpi_label %}{{ bt_cases.total|intcomma }}{% kpi_link %}{{ profile_url }}?what=cases{% endkpi_link %}{% kpi_helper %}{{ bt_cases.open|intcomma }} open · {{ bt_cases.schools|intcomma }} school{{ bt_cases.schools|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
 {% paginate loans.rows "loans_page" as loans_pager %}
 {% data_table name="cluster-loans" %}
 {% slot title %}School Loans{% endslot %}

@@ -979,7 +979,7 @@ main .budget-grand-total .budget-grand-total__meta {
 .edify-page-header p:not(.edify-page-eyebrow) {
   font-size: var(--edify-text-body-size);
   color: var(--edify-text-muted);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
   max-width: 68ch;
 }
@@ -1234,7 +1234,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   background-color: var(--edify-notification);
   color: var(--edify-notification-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 900;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1264,7 +1264,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   box-shadow: 0 3px 10px var(--edify-notification-glow);
   font-size: var(--edify-text-micro-size);
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1331,7 +1331,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 /* Budget sub-totals: larger and bolder than body rows. */
 .budget-subtotal-row {
   font-size: var(--edify-text-body-size) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
 }
 
 /* Button styles to match reference image 3 */
@@ -2807,7 +2807,7 @@ select:not([multiple]):not(.select-native) {
   margin: 0 0 5px;
   color: var(--brand-primary-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -2905,7 +2905,7 @@ select:not([multiple]):not(.select-native) {
   flex: 0 0 auto;
   color: var(--brand-primary-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -3005,7 +3005,7 @@ select:not([multiple]):not(.select-native) {
   margin: 0 0 5px;
   color: var(--brand-primary-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
   transition: color .15s ease;
@@ -3225,7 +3225,7 @@ svg[data-edify-svg-typography] text {
   color: var(--edify-text);
   font-family: var(--edify-font-display-family, inherit);
   font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.25rem);
-  font-weight: 300;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -3822,12 +3822,12 @@ svg[data-edify-svg-typography] text {
   flex: 0 0 auto;
 }
 
-.edify-admin-support-banner strong { font-weight: 800; }
+.edify-admin-support-banner strong { font-weight: 700; }
 
 .edify-admin-support-banner a {
   margin-inline-start: auto;
   flex: 0 0 auto;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: .2rem;
 }
@@ -4258,7 +4258,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
     color:var(--edify-on-accent);
   }
   .sr-legend-marker[data-school-type="core_trained"]::after{
-    content:'✓';font-size:var(--edify-text-micro-size);font-weight:900;
+    content:'✓';font-size:var(--edify-text-micro-size);font-weight:700;
     line-height:1;transform:scale(.82);
   }
   .sr-legend-marker[data-school-type="core_graduate"]::after{
@@ -4489,7 +4489,7 @@ main .apexcharts-canvas > svg.apexcharts-svg {
 .budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(2), .budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(3) { text-align: center; }
 .budget-ledger-table tr > :nth-child(n+4), .budget-ledger-table .budget-ledger-subtotal td, .budget-ledger-table tfoot td { text-align: right; white-space: nowrap; }
 .budget-ledger-table .budget-ledger-band > * { background: #145b9a; color: #fff; }
-.budget-ledger-band span { font-size: var(--edify-text-micro-size); font-weight: 400; margin-left: 4px; }
+.budget-ledger-band span { font-size: var(--edify-text-micro-size); font-weight: 500; margin-left: 4px; }
 .budget-ledger-table .budget-ledger-subtotal > * { background: var(--edify-surface-muted); color: var(--edify-text); font-weight: 700; }
 .budget-ledger-table tfoot td { font-weight: 700; text-align: right !important; }
 .budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal):hover { background: var(--edify-surface-hover, #f4f8fb); }
@@ -5615,7 +5615,7 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   margin: 0;
   color: var(--edify-text);
   font-size: var(--edify-text-title-size);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.025em;
 }
@@ -5699,14 +5699,14 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
 .context-metrics__label {
   color: var(--kpi-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 550;
+  font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 .context-metrics__value {
   color: var(--kpi-text);
   font-size: clamp(20px, 2cqi, 24px);
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.035em;
   line-height: 1.15;

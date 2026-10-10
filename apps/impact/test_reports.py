@@ -89,6 +89,23 @@ def _user(email, role, country="Uganda", roles=None):
     return User.objects.select_related("staff_profile").get(pk=user.pk)
 
 
+def _follow_up_days() -> int:
+    """How many days ago the cohort's follow-up SSA is dated: ten, unless
+    that moment is within a day of the fiscal year's edge. There the UTC day
+    and the day in Kampala are in different years for three hours (21:00 to
+    24:00 UTC on 10 October), the report's year was read by one clock and the
+    evidence by the other, and every count of the cohort came out 0 — in CI
+    on 2026-10-10. Two days further back the two clocks agree."""
+    moment = timezone.now() - timedelta(days=10)
+    around = {
+        get_operational_fy(moment + timedelta(days=shift)) for shift in (-1, 0, 1)
+    }
+    return 10 if len(around) == 1 else 12
+
+
+FOLLOW_UP_DAYS = _follow_up_days()
+
+
 def _ssa(school, days_ago, score):
     record = SsaRecord.objects.create(
         school=school,
@@ -279,7 +296,7 @@ class ReportFixture(TestCase):
     def setUpTestData(cls):
         # The report of the year its evidence is in: the follow-ups are ten
         # days old, so in October's first days that is the year just closed.
-        cls.fy = get_operational_fy(timezone.now() - timedelta(days=10))
+        cls.fy = get_operational_fy(timezone.now() - timedelta(days=FOLLOW_UP_DAYS))
         cls.ug = Region.objects.create(name="Report Central", country="Uganda")
         cls.ke = Region.objects.create(name="Report Coast", country="Kenya")
         cls.ug_district = District.objects.create(name="Report Wakiso", region=cls.ug)
@@ -312,7 +329,7 @@ class ReportFixture(TestCase):
                 account_owner_status="matched" if i < 2 else "unmatched",
             )
             baseline = _ssa(school, 300, 4.0)
-            follow_up = _ssa(school, 10, 6.0)
+            follow_up = _ssa(school, FOLLOW_UP_DAYS, 6.0)
             ProjectSchoolAssignment.objects.create(
                 project=cls.project,
                 school=school,
@@ -756,12 +773,12 @@ class ReportPageTests(ReportFixture):
 
     def test_the_live_annex_applies_its_period_and_names_who_generated_it(self):
         self.client.force_login(self.ida)
-        # A period inside the report's year that leaves out the ten-day-old
-        # follow-ups. Usually it starts five days ago; in October's first days
+        # A period inside the report's year that leaves out the follow-ups
+        # (FOLLOW_UP_DAYS old). Usually it starts five days ago; in October's first days
         # that is past the year's end, so it starts on the year's last day —
         # and on the one day the follow-ups fall on that last day, it ends the
         # day before them instead.
-        evidence = timezone.localdate() - timedelta(days=10)
+        evidence = timezone.localdate() - timedelta(days=FOLLOW_UP_DAYS)
         last_day = (get_fy_date_range(self.fy)[1] - timedelta(days=1)).date()
         if evidence < last_day:
             period = {"period_start": min(evidence + timedelta(days=5), last_day)}

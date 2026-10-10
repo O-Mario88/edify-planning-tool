@@ -78,7 +78,7 @@
 .app-sidebar__brand-product {
   color: rgba(215, 230, 239, 0.88);
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.35;
   letter-spacing: -0.01em;
   white-space: nowrap;

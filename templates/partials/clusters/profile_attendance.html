@@ -1,4 +1,4 @@
-{% load components table_pagination %}
+{% load kpi_metrics frontend_filters components table_pagination %}
 {% comment %}
 Cluster profile, Attendance (owner brief, 2026-10-08: "Meeting attendance
 intelligence ... School | Meetings Invited | Attended | Attendance % | Last
@@ -26,11 +26,20 @@ tables one below another).
 </label>
 {% endfilter_bar %}
 
+{% kpi_strip title="Cluster Meetings" %}{% kpi_metric %}{% kpi_label %}In The Plan{% endkpi_label %}{{ meeting_figures.planned|intcomma }}{% kpi_link %}{{ profile_url }}?fy={{ profile_fy }}&what=meetings{% endkpi_link %}{% kpi_helper %}meetings in FY {{ profile_fy }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Held{% endkpi_label %}{{ meeting_figures.held|intcomma }}{% kpi_link %}{{ profile_url }}?fy={{ profile_fy }}&what=meetings_done{% endkpi_link %}{% kpi_helper %}completed{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Upcoming{% endkpi_label %}{{ meeting_figures.upcoming_count|intcomma }}{% kpi_link %}{{ profile_url }}?fy={{ profile_fy }}&what=meetings_upcoming{% endkpi_link %}{% kpi_helper %}scheduled, still to come{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Schools Invited{% endkpi_label %}{{ meeting_figures.invited|intcomma }}{% kpi_link %}{{ profile_url }}?tab=attendance&fy={{ profile_fy }}&show=sessions{% endkpi_link %}{% kpi_helper %}invitations to meetings held{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Schools Represented{% endkpi_label %}{{ meeting_figures.schools|intcomma }}{% kpi_link %}{{ profile_url }}?tab=attendance&fy={{ profile_fy }}&show=all{% endkpi_link %}{% kpi_helper %}{{ meeting_figures.attended|intcomma }} attendances{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Meeting Attendance{% endkpi_label %}{{ meeting_figures.rate }}%{% kpi_link %}{{ profile_url }}?tab=attendance&fy={{ profile_fy }}&show=all{% endkpi_link %}{% kpi_helper %}attended of invited{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Repeated Absence{% endkpi_label %}{{ attendance.drifting|length }}{% kpi_link %}{{ profile_url }}?tab=attendance&fy={{ profile_fy }}&show=missing{% endkpi_link %}{% kpi_helper %}schools missed {{ attendance.alert_after }} or more in a row{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
+
 <nav class="oversight-entity-tabs" aria-label="Attendance views" data-attendance-views>
-<a class="oversight-entity-tabs__link{% if attendance_show == 'all' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=all"{% if attendance_show == 'all' %} aria-current="page"{% endif %}><span>All Schools</span><span class="oversight-entity-tabs__count">{{ attendance.schools|length }}</span></a>
-<a class="oversight-entity-tabs__link{% if attendance_show == 'missing' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=missing"{% if attendance_show == 'missing' %} aria-current="page"{% endif %}><span>Missed {{ attendance.alert_after }} or More in a Row</span><span class="oversight-entity-tabs__count">{{ attendance.drifting|length }}</span></a>
-<a class="oversight-entity-tabs__link{% if attendance_show == 'never' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=never"{% if attendance_show == 'never' %} aria-current="page"{% endif %}><span>Invited, Never Attended</span><span class="oversight-entity-tabs__count">{{ attendance.never|length }}</span></a>
-<a class="oversight-entity-tabs__link{% if attendance_show == 'sessions' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=attendance&amp;fy={{ profile_fy }}&amp;show=sessions"{% if attendance_show == 'sessions' %} aria-current="page"{% endif %}><span>Sessions Held</span><span class="oversight-entity-tabs__count">{{ attendance.sessions|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'all' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=attendance&amp;fy={{ profile_fy }}&amp;show=all"{% if attendance_show == 'all' %} aria-current="page"{% endif %}><span>All Schools</span><span class="oversight-entity-tabs__count">{{ attendance.schools|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'missing' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=attendance&amp;fy={{ profile_fy }}&amp;show=missing"{% if attendance_show == 'missing' %} aria-current="page"{% endif %}><span>Missed {{ attendance.alert_after }} or More in a Row</span><span class="oversight-entity-tabs__count">{{ attendance.drifting|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'never' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=attendance&amp;fy={{ profile_fy }}&amp;show=never"{% if attendance_show == 'never' %} aria-current="page"{% endif %}><span>Invited, Never Attended</span><span class="oversight-entity-tabs__count">{{ attendance.never|length }}</span></a>
+<a class="oversight-entity-tabs__link{% if attendance_show == 'sessions' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=attendance&amp;fy={{ profile_fy }}&amp;show=sessions"{% if attendance_show == 'sessions' %} aria-current="page"{% endif %}><span>Sessions Held</span><span class="oversight-entity-tabs__count">{{ attendance.sessions|length }}</span></a>
 </nav>
 
 {% if attendance_show == "sessions" %}

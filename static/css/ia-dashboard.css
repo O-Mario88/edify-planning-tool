@@ -77,7 +77,7 @@
   margin: 0 0 0.4rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.13em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -99,7 +99,7 @@
   margin: 0;
   color: #fff;
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.1;
 }
@@ -294,7 +294,7 @@
   overflow: clip;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.07em;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -306,7 +306,7 @@
   margin-top: 0.28rem;
   color: var(--edify-text);
   font-size: clamp(1.35rem, 2.2cqi, 1.75rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
 }
@@ -477,7 +477,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-table-heading-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -534,7 +534,7 @@
   color: var(--edify-accent-text);
   font-family: var(--edify-font-sans);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-status {
@@ -542,7 +542,7 @@
   padding: 0.2rem 0.45rem;
   border-radius: var(--edify-radius-pill);
   font-size: var(--edify-text-micro-size) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -698,7 +698,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-exception-list {
@@ -733,7 +733,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-exception-list__count[data-tone="error"] {
@@ -787,7 +787,7 @@
 .ia-card-heading > strong {
   color: var(--edify-success);
   font-size: var(--edify-text-tile-value-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
 
@@ -856,7 +856,7 @@
   margin: 0.3rem 0 0;
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-subsection {
@@ -954,7 +954,7 @@
   margin: 0.3rem 0 0;
   color: var(--edify-text);
   font-size: var(--edify-text-title-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-evidence__summary [data-tone="success"] dd,
@@ -992,7 +992,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-table-heading-size);
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -1039,7 +1039,7 @@
 .ia-integrity-list strong {
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-correction-cycle {
@@ -1055,7 +1055,7 @@
 .ia-correction-cycle__value {
   color: var(--edify-warning);
   font-size: var(--edify-text-tile-value-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
 
@@ -1239,7 +1239,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-table-heading-size);
-  font-weight: 800;
+  font-weight: 700;
   text-align: right;
   text-transform: uppercase;
 }
@@ -1484,7 +1484,7 @@
   margin: 0.25rem 0 0;
   color: var(--edify-text);
   font-size: var(--edify-text-body-size);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .ia-field-signals [data-tone="warning"] dd {

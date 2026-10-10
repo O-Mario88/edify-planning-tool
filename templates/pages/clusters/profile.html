@@ -1,0 +1,63 @@
+{% extends "layouts/shell.html" %}
+{% load chart_tags %}
+{% load table_pagination %}
+{% load frontend_filters row_actions %}
+
+{% block title %}{{ cluster.name }} - Cluster Profile{% endblock %}
+
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The Cluster Profile: the cluster's 360° record (owner's brief, 2026-10-10:
+"How is this cluster performing, what has happened, what has changed, and
+which schools/interventions are driving the results?"). Each tab is one read
+of records the platform already keeps, for the fiscal year in the address,
+drawn in the place of the one before it (owner, 2026-10-02: tabs, not tables
+one below another). A tab is a link, so it can be bookmarked and sent.
+Managing the cluster — planning, the roster, its actions — is the Cluster
+Page's.
+{% endcomment %}
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-cluster-profile>
+{% include "partials/_back_link.html" with back_href=cluster_page_url back_label="Cluster Page" %}
+{% include "partials/clusters/_page_header.html" with on="profile" %}
+
+<nav class="oversight-entity-tabs" aria-label="{{ cluster.name }} profile sections" data-cluster-profile-tabs>
+{% for entry in profile_tabs %}
+<a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}" href="{{ profile_url }}?tab={{ entry.key }}{% if pi %}&amp;fy={{ pi.fy }}{% elif profile_fy %}&amp;fy={{ profile_fy }}{% endif %}"{% if entry.is_active %} aria-current="page"{% endif %}><span>{{ entry.label }}</span></a>
+{% endfor %}
+</nav>
+
+{% if pi %}
+{% comment %}A section of the shared profile engine over this cluster's
+schools (apps.analytics.profile_intelligence; owner, 2026-10-09).{% endcomment %}
+<p class="edify-text-label edify-text-muted" data-profile-scope>{% include "partials/profiles/_scope_line.html" %}</p>
+{% include "partials/profiles/_filters.html" %}
+{% include "partials/profiles/_sections.html" %}
+{% else %}
+<div class="edify-rail-layout" data-rail-layout><div class="edify-rail-layout__main">
+{% if profile_tab == "ssa" %}
+{% include "partials/clusters/profile_ssa.html" %}
+{% elif profile_tab == "attendance" %}
+{% include "partials/clusters/profile_attendance.html" %}
+{% elif profile_tab == "interventions" %}
+{% include "partials/clusters/profile_interventions.html" %}
+{% elif profile_tab == "scores" %}
+{% include "partials/clusters/profile_scores.html" %}
+{% elif profile_tab == "students" %}
+{% include "partials/clusters/profile_students.html" %}
+{% elif profile_tab == "learning" %}
+{% include "partials/clusters/profile_learning.html" %}
+{% elif profile_tab == "loans" %}
+{% include "partials/clusters/profile_loans.html" %}
+{% elif profile_tab == "stories" %}
+{% include "partials/clusters/profile_stories.html" %}
+{% elif profile_tab == "history" %}
+{% include "partials/clusters/profile_history.html" %}
+{% elif profile_tab == "sources" %}
+{% include "partials/clusters/profile_sources.html" %}
+{% endif %}
+</div>{% if rail %}{% include "partials/profiles/_rail.html" %}{% endif %}</div>
+{% endif %}
+</div>
+{% endblock %}

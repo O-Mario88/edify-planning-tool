@@ -28,9 +28,9 @@ Assessment (apps.clusters.scores).
 
 <nav class="oversight-entity-tabs" aria-label="Scores" data-score-parts>
 {% for composite in scorecard.composites %}
-<a class="oversight-entity-tabs__link{% if score_part == composite.key %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=scores&amp;fy={{ profile_fy }}&amp;part={{ composite.key }}"{% if score_part == composite.key %} aria-current="page"{% endif %}><span>{{ composite.label }}</span><span class="oversight-entity-tabs__count">{% if composite.score is None %}—{% else %}{{ composite.score }}{% endif %}</span></a>
+<a class="oversight-entity-tabs__link{% if score_part == composite.key %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=scores&amp;fy={{ profile_fy }}&amp;part={{ composite.key }}"{% if score_part == composite.key %} aria-current="page"{% endif %}><span>{{ composite.label }}</span><span class="oversight-entity-tabs__count">{% if composite.score is None %}—{% else %}{{ composite.score }}{% endif %}</span></a>
 {% endfor %}
-<a class="oversight-entity-tabs__link{% if score_part == 'maturity' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}?tab=scores&amp;fy={{ profile_fy }}&amp;part=maturity"{% if score_part == 'maturity' %} aria-current="page"{% endif %}><span>Maturity</span><span class="oversight-entity-tabs__count">{{ scorecard.maturity.level }}</span></a>
+<a class="oversight-entity-tabs__link{% if score_part == 'maturity' %} is-active{% endif %}" href="/clusters/{{ cluster.id }}/profile?tab=scores&amp;fy={{ profile_fy }}&amp;part=maturity"{% if score_part == 'maturity' %} aria-current="page"{% endif %}><span>Maturity</span><span class="oversight-entity-tabs__count">{{ scorecard.maturity.level }}</span></a>
 </nav>
 
 {% if score_part == "maturity" %}

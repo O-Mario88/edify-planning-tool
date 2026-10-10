@@ -50,7 +50,7 @@
     color: var(--agreement-navy) !important;
     font-family: var(--edify-font-sans);
     font-size: clamp(1.25rem, 1.15rem + .35vw, 1.55rem) !important;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -.025em;
     line-height: 1.25;
   }
@@ -103,7 +103,7 @@
     border: 0;
     color: var(--agreement-navy) !important;
     font-size: clamp(1.25rem, 1.16rem + .3vw, 1.5rem) !important;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -.025em;
     line-height: 1.3;
   }
@@ -114,7 +114,7 @@
   .agreement-page .agreement-document .safeguarding-policy > section:first-child + p {
     color: var(--agreement-navy);
     font-size: clamp(1.06rem, 1.01rem + .16vw, 1.16rem);
-    font-weight: 560;
+    font-weight: 600;
     line-height: 1.78;
   }
   .agreement-page .agreement-document .safeguarding-policy > p.pl-5 {
@@ -157,7 +157,7 @@
     background: var(--agreement-paper);
     color: var(--agreement-blue);
     font-size: var(--edify-text-micro-size);
-    font-weight: 800;
+    font-weight: 700;
   }
   .agreement-page .agreement-document .safeguarding-policy ol li p:first-child {
     margin-top: .1rem;
@@ -178,7 +178,7 @@
     min-height: 3.25rem;
     border-radius: var(--edify-radius-md);
     font-size: var(--edify-text-label-size);
-    font-weight: 800;
+    font-weight: 700;
     transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
   }
   .agreement-action:hover {

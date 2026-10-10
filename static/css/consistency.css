@@ -4428,7 +4428,7 @@ main textarea,
 :root :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar p:not(button *):not(a *) {
   margin-block: 0.125rem 0 !important;
   font-size: var(--edify-text-label-size) !important;
-  font-weight: 450 !important;
+  font-weight: 500 !important;
   line-height: 1.35 !important;
 }
 :root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, h5, p, span):not(button *):not(a *) {
@@ -4705,7 +4705,7 @@ main .spp-filter-reset .htmx-indicator:not(.htmx-request),
 main .sp-filter-panel__footer .htmx-indicator:not(.htmx-request) { display: none; }
 main .sp-filter-panel__footer { float: right; margin-top: .375rem; padding: 0; min-height: 0; }
 main :is(.spp-more-filters, .sp-more-filters) { margin-top: .375rem; padding: 0; border: 0; }
-main :is(.spp-more-filters, .sp-more-filters) > summary { cursor: pointer; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; padding-block: .25rem; }
+main :is(.spp-more-filters, .sp-more-filters) > summary { cursor: pointer; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 600; padding-block: .25rem; }
 main .sp-more-filters[open] .sp-filter-grid { margin-top: .5rem; clear: both; }
 main .spp-delivery-tiles > div { min-height: 0; }
 main .spa-detail-grid { grid-template-columns: minmax(0, 1fr); }
@@ -4733,7 +4733,7 @@ main .sp-period-tabs { flex: 0 0 auto; max-width: 100%; }
   main #sp-plan-filters .sp-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-main .spp-readiness > summary { cursor: pointer; padding-block: .25rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; }
+main .spp-readiness > summary { cursor: pointer; padding-block: .25rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 600; }
 main .spp-readiness[open] > summary { margin-bottom: .5rem; }
 /* Profile queues need the same reading width as their directory, especially
    while the navigation rail occupies part of a laptop display. */
@@ -4743,7 +4743,7 @@ main .spp-readiness[open] > summary { margin-bottom: .5rem; }
 }
 main .project-delivery-overview > header,
 main .project-delivery-overview #budget-execution { padding: .75rem; }
-main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 650; color: var(--edify-accent-text); }
+main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 600; color: var(--edify-accent-text); }
 main .project-detail details[aria-labelledby] { padding: .75rem; }
 main .project-detail details[aria-labelledby] > summary { cursor: pointer; color: var(--edify-accent-text); }
 main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: var(--edify-text-label-size); }
@@ -5123,6 +5123,52 @@ main .edify-avatar-neutral {
     .edify-empty-state, .edify-empty-state *) {
   font-size: var(--edify-text-table-size) !important;
   font-weight: var(--edify-table-body-weight) !important;
+}
+
+/* ═══ ONE TYPE STANDARD ═══════════════════════════════════════════════════
+ * Owner, 2026-10-10: "change the typography of the entire platform to look
+ * like the attached reference ... everything should have the consistent size
+ * and font weight across the platform. Look at the staff activity page table
+ * typography and use it as a gold standard."
+ *
+ * That table: column names 14.7px bold, cells 13.7px medium on an 18px line,
+ * the name that opens the record and the figure that matters semibold. The
+ * steps and the three weights (500, 600, 700) are the tokens' now
+ * (design-system.css); this block is what a token cannot reach. Measured on
+ * every page five roles reach: what still differed after the tokens moved.
+ */
+/* The name that opens a record, and a figure marked strong, read as the
+   Staff Activity table's name and Active Time do: the cell's size, semibold. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody :is(td, th):not(.edify-group-head > th)
+  :is(strong, b, a.school-link, a.profile-link, .sal-name):not(#edify-none),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody [data-record-title] > a:not(#edify-none) {
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 600 !important;
+}
+/* A table's closing line of totals is a row of the table, in bold. */
+:is(main, .drawer-surface) table:not(.sr-only, .edify-visually-hidden) tfoot :is(td, th):not(#edify-none) {
+  padding-block: 0.34375rem !important;
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 700 !important;
+}
+/* What a person types or picks reads as data, like a cell; the label over
+   it is the semibold one. */
+:is(main, .drawer-surface, [role="dialog"]) :is(input, select, textarea):not([type="checkbox"], [type="radio"], [type="range"], [type="submit"], [type="button"]):not(#edify-none, #edify-nil) {
+  font-weight: 500 !important;
+}
+/* Bold is one weight. Outside a table a strong figure was 600 in one card
+   and 700 in the next. */
+main :is(strong, b):not(table *):not(#edify-none) { font-weight: 700 !important; }
+/* A button and a tab say their name as written: a handful were capitals. */
+:is(main, .drawer-surface) :is(button, .btn, [role="tab"], .edify-tab, summary):not(#edify-none) {
+  text-transform: none !important;
+}
+/* A pill is the small step, semibold, wherever it is. */
+main :is(.pill, .edify-badge, .pto-count-badge, .admin-count, .cpo-count):not(#edify-none) {
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600 !important;
 }
 
 /* ═══ ONE CONTENT LINE (owner, 2026-10-02) ════════════════════════════════

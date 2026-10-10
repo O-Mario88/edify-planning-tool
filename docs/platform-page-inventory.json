@@ -67,7 +67,7 @@
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/business-transformation/portfolio",
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -1114,13 +1114,13 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/dashboard",
         "/districts/<str:district_id>",
         "/my-plan",
         "/partners/<str:partner_id>",
-        "/projects/<str:project_id>",
-        "/schools/<str:school_id>"
+        "/projects/<str:project_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -1144,13 +1144,13 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/dashboard",
         "/districts/<str:district_id>",
         "/my-plan",
         "/partners/<str:partner_id>",
-        "/projects/<str:project_id>",
-        "/schools/<str:school_id>"
+        "/projects/<str:project_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -1176,12 +1176,12 @@
       "example_pages": [
         "/calendar",
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-planning-oversight/",
         "/country-profile",
         "/dashboard",
         "/districts/<str:district_id>",
-        "/my-plan",
-        "/partners/<str:partner_id>"
+        "/my-plan"
       ],
       "findings": [],
       "forms": 3,
@@ -3271,6 +3271,31 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6879,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": " Page Header",
+      "purpose": "Reusable  page header interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/_page_header.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
@@ -3771,10 +3796,10 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10158,
+      "bytes": 12210,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3795,7 +3820,7 @@
       "bytes": 3188,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3819,10 +3844,10 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11799,
+      "bytes": 11839,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3848,7 +3873,7 @@
       "bytes": 4562,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3870,10 +3895,10 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3498,
+      "bytes": 4684,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3893,10 +3918,10 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6801,
+      "bytes": 6817,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3917,13 +3942,34 @@
       ]
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 2111,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>/profile"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Profile Sources",
+      "purpose": "Reusable profile sources interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/clusters/profile_sources.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8229,
+      "bytes": 14609,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3939,7 +3985,8 @@
       "template": "partials/clusters/profile_ssa.html",
       "variants": [
         "{% if area.change > 0 %}success{% elif area.change < 0 %}danger{% else %}neutral{% endif %}",
-        "{{ row.tone }}"
+        "{{ row.tone }}",
+        "{{ row.tone|default:"
       ]
     },
     {
@@ -3949,7 +3996,7 @@
       "bytes": 3179,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -3972,7 +4019,7 @@
       "bytes": 4874,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>"
+        "/clusters/<str:cluster_id>/profile"
       ],
       "findings": [],
       "forms": 0,
@@ -4118,13 +4165,13 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
         "/projects/<str:project_id>",
         "/schools/<str:school_id>",
-        "/staff/<str:user_id>",
-        "/sub-regions/<str:sub_region_id>"
+        "/staff/<str:user_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -4149,13 +4196,13 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
         "/projects/<str:project_id>",
         "/schools/<str:school_id>",
-        "/staff/<str:user_id>",
-        "/sub-regions/<str:sub_region_id>"
+        "/staff/<str:user_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -11307,7 +11354,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8990,
+      "bytes": 9014,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -14148,7 +14195,7 @@
       "bytes": 1314,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14177,7 +14224,7 @@
       "bytes": 401,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14208,7 +14255,7 @@
       "bytes": 2210,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14238,6 +14285,7 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14264,7 +14312,7 @@
       "bytes": 2589,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14293,7 +14341,7 @@
       "bytes": 1899,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14320,7 +14368,7 @@
       "bytes": 6844,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14344,11 +14392,43 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2536,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Rail",
+      "purpose": "Reusable  rail interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_rail.html",
+      "variants": [
+        "{{ row.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 2552,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14375,7 +14455,7 @@
       "bytes": 2596,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14403,7 +14483,7 @@
       "bytes": 711,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14429,7 +14509,7 @@
       "bytes": 281,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -14452,13 +14532,11 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
-      ],
-      "bytes": 55677,
+      "accessibility_requirements": [],
+      "bytes": 60004,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/clusters/<str:cluster_id>",
+        "/clusters/<str:cluster_id>/profile",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
@@ -32871,6 +32949,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -32912,7 +32991,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "card_count": 0,
@@ -32926,11 +33005,9 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /clusters/{{ cluster.id }}/edit-drawer",
-        "POST /clusters/{{ cluster.id }}/delete",
         "GET /clusters/{{ cluster.id }}/facilitator-drawer",
         "GET /clusters/{{ cluster.id }}/catchment-drawer",
         "GET /clusters/{{ cluster.id }}/catchment/{{ row.id }}/end",
@@ -32948,13 +33025,15 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-ED202C2D52",
-      "page_title": "Cluster details",
+      "page_title": "Cluster",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "cluster_detail",
       "primary_action": "Add Schools to Cluster",
       "primary_user_decision": "What is the correct next action for this record?",
-      "purpose": "District: &bull; Sub-county:",
+      "purpose": "The Cluster Page: the operational workspace (owner's brief, 2026-10-10: \"What does the CCEO/staff need to manage or act on now?\").",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -32967,12 +33046,11 @@
       "route": "/clusters/<str:cluster_id>",
       "route_name": "cluster_detail",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/clusters/{{ cluster.id }}/delete"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -32986,7 +33064,7 @@
       "state_coverage": {
         "disabled": true,
         "empty": true,
-        "error": true,
+        "error": false,
         "loading": false
       },
       "surface_kind": "page",
@@ -33069,6 +33147,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33163,6 +33242,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33256,6 +33336,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33350,6 +33431,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33441,6 +33523,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33526,6 +33609,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33616,6 +33700,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33705,6 +33790,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33795,6 +33881,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33829,6 +33916,95 @@
       "typography_exceptions": [
         "text-[12px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.cluster_profile_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/clusters/profile.html",
+        "test:referenced-by-automated-test",
+        "permission:cluster_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0A2340E834",
+      "page_title": "Cluster Profile",
+      "page_type": "record-detail",
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
+      "permission_key": "cluster_detail",
+      "primary_action": "Review record",
+      "primary_user_decision": "What is the correct next action for this record?",
+      "purpose": "The Cluster Profile: the cluster's 360\u00b0 record (owner's brief, 2026-10-10: \"How is this cluster performing, what has happened, what has changed, and which schools/interventions are driving the results?\").",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/clusters/<str:cluster_id>/profile",
+      "route_name": "cluster_profile",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/clusters/profile.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -33885,6 +34061,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -33975,6 +34152,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34065,6 +34243,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34155,6 +34334,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34245,6 +34425,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34335,6 +34516,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34423,6 +34605,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34517,6 +34700,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34614,6 +34798,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34712,6 +34897,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34810,6 +34996,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -34908,6 +35095,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -41107,7 +41295,9 @@
       "page_id": "UI-PAGE-9960305561",
       "page_title": "Edify",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "country_planning_oversight",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -44723,7 +44913,9 @@
       "page_id": "UI-PAGE-A6FCE7EB16",
       "page_title": "Edify",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "planning",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -70689,6 +70881,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activity_catalogue.services",
+        "apps.business_transformation.models",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -75205,7 +75398,9 @@
       "page_id": "UI-PAGE-68972438CC",
       "page_title": "Edify",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "partner_detail",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -88272,7 +88467,8 @@
       "page_title": "School 360",
       "page_type": "record-detail",
       "per_page_css": [
-        "css/components/core-progress.css"
+        "css/components/core-progress.css",
+        "css/components/insight-rail.css"
       ],
       "permission_key": "school_profile",
       "primary_action": "Edit Details",
@@ -93241,7 +93437,9 @@
       "page_id": "UI-PAGE-7F963ACD27",
       "page_title": "Staff Profile",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "staff",
       "primary_action": "Open performance conversation",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -93512,7 +93710,9 @@
       "page_id": "UI-PAGE-243A1FB782",
       "page_title": "Edify",
       "page_type": "record-detail",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/components/insight-rail.css"
+      ],
       "permission_key": "planning",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
@@ -110409,6 +110609,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.cluster_views.cluster_profile_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cluster_detail",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/profile",
+      "route_name": "cluster_profile",
+      "templates": [
+        "pages/clusters/profile.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.remove_school_from_cluster_view",
       "kind": "partial",
       "methods": [
@@ -120646,13 +120860,13 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 597,
+    "accessibility_contract_pass": 598,
     "activity_states": 24,
-    "all_routes": 1394,
+    "all_routes": 1395,
     "api_routes": 363,
-    "component_templates": 687,
-    "full_pages": 268,
-    "mobile_contract_pass": 597,
+    "component_templates": 690,
+    "full_pages": 269,
+    "mobile_contract_pass": 598,
     "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
@@ -120662,14 +120876,14 @@
       "interaction-fragment": 613,
       "operational-queue": 155,
       "planning-or-creation": 14,
-      "record-detail": 29,
+      "record-detail": 30,
       "report": 45
     },
     "partials_and_drawers": 326,
-    "permission_gated": 901,
+    "permission_gated": 902,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 918,
+    "routed_surfaces": 919,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -120677,8 +120891,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 597,
-    "test_referenced": 818,
-    "theme_contract_pass": 597
+    "tablet_contract_pass": 598,
+    "test_referenced": 819,
+    "theme_contract_pass": 598
   }
 }

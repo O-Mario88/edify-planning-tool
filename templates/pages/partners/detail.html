@@ -3,6 +3,8 @@
 {% load school_identity %}
 {% load frontend_filters table_pagination row_actions %}
 {% block title %}{{ partner.name }} — Edify{% endblock %}
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+
 {% block shell_content %}
 {% comment %}
 A partner organisation's profile in the school profile's shape (owner,

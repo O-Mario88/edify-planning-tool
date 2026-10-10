@@ -685,6 +685,7 @@ __all__ = [
     "VERDICT_LABELS",
     "attendance_by_cluster",
     "member_schools",
+    "school_ssa_standing",
     "cluster_attendance",
     "cluster_membership_history",
     "cluster_ssa_movement",
@@ -693,3 +694,107 @@ __all__ = [
     "ssa_schools",
     "ssa_years_with_records",
 ]
+
+
+# ── Each school's SSA, with the intervention it is strongest and weakest in ──
+
+
+def school_ssa_standing(
+    schools: list[dict], *, fy: str, verdicts: list[dict] | None = None
+) -> list[dict]:
+    """One row per school of ``schools`` (``member_schools`` rows): its
+    average confirmed SSA in ``fy`` and in the year before, the change, and
+    the intervention it scores highest and lowest in on this year's record
+    (owner's brief, 2026-10-10: "School | SSA | Change | Strongest
+    Intervention | Struggling Intervention").
+
+    The averages are `ssa.year_comparison.school_year_scores` — the reading
+    every profile's School SSA uses — and the two interventions are read off
+    the same latest confirmed record of the year, so the row agrees with the
+    school's own profile. A school with no confirmed record this year has no
+    interventions named. Three queries, whatever the number of schools.
+
+    ``verdicts`` are the movement table's overall rows
+    (``movement["schools_by_area"][OVERALL]``): given them, a school is
+    called improved or declined exactly where that table counts it so, and a
+    school it could not compare says why — the tab's counts and its rows are
+    then one reading.
+    """
+    from apps.analytics.profile_intelligence import _change
+    from apps.core.enums import SsaIntervention
+    from apps.ssa.current_year import CURRENT_SSA_STATUSES
+    from apps.ssa.models import SsaRecord, SsaScore
+    from apps.ssa.year_comparison import school_year_scores
+
+    fy = str(fy)
+    ids = [s["id"] for s in schools]
+    averages = school_year_scores(ids, fy) if ids else {}
+    latest: dict[str, str] = {}
+    for school_id, record_id in (
+        SsaRecord.objects.filter(
+            school_id__in=ids,
+            fy=fy,
+            deleted_at__isnull=True,
+            verification_status__in=CURRENT_SSA_STATUSES,
+        )
+        .order_by("school_id", "-date_of_ssa", "-created_at", "-id")
+        .values_list("school_id", "id")
+    ):
+        latest.setdefault(school_id, record_id)
+    by_record: dict[str, list[tuple[float, str]]] = {}
+    if latest:
+        for record_id, intervention, score in SsaScore.objects.filter(
+            ssa_record_id__in=list(latest.values()), score__isnull=False
+        ).values_list("ssa_record_id", "intervention", "score"):
+            by_record.setdefault(record_id, []).append((float(score), intervention))
+    labels = dict(SsaIntervention.choices)
+    book = change_rules.RuleBook()
+    by_verdict = {row["id"]: row for row in verdicts or ()}
+    rows = []
+    for school in schools:
+        pair = averages.get(school["id"]) or {"current": None, "previous": None}
+        scored = sorted(by_record.get(latest.get(school["id"], ""), ()))
+        # Level scores: the first by name, so the row reads the same each time.
+        strongest = max(
+            scored, key=lambda p: (p[0], labels.get(p[1], p[1])), default=None
+        )
+        weakest = min(
+            scored, key=lambda p: (p[0], labels.get(p[1], p[1])), default=None
+        )
+        change = _change(pair["previous"], pair["current"], book=book)
+        counted = by_verdict.get(school["id"])
+        if counted is not None:
+            change = {
+                # The arithmetic of the two records; what it is called is
+                # the movement table's call.
+                "change": change["change"],
+                "status": counted["verdict"],
+                "status_label": counted["verdict_label"],
+                "tone": counted["tone"],
+            }
+        rows.append(
+            {
+                "id": school["id"],
+                "code": school.get("school_id") or "",
+                "name": school["name"],
+                "previous": pair["previous"],
+                "current": pair["current"],
+                "change": change["change"],
+                "verdict": change["status"],
+                "verdict_label": change["status_label"],
+                "tone": change["tone"],
+                "note": (counted or {}).get("note", ""),
+                "strongest": labels.get(strongest[1], strongest[1])
+                if strongest
+                else "",
+                "strongest_score": strongest[0] if strongest else None,
+                "struggling": labels.get(weakest[1], weakest[1])
+                if weakest and len(scored) > 1
+                else "",
+                "struggling_score": weakest[0] if weakest and len(scored) > 1 else None,
+            }
+        )
+    rows.sort(
+        key=lambda r: (r["current"] is None, -(r["current"] or 0), r["name"].casefold())
+    )
+    return rows
