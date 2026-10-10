@@ -1,0 +1,66 @@
+{% load components frontend_filters %}{% comment %}
+Training by the way it is delivered, and the year's cluster meetings
+(apps.analytics.profile_records.channels / meetings; owner's brief,
+2026-10-10: "Online training attendance must be treated as a first-class
+training channel. Do not bury it under general training", and "Assigned ≠
+Scheduled ≠ Completed"). Every count opens the activities it counted.
+{% endcomment %}
+{% data_table name="profile-training-channels" %}
+  {% slot title %}Training By Channel{% endslot %}
+  {% slot summary %}{{ pi.profile.fy_label }}{% if pi.profile.period_label %} · {{ pi.profile.period_label }}{% endif %}{% endslot %}
+  {% slot caption %}In-school, group and online training in this portfolio: what is in the plan, what a partner holds and has dated, what is still to come and what is completed, with the schools and the teachers and school leaders recorded at completed sessions, and attendance against the schools invited.{% endslot %}
+  {% slot footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">Assigned To A Partner is a hand-over for training the partner still holds, dated or not; Dated By A Partner is the in-school trainings a partner has put in the plan. Attendance is the schools recorded as attending of those invited to completed sessions; an in-school training has no invitation list. The three channels' In The Plan add up to the Trainings line above.</p>{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Channel</th>
+      <th scope="col" class="px-3 py-2 text-right">In The Plan</th>
+      <th scope="col" class="px-3 py-2 text-right">Planned By Staff</th>
+      <th scope="col" class="px-3 py-2 text-right">Assigned To A Partner</th>
+      <th scope="col" class="px-3 py-2 text-right">Dated By A Partner</th>
+      <th scope="col" class="px-3 py-2 text-right">Still To Come</th>
+      <th scope="col" class="px-3 py-2 text-right">Completed</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools Attending</th>
+      <th scope="col" class="px-3 py-2 text-right">Schools Invited</th>
+      <th scope="col" class="px-3 py-2 text-right">Attendance</th>
+      <th scope="col" class="px-3 py-2 text-right">Teachers And Leaders</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in pi.channels %}
+    <tr data-profile-channel="{{ row.key }}">
+      <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}</th>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="In The Plan"><a href="{{ pi.records }}{{ row.what }}">{{ row.planned|intcomma }}</a></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Planned By Staff">{% if row.key == "in_school" %}{{ row.staff_planned|intcomma }}{% else %}<span class="edify-text-muted" title="Not a partner hand-over">—</span>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Assigned To A Partner">{% if row.key == "in_school" %}<a href="{{ pi.records }}handovers">{{ row.partner_assigned|intcomma }}</a>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Dated By A Partner">{% if row.key == "in_school" %}<a href="{{ pi.records }}trainings_partner">{{ row.partner_scheduled|intcomma }}</a>{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Still To Come">{% if row.key == "in_school" %}{{ row.planned|sub:row.completed|intcomma }}{% else %}{{ row.scheduled|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Completed"><a href="{{ pi.records }}{{ row.what }}_done"><strong>{{ row.completed|intcomma }}</strong></a></td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Attending">{{ row.schools|intcomma }}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Invited">{% if row.invited is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.invited|intcomma }}{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Attendance">{% if row.rate is None %}<span class="edify-text-muted">—</span>{% else %}{{ row.rate }}%{% endif %}</td>
+      <td class="px-3 py-2 text-right tabular-nums" data-label="Teachers And Leaders"><a href="{{ pi.records }}teachers_trained">{{ row.people|intcomma }}</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% enddata_table %}
+
+{% data_table name="profile-meetings" %}
+  {% slot title %}Cluster Meetings{% endslot %}
+  {% slot summary %}<a href="{{ pi.records }}meetings">{{ pi.meetings.planned|intcomma }} in the plan</a> · <a href="{{ pi.records }}meetings_done">{{ pi.meetings.held|intcomma }} held</a> · <a href="{{ pi.records }}meetings_upcoming">{{ pi.meetings.upcoming_count|intcomma }} still to come</a> · <a href="{{ pi.records }}meetings_overdue">{{ pi.meetings.overdue|intcomma }} past their date</a>{% endslot %}
+  {% slot caption %}The year's cluster meetings in this portfolio by what each is for, with those held; then the schools represented at the meetings held and the next meetings.{% endslot %}
+  {% slot footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted"><a href="{{ pi.records }}at_meetings">{{ pi.meetings.schools|intcomma }} school{{ pi.meetings.schools|pluralize }} represented</a> · {{ pi.meetings.attended|intcomma }} of {{ pi.meetings.invited|intcomma }} invitations attended · {{ pi.meetings.rate }}% attendance.{% if pi.meetings.upcoming %} Next: {% for row in pi.meetings.upcoming %}<a href="/activities/{{ row.id }}">{{ row.cluster__name|default:"Meeting" }}, {{ row.day|date:"j M" }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}.{% endif %}{% if pi.has.clusters %} Schools absent from sessions in a row are listed for each cluster on the <a href="{{ pi.href }}{{ pi.param }}={{ pi.at.clusters }}&amp;fy={{ pi.fy }}">Clusters tab</a>.{% endif %}</p>{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Meeting Type</th>
+      <th scope="col" class="px-3 py-2 text-right">In The Plan</th>
+      <th scope="col" class="px-3 py-2 text-right">Held</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in pi.meetings.kinds %}
+    <tr><th scope="row" class="px-3 py-2 text-left" data-record-title>{{ row.label }}</th><td class="px-3 py-2 text-right tabular-nums" data-label="In The Plan">{{ row.planned|intcomma }}</td><td class="px-3 py-2 text-right tabular-nums" data-label="Held">{{ row.held|intcomma }}</td></tr>
+    {% empty %}
+    <tr><th scope="row" class="px-3 py-2 text-left" data-record-title>All meetings</th><td class="px-3 py-2 text-right tabular-nums" data-label="In The Plan">0</td><td class="px-3 py-2 text-right tabular-nums" data-label="Held">0</td></tr>
+    {% endfor %}
+  </tbody>
+{% enddata_table %}

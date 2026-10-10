@@ -15,6 +15,13 @@ urlpatterns = [
         views.NotificationMarkAllReadView.as_view(),
         name="mark-all-read",
     ),
+    path("push/config", views.PushConfigView.as_view(), name="push-config"),
+    path("push/subscribe", views.PushSubscribeView.as_view(), name="push-subscribe"),
+    path(
+        "push/unsubscribe",
+        views.PushUnsubscribeView.as_view(),
+        name="push-unsubscribe",
+    ),
     path(
         "<str:notification_id>/read", views.NotificationReadView.as_view(), name="read"
     ),

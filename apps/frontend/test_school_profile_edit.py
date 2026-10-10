@@ -477,8 +477,10 @@ class SchoolProfileEditTest(TestCase):
     def test_profile_page_displays_the_saved_location_details(self):
         self.client.post(self.edit_url, self._valid_payload())
 
+        # The school's own record is the Details tab of its profile.
         response = self.client.get(
             reverse("frontend:school_detail", args=[self.school.school_id])
+            + "?tab=details"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -502,8 +504,10 @@ class SchoolProfileEditTest(TestCase):
             ),
         )
 
+        # The school's own record is the Details tab of its profile.
         response = self.client.get(
             reverse("frontend:school_detail", args=[self.school.school_id])
+            + "?tab=details"
         )
 
         self.assertEqual(response.status_code, 200)

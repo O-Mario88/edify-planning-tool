@@ -1612,18 +1612,18 @@ class PageTest(World):
             .content.decode()
         )
         for heading in (
-            "Visits<br>Planned",
-            "Core<br>Trained",
-            "Core<br>Graduate",
-            "Schools<br>Planned",
-            "Partner<br>Planned",
-            "Training<br>Coverage",
-            "Cluster Meeting<br>Coverage",
-            "Open<br>Follow-ups",
+            "Visits Planned",
+            "Core Trained",
+            "Core Graduate",
+            "Schools Planned",
+            "Partner Planned",
+            "Training Coverage",
+            "Cluster Meeting Coverage",
+            "Open Follow-ups",
             # The school-type table's.
-            "Visits<br>Needed",
-            "Not Yet<br>Planned",
-            "Trainings<br>Planned",
+            "Visits Needed",
+            "Not Yet Planned",
+            "Trainings Planned",
         ):
             with self.subTest(heading=heading):
                 self.assertIn(f">{heading}</th>", body)
@@ -1644,11 +1644,11 @@ class PageTest(World):
         self.assertEqual(charts.count('<details class="cpo-chart-data" open>'), 4)
         self.assertNotIn("View chart data", charts)
         for heading in (
-            "Visit<br>target",
-            "Assigned to<br>Partners",
-            "Not yet<br>planned",
-            "Remaining<br>slots",
-            "Covered by a<br>planned meeting",
+            "Visit target",
+            "Assigned to Partners",
+            "Not yet planned",
+            "Remaining slots",
+            "Covered by a planned meeting",
         ):
             with self.subTest(heading=heading):
                 self.assertIn(f">{heading}</th>", charts)

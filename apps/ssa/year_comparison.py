@@ -28,6 +28,7 @@ __all__ = [
     "intervention_comparison",
     "latest_measured_fy",
     "previous_fy",
+    "school_intervention_scores",
     "school_year_scores",
 ]
 
@@ -109,6 +110,41 @@ def school_year_scores(schools, fy) -> dict[str, dict]:
         )
         entry = scores.setdefault(school_id, {"current": None, "previous": None})
         entry["current" if year == fy else "previous"] = value
+    return scores
+
+
+def school_intervention_scores(schools, fy, intervention: str) -> dict[str, dict]:
+    """``{school id: {"current", "previous"}}`` for one intervention: each
+    school's score for it on its latest confirmed record of ``fy`` and of
+    the year before. A school with a score in neither is not in it. Two
+    queries."""
+    from apps.ssa.current_year import CURRENT_SSA_STATUSES
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    fy = str(fy)
+    before = previous_fy(fy)
+    latest: dict[tuple[str, str], str] = {}
+    for record_id, school_id, year in (
+        SsaRecord.objects.filter(
+            school_id__in=schools,
+            fy__in=[year for year in (fy, before) if year],
+            deleted_at__isnull=True,
+            verification_status__in=CURRENT_SSA_STATUSES,
+        )
+        .order_by("school_id", "fy", "-date_of_ssa", "-created_at", "-id")
+        .values_list("id", "school_id", "fy")
+    ):
+        latest.setdefault((school_id, year), record_id)
+    place = {record_id: key for key, record_id in latest.items()}
+    scores: dict[str, dict] = {}
+    if not place:
+        return scores
+    for record_id, score in SsaScore.objects.filter(
+        ssa_record_id__in=list(place), intervention=intervention, score__isnull=False
+    ).values_list("ssa_record_id", "score"):
+        school_id, year = place[record_id]
+        entry = scores.setdefault(school_id, {"current": None, "previous": None})
+        entry["current" if year == fy else "previous"] = round(float(score), 2)
     return scores
 
 

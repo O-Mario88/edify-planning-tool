@@ -61,4 +61,44 @@ class Notification(TimeStampedModel):
         ]
 
 
-__all__ = ["Notification"]
+class PushSubscription(TimeStampedModel):
+    """One browser or installed app that asked to be told on the device.
+
+    The row is what the browser's push service handed back when the user
+    allowed notifications: the address to send to and the two keys a message
+    is encrypted with (apps.notifications.webpush). A user has one row per
+    device; a device belongs to whoever subscribed on it last, so a phone
+    that changes hands stops receiving the previous user's notifications.
+
+    A subscription is never deleted by a failure: it is marked revoked with
+    the reason, so "why did my phone stop ringing" has an answer.
+    """
+
+    id = CuidField()
+    user_id = models.CharField(max_length=30, db_index=True)
+    endpoint = models.TextField()
+    #: SHA-256 of the endpoint: an endpoint is too long to index, and one
+    #: device is one row.
+    endpoint_hash = models.CharField(max_length=64, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=64)
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    #: "Android · Chrome", read from the user agent for the user's own list.
+    device_label = models.CharField(max_length=64, blank=True, default="")
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+    failure_count = models.PositiveIntegerField(default=0)
+    last_error = models.CharField(max_length=255, blank=True, default="")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_reason = models.CharField(max_length=64, blank=True, default="")
+
+    class Meta:
+        db_table = "notification_push_subscription"
+        indexes = [
+            models.Index(
+                fields=["user_id", "revoked_at"], name="push_sub_user_live_idx"
+            ),
+        ]
+
+
+__all__ = ["Notification", "PushSubscription"]

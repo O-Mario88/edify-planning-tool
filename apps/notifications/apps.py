@@ -6,3 +6,8 @@ class NotificationsConfig(AppConfig):
     name = "apps.notifications"
     label = "notifications"
     verbose_name = "Edify Notifications"
+
+    def ready(self):
+        # Registration only: importing the module binds the outbox handler
+        # and the post-save hook, and touches no database.
+        from . import push  # noqa: F401

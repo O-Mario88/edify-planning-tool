@@ -1,0 +1,84 @@
+{% load chart_tags kpi_metrics table_pagination frontend_filters components %}{% comment %}
+What visits found at the school and what was handed to a partner (the
+Participation tab of its profile), under the year's work by channel.
+{% endcomment %}
+{% if visit_feedback %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="school-visit-feedback-title">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 id="school-visit-feedback-title" class="text-[15px] font-semibold text-slate-800 tracking-tight">School Visit Feedback</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Findings and improvements recorded at completed follow-up visits.</p>
+</div>
+<div class="divide-y divide-[var(--edify-border)]">
+{% for feedback in visit_feedback %}
+<article class="p-5 space-y-4">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div>
+<h4 class="text-[13px] font-bold text-slate-800">{{ feedback.activity.get_activity_type_display }}</h4>
+<p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">
+{{ feedback.activity_date|date:"j M Y"|default:"Date not recorded" }}
+{% if feedback.activity.salesforce_activity_id %} &bull; {{ feedback.activity.salesforce_activity_id }}{% endif %}
+</p>
+</div>
+{% if feedback.related_activity %}
+<span class="inline-flex items-center rounded-pill bg-slate-100 px-2.5 py-1 edify-text-caption font-bold text-slate-600">Related to {{ feedback.related_activity.get_activity_type_display }}{% if feedback.related_activity.planned_date %} · {{ feedback.related_activity.planned_date|date:"j M Y" }}{% endif %}</span>
+{% endif %}
+</div>
+<div>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Finding</p>
+<p class="mt-1 text-[12px] font-medium leading-relaxed text-slate-700">{{ feedback.finding|linebreaksbr }}</p>
+</div>
+<div>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Improvement since the last visit</p>
+<ul class="mt-2 list-disc space-y-1 pl-5 text-[12px] font-medium text-slate-700">
+{% for improvement in feedback.improvements %}<li>{{ improvement }}</li>{% endfor %}
+</ul>
+</div>
+</article>
+{% endfor %}
+</div>
+</section>
+{% endif %}
+
+{% comment %}
+Partner Support. The CCEO handed this school's support to a partner and keeps
+the school relationship, so this is where they see what became of it — without
+having to go looking on a partner-shaped page they do not own.
+
+Read-only, and it carries no cost until the partner schedules. An assignment
+with no date has no activity, so there is no price to show; a "UGX 0" here
+would read as free work rather than unpriced work.
+{% endcomment %}
+{% if partner_support %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Partner Support</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Support handed to a partner. The partner sets the date; you keep the evidence and Salesforce handoff.</p>
+</div>
+<div class="divide-y divide-[var(--edify-border)] text-[12px]">
+{% for item in partner_support %}
+<div class="p-4 flex flex-wrap justify-between gap-3">
+<div class="min-w-0">
+<h4 class="font-semibold text-slate-800">{% partner_link item.partner_name item.partner_id empty="Partner" %} &mdash; {{ item.activity_type|replace_underscore|title|default:"Support" }}</h4>
+<p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">
+{% if item.is_scheduled %}Scheduled for {{ item.scheduled_date|date:"j M Y"|default:"—" }}
+{% elif item.is_returned %}Returned to staff{% if item.return_reason %} &mdash; {{ item.return_reason }}{% endif %}
+{% else %}Assigned {{ item.assignment_date|date:"j M Y"|default:"—" }} &bull; no date set yet
+{% endif %}
+</p>
+<p class="edify-text-caption text-slate-400 mt-0.5 font-semibold">Next: {{ item.next_action }} &mdash; {{ item.next_action_owner }}</p>
+</div>
+<div class="text-right">
+{% if item.has_cost %}
+<p class="text-[12px] font-bold tabular-nums text-slate-700">UGX {{ item.planned_cost|intcomma }}</p>
+{% endif %}
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+{% if item.is_scheduled %}{{ item.activity_status|replace_underscore|title }}
+{% elif item.is_returned %}Returned
+{% else %}Awaiting partner{% endif %}
+</p>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}

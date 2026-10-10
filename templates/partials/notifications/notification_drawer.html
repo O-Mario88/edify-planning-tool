@@ -6,6 +6,13 @@
 {% block drawer_body %}
 <div class="space-y-3 text-[12px] font-semibold text-slate-600">
 
+{% comment %}This device's phone notifications (owner, 2026-10-10): on, off, or
+the reason they cannot be on, in words (static/js/push-notifications.js).{% endcomment %}
+<div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-2" data-push-control>
+<p class="edify-text-caption text-slate-500 font-medium" data-push-status>Checking phone notifications…</p>
+<button type="button" class="btn btn-secondary h-8 shrink-0 whitespace-nowrap" data-push-toggle hidden></button>
+</div>
+
 {% if notifications %}
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <h4 class="edify-text-caption font-semibold text-slate-600">Recent activity</h4>
@@ -34,7 +41,10 @@ Mark all as read
 {% else %}
 <div class="py-8 text-center space-y-2">
 <p class="text-slate-600 font-semibold text-[12px]">All caught up</p>
-<p class="text-slate-500 edify-text-caption">No notifications to show right now.</p>
+<p class="text-slate-500 edify-text-caption">Nothing is waiting to be read.</p>
+</div>
+<div class="drawer-footer">
+<a href="/notifications" class="btn btn-secondary h-8 inline-flex items-center justify-center">View all notifications</a>
 </div>
 {% endif %}
 

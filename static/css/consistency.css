@@ -3509,6 +3509,10 @@ main table tbody > tr:only-child > td[colspan] > :is(
   padding-block: 0.21875rem !important;
 }
 
+/* At every width (owner, 2026-10-10: "make every table row compact and no
+   wrapping on mobile screen, tablet and desktop"). The blocks below were for
+   768px and up, so on a phone a cell's second line still sat under its first
+   and a row was two or three lines tall. */
 /* Stacked cell content reads on one line. A table row is a record, not a
    card: a name over an id, a value over a caption, an avatar beside a
    stacked pair — all of it sits on one 32px line. Forms and flex rows keep
@@ -3595,7 +3599,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
 }
 
 /* Marked by micro-ux.js: a cell with two or more stacked blocks. */
-@media (min-width: 768px) {
+@media all {
   :is(main, .drawer-body) table tbody :is(td, th).edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) {
     display: inline !important;
     margin-block: 0 !important;
@@ -3610,7 +3614,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
 }
 
 /* Marked by micro-ux.js: `.block` lines and control rows inside a cell. */
-@media (min-width: 768px) {
+@media all {
   :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-line,
   :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-wrap > .edify-cell-line {
     display: inline !important;
@@ -3644,7 +3648,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
 /* One line per row: a cell that is not the action cell never wraps; long
    text is cut with an ellipsis and the table scrolls sideways instead.
    The IA dashboard's own queue pills join the 18px pill rhythm. */
-@media (min-width: 768px) {
+@media all {
   :is(main, .drawer-body) table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:not(.edify-cell-action):not([data-record-action]) {
     white-space: nowrap;
     overflow: hidden;
@@ -3662,7 +3666,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 }
 
-@media (min-width: 768px) {
+@media all {
   :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-follows::before {
     content: "· ";
     color: var(--edify-text-subtle, var(--edify-text-muted));
@@ -4836,12 +4840,12 @@ main .edify-avatar-neutral {
    buttons (owner, 2026-09-23: "the school name column is being cut off by
    visit planned column. move them to the right to give more space to the
    school name"). */
-:root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 65rem !important; }
+:root main table.school-plan-table--selectable { table-layout: fixed !important; inline-size: 100% !important; min-inline-size: 74rem !important; }
 .school-plan-table--selectable thead th:nth-child(1) { width: 2rem; }
 .school-plan-table--selectable thead th:nth-child(2) { width: 3.75rem; }
 .school-plan-table--selectable thead th:nth-child(3) { width: auto; }
-.school-plan-table--selectable thead th:nth-child(4) { width: 10.25rem; }
-.school-plan-table--selectable thead th:nth-child(5) { width: 11.75rem; }
+.school-plan-table--selectable thead th:nth-child(4) { width: 13.5rem; }
+.school-plan-table--selectable thead th:nth-child(5) { width: 17.5rem; }
 /* The columns after the two statuses are sized by name, not by position, so
    one more column never hands its neighbour's width to the wrong heading.
    Visit Lock (owner, 2026-10-08) holds its longest value whole, "Awaiting
@@ -4856,7 +4860,7 @@ main .edify-avatar-neutral {
    as its own heading allows, which is 6.5rem since the column names went up
    a step (2026-10-08) — at 6rem "Responsible" was cut by 5px. Sized by its
    name, like Visit Lock and Actions above. */
-:root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 71.5rem !important; }
+:root main table.school-plan-table--selectable[data-support-column] { min-inline-size: 80.5rem !important; }
 .school-plan-table--selectable thead th.school-plan-table__responsible { width: 6.5rem; }
 /* Where the page is wide enough, Schedule and Assign sit side by side. */
 @media (min-width: 87.5rem) {
@@ -4897,7 +4901,10 @@ main .edify-avatar-neutral {
   padding-inline: .5rem !important; overflow: hidden !important;
 }
 :root main table.school-plan-table.school-plan-table tbody td[data-planning-badges] .school-planning-badges.school-planning-badges {
-  display: flex !important; flex-wrap: wrap !important; max-inline-size: 100% !important;
+  /* One line (owner, 2026-10-10: every table row is one line at every
+     width): two chips used to stack, which made the row two lines tall. The
+     two status columns are wide enough for two chips side by side. */
+  display: flex !important; flex-wrap: nowrap !important; max-inline-size: 100% !important;
 }
 /* Chips carry their own border; the "·" the cell rhythm puts between stacked
    runs only pushed the second chip past the column edge. */
@@ -5069,6 +5076,54 @@ main .edify-avatar-neutral {
 }
 
 
+
+/* ═══ EVERY TABLE ROW IS COMPACT, AT EVERY WIDTH ══════════════════════════
+ * Owner, 2026-10-10: "make every table row compact and no wrapping on mobile
+ * screen, tablet and desktop", and "NO colum overflow on the next column".
+ * The one-line rule above keeps a cell's text on one line; these are the
+ * things that still made a row taller than its text, found by measuring
+ * every table the fifteen roles reach at 390, 820 and 1440px.
+ *
+ *  - A row's tick box was a 44px touch box on a phone or a tablet, so every
+ *    table with a tick column ran 56px rows there. The cell around it is the
+ *    target; the box is the size it is on a desktop.
+ *  - A closed "Breakdown" in a cell still laid out its hidden list, which
+ *    made the cost column as wide as its longest line.
+ */
+:root :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th)
+  .school-record-row__select.school-record-row__select {
+  block-size: 1.5rem !important;
+  min-block-size: 0 !important;
+}
+
+:root :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th)
+  details:not([open]) > :not(summary) {
+  display: none !important;
+}
+
+/* ═══ ONE BODY TYPE IN EVERY TABLE ════════════════════════════════════════
+ * Owner, 2026-10-10: "the table body font size and font weight (medium)
+ * should be consistent". The record-table contract set them for tables that
+ * carry its class; a table written by hand kept its template's own sizes
+ * (12px here, 13px there) and weights (semibold names, bold figures), so two
+ * tables on one page read as two designs. Every body cell of every table,
+ * and the text inside it, is the table size at medium weight. A chip, a
+ * button and a form control keep their own type: they are controls, not
+ * cell text. The heading row is the header contract's.
+ */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody :is(td, th):not(.edify-group-head > th),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody :is(td, th):not(.edify-group-head > th)
+  :not(svg, svg *, button, button *, .btn, .btn *, input, select, textarea, summary,
+    .edify-badge, .edify-status-badge, .status-pill, .school-planning-badge,
+    .core-package-count, .row-menu, .row-menu *, .sr-only, .edify-visually-hidden,
+    .edify-empty-state, .edify-empty-state *) {
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: var(--edify-table-body-weight) !important;
+}
 
 /* ═══ ONE CONTENT LINE (owner, 2026-10-02) ════════════════════════════════
  * "Fix all the padding on every card so that everything is well aligned ...

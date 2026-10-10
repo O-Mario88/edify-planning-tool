@@ -5800,6 +5800,15 @@ main .edify-data-chart__title { margin: 0; font-size: var(--edify-text-card-titl
   .context-metrics .context-metrics__link {
     padding: 10px 12px;
     white-space: normal !important;
+    /* Every part of every fact is centred on a phone (owner, 2026-10-10:
+       "ALL KPI CONTENT MUST BE CENTERED"). A fact that opens something was
+       centred by the phone button rule while one that opens nothing kept
+       the strip's left edge, so one strip read at two alignments. */
+    align-items: center;
+    text-align: center;
+  }
+  .context-metrics :is(.context-metrics__label, .context-metrics__value, .context-metrics__helper) {
+    text-align: center;
   }
   .context-metrics .context-metrics__helper {
     max-inline-size: none;

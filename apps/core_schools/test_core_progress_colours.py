@@ -107,7 +107,7 @@ class CoreRowMarksTest(_CoreFixture):
 
         html = (
             self._client(self.cceo)
-            .get(f"/schools/{self.school.school_id}")
+            .get(f"/schools/{self.school.school_id}?tab=details")
             .content.decode()
         )
 
@@ -121,7 +121,7 @@ class CoreRowMarksTest(_CoreFixture):
         self.school.save(update_fields=["school_type"])
         html = (
             self._client(self.cceo)
-            .get(f"/schools/{self.school.school_id}")
+            .get(f"/schools/{self.school.school_id}?tab=details")
             .content.decode()
         )
         self.assertNotIn("data-core-package", html)

@@ -78,6 +78,9 @@ class="h-8 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-a
 </div>
 <div class="px-4 sm:px-6 pb-5 pt-4 space-y-4 max-w-[1500px] mx-auto">
 
+{% if can_take_schools and unheld_count %}
+<p class="edify-note" data-tone="info" role="note" data-unheld-schools>{{ unheld_count|intcomma }} school{{ unheld_count|pluralize }} in your country {{ unheld_count|pluralize:"has,have" }} no responsible staff member. <a href="/schools?gap=unheld" class="font-semibold underline">See {{ unheld_count|pluralize:"it,them" }}</a>, complete {{ unheld_count|pluralize:"its,their" }} details, and take the ones that are yours.</p>
+{% endif %}
 {% if messages %}
 <div class="space-y-2" aria-live="polite">
 {% for message in messages %}
@@ -145,6 +148,16 @@ class="school-filters-form space-y-3"
 <option value="">All</option>
 <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
 <option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
+</select>
+</div>
+<!-- What the record is missing (apps.schools.data_gaps; owner, 2026-10-10):
+a school that lacks a detail is listed, not hidden, so its holder can fill it. -->
+<div>
+<span class="edify-filter-label">Missing detail</span>
+<select aria-label="Missing detail" name="gap" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="">All schools</option>
+{% for option in gap_options %}<option value="{{ option.key }}" {% if selected_gap == option.key %}selected{% endif %}>{{ option.label }} ({{ option.count|intcomma }})</option>
+{% endfor %}{% if can_take_schools %}<option value="unheld" {% if selected_gap == 'unheld' %}selected{% endif %}>Nobody Holds It ({{ unheld_count|intcomma }})</option>{% endif %}
 </select>
 </div>
 <!-- Project Status -->

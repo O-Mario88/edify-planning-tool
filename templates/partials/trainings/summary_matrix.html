@@ -53,12 +53,12 @@ the card.
         <tr>
           <th scope="col" class="px-3 py-2">Training Name</th>
           <th scope="col" class="px-3 py-2">Mode of delivery</th>
-          <th scope="col" class="px-3 py-2 text-right">Total Covered<br>/ Country Ceiling</th>
-          <th scope="col" class="px-3 py-2 text-right">Staff<br>Planned</th>
-          <th scope="col" class="px-3 py-2 text-right">Awaiting<br>Partner</th>
+          <th scope="col" class="px-3 py-2 text-right">Total Covered / Country Ceiling</th>
+          <th scope="col" class="px-3 py-2 text-right">Staff Planned</th>
+          <th scope="col" class="px-3 py-2 text-right">Awaiting Partner</th>
           <th scope="col" class="px-3 py-2 text-right">Remaining</th>
           {% for column in summary.columns %}
-          <th scope="col" class="px-3 py-2 text-right" data-summary-staff="{{ column.id }}"># Schools<br>({{ column.name }}{% if column.is_lead %} · PL{% endif %})</th>
+          <th scope="col" class="px-3 py-2 text-right" data-summary-staff="{{ column.id }}"># Schools ({{ column.name }}{% if column.is_lead %} · PL{% endif %})</th>
           {% endfor %}
         </tr>
       </thead>

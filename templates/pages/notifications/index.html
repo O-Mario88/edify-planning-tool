@@ -215,7 +215,7 @@
               <!-- Route trigger Link -->
               {% if n.target_route %}
                 <a
-                  href="{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route }}{% else %}{{ n.target_route }}{% endif %}"
+                  href="{{ n.target_route }}"{% if n.status == 'unread' %} data-notification-read="{{ n.id }}"{% endif %}
                   class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
                 >
                   {{ n.action_label|default:"Open Record" }}

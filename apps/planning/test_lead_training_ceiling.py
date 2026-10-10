@@ -197,8 +197,8 @@ class TheLeadHasAColumnTest(CeilingFixture):
     def test_the_page_marks_the_lead_s_column(self):
         body = self.page(self.pl).content.decode()
 
-        self.assertIn("# Schools<br>(Lead Lydia · PL)", body)
-        self.assertIn("# Schools<br>(Mary Officer)", body)
+        self.assertIn("# Schools (Lead Lydia · PL)", body)
+        self.assertIn("# Schools (Mary Officer)", body)
 
     def test_the_country_s_table_lists_the_leads_with_their_teams(self):
         director = self._person("lead-cd@edify.org", "Director Dan", "CountryDirector")[

@@ -2,9 +2,12 @@
 The year a profile reads, and — on its Schools tab — which schools it lists.
 `pi` is frontend.views.profile_views.profile_context.
 {% endcomment %}
+{% include "partials/profiles/_header.html" %}
 {% filter_bar action=pi.base_url label="Profile year" %}
   <input type="hidden" name="{{ pi.param }}" value="{{ pi.tab }}">
   {% for key, value in pi.keep.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
+  {% if pi.what %}<input type="hidden" name="what" value="{{ pi.what }}">{% endif %}
+  {% for key, value in pi.keep_filters.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
   <label class="block">
     <span class="edify-filter-label">Fiscal year</span>
     <select name="fy" aria-label="Fiscal year" class="h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700">

@@ -88,6 +88,14 @@ route's, so one constant URL answers it for every row.
       reason under it.
       {% endcomment %}
       {% row_actions school.school_name %}
+      {% if selected_gap == "unheld" and can_take_schools %}
+        {# A school nobody holds: whoever it belongs to takes it (owner, 2026-10-10). #}
+        <form method="post" action="/schools/{{ school.id }}/take" class="contents">
+          {% csrf_token %}
+          <button type="submit" class="row-menu__item" role="menuitem" aria-label="Take {{ school.school_name }} as my school">Take This School</button>
+        </form>
+        <a class="row-menu__item" role="menuitem" href="/schools/{{ school.id }}?tab=details">Open And Complete</a>
+      {% endif %}
       {% if can_plan_from_directory %}
         <button
           type="button"

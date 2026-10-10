@@ -1131,7 +1131,7 @@ def _evidence_tables(request, report, rights) -> dict:
             f"{_share(cohort.get('improved_pct'))} / {_share(cohort.get('declined_pct'))}",
         ),
         (
-            "Missing a baseline / overdue follow-up",
+            "Previous FY SSA missing / current FY SSA overdue",
             f"{cohort.get('baseline_missing', 0)} / {cohort.get('overdue', 0)}",
         ),
         (

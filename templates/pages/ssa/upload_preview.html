@@ -130,8 +130,7 @@ Blocked Rows ({{ blocked_count }})
 <td class="px-4 py-3.5">{{ r.date_of_ssa|default:"—" }}</td>
 <td class="px-4 py-3.5 text-rose-600 text-[12px]">
 {% for error in r.validation_errors %}
-&bull; {{ error }}<br>
-{% endfor %}
+&bull; {{ error }} · {% endfor %}
 </td>
 </tr>
 {% empty %}

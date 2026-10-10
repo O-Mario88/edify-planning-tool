@@ -242,7 +242,14 @@ class RolePermissionService:
         if obj_type == "School":
             if scope.country_scope:
                 return True
-            return obj.id in scope.school_ids
+            if obj.id in scope.school_ids:
+                return True
+            # A school nobody holds is open to the country's field staff, so
+            # that somebody can complete its record and take it (owner,
+            # 2026-10-10; apps.schools.data_gaps).
+            from apps.schools.data_gaps import open_to
+
+            return open_to(user, obj.id)
 
         elif obj_type == "Cluster":
             if scope.country_scope:

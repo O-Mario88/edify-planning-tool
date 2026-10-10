@@ -15,8 +15,13 @@
 {% if n.target_route %}
 role="link"
 tabindex="0"
-@click="if (!$event.target.closest('button, a, input')) window.location.assign('{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route|urlencode }}{% else %}{{ n.target_route }}{% endif %}')"
-@keydown.enter="window.location.assign('{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route|urlencode }}{% else %}{{ n.target_route }}{% endif %}')"
+{# A tap goes straight to the record the notification is about (owner, #}
+{# 2026-10-10: "open the link direct"), and is marked read on the way #}
+{# without a stop in between (push-notifications.js). #}
+@click="if (!$event.target.closest('button, a, input')) window.location.assign('{{ n.target_route|escapejs }}')"
+@keydown.enter="$el.click()"
+data-notification-read="{{ n.id }}"
+data-notification-open="{{ n.id }}"
 class="cursor-pointer py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}edify-primary-soft-alpha-20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"
 {% else %}
 class="py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}edify-primary-soft-alpha-20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"

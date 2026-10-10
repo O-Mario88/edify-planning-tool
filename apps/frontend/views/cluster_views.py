@@ -1153,7 +1153,12 @@ def cluster_detail_view(request, cluster_id):
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
     }
-    if tab in PROFILE_ENGINE_TABS and _cluster_row is not None:
+    # A figure's records (`what=`) are drawn by the shared sections too,
+    # whichever tab the address names.
+    from apps.analytics.profile_records import RECORDS
+
+    opens_records = request.GET.get("what", "") in RECORDS
+    if (tab in PROFILE_ENGINE_TABS or opens_records) and _cluster_row is not None:
         from apps.analytics import profile_intelligence
         from apps.frontend.views.profile_views import profile_context
 
@@ -1166,6 +1171,7 @@ def cluster_detail_view(request, cluster_id):
             ),
             keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
             labels={section: label for section, label in PROFILE_ENGINE_TABS.values()},
+            subject=_cluster_row,
         )
         return render(request, "pages/clusters/detail.html", context)
     if not is_overview:

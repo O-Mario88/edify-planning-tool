@@ -751,7 +751,7 @@ class PageTest(Bulk, World):
         )
         self.assertRegex(
             types,
-            r'<th scope="col" data-col="visits" x-show="view === \'visits\'" x-cloak[^>]*>Visits<br>Needed</th>',
+            r'<th scope="col" data-col="visits" x-show="view === \'visits\'" x-cloak[^>]*>Visits Needed</th>',
         )
         people = body[body.index('aria-labelledby="cpo-drill-name"') :]
         people = people[: people.index("</section>")]
@@ -760,13 +760,13 @@ class PageTest(Bulk, World):
                 self.assertRegex(people, rf"<button[^>]*data-edify-tab[^>]*>{label}<")
         self.assertEqual(people.count("<table"), 1)
         for heading in (
-            "Core<br>Visits",
-            "Client<br>Visits",
-            "Partner<br>Target",
-            "Client<br>Spillover",
-            "Assigned<br>to Partner",
-            "Staff<br>Trainings",
-            "Partner<br>Trainings",
+            "Core Visits",
+            "Client Visits",
+            "Partner Target",
+            "Client Spillover",
+            "Assigned to Partner",
+            "Staff Trainings",
+            "Partner Trainings",
         ):
             with self.subTest(heading=heading):
                 self.assertIn(f">{heading}</th>", people)

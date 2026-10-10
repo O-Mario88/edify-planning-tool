@@ -79,7 +79,9 @@
   <!-- Message timeline -->
   <div class="p-5 space-y-1 flex-1 min-h-0 overflow-y-auto" id="message-timeline">
     {% for m in selected.messages %}
-    <div class="rounded-surface border {% if m.is_system %}border-slate-200 bg-slate-50/60{% else %}border-slate-100 edify-surface{% endif %} p-4" data-messages-tile>
+    {# Each message has its own address, so a notification about one opens #}
+    {# the conversation at that message, marked (owner, 2026-10-10). #}
+    <div id="message-{{ m.id }}" class="rounded-surface border {% if m.is_system %}border-slate-200 bg-slate-50/60{% else %}border-slate-100 edify-surface{% endif %} p-4{% if request.GET.message == m.id %} ring-2 ring-[var(--edify-accent)]{% endif %}" data-messages-tile{% if request.GET.message == m.id %} data-message-target aria-current="true"{% endif %}>
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="h-9 w-9 rounded-pill {% if m.is_system %}bg-slate-800 text-white{% else %}bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)]{% endif %} flex items-center justify-center edify-text-caption font-bold shrink-0">

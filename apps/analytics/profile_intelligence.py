@@ -59,7 +59,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -82,6 +82,8 @@ __all__ = [
     "district_scope",
     "finance",
     "groups",
+    "INTERVENTION_METHOD",
+    "MOVERS_METHOD",
     "partner_scope",
     "people",
     "period_options",
@@ -131,7 +133,9 @@ _CHANGE_LABELS = {
     "declined": "Declined",
     "no_change": "No change",
     "maintained_strong": "Maintained strong",
-    "not_comparable": "Not measured",
+    # One of the two years has no confirmed SSA, so there is nothing to
+    # compare yet.
+    "not_comparable": "No comparison yet",
 }
 _CHANGE_TONES = {
     "improved": "success",
@@ -184,7 +188,13 @@ def sub_region_scope(sub_region) -> Scope:
         key=sub_region.id,
         name=f"{sub_region.name} Sub-region",
         covers="All schools in the sub-region",
-        schools=_operating().filter(sub_region_id=sub_region.id),
+        # A school's sub-region is its district's (`geography.District`): the
+        # school's own column is a copy that an upload does not fill, and a
+        # profile read from it alone counted no school at all (2026-10-10).
+        schools=_operating().filter(
+            Q(district__sub_region_id=sub_region.id)
+            | Q(district__sub_region__isnull=True, sub_region_id=sub_region.id)
+        ),
     )
 
 
@@ -214,12 +224,17 @@ def cluster_scope(cluster) -> Scope:
 
 
 def school_scope(school) -> Scope:
+    from apps.schools.models import School
+
     return Scope(
         kind="school",
         key=school.id,
         name=school.name,
         covers="Single school",
-        schools=_operating().filter(id=school.id),
+        # The school itself, operating or closed: a closed school's profile
+        # still tells what happened there. (Every wider scope counts
+        # operating schools only.)
+        schools=School.objects.filter(id=school.id, deleted_at__isnull=True),
     )
 
 
@@ -287,7 +302,7 @@ def partner_scope(partner) -> Scope:
 
 # ── Reading the scope ───────────────────────────────────────────────────────
 def _schools(scope: Scope) -> list[dict]:
-    return list(
+    rows = list(
         scope.schools.values(
             "id",
             "school_id",
@@ -298,9 +313,15 @@ def _schools(scope: Scope) -> list[dict]:
             "account_owner_id",
             "district_id",
             "district__name",
+            "district__sub_region_id",
             "sub_region_id",
+            "sub_county_id",
         ).order_by("name", "id")
     )
+    for row in rows:
+        # The district's sub-region, else the school's own copy of it.
+        row["sub_region"] = row.pop("district__sub_region_id") or row["sub_region_id"]
+    return rows
 
 
 def _change(previous, current, *, book, intervention=None) -> dict:
@@ -332,6 +353,80 @@ def _change(previous, current, *, book, intervention=None) -> dict:
 def _mean(values) -> float | None:
     values = [float(v) for v in values if v is not None]
     return round(sum(values) / len(values), 2) if values else None
+
+
+#: How a profile names its best and its struggling SSA intervention, said on
+#: the page beside them (the brief, 2026-10-10: "Do not simply select the
+#: lowest absolute score if another intervention is declining sharply. Use a
+#: transparent ranking methodology").
+INTERVENTION_METHOD = (
+    "Best performing is the intervention that rose most since the previous "
+    "year by the improvement rule; where none rose, the highest score this "
+    "year. Struggling is the intervention that declined most since the "
+    "previous year; where none declined, the lowest score this year, and of two "
+    "level ones the one that rose least. An intervention with no confirmed "
+    "score this year is not ranked."
+)
+#: How the improving and the declining lists are made.
+MOVERS_METHOD = (
+    "Improving and declining are read by the change in average confirmed SSA "
+    "score since the previous year, by the one improvement rule; the biggest "
+    "change comes first. One with no score in either year is in neither list."
+)
+
+
+def _intervention_picks(rows) -> tuple[dict | None, dict | None]:
+    """The best performing and the struggling intervention of ``rows``
+    (`INTERVENTION_METHOD`), each with ``basis``: "change" when the change
+    chose it, "score" when this year's score did."""
+    measured = [row for row in rows if row["current"] is not None]
+    if not measured:
+        return None, None
+    improved = [row for row in measured if row["status"] == "improved"]
+    if improved:
+        best = dict(
+            max(improved, key=lambda r: (r["change"], r["current"])), basis="change"
+        )
+    else:
+        best = dict(
+            max(measured, key=lambda r: (r["current"], r["change"] or 0)),
+            basis="score",
+        )
+    # The struggling one is never the best one: where every intervention
+    # moved alike (or only one declined and it is also the highest), it is
+    # read among the others.
+    others = [row for row in measured if row["key"] != best["key"]]
+    if not others:
+        # One intervention measured: it is not its own opposite.
+        return best, None
+    declined = [row for row in others if row["status"] == "declined"]
+    if declined:
+        struggling = dict(
+            min(declined, key=lambda r: (r["change"], r["current"])), basis="change"
+        )
+    else:
+        struggling = dict(
+            min(others, key=lambda r: (r["current"], r["change"] or 0)),
+            basis="score",
+        )
+    return best, struggling
+
+
+def _movers(rows) -> tuple[list[dict], list[dict]]:
+    """The rows that improved most and those that declined most
+    (`MOVERS_METHOD`), up to `RANKED` of each."""
+    improving = sorted(
+        (row for row in rows if row["status"] == "improved"),
+        key=lambda r: (-r["change"], r["name"].casefold()),
+    )[:RANKED]
+    declining = sorted(
+        (row for row in rows if row["status"] == "declined"),
+        key=lambda r: (r["change"], r["name"].casefold()),
+    )[:RANKED]
+    return (
+        [dict(row, rank=index + 1) for index, row in enumerate(improving)],
+        [dict(row, rank=index + 1) for index, row in enumerate(declining)],
+    )
 
 
 def _rank(rows) -> tuple[list[dict], list[dict]]:
@@ -488,8 +583,19 @@ def _work_by_place(
             visits_done=Count("id", filter=visit & done),
             trainings=Count("id", filter=training),
             trainings_done=Count("id", filter=training & done),
+            teachers=Sum("teachers_attended", filter=training & done),
+            leaders=Sum("leaders_attended", filter=training & done),
         )
     }
+    for row in schools.values():
+        row["teachers"] = row["teachers"] or 0
+        row["leaders"] = row["leaders"] or 0
+    # Teachers and school leaders recorded for a school at a completed group
+    # training are trained too (`people`): the register is the record.
+    for school_id, teachers, leaders in _register(scope, fy, window, _TRAININGS):
+        row = schools.setdefault(school_id, {"school_id": school_id, **_NO_WORK})
+        row["teachers"] += teachers or 0
+        row["leaders"] += leaders or 0
     clusters = {
         row["cluster_id"]: row
         for row in work.filter(school__isnull=True, cluster_id__isnull=False)
@@ -504,7 +610,51 @@ def _work_by_place(
     return schools, clusters
 
 
-_NO_WORK = {"visits": 0, "visits_done": 0, "trainings": 0, "trainings_done": 0}
+_NO_WORK = {
+    "visits": 0,
+    "visits_done": 0,
+    "trainings": 0,
+    "trainings_done": 0,
+    # Teachers and school leaders trained: at the school's own completed
+    # trainings and, by the register, at completed group trainings.
+    "teachers": 0,
+    "leaders": 0,
+}
+
+
+def _sessions(fy, window):
+    """The year's completed sessions that are not at one school: group
+    trainings and cluster meetings."""
+    from apps.activities.models import Activity
+
+    return _in_window(
+        Activity.objects.filter(
+            status__in=COMPLETED_WORK_STATUSES,
+            school__isnull=True,
+            fy=str(fy),
+            deleted_at__isnull=True,
+        ),
+        window,
+    )
+
+
+def _register(scope: Scope, fy, window, types):
+    """``(school id, teachers, leaders)`` for each of the scope's schools
+    recorded as attending a completed session of ``types``. One query."""
+    from apps.activities.models import ClusterActivityAttendance
+
+    return (
+        ClusterActivityAttendance.objects.filter(
+            school_id__in=scope.schools.values("id"),
+            attended=True,
+            activity_id__in=_sessions(fy, window)
+            .filter(activity_type__in=types)
+            .values("id"),
+        )
+        .values_list("school_id")
+        .annotate(teachers=Sum("teachers"), leaders=Sum("leaders"))
+        .values_list("school_id", "teachers", "leaders")
+    )
 
 
 def _work_of(rows, work: dict) -> dict:
@@ -676,6 +826,9 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 # Visits at its schools here, and the cluster's own sessions.
                 "visits": _work_of(rows, school_work)["visits"],
                 "visits_done": _work_of(rows, school_work)["visits_done"],
+                "teachers": _work_of(rows, school_work)["teachers"],
+                "leaders": _work_of(rows, school_work)["leaders"],
+                "enrollment": sum(r["enrollment"] or 0 for r in rows),
                 "meetings": cluster_work.get(cluster_id, {}).get("meetings", 0),
                 "meetings_done": cluster_work.get(cluster_id, {}).get(
                     "meetings_done", 0
@@ -752,6 +905,9 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
     # ── Rankings and attention ─────────────────────────────────────────────
     best_schools, worst_schools = _rank(school_scores)
     best_clusters, worst_clusters = _rank(clusters)
+    improving_schools, declining_schools = _movers(school_scores)
+    improving_clusters, declining_clusters = _movers(clusters)
+    best_intervention, struggling_intervention = _intervention_picks(comparison["rows"])
     execution = _execution(scope, cluster_ids, fy, window)
     _expected(execution, schools, school_work)
     measured = [row for row in comparison["rows"] if row["current"] is not None]
@@ -807,6 +963,7 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 "",
                 "activities",
                 "",
+                "meetings_overdue",
             ),
             _attention(
                 execution["visits"]["overdue"],
@@ -815,6 +972,7 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 "",
                 "activities",
                 "",
+                "visits_overdue",
             ),
         )
         if item
@@ -843,6 +1001,9 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 key=lambda r: r["change"],
                 default=None,
             ),
+            "best": best_intervention,
+            "struggling": struggling_intervention,
+            "method": INTERVENTION_METHOD,
             "rule": RULE_SENTENCE,
             # The score the programme works towards, what is left to it, and
             # the schools there.
@@ -864,7 +1025,12 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
             "worst_schools": worst_schools,
             "best_clusters": best_clusters,
             "worst_clusters": worst_clusters,
+            "improving_schools": improving_schools,
+            "declining_schools": declining_schools,
+            "improving_clusters": improving_clusters,
+            "declining_clusters": declining_clusters,
             "method": RANKING_METHOD,
+            "movers_method": MOVERS_METHOD,
         },
         "execution": execution,
         "projects": _projects(
@@ -920,7 +1086,7 @@ def _expected(execution: dict, schools: list[dict], school_work: dict) -> None:
         )
 
 
-def _attention(count, one, many, when, tab, show) -> dict | None:
+def _attention(count, one, many, when, tab, show, what="") -> dict | None:
     if not count:
         return None
     text = f"{count:,} {one if count == 1 else many}"
@@ -929,10 +1095,13 @@ def _attention(count, one, many, when, tab, show) -> dict | None:
         "text": f"{text} {when}".strip(),
         "tab": tab,
         "show": show,
+        # The records the line counts (`profile_records.RECORDS`), where it
+        # counts work rather than schools.
+        "what": what,
     }
 
 
-def school_rows(profile: dict, show: str = "all") -> list[dict]:
+def school_rows(profile: dict, show: str = "all", *, where=None) -> list[dict]:
     """The schools behind a figure of ``profile``: every school of the scope,
     or the ones a figure counted (`SHOW_LABELS`). Each row carries the
     school's type, cluster, and its SSA last year, this year and the change,
@@ -944,6 +1113,9 @@ def school_rows(profile: dict, show: str = "all") -> list[dict]:
     rows = []
     for school in profile["_schools"]:
         if wanted is not None and school["id"] not in wanted:
+            continue
+        # ``where`` narrows the list to one part: ``(school field, value)``.
+        if where is not None and school.get(where[0]) != where[1]:
             continue
         score = profile["_scores"][school["id"]]
         rows.append(
@@ -971,9 +1143,12 @@ def school_rows(profile: dict, show: str = "all") -> list[dict]:
 # ── A scope read by its parts ───────────────────────────────────────────────
 #: The parts a scope can be read by: key → (label, the school field).
 GROUPS = {
-    "sub_regions": ("Sub-regions", "sub_region_id"),
+    "sub_regions": ("Sub-regions", "sub_region"),
     "districts": ("Districts", "district_id"),
     "staff": ("Staff", "account_owner_id"),
+    # The geographic layer inside a district (the brief, 2026-10-10:
+    # "District Sub-county Intelligence").
+    "sub_counties": ("Sub-counties", "sub_county_id"),
 }
 
 
@@ -995,6 +1170,15 @@ def _group_names(by: str, keys: set) -> dict[str, tuple[str, str]]:
         return {
             pk: (pk, name)
             for pk, name in SubRegion.objects.filter(id__in=keys).values_list(
+                "id", "name"
+            )
+        }
+    if by == "sub_counties":
+        from apps.geography.models import SubCounty
+
+        return {
+            pk: (pk, name)
+            for pk, name in SubCounty.objects.filter(id__in=keys).values_list(
                 "id", "name"
             )
         }
@@ -1056,7 +1240,16 @@ def groups(profile: dict, by: str) -> dict:
         )
     rows.sort(key=lambda r: (r["name"].casefold(), str(r["id"])))
     best, worst = _rank(rows)
-    return {"by": by, "rows": rows, "best": best, "worst": worst, "unplaced": unplaced}
+    improving, declining = _movers(rows)
+    return {
+        "by": by,
+        "rows": rows,
+        "best": best,
+        "worst": worst,
+        "improving": improving,
+        "declining": declining,
+        "unplaced": unplaced,
+    }
 
 
 # ── Cluster Management, for the clusters of any scope ───────────────────────

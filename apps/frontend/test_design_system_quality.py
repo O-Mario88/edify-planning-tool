@@ -739,13 +739,14 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         for declaration in (
             "--edify-table-cell-padding-block: 0.5rem",
             "--edify-table-cell-padding-inline: 0.75rem",
-            # Headers may be bold; the body never is. Cells use a medium-light weight (450)
-            # per the reference grid, and identity separates itself with ink
-            # colour plus a half-step of medium, not a second bold rail.
+            # Headers may be bold; the body never is. Every cell of a body,
+            # the record's name included, is medium (owner, 2026-10-10: "the
+            # table body font size and font weight (medium) should be
+            # consistent"); identity separates itself with ink colour.
             # Bold since 2026-10-08 (owner: "make it bold").
             "--edify-table-header-weight: 700",
-            "--edify-table-body-weight: 450",
-            "--edify-table-identity-weight: 550",
+            "--edify-table-body-weight: 500",
+            "--edify-table-identity-weight: 500",
             "--edify-table-action-size: 2rem",
             "--edify-table-header-divider:",
         ):

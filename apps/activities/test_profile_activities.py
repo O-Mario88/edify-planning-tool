@@ -230,7 +230,7 @@ class EveryProfileShowsTheSection(ProfileActivitiesFixture):
     def test_school_cluster_partner_and_district_profiles_render_it(self):
         self.assertTrue(self.client.login(email=self.cceo.email, password=PASSWORD))
         for url, param in (
-            (f"/schools/{self.school.school_id}", "school_acts"),
+            (f"/schools/{self.school.school_id}?tab=activities", "school_acts"),
             (f"/clusters/{self.cluster.id}", "cluster_acts"),
             (f"/partners/{self.partner.id}", "partner_acts"),
             (f"/districts/{self.district.id}?tab=activities", "district_acts"),
@@ -244,7 +244,9 @@ class EveryProfileShowsTheSection(ProfileActivitiesFixture):
 
     def test_the_owner_s_menu_carries_the_three_doors(self):
         self.assertTrue(self.client.login(email=self.cceo.email, password=PASSWORD))
-        body = self.client.get(f"/schools/{self.school.school_id}").content.decode()
+        body = self.client.get(
+            f"/schools/{self.school.school_id}?tab=activities"
+        ).content.decode()
         for door in ("complete-drawer", "reschedule-drawer", "cancel-drawer"):
             self.assertIn(f"/my-plan/{self.planned.id}/{door}", body)
 

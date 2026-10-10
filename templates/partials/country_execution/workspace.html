@@ -114,7 +114,7 @@ do (owner, 2026-10-02); they can still be folded away.
         <div class="cpo-tscroll">
           {% paginate chart.table.rows "lead_chart_page" as lead_chart_pager %}
           <table class="cpo-mini" data-table-wrap="off">
-            <thead><tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr></thead>
+            <thead><tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column.split|join:" " }}</th>{% endfor %}</tr></thead>
             <tbody>
               {% for row in lead_chart_pager.rows %}
               <tr><th scope="row">{{ row.label }}</th>{% for value in row.cells %}<td>{{ value }}</td>{% endfor %}</tr>

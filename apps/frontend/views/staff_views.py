@@ -1081,10 +1081,17 @@ def notifications_page_view(request):
 
 
 def _get_sorted_drawer_notifications(user) -> list[Notification]:
-    """Helper to get notifications for drawer sorted by Critical/Action-Required first, then latest."""
-    notifs_qs = Notification.objects.filter(recipient_id=user.id).exclude(
-        Q(status="archived") | Q(resolved_at__isnull=False)
-    )
+    """The drawer's list: what still waits to be read, action-required and
+    urgent first, then the newest.
+
+    Owner, 2026-10-10: a notification that has been opened is cleared from
+    the active drawer ("prevent it remaining visibly unread after successful
+    handling"). It used to stay under the unread ones; the history is the
+    notification centre's ("View all notifications"), which keeps every one.
+    """
+    notifs_qs = Notification.objects.filter(
+        recipient_id=user.id, status="unread"
+    ).exclude(resolved_at__isnull=False)
     notifs = list(notifs_qs)
 
     def sort_key(n):
@@ -1098,7 +1105,11 @@ def _get_sorted_drawer_notifications(user) -> list[Notification]:
         return (unread, ar_val, p_val, -n.created_at.timestamp())
 
     notifs.sort(key=sort_key)
-    return notifs[:20]
+    # Every item opens its record directly (owner, 2026-10-10), so one whose
+    # record has since been removed is cleared here rather than listed.
+    from apps.notifications.push import clear_gone
+
+    return clear_gone(notifs[:20])
 
 
 @require_page_permission("dashboard")
@@ -1115,10 +1126,53 @@ def notification_drawer_view(request):
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
-        "drawer_type": "right_top",
+        # Under the bell that opened it (owner, 2026-10-10).
+        "drawer_type": "anchored",
+        "drawer_anchor": ".edify-topbar__utility--notifications",
         "drawer_size": "sm",
     }
     return render(request, "partials/notifications/notification_drawer.html", context)
+
+
+@require_page_permission("dashboard")
+def open_notification(request, notif_id):
+    """What a tap on a notification does, in the app's drawer and on a
+    phone's lock screen alike (owner, 2026-10-10): the notification is marked
+    read, and the reader lands on the record it is about. A reader whose
+    session has gone signs in first and lands in the same place (the
+    permission gate keeps this address as the sign-in's `next`). A record
+    that no longer exists clears the notification and says so, rather than
+    leaving a link that leads nowhere."""
+    from apps.notifications import push
+
+    notification = Notification.objects.filter(
+        id=notif_id, recipient_id=request.user.id
+    ).first()
+    if notification is None:
+        # Another account's, or one that was removed.
+        messages.info(request, "That notification is no longer in your list.")
+        return redirect("/notifications")
+    outcome = push.open_destination(
+        notification, host=request.get_host(), secure=request.is_secure()
+    )
+    if outcome["gone"]:
+        messages.info(
+            request,
+            f"\u201c{notification.title}\u201d was about a record that is no "
+            "longer available. The notification has been cleared.",
+        )
+    # `open_destination` only ever answers one of the application's own
+    # routes; the check is repeated here, at the redirect itself, so the
+    # value that is followed is visibly the one that was checked (the same
+    # shape as `mark_notification_read` below).
+    destination = outcome["url"]
+    if url_has_allowed_host_and_scheme(
+        destination,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(destination)
+    return redirect("/notifications")
 
 
 @require_page_permission("dashboard")

@@ -46,8 +46,12 @@ a Programme Lead over the whole team's schools.
 {% include "partials/profiles/_filters.html" %}
 {% include "partials/profiles/_sections.html" %}
 {% else %}
-{% legacy_kpi_item "Overdue activities" overdue_count helper="Needs recovery" tone="danger" icon="warning" as overdue_kpi %}
-{% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" as completed_kpi %}
+{% comment %}Each headline opens the list it counts, below on this tab (owner,
+2026-10-10: no figure without its records).{% endcomment %}
+{% with acts_anchor="#"|add:profile_activities.param|add:"-activities" %}
+{% legacy_kpi_item "Overdue activities" overdue_count helper="Needs recovery" tone="danger" icon="warning" link=acts_anchor as overdue_kpi %}
+{% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" link=acts_anchor as completed_kpi %}
+{% endwith %}
 {% collect_kpi_items overdue_kpi completed_kpi as staff_activity_kpis %}
 {% include "components/context_metrics.html" with items=staff_activity_kpis variant="executive" density="compact" title="Activity headline" %}
 

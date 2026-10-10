@@ -269,7 +269,7 @@ IA_OUTCOME_METRIC_ROWS: tuple[dict, ...] = (
         unit="percent",
     ),
     _cohort(
-        "Project Enrolments Missing a Baseline",
+        "Project Enrolments Missing Previous FY SSA",
         definition=(
             "Project enrolments without a valid confirmed baseline: either no "
             "confirmed SSA exists yet or it has not been captured."

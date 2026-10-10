@@ -17,6 +17,7 @@ from urllib.parse import quote
 from django.shortcuts import get_object_or_404, render
 
 from apps.analytics import profile_intelligence as engine
+from apps.analytics import profile_records
 from apps.core.permissions import RolePermissionService, require_page_permission
 
 #: Every section a profile can have, in the order of the tab strip.
@@ -25,11 +26,15 @@ SECTIONS = (
     ("ssa", "SSA"),
     ("sub_regions", "Sub-regions"),
     ("districts", "Districts"),
+    ("sub_counties", "Sub-counties"),
     ("staff", "Staff"),
     ("clusters", "Clusters"),
     ("schools", "Schools"),
     ("activities", "Activities"),
     ("projects", "Projects"),
+    # A school's own two: its learners' numbers and results, and its stories.
+    ("academic", "Academic"),
+    ("stories", "Stories"),
 )
 _LABELS = dict(SECTIONS)
 
@@ -61,6 +66,7 @@ SECTIONS_OF = {
     "district": (
         "overview",
         "ssa",
+        "sub_counties",
         "staff",
         "clusters",
         "schools",
@@ -96,6 +102,8 @@ SECTIONS_OF = {
         "projects",
     ),
     "cluster": ("overview", "schools", "activities", "projects"),
+    # School 360 (the brief, 2026-10-10): the same sections over one school.
+    "school": ("overview", "ssa", "activities", "academic", "stories", "projects"),
 }
 
 #: Where a row of a part opens.
@@ -127,23 +135,31 @@ def profile_context(
     *,
     param: str = "tab",
     lead: tuple = (),
+    trail: tuple = (),
     activities=None,
     activities_param: str = "profile_acts",
     activities_caption: str = "",
     keep: dict | None = None,
     labels: dict | None = None,
     keys: dict | None = None,
+    subject=None,
 ) -> dict:
     """Everything the shared profile sections draw for ``scope``.
 
     ``param`` is the query parameter that names the open section; ``lead``
     are the page's own tabs drawn before the engine's (``(key, label)``), the
-    first of them the one a page opens on; ``activities`` is the queryset of
+    first of them the one a page opens on, and ``trail`` those drawn after
+    them; ``activities`` is the queryset of
     the Activities tab's list (already narrowed to what the reader may see);
     ``keep`` are query values every link of the profile carries (a page with
     its own tab parameter); ``labels`` renames a section for this page, and
     ``keys`` gives a section another key in the address where the page
-    already has a tab of that name (a cluster's own "overview").
+    already has a tab of that name (a cluster's own "overview");
+    ``subject`` is the record the profile is about (the school, the cluster,
+    the district), for the header's facts.
+
+    A figure opens its records with ``what=`` (`profile_records.RECORDS`):
+    the page then draws those tables under the tab the figure lives on.
     """
     options = fy_choices()
     fy = request.GET.get("fy", "")
@@ -161,11 +177,26 @@ def profile_context(
     keys = keys or {}
     sections = [(keys.get(key, key), names[key]) for key in SECTIONS_OF[scope.kind]]
     section_of = {keys.get(key, key): key for key in SECTIONS_OF[scope.kind]}
-    tabs = [*lead, *sections]
+    tabs = [*lead, *sections, *trail]
     tab = request.GET.get(param, "")
+    if tab not in dict(tabs) and activities is not None:
+        # The activity list's own links (its Planned / Completed switch, its
+        # pager) carry the list's parameters and no tab: they belong to the
+        # tab the list is on.
+        if any(key.startswith(activities_param) for key in request.GET):
+            tab = (keys or {}).get("activities", "activities")
     if tab not in dict(tabs):
         tab = tabs[0][0]
     section = section_of.get(tab, "")
+    # The records behind a figure (the brief, 2026-10-10: "Summary →
+    # Breakdown → Actual Records"), drawn under the figure's own tab.
+    what = request.GET.get("what", "")
+    if what in profile_records.RECORDS:
+        home = profile_records.RECORDS[what][0]
+        home = home if home in SECTIONS_OF[scope.kind] else "overview"
+        tab, section = keys.get(home, home), "records"
+    else:
+        what = ""
     show = request.GET.get("show", "")
     if show not in engine.SHOW_LABELS:
         show = "all"
@@ -201,14 +232,31 @@ def profile_context(
         ),
         "period": period,
         "period_options": engine.period_options(),
+        "what": what,
+        # The sections this kind of profile has, for a figure that opens one.
+        "has": dict.fromkeys(SECTIONS_OF[scope.kind], True),
+        # What each section is called in this page's address.
+        "at": {key: keys.get(key, key) for key in SECTIONS_OF[scope.kind]},
     }
+    # Where a figure's records open: the address up to the figure's name.
+    context["records"] = f"{context['href']}fy={fy}&what="
     if not context["is_engine_tab"]:
         # The page's own tab: the engine is not read at all.
         return context
 
     profile = engine.build(scope, fy, period)
     context["profile"] = profile
-    if section == "overview":
+    may_open_staff = RolePermissionService.can_view_page(request.user, "staff")
+    context["identity"] = profile_records.identity(
+        profile, subject, may_open_staff=may_open_staff
+    )
+    if section == "records":
+        context["record_tables"] = profile_records.records(
+            profile, what, key=request.GET.get("key", ""), principal=request.user
+        )
+        context["record_title"] = profile_records.RECORDS[what][1]
+        context["record_back"] = f"{context['href']}{param}={tab}&fy={fy}"
+    elif section == "overview":
         # What the profile covers, level by level, each line opening the tab
         # that lists it (owner, 2026-10-09: "country should have summary of
         # all the sub-region, district, clusters, schools, and their
@@ -231,8 +279,32 @@ def profile_context(
         # register — loans and Business Transformation.
         context["people"] = engine.people(profile)
         context["finance"] = engine.finance(profile, request.user)
+        context["stories"] = profile_records.stories(profile)
+        context["online"] = profile_records.channels(profile)[-1]
+        context["focus_work"] = profile_records.focus_work(profile)
+        # How many of each geographic part the scope has.
+        context["levels"] = {
+            "sub_regions": len(
+                {s["sub_region"] for s in profile["_schools"] if s["sub_region"]}
+            ),
+            "sub_counties": len(
+                {s["sub_county_id"] for s in profile["_schools"] if s["sub_county_id"]}
+            ),
+        }
+        context["partners"] = (
+            profile_records._handover_queryset(profile)
+            .values("partner_id")
+            .distinct()
+            .count()
+        )
     elif section == "schools":
-        context["school_rows"] = engine.school_rows(profile, show)
+        # A sub-county's row opens its schools here.
+        where = None
+        sub_county = request.GET.get("sub_county", "")
+        if sub_county:
+            where = ("sub_county_id", sub_county)
+            context["keep_filters"] = {"sub_county": sub_county}
+        context["school_rows"] = engine.school_rows(profile, show, where=where)
         context["many_districts"] = profile["portfolio"]["districts"] > 1
     elif section in engine.GROUPS:
         tab = section
@@ -241,10 +313,11 @@ def profile_context(
         part = "team members" if names[tab] == _TEAM_LABEL else names[tab].lower()
         context["group_best_title"] = f"Best performing {part}"
         context["group_worst_title"] = f"{names[tab]} needing the most support"
-        context["group_url"] = _PART_URL[tab]
-        context["may_open_group"] = (
-            tab != "staff" or RolePermissionService.can_view_page(request.user, "staff")
-        )
+        context["group_improving_title"] = f"Improving {part}"
+        context["group_declining_title"] = f"Declining {part}"
+        # A sub-county has no page of its own: its row opens its schools.
+        context["group_url"] = _PART_URL.get(tab, "")
+        context["may_open_group"] = tab != "staff" or may_open_staff
     elif section == "clusters":
         # Cluster Management's reads, for the clusters of this scope.
         context["cluster_totals"] = engine.cluster_management(profile)
@@ -255,16 +328,30 @@ def profile_context(
         from apps.ssa.services import get_ssa_progress_by_fy
 
         context["progress"] = get_ssa_progress_by_fy(scope.schools)
+    elif section == "academic":
+        # The learners' numbers and results, record by record.
+        context["record_tables"] = [
+            *profile_records.records(profile, "enrolment"),
+            *profile_records.records(profile, "learning"),
+        ]
+        context["students"] = engine.students(profile)
+    elif section == "stories":
+        context["record_tables"] = profile_records.records(profile, "stories")
+        context["stories"] = profile_records.stories(profile)
     elif section == "projects":
         context["may_open_projects"] = RolePermissionService.can_view_page(
             request.user, "project_monitoring"
         )
     elif section == "activities":
         context["execution_rows"] = [
-            ("School visits", profile["execution"]["visits"]),
-            ("Trainings", profile["execution"]["trainings"]),
-            ("Cluster meetings", profile["execution"]["meetings"]),
+            ("School visits", profile["execution"]["visits"], "visits"),
+            ("Trainings", profile["execution"]["trainings"], "trainings"),
+            ("Cluster meetings", profile["execution"]["meetings"], "meetings"),
         ]
+        # Training by the way it is delivered — online a channel of its own —
+        # and the year's cluster meetings.
+        context["channels"] = profile_records.channels(profile)
+        context["meetings"] = profile_records.meetings(profile)
         if activities is not None:
             from apps.activities import profile_activities as profile_acts
 
@@ -287,7 +374,9 @@ def sub_region_profile_view(request, sub_region_id):
         request,
         "pages/profiles/profile.html",
         {
-            "pi": profile_context(request, scope, f"/sub-regions/{sub_region.id}"),
+            "pi": profile_context(
+                request, scope, f"/sub-regions/{sub_region.id}", subject=sub_region
+            ),
             "profile_title": scope.name,
             "profile_lead": sub_region.region.name if sub_region.region_id else "",
             "back_href": "/country-profile?tab=sub_regions",

@@ -1778,7 +1778,7 @@ def _attach_ssa(row, assignment, project, readings, intervention_labels) -> None
     elif assignment.baseline_score is None and not any(
         reading.baseline is not None for reading in row.focus
     ):
-        row.impact_label, row.impact_tone = "No baseline", TONE_WARNING
+        row.impact_label, row.impact_tone = "Previous FY SSA missing", TONE_WARNING
     elif row.verified == 0:
         row.impact_label, row.impact_tone = "Awaiting delivery", TONE_NEUTRAL
     else:

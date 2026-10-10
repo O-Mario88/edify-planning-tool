@@ -411,8 +411,12 @@
      the reference grid, and the identity column separates itself with ink
      colour plus a half-step of medium — not a second bold rail. */
   --edify-table-header-weight: 700;
-  --edify-table-body-weight: 450;
-  --edify-table-identity-weight: 550;
+  /* One weight for everything in a table's body, medium (owner, 2026-10-10:
+     "the table body font size and font weight (medium) should be
+     consistent"). Body text was 450 and the record's name 550, and a table
+     outside the record-table contract kept whatever its template wrote. */
+  --edify-table-body-weight: 500;
+  --edify-table-identity-weight: 500;
   --edify-table-action-size: 2rem;
   --edify-table-radius: 0.5rem;
 

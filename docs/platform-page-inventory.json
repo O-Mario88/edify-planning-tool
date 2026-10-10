@@ -256,7 +256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5825,
+      "bytes": 6905,
       "deprecated_alternatives": [],
       "example_pages": [
         "/acting-leadership/<str:assignment_id>",
@@ -4880,7 +4880,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1826,
+      "bytes": 1805,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -4955,7 +4955,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8192,
+      "bytes": 8150,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5296,7 +5296,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17489,
+      "bytes": 17491,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5382,7 +5382,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2302,
+      "bytes": 2304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5608,7 +5608,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14978,
+      "bytes": 14927,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5633,7 +5633,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19185,
+      "bytes": 19110,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -8422,7 +8422,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 27689,
+      "bytes": 27683,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -9596,7 +9596,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4396,
+      "bytes": 4370,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/impact-reports/",
@@ -10001,7 +10001,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18754,
+      "bytes": 19096,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -11256,7 +11256,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1582,
+      "bytes": 2238,
       "deprecated_alternatives": [],
       "example_pages": [
         "/notifications/drawer"
@@ -11279,7 +11279,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 3876,
+      "bytes": 3886,
       "deprecated_alternatives": [],
       "example_pages": [
         "/notifications/<str:notif_id>/read",
@@ -11620,7 +11620,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6418,
+      "bytes": 6403,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -12127,7 +12127,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6619,
+      "bytes": 6610,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12181,7 +12181,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12527,
+      "bytes": 12512,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -14145,6 +14145,35 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 1314,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Cell",
+      "purpose": "Reusable  cell interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_cell.html",
+      "variants": [
+        "{{ cell.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 401,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -14176,13 +14205,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1960,
+      "bytes": 2210,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
       ],
@@ -14201,6 +14231,119 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1119,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Header",
+      "purpose": "Reusable  header interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_header.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2589,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Intervention Row",
+      "purpose": "Reusable  intervention row interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_intervention_row.html",
+      "variants": [
+        "{% if slot == "
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1899,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Interventions",
+      "purpose": "Reusable  interventions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_interventions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 6844,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Operations",
+      "purpose": "Reusable  operations interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_operations.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 2552,
       "deprecated_alternatives": [],
@@ -14209,6 +14352,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
       ],
@@ -14224,6 +14368,34 @@
       ],
       "tables": 0,
       "template": "partials/profiles/_ranking.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2596,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/clusters/<str:cluster_id>",
+        "/country-profile",
+        "/districts/<str:district_id>",
+        "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
+        "/staff/<str:user_id>",
+        "/sub-regions/<str:sub_region_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Records",
+      "purpose": "Reusable  records interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/profiles/_records.html",
       "variants": []
     },
     {
@@ -14283,13 +14455,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 46545,
+      "bytes": 55677,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
       ],
@@ -14301,8 +14474,7 @@
       "purpose": "Reusable  sections interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 0,
       "template": "partials/profiles/_sections.html",
@@ -14321,6 +14493,7 @@
         "/country-profile",
         "/districts/<str:district_id>",
         "/partners/<str:partner_id>",
+        "/schools/<str:school_id>",
         "/staff/<str:user_id>",
         "/sub-regions/<str:sub_region_id>"
       ],
@@ -14776,7 +14949,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 15655,
+      "bytes": 15625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/monitoring",
@@ -15122,6 +15295,83 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 11893,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Details",
+      "purpose": "Reusable  details interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_details.html",
+      "variants": [
+        "info",
+        "warning",
+        "{{ visit_status.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4539,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Participation",
+      "purpose": "Reusable  participation interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/schools/_participation.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6183,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/schools/<str:school_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Ssa Records",
+      "purpose": "Reusable  ssa records interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/schools/_ssa_records.html",
+      "variants": [
+        "warning",
+        "{{ d.tone }}",
+        "{{ h.tone }}",
+        "{{ pair.tone }}"
+      ]
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
@@ -15327,13 +15577,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10653,
+      "bytes": 11218,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
       ],
       "findings": [],
-      "forms": 0,
+      "forms": 1,
       "htmx_controls": 5,
       "kind": "application-partial",
       "name": "Directory Row",
@@ -16085,7 +16335,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6079,
+      "bytes": 6070,
       "deprecated_alternatives": [],
       "example_pages": [
         "/staff-activity"
@@ -16841,7 +17091,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7708,
+      "bytes": 7693,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -16895,7 +17145,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11617,
+      "bytes": 11602,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -16922,7 +17172,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8871,
+      "bytes": 8859,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -64696,7 +64946,7 @@
       "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
-      "notifications": false,
+      "notifications": true,
       "page_id": "UI-PAGE-01B1335022",
       "page_title": "Message Thread",
       "page_type": "interaction-fragment",
@@ -64882,7 +65132,7 @@
       "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
-      "notifications": false,
+      "notifications": true,
       "page_id": "UI-PAGE-F155B4F7CE",
       "page_title": "Message Thread Reply",
       "page_type": "interaction-fragment",
@@ -69020,6 +69270,100 @@
         "text-[15px]",
         "text-[44px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_views",
+      "backend_view": "apps.frontend.views.staff_views.open_notification",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:dashboard"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EA4C461690",
+      "page_title": "Open Notification",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "dashboard",
+      "primary_action": "Open Notification",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "What a tap on a notification does, in the app's drawer and on a phone's lock screen alike (owner, 2026-10-10): the notification is marked read, and the reader lands on the record it is about. A reader whose session has gone signs in first and lands in the same place (the permission gate keeps this address as the sign-in's `next`). A record that no longer exists clears the notification and says so, rather than leaving a link that leads nowhere.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/notifications/<str:notif_id>/open",
+      "route_name": "open_notification",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.schools.models",
+        "apps.ssa.services",
+        "apps.targets.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -87890,7 +88234,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_detail_view",
       "card_count": 0,
@@ -87949,8 +88293,7 @@
       "route_name": "school_detail",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/schools/{{ school.school_id }}/reopen",
-        "{% url "
+        "/schools/{{ school.school_id }}/reopen"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -87974,13 +88317,13 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -87995,10 +88338,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[18px]"
+        "text-[13px]"
       ]
     },
     {
@@ -88742,6 +89082,98 @@
       ],
       "route": "/schools/<str:school_id>/reopen",
       "route_name": "school_reopen",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.business_transformation.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.core_schools.services",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_take_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:school_directory"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-189291E896",
+      "page_title": "School Take",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "school_directory",
+      "primary_action": "School Take",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "A field officer or a Programme Lead takes a school nobody holds (owner, 2026-10-10; apps.schools.data_gaps.take).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL"
+      ],
+      "route": "/schools/<str:school_id>/take",
+      "route_name": "school_take",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
@@ -107462,6 +107894,57 @@
       ],
       "page_permission": "",
       "required_permissions": [],
+      "route": "/api/notifications(?:/|)push/config",
+      "route_name": "push-config",
+      "templates": []
+    },
+    {
+      "callback": "apps.notifications.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/notifications(?:/|)push/subscribe",
+      "route_name": "push-subscribe",
+      "templates": []
+    },
+    {
+      "callback": "apps.notifications.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/notifications(?:/|)push/unsubscribe",
+      "route_name": "push-unsubscribe",
+      "templates": []
+    },
+    {
+      "callback": "apps.notifications.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
       "route": "/api/notifications(?:/|)rail",
       "route_name": "rail",
       "templates": []
@@ -115497,6 +115980,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.staff_views.open_notification",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/notifications/<str:notif_id>/open",
+      "route_name": "open_notification",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.staff_views.mark_notification_read",
       "kind": "drawer",
       "methods": [
@@ -118423,6 +118918,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.school_views.school_take_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_directory",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/take",
+      "route_name": "school_take",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.ownership_views.school_owner_transfer_drawer",
       "kind": "drawer",
       "methods": [
@@ -120141,28 +120648,28 @@
   "summary": {
     "accessibility_contract_pass": 597,
     "activity_states": 24,
-    "all_routes": 1389,
-    "api_routes": 360,
-    "component_templates": 678,
+    "all_routes": 1394,
+    "api_routes": 363,
+    "component_templates": 687,
     "full_pages": 268,
     "mobile_contract_pass": 597,
-    "nonvisual_actions": 285,
+    "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 611,
+      "interaction-fragment": 613,
       "operational-queue": 155,
       "planning-or-creation": 14,
       "record-detail": 29,
       "report": 45
     },
     "partials_and_drawers": 326,
-    "permission_gated": 899,
+    "permission_gated": 901,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 916,
+    "routed_surfaces": 918,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -120171,7 +120678,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 597,
-    "test_referenced": 816,
+    "test_referenced": 818,
     "theme_contract_pass": 597
   }
 }
