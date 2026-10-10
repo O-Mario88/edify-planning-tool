@@ -97,8 +97,13 @@ class PushSubscribeView(APIView):
                 keys.get("auth", ""),
                 request.META.get("HTTP_USER_AGENT", ""),
             )
-        except push.InvalidSubscription as exc:
-            return Response({"ok": False, "reason": str(exc)}, status=400)
+        except push.InvalidSubscription:
+            # A fixed sentence: what the browser sent is not echoed back, and
+            # neither is anything about why it was refused.
+            return Response(
+                {"ok": False, "reason": "That is not a usable push subscription."},
+                status=400,
+            )
         if created and request.data.get("announce", True):
             # The first message a device gets proves the whole path to it.
             services.announce_push_enabled(request.user, subscription)

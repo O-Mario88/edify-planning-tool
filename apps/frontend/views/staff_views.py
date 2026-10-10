@@ -1161,7 +1161,18 @@ def open_notification(request, notif_id):
             f"\u201c{notification.title}\u201d was about a record that is no "
             "longer available. The notification has been cleared.",
         )
-    return redirect(outcome["url"])
+    # `open_destination` only ever answers one of the application's own
+    # routes; the check is repeated here, at the redirect itself, so the
+    # value that is followed is visibly the one that was checked (the same
+    # shape as `mark_notification_read` below).
+    destination = outcome["url"]
+    if url_has_allowed_host_and_scheme(
+        destination,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(destination)
+    return redirect("/notifications")
 
 
 @require_page_permission("dashboard")
