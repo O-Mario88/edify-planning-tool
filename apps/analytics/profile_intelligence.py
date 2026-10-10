@@ -126,6 +126,11 @@ SHOW_LABELS = {
     "improved": "SSA improved",
     "declined": "SSA declined",
     "awaiting_partner": "Awaiting a partner's date",
+    # Due a training or a visit this year by its type, with none in the plan
+    # (owner's brief, 2026-10-10: "schools without training", "schools
+    # without recent visit").
+    "no_training": "No training in the plan",
+    "no_visit": "No visit in the plan",
 }
 
 _CHANGE_LABELS = {
@@ -556,6 +561,11 @@ def _execution(scope: Scope, cluster_ids, fy, window=(None, None, "")) -> dict:
             _TRAININGS, group_sessions=Count("id", filter=Q(school__isnull=True))
         ),
         "meetings": figures(_MEETINGS),
+        # A project's work whose day has gone (owner's brief, 2026-10-10:
+        # "overdue project activity"), whatever kind of work it is.
+        "project_overdue": work.filter(
+            waiting & past, project_id__isnull=False
+        ).count(),
     }
 
 
@@ -873,7 +883,19 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
     pipeline["scheduled"] = (
         pipeline["assigned"] - pipeline["awaiting"] - pipeline["completed"]
     )
+    from apps.planning.country_oversight import rules as _rules
+
+    def _due_without(ask, key) -> set:
+        return {
+            s["id"]
+            for s in schools
+            if ask(_rules.requirement_for(s["school_type"]))
+            and not (school_work.get(s["id"]) or {}).get(key)
+        }
+
     flags = {
+        "no_training": _due_without(lambda r: r.trainings, "trainings"),
+        "no_visit": _due_without(lambda r: r.visits, "visits"),
         "no_ssa": {s["id"] for s in school_scores if s["current"] is None},
         "unplanned": set(by_id) - planned_ids,
         "improved": {s["id"] for s in school_scores if s["status"] == "improved"},
@@ -949,6 +971,30 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 "",
             ),
             _attention(
+                sum(1 for row in comparison["rows"] if row["status"] == "declined"),
+                "SSA intervention declined",
+                "SSA interventions declined",
+                f"since {comparison['previous_label']}",
+                "ssa",
+                "",
+            ),
+            _attention(
+                portfolio["no_training"],
+                "school due a training has none in the plan",
+                "schools due a training have none in the plan",
+                f"in {comparison['label']}",
+                "schools",
+                "no_training",
+            ),
+            _attention(
+                portfolio["no_visit"],
+                "school due a visit has none in the plan",
+                "schools due a visit have none in the plan",
+                f"in {comparison['label']}",
+                "schools",
+                "no_visit",
+            ),
+            _attention(
                 portfolio["awaiting_partner"],
                 "school is waiting for a partner's date",
                 "schools are waiting for a partner's date",
@@ -973,6 +1019,24 @@ def build(scope: Scope, fy=None, period: str = PERIOD_YEAR) -> dict:
                 "activities",
                 "",
                 "visits_overdue",
+            ),
+            _attention(
+                execution["trainings"]["overdue"],
+                "training is past its date and not delivered",
+                "trainings are past their date and not delivered",
+                "",
+                "activities",
+                "",
+                "trainings_overdue",
+            ),
+            _attention(
+                execution["project_overdue"],
+                "project activity is past its date and not done",
+                "project activities are past their date and not done",
+                "",
+                "activities",
+                "",
+                "project_overdue",
             ),
         )
         if item

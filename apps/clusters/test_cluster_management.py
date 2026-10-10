@@ -432,7 +432,8 @@ class WorkspaceTest(_Scored):
 
         body = self._section().content.decode()
         self.assertIn(
-            f'href="/clusters/{self.cluster.id}?tab=attendance&amp;fy={self.fy}"', body
+            f'href="/clusters/{self.cluster.id}/profile?tab=attendance&amp;fy={self.fy}"',
+            body,
         )
         self.assertIn("75 · High", body)
 

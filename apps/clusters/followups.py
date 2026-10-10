@@ -85,7 +85,7 @@ def attendance_todos(principal, role, today) -> list[dict]:
                     if role == "Program Lead"
                     else "Planning",
                     priority="high",
-                    url=f"/clusters/{cluster.id}?tab=attendance&show=missing",
+                    url=f"/clusters/{cluster.id}/profile?tab=attendance&show=missing",
                     action="Open Schools",
                     linked=cluster.name,
                     today=today,

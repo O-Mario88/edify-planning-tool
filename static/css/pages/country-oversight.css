@@ -676,7 +676,7 @@
 .cpo-root .cpo-table.cpo-table tr.cxo-total .cpo-namecell { padding-inline-start: 2.8rem !important; }
 .cpo-root .cpo-table.cpo-table thead th:first-child { padding-inline-start: 1.1rem !important; }
 .cpo-root .cpo-table.cpo-table :is(thead, tbody) tr > :last-child { padding-inline-end: 0.6rem !important; }
-.cpo-table tr[data-level="3"] .cpo-namecell { font-weight: 400; color: var(--cpo-ink-2); }
+.cpo-table tr[data-level="3"] .cpo-namecell { font-weight: 500; color: var(--cpo-ink-2); }
 .cpo-table tr[data-level="placeholder"] { display: none; }
 .cpo-toggle {
   all: unset;
@@ -694,7 +694,7 @@
 .cpo-toggle svg { inline-size: 0.95rem; block-size: 0.95rem; transition: transform 120ms ease; }
 .cpo-toggle.is-open svg { transform: rotate(90deg); }
 .cpo-toggle:focus-visible { outline: 2px solid var(--cpo-accent); outline-offset: 1px; }
-.cpo-hint { margin-inline-start: 0.4rem; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 400; }
+.cpo-hint { margin-inline-start: 0.4rem; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 500; }
 .cpo-flagged { margin-inline-start: 0.4rem; font-size: var(--edify-text-micro-size); color: var(--cpo-low); font-weight: 600; }
 /* A row's note sits under its name. Name and note each keep one line, as
    every table heading does on the platform: a long officer or Partner name
@@ -999,7 +999,7 @@
 }
 .cpo-figs dt { font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); font-weight: 600; }
 .cpo-figs dd { margin: 0.15rem 0 0; font-size: var(--edify-text-title-size); font-weight: 700; color: var(--cpo-ink); font-variant-numeric: tabular-nums; }
-.cpo-figs dd small { display: block; margin-block-start: 0.1rem; font-size: var(--edify-text-micro-size); font-weight: 400; color: var(--cpo-ink-3); }
+.cpo-figs dd small { display: block; margin-block-start: 0.1rem; font-size: var(--edify-text-micro-size); font-weight: 500; color: var(--cpo-ink-3); }
 .cpo-figs dd.is-late { color: var(--cpo-low); }
 .cpo-figs--tight { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
 .cpo-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.4rem 1rem; margin: 0; }
@@ -1053,7 +1053,7 @@
 }
 .cpo-slot-name { font-weight: 600; }
 .cpo-slot-name small,
-.cpo-slot-what small { display: block; font-weight: 400; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
+.cpo-slot-what small { display: block; font-weight: 500; font-size: var(--edify-text-micro-size); color: var(--cpo-ink-3); }
 .cpo-slot[data-state="beyond"] { color: var(--cpo-ink-3); }
 .cpo-fu-entry {
   padding: 0.8rem 0.9rem;
@@ -1446,7 +1446,7 @@
   padding: 0.35rem 0.4rem;
   border-block-end: 1px solid var(--cpo-line);
   text-align: start;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--cpo-ink-2);
 }
 .cxo-small thead th { font-weight: 600; color: var(--cpo-ink); background: var(--cpo-sunk); }

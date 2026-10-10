@@ -99,14 +99,14 @@ that lists the schools behind it. A row built without them draws a dash.
         the figure as text: a link there would answer 403.{% endcomment %}
         <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-attendance>
           {% if row.has_engagement and row.attendance_rate is not None %}
-            {% if can_open_cluster == False %}{{ row.attendance_rate }}%{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=attendance&amp;fy={{ row.attendance_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.attendance_rate }}% of invitations attended in FY {{ row.attendance_fy }}">{{ row.attendance_rate }}%</a>{% endif %}
+            {% if can_open_cluster == False %}{{ row.attendance_rate }}%{% else %}<a href="/clusters/{{ row.cluster_id }}/profile?tab=attendance&amp;fy={{ row.attendance_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.attendance_rate }}% of invitations attended in FY {{ row.attendance_fy }}">{{ row.attendance_rate }}%</a>{% endif %}
           {% else %}
             <span class="text-slate-400">—</span>
           {% endif %}
         </td>
         <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-absent>
           {% if row.has_engagement and row.absent_schools %}
-            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=attendance&amp;fy={{ row.attendance_fy }}&amp;show=missing" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.absent_schools }} school{{ row.absent_schools|pluralize }} absent from {{ absent_after|default:3 }} or more sessions in a row"><span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span></a>{% endif %}
+            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}/profile?tab=attendance&amp;fy={{ row.attendance_fy }}&amp;show=missing" class="hover:underline font-semibold" aria-label="{{ row.name }}: {{ row.absent_schools }} school{{ row.absent_schools|pluralize }} absent from {{ absent_after|default:3 }} or more sessions in a row"><span class="edify-status-text" data-edify-tone="danger">{{ row.absent_schools }}</span></a>{% endif %}
           {% elif row.has_engagement %}
             0
           {% else %}
@@ -115,7 +115,7 @@ that lists the schools behind it. A row built without them draws a dash.
         </td>
         <td class="px-4 py-2.5 text-center tabular-nums" data-cluster-ssa-change>
           {% if row.has_engagement and row.ssa_change is not None %}
-            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}?tab=ssa&amp;fy={{ row.ssa_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: SSA change {% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }} across {{ row.ssa_compared }} school{{ row.ssa_compared|pluralize }}"><span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span></a>{% endif %}
+            {% if can_open_cluster == False %}<span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span>{% else %}<a href="/clusters/{{ row.cluster_id }}/profile?tab=ssa&amp;fy={{ row.ssa_fy }}" class="hover:underline font-semibold" aria-label="{{ row.name }}: SSA change {% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }} across {{ row.ssa_compared }} school{{ row.ssa_compared|pluralize }}"><span class="edify-status-text" data-edify-tone="{% if row.ssa_change > 0 %}success{% elif row.ssa_change < 0 %}danger{% else %}neutral{% endif %}">{% if row.ssa_change > 0 %}+{% endif %}{{ row.ssa_change|floatformat:1 }}</span></a>{% endif %}
           {% else %}
             <span class="text-slate-400">—</span>
           {% endif %}

@@ -44,7 +44,7 @@
   margin: 0;
   color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .14em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -58,7 +58,7 @@
   color: var(--brand-primary-on-solid) !important;
   font-family: var(--edify-font-sans) !important;
   font-size: var(--edify-text-display-size) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   letter-spacing: -.055em !important;
   line-height: 1.02 !important;
   text-wrap: balance;
@@ -80,7 +80,7 @@
 }
 
 .help-stat-list div { min-inline-size: 5.25rem; }
-.help-stat-list dt { color: var(--brand-primary-on-solid); font-size: var(--edify-text-title-size); font-weight: 800; line-height: 1.25; }
+.help-stat-list dt { color: var(--brand-primary-on-solid); font-size: var(--edify-text-title-size); font-weight: 700; line-height: 1.25; }
 .help-stat-list dd { margin: .15rem 0 0; color: color-mix(in srgb, var(--brand-primary-on-solid) 72%, transparent); font-size: var(--edify-text-micro-size); font-weight: 600; line-height: 1.35; }
 
 .help-search-label {
@@ -126,7 +126,7 @@
   background: var(--brand-primary);
   color: var(--brand-primary-on-solid);
   font-size: var(--edify-text-label-size);
-  font-weight: 800;
+  font-weight: 700;
   box-shadow: 0 9px 17px -10px rgba(15, 78, 130, .9);
 }
 
@@ -140,7 +140,7 @@
   line-height: 1.5;
 }
 
-.help-role-note span { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; margin-inline-end: .2rem; border-radius: var(--edify-radius-pill); background: rgba(94, 210, 170, .2); color: #9ce6ca; font-weight: 900; }
+.help-role-note span { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; margin-inline-end: .2rem; border-radius: var(--edify-radius-pill); background: rgba(94, 210, 170, .2); color: #9ce6ca; font-weight: 700; }
 .help-role-note strong { color: var(--brand-primary-on-solid); }
 
 .help-topic-section { margin-block-start: clamp(2rem, 4vw, 3.5rem); }
@@ -157,7 +157,7 @@
   margin: .3rem 0 0;
   color: var(--edify-text);
   font-size: clamp(1.45rem, 2vw, 2rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -.035em;
   line-height: 1.15;
 }
@@ -223,7 +223,7 @@
   inset-inline-end: 1.1rem;
   color: var(--brand-primary-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 850;
+  font-weight: 700;
   letter-spacing: .08em;
 }
 
@@ -246,7 +246,7 @@
 .help-topic-card__title {
   color: var(--edify-text);
   font-size: var(--edify-text-title-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -.018em;
   line-height: 1.27;
 }
@@ -266,7 +266,7 @@
 }
 
 .help-topic-card__body { padding: 1rem 1.25rem 1.15rem; }
-.help-topic-card__start { margin: 0 0 .65rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.help-topic-card__start { margin: 0 0 .65rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 
 .help-topic-card__list { display: grid; gap: .2rem; margin: 0; padding: 0; list-style: none; }
 
@@ -308,7 +308,7 @@
   font-weight: 700;
 }
 
-.help-topic-card__footer a { display: inline-flex; align-items: center; gap: .36rem; color: var(--topic); font-weight: 800; }
+.help-topic-card__footer a { display: inline-flex; align-items: center; gap: .36rem; color: var(--topic); font-weight: 700; }
 .help-topic-card__footer a:hover { text-decoration: underline; }
 .help-topic-card__footer svg { inline-size: .9rem; block-size: .9rem; }
 
@@ -335,7 +335,7 @@
 .help-quick-card { padding: clamp(1.2rem, 2.2vw, 1.7rem); background: var(--edify-surface); }
 .help-learning-card__content { display: flex; align-items: start; justify-content: space-between; gap: 1rem 1.5rem; }
 .help-learning-card h2,
-.help-quick-card h2 { margin: .32rem 0 0; color: var(--edify-text); font-size: var(--edify-text-heading-size); font-weight: 800; letter-spacing: -.02em; }
+.help-quick-card h2 { margin: .32rem 0 0; color: var(--edify-text); font-size: var(--edify-text-heading-size); font-weight: 700; letter-spacing: -.02em; }
 .help-learning-card p,
 .help-quick-card p { max-inline-size: 60ch; margin: .55rem 0 0; color: var(--edify-text-muted); font-size: var(--edify-text-body-size); line-height: 1.6; }
 
@@ -350,13 +350,13 @@
   background: var(--edify-accent);
   color: var(--edify-on-accent);
   font-size: var(--edify-text-label-size);
-  font-weight: 800;
+  font-weight: 700;
   box-shadow: 0 10px 20px -14px rgba(11, 66, 109, .85);
 }
 
 .help-primary-link:hover { background: var(--edify-accent-hover); transform: translateY(-1px); }
 .help-quick-links { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }
-.help-quick-links a { color: var(--edify-accent-text); font-size: var(--edify-text-label-size); font-weight: 800; }
+.help-quick-links a { color: var(--edify-accent-text); font-size: var(--edify-text-label-size); font-weight: 700; }
 .help-quick-links a:hover { text-decoration: underline; }
 
 @supports (font-size: 1cqi) {
@@ -461,7 +461,7 @@
 
 .help-toc__eyebrow {
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--edify-text-subtle);
@@ -532,7 +532,7 @@
 /* Selection is carried by weight, a left marker AND colour — never colour
    alone, so the current article is identifiable without colour vision. */
 .help-toc__link--active {
-  font-weight: 800;
+  font-weight: 700;
   color: var(--edify-primary);
   background: var(--edify-primary-soft, var(--edify-surface-muted));
   box-shadow: inset 3px 0 0 0 var(--edify-primary);

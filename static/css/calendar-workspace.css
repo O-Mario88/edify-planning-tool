@@ -393,7 +393,7 @@
 .calendar-month__date-card span {
   margin-top: 0.1rem;
   font-size: var(--edify-text-micro-size);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: 0.08em;
 }
@@ -1009,7 +1009,7 @@ a.calendar-event__copy:focus-visible strong {
     margin: 0;
     color: var(--edify-text);
     font-size: clamp(1rem, 4.7vw, 1.22rem);
-    font-weight: 780;
+    font-weight: 700;
     line-height: 1.2;
   }
 

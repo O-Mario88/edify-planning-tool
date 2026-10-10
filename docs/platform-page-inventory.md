@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **918**
-- All registered routes: **1394**
+- Routed product surfaces: **919**
+- All registered routes: **1395**
 - API routes: **363**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **687**
-- Full pages: **268**
+- Shared component templates: **690**
+- Full pages: **269**
 - Partials and drawers: **326**
-- Permission-gated surfaces: **901**
-- Referenced by automated tests: **818**
+- Permission-gated surfaces: **902**
+- Referenced by automated tests: **819**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -199,7 +199,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EFB5DF0B83 | /cluster-management/scoring | Scoring · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-273FCBD571 | /cluster-oversight/ | Cluster Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster details | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FA80612906 | /clusters/<str:cluster_id>/bulk-assign-drawer | Cluster Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2FD8EC78D2 | /clusters/<str:cluster_id>/bulk-schedule-drawer | Cluster Bulk Schedule Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D7135BBA7E | /clusters/<str:cluster_id>/catchment-drawer | Cluster Catchment Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -209,6 +209,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-2F0996F451 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FDE4F3F7C6 | /clusters/<str:cluster_id>/facilitator | Cluster Facilitator | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-87A93CBB5B | /clusters/<str:cluster_id>/facilitator-drawer | Cluster Facilitator Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0A2340E834 | /clusters/<str:cluster_id>/profile | Cluster Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3429DE9B4C | /clusters/<str:cluster_id>/schools/<str:school_id>/remove | Remove School From Cluster | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D1234D25E2 | /clusters/create | Create Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

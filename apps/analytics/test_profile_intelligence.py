@@ -653,7 +653,7 @@ class EveryProfilePageTest(EveryScopeTest):
                 for heading in ("Attendance", "Health", "Impact", "Maturity"):
                     self.assertIn(f">{heading}</th>", body)
                 self.assertIn(
-                    f'href="/clusters/{self.north.id}?tab=attendance&amp;fy={self.fy}"',
+                    f'href="/clusters/{self.north.id}/profile?tab=attendance&amp;fy={self.fy}"',
                     body,
                 )
                 self.assertIn("Teachers Reached", body)
@@ -694,10 +694,10 @@ class EveryProfilePageTest(EveryScopeTest):
         self.assertIn("what=handovers_awaiting", body)
 
     def test_a_cluster_profile_gains_the_sections_beside_its_own_tabs(self):
-        url = f"/clusters/{self.north.id}"
+        url = f"/clusters/{self.north.id}/profile"
 
         own = self.open(url)
-        for label in ("Portfolio &amp; Rankings", "School SSA", "Attendance"):
+        for label in ("Summary", "Schools", "Meetings &amp; Attendance"):
             self.assertIn(f"<span>{label}</span>", own)
 
         body = self.open(url, tab="school_ssa")
@@ -840,9 +840,9 @@ class SummaryTest(EveryScopeTest):
         self.assertIn("Enrolment Growth", body)
         self.assertIn("Visits Completed", body)
         # On a cluster's page the schools line opens the cluster's own key.
-        cluster = client.get(f"/clusters/{self.north.id}", {"tab": "portfolio"})
+        cluster = client.get(f"/clusters/{self.north.id}/profile", {"tab": "portfolio"})
         self.assertIn(
-            f"/clusters/{self.north.id}?tab=school_ssa&amp;fy={self.fy}",
+            f"/clusters/{self.north.id}/profile?tab=school_ssa&amp;fy={self.fy}",
             cluster.content.decode(),
         )
 

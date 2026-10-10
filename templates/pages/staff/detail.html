@@ -5,6 +5,8 @@
 
 {% block title %}{{ member.name }} — Staff Profile{% endblock %}
 
+{% block feature_css %}{% load static %}<link rel="stylesheet" href="{% static 'css/components/insight-rail.css' %}?v=20261010rail1">{% endblock %}
+
 {% block shell_content %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
 <!-- Breadcrumb -->

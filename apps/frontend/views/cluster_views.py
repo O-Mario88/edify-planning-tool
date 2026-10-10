@@ -36,7 +36,6 @@ from apps.core.rbac import Permission
 from apps.clusters.services import (
     cluster_schools,
     cluster_detail,
-    cluster_intervention_overview,
     cluster_activity_impact,
     assign_school as assign_school_to_cluster,
     cluster_creation_district_ids,
@@ -229,8 +228,6 @@ def _cost_preview_participants(request, activity_type):
 
 
 def get_cluster_impact_data(cluster_id, focus_intervention, principal):
-    from apps.clusters.services import cluster_activity_impact
-
     impacts = cluster_activity_impact(cluster_id, principal)
     focus_impacts = [
         imp for imp in impacts if imp.get("focusIntervention") == focus_intervention
@@ -912,31 +909,40 @@ def create_cluster_view(request):
     return redirect("/clusters")
 
 
-#: The cluster profile's sections (owner brief, 2026-10-08: "Clicking a cluster
-#: should open: Cluster Profile ... Then tabs"). Overview is the page as it
-#: was; each of the others is one read of apps.clusters.profile_insights over
-#: records the platform already keeps, so no figure here has a second source.
+#: The Cluster Profile's sections, in the order of the owner's brief of
+#: 2026-10-10 ("The Cluster Page manages the cluster. The Cluster Profile
+#: explains the cluster."). The profile is its own page, `/clusters/<id>/profile`;
+#: the Cluster Page (`/clusters/<id>`) keeps what its holder acts on: the
+#: record, the roster with its tick boxes, the year's work and what is waiting.
+#: Each section is one read of records the platform already keeps
+#: (apps.analytics.profile_intelligence over the cluster's schools, and
+#: apps.clusters.profile_insights / outcomes / interventions / scores), so no
+#: figure here has a second source. `apps.clusters.profile_map` says, figure
+#: by figure, which records each is read from.
 PROFILE_TABS = (
-    ("overview", "Overview"),
-    ("ssa", "SSA Movement"),
-    ("attendance", "Attendance"),
-    ("interventions", "Interventions"),
+    ("portfolio", "Summary"),
+    ("ssa", "SSA Performance"),
+    ("school_ssa", "Schools"),
+    ("work", "Training & Visits"),
+    ("attendance", "Meetings & Attendance"),
     ("students", "Students"),
     ("learning", "Learning Results"),
-    ("loans", "Loans"),
-    ("stories", "Stories"),
+    ("loans", "Loans & BT"),
+    ("stories", "MSCS"),
+    ("projects", "Projects"),
+    ("interventions", "Impact Timeline"),
     ("scores", "Health & Impact"),
     ("history", "Membership History"),
+    ("sources", "Sources"),
 )
 
-#: The sections the profile engine adds to a cluster's profile (owner,
-#: 2026-10-09: every profile reads the same way): address key → the engine's
-#: section and its name on this page. "overview" is already the cluster's own
-#: first tab, so the engine's overview has another key here.
+#: The sections the profile engine draws (owner, 2026-10-09: every profile
+#: reads the same way): address key → the engine's section and its name on
+#: this page.
 PROFILE_ENGINE_TABS = {
-    "portfolio": ("overview", "Portfolio & Rankings"),
-    "school_ssa": ("schools", "School SSA"),
-    "work": ("activities", "Visits & Trainings"),
+    "portfolio": ("overview", "Summary"),
+    "school_ssa": ("schools", "Schools"),
+    "work": ("activities", "Training & Visits"),
     "projects": ("projects", "Projects"),
 }
 
@@ -947,13 +953,9 @@ def _profile_tabs_for(user) -> tuple:
     is not shown a tab that could only ever be empty for them (owner,
     2026-09-27: a feature a role may not use is hidden, not greyed)."""
     may_read_loans = RolePermissionService.can_view_page(user, "loans")
-    own = tuple(
+    return tuple(
         (key, label) for key, label in PROFILE_TABS if key != "loans" or may_read_loans
     )
-    # The cluster's own first tab, then what the profile engine says of its
-    # schools, then the records Cluster Management keeps.
-    engine = tuple((key, label) for key, (_s, label) in PROFILE_ENGINE_TABS.items())
-    return (*own[:1], *engine, *own[1:])
 
 
 def _profile_fy(request, options, default: str) -> str:
@@ -978,9 +980,39 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
         options = sorted(set(fy_options()) | set(recorded), reverse=True)
         fy = _profile_fy(request, options, operational_fy)
         movement = insights.cluster_ssa_movement(cluster, fy=fy)
+        # One table at a time (owner, 2026-10-02): the areas, or each school
+        # with the intervention it is strongest and weakest in.
+        view = (request.GET.get("view") or "").strip()
+        if view not in ("areas", "schools"):
+            view = "areas"
+        from apps.analytics import profile_intelligence
+        from apps.ssa.year_comparison import intervention_comparison
+
+        members = insights.member_schools([cluster.id])[cluster.id]
+        headline = intervention_comparison(
+            profile_intelligence.cluster_scope(cluster).schools.values("id"), fy
+        )
         return {
+            # This year's score less the baseline, where both exist.
+            "ssa_change": (
+                round(headline["current"] - headline["previous"], 2)
+                if headline.get("current") is not None
+                and headline.get("previous") is not None
+                else None
+            ),
             "profile_fy": fy,
             "profile_fy_options": options,
+            "ssa_view": view,
+            # The cluster's score this year and the baseline (the year
+            # before), the reading the Summary's SSA Score shows.
+            "ssa_headline": headline,
+            "ssa_standing": insights.school_ssa_standing(
+                members,
+                fy=fy,
+                verdicts=movement["schools_by_area"][insights.OVERALL],
+            )
+            if view == "schools"
+            else None,
             "ssa_movement": movement,
             "ssa_drill": insights.ssa_schools(
                 movement,
@@ -995,7 +1027,18 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
         if show not in insights.ATTENDANCE_VIEWS:
             show = insights.SHOW_ALL
         attendance = insights.cluster_attendance(cluster, fy=fy)
+        # The year's meetings from plan to held (owner's brief, 2026-10-10:
+        # "meetings planned, scheduled, completed, schools invited, schools
+        # represented, attendance rate, repeated absences"), the profile
+        # engine's own counts, so each opens the meetings it counted.
+        from apps.analytics import profile_intelligence, profile_records
+
         return {
+            "meeting_figures": profile_records.meetings(
+                profile_intelligence.build(
+                    profile_intelligence.cluster_scope(cluster), fy
+                )
+            ),
             "profile_fy": fy,
             "profile_fy_options": options,
             "attendance": attendance,
@@ -1007,6 +1050,10 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
         }
     if tab == "history":
         return {"membership": insights.cluster_membership_history(cluster)}
+    if tab == "sources":
+        from apps.clusters import profile_map
+
+        return {"metric_sections": profile_map.sections()}
 
     from apps.clusters import outcomes
 
@@ -1025,7 +1072,31 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
             "learning": outcomes.cluster_learning(cluster, fy=fy),
         }
     if tab == "loans":
-        return {"loans": outcomes.cluster_loans(cluster, request.user)}
+        loans = outcomes.cluster_loans(cluster, request.user)
+        # Business Transformation beside the loans (owner's brief,
+        # 2026-10-10), counted from the cases the platform holds for these
+        # schools; each figure opens its records.
+        from django.db.models import Count, Q
+
+        from apps.analytics import profile_intelligence
+        from apps.business_transformation.models import (
+            OPEN_CASE_STATUSES,
+            TransformationCase,
+        )
+
+        cases = TransformationCase.objects.filter(
+            school_id__in=profile_intelligence.cluster_scope(cluster).schools.values(
+                "id"
+            ),
+            deleted_at__isnull=True,
+        ).aggregate(
+            total=Count("id"),
+            open=Count(
+                "id", filter=Q(status__in=[s.value for s in OPEN_CASE_STATUSES])
+            ),
+            schools=Count("school_id", distinct=True),
+        )
+        return {"loans": loans, "bt_cases": cases}
     if tab == "stories":
         return {
             "stories": outcomes.cluster_stories(cluster),
@@ -1081,41 +1152,22 @@ def _profile_tab_context(request, cluster, tab: str) -> dict:
     return {}
 
 
-@require_page_permission("cluster_detail")
-def cluster_detail_view(request, cluster_id):
-    profile_tabs = _profile_tabs_for(request.user)
-    tab = (request.GET.get("tab") or "").strip()
-    if tab not in dict(profile_tabs):
-        tab = "overview"
-    is_overview = tab == "overview"
-    try:
-        detail = cluster_detail(cluster_id, request.user)
-        if is_overview:
-            intervention_overview = cluster_intervention_overview(
-                cluster_id, request.user
-            )
-            impact = cluster_activity_impact(cluster_id, request.user)
-            schools = cluster_schools(cluster_id, request.user)
-    except Exception as e:
-        messages.error(request, f"Error loading cluster details: {e}")
-        return redirect("/clusters")
-
+def _cluster_page_base(request, cluster_id):
+    """What the Cluster Page and the Cluster Profile both draw: the record,
+    its row, and what this reader may do to it. ``(detail, row, context)``;
+    raises what `cluster_detail` raises for a cluster the reader may not see.
+    """
     from apps.clusters.models import Cluster as _Cluster
     from apps.clusters.services import cluster_delete_block, may_edit_cluster_profile
 
-    _cluster_row = _Cluster.objects.filter(
-        id=cluster_id, deleted_at__isnull=True
-    ).first()
+    detail = cluster_detail(cluster_id, request.user)
+    row = _Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     context = {
         "cluster": detail,
-        "profile_tab": tab,
-        "profile_tabs": [
-            {"key": key, "label": label, "is_active": key == tab}
-            for key, label in profile_tabs
-        ],
+        "cluster_row": row,
         # The reason the Delete control is inert, shown beside it — a cluster
         # that has hosted work is kept, and the page says so before a press.
-        "delete_block": cluster_delete_block(_cluster_row) if _cluster_row else None,
+        "delete_block": cluster_delete_block(row) if row else None,
         # The same check edit_cluster_drawer_view enforces. Asking the
         # permission service rather than comparing role strings means the
         # button appears exactly when the drawer behind it would open — a
@@ -1124,10 +1176,10 @@ def cluster_detail_view(request, cluster_id):
         "can_edit_cluster": RolePermissionService.can_view_page(
             request.user, "planning"
         )
-        and bool(_cluster_row and may_edit_cluster_profile(_cluster_row, request.user)),
+        and bool(row and may_edit_cluster_profile(row, request.user)),
         # Cluster-level planning and school-level scheduling use the same
         # permission checks as the destinations behind their controls. This
-        # keeps the profile useful as a planning launch point without showing
+        # keeps the page useful as a planning launch point without showing
         # actions that will answer 403 for oversight-only roles.
         # Cluster meetings and trainings are the cluster owner's programme;
         # the page permission alone let the Country Director see buttons the
@@ -1153,47 +1205,54 @@ def cluster_detail_view(request, cluster_id):
         # (owner, 2026-09-23), from the rows cluster_schools() already carries.
         "support_rule": support_visibility_enabled(request.user),
     }
-    # A figure's records (`what=`) are drawn by the shared sections too,
-    # whichever tab the address names.
+    if row is not None:
+        from apps.analytics.profile_records import cluster_identity
+
+        # Where the cluster sits and who holds it, the same on both pages.
+        context["cluster_facts"] = {
+            "identity": cluster_identity(
+                row,
+                may_open_staff=RolePermissionService.can_view_page(
+                    request.user, "staff"
+                ),
+            )
+        }
+    return detail, row, context
+
+
+@require_page_permission("cluster_detail")
+def cluster_detail_view(request, cluster_id):
+    """The Cluster Page: the operational workspace (owner's brief,
+    2026-10-10: "What does the CCEO/staff need to manage or act on now?").
+
+    The record and its contacts, the running year's work and what is
+    waiting, the roster with its tick boxes, and the planned and completed
+    activities. What explains the cluster — SSA, attendance, impact, history
+    — is the Cluster Profile's (`cluster_profile_view`); an address written
+    before the two were parted (`?tab=`, `?what=`) is sent on there.
+    """
     from apps.analytics.profile_records import RECORDS
 
-    opens_records = request.GET.get("what", "") in RECORDS
-    if (tab in PROFILE_ENGINE_TABS or opens_records) and _cluster_row is not None:
-        from apps.analytics import profile_intelligence
-        from apps.frontend.views.profile_views import profile_context
-
-        context["pi"] = profile_context(
-            request,
-            profile_intelligence.cluster_scope(_cluster_row),
-            f"/clusters/{_cluster_row.id}",
-            lead=tuple(
-                pair for pair in profile_tabs if pair[0] not in PROFILE_ENGINE_TABS
-            ),
-            keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
-            labels={section: label for section, label in PROFILE_ENGINE_TABS.values()},
-            subject=_cluster_row,
+    asked = (request.GET.get("tab") or "").strip()
+    if (asked and asked != "overview") or request.GET.get("what", "") in RECORDS:
+        query = request.GET.urlencode()
+        return redirect(
+            f"/clusters/{cluster_id}/profile" + (f"?{query}" if query else "")
         )
-        return render(request, "pages/clusters/detail.html", context)
-    if not is_overview:
-        # A tab reads its own records and nothing of the Overview's: the
-        # roster, its planning badges and the activity list are not built
-        # for a page that does not draw them.
-        if _cluster_row is not None:
-            context.update(_profile_tab_context(request, _cluster_row, tab))
-        return render(request, "pages/clusters/detail.html", context)
+    try:
+        _detail, _cluster_row, context = _cluster_page_base(request, cluster_id)
+        schools = cluster_schools(cluster_id, request.user)
+    except Exception as e:
+        messages.error(request, f"Error loading cluster details: {e}")
+        return redirect("/clusters")
 
     _attach_planning_badges(request, schools)
-    context.update(
-        {
-            "weakest_interventions": intervention_overview["weakest"],
-            "intervention_summary": intervention_overview["summary"],
-            "cluster_ssa": _cluster_year_comparison(schools),
-            "activity_impact": impact,
-            "schools": schools,
-        }
-    )
+    context["schools"] = schools
     context.update(_catchment_context(request.user, _cluster_row))
     if _cluster_row is not None:
+        from apps.clusters.page_summary import operational_summary
+
+        context["ops"] = operational_summary(_cluster_row)
         # Planned and completed work with its actions (owner, 2026-09-28).
         from apps.activities import profile_activities as profile_acts
 
@@ -1204,6 +1263,90 @@ def cluster_detail_view(request, cluster_id):
             subject="auto",
         )
     return render(request, "pages/clusters/detail.html", context)
+
+
+@require_page_permission("cluster_detail")
+def cluster_profile_view(request, cluster_id):
+    """The Cluster Profile: the cluster's 360° record (owner's brief,
+    2026-10-10: "How is this cluster performing, what has happened, what has
+    changed, and which schools/interventions are driving the results?").
+
+    Every section reads records the platform already keeps, for the fiscal
+    year in the address; nothing is typed here and nothing is stored.
+    """
+    profile_tabs = _profile_tabs_for(request.user)
+    tab = (request.GET.get("tab") or "").strip()
+    if tab not in dict(profile_tabs):
+        # The profile opens on its Summary; the shared sections read the tab
+        # from the address, so the address is made to say so.
+        tab = profile_tabs[0][0]
+        request.GET = request.GET.copy()
+        request.GET["tab"] = tab
+    try:
+        _detail, _cluster_row, context = _cluster_page_base(request, cluster_id)
+    except Exception as e:
+        messages.error(request, f"Error loading cluster details: {e}")
+        return redirect("/clusters")
+    if _cluster_row is None:
+        return redirect("/clusters")
+    base_url = f"/clusters/{_cluster_row.id}/profile"
+    context.update(
+        {
+            "profile_url": base_url,
+            "profile_tab": tab,
+            "profile_tabs": [
+                {"key": key, "label": label, "is_active": key == tab}
+                for key, label in profile_tabs
+            ],
+        }
+    )
+    # A figure's records (`what=`) are drawn by the shared sections too,
+    # whichever tab the address names.
+    from apps.analytics.profile_records import RECORDS
+
+    opens_records = request.GET.get("what", "") in RECORDS
+    if tab in PROFILE_ENGINE_TABS or opens_records:
+        from apps.analytics import profile_intelligence
+        from apps.frontend.views.profile_views import profile_context
+
+        pi = profile_context(
+            request,
+            profile_intelligence.cluster_scope(_cluster_row),
+            base_url,
+            lead=tuple(
+                pair for pair in profile_tabs if pair[0] not in PROFILE_ENGINE_TABS
+            ),
+            keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
+            labels={section: label for section, label in PROFILE_ENGINE_TABS.values()},
+            subject=_cluster_row,
+        )
+        # The SSA section is this page's own tab (the movement table and
+        # each school's standing), so a figure about SSA opens it.
+        pi["at"]["ssa"] = "ssa"
+        context["pi"] = pi
+        # The open tab is the one the figure lives on.
+        for entry in context["profile_tabs"]:
+            entry["is_active"] = entry["key"] == pi["tab"]
+        context["profile_tab"] = pi["tab"]
+        return render(request, "pages/clusters/profile.html", context)
+    context.update(_profile_tab_context(request, _cluster_row, tab))
+    # The insight rail beside the tab (owner, 2026-10-10), read for the year
+    # the tab shows where that is a year the profile engine offers.
+    from apps.analytics import profile_intelligence
+    from apps.frontend.views.profile_views import profile_context, rail_for
+
+    scope = profile_intelligence.cluster_scope(_cluster_row)
+    shell = profile_context(
+        request,
+        scope,
+        base_url,
+        lead=tuple(pair for pair in profile_tabs if pair[0] not in PROFILE_ENGINE_TABS),
+        keys={section: key for key, (section, _l) in PROFILE_ENGINE_TABS.items()},
+        subject=_cluster_row,
+    )
+    shell["at"]["ssa"] = "ssa"
+    context["rail"] = rail_for(shell, profile_intelligence.build(scope, shell["fy"]))
+    return render(request, "pages/clusters/profile.html", context)
 
 
 def _catchment_context(user, cluster) -> dict:

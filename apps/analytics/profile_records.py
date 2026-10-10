@@ -40,6 +40,7 @@ __all__ = [
     "RECORDS",
     "Rows",
     "channels",
+    "cluster_identity",
     "focus_work",
     "identity",
     "meetings",
@@ -241,6 +242,14 @@ def _work_kinds() -> dict:
         "visits_overdue": ("School visits past their date", visit & _WAITING & _past()),
         "trainings": ("Trainings in the plan", training),
         "trainings_done": ("Trainings completed", training & _DONE),
+        "trainings_overdue": (
+            "Trainings past their date",
+            training & _WAITING & _past(),
+        ),
+        "project_overdue": (
+            "Project work past its date",
+            Q(project_id__isnull=False) & _WAITING & _past(),
+        ),
         "trainings_in_school": (
             "In-school trainings in the plan",
             training & _IN_SCHOOL & ~_ONLINE,
@@ -1501,6 +1510,27 @@ def identity(
         fact("Type", "Partner")
         fact("Districts", profile["portfolio"]["districts"])
     fact("Fiscal Year", profile["fy_label"])
+    return facts
+
+
+def cluster_identity(
+    cluster, *, fy_label: str = "", may_open_staff=False
+) -> list[dict]:
+    """A cluster's header facts without building its profile: where it sits,
+    who holds its schools, its status and how many schools it has. The
+    Cluster Page and the profile's own tabs draw the same header the engine's
+    tabs do. Three queries."""
+    scope = engine.cluster_scope(cluster)
+    schools = list(scope.schools.values("account_owner_id"))
+    facts = identity(
+        {"scope": scope, "_schools": schools, "fy_label": fy_label},
+        cluster,
+        may_open_staff=may_open_staff,
+    )
+    facts.insert(
+        len(facts) - (1 if fy_label else 0),
+        {"label": "Schools", "value": len(schools), "href": ""},
+    )
     return facts
 
 

@@ -172,7 +172,17 @@ class ShellAssetBudgetTest(SimpleTestCase):
     #: classes of the profile pages and of Cluster Management, which the
     #: Tailwind sheet carries for the whole platform. Half a kilobyte: this
     #: is a ratchet.
-    CSS_GZIP_KB = 246.5
+    #:
+    #: Raised to 247 on 2026-10-10 (246.57 to 246.79 KB) for the one type
+    #: standard the owner asked for across the platform ("everything should
+    #: have the consistent size and font weight ... use [the Staff Activity
+    #: table] as a gold standard"). The standard itself is token values and
+    #: 350 weights rewritten in place, which weigh nothing; the 0.2 KB is the
+    #: block at the end of consistency.css for what a token cannot reach
+    #: (form values, bold, a table's footer, capitals on a few buttons). The
+    #: branch started 0.07 KB over, from the utility classes of the profile
+    #: pages it stands on. Half a kilobyte: this is a ratchet.
+    CSS_GZIP_KB = 247
     PARSER_BLOCKING_HEAD_SCRIPTS = 3
     #: platform-status.js also lets the upload drawer's request through
     #: offline (2026-09-26), so the service worker can open it without signal:

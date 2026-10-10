@@ -154,12 +154,12 @@ main :where(h2, h3) {
 
 main h2 {
   font-size: var(--edify-text-heading-size) !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
 main h3 {
   font-size: var(--edify-text-title-size) !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
 main :where(p, li, dd) {
@@ -174,7 +174,7 @@ main .font-bold {
   font-weight: 600 !important;
 }
 
-main :where(.font-semibold, strong, b) {
+main :where(.font-semibold) {
   font-weight: 600;
 }
 
@@ -829,7 +829,7 @@ main table tbody tr,
 
 main table tbody :where(td, th),
 .drawer-body table tbody :where(td, th) {
-  font-weight: 300;
+  font-weight: 500;
 }
 
 /* A row header — a school name, a cluster — is still the label for its row,
@@ -851,7 +851,7 @@ main table tbody th[scope="row"],
   --heat-mix: 0%;
   background: color-mix(in oklab, var(--heat-hue) var(--heat-mix), transparent);
   color: var(--edify-text);
-  font-weight: 400;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1513,7 +1513,7 @@ main .platform-hero p {
   max-inline-size: 68ch;
   color: rgba(232, 244, 252, 0.76) !important;
   font-size: var(--edify-text-body-size) !important;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
   line-height: 1.55;
 }
 
@@ -2562,7 +2562,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   background: transparent;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
-  font-weight: 550;
+  font-weight: 600;
   text-align: start;
 }
 
@@ -3997,7 +3997,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   font-weight: var(--edify-text-title-weight);
 }
 
-.school-ssa-group__score { font-weight: 800; white-space: nowrap; }
+.school-ssa-group__score { font-weight: 700; white-space: nowrap; }
 
 /* The group training and cluster meeting drawer lists the cluster's
    recommended interventions in this same format (owner, 2026-09-26). On the

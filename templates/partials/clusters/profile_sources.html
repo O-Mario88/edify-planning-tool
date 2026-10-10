@@ -1,0 +1,37 @@
+{% load components %}
+{% comment %}
+Cluster Profile, Sources (owner's brief, 2026-10-10: "For every profile
+metric, create an explicit mapping: Metric → Authoritative source → Filter →
+Aggregation → Drilldown destination ... This documentation should exist in
+the implementation"). The mapping itself is apps.clusters.profile_map; this
+is that mapping, read out. Each figure's name opens the place it is drawn.
+{% endcomment %}
+<div class="space-y-4" data-cluster-profile-panel="sources">
+{% data_table name="cluster-profile-sources" %}
+{% slot title %}Where Each Figure Comes From{% endslot %}
+{% slot summary %}Every figure of this profile is read from records the platform already holds; nothing is typed here and nothing is stored{% endslot %}
+{% slot caption %}Each figure of the Cluster Profile for {{ cluster.name }}: the section it is in, the records it is read from, how those records are filtered, how they are added up, and where the figure opens.{% endslot %}
+<thead>
+<tr>
+<th scope="col" class="px-3 py-2">Section</th>
+<th scope="col" class="px-3 py-2">Figure</th>
+<th scope="col" class="px-3 py-2">Read From</th>
+<th scope="col" class="px-3 py-2">Filter</th>
+<th scope="col" class="px-3 py-2">How It Is Worked Out</th>
+<th scope="col" class="px-3 py-2">Opens</th>
+</tr>
+</thead>
+<tbody>
+{% for group in metric_sections %}{% for metric in group.metrics %}
+<tr data-profile-metric="{{ metric.figure|slugify }}">
+<td class="px-3 py-2" data-label="Section">{{ metric.section }}</td>
+<th scope="row" class="px-3 py-2 text-left" data-record-title><a href="{{ profile_url }}?{% if metric.opens|slice:":4" == "tab:" %}tab={{ metric.opens|slice:"4:" }}{% else %}what={{ metric.opens|slice:"5:" }}{% endif %}">{{ metric.figure }}</a></th>
+<td class="px-3 py-2" data-label="Read From">{{ metric.source }}</td>
+<td class="px-3 py-2" data-label="Filter">{{ metric.filters }}</td>
+<td class="px-3 py-2" data-label="How It Is Worked Out">{{ metric.aggregation }}</td>
+<td class="px-3 py-2" data-label="Opens">{{ metric.drilldown }}</td>
+</tr>
+{% endfor %}{% endfor %}
+</tbody>
+{% enddata_table %}
+</div>

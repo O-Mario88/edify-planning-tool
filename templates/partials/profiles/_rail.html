@@ -1,0 +1,45 @@
+{% comment %}
+The insight rail (apps.analytics.profile_rail; owner, 2026-10-10: "I like the
+second column ... ssa performance and other short and small cards can use the
+second right column"). `rail` is profile_rail.build: a list of parts, each a
+figure, a list of lines, a list of meters or a list of links. Every line is a
+link to what it counted.
+{% endcomment %}
+<aside class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-4 edify-rail" aria-labelledby="edify-rail-title" data-insight-rail>
+  <header class="edify-rail__head">
+    <h2 id="edify-rail-title">{{ rail.title }}</h2>
+    <p>{{ rail.period }}</p>
+  </header>
+  {% for part in rail.parts %}
+  <section class="edify-rail__part" aria-labelledby="edify-rail-{{ part.key }}" data-rail-part="{{ part.key }}">
+    <h3 id="edify-rail-{{ part.key }}">{{ part.title }}</h3>
+    {% if part.figure %}
+    <p class="edify-rail__figure">{% if part.figure_href %}<a href="{{ part.figure_href }}">{{ part.figure }}</a>{% else %}<span>{{ part.figure }}</span>{% endif %}{% if part.figure_note %} <small>{{ part.figure_note }}</small>{% endif %}</p>
+    {% endif %}
+    {% if part.meters %}
+    <ul class="edify-rail__meters">
+      {% for row in part.meters %}
+      <li><a href="{{ row.href }}" class="edify-rail__name">{{ row.label }}</a><span class="edify-rail__meter" aria-hidden="true"><span style="inline-size: {{ row.share }}%"></span></span><span class="edify-rail__value">{{ row.value }}</span></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if part.rows %}
+    <ul class="edify-rail__rows">
+      {% for row in part.rows %}
+      <li>{% if row.href %}<a href="{{ row.href }}" class="edify-rail__name">{{ row.label }}</a>{% else %}<span class="edify-rail__name">{{ row.label }}</span>{% endif %}<span class="edify-rail__value"{% if row.tone %} data-edify-tone="{{ row.tone }}"{% endif %}>{% if row.value_href %}<a href="{{ row.value_href }}">{{ row.value }}</a>{% else %}{{ row.value }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if part.links %}
+    <ul class="edify-rail__links">
+      {% for row in part.links %}
+      <li><a href="{{ row.href }}"{% if row.key %} data-profile-attention-item="{{ row.key }}"{% endif %}>{{ row.label }}</a></li>
+      {% endfor %}
+    </ul>
+    {% elif part.empty %}
+    <p class="edify-rail__note">{{ part.empty }}</p>
+    {% endif %}
+    {% if part.note %}<p class="edify-rail__note">{{ part.note }}</p>{% endif %}
+  </section>
+  {% endfor %}
+</aside>

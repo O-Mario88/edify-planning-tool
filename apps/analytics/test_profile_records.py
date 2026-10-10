@@ -665,7 +665,7 @@ class ProfilePagesTest(RecordsFixture):
                 ),
             ),
             "cluster": (
-                f"/clusters/{self.north.id}",
+                f"/clusters/{self.north.id}/profile",
                 ("portfolio", "school_ssa", "work"),
             ),
             "school": (

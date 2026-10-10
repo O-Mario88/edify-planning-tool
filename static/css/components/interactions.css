@@ -806,7 +806,7 @@ main .edify-section-nav__view-label {
   flex: 0 0 auto;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: var(--edify-text-label-leading);
 }
 
@@ -828,7 +828,7 @@ main .edify-section-nav__view-button {
   background: var(--edify-surface);
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: var(--edify-text-label-leading);
   cursor: pointer;
   transition: border-color .15s ease, box-shadow .15s ease;
@@ -880,7 +880,7 @@ main .edify-section-nav__view-link {
   border-radius: calc(var(--edify-radius-control) - 2px);
   color: var(--edify-text-muted);
   font-size: var(--edify-text-label-size);
-  font-weight: 400;
+  font-weight: 500;
   line-height: var(--edify-text-label-leading);
   text-decoration: none;
 }
@@ -893,7 +893,7 @@ main .edify-section-nav__view-link:hover {
 main .edify-section-nav__view-link.is-active {
   background: color-mix(in srgb, var(--edify-accent) 10%, transparent);
   color: var(--edify-accent-text);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 main .edify-section-nav__view-link.is-active::after {
@@ -2198,7 +2198,7 @@ main [data-edify-filter-clear][data-edify-filter-clear]:not(#edify-filter-none):
     overflow: hidden !important;
     color: var(--edify-text-muted) !important;
     font-size: var(--edify-text-table-size) !important;
-    font-weight: 450 !important;
+    font-weight: 500 !important;
     line-height: 1.3 !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;

@@ -700,6 +700,13 @@ urlpatterns = [
         cluster_views.cluster_detail_view,
         name="cluster_detail",
     ),
+    # The cluster's 360° record, apart from the page that manages it (owner,
+    # 2026-10-10).
+    path(
+        "clusters/<str:cluster_id>/profile",
+        cluster_views.cluster_profile_view,
+        name="cluster_profile",
+    ),
     path(
         "partials/clusters/<str:cluster_id>/schools",
         cluster_views.cluster_schools_partial,
