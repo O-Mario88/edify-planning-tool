@@ -585,11 +585,11 @@ class ThePagesShowIt(CoverageFixture):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         for heading in (
-            "Staff<br>Planned",
-            "Partner<br>Assigned",
-            "Awaiting<br>Partner",
-            "Group<br>Scheduled",
-            "Schools<br>Covered",
+            "Staff Planned",
+            "Partner Assigned",
+            "Awaiting Partner",
+            "Group Scheduled",
+            "Schools Covered",
             "Remaining",
         ):
             self.assertIn(heading, html)

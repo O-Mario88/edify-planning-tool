@@ -12,7 +12,9 @@ class SchoolFilterToolbarContractTests(SimpleTestCase):
         grid = template.split('<div class="school-filter-grid grid gap-3">', 1)[1]
         grid = grid.split("</form>", 1)[0]
 
-        self.assertEqual(grid.count("<select"), 5)
+        # Six since 2026-10-10: "Missing detail" joined the five
+        # (apps.schools.data_gaps).
+        self.assertEqual(grid.count("<select"), 6)
         self.assertIn(
             'include "partials/schools/directory_sub_county_filter.html"',
             grid,

@@ -2538,7 +2538,9 @@
   transform: none !important;
 }
 
-@media (max-width: 47.99rem) {
+/* Below 48rem, written as its negation so that the phone sheet's own block
+   above stays the last `max-width: 47.99rem` block in the file. */
+@media not all and (min-width: 48rem) {
   .drawer-surface.drawer-surface.drawer-surface.type-anchored {
     inset: var(--edify-anchor-top, 3.75rem) 0.5rem auto 0.5rem !important;
     inline-size: auto !important;

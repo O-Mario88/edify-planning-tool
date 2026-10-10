@@ -296,8 +296,11 @@ aria-label="Notifications"
 </button>
 {% comment %}Phone notifications (owner, 2026-10-10): this device's
 subscription, the bell count while the app is open, and the line that says
-what arrived (static/js/push-notifications.js; apps.notifications.push).{% endcomment %}
-<script defer src="{% static 'js/push-notifications.js' %}?v=20261010push1"></script>
+what arrived (static/js/push-notifications.js; apps.notifications.push).
+`async`, not `defer`: nothing it does belongs to the first frame, and the
+deferred scripts in the head are the ones that hold it
+(e2e/performance-budgets.spec.js, "the first frame is the finished page").{% endcomment %}
+<script async src="{% static 'js/push-notifications.js' %}?v=20261010push1"></script>
 
 <!-- Contextual Help navigates directly to the full Knowledge Center article for
 the current page. The server resolves the route to a reviewed, role-aware article. -->
