@@ -105,7 +105,7 @@ class RenderedCallSiteTest(TestCase):
         )
         client = Client()
         client.force_login(_user("confirm-admin@edify.test", EdifyRole.ADMIN.value))
-        body = client.get(f"/schools/{school.school_id}").content.decode()
+        body = client.get(f"/schools/{school.school_id}?tab=details").content.decode()
         self.assertIn("confirm-action__panel", body)
         self.assertNotIn("confirm(", body)
 

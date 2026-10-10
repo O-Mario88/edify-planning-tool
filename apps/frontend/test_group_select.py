@@ -60,7 +60,7 @@ class TickBoxesOnThePlan(GroupFixture):
             self.assertFalse(rows[self.verified.id]["can_pick"])
 
     def test_a_profile_ticks_planned_rows_for_the_one_who_runs_them(self):
-        own = self.client.get(f"/schools/{self.school.school_id}")
+        own = self.client.get(f"/schools/{self.school.school_id}?tab=activities")
         self.assertEqual(own.status_code, 200)
         self.assertContains(own, f'value="{self.planned.id}" {PICK}')
         self.assertContains(own, BAR)

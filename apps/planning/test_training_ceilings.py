@@ -1433,12 +1433,12 @@ class WhoSeesTheSummary(CeilingFixture):
         for heading in (
             "Training Name",
             "Mode of delivery",
-            "Total Covered<br>/ Country Ceiling",
-            "Staff<br>Planned",
-            "Awaiting<br>Partner",
+            "Total Covered / Country Ceiling",
+            "Staff Planned",
+            "Awaiting Partner",
             ">Remaining</th>",
-            "# Schools<br>(Mary Officer)",
-            "# Schools<br>(Standard CCEO)",
+            "# Schools (Mary Officer)",
+            "# Schools (Standard CCEO)",
         ):
             self.assertIn(heading, body)
         self.assertNotIn("Outside Officer", body)
@@ -1490,7 +1490,7 @@ class WhoSeesTheSummary(CeilingFixture):
                     self.assertIn(name, names)
                 self.assertFalse(summary.may_set)
                 body = response.content.decode()
-                self.assertIn("# Schools<br>(Outside Officer)", body)
+                self.assertIn("# Schools (Outside Officer)", body)
                 # An officer's ceiling is the Programme Lead's: no capacity
                 # button, and the save refuses them. The Country Ceiling is
                 # Admin's and Impact Assessment's (TheCountryCeiling).
@@ -2329,23 +2329,23 @@ class TheCountryCeiling(CeilingFixture):
         headings = [
             "Training Name",
             "Mode of delivery",
-            "Total Covered<br>/ Country Ceiling",
-            "Staff<br>Planned",
-            "Awaiting<br>Partner",
+            "Total Covered / Country Ceiling",
+            "Staff Planned",
+            "Awaiting Partner",
             ">Remaining</th>",
-            "# Schools<br>(Mary Officer)",
-            "# Schools<br>(Standard CCEO)",
+            "# Schools (Mary Officer)",
+            "# Schools (Standard CCEO)",
         ]
         places = [body.index(heading) for heading in headings]
         self.assertEqual(places, sorted(places))
         self.assertNotIn("Country Target", body)
         # Owner, 2026-10-09: "get rid of group scheduled, and replace country
         # ceiling with total covered out of the set ceiling".
-        self.assertNotIn("Group<br>Scheduled", body)
+        self.assertNotIn("Group Scheduled", body)
         # "partner assigned and awaiting partner schedule are duplicate
         # remove one column and leave one": Awaiting Partner stays.
-        self.assertNotIn("Partner<br>Assigned", body)
-        self.assertNotIn("Country<br>Ceiling", body)
+        self.assertNotIn("Partner Assigned", body)
+        self.assertNotIn(">Country Ceiling</th>", body)
         row = body.split('data-summary-row="training"', 1)[1].split("</tr>", 1)[0]
         for cell, value in (
             ("data-country-ceiling", "30"),

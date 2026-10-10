@@ -147,7 +147,7 @@ class SchoolDeletionPageTest(TestCase):
     def test_admin_sees_danger_zone_and_deletes(self):
         client = Client()
         client.force_login(self.admin)
-        page = client.get("/schools/SDEL-P1")
+        page = client.get("/schools/SDEL-P1?tab=details")
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "Danger Zone")
 
@@ -163,7 +163,7 @@ class SchoolDeletionPageTest(TestCase):
     def test_cd_sees_no_danger_zone_and_cannot_delete(self):
         client = Client()
         client.force_login(self.cd)
-        page = client.get("/schools/SDEL-P1")
+        page = client.get("/schools/SDEL-P1?tab=details")
         self.assertEqual(page.status_code, 200)
         self.assertNotContains(page, "Danger Zone")
 

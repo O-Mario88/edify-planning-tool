@@ -729,7 +729,13 @@ def stories(profile: dict) -> dict:
     labels = dict(SsaIntervention.choices)
     latest = list(
         queryset.values(
-            "id", "title", "story_date", "status", "intervention", "school__name"
+            "id",
+            "title",
+            "story_date",
+            "status",
+            "intervention",
+            "school__name",
+            "school__school_id",
         ).order_by("-story_date", "-created_at")[:5]
     )
     by_area: dict[str, int] = defaultdict(int)
@@ -828,7 +834,7 @@ def _handover_tables(profile: dict, stage: str) -> list[dict]:
     title = "Hand-overs a partner holds"
     if stage == "awaiting":
         queryset, title = queryset.filter(waiting), "Awaiting the partner's date"
-    elif stage == "scheduled":
+    elif stage == "dated":
         queryset, title = (
             queryset.exclude(waiting).exclude(completed),
             "Dated by the partner",
@@ -1130,7 +1136,7 @@ RECORDS = {
     "stories_approved": ("overview", "Approved stories"),
     "handovers": ("overview", "Hand-overs a partner holds"),
     "handovers_awaiting": ("overview", "Awaiting the partner's date"),
-    "handovers_scheduled": ("overview", "Dated by the partner"),
+    "handovers_dated": ("overview", "Dated by the partner"),
     "handovers_completed": ("overview", "Completed by the partner"),
     "partners": ("overview", "Partners"),
     "loans": ("overview", "School loans"),

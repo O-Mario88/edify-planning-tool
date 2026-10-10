@@ -1165,6 +1165,7 @@ def _cluster_page_base(request, cluster_id):
     context = {
         "cluster": detail,
         "cluster_row": row,
+        "cluster_page_url": f"/clusters/{cluster_id}",
         # The reason the Delete control is inert, shown beside it — a cluster
         # that has hosted work is kept, and the page says so before a press.
         "delete_block": cluster_delete_block(row) if row else None,

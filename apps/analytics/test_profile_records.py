@@ -551,16 +551,16 @@ class ReconciliationTest(RecordsFixture):
 
         counts = {
             stage: len(records.records(profile, f"handovers{stage}")[0]["rows"])
-            for stage in ("", "_awaiting", "_scheduled", "_completed")
+            for stage in ("", "_awaiting", "_dated", "_completed")
         }
 
         self.assertEqual(counts[""], pipeline["assigned"])
         self.assertEqual(
-            (counts["_awaiting"], counts["_scheduled"], counts["_completed"]),
+            (counts["_awaiting"], counts["_dated"], counts["_completed"]),
             (pipeline["awaiting"], pipeline["scheduled"], pipeline["completed"]),
         )
         self.assertEqual(
-            counts["_awaiting"] + counts["_scheduled"] + counts["_completed"],
+            counts["_awaiting"] + counts["_dated"] + counts["_completed"],
             counts[""],
         )
         # An assignment is not a school: one partner, three schools.

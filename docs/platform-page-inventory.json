@@ -3273,7 +3273,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6358,
+      "bytes": 6347,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -5343,7 +5343,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 17476,
+      "bytes": 17491,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -5429,7 +5429,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2289,
+      "bytes": 2304,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/"
@@ -14395,7 +14395,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2520,
+      "bytes": 2536,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",
@@ -14533,7 +14533,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 59854,
+      "bytes": 60004,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile",

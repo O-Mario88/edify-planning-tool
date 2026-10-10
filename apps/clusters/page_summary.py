@@ -100,7 +100,7 @@ def operational_summary(cluster) -> dict:
             # The page's own list: the profile's lines and the register's.
             part["title"] = "Needs Attention Now"
             part["links"] = [
-                {"label": i["text"], "href": i["href"], "key": i["key"]}
+                {"name": i["text"], "href": i["href"], "key": i["key"]}
                 for i in attention
             ]
     return {

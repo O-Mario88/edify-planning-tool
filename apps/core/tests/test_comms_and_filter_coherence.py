@@ -142,12 +142,19 @@ class LinkedItemAuthorizationTests(TestCase):
             district_id=district.id,
             account_owner_id=sp.id,
         )
+        # Somebody else's school. (One that nobody holds is open to every
+        # field officer of the country since 2026-10-10, so that somebody can
+        # complete it: apps.schools.data_gaps.)
+        owner = _user("li-other@t.org", "Other", EdifyRole.CCEO.value)
+        sp_other = StaffProfile.objects.create(user=owner, country="Uganda")
         theirs = _S.objects.create(
             name="Theirs",
             school_id="LI-2",
             region_id=region.id,
             district_id=district.id,
+            account_owner_id=sp_other.id,
         )
+        StaffSchoolAssignment.objects.create(staff=sp_other, school_id=theirs.id)
         StaffSchoolAssignment.objects.create(staff=sp, school_id=mine.id)
         recipient = _user("li-pl@t.org", "Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         sp_pl = StaffProfile.objects.create(user=recipient, country="Uganda")

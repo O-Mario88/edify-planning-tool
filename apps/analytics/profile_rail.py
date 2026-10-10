@@ -54,8 +54,8 @@ def build(
 
     meters = [
         {
-            "label": row["label"],
-            "value": f"{row['current'] or 0:.1f}",
+            "name": row["label"],
+            "figure_text": f"{row['current'] or 0:.1f}",
             "share": round((row["current"] or 0) * 100 / _SCALE),
             "href": records_url("intervention", row["key"]),
             "tone": row.get("tone", ""),
@@ -64,7 +64,7 @@ def build(
     ]
     attention = [
         {
-            "label": item["text"],
+            "name": item["text"],
             "href": records_url(item["what"])
             if item["what"]
             else tab_url(item["tab"], item["show"]),
@@ -74,42 +74,42 @@ def build(
     ]
     schools = [
         {
-            "label": "Assessed this year",
-            "value": f"{portfolio['assessed']:,} of {portfolio['schools']:,}",
+            "name": "Assessed this year",
+            "figure_text": f"{portfolio['assessed']:,} of {portfolio['schools']:,}",
             "href": records_url("ssa"),
         },
         {
-            "label": "SSA improved",
-            "value": f"{portfolio['improved']:,}",
+            "name": "SSA improved",
+            "figure_text": f"{portfolio['improved']:,}",
             "href": tab_url("schools", "improved"),
             "tone": "success" if portfolio["improved"] else "",
         },
         {
-            "label": "SSA declined",
-            "value": f"{portfolio['declined']:,}",
+            "name": "SSA declined",
+            "figure_text": f"{portfolio['declined']:,}",
             "href": tab_url("schools", "declined"),
             "tone": "danger" if portfolio["declined"] else "",
         },
         {
-            "label": "No SSA this year",
-            "value": f"{portfolio['no_ssa']:,}",
+            "name": "No SSA this year",
+            "figure_text": f"{portfolio['no_ssa']:,}",
             "href": tab_url("schools", "no_ssa"),
         },
         {
-            "label": "Nothing planned",
-            "value": f"{portfolio['unplanned']:,}",
+            "name": "Nothing planned",
+            "figure_text": f"{portfolio['unplanned']:,}",
             "href": tab_url("schools", "unplanned"),
         },
         {
-            "label": "Awaiting a partner's date",
-            "value": f"{portfolio['awaiting_partner']:,}",
+            "name": "Awaiting a partner's date",
+            "figure_text": f"{portfolio['awaiting_partner']:,}",
             "href": tab_url("schools", "awaiting_partner"),
         },
     ]
     work = [
         {
-            "label": label,
-            "value": f"{execution[key]['completed']:,} / {execution[key]['planned']:,}",
+            "name": label,
+            "figure_text": f"{execution[key]['completed']:,} / {execution[key]['planned']:,}",
             "share": _share(execution[key]["completed"], execution[key]["planned"]),
             "href": records_url(key),
         }

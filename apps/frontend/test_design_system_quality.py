@@ -746,7 +746,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             # Bold since 2026-10-08 (owner: "make it bold").
             "--edify-table-header-weight: 700",
             "--edify-table-body-weight: 500",
-            "--edify-table-identity-weight: 500",
+            # The name that opens a record is semibold, as in the Staff
+            # Activity table the owner made the standard (2026-10-10).
+            "--edify-table-identity-weight: 600",
             "--edify-table-action-size: 2rem",
             "--edify-table-header-divider:",
         ):
@@ -1649,12 +1651,15 @@ class TypeScaleFloorTest(SimpleTestCase):
 
     def test_readable_core_tiers_are_defined(self):
         """The fluid scale's lower bounds are the readable tiers: micro never
-        below the 12px floor, labels from 13px and body copy from 14px."""
+        below the 12px floor and labels from 13px. Body copy is the label
+        step (owner, 2026-10-10: one reading size, a table cell's); the 14px
+        step it used to be is the lead step, for column names."""
         tokens = _read("static/css/design-system.css")
         self.assertIn("--edify-text-floor: 0.75rem;", tokens)
         self.assertIn("--edify-text-micro-size: clamp(var(--edify-text-floor),", tokens)
         self.assertIn("--edify-text-label-size: clamp(0.8125rem,", tokens)
-        self.assertIn("--edify-text-body-size: clamp(0.875rem,", tokens)
+        self.assertIn("--edify-text-lead-size: clamp(0.875rem,", tokens)
+        self.assertIn("--edify-text-body-size: var(--edify-text-label-size);", tokens)
 
     def test_legacy_compact_template_utilities_map_to_the_label_tier(self):
         consistency = _read("static/css/consistency.css")
@@ -1688,7 +1693,9 @@ class StableTypographyContractTest(SimpleTestCase):
         typography_block = tokens.split("/* ── TYPOGRAPHY SCALE", 1)[1].split(
             "/* ── OPERATIONAL TABLE CONTRACT", 1
         )[0]
-        for step in ("display", "heading", "title", "body", "label", "micro"):
+        # Body is the label step and a heading the title step (owner,
+        # 2026-10-10), so the rungs that carry a clamp are these.
+        for step in ("display", "title", "lead", "label", "micro"):
             self.assertRegex(
                 typography_block, rf"--edify-text-{step}-size: clamp\([^;]+vw"
             )
@@ -1750,7 +1757,7 @@ class StableTypographyContractTest(SimpleTestCase):
 
         for expected in (
             "--edify-text-display-size: clamp(1.25rem,",
-            "--edify-text-heading-size: clamp(1rem,",
+            "--edify-text-heading-size: var(--edify-text-title-size);",
             "--edify-text-tile-value-size: clamp(1.125rem,",
             "--edify-text-table-size: var(--edify-text-label-size);",
             "--edify-text-floor: 0.75rem;",
@@ -1761,7 +1768,7 @@ class StableTypographyContractTest(SimpleTestCase):
         # largest, the column names "just slightly bigger not large" than the
         # cells. Column names sat one step below the cells before.
         self.assertIn(
-            "--edify-text-table-heading-size: var(--edify-text-body-size);",
+            "--edify-text-table-heading-size: var(--edify-text-lead-size);",
             tokens,
         )
         self.assertIn(
@@ -1806,7 +1813,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn(".drawer-body table th {", platform)
         self.assertIn(".drawer-body table td {", platform)
         self.assertIn(
-            "--edify-text-table-heading-size: var(--edify-text-body-size);",
+            "--edify-text-table-heading-size: var(--edify-text-lead-size);",
             _read("static/css/design-system.css"),
         )
         self.assertIn("text-wrap: nowrap", platform)
@@ -1890,7 +1897,7 @@ class TableReadsInThreeStepsTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
         for role, step in (
             ("--edify-text-table-title-size", "--edify-text-title-size"),
-            ("--edify-text-table-heading-size", "--edify-text-body-size"),
+            ("--edify-text-table-heading-size", "--edify-text-lead-size"),
             ("--edify-text-table-size", "--edify-text-label-size"),
         ):
             with self.subTest(role=role):

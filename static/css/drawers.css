@@ -2511,7 +2511,6 @@
      itself to none does not survive the stylesheet build, which keeps only
      the prefixed declaration.) */
   opacity: 0 !important;
-  background-color: transparent !important;
 }
 
 .drawer-surface.drawer-surface.drawer-surface.type-anchored {
@@ -2521,7 +2520,7 @@
   max-inline-size: none !important;
   max-block-size: min(38rem, calc(100dvh - var(--edify-anchor-top, 4rem) - 1rem)) !important;
   border: 1px solid var(--edify-border) !important;
-  border-radius: 1rem !important;
+  border-radius: var(--edify-radius-lg) !important;
   box-shadow:
     0 1.25rem 2.5rem -0.75rem rgb(15 23 42 / 0.28),
     0 0.5rem 1rem -0.5rem rgb(15 23 42 / 0.16) !important;
@@ -2538,13 +2537,13 @@
   transform: none !important;
 }
 
-@media (max-width: 47.99rem) {
+/* Below 48rem, written as its negation so that the phone sheet's own block
+   above stays the last `max-width: 47.99rem` block in the file. */
+@media not all and (min-width: 48rem) {
   .drawer-surface.drawer-surface.drawer-surface.type-anchored {
     inset: var(--edify-anchor-top, 3.75rem) 0.5rem auto 0.5rem !important;
     inline-size: auto !important;
     max-block-size: calc(100svh - var(--edify-anchor-top, 3.75rem) - 5rem - env(safe-area-inset-bottom)) !important;
-    border: 1px solid var(--edify-border) !important;
-    border-radius: 1rem !important;
   }
 }
 

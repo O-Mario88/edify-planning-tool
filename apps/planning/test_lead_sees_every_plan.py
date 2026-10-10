@@ -256,7 +256,7 @@ class PartnerShareOnTheMonitorTest(MirrorFixture):
             HTTP_X_EDIFY_EMBED="dashboard",
             HTTP_HX_REQUEST="true",
         )
-        self.assertContains(response, "Core partner<br>visits")
+        self.assertContains(response, "Core partner visits")
         self.assertContains(response, "/team-planning-oversight/?period=fy")
         self.assertContains(response, f"&owner={self.james.id}&activity=visits")
         self.assertContains(response, "&owner=mine&activity=visits")

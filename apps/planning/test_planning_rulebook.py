@@ -796,7 +796,7 @@ class PeopleFirstPageTest(World):
         page = client.get(f"/country-planning-oversight/?fy={FY}").content.decode()
         self.assertIn("Planned and Not Yet Planned by School Type", page)
         self.assertIn("Visits Planned Against Target by Program Lead", page)
-        self.assertIn("Core<br>Graduate", page)
+        self.assertIn("Core Graduate", page)
         rows = client.get(
             f"/country-planning-oversight/rows?level=lead&key={self.pl.id}&fy={FY}",
             HTTP_HX_REQUEST="true",

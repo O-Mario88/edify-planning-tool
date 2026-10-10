@@ -67,8 +67,10 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
         # a portfolio means moving several schools, and the directory is the
         # list a registry administrator is looking at.
         self.assertEqual(directory.count("{% row_actions school.school_name %}"), 1)
-        self.assertEqual(directory.count('class="row-menu__item"'), 7)
-        self.assertEqual(directory.count('role="menuitem"'), 7)
+        # Take This School and Open And Complete are the eighth and ninth,
+        # on the list of schools nobody holds (owner, 2026-10-10).
+        self.assertEqual(directory.count('class="row-menu__item"'), 9)
+        self.assertEqual(directory.count('role="menuitem"'), 9)
         self.assertNotIn("school-record-action", directory)
         for label in (
             ">Schedule<",

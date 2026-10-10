@@ -6,7 +6,7 @@ page. `on` is "page" (the operational Cluster Page, which also carries the
 planning and record actions) or "profile".
 {% endcomment %}
 <div>
-{% if on == "profile" %}{% include "partials/_back_link.html" with back_href="/clusters/"|add:cluster.id back_label="Cluster Page" %}{% else %}{% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}{% endif %}
+{% if on == "profile" %}{% include "partials/_back_link.html" with back_href=cluster_page_url back_label="Cluster Page" %}{% else %}{% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}{% endif %}
 <div class="mt-2 edify-page-header">
 <div class="edify-page-header__lead">
 <h1 class="edify-page-title edify-page-header__title">{{ cluster.name }}{% if on == "profile" %}: Cluster Profile{% endif %}</h1>

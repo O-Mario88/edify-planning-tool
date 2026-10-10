@@ -319,12 +319,24 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         integration-level proof of it — `test_reg02_calendar_policy` proves the
         policy, this proves the leave workflow's own surface honours it.
         """
-        # Create approved leave for CCEO-2 on Oct 8 to Oct 12
+        # Approved leave for CCEO-2 around a day that can still be scheduled.
+        # The day was the literal 2026-10-09, so from 10 October 2026 the
+        # refusal read "9 October 2026 has passed" and never reached the
+        # leave check this test is about.
+        from datetime import timedelta
+
+        day = timezone.localdate() + timedelta(days=3)
+        if day.weekday() == 6:
+            day += timedelta(days=1)
+        # Also a public holiday, as 9 October is in this fixture (see below).
+        PublicHoliday.objects.get_or_create(
+            date=day, defaults={"name": "A holiday inside the leave"}
+        )
         Leave.objects.create(
             staff=self.cceo2_profile,
             type="personal_time_off",
-            start_date="2026-10-08",
-            end_date="2026-10-12",
+            start_date=day - timedelta(days=1),
+            end_date=day + timedelta(days=3),
             days=5,
             days_charged=2,
             status="approved",
@@ -349,12 +361,12 @@ class LeaveWorkflowIntegrationTest(APITestCase):
                 data={
                     "activityType": "school_visit",
                     "schoolId": self.school2.school_id,
-                    "scheduledDate": "2026-10-09",
+                    "scheduledDate": day.isoformat(),
                     "responsibleStaffId": self.cceo2_user.id,
                 },
                 principal=self.cceo2_user,
             )
-        # Named specifically. 2026-10-09 is also a public holiday in this
+        # Named specifically. The day is also a public holiday in this
         # fixture, so a bare assertRaises would stay green if the leave check
         # were removed and only the holiday check remained — the test would
         # then be about holidays while still claiming to be about leave.

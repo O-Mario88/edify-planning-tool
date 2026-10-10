@@ -129,10 +129,10 @@ class OnThePagesTests(PeopleFixture):
 
     def test_the_monitor_has_a_column_for_each(self):
         page = self.monitor()
-        core = page.find("Core: over 2 Staff<br>or 2 Partner visits</th>")
-        client = page.find("Client: Staff<br>and Partner</th>")
+        core = page.find("Core: over 2 Staff or 2 Partner visits</th>")
+        client = page.find("Client: Staff and Partner</th>")
         self.assertTrue(0 < core < client, (core, client))
-        self.assertNotIn("Staff and<br>Partner</th>", page)
+        self.assertNotIn(">Staff and Partner</th>", page)
         # A group's heading row spans every column of the table.
         head = page[page.rfind("<thead>", 0, core) : page.find("</thead>", core)]
         self.assertIn(f'<th colspan="{head.count("<th ")}" scope="colgroup">', page)
