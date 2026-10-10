@@ -1236,10 +1236,27 @@ def cluster_detail_view(request, cluster_id):
 
     asked = (request.GET.get("tab") or "").strip()
     if (asked and asked != "overview") or request.GET.get("what", "") in RECORDS:
-        query = request.GET.urlencode()
-        return redirect(
-            f"/clusters/{cluster_id}/profile" + (f"?{query}" if query else "")
+        # The destination is this site's own page for a cluster that
+        # exists: its address is built from the stored record's id, never
+        # from the id as it was typed, and checked where it is followed.
+        from django.utils.http import url_has_allowed_host_and_scheme
+
+        from apps.clusters.models import Cluster as _Cluster
+
+        known = (
+            _Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True)
+            .values_list("id", flat=True)
+            .first()
         )
+        if known is None:
+            return redirect("/clusters")
+        query = request.GET.urlencode()
+        destination = f"/clusters/{known}/profile" + (f"?{query}" if query else "")
+        if not url_has_allowed_host_and_scheme(
+            destination, allowed_hosts={request.get_host()}
+        ) or not destination.startswith("/clusters/"):
+            return redirect("/clusters")
+        return redirect(destination)
     try:
         _detail, _cluster_row, context = _cluster_page_base(request, cluster_id)
         schools = cluster_schools(cluster_id, request.user)
