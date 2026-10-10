@@ -3318,7 +3318,7 @@
    "audit_id": "KPI-SOURCE-172",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 1695,
+   "line": 1712,
    "label": null,
    "keys": [
     "label",

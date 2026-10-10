@@ -19,6 +19,7 @@ Managing the cluster — planning, the roster, its actions — is the Cluster
 Page's.
 {% endcomment %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-cluster-profile>
+{% include "partials/_back_link.html" with back_href=cluster_page_url back_label="Cluster Page" %}
 {% include "partials/clusters/_page_header.html" with on="profile" %}
 
 <nav class="oversight-entity-tabs" aria-label="{{ cluster.name }} profile sections" data-cluster-profile-tabs>

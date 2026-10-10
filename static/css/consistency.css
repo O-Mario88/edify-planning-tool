@@ -5125,6 +5125,52 @@ main .edify-avatar-neutral {
   font-weight: var(--edify-table-body-weight) !important;
 }
 
+/* ═══ ONE TYPE STANDARD ═══════════════════════════════════════════════════
+ * Owner, 2026-10-10: "change the typography of the entire platform to look
+ * like the attached reference ... everything should have the consistent size
+ * and font weight across the platform. Look at the staff activity page table
+ * typography and use it as a gold standard."
+ *
+ * That table: column names 14.7px bold, cells 13.7px medium on an 18px line,
+ * the name that opens the record and the figure that matters semibold. The
+ * steps and the three weights (500, 600, 700) are the tokens' now
+ * (design-system.css); this block is what a token cannot reach. Measured on
+ * every page five roles reach: what still differed after the tokens moved.
+ */
+/* The name that opens a record, and a figure marked strong, read as the
+   Staff Activity table's name and Active Time do: the cell's size, semibold. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody :is(td, th):not(.edify-group-head > th)
+  :is(strong, b, a.school-link, a.profile-link, .sal-name):not(#edify-none),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) tbody [data-record-title] > a:not(#edify-none) {
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 600 !important;
+}
+/* A table's closing line of totals is a row of the table, in bold. */
+:is(main, .drawer-surface) table:not(.sr-only, .edify-visually-hidden) tfoot :is(td, th):not(#edify-none) {
+  padding-block: 0.34375rem !important;
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: 700 !important;
+}
+/* What a person types or picks reads as data, like a cell; the label over
+   it is the semibold one. */
+:is(main, .drawer-surface, [role="dialog"]) :is(input, select, textarea):not([type="checkbox"], [type="radio"], [type="range"], [type="submit"], [type="button"]):not(#edify-none, #edify-nil) {
+  font-weight: 500 !important;
+}
+/* Bold is one weight. Outside a table a strong figure was 600 in one card
+   and 700 in the next. */
+main :is(strong, b):not(table *):not(#edify-none) { font-weight: 700 !important; }
+/* A button and a tab say their name as written: a handful were capitals. */
+:is(main, .drawer-surface) :is(button, .btn, [role="tab"], .edify-tab, summary):not(#edify-none) {
+  text-transform: none !important;
+}
+/* A pill is the small step, semibold, wherever it is. */
+main :is(.pill, .edify-badge, .pto-count-badge, .admin-count, .cpo-count):not(#edify-none) {
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600 !important;
+}
+
 /* ═══ ONE CONTENT LINE (owner, 2026-10-02) ════════════════════════════════
  * "Fix all the padding on every card so that everything is well aligned ...
  * content inside cards, table padding, tabs, content inside kpi strips" and
@@ -5277,56 +5323,4 @@ main .edify-structured-surface:not(
   .sal-aside, .spp-intelligence, .spp-next-step, .spp-bulk
 ) > :is(nav, [role="tablist"], .edify-tab-container) {
   --edify-fill-inset: var(--edify-section-inset);
-}
-
-/* ═══ ONE TYPE STANDARD ═══════════════════════════════════════════════════
- * Owner, 2026-10-10: "change the typography of the entire platform to look
- * like the attached reference ... everything should have the consistent size
- * and font weight across the platform. Look at the staff activity page table
- * typography and use it as a gold standard."
- *
- * That table: column names 14.7px bold, cells 13.7px medium on an 18px line,
- * the name that opens the record and the figure that matters semibold. The
- * steps and the three weights (500, 600, 700) are the tokens' now
- * (design-system.css); this block is what a token cannot reach. Measured on
- * every page five roles reach: what still differed after the tokens moved.
- */
-/* The name that opens a record, and a figure marked strong, read as the
-   Staff Activity table's name and Active Time do: the cell's size, semibold. */
-:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  table:not(.sr-only, .edify-visually-hidden) tbody :is(td, th):not(.edify-group-head > th)
-  :is(strong, b, a.school-link, a.profile-link, .sal-name):not(#edify-none),
-:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  table:not(.sr-only, .edify-visually-hidden) tbody [data-record-title] > a:not(#edify-none) {
-  font-size: var(--edify-text-table-size) !important;
-  font-weight: 600 !important;
-}
-/* A table's closing line of totals is a row of the table, in bold. */
-:is(main, .drawer-surface) table:not(.sr-only, .edify-visually-hidden) tfoot :is(td, th):not(#edify-none) {
-  padding-block: 0.34375rem !important;
-  font-size: var(--edify-text-table-size) !important;
-  font-weight: 700 !important;
-  line-height: 1.125rem !important;
-}
-/* What a person types or picks reads as data, like a cell; the label over
-   it is the semibold one. */
-:is(main, .drawer-surface, [role="dialog"]) :is(input, select, textarea):not([type="checkbox"], [type="radio"], [type="range"], [type="submit"], [type="button"]):not(#edify-none, #edify-nil) {
-  font-weight: 500 !important;
-}
-/* Bold is one weight. Outside a table a strong figure was 600 in one card
-   and 700 in the next. */
-main :is(strong, b):not(table *):not(#edify-none) { font-weight: 700 !important; }
-/* A name inside a title is the title's weight. */
-main :is(h2, h3, h4) a { font-weight: inherit !important; }
-/* A button and a tab say their name as written: a handful were capitals. */
-:is(main, .drawer-surface) :is(button, .btn, [role="tab"], .edify-tab, summary):not(#edify-none) {
-  text-transform: none !important;
-}
-/* Every title over a block of the page sits on one line height. */
-main :is(h2, h3, h4) { line-height: var(--edify-text-heading-leading) !important; }
-/* A pill is the small step, semibold, wherever it is. */
-main :is(.pill, .edify-badge, .pto-count-badge, .admin-count, .cpo-count):not(#edify-none) {
-  font-size: var(--edify-text-micro-size) !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
 }

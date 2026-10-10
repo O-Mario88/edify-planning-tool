@@ -3273,7 +3273,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6347,
+      "bytes": 6879,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>",

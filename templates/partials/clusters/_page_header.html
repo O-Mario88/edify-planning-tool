@@ -6,11 +6,13 @@ page. `on` is "page" (the operational Cluster Page, which also carries the
 planning and record actions) or "profile".
 {% endcomment %}
 <div>
-{% if on == "profile" %}{% include "partials/_back_link.html" with back_href=cluster_page_url back_label="Cluster Page" %}{% else %}{% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}{% endif %}
+{% comment %}The back control is written on each page (test_back_navigation reads it there).{% endcomment %}
 <div class="mt-2 edify-page-header">
 <div class="edify-page-header__lead">
 <h1 class="edify-page-title edify-page-header__title">{{ cluster.name }}{% if on == "profile" %}: Cluster Profile{% endif %}</h1>
-<p class="edify-page-header__description">{% if on == "profile" %}How this cluster is performing, what has happened and what has changed, from the records the platform already holds.{% else %}Plan and manage this cluster's schools, meetings and trainings.{% endif %}</p>
+<p class="edify-page-header__description">
+District: {% if cluster.district.id %}<a href="/districts/{{ cluster.district.id }}" class="hover:underline font-medium text-slate-800">{{ cluster.district.name }}</a>{% elif cluster.district_id %}<a href="/districts/{{ cluster.district_id }}" class="hover:underline font-medium text-slate-800">{% firstof cluster.district.name cluster.district %}</a>{% else %}{% firstof cluster.district.name cluster.district %}{% endif %} &bull; Sub-county: {% if cluster.subCounty.id %}<a href="/schools?sub_county={{ cluster.subCounty.id }}" class="hover:underline font-medium text-slate-800">{{ cluster.subCounty.name }}</a>{% elif cluster.sub_county_id %}<a href="/schools?sub_county={{ cluster.sub_county_id }}" class="hover:underline font-medium text-slate-800">{% firstof cluster.subCounty.name cluster.subCounty %}</a>{% else %}{% firstof cluster.subCounty.name cluster.subCounty %}{% endif %}
+</p>
 </div>
 
 <!-- Actions -->

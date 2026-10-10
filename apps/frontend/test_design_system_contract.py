@@ -739,9 +739,13 @@ class DesignSystemContractTest(SimpleTestCase):
         tokens = (ROOT / "static/css/design-system.css").read_text()
         contract = (ROOT / "static/css/consistency.css").read_text()
 
-        self.assertIn("--edify-text-body-weight:    450", tokens)
-        self.assertIn("--edify-text-label-weight:   550", tokens)
-        self.assertIn("--edify-text-micro-weight:   450", tokens)
+        # Three weights, the Staff Activity table's (owner, 2026-10-10: "the
+        # consistent size and font weight across the platform"): text medium,
+        # a label semibold, a title bold. Text was 450 and a label 550.
+        self.assertIn("--edify-text-body-weight:    500", tokens)
+        self.assertIn("--edify-text-label-weight:   600", tokens)
+        self.assertIn("--edify-text-micro-weight:   500", tokens)
+        self.assertIn("--edify-text-title-weight:   700", tokens)
         for tracking_token in (
             "--edify-text-display-tracking: normal",
             "--edify-text-heading-tracking: normal",

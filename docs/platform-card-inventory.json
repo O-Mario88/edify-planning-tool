@@ -907,7 +907,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 41,
+   "line": 42,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -916,7 +916,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 108,
+   "line": 109,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
