@@ -853,6 +853,12 @@ def assert_may_write_school(principal, school, *, action: str = "change") -> Non
     from apps.core.exceptions import Forbidden
 
     if not may_write_school(resolve_user_scope(principal), school):
+        # A school nobody holds has no owner to ask: the country's field
+        # staff may complete its record (owner, 2026-10-10).
+        from apps.schools.data_gaps import open_to
+
+        if open_to(principal, school.id):
+            return
         raise Forbidden(
             f"You can only {action} a school in your own portfolio. "
             "This one belongs to another staff member — ask its owner, or a "

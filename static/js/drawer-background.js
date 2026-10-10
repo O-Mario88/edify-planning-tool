@@ -164,6 +164,17 @@
     frame.setAttribute(OPENING_ATTR, "");
     frame.innerHTML = FRAME;
     frame.querySelector("h3").textContent = labelFor(trigger) || "Opening";
+    /* A drawer that opens under its control (Notifications, Messages; owner,
+       2026-10-10) is framed there too, so it does not appear in the middle
+       of the screen and then jump to the bell. */
+    if (trigger && trigger.hasAttribute && trigger.hasAttribute("data-drawer-anchor")) {
+      var surface = frame.querySelector(".drawer-surface");
+      var box = trigger.getBoundingClientRect();
+      surface.className = "drawer-surface size-sm type-anchored";
+      frame.querySelector(".drawer-backdrop").className = "drawer-backdrop type-anchored";
+      surface.style.setProperty("--edify-anchor-top", Math.round(box.bottom + 8) + "px");
+      surface.style.setProperty("--edify-anchor-right", Math.max(8, Math.round(document.documentElement.clientWidth - box.right)) + "px");
+    }
     frame.querySelector(".drawer-backdrop").addEventListener("click", cancelOpening);
     frame.querySelector(".drawer-close-btn").addEventListener("click", cancelOpening);
     hostNode.appendChild(frame);

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **916**
-- All registered routes: **1389**
-- API routes: **360**
+- Routed product surfaces: **918**
+- All registered routes: **1394**
+- API routes: **363**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **678**
+- Shared component templates: **687**
 - Full pages: **268**
 - Partials and drawers: **326**
-- Permission-gated surfaces: **899**
-- Referenced by automated tests: **816**
+- Permission-gated surfaces: **901**
+- Referenced by automated tests: **818**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -614,6 +614,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-149A7654FC | /my-team | My Team · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E808A3A1BC | /notifications | Notifications | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D4CC699CE9 | /notifications/ | Notifications | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EA4C461690 | /notifications/<str:notif_id>/open | Open Notification | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E788473911 | /notifications/<str:notif_id>/read | Mark Notif Read | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0D3E8983C0 | /notifications/drawer | Notifications Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-45CD52E6FC | /notifications/mark-all-read | Mark All Notifications Read | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -830,6 +831,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-43A9299FB0 | /schools/<str:school_id>/delete | School Delete | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9AB62DBEF9 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0E19B43194 | /schools/<str:school_id>/reopen | School Reopen | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-189291E896 | /schools/<str:school_id>/take | School Take | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9559BE9B58 | /schools/<str:school_id>/transfer-owner | School Owner Transfer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-755C340D69 | /schools/add-school | Add School | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-326063C770 | /schools/bulk-assign-cluster | Bulk Assign Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

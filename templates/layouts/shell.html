@@ -261,6 +261,7 @@ buttons read as one more thing to press (2026-10-01). -->
 hx-get="/messages/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
+data-drawer-anchor
 class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--messages{% if mobile_nav %} edify-topbar__utility--mobile-redundant{% endif %} flex items-center justify-center relative focus:outline-none"
 title="Messages"
 aria-label="Messages"
@@ -277,6 +278,7 @@ aria-label="Messages"
 hx-get="/notifications/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
+data-drawer-anchor
 class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--notifications flex items-center justify-center relative focus:outline-none"
 title="Notifications"
 aria-label="Notifications"
@@ -292,6 +294,10 @@ aria-label="Notifications"
 {% endif %}
 </div>
 </button>
+{% comment %}Phone notifications (owner, 2026-10-10): this device's
+subscription, the bell count while the app is open, and the line that says
+what arrived (static/js/push-notifications.js; apps.notifications.push).{% endcomment %}
+<script defer src="{% static 'js/push-notifications.js' %}?v=20261010push1"></script>
 
 <!-- Contextual Help navigates directly to the full Knowledge Center article for
 the current page. The server resolves the route to a reviewed, role-aware article. -->

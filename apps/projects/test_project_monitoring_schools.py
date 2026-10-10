@@ -298,7 +298,9 @@ class FocusInterventionsTest(_Fixture):
     def test_a_missing_follow_up_is_never_no_change(self):
         _result, rows = self.rows_for(self.lead_user)
         self.assertEqual(rows["Delivered Primary"].impact_label, "Awaiting delivery")
-        self.assertEqual(rows["Unplanned Primary"].impact_label, "No baseline")
+        self.assertEqual(
+            rows["Unplanned Primary"].impact_label, "Previous FY SSA missing"
+        )
 
 
 class WhoSeesWhichSchoolsTest(_Fixture):

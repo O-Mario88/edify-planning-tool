@@ -187,3 +187,114 @@ def batch_options(base=None):
         .order_by("-created_at")
         .values_list("id", "file_name")
     )
+
+
+# ── Filing a parked row once its school exists ──────────────────────────────
+def refile_known(school_ids=None, *, apply: bool = True) -> dict:
+    """File the parked SSA rows whose School ID now names a school.
+
+    Owner, 2026-10-10: "all the schools that were assessed but the record had
+    issues can be fixed and showed in the right place". On production that day
+    88 rows of FY 2025/26 sat in this queue, every one for a School ID the
+    directory did not hold. Such a row is a real assessment waiting for its
+    school: the moment a school with exactly that School ID is added (an
+    upload, a single create), the row is filed to it by the same writer every
+    SSA goes through (`apps.ssa.services.upload`), in the name of whoever
+    uploaded the batch, and waits for verification like any other.
+
+    Exact School ID only — a name that merely looks alike is a person's
+    decision, on the queue's own page. ``school_ids`` narrows the pass to the
+    schools just added; ``apply=False`` reports what would be filed.
+
+    ``{"filed": [...], "skipped": [...]}``, each entry the row's School ID
+    with the reason it was left.
+    """
+    from apps.accounts.models import User
+    from apps.schools.models import School, UnmatchedSSARecord
+    from apps.ssa.services import upload
+
+    parked = UnmatchedSSARecord.objects.filter(
+        status__in=("pending", "hold")
+    ).select_related("batch")
+    if school_ids is not None:
+        wanted = {str(value).strip() for value in school_ids if value}
+        if not wanted:
+            return {"filed": [], "skipped": []}
+        parked = parked.filter(school_id__in=wanted)
+    parked = list(parked.order_by("created_at", "id"))
+    if not parked:
+        return {"filed": [], "skipped": []}
+    schools = {
+        school.school_id: school
+        for school in School.objects.filter(
+            school_id__in={row.school_id.strip() for row in parked},
+            deleted_at__isnull=True,
+        )
+    }
+    uploaders = {
+        user.id: user
+        for user in User.objects.filter(
+            id__in={row.batch.uploaded_by for row in parked if row.batch_id},
+            is_active=True,
+        )
+    }
+    filed, skipped = [], []
+    for row in parked:
+        school = schools.get(row.school_id.strip())
+        if school is None:
+            continue
+        actor = uploaders.get(row.batch.uploaded_by) if row.batch_id else None
+        if actor is None:
+            skipped.append((row.school_id, "the uploader's account is not active"))
+            continue
+        if not apply:
+            filed.append(row.school_id)
+            continue
+
+        def write(locked, school=school, actor=actor):
+            return upload(
+                {
+                    "schoolId": school.school_id,
+                    "dateOfSsa": locked.date_of_ssa,
+                    "scores": [
+                        {"intervention": key, "score": score}
+                        for key, score in (locked.scores or {}).items()
+                    ],
+                    "collectorType": "ia"
+                    if actor.active_role == "ImpactAssessment"
+                    else "staff",
+                },
+                actor,
+            )
+
+        try:
+            transition_unmatched_record(row.id, "matched", actor, on_match=write)
+        except Exception as exc:  # noqa: BLE001 — one bad row never stops the rest
+            skipped.append((row.school_id, f"{type(exc).__name__}: {exc}"[:200]))
+        else:
+            filed.append(row.school_id)
+    return {"filed": filed, "skipped": skipped}
+
+
+def refile_after_commit(school_ids) -> None:
+    """Queue `refile_known` for schools just added, once they are committed.
+    Never raises: a parked row that is not filed now is still in the queue."""
+    import logging
+
+    school_ids = [value for value in school_ids if value]
+    if not school_ids:
+        return
+
+    def run() -> None:
+        try:
+            result = refile_known(school_ids)
+            if result["filed"] or result["skipped"]:
+                logging.getLogger("edify.ssa.unmatched").info(
+                    "Parked SSA rows filed for new schools: %s", result
+                )
+        except Exception:  # noqa: BLE001
+            logging.getLogger("edify.ssa.unmatched").exception(
+                "Parked SSA rows could not be filed for %s", school_ids
+            )
+
+    transaction.on_commit(run)

@@ -3,6 +3,19 @@ x-data="{
 active: false,
 size: '{{ drawer_size|default:'md' }}',
 type: '{{ drawer_type|default:'center' }}',
+{# An anchored drawer (type 'anchored': Notifications, Messages) opens #}
+{# directly under the control that opened it (owner, 2026-10-10): its top #}
+{# and right edge are measured from that control, and again on resize. #}
+anchor: '{{ drawer_anchor|default:'' }}',
+place() {
+if (this.type !== 'anchored') return;
+const controls = this.anchor ? [...document.querySelectorAll(this.anchor)] : [];
+const control = controls.find((el) => el.getClientRects().length) || document.querySelector('.edify-topbar__utilities');
+const box = control ? control.getBoundingClientRect() : null;
+const edge = document.documentElement.clientWidth;
+this.$refs.surface.style.setProperty('--edify-anchor-top', Math.round((box ? box.bottom : 56) + 8) + 'px');
+this.$refs.surface.style.setProperty('--edify-anchor-right', Math.max(8, Math.round(edge - (box ? box.right : edge - 8))) + 'px');
+},
 isDirty: false,
 confirmDiscard: false,
 previousFocus: null,
@@ -55,7 +68,10 @@ if ((!container || !container.children.length) && target?.isConnected) target.fo
 x-init="
 previousFocus = document.activeElement;
 $nextTick(() => {
-window.__edifyDrawerBackground?.lock();
+{# A drawer under its control is a panel over a page that stays as it is: #}
+{# the page is not drained, stepped back or scroll-locked behind it. #}
+if (type !== 'anchored') window.__edifyDrawerBackground?.lock();
+place();
 active = true;
 $nextTick(() => {
 setTimeout(() => {
@@ -70,6 +86,7 @@ if (active) { active = false; finishClose(); }
 @keydown.escape.window="
 confirmDiscard ? (confirmDiscard = false) : requestClose()
 "
+@resize.window="place()"
 class="edify-drawer-root relative z-50"
 data-edify-drawer
 >

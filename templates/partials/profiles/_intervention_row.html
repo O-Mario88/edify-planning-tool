@@ -1,0 +1,22 @@
+{% load frontend_filters %}<tr data-profile-intervention-pick="{{ slot }}">
+  <th scope="row" class="px-3 py-2 text-left" data-record-title><span class="edify-status-text" data-edify-tone="{% if slot == 'best' %}success{% else %}danger{% endif %}">{{ standing }}</span></th>
+  {% if row %}{% with work=pi.focus_work|get_item:row.key %}
+  <td class="px-3 py-2" data-label="Intervention"><a href="{{ pi.records }}intervention&amp;key={{ row.key }}"><strong>{{ row.label }}</strong></a></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Previous">{% include "partials/profiles/_score.html" with value=row.previous %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Current"><strong>{{ row.current|floatformat:2 }}</strong></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Change">{% include "partials/profiles/_change.html" %}</td>
+  <td class="px-3 py-2" data-label="Trend">{{ row.status_label }}</td>
+  <td class="px-3 py-2" data-label="Chosen By">{% if row.basis == "change" %}Change since the previous year{% else %}Score this year{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Supporting Activities"><a href="{{ pi.records }}intervention&amp;key={{ row.key }}">{{ work.done|default:0|intcomma }} / {{ work.planned|default:0|intcomma }}</a></td>
+  <td class="px-3 py-2" data-label="Recommended">{% if slot == "best" %}Keep what works{% elif not work.planned %}Plan a visit or a training with this focus{% elif work.done %}Follow up what that work found{% else %}Deliver the work planned for it{% endif %}</td>
+  {% endwith %}{% else %}
+  <td class="px-3 py-2" data-label="Intervention">{% if slot == "struggling" and pi.profile.ssa.best %}Only one intervention has a confirmed score in {{ pi.profile.fy_label }}{% else %}No intervention has a confirmed score in {{ pi.profile.fy_label }} yet{% endif %}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Previous">0</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Current">0</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Change">0</td>
+  <td class="px-3 py-2" data-label="Trend"><span class="edify-text-muted">—</span></td>
+  <td class="px-3 py-2" data-label="Chosen By"><span class="edify-text-muted">—</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Supporting Activities">0 / 0</td>
+  <td class="px-3 py-2" data-label="Recommended">{% if pi.profile.portfolio.no_ssa %}Collect this year's SSA{% else %}<span class="edify-text-muted">—</span>{% endif %}</td>
+  {% endif %}
+</tr>

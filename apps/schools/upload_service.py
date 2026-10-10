@@ -984,6 +984,12 @@ def import_school_batch(batch, user) -> dict:
         if new_schools:
             School.objects.bulk_create(new_schools, batch_size=1000)
             _bulk_refresh_quality_issues(new_schools)
+            # An SSA uploaded before its school was in the directory waits in
+            # the Unmatched SSA queue: file it now that the school exists
+            # (owner, 2026-10-10; apps.ssa.unmatched_service.refile_known).
+            from apps.ssa.unmatched_service import refile_after_commit
+
+            refile_after_commit([school.school_id for school in new_schools])
         new_by_school_id = {school.school_id: school for school in new_schools}
         if new_cluster_assignments:
             SchoolClusterAssignment.objects.bulk_create(

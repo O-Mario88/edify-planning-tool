@@ -302,6 +302,23 @@ def school_directory_view(request):
     # cluster, project and staff-match controls on every one of them.
     # Supervision is not ownership.
     base_qs = school_queryset(scope, direct_only=True).filter(deleted_at__isnull=True)
+    # What a school's record is missing, by one definition
+    # (apps.schools.data_gaps; owner, 2026-10-10). "unheld" is the schools
+    # nobody holds, shown to the country's field staff so that somebody can
+    # complete and take them: they are in nobody's own directory.
+    from apps.schools import data_gaps
+
+    can_take_schools = data_gaps.may_take(request.user)
+    unheld_schools = (
+        data_gaps.unheld(data_gaps.country_of(request.user))
+        if can_take_schools
+        else None
+    )
+    gap = request.GET.get("gap", "").strip()
+    if gap == "unheld" and unheld_schools is not None:
+        base_qs = unheld_schools
+    elif gap not in data_gaps.LABELS:
+        gap = ""
 
     # Input parameters
     q = request.GET.get("q", "").strip()
@@ -390,6 +407,13 @@ def school_directory_view(request):
                 project_assignments__isnull=False
             ).distinct()
 
+    # How many schools have each gap, before the gap filter narrows the
+    # list, so the menu says what choosing each would show.
+    gap_counts = data_gaps.counts(filtered_qs, fy)
+    gap_condition = data_gaps.gap_q(gap, fy) if gap and gap != "unheld" else None
+    if gap_condition is not None:
+        filtered_qs = filtered_qs.filter(gap_condition)
+
     # One conditional aggregate describes the population behind the tabs and
     # KPI strip. These used to be fourteen near-identical COUNT round trips;
     # at country scale the SQL itself was cheap but their serial network waits
@@ -406,7 +430,11 @@ def school_directory_view(request):
         ),
         client=Count("id", filter=Q(school_type="client"), distinct=True),
         core=Count("id", filter=Q(school_type="core"), distinct=True),
-        no_ssa=Count("id", filter=Q(current_fy_ssa_status="not_done"), distinct=True),
+        # No confirmed SSA in the year the page is reading. It counted a
+        # flag on the school that is reset when the year turns, so FY 2025/26
+        # read "No SSA: 16,152" on production while 14,818 of those schools
+        # held a confirmed SSA of that year (2026-10-10).
+        no_ssa=Count("id", filter=data_gaps.no_ssa_q(fy), distinct=True),
         staff_setup=Count(
             "id",
             filter=(
@@ -822,6 +850,13 @@ def school_directory_view(request):
         },
         "selected_fy": fy,
         "fy_options": fy_options(),
+        "selected_gap": gap,
+        "gap_options": [
+            {"key": key, "label": label, "count": gap_counts.get(key, 0)}
+            for key, label in data_gaps.LABELS.items()
+        ],
+        "can_take_schools": can_take_schools,
+        "unheld_count": unheld_schools.count() if unheld_schools is not None else 0,
         "selected_region": region_id,
         "selected_district": district_id,
         "selected_sub_county": sub_county_id,
@@ -1614,60 +1649,70 @@ def school_detail_view(request, school_id):
     school.assigned_staff = (
         school.account_owner_name_raw or school.account_owner_id or "Unassigned"
     )
-    # The SSA panel (IA review, owner, 2026-09-13). The headline is the newest
-    # CONFIRMED assessment — a pending or returned upload used to stand as the
-    # school's "Average SSA" — and change is read between confirmed
-    # assessments by the one rule (apps.ssa.change_rules), once per pair of
-    # readings rather than once per activity delivered around them.
+    from apps.core.permissions import has_permission
+    from apps.schools.ownership_transfer import may_transfer_school
+
+    # School 360 (owner's brief, 2026-10-10: "it currently feels disconnected
+    # from the overall system architecture"): the school is read through the
+    # shared profile engine like every other profile — Overview, SSA,
+    # Participation, Academic, Stories, Projects — and its own record
+    # (demographics, contacts, data quality) is the last tab, Details. Each
+    # tab reads only what it draws.
+    from apps.activities import profile_activities as profile_acts
+    from apps.analytics import profile_intelligence
+    from apps.frontend.views.profile_views import profile_context
+
+    pi = profile_context(
+        request,
+        profile_intelligence.school_scope(school),
+        f"/schools/{school.id}",
+        trail=(("details", "Details"),),
+        labels={"activities": "Participation"},
+        activities=profile_acts.for_school(school),
+        activities_param="school_acts",
+        activities_caption=(
+            "Visits and trainings at this school, and the cluster sessions it "
+            "is invited to."
+        ),
+        subject=school,
+    )
+    context = {
+        "school": school,
+        "pi": pi,
+        # Admin and Impact Assessment reassign portfolio ownership.
+        "can_transfer_owner": may_transfer_school(request.user),
+        "can_assign_project": has_permission(request.user, "project.assignSchool"),
+        **_profile_planning_controls(request.user, school),
+    }
+    if pi["section"] == "ssa":
+        context.update(_school_ssa_context(school))
+    elif pi["section"] == "activities":
+        context.update(_school_participation_context(school))
+    elif not pi["is_engine_tab"]:
+        context.update(_school_details_context(request, school))
+    return render(request, "pages/schools/detail.html", context)
+
+
+def _school_ssa_context(school) -> dict:
+    """The SSA tab's own records (IA review, owner, 2026-09-13): the newest
+    CONFIRMED assessment as the headline — a pending or returned upload used
+    to stand as the school's "Average SSA" — and the change between confirmed
+    assessments by the one rule (apps.ssa.change_rules), once per pair of
+    readings rather than once per activity delivered around them."""
     from apps.analytics.ia_workflow import school_progress
 
     ssa_progress = school_progress(school)
-    # The school through the shared profile engine (owner's brief,
-    # 2026-10-09): each intervention last year, this year, the change and
-    # what the change is called, in the latest year the school was assessed;
-    # and what the running year still lacks.
-    from apps.analytics import profile_intelligence
+    return {"ssa_progress": ssa_progress, "latest_ssa": ssa_progress["latest"]}
 
-    school_scope = profile_intelligence.school_scope(school)
-    school_profile = profile_intelligence.build(school_scope)
-    school_now = profile_intelligence.build(school_scope, get_operational_fy())
-    ssa_comparison = school_profile["ssa"]
-    latest_ssa = ssa_progress["latest"]
-    from apps.activities import profile_activities as profile_acts
 
-    activities = profile_acts.profile_activities(
-        request, profile_acts.for_school(school), param="school_acts", subject="auto"
-    )
-
-    # The ring carries the same four states the status pill does, so the two
-    # cannot disagree about what "Needs Cleanup" looks like.
-    quality_colour = {
-        "Clean": "var(--edify-chart-green)",
-        "Needs Review": "var(--edify-chart-blue)",
-        "Needs Cleanup": "var(--edify-chart-amber)",
-    }.get(school.data_quality_status, "var(--edify-chart-red)")
-    quality_gauge = build_gauge(
-        school.data_quality_score, label="Data quality", color=quality_colour
-    )
-
-    from apps.core.navigation import get_user_role_slug
+def _school_participation_context(school) -> dict:
+    """What visits found and what a partner holds, under the year's work."""
+    from apps.activities.models import Activity, SchoolVisitFeedback
     from apps.planning import partner_oversight_service
-
-    # Partner-delivered work at this school. Read-only, and read from the same
-    # service the Partner Oversight page uses, so the CCEO's school view and
-    # the Program Lead's partner view cannot tell different stories about the
-    # same handover.
-    partner_support = partner_oversight_service.build_items_for_school(school.id)
-
-    from apps.business_transformation.services import school_profile_context
-
-    business_transformation = school_profile_context(request.user, school)
 
     # Visit feedback stays on the activity that produced it. School 360 reads
     # that same record and adds the existing follow-up/pair lineage so the
     # finding is never detached from the visit or training it describes.
-    from apps.activities.models import Activity, SchoolVisitFeedback
-
     visit_feedback = list(
         SchoolVisitFeedback.objects.filter(
             activity__school=school, activity__deleted_at__isnull=True
@@ -1691,13 +1736,36 @@ def school_detail_view(request, school_id):
             or activity.planned_date
             or (local_day(activity.scheduled_date) if activity.scheduled_date else None)
         )
+    return {
+        "visit_feedback": visit_feedback,
+        # Partner-delivered work at this school. Read-only, and read from the
+        # same service the Partner Oversight page uses, so the CCEO's school
+        # view and the Program Lead's partner view cannot tell different
+        # stories about the same handover.
+        "partner_support": partner_oversight_service.build_items_for_school(school.id),
+    }
 
+
+def _school_details_context(request, school) -> dict:
+    """The school's own record: where it is, who holds it, its cluster and
+    every membership before it, its package, Business Transformation and the
+    quality of its data."""
+    from apps.business_transformation.services import school_profile_context
+    from apps.clusters.catchment import serving_match
+    from apps.clusters.membership_history import membership_history
+    from apps.core.navigation import get_user_role_slug
+    from apps.schools.school_status import cluster_training_coverage, visit_statuses
+
+    # The ring carries the same four states the status pill does, so the two
+    # cannot disagree about what "Needs Cleanup" looks like.
+    quality_colour = {
+        "Clean": "var(--edify-chart-green)",
+        "Needs Review": "var(--edify-chart-blue)",
+        "Needs Cleanup": "var(--edify-chart-amber)",
+    }.get(school.data_quality_status, "var(--edify-chart-red)")
     # Current cluster and every membership before it (owner, 2026-09-15):
     # joins, changes and removals with who, why and when, and whether the
     # cluster serves the school across a district border.
-    from apps.clusters.catchment import serving_match
-    from apps.clusters.membership_history import membership_history
-
     current_cluster = (
         Cluster.objects.select_related("district")
         .filter(id=school.cluster_id, deleted_at__isnull=True)
@@ -1708,19 +1776,10 @@ def school_detail_view(request, school_id):
     current_match = (
         serving_match(current_cluster, school.district_id) if current_cluster else None
     )
-
-    from apps.core.permissions import has_permission
-    from apps.schools.ownership_transfer import may_transfer_school
-    from apps.schools.school_status import cluster_training_coverage, visit_statuses
-
     fy_now = get_operational_fy()
-    visit_state = visit_statuses([school.id], fy=fy_now)[school.id]
-    training_state = cluster_training_coverage([school], fy=fy_now)[school.id]
-
-    context = {
-        "school": school,
-        "visit_status": visit_state,
-        "training_coverage": training_state,
+    return {
+        "visit_status": visit_statuses([school.id], fy=fy_now)[school.id],
+        "training_coverage": cluster_training_coverage([school], fy=fy_now)[school.id],
         "core_package": _core_package_marks(school, fy_now),
         "status_fy": fy_now,
         "current_cluster": current_cluster,
@@ -1730,31 +1789,14 @@ def school_detail_view(request, school_id):
         "current_cluster_outside_catchment": bool(current_cluster)
         and current_match is None,
         "cluster_history": membership_history(school.id),
-        "partner_support": partner_support,
-        "business_transformation": business_transformation,
-        "latest_ssa": latest_ssa,
-        "ssa_progress": ssa_progress,
-        "ssa_comparison": ssa_comparison,
-        "school_profile": school_profile,
-        "school_now": school_now,
-        # Enrolment and learning results against the year before, and the
-        # running year's visits and trainings (owner, 2026-10-09: "Schools
-        # (SSA, students impact, visit, trainings)").
-        "school_students": profile_intelligence.students(school_now),
-        "school_people": profile_intelligence.people(school_now),
-        "school_finance": profile_intelligence.finance(school_now, request.user),
-        "profile_activities": activities,
-        "visit_feedback": visit_feedback,
-        "quality_gauge": quality_gauge,
+        "business_transformation": school_profile_context(request.user, school),
+        "quality_gauge": build_gauge(
+            school.data_quality_score, label="Data quality", color=quality_colour
+        ),
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",
-        # Admin and Impact Assessment reassign portfolio ownership.
-        "can_transfer_owner": may_transfer_school(request.user),
-        "can_assign_project": has_permission(request.user, "project.assignSchool"),
-        **_profile_planning_controls(request.user, school),
     }
-    return render(request, "pages/schools/detail.html", context)
 
 
 def _profile_planning_controls(user, school) -> dict:
@@ -1832,6 +1874,33 @@ def _core_package_marks(school, fy: str) -> dict | None:
         "visits_target": summary["visits_target"],
         "trainings_target": summary["trainings_target"],
     }
+
+
+@require_page_permission("school_directory")
+def school_take_view(request, school_id):
+    """A field officer or a Programme Lead takes a school nobody holds
+    (owner, 2026-10-10; apps.schools.data_gaps.take)."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.core.scoping import forget_user_scope
+    from apps.schools import data_gaps
+
+    if request.method != "POST":
+        return redirect("/schools?gap=unheld")
+    school = School.objects.filter(id=school_id, deleted_at__isnull=True).first()
+    if school is None:
+        messages.error(request, "School not found.")
+        return redirect("/schools?gap=unheld")
+    try:
+        data_gaps.take(school, request.user)
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+        return redirect("/schools?gap=unheld")
+    forget_user_scope(request.user)
+    messages.success(
+        request,
+        f"{school.name} is now your school. Complete its details below.",
+    )
+    return redirect(f"/schools/{school.id}?tab=details")
 
 
 @require_page_permission("school_profile")

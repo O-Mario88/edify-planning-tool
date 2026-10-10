@@ -1907,6 +1907,11 @@ urlpatterns = [
         name="mark_all_notifications_read",
     ),
     path(
+        "notifications/<str:notif_id>/open",
+        staff_views.open_notification,
+        name="open_notification",
+    ),
+    path(
         "notifications/<str:notif_id>/read",
         staff_views.mark_notification_read,
         name="mark_notif_read",
@@ -2436,6 +2441,11 @@ urlpatterns = [
         "ownership-transfers/",
         ownership_views.ownership_transfers_view,
         name="ownership_transfers",
+    ),
+    path(
+        "schools/<str:school_id>/take",
+        school_views.school_take_view,
+        name="school_take",
     ),
     path(
         "schools/<str:school_id>/transfer-owner",

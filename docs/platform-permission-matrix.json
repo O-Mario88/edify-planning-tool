@@ -14318,6 +14318,31 @@
     "MfiLoanOfficer",
     "Admin"
    ],
+   "route": "/notifications/<str:notif_id>/open",
+   "route_name": "open_notification",
+   "view": "apps.frontend.views.staff_views.open_notification"
+  },
+  {
+   "page_permission": "dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
    "route": "/notifications/<str:notif_id>/read",
    "route_name": "mark_notif_read",
    "view": "apps.frontend.views.staff_views.mark_notification_read"
@@ -17764,6 +17789,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/schools/<str:school_id>/take",
+   "route_name": "school_take",
+   "view": "apps.frontend.views.school_views.school_take_view"
+  },
+  {
+   "page_permission": "school_directory",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/schools/<str:school_id>/transfer-owner",
    "route_name": "school_owner_transfer",
    "view": "apps.frontend.views.ownership_views.school_owner_transfer_drawer"
@@ -19453,28 +19495,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 448,
-  "Admin": 1096,
-  "BusinessTransformationOfficer": 241,
-  "CCEO": 575,
-  "CountryDirector": 832,
-  "HumanResources": 329,
-  "ImpactAssessment": 701,
-  "MfiLoanOfficer": 137,
-  "MfiPartnerAdmin": 140,
-  "PartnerAdmin": 235,
-  "PartnerFieldOfficer": 235,
-  "Program Lead": 680,
-  "ProjectCoordinator": 481,
-  "RegionalProgramLead": 348,
-  "RegionalVicePresident": 421
+  "Accountant": 449,
+  "Admin": 1098,
+  "BusinessTransformationOfficer": 242,
+  "CCEO": 577,
+  "CountryDirector": 834,
+  "HumanResources": 330,
+  "ImpactAssessment": 703,
+  "MfiLoanOfficer": 138,
+  "MfiPartnerAdmin": 141,
+  "PartnerAdmin": 236,
+  "PartnerFieldOfficer": 236,
+  "Program Lead": 682,
+  "ProjectCoordinator": 483,
+  "RegionalProgramLead": 350,
+  "RegionalVicePresident": 422
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1193,
-  "routes_total": 1389,
-  "routes_unguarded": 196,
+  "routes_guarded": 1195,
+  "routes_total": 1394,
+  "routes_unguarded": 199,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -20484,6 +20526,27 @@
    "required_permissions": [],
    "route": "/api/notifications(?:/|)mark-all-read",
    "route_name": "mark-all-read",
+   "view": "apps.notifications.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)push/config",
+   "route_name": "push-config",
+   "view": "apps.notifications.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)push/subscribe",
+   "route_name": "push-subscribe",
+   "view": "apps.notifications.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/notifications(?:/|)push/unsubscribe",
+   "route_name": "push-unsubscribe",
    "view": "apps.notifications.views.view"
   },
   {

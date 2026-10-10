@@ -90,7 +90,7 @@ written, and is the row's only action, so its form stays in the cell.
             <td data-label="Original verifier">{{ s.original_verifier }}</td>
             <td data-label="Drawn" class="tabular-nums">{{ s.sampled_at|date:"d M Y" }}</td>
             <td data-label="Check">{{ s.method }}</td>
-            <td data-label="Outcome"><span data-tone="{{ s.tone }}">{{ s.status }}</span>{% if s.outcome_note %} · {{ s.outcome_note|linebreaksbr }}{% endif %}{% if s.checked_by %} · by {{ s.checked_by }}, {{ s.checked_at|date:"d M" }}{% endif %}</td>
+            <td data-label="Outcome"><span data-tone="{{ s.tone }}">{{ s.status }}</span>{% if s.outcome_note %} · {{ s.outcome_note }}{% endif %}{% if s.checked_by %} · by {{ s.checked_by }}, {{ s.checked_at|date:"d M" }}{% endif %}</td>
             <td class="is-end" data-record-action data-label="Actions"{% if s.may_grade %} x-data="{ grade: '' }"{% endif %}>
               {% if s.may_grade %}
               {% row_actions s.school %}

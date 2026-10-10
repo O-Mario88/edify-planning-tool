@@ -147,11 +147,14 @@ def parse_metric(parser, token):
 
 
 class MetricStripNode(template.Node):
-    def __init__(self, body, live_id=""):
+    def __init__(self, body, live_id="", title=""):
         self.body = body
         # An id that makes the strip a live region: it reads itself again
         # when the plan changes (static/js/live-regions.js).
         self.live_id = live_id
+        # What the strip's figures are, said above it where a page has
+        # several strips (a profile: Portfolio, Performance, Operations).
+        self.title = title
 
     def render(self, context):
         items = []
@@ -160,7 +163,7 @@ class MetricStripNode(template.Node):
         values = context.flatten()
         values.update(
             items=items,
-            title="",
+            title=self.title,
             subtitle="",
             density=None,
             variant="executive",
@@ -172,17 +175,18 @@ class MetricStripNode(template.Node):
 
 @register.tag("kpi_strip")
 def parse_metric_strip(parser, token):
-    live_id = ""
+    options = {"live_id": "", "title": ""}
     for bit in token.split_contents()[1:]:
         name, _, value = bit.partition("=")
-        if name != "live_id" or not value:
+        if name not in options or not value:
             raise template.TemplateSyntaxError(
-                'kpi_strip takes one optional argument: live_id="an-id"'
+                'kpi_strip takes two optional arguments: live_id="an-id" '
+                'and title="What the figures are"'
             )
-        live_id = value.strip("\"'")
+        options[name] = value.strip("\"'")
     body = parser.parse(("endkpi_strip",))
     parser.delete_first_token()
-    return MetricStripNode(body, live_id)
+    return MetricStripNode(body, options["live_id"], options["title"])
 
 
 @register.simple_tag

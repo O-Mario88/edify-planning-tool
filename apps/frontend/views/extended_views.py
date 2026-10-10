@@ -1083,6 +1083,7 @@ def district_detail_view(request, district_id):
             "Visits, trainings and cluster sessions in this district that "
             "your role oversees."
         ),
+        subject=district,
     )
     return render(
         request,

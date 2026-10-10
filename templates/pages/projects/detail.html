@@ -233,7 +233,7 @@ may withdraw it and its project work has not begun.{% endcomment %}
 {% endif %}
 <table class="edify-record-table w-full">
   <caption class="sr-only">Participating schools in {{ project.name }}</caption>
-  <thead><tr>{% if can_bulk_withdraw %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-project-leave-pick]" aria-label="Select every school on this page that can be withdrawn"></label></th>{% endif %}<th scope="col">School ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Baseline SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
+  <thead><tr>{% if can_bulk_withdraw %}<th scope="col" class="school-plan-table__select"><label class="school-record-row__select"><input type="checkbox" data-select-all="input[data-project-leave-pick]" aria-label="Select every school on this page that can be withdrawn"></label></th>{% endif %}<th scope="col">School ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">School owner</th><th scope="col">Added by</th><th scope="col">Date added</th><th scope="col">Eligibility</th><th scope="col">Previous FY SSA</th><th scope="col">Planning</th><th scope="col">Visit</th><th scope="col">Training</th><th scope="col">Partner</th><th scope="col">Action</th></tr></thead>
   <tbody>
     {% for row in portfolio_pager.rows %}
     <tr>
@@ -248,7 +248,7 @@ may withdraw it and its project work has not begun.{% endcomment %}
       <td data-label="Added by">{{ row.added_by }}</td>
       <td data-label="Date added">{{ row.date_added|date:"j M Y" }}</td>
       <td data-label="Eligibility">{{ row.eligibility_reason }}</td>
-      <td data-label="Baseline SSA">{% if row.baseline_score is not None %}{{ row.baseline_score|floatformat:"-1" }}{% if row.baseline_band %} · {{ row.baseline_band }}{% endif %}{% else %}Not captured{% endif %}</td>
+      <td data-label="Previous FY SSA">{% if row.baseline_score is not None %}{{ row.baseline_score|floatformat:"-1" }}{% if row.baseline_band %} · {{ row.baseline_band }}{% endif %}{% else %}Not captured{% endif %}</td>
       <td data-label="Planning"{% if row.needs_planning %} class="is-attention"{% endif %}>{{ row.planning_status }}</td>
       <td data-label="Visit"><span class="edify-badge" data-tone="{{ row.visit_status_tone }}">{{ row.visit_status }}</span>{% if row.next_visit_date %} <span class="edify-text-caption">{{ row.next_visit_date|date:"j M" }}</span>{% endif %}</td>
       <td data-label="Training">{{ row.training_status }}</td>

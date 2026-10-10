@@ -1,13 +1,13 @@
 {
  "summary": {
   "titled_cards": 669,
-  "templates": 252,
+  "templates": 254,
   "distinct_titles": 635,
   "with_card_key": 13,
-  "untitled_surfaces": 594,
+  "untitled_surfaces": 595,
   "untitled_chrome": 153,
   "untitled_nested": 192,
-  "untitled_headless": 249,
+  "untitled_headless": 250,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
   "ambiguous_titles": 1
@@ -42,7 +42,7 @@
   ],
   "danger zone": [
    "templates/pages/admin/user_detail.html",
-   "templates/pages/schools/detail.html"
+   "templates/partials/schools/_details.html"
   ],
   "evidence": [
    "templates/pages/ia/partner_review.html",
@@ -90,7 +90,7 @@
   ],
   "school visit feedback": [
    "templates/pages/partner/activity_workroom.html",
-   "templates/pages/schools/detail.html"
+   "templates/partials/schools/_participation.html"
   ],
   "schools needing urgent attention": [
    "templates/partials/dashboards/cceo/week.html",
@@ -2832,107 +2832,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/pages/schools/detail.html",
-   "line": 159,
-   "title": "School Demographics &amp; Assignment",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 286,
-   "title": "SSA change between confirmed assessments",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 293,
-   "title": "FY vs FY",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-100 p-4 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 320,
-   "title": "School Visit Feedback",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": [
-    [
-     39,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 369,
-   "title": "Partner Support",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
-   "branch_path": [
-    [
-     43,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 407,
-   "title": "Data Quality Score",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 454,
-   "title": "Current confirmed SSA",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 511,
-   "title": "SSA history",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
-   "branch_path": [
-    [
-     74,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/schools/detail.html",
-   "line": 531,
-   "title": "Danger Zone",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
-   "branch_path": [
-    [
-     77,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/pages/schools/import_result.html",
    "line": 22,
    "title": "Successfully Imported",
@@ -3213,7 +3112,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 60,
+   "line": 64,
    "title": "Supervision",
    "heading_level": 2,
    "has_card_key": false,
@@ -3231,7 +3130,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 93,
+   "line": 97,
    "title": "Schools Covered",
    "heading_level": 2,
    "has_card_key": false,
@@ -6724,21 +6623,21 @@
   },
   {
    "template": "templates/partials/profiles/_sections.html",
-   "line": 68,
-   "title": "Needs attention",
+   "line": 41,
+   "title": "Needs Attention",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-4 space-y-2",
    "branch_path": [
     [
      0,
-     0
+     3
     ]
    ]
   },
   {
    "template": "templates/partials/profiles/_sections.html",
-   "line": 89,
+   "line": 56,
    "title": "SSA score by intervention",
    "heading_level": 2,
    "has_card_key": false,
@@ -6746,10 +6645,10 @@
    "branch_path": [
     [
      0,
-     0
+     3
     ],
     [
-     29,
+     27,
      1
     ]
    ]
@@ -7154,6 +7053,107 @@
     [
      1,
      1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/schools/_details.html",
+   "line": 9,
+   "title": "School Demographics &amp; Assignment",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_details.html",
+   "line": 131,
+   "title": "Data Quality Score",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_details.html",
+   "line": 174,
+   "title": "Danger Zone",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
+   "branch_path": [
+    [
+     23,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/schools/_participation.html",
+   "line": 6,
+   "title": "School Visit Feedback",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/schools/_participation.html",
+   "line": 52,
+   "title": "Partner Support",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     4,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/schools/_ssa_records.html",
+   "line": 17,
+   "title": "SSA change between confirmed assessments",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_ssa_records.html",
+   "line": 24,
+   "title": "FY vs FY",
+   "heading_level": 4,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-100 p-4 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_ssa_records.html",
+   "line": 52,
+   "title": "Current confirmed SSA",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/_ssa_records.html",
+   "line": 65,
+   "title": "SSA history",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
+   "branch_path": [
+    [
+     10,
+     0
     ]
    ]
   },

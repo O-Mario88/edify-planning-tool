@@ -1,0 +1,43 @@
+{% load components table_pagination frontend_filters %}{% comment %}
+The records behind a figure of a profile (apps.analytics.profile_records;
+owner's brief, 2026-10-10: "Summary → Breakdown → Actual Records"). Each
+table is paged in the database; a table whose figure is a sum closes with
+its total, so the list reconciles with the number that opened it.
+{% endcomment %}
+<div class="space-y-4" data-profile-records="{{ pi.what }}">
+{% if not inline %}{% include "partials/_back_link.html" with back_href=pi.record_back back_label="Back to the summary" %}{% endif %}
+{% for table in pi.record_tables %}
+{% with page_param="rec_"|add:table.key table_name="profile-records-"|add:table.key %}
+{% paginate table.rows page_param as pager %}
+<div id="profile-records-{{ table.key }}"></div>
+{% data_table name=table_name %}
+  {% slot title %}{{ table.title }}{% endslot %}
+  {% slot summary %}{{ pager.total|intcomma }} record{{ pager.total|pluralize }} · {{ pi.profile.fy_label }}{% if pi.profile.period_label %} · {{ pi.profile.period_label }}{% endif %}{% endslot %}
+  {% slot caption %}{{ table.caption }}{% endslot %}
+  {% slot empty %}{% include "components/empty_state.html" with message="No record yet: the figure is 0." compact="true" %}{% endslot %}
+  {% slot footer %}{% include "components/table_pager.html" with pager=pager param=page_param %}{% if table.footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted">{{ table.footer }}</p>{% endif %}{% endslot %}
+  {% if pager.total %}
+  <thead>
+    <tr>
+      {% for label, kind in table.columns %}<th scope="col" class="px-3 py-2{% if kind == 'num' %} text-right{% endif %}">{{ label }}</th>{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in pager.rows %}
+    <tr data-profile-record>
+      {% for cell in row %}<td class="px-3 py-2{% if cell.kind == 'num' or cell.kind == 'opt' or cell.kind == 'score' or cell.kind == 'change' or cell.kind == 'money' %} text-right tabular-nums{% endif %}">{% include "partials/profiles/_cell.html" %}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+    {% if table.total %}
+    <tr data-profile-record-total>
+      {% for value in table.total %}<td class="px-3 py-2{% if not forloop.first %} text-right tabular-nums{% endif %}"><strong>{% if forloop.first %}{{ value }}{% elif value != "" %}{{ value|intcomma }}{% endif %}</strong></td>{% endfor %}
+    </tr>
+    {% endif %}
+  </tbody>
+  {% endif %}
+{% enddata_table %}
+{% endwith %}
+{% empty %}
+{% include "components/empty_state.html" with message="These records are not open to your role." compact="true" %}
+{% endfor %}
+</div>

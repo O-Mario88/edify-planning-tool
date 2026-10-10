@@ -161,6 +161,10 @@ class NotificationLinkResolver:
         # day; the Programme Lead monitors the team's plans.
         # Staff Activity Log follow-ups (owner, 2026-09-29): every party
         # opens the follow-up itself, which each of them may read.
+        # A device was subscribed to phone notifications
+        # (apps.notifications.push): the notice opens the notification centre.
+        if event_type == "push_enabled":
+            return "/notifications", "Open Notifications"
         if event_type.startswith("staff_activity.follow_up"):
             return (
                 f"/staff-activity/follow-ups/{context_id}"
@@ -1209,6 +1213,36 @@ def counts(principal) -> dict:
 
 def unread_count(principal) -> dict:
     return {"count": _live(principal).filter(status="unread").count()}
+
+
+def unread_ids(principal) -> list[str]:
+    """The ids of the user's live unread notifications (newest 100): what a
+    device may still be showing."""
+    return list(
+        _live(principal)
+        .filter(status="unread")
+        .order_by("-created_at")
+        .values_list("id", flat=True)[:100]
+    )
+
+
+def announce_push_enabled(user, subscription) -> None:
+    """Tell a device that has just been subscribed that it worked, through
+    the same path as every other notification: the bell holds it and the
+    phone rings with it."""
+    WorkflowNotificationService.trigger(
+        event_type="push_enabled",
+        category="system",
+        priority="normal",
+        title="Phone notifications are on",
+        body=(
+            f"This device ({subscription.device_label}) will now be told about "
+            "work that needs you, even when Edify is closed."
+        ),
+        context_type="system",
+        context_id=f"push-{subscription.id}",
+        recipients=[user],
+    )
 
 
 def mark_read(notification_id: str, principal) -> dict:

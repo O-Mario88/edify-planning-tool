@@ -39,31 +39,31 @@ kept across the redraw (window.cpoTypesView).{% endcomment %}
         <tr>
           <th scope="col" class="cpo-namecol">School Type</th>
           <th scope="col" data-col="schools" x-show="view === 'schools'">Schools</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with every visit they need planned: four at a Core school, one at any other">Fully<br>Planned</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with some of the visits they need planned, and not all">Partly<br>Planned</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with no visit planned whose visit a Partner holds and has not dated">Awaiting a<br>Partner's Date</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with no visit planned and none in a Partner's hands">Not Yet<br>Planned</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with any live Partner work, dated by the Partner or not">With a<br>Partner</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Core schools whose two staff visits are both planned">Staff Half<br>Planned</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Client, Core Trained and Core Graduate schools booked more than once: by staff and a Partner, or the same kind of visit twice">Duplicate<br>Bookings</th>
-          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Core schools with more than two staff visits or more than two Partner visits: visits three and four are the other side's">More Than<br>2 + 2</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots the schools of this type need in the year">Visits<br>Needed</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Staff visits expected: two at each Core school, and one at each other school that staff capacity reaches">Staff<br>Target</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots staff have planned, of the staff target">Planned<br>by Staff</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Partner visits expected: two at each Core school, and one at each school beyond staff capacity">Partner<br>Target</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots in a Partner's hands, dated or not, of the Partner target">Assigned<br>to Partners</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visits a Partner has dated, of the Partner target">Planned<br>by Partners</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots with nothing planned yet">Visits<br>Remaining</th>
-          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots planned by staff or dated by a Partner, of those needed">Visit<br>Coverage</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>Trainings<br>Needed</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Staff trainings expected: two at each Core school, and one at each other school that staff capacity reaches">Staff<br>Target</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots staff have planned, of the staff target">Planned<br>by Staff</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Partner trainings expected: two at each Core school, and one at each school beyond staff capacity">Partner<br>Target</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots in a Partner's hands, dated or not, of the Partner target">Assigned<br>to Partners</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Trainings a Partner delivers, of the Partner target">Planned<br>by Partners</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots planned by either side, of those needed">Trainings<br>Planned</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>Trainings<br>Remaining</th>
-          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>No Training<br>Planned</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with every visit they need planned: four at a Core school, one at any other">Fully Planned</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with some of the visits they need planned, and not all">Partly Planned</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with no visit planned whose visit a Partner holds and has not dated">Awaiting a Partner's Date</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with no visit planned and none in a Partner's hands">Not Yet Planned</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Schools with any live Partner work, dated by the Partner or not">With a Partner</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Core schools whose two staff visits are both planned">Staff Half Planned</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Client, Core Trained and Core Graduate schools booked more than once: by staff and a Partner, or the same kind of visit twice">Duplicate Bookings</th>
+          <th scope="col" data-col="schools" x-show="view === 'schools'" title="Core schools with more than two staff visits or more than two Partner visits: visits three and four are the other side's">More Than 2 + 2</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots the schools of this type need in the year">Visits Needed</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Staff visits expected: two at each Core school, and one at each other school that staff capacity reaches">Staff Target</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots staff have planned, of the staff target">Planned by Staff</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Partner visits expected: two at each Core school, and one at each school beyond staff capacity">Partner Target</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots in a Partner's hands, dated or not, of the Partner target">Assigned to Partners</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visits a Partner has dated, of the Partner target">Planned by Partners</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots with nothing planned yet">Visits Remaining</th>
+          <th scope="col" data-col="visits" x-show="view === 'visits'" x-cloak title="Visit slots planned by staff or dated by a Partner, of those needed">Visit Coverage</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>Trainings Needed</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Staff trainings expected: two at each Core school, and one at each other school that staff capacity reaches">Staff Target</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots staff have planned, of the staff target">Planned by Staff</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Partner trainings expected: two at each Core school, and one at each school beyond staff capacity">Partner Target</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots in a Partner's hands, dated or not, of the Partner target">Assigned to Partners</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Trainings a Partner delivers, of the Partner target">Planned by Partners</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak title="Training slots planned by either side, of those needed">Trainings Planned</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>Trainings Remaining</th>
+          <th scope="col" data-col="trainings" x-show="view === 'trainings'" x-cloak>No Training Planned</th>
         </tr>
       </thead>
       <tbody>

@@ -1,0 +1,29 @@
+{% load components frontend_filters %}{% comment %}
+The best performing and the struggling SSA intervention of a profile, with
+the figures each was chosen by, the year's work that named it, and how the
+choice is made (apps.analytics.profile_intelligence._intervention_picks;
+owner's brief, 2026-10-10: "Use a transparent ranking methodology").
+{% endcomment %}
+{% data_table name="profile-intervention-picks" %}
+  {% slot title %}Best Performing And Struggling Intervention{% endslot %}
+  {% slot summary %}{{ pi.profile.previous_label }} to {{ pi.profile.fy_label }}{% endslot %}
+  {% slot caption %}The SSA intervention that performs best and the one that struggles in this portfolio, each with its previous and current score, the change, what the change is called, what it was chosen by, and the year's work that named it as its focus.{% endslot %}
+  {% slot footer %}<p class="px-4 py-2.5 edify-text-caption edify-text-muted" data-profile-intervention-method>{{ pi.profile.ssa.method }}</p>{% endslot %}
+  <thead>
+    <tr>
+      <th scope="col" class="px-3 py-2">Standing</th>
+      <th scope="col" class="px-3 py-2">Intervention</th>
+      <th scope="col" class="px-3 py-2 text-right">Previous</th>
+      <th scope="col" class="px-3 py-2 text-right">Current</th>
+      <th scope="col" class="px-3 py-2 text-right">Change</th>
+      <th scope="col" class="px-3 py-2">Trend</th>
+      <th scope="col" class="px-3 py-2">Chosen By</th>
+      <th scope="col" class="px-3 py-2 text-right">Supporting Activities</th>
+      <th scope="col" class="px-3 py-2">Recommended</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% include "partials/profiles/_intervention_row.html" with row=pi.profile.ssa.best slot="best" standing="Best performing" %}
+    {% include "partials/profiles/_intervention_row.html" with row=pi.profile.ssa.struggling slot="struggling" standing="Struggling" %}
+  </tbody>
+{% enddata_table %}

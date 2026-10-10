@@ -932,6 +932,26 @@ SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "")
 # carries a live sign-in code, which outlives the SMS in a log stream.
 SMS_LOG_BODIES = _truthy(os.environ.get("SMS_LOG_BODIES"), fallback=False)
 
+# ── Phone notifications (Web Push) ───────────────────────────────────────────
+# The key pair this deployment signs its pushes with (VAPID, RFC 8292), both
+# base64url; `manage.py generate_vapid_keys` makes a pair. The public key is
+# what a browser subscribes with, so changing the pair orphans every existing
+# subscription: set it once per environment and keep it. Without both, push
+# is off and the app does not offer it (apps.notifications.webpush).
+WEBPUSH_VAPID_PUBLIC_KEY = os.environ.get("WEBPUSH_VAPID_PUBLIC_KEY", "").strip()
+WEBPUSH_VAPID_PRIVATE_KEY = os.environ.get("WEBPUSH_VAPID_PRIVATE_KEY", "").strip()
+# Who a push service can write to about this sender: a mailto: or https: URL.
+WEBPUSH_SUBJECT = os.environ.get("WEBPUSH_SUBJECT", "mailto:admin@edifyplanning.app")
+# Send as soon as the notification commits, on a short-lived thread, rather
+# than waiting for the minute's outbox drain. The drain is the backstop either
+# way. Off where a thread would outlive its transaction (the test runner).
+WEBPUSH_EAGER = _truthy(os.environ.get("WEBPUSH_EAGER"), fallback=True)
+if IS_TESTING:
+    # A developer's own key pair must not make the suite talk to a push
+    # service; a test that exercises push sets its own (override_settings).
+    WEBPUSH_VAPID_PUBLIC_KEY = WEBPUSH_VAPID_PRIVATE_KEY = ""
+    WEBPUSH_EAGER = False
+
 # Two-factor authentication. Enrolment is per user (User.mfa_enabled, set from
 # the settings page); this turns it on for every account at once, for an
 # organisation that wants it mandatory rather than optional.

@@ -1317,10 +1317,10 @@ def _project_ssa_todos(principal, role, today):
     for row_obj in mine.filter(baseline_score__isnull=True)[:20]:
         row(
             key=f"psa-baseline-{row_obj.id}",
-            title="Collect Baseline SSA",
+            title="Collect Current FY SSA",
             description=f"{row_obj.school.name} · {row_obj.project.name}",
             priority="high",
-            status_label="Baseline required",
+            status_label="Current FY SSA missing",
             tone="danger",
             url=f"/schools/{row_obj.school_id}",
             action="Open school",

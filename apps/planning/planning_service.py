@@ -217,9 +217,31 @@ class PlanningDashboardService:
             )
         if school_type and school_type != "All":
             schools_qs = schools_qs.filter(school_type=school_type)
-        if readiness and readiness != "All":
+        if readiness == "data_cleanup_required":
+            # The schools the "Data Cleanup Required" figure counts: clustered
+            # and missing a detail planning needs, read from the record. The
+            # filter read a stored label nothing writes, so on production the
+            # figure said 15,167 and its list was empty (2026-10-10) — the
+            # schools that most needed their holder were the ones not shown.
+            from apps.schools.data_gaps import planning_blockers_q
+
+            schools_qs = schools_qs.exclude(
+                Q(cluster_id__isnull=True) | Q(cluster_id="")
+            ).filter(planning_blockers_q())
+        elif readiness and readiness != "All":
             schools_qs = schools_qs.filter(planning_readiness=readiness)
-        if ssa_status and ssa_status != "All":
+        if ssa_status in ("done", "not_done"):
+            # Done is a confirmed SSA of the year the page reads, from the
+            # records: the stored flag is reset when the year turns, so "Done"
+            # listed nothing for a year in which 14,818 schools were assessed
+            # (production, 2026-10-10).
+            from apps.schools.data_gaps import no_ssa_q
+
+            lacking = no_ssa_q(fy)
+            schools_qs = schools_qs.filter(
+                lacking if ssa_status == "not_done" else ~lacking
+            )
+        elif ssa_status and ssa_status != "All":
             schools_qs = schools_qs.filter(current_fy_ssa_status=ssa_status)
         if cluster_status and cluster_status != "All":
             schools_qs = schools_qs.filter(cluster_status=cluster_status)
@@ -864,15 +886,13 @@ class PlanningDashboardService:
             ).count()
         )
 
+        # One definition for the figure and for the list its filter opens
+        # (apps.schools.data_gaps).
+        from apps.schools.data_gaps import planning_blockers_q
+
         cleanup_qs = base_schools_qs.exclude(
             Q(cluster_id__isnull=True) | Q(cluster_id="")
-        ).filter(
-            Q(district_id__isnull=True)
-            | Q(sub_county_id__isnull=True)
-            | Q(account_owner_id__isnull=True)
-            | Q(school_id__isnull=True)
-            | Q(school_id="")
-        )
+        ).filter(planning_blockers_q())
         data_cleanup_count = cleanup_qs.count()
         clean_schools_qs = base_schools_qs.exclude(
             Q(cluster_id__isnull=True) | Q(cluster_id="")

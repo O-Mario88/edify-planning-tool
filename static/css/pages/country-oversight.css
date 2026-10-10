@@ -713,16 +713,18 @@
   inline-size: 1.5rem !important;
   margin-inline-end: 0.2rem;
 }
+/* On the name's own line (owner, 2026-10-10: every table row is one line at
+   every width). The note used to sit under the name, which made the row two
+   lines tall. */
 .cpo-root .cpo-table.cpo-table tbody th.cpo-namecell > span:is(.cpo-hint, .cpo-flagged) {
-  display: block !important;
-  margin-inline-start: 0;
-  line-height: 1.25;
+  display: inline !important;
+  margin-inline-start: 0.4rem;
 }
 /* A row that opens carries its chevron inside the name's span, so a pinned
    name column (a phone, a tablet) keeps chevron and name on the first line
    and stacks only the note under them; the note lines up under the name. */
 .cpo-root .cpo-table.cpo-table tbody th.cpo-namecell:not([data-leaf]) > span:is(.cpo-hint, .cpo-flagged) {
-  margin-inline-start: 1.7rem;
+  margin-inline-start: 0.4rem;
 }
 .cpo-pct { font-size: var(--edify-text-micro-size); font-weight: 600; margin-inline-start: 0.1rem; }
 .cpo-pct[data-tone="good"] { color: var(--cpo-good); }

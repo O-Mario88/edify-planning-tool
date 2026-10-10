@@ -206,7 +206,7 @@ class SsaTest(ProfileFixture):
         # One year alone is not a change, and never a zero.
         for name in ("Charlie Primary", "Delta Primary", "Foxtrot Primary"):
             self.assertIsNone(rows[name]["change"])
-            self.assertEqual(rows[name]["status_label"], "Not measured")
+            self.assertEqual(rows[name]["status_label"], "No comparison yet")
 
     def test_a_cluster_is_its_schools_in_the_district(self):
         clusters = {row["name"]: row for row in self.profile()["clusters"]}
@@ -388,13 +388,15 @@ class DistrictPageTest(ProfileFixture):
     def test_an_earlier_year_is_a_choice(self):
         body = self.page(tab="ssa", fy=self.last).content.decode()
 
-        self.assertIn(f"{fy_label(self.last)}</th>", body)
+        self.assertIn(f"Current ({fy_label(self.last)})</th>", body)
         row = body.split('data-profile-intervention="overall"', 1)[1].split("</tr>", 1)[
             0
         ]
         # Last year's 4.50 is this page's current column; nothing before it.
         self.assertRegex(row, r"<strong>4\.50\s*</strong>")
-        self.assertIn("Not measured", row)
+        self.assertIn("No comparison yet", row)
+        # A profile never says "Not measured" (owner, 2026-10-10).
+        self.assertNotIn("Not measured", body)
 
     def test_the_ranking_says_how_it_was_made(self):
         body = self.page().content.decode()
@@ -654,7 +656,7 @@ class EveryProfilePageTest(EveryScopeTest):
                     f'href="/clusters/{self.north.id}?tab=attendance&amp;fy={self.fy}"',
                     body,
                 )
-                self.assertIn("Teachers reached", body)
+                self.assertIn("Teachers Reached", body)
 
     def test_a_staff_profile_keeps_its_page_and_gains_the_sections(self):
         url = f"/staff/{self.officer.user_id}"
@@ -687,9 +689,9 @@ class EveryProfilePageTest(EveryScopeTest):
         body = self.open(f"/partners/{self.partner.id}", tab="overview")
 
         self.assertIn("Assigned portfolio", body)
-        self.assertIn("Awaiting the partner&#x27;s date", body)
-        # The tile opens the schools it counts.
-        self.assertIn("show=awaiting_partner", body)
+        self.assertIn("Awaiting The Partner&#x27;s Date", body)
+        # The tile opens the hand-overs it counts.
+        self.assertIn("what=handovers_awaiting", body)
 
     def test_a_cluster_profile_gains_the_sections_beside_its_own_tabs(self):
         url = f"/clusters/{self.north.id}"
@@ -707,11 +709,17 @@ class EveryProfilePageTest(EveryScopeTest):
     def test_a_school_profile_names_its_best_and_its_struggling_intervention(self):
         body = self.open(f"/schools/{self.schools['Bravo'].id}")
 
-        self.assertIn("data-school-ssa-interventions", body)
-        self.assertIn("Struggling intervention:", body)
-        self.assertIn("Declined", body)
+        struggling = body.split('data-profile-intervention-pick="struggling"', 1)[
+            1
+        ].split("</tr>", 1)[0]
+        self.assertIn("Declined", struggling)
+        self.assertIn("Change since the previous year", struggling)
         alpha = self.open(f"/schools/{self.schools['Alpha'].id}")
-        self.assertIn("Best performing intervention:", alpha)
+        best = alpha.split('data-profile-intervention-pick="best"', 1)[1].split(
+            "</tr>", 1
+        )[0]
+        self.assertIn("Improved", best)
+        self.assertIn("what=intervention&amp;key=", best)
 
 
 class SummaryTest(EveryScopeTest):
@@ -825,12 +833,12 @@ class SummaryTest(EveryScopeTest):
 
         body = client.get("/country-profile").content.decode()
 
-        self.assertIn("What this profile covers", body)
+        self.assertIn("What This Profile Covers", body)
         for level in ("sub_regions", "districts", "clusters", "schools"):
             self.assertIn(f'data-profile-level="{level}"', body)
             self.assertIn(f"/country-profile?tab={level}&amp;fy={self.fy}", body)
-        self.assertIn("Enrolment growth", body)
-        self.assertIn("Visits completed", body)
+        self.assertIn("Enrolment Growth", body)
+        self.assertIn("Visits Completed", body)
         # On a cluster's page the schools line opens the cluster's own key.
         cluster = client.get(f"/clusters/{self.north.id}", {"tab": "portfolio"})
         self.assertIn(
@@ -847,7 +855,7 @@ class SummaryTest(EveryScopeTest):
 
         body = client.get(f"/schools/{self.schools['Alpha'].id}").content.decode()
 
-        for label in ("Visits completed", "Trainings completed", "Enrolment growth"):
+        for label in ("Visits Completed", "Trainings Completed", "Enrolment Growth"):
             self.assertIn(label, body)
 
 
@@ -1041,13 +1049,13 @@ class TheRestOfTheBriefTest(EveryScopeTest):
 
         overview = client.get(base, {"period": "Q1"}).content.decode()
         for label in (
-            "Teachers trained",
-            "School leaders trained",
-            "SSA target",
-            "School loans",
+            "Teachers Trained",
+            "School Leaders Trained",
+            "SSA Score",
+            "School Loans",
         ):
             self.assertIn(label, overview)
-        self.assertIn("expected this year", overview)
+        self.assertIn(" expected", overview)
         self.assertIn("work in Q1 (Oct–Dec)", overview)
         # The period travels with every link of the profile.
         self.assertIn(f"{base}?period=Q1&amp;tab=schools&amp;fy={self.fy}", overview)
@@ -1061,5 +1069,5 @@ class TheRestOfTheBriefTest(EveryScopeTest):
         self.assertIn("No project has a school in this portfolio.", projects)
 
         school = client.get(f"/schools/{self.schools['Alpha'].id}").content.decode()
-        for label in ("Teachers trained", "SSA target", "expected in"):
+        for label in ("Teachers Trained", "SSA Score", " expected"):
             self.assertIn(label, school)

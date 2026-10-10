@@ -52,8 +52,8 @@ meets the card edge (owner, 2026-09-14).{% endcomment %}
           {% for row in import_rows.rows %}
           <tr>
             <td data-label="Row">{{ row.row_number }}</td>
-            <td data-label="Priority"><strong>{{ row.priority_code }}</strong><br>{{ row.priority_title }}</td>
-            <td data-label="Milestone"><strong>{{ row.milestone_code }}</strong><br>{{ row.milestone_title }}</td>
+            <td data-label="Priority"><strong>{{ row.priority_code }}</strong> · {{ row.priority_title }}</td>
+            <td data-label="Milestone"><strong>{{ row.milestone_code }}</strong> · {{ row.milestone_title }}</td>
             <td data-label="Target">{{ row.target_value|default_if_none:"—" }} {{ row.target_unit }}</td>
             <td data-label="Method">{{ row.allocation_method }}</td>
             <td data-label="Validation"><span class="ia-status" data-tone="{% if row.status == 'blocked' %}danger{% elif row.status == 'review' %}warning{% else %}success{% endif %}">{{ row.get_status_display }}</span>{% if row.validation_errors %}<ul>{% for error in row.validation_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</td>

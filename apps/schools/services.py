@@ -128,6 +128,18 @@ def get_one(school_id: str, principal):
     qs = _with_relations(base if base is not None else School.objects.all())
     school = qs.filter(school_id=school_id).first() or qs.filter(id=school_id).first()
     if not school:
+        # A school nobody holds is in nobody's scope, which hid it from the
+        # very people who could complete its record. The country's field
+        # staff may open it (owner, 2026-10-10; apps.schools.data_gaps).
+        from apps.schools import data_gaps
+
+        if data_gaps.may_take(principal):
+            unheld = _with_relations(data_gaps.unheld(data_gaps.country_of(principal)))
+            school = (
+                unheld.filter(school_id=school_id).first()
+                or unheld.filter(id=school_id).first()
+            )
+    if not school:
         raise NotFoundError("School not found.")
     return school
 
@@ -205,6 +217,11 @@ def create_one(data: dict, principal) -> School:
         salesforce_account_id=(data.get("salesforceAccountId") or "").strip() or None,
         created_by_ia=getattr(principal, "active_role", None) == "ImpactAssessment",
     )
+    # An SSA that was uploaded before this school existed is filed to it now
+    # (apps.ssa.unmatched_service.refile_known).
+    from apps.ssa.unmatched_service import refile_after_commit
+
+    refile_after_commit([school.school_id])
     return school
 
 

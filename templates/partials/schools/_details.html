@@ -1,0 +1,187 @@
+{% load chart_tags kpi_metrics table_pagination frontend_filters components %}{% comment %}
+The school's own record (the Details tab of its profile): where it is and who
+holds it, contacts, Business Transformation, the quality of its data, and —
+for an Admin — deletion. What the school achieves is on the other tabs, from
+the shared profile engine.
+{% endcomment %}
+<div class="edify-record-workspace grid lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div>
+<p class="edify-profile-field__label">Region</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.region.name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">District</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.district %}<a href="/districts/{{ school.district.id }}" class="hover:underline font-medium text-slate-800">{{ school.district.name }}</a>{% else %}Not specified{% endif %}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Sub-county</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.sub_county %}<a href="/schools?sub_county={{ school.sub_county.id }}" class="hover:underline font-medium text-slate-800">{{ school.sub_county.name }}</a>{% else %}Not specified{% endif %}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Parish</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.parish.name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Pupil Enrolment</p>
+<p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school.enrollment|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Coordinates</p>
+<p class="edify-profile-field__value mt-0.5 tabular-nums">
+{% if school.latitude != None and school.longitude != None %}
+{{ school.latitude|floatformat:6 }}, {{ school.longitude|floatformat:6 }}
+{% else %}
+Not specified
+{% endif %}
+</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Current Partner Type</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.get_school_type_display }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Assigned Staff</p>
+<p class="edify-profile-field__value mt-0.5">{% if school.account_owner_id %}<a href="/staff/{{ school.account_owner_id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% elif school.account_owner %}<a href="/staff/{{ school.account_owner.id }}" class="hover:underline font-medium text-slate-800">{{ school.assigned_staff }}</a>{% else %}{{ school.assigned_staff }}{% endif %}</p>
+</div>
+<div data-school-visit-status>
+<p class="edify-profile-field__label">Visit status (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="edify-badge" data-tone="{{ visit_status.tone }}">{{ visit_status.label }}</span>{% if visit_status.next_date %} <span class="edify-text-caption">{{ visit_status.next_date|date:"j M Y" }}</span>{% endif %}</p>
+</div>
+{% if core_package %}
+{% comment %}A Core School's package (owner, 2026-09-27): completed work green, planned blue, open quiet — the same marks as the Core Schools rows (core-progress.css).{% endcomment %}
+<div data-core-package="visits">
+<p class="edify-profile-field__label">Core visits (FY{{ core_package.fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="core-package-count" data-state="{% if not core_package.visits_planned %}open{% elif core_package.visits_done >= core_package.visits_planned %}done{% else %}planned{% endif %}">{{ core_package.visits_planned }}/{{ core_package.visits_target }}</span> <span class="core-seq" data-core-seq="visits">{% for mark in core_package.visits %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span></p>
+</div>
+<div data-core-package="trainings">
+<p class="edify-profile-field__label">Core trainings (FY{{ core_package.fy }})</p>
+<p class="edify-profile-field__value mt-0.5"><span class="core-package-count" data-state="{% if not core_package.trainings_planned %}open{% elif core_package.trainings_done >= core_package.trainings_planned %}done{% else %}planned{% endif %}">{{ core_package.trainings_planned }}/{{ core_package.trainings_target }}</span> <span class="core-seq" data-core-seq="trainings">{% for mark in core_package.trainings %}<span class="core-seq__mark" data-state="{{ mark.state }}" title="{{ mark.title }}">{{ mark.label }}</span>{% endfor %}</span></p>
+</div>
+{% endif %}
+<div data-school-training-status>
+<p class="edify-profile-field__label">Cluster training (FY{{ status_fy }})</p>
+<p class="edify-profile-field__value mt-0.5">{{ training_coverage.label }}{% if training_coverage.planned and training_coverage.cluster_name %} · {% cluster_link training_coverage.cluster_name training_coverage.cluster_id %}{% if training_coverage.planned_date %} · {{ training_coverage.planned_date|date:"j M Y" }}{% endif %}{% elif training_coverage.reason %} <span class="edify-text-caption">{{ training_coverage.reason }}</span>{% endif %}</p>
+</div>
+<div data-school-cluster>
+<p class="edify-profile-field__label">Cluster</p>
+<p class="edify-profile-field__value mt-0.5">{% if current_cluster %}<a href="/clusters/{{ current_cluster.id }}" class="hover:underline">{{ current_cluster.name }}</a>{% if current_cluster.district_id != school.district_id %} · {% district_link current_cluster.district.name current_cluster.district.id %}{% endif %}{% else %}Not in a cluster{% endif %}</p>
+{% if current_cluster_cross_district %}<span class="edify-badge mt-1" data-tone="info">Cross-District Cluster</span>{% elif current_cluster_outside_catchment %}<span class="edify-badge mt-1" data-tone="warning">Outside the cluster's catchment</span>{% endif %}
+</div>
+</div>
+{% if cluster_history %}
+<details class="border-t border-slate-100 pt-4" data-cluster-history>
+<summary class="edify-profile-section-title cursor-pointer">Cluster history ({{ cluster_history|length }})</summary>
+<ul class="mt-3 space-y-2 text-[12px]">
+{% for m in cluster_history %}
+<li>
+<a href="/clusters/{{ m.cluster.id }}" class="font-bold text-slate-800 hover:underline">{{ m.cluster.name }}</a>{% if m.is_cross_district %} <span class="edify-badge" data-tone="info">Cross-District Cluster</span>{% endif %}
+<span class="block edify-text-caption text-slate-500">{{ m.started_at|date:"j M Y" }} – {% if m.ended_at %}{{ m.ended_at|date:"j M Y" }}{% else %}present{% endif %}{% if m.start_reason %} · {{ m.start_reason }}{% endif %}{% if m.end_reason %} · Ended: {{ m.end_reason }}{% endif %}</span>
+</li>
+{% endfor %}
+</ul>
+</details>
+{% endif %}
+
+<div class="border-t border-slate-100 pt-5">
+<div class="flex items-center justify-between gap-3 mb-4">
+<h4 class="edify-profile-section-title">Contact &amp; operational details</h4>
+<p class="edify-text-caption font-medium text-slate-400">Optional fields can be completed through Edit Details.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div>
+<p class="edify-profile-field__label">School Phone</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.school_phone|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Primary Contact</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.primary_contact_name|default:"Not specified" }}</p>
+{% if school.primary_contact_phone %}
+<p class="edify-profile-field__value mt-0.5">{{ school.primary_contact_phone }}</p>
+{% endif %}
+</div>
+<div>
+<p class="edify-profile-field__label">Director</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.director_name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Headteacher</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.headteacher_name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Last Enrolment Date</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.last_enrollment_date|date:"d M Y"|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-profile-field__label">Physical Address</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.shipping_address|default:"Not specified" }}</p>
+</div>
+</div>
+</div>
+</div>
+
+{% include "partials/schools/business_transformation.html" %}
+</div>
+<div class="space-y-6">
+<div class="space-y-6">
+<!-- Data Quality Status Card -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-semibold text-slate-800">Data Quality Score</h3>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider
+{% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+{% elif school.data_quality_status == 'Needs Review' %}edify-primary-soft edify-primary-text border edify-primary-border
+{% elif school.data_quality_status == 'Needs Cleanup' %}bg-amber-50 text-amber-700 border border-amber-200
+{% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
+{{ school.data_quality_status }}
+</span>
+</div>
+<div class="flex items-center gap-4">
+<!-- Circular Progress Indicator -->
+<div class="shrink-0" style="--edify-donut-gauge-size: 4rem; --edify-donut-gauge-headline: 0.9375rem">
+{% include "partials/components/donut_rings.html" with donut=quality_gauge donut_class="edify-donut--gauge" donut_label="Data quality score" headline=school.data_quality_score headline_unit="%" %}
+</div>
+<div class="space-y-1">
+<p class="text-[12px] text-slate-500 font-semibold leading-snug">Score is updated automatically. Keep fields complete and verified to improve it.</p>
+</div>
+</div>
+
+<!-- Cleanup list -->
+{% if school.data_quality_issues.all %}
+<div class="space-y-2 pt-2 border-t border-slate-100">
+<p class="edify-text-caption uppercase font-bold text-slate-400">Required Cleanups</p>
+<ul class="space-y-1.5 text-[12px] font-semibold text-slate-600">
+{% for issue in school.data_quality_issues.all %}
+{% if issue.status == 'open' %}
+<li class="flex items-center gap-1.5">
+<span class="h-1.5 w-1.5 rounded-pill {% if issue.severity == 'critical' %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
+<span>{{ issue.suggested_fix }}</span>
+</li>
+{% endif %}
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+
+{% if can_delete_school %}
+<!-- Danger Zone (Admin only — deletion is enforced server-side too) -->
+<div class="bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4">
+<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<p class="edify-text-caption text-rose-700 font-semibold leading-relaxed">
+Deleting this school removes it from every directory, dashboard, and analysis. SSA history and audit logs are retained. Deletion is blocked while activities are in flight or disbursed funds are unaccounted.
+</p>
+<form
+method="POST"
+action="{% url 'frontend:school_delete' school.school_id %}"
+>
+{% csrf_token %}
+{% include "partials/components/confirm_action.html" with uid=school.school_id trigger_label="Delete School" trigger_class="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all" title="Delete this school?" body="It disappears from every directory, dashboard and analysis. SSA history and audit logs are kept, and deletion is refused while activities are in flight or disbursed funds are unaccounted." confirm_label="Delete school" %}
+</form>
+</div>
+{% endif %}

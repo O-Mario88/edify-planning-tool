@@ -169,6 +169,96 @@ self.addEventListener('sync', (event) => {
   );
 });
 
+// Phone notifications (apps.notifications.push). The server sends one
+// encrypted message per notification and device; this shows it in the
+// phone's tray and on its lock screen, and a tap opens the one address that
+// marks it read and goes to its record. The payload is the notification's
+// own title, text and id -- nothing is made up here.
+const PUSH_ICON = '%(icon)s';
+const PUSH_BADGE = '%(badge)s';
+// Safari withdraws a subscription that receives pushes it shows nothing
+// for, so there a notification is always shown.
+const ALWAYS_SHOW = /Safari/.test(self.navigator.userAgent)
+  && !/Chrome|Chromium|Android/.test(self.navigator.userAgent);
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = {}; }
+  const title = data.title || 'Edify';
+  const url = (typeof data.url === 'string' && data.url.charAt(0) === '/'
+    && data.url.charAt(1) !== '/') ? data.url : '/notifications';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Every open page hears of it: the bell count moves and, in the page
+      // being looked at, a line says what arrived.
+      clients.forEach((client) => client.postMessage({
+        type: 'edify-notification', id: data.id, title: title,
+        body: data.body || '', url: url, shown: !client.focused || ALWAYS_SHOW,
+      }));
+      // Someone looking at the app has the bell and that line; the phone's
+      // tray would only say it twice.
+      if (!ALWAYS_SHOW && clients.some((client) => client.focused)) return null;
+      return self.registration.showNotification(title, {
+        body: data.body || '',
+        // One notification, one entry: a repeat replaces it.
+        tag: data.tag || 'edify',
+        renotify: true,
+        icon: PUSH_ICON,
+        badge: PUSH_BADGE,
+        timestamp: Date.parse(data.at) || Date.now(),
+        requireInteraction: data.priority === 'urgent',
+        data: { url: url, id: data.id },
+      });
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || '/notifications', self.location.origin);
+  // Only this app's own pages, whatever the payload said.
+  const url = target.origin === self.location.origin ? target.href : self.location.origin + '/notifications';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // The app's open window is brought forward and taken to the record;
+      // with none open, the app is opened there.
+      const open = clients.find((client) => 'focus' in client);
+      if (open) {
+        return open.focus().then((client) => (
+          client && 'navigate' in client ? client.navigate(url) : self.clients.openWindow(url)
+        )).catch(() => self.clients.openWindow(url));
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
+// A page says which notifications are still unread: whatever else this
+// device still shows was read somewhere else, and is cleared from its tray.
+// On sign-out the page says `clear`, and nothing of the last user stays.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type !== 'edify-notifications-sync' || !self.registration.getNotifications) return;
+  const unread = new Set((data.unread || []).map((id) => 'edify-' + id));
+  event.waitUntil(
+    self.registration.getNotifications().then((shown) => {
+      shown.forEach((note) => {
+        if (data.clear || (note.tag && note.tag.indexOf('edify-') === 0 && !unread.has(note.tag))) note.close();
+      });
+    })
+  );
+});
+
+// The browser replaced the subscription (keys rotated, service moved): the
+// next page to open records the new one (push-notifications.js).
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      clients.forEach((client) => client.postMessage({ type: 'edify-push-resubscribe' }));
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -311,6 +401,19 @@ def static_version() -> str:
     return digest.hexdigest()[:12]
 
 
+def _asset(path: str) -> str:
+    """A static file's address for the worker. A hashing storage that has no
+    entry for it (a build without the manifest) must not take the worker
+    down with it: the worker is what keeps the app installed and offline-
+    capable, and a notification without its icon is still a notification."""
+    try:
+        return static(path)
+    except ValueError:
+        from django.conf import settings
+
+        return f"{settings.STATIC_URL}{path}"
+
+
 @require_GET
 @cache_control(max_age=0, no_cache=True)
 def service_worker(request):
@@ -324,6 +427,9 @@ def service_worker(request):
         "version": static_version(),
         "static_branch": STATIC_FETCH_BRANCH if hashed else PASSTHROUGH_NOTE,
         "precache_assets": STATIC_PRECACHE if hashed else "",
+        "icon": _asset("icons/icon-192.png"),
+        # The small mark Android draws in the status bar.
+        "badge": _asset("icons/icon-maskable-192.png"),
     }
     response = HttpResponse(body, content_type="application/javascript")
     # Belt and braces: allows the scope even if the file ever moves.

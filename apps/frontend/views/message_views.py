@@ -242,7 +242,10 @@ def message_drawer_view(request):
     context = {
         "threads": threads,
         "unread_count": unread_count,
-        "drawer_type": "right_top",
+        # Under the message icon that opened it, by the same positioning as
+        # the notification drawer (owner, 2026-10-10).
+        "drawer_type": "anchored",
+        "drawer_anchor": ".edify-topbar__utility--messages",
         "drawer_size": "sm",
     }
     return render(request, "partials/messages/message_drawer.html", context)
@@ -353,7 +356,11 @@ def message_deep_link_view(request, message_id):
     """Legacy deep link (/messages/<message_id>) used by notifications."""
     msg = Message.objects.filter(id=message_id).first()
     if msg:
-        return local_redirect(f"/messages?thread={msg.thread_id}")
+        # The exact conversation and the exact message in it (owner,
+        # 2026-10-10: "Messages → exact conversation → exact message").
+        return local_redirect(
+            f"/messages?thread={msg.thread_id}&message={msg.id}#message-{msg.id}"
+        )
     if MessageThread.objects.filter(id=message_id).exists():
         return local_redirect(f"/messages?thread={message_id}")
     django_messages.error(request, "That conversation could not be found.")

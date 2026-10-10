@@ -169,8 +169,9 @@ What does not match is a screen-reader-only label, and the fund breakdown
 ledger, whose cells are a step larger than a standard table's.
 
 **What a larger column name costs in width.** A column is as wide as the wider
-of its heading and its cells, and a table that no longer fits its card wraps
-its headings or scrolls (micro-ux.js, `wrapLongText` and `columnPlan`). So
+of its heading and its cells, and a table that no longer fits its card
+scrolls (micro-ux.js, `columnPlan`; since 2026-10-10 nothing in a table wraps at
+any width, so a table too wide for its card scrolls as one piece). So
 the size was measured before it was kept: 294 tables at 1440px and 1280px,
 drawn three ways. Title Case at 14.7px bold is *narrower* than what it
 replaced — capitals at 12.7px with 0.05em letter-spacing — so every table

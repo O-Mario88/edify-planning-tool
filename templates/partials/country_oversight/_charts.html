@@ -22,7 +22,7 @@ third time.
       <div class="cpo-tscroll">
         <table class="cpo-mini" data-table-wrap="off">
           <thead>
-            <tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column|linebreaksbr }}</th>{% endfor %}</tr>
+            <tr><th scope="col">Programme Lead</th>{% for column in chart.table.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr>
           </thead>
           {% paginate chart.table.rows "chart_rows_page" as chart_pager %}
           <tbody>

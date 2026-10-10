@@ -74,6 +74,19 @@ STATE_TONES = {
     "upcoming": "info",
 }
 
+#: What a state is called on the page, where its key is not the words.
+#: Owner, 2026-10-10: "Baseline missing should be previous FY SSA missing or
+#: current FY SSA missing. Use 'previous' instead of using 'baseline'". The
+#: first assessment a change is measured from is the previous FY's SSA; the
+#: one it is measured to is the current FY's.
+STATE_LABELS = {
+    "baseline_missing": "Previous FY SSA missing",
+    "not_scheduled": "Current FY SSA missing",
+    "overdue": "Current FY SSA missing (overdue)",
+    "due": "Current FY SSA missing (due today)",
+    "upcoming": "Current FY SSA missing (upcoming)",
+}
+
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
 
 
@@ -103,7 +116,7 @@ def evidence_row(assignment, today):
     measured = valid_follow_up and assignment.impact_classification in MEASURED
     due = assignment.follow_up_due_on
     if not valid_baseline:
-        state, action = "baseline_missing", "Collect or confirm the baseline"
+        state, action = "baseline_missing", "Collect or confirm the previous FY SSA"
     elif measured:
         state, action = (
             assignment.impact_classification,
@@ -138,7 +151,7 @@ def evidence_row(assignment, today):
         "intervention_code": intervention,
         "intervention": INTERVENTION_LABELS.get(intervention, "Not mapped"),
         "state": state,
-        "status": state.replace("_", " ").capitalize(),
+        "status": STATE_LABELS.get(state, state.replace("_", " ").capitalize()),
         "tone": STATE_TONES.get(state, "neutral"),
         "action": action,
         "baseline": assignment.baseline_score if valid_baseline else None,
@@ -222,7 +235,7 @@ def _cohort_domains(measured_rows) -> list[dict]:
 
 
 def _baseline_details(assignments, rows) -> None:
-    """Tell "a confirmed SSA exists but the baseline was not captured" apart
+    """Tell "a confirmed SSA exists but the previous FY SSA was not captured" apart
     from "there is no confirmed SSA to capture" (apps.projects.baselines), so
     IA is not sent into the field for an assessment that already exists."""
     from apps.projects import baselines
@@ -237,7 +250,7 @@ def _baseline_details(assignments, rows) -> None:
         state = states.get(row["assignment_id"])
         if state == baselines.NOT_CAPTURED:
             row["action"] = (
-                "A confirmed SSA exists; its baseline is captured on the next refresh"
+                "A confirmed SSA exists; it is captured as the previous FY SSA on the next refresh"
             )
             row["baseline_state"] = "not_captured"
         elif state == baselines.NO_INTERVENTION:
@@ -628,7 +641,7 @@ def cohort_tiles(workspace: dict) -> list[dict]:
             else "Not measured",
             f"{workspace['improved']} of {measured} measured enrolments"
             if measured
-            else "no enrolment has a confirmed baseline and follow-up",
+            else "no enrolment has a confirmed previous and current FY SSA",
             "success" if measured else "neutral",
             raw_value=_share(workspace["improved"], measured),
         ),
@@ -639,14 +652,14 @@ def cohort_tiles(workspace: dict) -> list[dict]:
             else "Not measured",
             f"{workspace['declined']} of {measured} measured enrolments"
             if measured
-            else "no enrolment has a confirmed baseline and follow-up",
+            else "no enrolment has a confirmed previous and current FY SSA",
             "danger" if measured and workspace["declined"] else "neutral",
             raw_value=_share(workspace["declined"], measured),
         ),
         _metric(
-            "Project Enrolments Missing a Baseline",
+            "Project Enrolments Missing Previous FY SSA",
             workspace["baseline_missing"],
-            "no confirmed baseline captured",
+            "no confirmed previous FY SSA captured",
             "warning" if workspace["baseline_missing"] else "info",
             drilldown_url=f"/ia/dashboard/?view=collection{suffix}",
         ),

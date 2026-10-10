@@ -1,0 +1,17 @@
+{% comment %}
+What a profile is about (apps.analytics.profile_records.identity; owner's
+brief, 2026-10-10: "What am I looking at, and what does this profile control
+or represent?"): the same facts in the same place on every profile — type,
+where it sits, who owns it, the year, its status.
+{% endcomment %}{% if pi.identity %}
+<section class="card px-4 py-3" aria-label="Profile details" data-profile-identity>
+  <dl class="flex flex-wrap gap-x-8 gap-y-2">
+    {% for fact in pi.identity %}
+    <div class="min-w-0" data-profile-fact="{{ fact.label|slugify }}">
+      <dt class="edify-text-caption edify-text-muted">{{ fact.label }}</dt>
+      <dd class="edify-text-label font-semibold">{% if fact.people %}{% for person in fact.people %}{% if person.href %}<a href="{{ person.href }}">{{ person.name }}</a>{% else %}{{ person.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}{% if fact.more %} and {{ fact.more }} more{% endif %}{% elif fact.href %}<a href="{{ fact.href }}">{{ fact.value }}</a>{% else %}{{ fact.value }}{% endif %}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</section>
+{% endif %}
