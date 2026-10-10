@@ -52,7 +52,15 @@ HAND_WIRED_FILTER_FORM_CEILING = 12
 #: over the rail; its ceiling keeps the same ten. 3,937 on 2026-10-08, when the
 #: school name on the planning tables became a link and the rules that had
 #: forced the old name button into its column went with it.)
-IMPORTANT_CEILING = 3947
+#: Raised to the count, 3,958, on 2026-10-10 for three things the owner asked
+#: for that day, each of which has to outrank rules that are themselves
+#: `!important`: the drawer that opens under its own icon (the one drawer
+#: shape and its phone sheet are forced, by four earlier passes, in
+#: drawers.css), one body type in every table (over the size and weight
+#: utilities templates write on cells), and compact rows (the tick box's
+#: touch size). The desktop text-wrapping rules they replace are gone. No
+#: headroom: from here only downwards.
+IMPORTANT_CEILING = 3958
 CLASS_SUBSTRING_SELECTOR_CEILING = 577
 
 _COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

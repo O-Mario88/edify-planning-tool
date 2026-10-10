@@ -179,6 +179,12 @@ def profile_context(
     section_of = {keys.get(key, key): key for key in SECTIONS_OF[scope.kind]}
     tabs = [*lead, *sections, *trail]
     tab = request.GET.get(param, "")
+    if tab not in dict(tabs) and activities is not None:
+        # The activity list's own links (its Planned / Completed switch, its
+        # pager) carry the list's parameters and no tab: they belong to the
+        # tab the list is on.
+        if any(key.startswith(activities_param) for key in request.GET):
+            tab = (keys or {}).get("activities", "activities")
     if tab not in dict(tabs):
         tab = tabs[0][0]
     section = section_of.get(tab, "")

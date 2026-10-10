@@ -749,7 +749,7 @@ class OutcomesAndProgressTests(EvidenceFixture):
         self.assertEqual(progress["pairs"][0]["classification"], "improved")
         self.assertEqual(progress["improved_pairs"], 1)
         self.client.force_login(self.ia)
-        response = self.client.get(f"/schools/{self.school.school_id}")
+        response = self.client.get(f"/schools/{self.school.school_id}?tab=ssa")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="ssa-timeline"')
         self.assertContains(response, "Current confirmed SSA")

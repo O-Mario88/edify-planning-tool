@@ -285,7 +285,8 @@ class DesignSystemContractTest(SimpleTestCase):
         ]
         self.assertEqual(missing, [], f"profile pages outside the contract: {missing}")
 
-        school = (ROOT / "templates/pages/schools/detail.html").read_text()
+        # The school's own record is the Details tab of its profile.
+        school = (ROOT / "templates/partials/schools/_details.html").read_text()
         enrollment = school.split("Pupil Enrolment", 1)[1].split("</div>", 1)[0]
         self.assertIn("edify-profile-field__value", enrollment)
         self.assertNotIn("text-slate-800", enrollment)

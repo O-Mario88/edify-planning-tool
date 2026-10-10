@@ -140,7 +140,7 @@ class SchoolVisitFeedbackTest(TestCase):
         self._feedback()
         self.client.force_login(self.cceo)
 
-        response = self.client.get(f"/schools/{self.school.school_id}")
+        response = self.client.get(f"/schools/{self.school.school_id}?tab=activities")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "School Visit Feedback")
