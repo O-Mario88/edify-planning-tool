@@ -3,22 +3,22 @@
  "schema_version": 1,
  "summary": {
   "by_evidence": {
-   "browser-rendered": 833,
+   "browser-rendered": 834,
    "none": 295,
-   "page-tested": 1499,
-   "request-tested": 1343
+   "page-tested": 1500,
+   "request-tested": 1348
   },
   "by_kind": {
-   "button": 1371,
+   "button": 1374,
    "disclosure": 75,
    "field": 1345,
-   "link": 1112,
+   "link": 1116,
    "tab": 67
   },
-  "controls": 3970,
+  "controls": 3977,
   "high_consequence": 205,
-  "state_changing": 458,
-  "templates_scanned": 669,
+  "state_changing": 459,
+  "templates_scanned": 671,
   "unresolved_destinations": 0,
   "untested": 295,
   "untested_state_changing": 22
@@ -99,6 +99,7 @@
     "/analytics/school-closures",
     "/analytics/verification-quality",
     "/analytics/visit-effectiveness",
+    "/brief",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -325,6 +326,7 @@
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
+    "/team/check-in/<str:staff_id>",
     "/team/coaching",
     "/today",
     "/todos",
@@ -871,6 +873,7 @@
     "/admin-panel/school-upload-history",
     "/analytics/closure-quality",
     "/analytics/school-closures",
+    "/brief",
     "/budget",
     "/budget/",
     "/business-transformation",
@@ -973,6 +976,7 @@
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
+    "/team/check-in/<str:staff_id>",
     "/team/coaching",
     "/work-plan",
     "/work-plan/"
@@ -1095,6 +1099,7 @@
     "/analytics/school-closures",
     "/analytics/verification-quality",
     "/analytics/visit-effectiveness",
+    "/brief",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -1317,6 +1322,7 @@
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
+    "/team/check-in/<str:staff_id>",
     "/team/coaching",
     "/today",
     "/todos",
@@ -1476,6 +1482,7 @@
     "/analytics/school-closures",
     "/analytics/verification-quality",
     "/analytics/visit-effectiveness",
+    "/brief",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -1698,6 +1705,7 @@
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
+    "/team/check-in/<str:staff_id>",
     "/team/coaching",
     "/today",
     "/todos",
@@ -2029,6 +2037,7 @@
     "/analytics/school-closures",
     "/analytics/verification-quality",
     "/analytics/visit-effectiveness",
+    "/brief",
     "/budget",
     "/budget/",
     "/budgets/overview",
@@ -2251,6 +2260,7 @@
     "/team-planning-oversight/",
     "/team-targets",
     "/team-targets/",
+    "/team/check-in/<str:staff_id>",
     "/team/coaching",
     "/today",
     "/todos",
@@ -2683,6 +2693,18 @@
    ],
    "roles": []
   },
+  "pages/briefs/index.html": {
+   "pages": [
+    "/brief"
+   ],
+   "roles": [
+    "ADMIN",
+    "CCEO",
+    "CD",
+    "PL",
+    "RPL"
+   ]
+  },
   "pages/budget/index.html": {
    "pages": [
     "/budgets/overview"
@@ -2814,6 +2836,17 @@
     "PL",
     "RPL",
     "RVP"
+   ]
+  },
+  "pages/check_in/index.html": {
+   "pages": [
+    "/team/check-in/<str:staff_id>"
+   ],
+   "roles": [
+    "ADMIN",
+    "CD",
+    "PL",
+    "RPL"
    ]
   },
   "pages/closure/activity_closure_detail.html": {
@@ -11543,6 +11576,8 @@
   {"accessible_name": "", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-51AA9A673477", "kind": "field", "line": 38, "method": "", "selector": "#confirm-password", "state_changing": false, "tag": "input", "template": "pages/auth/reset_password.html"},
   {"accessible_name": "Show confirmed password", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-A84A0071836F", "kind": "button", "line": 39, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/auth/reset_password.html"},
   {"accessible_name": "Set new password", "destination": "                                   ", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-219C5131231B", "kind": "button", "line": 60, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/auth/reset_password.html"},
+  {"accessible_name": "Open {{ line.label }}", "destination": "{{ line.url }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-F61C4929A8BB", "kind": "link", "line": 40, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/briefs/index.html"},
+  {"accessible_name": "Choose {{ channel.name }}", "destination": "/brief/channel", "destination_route": "/brief/channel", "evidence": "request-tested", "high_consequence": false, "id": "INT-D7B6C3576C26", "kind": "button", "line": 68, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/briefs/index.html"},
   {"accessible_name": "Review Requests →", "destination": "/fund-requests", "destination_route": "/fund-requests", "evidence": "request-tested", "high_consequence": false, "id": "INT-4789282414DD", "kind": "link", "line": 55, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/budget/index.html"},
   {"accessible_name": "My Budget", "destination": "{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-B7EA35F755E3", "kind": "link", "line": 29, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/budgets/monthly.html"},
   {"accessible_name": "Team Budget", "destination": "{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-74CC8101A641", "kind": "link", "line": 30, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/budgets/monthly.html"},
@@ -11671,6 +11706,11 @@
   {"accessible_name": "{{ action.label }}", "destination": "{{ action.drawer }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-ED480DCCC68D", "kind": "button", "line": 101, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/cce_leadership/workspace.html"},
   {"accessible_name": "{{ action.label }}", "destination": "{{ action.href }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-7DE6D421329E", "kind": "link", "line": 108, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/cce_leadership/workspace.html"},
   {"accessible_name": "{{ action.label }}", "destination": "{{ action.drawer }}", "destination_route": "", "evidence": "browser-rendered", "high_consequence": false, "id": "INT-80BA539960B7", "kind": "button", "line": 110, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/cce_leadership/workspace.html"},
+  {"accessible_name": "Previous Officer", "destination": "/team/check-in/{{ previous.id }}", "destination_route": "/team/check-in/<str:staff_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-4C7FB92E19BE", "kind": "link", "line": 18, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/check_in/index.html"},
+  {"accessible_name": "Next Officer", "destination": "/team/check-in/{{ following.id }}", "destination_route": "/team/check-in/<str:staff_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-A1856D5CF1CC", "kind": "link", "line": 19, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/check_in/index.html"},
+  {"accessible_name": "Record Check-in", "destination": "/team/coaching/new?cceo={{ member.id }}&kind=performance_checkin", "destination_route": "/team/coaching/new", "evidence": "request-tested", "high_consequence": false, "id": "INT-8E621E7AA936", "kind": "button", "line": 20, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/check_in/index.html"},
+  {"accessible_name": "Open {{ fact.line }}", "destination": "{{ fact.url }}", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-3BBD0DCAF45C", "kind": "link", "line": 39, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "pages/check_in/index.html"},
+  {"accessible_name": "Open the last check-in", "destination": "/team/coaching/{{ last.id }}", "destination_route": "/team/coaching/<str:record_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-C906493B2FC7", "kind": "button", "line": 66, "method": "GET", "selector": "", "state_changing": false, "tag": "button", "template": "pages/check_in/index.html"},
   {"accessible_name": "Reopen Closed Activity", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-79ACB6AC7A9E", "kind": "button", "line": 145, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/closure/activity_closure_detail.html"},
   {"accessible_name": "Close & Lock Activity Closing...", "destination": "/activities/{{ act.id }}/closure/close", "destination_route": "/activities/<str:activity_id>/closure/close", "evidence": "request-tested", "high_consequence": true, "id": "INT-D379A48E9132", "kind": "button", "line": 157, "method": "POST", "selector": "", "state_changing": true, "tag": "button", "template": "pages/closure/activity_closure_detail.html"},
   {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "page-tested", "high_consequence": false, "id": "INT-804294A80D0D", "kind": "button", "line": 201, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "pages/closure/activity_closure_detail.html"},

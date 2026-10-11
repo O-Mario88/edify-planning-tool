@@ -538,6 +538,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Admin read the record; an officer reads their own appointments, which
     # is why the CCEO is here and not in the sidebar entry.
     "acting_leadership": {PL, CD, HR, ADMIN, CCEO},
+    # The brief page (apps.briefs): the roles that are sent a brief. Opened
+    # from the bell or a message, never from the sidebar.
+    "brief": {CD, PL, RPL, CCEO},
     "ssa": {IA, CD, RVP, PL, CCEO, ADMIN},
     # SSA Performance is an intelligence surface for every role. Its service
     # applies school/region/partner/project scope before computing any metric.

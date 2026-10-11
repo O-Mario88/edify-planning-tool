@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **909**
-- All registered routes: **1382**
+- Routed product surfaces: **913**
+- All registered routes: **1386**
 - API routes: **360**
 - Roles: **15**
 - Permission keys: **127**
-- Scheduled jobs: **37**
+- Scheduled jobs: **39**
 - Activity states: **24**
 - Shared component templates: **657**
-- Full pages: **265**
+- Full pages: **267**
 - Partials and drawers: **322**
-- Permission-gated surfaces: **892**
-- Referenced by automated tests: **809**
+- Permission-gated surfaces: **896**
+- Referenced by automated tests: **813**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -154,6 +154,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-91505FDFED | /analytics/visit-effectiveness | Visit Effectiveness | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BB675805DE | /api/analytics/combine-map-boundaries | Combine Map Boundaries | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-86E2200E55 | /api/analytics/map-subcounties | Map Subcounty Metrics | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-575D47CE13 | /brief | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-62761A86D6 | /brief/channel | Brief Channel | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1BACC71B5F | /budget | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-04C3EE0B01 | /budget/ | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F5541CFE7 | /budgets/monthly | Monthly Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -900,6 +902,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-4899A73E26 | /team-targets/sfid-backlog | Team Targets Sfid Backlog | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E9A7433ABD | /team-targets/staff-drawer | Team Targets Staff Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6A617E75EC | /team-targets/validation-backlog | Team Targets Validation Backlog | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EC2D15A685 | /team/check-in | Check In Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-605CE0B9D7 | /team/check-in/<str:staff_id> | Weekly Check-in · · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E75C7F213E | /team/coaching | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9CBAE36A98 | /team/coaching/<str:record_id> | Team Coaching Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3158803001 | /team/coaching/<str:record_id>/follow-up | Team Coaching Follow Up Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

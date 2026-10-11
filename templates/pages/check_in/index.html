@@ -1,0 +1,72 @@
+{% extends "layouts/shell.html" %}
+{% load components %}
+
+{% block title %}Weekly Check-in · {{ officer_name }} · Edify{% endblock %}
+
+{% comment %}
+The weekly check-in (apps.cce_leadership.check_in): one officer's week on one
+page, read by the Programme Lead and the officer together. The first table is
+the week, each line with the table it was counted from; the second is what was
+agreed at the last check-in. "Record Check-in" opens the coaching drawer, so a
+check-in is a coaching record like any other.
+{% endcomment %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-check-in="{{ member.id }}">
+
+  {% page_header title=officer_name eyebrow="Weekly Check-in" description="This officer's week and year, and what you agreed last time. Read it together, record what you agree, then move to the next officer." %}
+    {% if previous %}<a href="/team/check-in/{{ previous.id }}" class="edify-action-button h-9" data-check-in-previous>Previous Officer</a>{% endif %}
+    {% if following %}<a href="/team/check-in/{{ following.id }}" class="edify-action-button h-9" data-check-in-next>Next Officer</a>{% endif %}
+    <button type="button" hx-get="/team/coaching/new?cceo={{ member.id }}&amp;kind=performance_checkin" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary h-9" data-check-in-record>Record Check-in</button>
+  {% endpage_header %}
+
+  {% data_table name="check-in-week" %}
+    {% slot title %}This Week{% endslot %}
+    {% slot summary %}{{ week_start|date:"j M" }} to {{ week_end|date:"j M Y" }} · officer {{ position }} of {{ team_count }} · {{ held_count }} checked in this week{% endslot %}
+    {% slot caption %}The officer's year and week: what each line measures, its figure now, and a link to the table behind it.{% endslot %}
+    <thead>
+      <tr>
+        <th scope="col" class="px-3 py-2">Line</th>
+        <th scope="col" class="px-3 py-2">Figure</th>
+        <th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Open</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fact in facts %}
+      <tr data-check-in-fact>
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ fact.line }}</th>
+        <td class="px-3 py-2" data-label="Figure">{% if fact.tone %}<span data-tone="{{ fact.tone }}">{{ fact.figure }}</span>{% else %}{{ fact.figure }}{% endif %}</td>
+        <td class="px-3 py-2 text-right" data-label="Open">{% if fact.url %}<a href="{{ fact.url }}" class="hover:underline font-semibold">Open<span class="sr-only"> {{ fact.line }}</span></a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  {% enddata_table %}
+
+  {% data_table name="check-in-last" %}
+    {% slot title %}Agreed Last Time{% endslot %}
+    {% slot summary %}{% if held_this_week %}Checked in this week{% else %}Not checked in this week yet{% endif %}{% endslot %}
+    {% slot caption %}The last check-in with this officer: when it was held, what was agreed, when the follow-up is due and where it stands.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="No check-in has been recorded with this officer yet." hint="Record Check-in saves what you agree today; next week's page opens with it." compact="true" %}{% endslot %}
+    {% if last %}
+    <thead>
+      <tr>
+        <th scope="col" class="px-3 py-2">Held</th>
+        <th scope="col" class="px-3 py-2">Agreed Actions</th>
+        <th scope="col" class="px-3 py-2">Follow Up By</th>
+        <th scope="col" class="px-3 py-2">State</th>
+        <th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Open</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-check-in-last>
+        <th scope="row" class="px-3 py-2 text-left tabular-nums" data-record-title>{{ last.held_on|date:"j M Y" }}</th>
+        <td class="px-3 py-2" data-label="Agreed Actions">{{ last.agreed_actions|default:"None written"|linebreaksbr }}</td>
+        <td class="px-3 py-2 tabular-nums" data-label="Follow Up By">{{ last.follow_up_due|date:"j M Y"|default:"No date" }}</td>
+        <td class="px-3 py-2" data-label="State"><span data-tone="{{ last.tone }}">{{ last.state }}</span></td>
+        <td class="px-3 py-2 text-right" data-label="Open"><button type="button" class="hover:underline font-semibold" hx-get="/team/coaching/{{ last.id }}" hx-target="#drawer-container" hx-swap="innerHTML">Open<span class="sr-only"> the last check-in</span></button></td>
+      </tr>
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+</div>
+{% endblock %}

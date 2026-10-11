@@ -1,0 +1,77 @@
+{% extends "layouts/shell.html" %}
+{% load components %}
+
+{% block title %}{{ brief_name }} · Edify{% endblock %}
+
+{% comment %}
+The brief page (apps.briefs). The bell notice and the text message open it.
+One table of the brief's lines, each with the figure and a link to the table
+behind it; one table of the channels the reader can have it sent on. Counts
+only: a brief never names a school or a person, or shows a sum.
+{% endcomment %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-brief="{{ kind }}">
+
+  {% page_header title=brief_name description="The figures behind today's brief, read now. Each line opens the table it was counted from." %}{% endpage_header %}
+
+  {% for message in messages %}
+  <div class="rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}" role="status">{{ message }}</div>
+  {% endfor %}
+
+  {% data_table name="brief-lines" %}
+    {% slot title %}Today{% endslot %}
+    {% slot summary %}{{ today|date:"l j F Y" }}{% endslot %}
+    {% slot caption %}The lines of the brief: what each one measures, its figure now, and a link to the table behind it.{% endslot %}
+    {% slot empty %}{% include "components/empty_state.html" with message="Nothing to report today." hint="A brief is sent only when there is something to act on." compact="true" %}{% endslot %}
+    {% if brief %}
+    <thead>
+      <tr>
+        <th scope="col" class="px-3 py-2">Line</th>
+        <th scope="col" class="px-3 py-2">Figure</th>
+        <th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Open</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in brief.lines %}
+      <tr data-brief-line>
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ line.label }}</th>
+        <td class="px-3 py-2" data-label="Figure">{{ line.text }}</td>
+        <td class="px-3 py-2 text-right" data-label="Open">{% if line.url %}<a href="{{ line.url }}" class="hover:underline font-semibold">Open<span class="sr-only"> {{ line.label }}</span></a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% endif %}
+  {% enddata_table %}
+
+  {% data_table name="brief-channels" %}
+    {% slot title %}Where Your Brief Is Sent{% endslot %}
+    {% slot caption %}The channels a brief can be sent on, which one is chosen, and a control to choose another. A brief is sent on working days, in working hours.{% endslot %}
+    <thead>
+      <tr>
+        <th scope="col" class="px-3 py-2">Channel</th>
+        <th scope="col" class="px-3 py-2">What Happens</th>
+        <th scope="col" class="px-3 py-2 text-right"><span class="sr-only">Choose</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for channel in channels %}
+      <tr data-brief-channel="{{ channel.channel }}">
+        <th scope="row" class="px-3 py-2 text-left" data-record-title>{{ channel.name }}</th>
+        <td class="px-3 py-2" data-label="What Happens">{{ channel.note }}</td>
+        <td class="px-3 py-2 text-right" data-label="Choose">
+          {% if channel.chosen %}{% include "components/badge.html" with tone="success" label="Chosen" %}
+          {% elif channel.available %}
+          <form method="post" action="/brief/channel" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="channel" value="{{ channel.channel }}">
+            <button type="submit" class="edify-action-button h-8">Choose<span class="sr-only"> {{ channel.name }}</span></button>
+          </form>
+          {% else %}{% include "components/badge.html" with tone="neutral" label="Not available" %}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  {% enddata_table %}
+</div>
+{% endblock %}

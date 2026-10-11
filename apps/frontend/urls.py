@@ -56,6 +56,8 @@ from .views import (
     staff_activity_views,
     training_ceiling_views,
     acting_views,
+    brief_views,
+    check_in_views,
 )
 
 app_name = "frontend"
@@ -307,6 +309,15 @@ urlpatterns = [
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),
     # Acting Leadership (apps.acting): a leader appoints an acting leader for
     # one month, and the record of who held delegated authority and when.
+    # The Programme Lead's weekly check-in: one page per officer.
+    path("team/check-in", check_in_views.check_in_start_view, name="check_in_start"),
+    path(
+        "team/check-in/<str:staff_id>",
+        check_in_views.check_in_view,
+        name="check_in",
+    ),
+    path("brief", brief_views.brief_view, name="brief"),
+    path("brief/channel", brief_views.brief_channel_view, name="brief_channel"),
     path(
         "acting-leadership",
         acting_views.acting_leadership_view,

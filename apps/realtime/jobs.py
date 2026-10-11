@@ -305,6 +305,37 @@ def daily_digest_job():
     run_tracked_job("daily_digest", _do_daily_digest)
 
 
+# ── Role briefs (apps.briefs) ─────────────────────────────────────────────────
+def _do_morning_briefs(today=None) -> int:
+    from apps.briefs import builder
+    from apps.briefs.delivery import send_briefs
+
+    today = today or timezone.localdate()
+    kinds = [builder.COUNTRY_MORNING]
+    if today.weekday() == 0:
+        kinds += [builder.TEAM_MONDAY, builder.REGIONAL_MONDAY]
+    return send_briefs(kinds, today=today)
+
+
+def _do_evening_briefs(today=None) -> int:
+    from apps.briefs import builder
+    from apps.briefs.delivery import send_briefs
+
+    return send_briefs([builder.FIELD_EVENING], today=today)
+
+
+def morning_briefs_job():
+    if not _enabled():
+        return
+    run_tracked_job("morning_briefs", _do_morning_briefs)
+
+
+def evening_briefs_job():
+    if not _enabled():
+        return
+    run_tracked_job("evening_briefs", _do_evening_briefs)
+
+
 # ── Daily plan notifications (owner, 2026-09-24) ──────────────────────────────
 #: "Notifications also should notify the CCEO of the activities of that day.
 #: Notification for PL should be to monitor all the plans."

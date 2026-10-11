@@ -174,6 +174,10 @@ class NotificationLinkResolver:
             return "/acting-leadership", "Open Acting Leadership"
         if event_type == "daily_plan_today":
             return "/dashboard?view=today", "Open Today"
+        # Role briefs (apps.briefs): the notice opens the brief itself, whose
+        # lines link to the tables behind them.
+        if event_type.startswith("brief."):
+            return f"/brief?kind={event_type[len('brief.'):]}", "Open Brief"
         # Planned work on a public holiday or a leave day (owner, 2026-10-05;
         # apps.activities.day_off). My Plan lists it first for the month, each
         # row with its Reschedule control. The key is "dayoff-<ISO date>".

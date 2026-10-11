@@ -1021,3 +1021,28 @@ class RegionalLeadDashboardService:
             "priorities": _regional_priorities(fy),
             "follow_ups": follow_ups,
         }
+
+
+def lead_roster_summary(user, *, fy: str) -> dict:
+    """One summary count of Programme Leads in scope and how many are on track."""
+    reach = _reach(user)
+    items = oversight.build_items(user, fy=fy)
+    pairs = list(zip(items, _item_countries(items)))
+    follow_ups = _follow_ups(user, fy=fy)
+    roster = _lead_roster(
+        pairs,
+        countries=reach["countries"],
+        fy=fy,
+        follow_ups_by_lead=follow_ups["by_lead"],
+    )
+    leads = roster["total"]
+    on_track = sum(1 for r in roster["rows"] if r["tone"] == "success")
+    return {
+        "leads": leads,
+        "on_track": on_track,
+        "needs_coaching": roster["needs_coaching"],
+        "follow_ups_active": follow_ups["active"],
+        "follow_ups_overdue": follow_ups["overdue"],
+    }
+
+

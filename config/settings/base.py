@@ -139,6 +139,7 @@ INSTALLED_APPS = [
     "apps.telemetry",
     "apps.staff_activity",
     "apps.acting",
+    "apps.briefs",
     "apps.help_center",
     "apps.frontend",
     # ... (registered as each module is built)
@@ -931,6 +932,10 @@ SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "")
 # Whether the dev sender may log the message body. Off by default: the body
 # carries a live sign-in code, which outlives the SMS in a log stream.
 SMS_LOG_BODIES = _truthy(os.environ.get("SMS_LOG_BODIES"), fallback=False)
+# Role briefs (apps.briefs): the morning, Monday and evening messages. On by
+# default, since a brief reaches the bell only until a person picks a phone
+# channel; ROLE_BRIEFS_ENABLED=false stops every brief without a deploy.
+ROLE_BRIEFS_ENABLED = _truthy(os.environ.get("ROLE_BRIEFS_ENABLED"), fallback=True)
 
 # Two-factor authentication. Enrolment is per user (User.mfa_enabled, set from
 # the settings page); this turns it on for every account at once, for an

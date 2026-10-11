@@ -104,6 +104,46 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="morning_briefs",
+        description=(
+            "Role briefs (apps.briefs): the Country Director's Morning Country "
+            "Brief every working day, and on Mondays the Programme Lead's team "
+            "brief and the Regional Programme Lead's digest. Counts and links "
+            "only, to the bell and to the channel each person chose."
+        ),
+        cron="Mon-Fri 07:00 Africa/Nairobi",
+        cron_kwargs={"day_of_week": "mon-fri", "hour": 7, "minute": 0},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 24 * 3 + 120,  # a weekend, and grace
+        idempotent=True,
+        idempotency_note=(
+            "Keyed per person, brief and day (context_id br-<date>), checked "
+            "even against archived notices; a same-day re-run sends nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="evening_briefs",
+        description=(
+            "Role briefs (apps.briefs): each CCEO's Evening Message about the "
+            "next working day: how many activities, schools and sub-counties, "
+            "and where the week's fund request stands. Nothing planned, "
+            "nothing sent."
+        ),
+        cron="Mon-Fri 17:00 Africa/Nairobi",
+        cron_kwargs={"day_of_week": "mon-fri", "hour": 17, "minute": 0},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 24 * 3 + 120,
+        idempotent=True,
+        idempotency_note=(
+            "Keyed per person, brief and day (context_id br-<date>); a "
+            "same-day re-run sends nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="activity_reminders",
         description="'Starts tomorrow' reminder to each responsible person for every planned activity (incl. non-school programme events).",
         cron="daily 07:00 Africa/Nairobi",

@@ -7017,6 +7017,36 @@
    "view": "apps.schools.upload_views.view"
   },
   {
+   "page_permission": "brief",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/brief",
+   "route_name": "brief",
+   "view": "apps.frontend.views.brief_views.brief_view"
+  },
+  {
+   "page_permission": "brief",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/brief/channel",
+   "route_name": "brief_channel",
+   "view": "apps.frontend.views.brief_views.brief_channel_view"
+  },
+  {
    "page_permission": "monthly_budget",
    "required_permissions": [],
    "role_exclusive": false,
@@ -18853,6 +18883,34 @@
     "RegionalProgramLead",
     "Admin"
    ],
+   "route": "/team/check-in",
+   "route_name": "check_in_start",
+   "view": "apps.frontend.views.check_in_views.check_in_start_view"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/check-in/<str:staff_id>",
+   "route_name": "check_in",
+   "view": "apps.frontend.views.check_in_views.check_in_view"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
    "route": "/team/coaching",
    "route_name": "team_coaching",
    "view": "apps.frontend.views.coaching_views.team_coaching_view"
@@ -19357,26 +19415,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 445,
-  "Admin": 1089,
+  "Admin": 1093,
   "BusinessTransformationOfficer": 239,
-  "CCEO": 570,
-  "CountryDirector": 841,
+  "CCEO": 572,
+  "CountryDirector": 845,
   "HumanResources": 342,
   "ImpactAssessment": 694,
   "MfiLoanOfficer": 135,
   "MfiPartnerAdmin": 138,
   "PartnerAdmin": 233,
   "PartnerFieldOfficer": 233,
-  "Program Lead": 675,
+  "Program Lead": 679,
   "ProjectCoordinator": 478,
-  "RegionalProgramLead": 344,
+  "RegionalProgramLead": 348,
   "RegionalVicePresident": 416
  },
  "summary": {
-  "page_keys_declared": 184,
-  "page_keys_in_navigation": 201,
-  "routes_guarded": 1186,
-  "routes_total": 1382,
+  "page_keys_declared": 185,
+  "page_keys_in_navigation": 202,
+  "routes_guarded": 1190,
+  "routes_total": 1386,
   "routes_unguarded": 196,
   "surfaces_no_role_can_reach": 0
  },

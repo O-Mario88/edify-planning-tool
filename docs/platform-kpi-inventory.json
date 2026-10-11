@@ -1850,7 +1850,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/analytics/rpl_dashboard_service.py",
-   "line": 749,
+   "line": 770,
    "label": null,
    "keys": [
     "count",
@@ -3454,7 +3454,7 @@
    "audit_id": "KPI-SOURCE-181",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 991,
+   "line": 995,
    "label": "Officer",
    "keys": [
     "label",
@@ -3471,7 +3471,7 @@
    "audit_id": "KPI-SOURCE-182",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 992,
+   "line": 996,
    "label": "Subject",
    "keys": [
     "label",
@@ -3488,7 +3488,7 @@
    "audit_id": "KPI-SOURCE-183",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 993,
+   "line": 997,
    "label": "Actions agreed",
    "keys": [
     "label",
@@ -3505,7 +3505,7 @@
    "audit_id": "KPI-SOURCE-184",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 994,
+   "line": 998,
    "label": "Follow up by",
    "keys": [
     "label",
@@ -3522,7 +3522,7 @@
    "audit_id": "KPI-SOURCE-185",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 995,
+   "line": 999,
    "label": "Officer's response",
    "keys": [
     "label",
@@ -3624,7 +3624,7 @@
    "audit_id": "KPI-SOURCE-191",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 881,
+   "line": 885,
    "label": "Officer",
    "keys": [
     "label",
@@ -3641,7 +3641,7 @@
    "audit_id": "KPI-SOURCE-192",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 882,
+   "line": 886,
    "label": "State",
    "keys": [
     "label",
@@ -3658,7 +3658,7 @@
    "audit_id": "KPI-SOURCE-193",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 883,
+   "line": 887,
    "label": "Officer's response",
    "keys": [
     "label",
@@ -3735,7 +3735,7 @@
    "audit_id": "KPI-SOURCE-197",
    "kind": "other",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 1122,
+   "line": 1126,
    "label": "Kind",
    "keys": [
     "blank",
@@ -3755,7 +3755,7 @@
    "audit_id": "KPI-SOURCE-198",
    "kind": "other",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 1129,
+   "line": 1133,
    "label": "State",
    "keys": [
     "blank",
@@ -3775,7 +3775,7 @@
    "audit_id": "KPI-SOURCE-199",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/coaching_views.py",
-   "line": 1002,
+   "line": 1006,
    "label": "Follow-up note",
    "keys": [
     "label",

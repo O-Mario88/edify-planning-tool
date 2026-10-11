@@ -111,6 +111,19 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     # (apps.notifications.services.SMS_MONEY_EVENTS). Opt-out per user;
     # a blank `phone` opts out by absence.
     sms_money_alerts = models.BooleanField(default=True)
+    # Where this person's role brief reaches them (apps.briefs): the bell
+    # only, or the bell and a text message or an email, or not at all. Each
+    # person chooses; nobody is put on a phone channel they did not pick.
+    brief_channel = models.CharField(
+        max_length=8,
+        default="app",
+        choices=[
+            ("app", "In the platform"),
+            ("sms", "Text message"),
+            ("email", "Email"),
+            ("off", "No brief"),
+        ],
+    )
     roles = ArrayField(
         base_field=models.CharField(
             max_length=64, choices=[(r.value, r.value) for r in EdifyRole]

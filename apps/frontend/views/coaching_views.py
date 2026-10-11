@@ -496,6 +496,10 @@ def _one_to_one_panel(user, month, visible, team_ids, today) -> dict:
                         ),
                     },
                     {
+                        "label": "Weekly check-in",
+                        "href": f"/team/check-in/{entry['staff_id']}",
+                    },
+                    {
                         "label": "History",
                         "href": f"{TEAM_URL}?cceo={entry['staff_id']}",
                     },
