@@ -201,26 +201,52 @@ class CapacityQueueTests(QueueFixture):
         )
         return StaffProfile.objects.create(user=user, title="CCEO")
 
-    def test_over_capacity_uses_the_governed_limit(self):
+    def _visits(self, staff, school, count):
+        from datetime import timedelta
+
+        from apps.activities.models import Activity
+
+        fy = get_operational_fy(timezone.now())
+        Activity.objects.bulk_create(
+            [
+                Activity(
+                    activity_type="training_follow_up_visit",
+                    school=school,
+                    fy=fy,
+                    planned_date=timezone.localdate() + timedelta(days=1),
+                    status="scheduled",
+                    responsible_staff_id=staff.id,
+                    delivery_type="staff",
+                )
+                for _ in range(count)
+            ]
+        )
+
+    def test_over_capacity_is_past_the_visit_ceiling(self):
+        # Owner, 2026-10-03: 560 visits a year for a CCEO. At it nobody is
+        # over; one more and the person is, by that one.
         staff = self._staff("over@dq.test")
+        school = self._school("Cap School")
+        self._visits(staff, school, 560)
+        self.assertEqual(over_capacity_staff(), [])
+        self._visits(staff, school, 1)
+        over = over_capacity_staff()
+        self.assertEqual(len(over), 1)
+        self.assertEqual(
+            (over[0]["used"], over[0]["limit"], over[0]["reason"]),
+            (561, 560, "past_ceiling"),
+        )
+
+    def test_holding_schools_is_not_over_capacity(self):
+        # The old rule called anyone with more than ten schools overloaded.
+        staff = self._staff("default@dq.test")
         StaffSupportCapacity.objects.create(
             staff=staff,
             fy=get_operational_fy(timezone.now()),
             max_direct_schools_supported=1,
             is_active=True,
         )
-        for index in range(2):
-            school = self._school(f"Cap School {index}")
-            StaffSchoolAssignment.objects.create(staff=staff, school_id=school.id)
-        over = over_capacity_staff()
-        self.assertEqual(len(over), 1)
-        self.assertEqual(over[0]["used"], 2)
-        self.assertEqual(over[0]["limit"], 1)
-
-    def test_the_default_limit_matches_the_assignment_drawer(self):
-        # No capacity row → the same default of 10 the drawer applies.
-        staff = self._staff("default@dq.test")
-        for index in range(10):
+        for index in range(12):
             school = self._school(f"Default School {index}")
             StaffSchoolAssignment.objects.create(staff=staff, school_id=school.id)
         self.assertEqual(over_capacity_staff(), [])

@@ -340,14 +340,15 @@ class CDDashboardService:
         trend = CDDashboardService._trend
 
         # Workload, not "productivity": the old tile was the country activity
-        # completion rate and said nothing about staff. This one reads the
-        # governed StaffSupportCapacity, so overload is surfaced for
+        # completion rate and said nothing about staff. Capacity is the visit
+        # ceiling of the role (owner, 2026-10-03: 280 a Programme Lead, 560 a
+        # CCEO), so the tile counts who has planned past it or holds Core
+        # schools enough to take all of it. Overload is surfaced for
         # rebalancing, never for discipline (PRODUCT_PRINCIPLES: Healthy).
-        from apps.accounts.models import StaffSchoolAssignment
-        from apps.schools.data_quality import over_capacity_staff
+        from apps.schools.data_quality import over_capacity_staff, staff_on_ceiling
 
         over = len(over_capacity_staff())
-        carrying = StaffSchoolAssignment.objects.values("staff_id").distinct().count()
+        carrying = staff_on_ceiling()
 
         pending = CDDashboardService._pending_cd_items(fy)
         high_risk_teams = sum(
@@ -406,8 +407,8 @@ class CDDashboardService:
                 "Staff Over Capacity",
                 f"{over} of {carrying}",
                 "danger" if over else "info",
-                "carrying more direct schools than their capacity",
-                "/staff",
+                "past the 280 or 560 visits their role plans in a year",
+                "/planning-monitor/",
             ),
             card(
                 "cloud",

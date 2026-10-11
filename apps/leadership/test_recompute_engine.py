@@ -17,8 +17,6 @@ from django.utils import timezone
 
 from apps.accounts.models import (
     StaffProfile,
-    StaffSchoolAssignment,
-    StaffSupportCapacity,
 )
 from apps.activities.models import Activity, ActivityType
 from apps.geography.models import District, Region
@@ -68,30 +66,42 @@ class StaffCapacityOverloadDetectorTest(TestCase):
             is_active=True,
         )
         profile = StaffProfile.objects.create(user=user, title="CCEO")
-        StaffSupportCapacity.objects.create(
-            staff=profile,
-            fy="2026",
-            max_direct_schools_supported=3,
-            set_by_user_id="cd-1",
-            set_by_role="CountryDirector",
-        )
         region = Region.objects.create(name="Overload Region")
         district = District.objects.create(name="Overload District", region=region)
-        for i in range(5):
-            school = School.objects.create(
-                school_id=f"OVL-{i}",
-                name=f"Overload School {i}",
-                region=region,
-                district=district,
-            )
-            StaffSchoolAssignment.objects.create(staff=profile, school_id=school.id)
+        school = School.objects.create(
+            school_id="OVL-0",
+            name="Overload School",
+            region=region,
+            district=district,
+        )
+        # Owner, 2026-10-03: capacity is the visits a role plans in a year,
+        # 560 for a CCEO. Five visits past it is the overload.
+        from datetime import date
+
+        from apps.activities.models import Activity
+
+        Activity.objects.bulk_create(
+            [
+                Activity(
+                    activity_type="training_follow_up_visit",
+                    school=school,
+                    fy="2026",
+                    planned_date=date(2026, 3, 2),
+                    status="scheduled",
+                    responsible_staff_id=profile.id,
+                    delivery_type="staff",
+                )
+                for _ in range(565)
+            ]
+        )
 
         result = services.recompute({"fy": "2026"}, principal=None)
         self.assertGreaterEqual(result["generatedCount"], 1)
         insight = LeadershipDecisionInsight.objects.get(scope_id=f"auto:o:{profile.id}")
         self.assertEqual(insight.decision_type, DecisionType.STAFF_ADDITION.value)
-        self.assertEqual(insight.metrics["assigned_schools"], 5)
-        self.assertEqual(insight.metrics["capacity"], 3)
+        self.assertEqual(insight.metrics["visits"], 565)
+        self.assertEqual(insight.metrics["capacity"], 560)
+        self.assertEqual(insight.metrics["overload"], 5)
 
 
 class PartnerPerformanceDetectorTest(TestCase):

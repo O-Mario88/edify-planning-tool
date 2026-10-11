@@ -206,42 +206,81 @@ def detect_duplicate_candidates(
     return {"candidates_created": created, "schools_flagged": len(flagged_ids)}
 
 
-def over_capacity_staff() -> list[dict]:
-    """Staff carrying more direct schools than their governed capacity.
+def over_capacity_staff(fy: str | None = None) -> list[dict]:
+    """Programme Leads and CCEOs past the visits their role plans in a year.
 
-    Mirrors the assignment drawer's rule exactly (apps.assignment.services):
-    the CD/IA-set StaffSupportCapacity for the operational FY, with the same
-    default of 10 when no capacity row exists — the two surfaces must never
-    disagree about who is over.
+    Owner, 2026-10-03: staff capacity is the visit ceiling of the role, 280
+    for a Programme Lead and 560 for a CCEO, not a number of schools set
+    person by person (this read the CD/IA-set StaffSupportCapacity, ten
+    schools by default, until then; a CCEO holds hundreds). Somebody is over
+    when the counted visits they planned this year pass the ceiling
+    (``reason`` "past_ceiling"), or when the Core schools they hold take all
+    of it at two visits each ("core_only"). The ceiling warns and never
+    refuses, so this is a list to rebalance from, never a block.
+
+    ``used`` is the visits planned, or the Core staff visits the schools
+    take; ``limit`` the ceiling. ``staff_on_ceiling`` is who it is read for.
+    ``fy`` is the year the visits are counted in: the operational one unless
+    a caller reads another.
     """
-
-    from apps.accounts.models import StaffSchoolAssignment, StaffSupportCapacity
     from apps.core.fy import get_operational_fy
+    from apps.planning import staff_plan
+    from apps.planning.country_oversight import rules
+    from apps.schools.lifecycle_service import active_schools
+    from apps.schools.models import School
 
-    fy = get_operational_fy(timezone.now())
-    limits = {
-        staff_id: limit
-        for staff_id, limit in StaffSupportCapacity.objects.filter(
-            fy=fy, is_active=True
-        ).values_list("staff_id", "max_direct_schools_supported")
-    }
-    usage = (
-        StaffSchoolAssignment.objects.values("staff_id")
-        .annotate(used=Count("id"))
-        .order_by()
+    fy = str(fy or get_operational_fy(timezone.now()))
+    people = [person for team in rules.roster("") for person in team.people]
+    if not people:
+        return []
+    tallies = staff_plan.visit_tallies(
+        {person.key: list(person.ids) for person in people}, fy
     )
+    key_of = {raw: person.key for person in people for raw in person.ids}
+    core: dict[str, int] = {}
+    for owner_id, n in (
+        active_schools(
+            School.objects.filter(account_owner_id__in=list(key_of), school_type="core")
+        )
+        .values_list("account_owner_id")
+        .annotate(n=Count("id"))
+        .order_by()
+    ):
+        key = key_of.get(str(owner_id))
+        if key:
+            core[key] = core.get(key, 0) + n
     over = []
-    for row in usage:
-        limit = limits.get(row["staff_id"], 10)
-        if row["used"] > limit:
+    for person in people:
+        planned = tallies[person.key].total
+        if rules.over_ceiling(planned, person.target):
             over.append(
                 {
-                    "staff_id": str(row["staff_id"]),
-                    "used": row["used"],
-                    "limit": limit,
+                    "staff_id": person.key,
+                    "used": planned,
+                    "limit": person.target,
+                    "reason": "past_ceiling",
+                }
+            )
+            continue
+        share = rules.workload(person.target, core.get(person.key, 0), 0)
+        if share.core_only:
+            over.append(
+                {
+                    "staff_id": person.key,
+                    "used": share.staff_core_visits,
+                    "limit": person.target,
+                    "reason": "core_only",
                 }
             )
     return over
+
+
+def staff_on_ceiling() -> int:
+    """How many people ``over_capacity_staff`` is read for: every Programme
+    Lead and CCEO."""
+    from apps.planning.country_oversight import rules
+
+    return sum(len(team.people) for team in rules.roster(""))
 
 
 def scan_all(*, batch_size: int = 500) -> dict:

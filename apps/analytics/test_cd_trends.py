@@ -105,13 +105,14 @@ class CdTrendTilesTest(TestCase):
         self.assertEqual(len(chart["prior_completed"]), 12)
         self.assertEqual(sum(chart["prior_completed"]), 1)
 
-    def test_the_workload_tile_reads_governed_capacity(self):
+    def test_the_workload_tile_reads_the_visit_ceiling(self):
+        # Owner, 2026-10-03: capacity is the visits a role plans in a year
+        # (560 a CCEO), not a number of schools set person by person. Holding
+        # schools is never "over"; planning past the ceiling is.
         for school in self.schools:
             StaffSchoolAssignment.objects.create(
                 staff=self.cceo_sp, school_id=school.id
             )
-        tiles, _ = self._tiles()
-        self.assertEqual(tiles["Staff Over Capacity"]["value"], "0 of 1")
         StaffSupportCapacity.objects.create(
             staff=self.cceo_sp,
             fy="2026",
@@ -121,8 +122,8 @@ class CdTrendTilesTest(TestCase):
         )
         tiles, _ = self._tiles()
         tile = tiles["Staff Over Capacity"]
-        self.assertEqual(tile["value"], "1 of 1")
-        self.assertEqual(tile["link"], "/staff")
+        self.assertEqual(tile["value"], "0 of 1")
+        self.assertEqual(tile["link"], "/planning-monitor/")
         self.assertNotIn("Staff Productivity", tiles)
 
     def test_the_dashboard_renders_the_trend(self):

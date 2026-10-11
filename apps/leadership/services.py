@@ -323,59 +323,68 @@ def _detect_recruitment_gaps(fy: str, now) -> list[dict]:
 
 
 def _detect_staff_capacity_overload(fy: str, now) -> list[dict]:
-    """Flag individual staff carrying more schools than their set direct-
-    support capacity -- signals a need to add staff to share the load."""
-    from django.db.models import Count
-
-    from apps.accounts.models import (
-        StaffProfile,
-        StaffSchoolAssignment,
-        StaffSupportCapacity,
-    )
+    """Flag Programme Leads and CCEOs past the visits their role plans in a
+    year (280 and 560; owner, 2026-10-03), or whose Core schools alone take
+    all of it -- the schools past the ceiling are a Partner's to visit."""
+    from apps.accounts.models import StaffProfile
+    from apps.schools.data_quality import over_capacity_staff
 
     insights = []
-    caps = {
-        c.staff_id: c.max_direct_schools_supported
-        for c in StaffSupportCapacity.objects.filter(fy=fy)
+    found = over_capacity_staff(fy)
+    names = {
+        profile.id: profile.user.name
+        for profile in StaffProfile.objects.filter(
+            id__in=[row["staff_id"] for row in found]
+        ).select_related("user")
+        if profile.user_id
     }
-    counts = dict(
-        StaffSchoolAssignment.objects.values_list("staff_id")
-        .annotate(n=Count("id"))
-        .values_list("staff_id", "n")
-    )
-    for staff_id, assigned in counts.items():
-        cap = caps.get(staff_id, 10)  # platform default per apps.assignment
-        if cap and assigned > cap:
-            profile = (
-                StaffProfile.objects.filter(id=staff_id).select_related("user").first()
+    for row in found:
+        staff_id, used, cap = row["staff_id"], row["used"], row["limit"]
+        name = names.get(staff_id, staff_id)
+        overload = max(0, used - cap)
+        if row["reason"] == "core_only":
+            recommendation = (
+                f"Hand {name}'s other schools to a Partner -- their Core schools "
+                f"take {used} staff visits against a ceiling of {cap}."
             )
-            name = profile.user.name if profile and profile.user_id else staff_id
-            overload = assigned - cap
-            insights.append(
-                {
-                    "decision_type": DecisionType.STAFF_ADDITION.value,
-                    "scope_type": DecisionScopeType.STAFF.value,
-                    "scope_id": f"auto:o:{staff_id}",
-                    "scope_name": name,
-                    "recommendation": (
-                        f"Add supporting staff for {name}'s portfolio -- carrying {assigned} "
-                        f"schools against a capacity of {cap} ({overload} over)."
-                    ),
-                    "reason": f"{assigned} assigned schools exceeds the {cap}-school direct-support capacity set for FY {fy}.",
-                    "risk_level": DecisionRiskLevel.HIGH.value
-                    if overload > cap * 0.5
-                    else DecisionRiskLevel.MEDIUM.value,
-                    "confidence_level": DecisionConfidenceLevel.HIGH.value,
-                    "confidence_score": 0.9,
-                    "suggested_action": "Add a staff member to this portfolio or route new schools to partners.",
-                    "risk_flags": ["capacity_overload"],
-                    "metrics": {
-                        "assigned_schools": assigned,
-                        "capacity": cap,
-                        "overload": overload,
-                    },
-                }
+            reason = (
+                f"At two staff visits each, the Core schools held take the whole "
+                f"{cap}-visit ceiling for FY {fy}."
             )
+        else:
+            recommendation = (
+                f"Hand the schools past {name}'s ceiling to a Partner -- {used} "
+                f"visits planned against a ceiling of {cap} ({overload} over)."
+            )
+            reason = (
+                f"{used} visits planned exceeds the {cap} visits the role plans "
+                f"in FY {fy}."
+            )
+        insights.append(
+            {
+                "decision_type": DecisionType.STAFF_ADDITION.value,
+                "scope_type": DecisionScopeType.STAFF.value,
+                "scope_id": f"auto:o:{staff_id}",
+                "scope_name": name,
+                "recommendation": recommendation,
+                "reason": reason,
+                "risk_level": DecisionRiskLevel.HIGH.value
+                if overload > cap * 0.5
+                else DecisionRiskLevel.MEDIUM.value,
+                "confidence_level": DecisionConfidenceLevel.HIGH.value,
+                "confidence_score": 0.9,
+                "suggested_action": (
+                    "Assign the schools past the ceiling to a Partner, or add a "
+                    "staff member to this portfolio."
+                ),
+                "risk_flags": ["capacity_overload"],
+                "metrics": {
+                    "visits": used,
+                    "capacity": cap,
+                    "overload": overload,
+                },
+            }
+        )
     return insights
 
 

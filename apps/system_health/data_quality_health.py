@@ -127,20 +127,20 @@ def data_quality_health() -> dict:
                 "severity": "warning",
                 "component": "Portfolio capacity",
                 "current_state": (
-                    f"{summary['overCapacityStaff']} staff carrying more "
-                    "direct schools than their governed capacity"
+                    f"{summary['overCapacityStaff']} Programme Leads or CCEOs "
+                    "past the visits their role plans in a year"
                 ),
                 "expected_state": (
-                    "Portfolios within StaffSupportCapacity — overload is "
-                    "surfaced for rebalancing, never for discipline"
+                    "Plans within 280 (Programme Lead) or 560 (CCEO) visits — "
+                    "overload is surfaced for rebalancing, never refused"
                 ),
                 "last_check": now.isoformat(),
                 "owner": "CountryDirector",
                 "recommended_action": (
-                    "Rebalance portfolios or adjust the governed capacity; "
-                    "partner assignment is the overflow route."
+                    "Hand the schools past the ceiling to a Partner; partner "
+                    "assignment is the overflow route."
                 ),
-                "resolution_link": "/staff",
+                "resolution_link": "/planning-monitor/",
             }
         )
     scan_recent = ScheduledJobExecution.objects.filter(
