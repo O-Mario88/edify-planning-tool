@@ -295,7 +295,9 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
 
     def test_cluster_oversight_export_excel(self):
         client = self.as_pl()
-        resp = client.get("/cluster-oversight/export", {"fy": self.fy, "format": "xlsx"})
+        resp = client.get(
+            "/cluster-oversight/export", {"fy": self.fy, "format": "xlsx"}
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp["Content-Type"],
@@ -319,4 +321,3 @@ class CustomExportPeriodAndDrawerTest(FilterExportFixture):
             resp["Content-Type"],
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-

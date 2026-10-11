@@ -1467,7 +1467,12 @@ def read_filters(request) -> dict:
         val = (request.GET.get(key) or "").strip()
         if not val:
             continue
-        if key == "activity_type" and val in ("visits_trainings", "visits", "trainings", "all"):
+        if key == "activity_type" and val in (
+            "visits_trainings",
+            "visits",
+            "trainings",
+            "all",
+        ):
             continue
         if key == "status" and val == "all":
             continue

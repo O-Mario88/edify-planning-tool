@@ -223,7 +223,9 @@ def _period_filters(request) -> dict:
         else None
     )
 
-    if period_type == "month_range" or (from_month is not None and to_month is not None):
+    if period_type == "month_range" or (
+        from_month is not None and to_month is not None
+    ):
         if from_month is not None and to_month is not None:
             d_start, d_end = month_range_to_dates(fy, from_month, to_month)
         elif from_month is not None:
@@ -2787,15 +2789,11 @@ def _filter_export_items(items, request, period: dict) -> list:
         ]
     elif act_type == "visits":
         filtered = [
-            it
-            for it in filtered
-            if getattr(it, "activity_type", "") in VISIT_TYPES
+            it for it in filtered if getattr(it, "activity_type", "") in VISIT_TYPES
         ]
     elif act_type == "trainings":
         filtered = [
-            it
-            for it in filtered
-            if getattr(it, "activity_type", "") in TRAINING_TYPES
+            it for it in filtered if getattr(it, "activity_type", "") in TRAINING_TYPES
         ]
 
     return filtered
@@ -3998,8 +3996,7 @@ def partner_oversight_export_view(request):
         items = [
             it
             for it in items
-            if it.activity_type in VISIT_TYPES
-            or it.activity_type in TRAINING_TYPES
+            if it.activity_type in VISIT_TYPES or it.activity_type in TRAINING_TYPES
         ]
     elif req_act == "visits":
         from apps.core.activity_types import VISIT_TYPES
@@ -4580,7 +4577,12 @@ def partner_return_resolve_submit_view(request):
 @require_export_permission
 def planning_export_drawer_view(request):
     """Drawer to customize period from (Month) to (Month) and export plans to Excel."""
-    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
 
     scope = oversight.resolve_oversight_scope(request.user)
     is_country = scope.is_country or "country-planning" in request.path
@@ -4647,7 +4649,12 @@ def planning_export_drawer_view(request):
 @require_export_permission
 def partner_oversight_export_drawer_view(request):
     """Drawer to customize period and export partner plans to Excel."""
-    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     raw_from_month = (
@@ -4705,7 +4712,12 @@ def partner_oversight_export_drawer_view(request):
 @require_export_permission
 def project_export_drawer_view(request):
     """Drawer to customize period and export special projects to Excel."""
-    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     raw_from_month = (
@@ -4765,7 +4777,12 @@ def project_export_drawer_view(request):
 @require_export_permission
 def cluster_oversight_export_drawer_view(request):
     """Drawer to customize period and export cluster oversight to Excel."""
-    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     raw_from_month = (

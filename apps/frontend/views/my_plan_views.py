@@ -278,9 +278,7 @@ def my_plan_view(request):
         ):
             f_m = int(raw_from_m) if raw_from_m.isdigit() else 10
             t_m = int(raw_to_m) if raw_to_m.isdigit() else 9
-            filter_start_date, filter_end_date = month_range_to_dates(
-                fy_val, f_m, t_m
-            )
+            filter_start_date, filter_end_date = month_range_to_dates(fy_val, f_m, t_m)
         elif period_type == "custom_dates" or (raw_s_date and raw_e_date):
             try:
                 s_d = datetime.strptime(raw_s_date, "%Y-%m-%d").date()
@@ -362,7 +360,9 @@ def my_plan_view(request):
             sequence = a.get("visit_number") or a.get("training_number") or ""
             if a.get("is_cluster_invited"):
                 cluster_from = f"{a.get('cluster_name', '')} (Invited)"
-            elif a.get("delivery_type") == "in-school" or "in_school" in a.get("activity_type", ""):
+            elif a.get("delivery_type") == "in-school" or "in_school" in a.get(
+                "activity_type", ""
+            ):
                 cluster_from = "School Visit"
             elif a.get("is_core"):
                 cluster_from = "Core School"
@@ -405,7 +405,9 @@ def my_plan_view(request):
                     a.get("salesforce_activity_id") or "",
                     a.get("evidence_status") or "",
                     a.get("budget_status") or "",
-                    a.get("verification_status") or a.get("ia_verification_status") or "",
+                    a.get("verification_status")
+                    or a.get("ia_verification_status")
+                    or "",
                     a.get("payment_status") or "",
                     a.get("budget_total", ""),
                 ]
@@ -3505,7 +3507,12 @@ def day_package_view(request):
 def my_plan_export_drawer_view(request):
     """Drawer to customize period from (Month) to (Month) and export My Plan to Excel."""
     from datetime import timedelta
-    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     raw_from_month = (
@@ -3551,4 +3558,3 @@ def my_plan_export_drawer_view(request):
         "partials/oversight/export_customization_drawer.html",
         context,
     )
-
