@@ -144,14 +144,14 @@
 
 @media (max-width: 767.98px) {
   .edify-popup-dialog {
-    padding: 0.75rem;
+    padding: 1.25rem;
   }
 
   .edify-popup-dialog__surface {
-    width: 100% !important;
-    max-width: 100% !important;
-    max-height: calc(100dvh - 1.5rem) !important;
-    border-radius: var(--edify-radius-xl) !important;
+    width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-height: min(84svh, 44rem) !important;
+    border-radius: var(--edify-radius-xl, 1rem) !important;
   }
 }
 
@@ -516,20 +516,23 @@
 
 @media (max-width: 47.99rem) {
   .drawer-surface.type-center {
-    top: 0.5rem;
-    right: 0.5rem;
-    bottom: 0.5rem;
-    left: 0.5rem;
-    width: auto;
-    max-width: none;
-    max-height: none !important;
-    height: auto;
-    border-radius: var(--edify-radius-md) !important;
-    transform: translateY(1rem) scale(0.985);
+    inset: 0 !important;
+    margin: auto !important;
+    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
+    block-size: fit-content !important;
+    max-block-size: min(84svh, 44rem) !important;
+    height: auto !important;
+    max-height: min(84svh, 44rem) !important;
+    border-radius: var(--edify-drawer-radius, 1rem) !important;
+    border: 1px solid var(--edify-border) !important;
+    transform: translateY(0.75rem) scale(0.97);
   }
 
   .drawer-surface.type-center.active {
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 
   .drawer-surface.type-center::after {
@@ -881,35 +884,34 @@
    with the mobile browser's chrome SHOWN, so the sheet does not grow under an
    address bar that reappears on scroll. */
 @media (max-width: 767.98px) {
-  .drawer-surface {
-    /* A floating card, not a full-bleed sheet. It sits below the top bar with
-       a margin on every side, so the page stays visible around it and the
-       drawer reads as something laid ON the page rather than a second screen
-       that replaced it — the same object the desktop shows, scaled down.
-       `svh` keeps it clear of the mobile browser chrome when that reappears. */
-    top: 0.75rem !important;
-    bottom: auto !important;
-    left: 0.75rem !important;
-    right: 0.75rem !important;
-    width: auto !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: 82svh !important;
-    border-radius: var(--drawer-radius) !important;
-    border-left: 1px solid var(--edify-border) !important;
-    /* Clears its own top margin on the way in, so it enters fully off-screen
-       rather than peeking. */
-    transform: translateY(calc(-100% - 1rem)) !important;
-  }
-  .drawer-surface.active {
-    transform: translateY(0) !important;
-  }
+  .drawer-surface,
   .drawer-surface.type-center {
-    top: 0.75rem !important;
-    bottom: auto !important;
-    left: 0.75rem !important;
-    right: 0.75rem !important;
-    max-width: none !important;
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
+    block-size: fit-content !important;
+    height: auto !important;
+    max-block-size: min(84svh, 44rem) !important;
+    max-height: min(84svh, 44rem) !important;
+    border-radius: var(--drawer-radius, 1rem) !important;
+    border: 1px solid var(--edify-border) !important;
+    box-shadow: var(--drawer-shadow) !important;
+    overflow: hidden auto !important;
+    transform: translateY(0.75rem) scale(0.97) !important;
+    opacity: 0;
+  }
+  .drawer-surface.active,
+  .drawer-surface.type-center.active {
+    transform: none !important;
+    opacity: 1 !important;
   }
 }
 
@@ -1933,19 +1935,23 @@
 
 @media (max-width: 47.99rem) {
   .drawer-surface.type-center {
-    top: 0.5rem !important;
-    right: 0.5rem !important;
-    bottom: 0.5rem !important;
-    left: 0.5rem !important;
-    width: auto !important;
-    max-width: none !important;
-    max-height: none !important;
-    border-radius: var(--edify-radius-md) !important;
-    transform: translateY(1rem) scale(0.985) !important;
+    inset: 0 !important;
+    margin: auto !important;
+    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
+    block-size: fit-content !important;
+    height: auto !important;
+    max-block-size: min(84svh, 44rem) !important;
+    max-height: min(84svh, 44rem) !important;
+    border-radius: var(--edify-drawer-radius, 1rem) !important;
+    border: 1px solid var(--edify-border) !important;
+    transform: translateY(0.75rem) scale(0.97) !important;
   }
 
   .drawer-surface.type-center.active {
-    transform: translateY(0) scale(1) !important;
+    transform: none !important;
   }
 
   .drawer-surface.type-center::after {
@@ -2156,38 +2162,37 @@
 
 @media (max-width: 47.99rem) {
   :root {
-    --edify-drawer-inset: 0.75rem;
-    --edify-drawer-radius: 1.125rem;
+    --edify-drawer-inset: 1.25rem;
+    --edify-drawer-radius: 1rem;
   }
 
-  /* A phone gets a sheet, not a card (owner, 2026-09-23: "full-height or
-     near-full-height sheets … avoid narrow desktop drawers squeezed onto the
-     screen"). It rises from the bottom edge at the full width of the screen
-     and grows with its content up to nearly the full height, leaving a strip
-     of the receded page above it; its title and action shelf stay pinned
-     while the body scrolls, and the shelf clears the home indicator (below).
-     Tablets and wider keep the centred card. */
+  /* Floating drawers are smaller, narrower, centered and not full-screen on mobile across the platform. */
   .drawer-surface,
   .drawer-surface.type-center,
   .drawer-surface.type-right_top {
-    inset: auto 0 0 0 !important;
-    margin: 0 !important;
-    inline-size: 100% !important;
-    max-inline-size: none !important;
-    /* svh, not dvh: the mobile browser's chrome reappearing on scroll must
-       not resize the sheet out from under a form. */
-    max-block-size: calc(100svh - var(--edify-sheet-top-gap) - env(safe-area-inset-top)) !important;
-    border-inline: 0 !important;
-    border-block-end: 0 !important;
-    border-end-start-radius: 0 !important;
-    border-end-end-radius: 0 !important;
-    transform: translateY(1.5rem) !important;
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
+    width: min(calc(100vw - 2.5rem), 22rem) !important;
+    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
+    block-size: fit-content !important;
+    height: auto !important;
+    max-block-size: min(84svh, 44rem) !important;
+    max-height: min(84svh, 44rem) !important;
+    border: 1px solid var(--edify-border) !important;
+    border-radius: var(--edify-drawer-radius, 1rem) !important;
+    box-shadow: var(--edify-drawer-shadow, var(--drawer-shadow)) !important;
+    overflow: hidden auto !important;
+    transform: translateY(0.75rem) scale(0.97) !important;
   }
 
   .drawer-surface.active,
   .drawer-surface.type-center.active,
   .drawer-surface.type-right_top.active {
     transform: none !important;
+    opacity: 1 !important;
   }
 
   /* The page behind barely moves on a small screen — at this size the scale
@@ -2349,29 +2354,29 @@
 
 @media (max-width: 47.99rem) {
   .drawer-surface .drawer-header {
-    padding: 1.25rem 3.5rem 0.75rem 1.25rem !important;
+    padding: 1.125rem 3.25rem 0.75rem 1.125rem !important;
   }
 
   .drawer-surface .drawer-close-btn {
-    inset-block-start: 0.9rem !important;
-    inset-inline-end: 0.9rem !important;
-    inline-size: 2.5rem !important;
-    block-size: 2.5rem !important;
+    inset-block-start: 0.875rem !important;
+    inset-inline-end: 0.875rem !important;
+    inline-size: 2.25rem !important;
+    block-size: 2.25rem !important;
   }
 
   .drawer-surface .drawer-body {
-    padding: 0.25rem 1.25rem 0 !important;
+    padding: 0.25rem 1.125rem 0 !important;
   }
 
   .drawer-surface .drawer-body:not(:has(.drawer-footer)) {
-    padding-block-end: 1.25rem !important;
+    padding-block-end: 1.125rem !important;
   }
 
   .drawer-surface .drawer-footer {
-    margin: 1rem -1.25rem 0 !important;
-    padding: 0.9rem 1.25rem calc(0.9rem + env(safe-area-inset-bottom)) !important;
-    border-end-start-radius: 0;
-    border-end-end-radius: 0;
+    margin: 1rem -1.125rem 0 !important;
+    padding: 0.875rem 1.125rem calc(0.875rem + env(safe-area-inset-bottom)) !important;
+    border-end-start-radius: calc(var(--edify-drawer-radius, 1rem) - 1px) !important;
+    border-end-end-radius: calc(var(--edify-drawer-radius, 1rem) - 1px) !important;
   }
 
   /* No grab handle. The little pill at the top belonged to the sheet this

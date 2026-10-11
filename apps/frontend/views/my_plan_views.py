@@ -15,7 +15,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from datetime import date
+from datetime import date, datetime
 from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
 
@@ -197,7 +197,23 @@ def my_plan_view(request):
     # one of them holds; the team and country plans export from their own
     # oversight pages. CSV stays, so existing links keep working.
     export = request.GET.get("export", "").strip().lower()
-    if export in {"csv", "xlsx", "excel"}:
+    if not export and request.GET.get("format", "").strip().lower() in {
+        "xlsx",
+        "excel",
+    }:
+        export = "xlsx"
+    if export in {"csv", "xlsx", "excel"} or any(
+        k in request.GET
+        for k in (
+            "from_month",
+            "to_month",
+            "start_date",
+            "end_date",
+            "period_type",
+        )
+    ):
+        if not export:
+            export = "xlsx"
         # Owner, 2026-09-27: "All exported plan should have school ID." The
         # School ID is the school's business code; a cluster session a row
         # stands for as a whole has none. A cluster training is listed once
@@ -208,9 +224,22 @@ def my_plan_view(request):
             "Type",
             "School / Cluster",
             "District",
+            "Cluster Planned From",
+            "Training Name",
+            "Mode of Delivery",
+            "Purpose of Visit / Topic",
+            "SSA Intervention",
             "Planned Date",
             "Status",
             "Owner",
+            "Execution Role",
+            "Facilitated By",
+            "Participants",
+            "Salesforce ID",
+            "Evidence",
+            "Budget Status",
+            "Verification Status",
+            "Payment Status",
             "Budget (UGX)",
         ]
         # Every table the page shows, the Core School and Programme School
@@ -229,6 +258,96 @@ def my_plan_view(request):
             ),
             *context.get("programme_activities", []),
         ]
+
+        from datetime import date
+        from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+        from apps.core.fy import get_operational_fy, month_range_to_dates
+        from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
+
+        period_type = (request.GET.get("period_type") or "").strip().lower()
+        raw_from_m = (request.GET.get("from_month") or "").strip()
+        raw_to_m = (request.GET.get("to_month") or "").strip()
+        raw_s_date = (request.GET.get("start_date") or "").strip()
+        raw_e_date = (request.GET.get("end_date") or "").strip()
+        fy_val = str(context.get("fy") or query.get("fy") or get_operational_fy())
+
+        filter_start_date = None
+        filter_end_date = None
+        if period_type == "month_range" or (
+            raw_from_m.isdigit() and raw_to_m.isdigit()
+        ):
+            f_m = int(raw_from_m) if raw_from_m.isdigit() else 10
+            t_m = int(raw_to_m) if raw_to_m.isdigit() else 9
+            filter_start_date, filter_end_date = month_range_to_dates(
+                fy_val, f_m, t_m
+            )
+        elif period_type == "custom_dates" or (raw_s_date and raw_e_date):
+            try:
+                s_d = datetime.strptime(raw_s_date, "%Y-%m-%d").date()
+                e_d = datetime.strptime(raw_e_date, "%Y-%m-%d").date()
+                if s_d > e_d:
+                    s_d, e_d = e_d, s_d
+                filter_start_date, filter_end_date = s_d, e_d
+            except (ValueError, TypeError):
+                pass
+
+        if filter_start_date is not None and filter_end_date is not None:
+
+            def _item_date(a) -> date | None:
+                p_d = a.get("planned_date")
+                if isinstance(p_d, date):
+                    return p_d
+                if isinstance(p_d, str) and p_d:
+                    try:
+                        return date.fromisoformat(p_d)
+                    except ValueError:
+                        pass
+                return None
+
+            feed = [
+                a
+                for a in feed
+                if (d_val := _item_date(a)) is not None
+                and filter_start_date <= d_val <= filter_end_date
+            ]
+
+        req_status = (request.GET.get("status") or "").strip().lower()
+        if req_status == "completed":
+            feed = [
+                a
+                for a in feed
+                if a.get("raw_status") in COMPLETED_WORK_STATUSES
+                or "complet" in str(a.get("status", "")).lower()
+                or "complet" in str(a.get("status_label", "")).lower()
+                or "delivered" in str(a.get("status", "")).lower()
+            ]
+        elif req_status == "scheduled":
+            feed = [
+                a
+                for a in feed
+                if "schedul" in str(a.get("status", "")).lower()
+                or "schedul" in str(a.get("status_label", "")).lower()
+            ]
+        elif req_status == "in_progress":
+            feed = [
+                a
+                for a in feed
+                if "progress" in str(a.get("status", "")).lower()
+                or "progress" in str(a.get("status_label", "")).lower()
+            ]
+
+        req_act = (request.GET.get("activity_type") or "").strip().lower()
+        if req_act == "visits_trainings":
+            feed = [
+                a
+                for a in feed
+                if a.get("activity_type") in VISIT_TYPES
+                or a.get("activity_type") in TRAINING_TYPES
+            ]
+        elif req_act == "visits":
+            feed = [a for a in feed if a.get("activity_type") in VISIT_TYPES]
+        elif req_act == "trainings":
+            feed = [a for a in feed if a.get("activity_type") in TRAINING_TYPES]
         rows = []
         seen = set()
         for a in feed:
@@ -241,6 +360,28 @@ def my_plan_view(request):
                 continue
             seen.add(key)
             sequence = a.get("visit_number") or a.get("training_number") or ""
+            if a.get("is_cluster_invited"):
+                cluster_from = f"{a.get('cluster_name', '')} (Invited)"
+            elif a.get("delivery_type") == "in-school" or "in_school" in a.get("activity_type", ""):
+                cluster_from = "School Visit"
+            elif a.get("is_core"):
+                cluster_from = "Core School"
+            elif a.get("cluster_name"):
+                cluster_from = a.get("cluster_name", "")
+            else:
+                cluster_from = a.get("school_cluster_name", "")
+
+            training_name = (
+                a.get("training_name")
+                or a.get("meeting_training")
+                or a.get("activity_name")
+                or ""
+            )
+            mode_of_delivery = (
+                a.get("training_mode")
+                or a.get("meeting_kind")
+                or ("In-School" if not is_cluster_row else "Cluster Group")
+            )
             rows.append(
                 [
                     a["id"],
@@ -250,12 +391,27 @@ def my_plan_view(request):
                     else a["activity_type_label"],
                     a["cluster_name"] if is_cluster_row else a["school_name"],
                     a["cluster_district"] if is_cluster_row else a["school_district"],
+                    cluster_from,
+                    training_name,
+                    mode_of_delivery,
+                    a.get("purpose") or "",
+                    a.get("focus_intervention") or "",
                     a["planned_date"] or "",
                     a["status_label"],
                     a.get("owner", ""),
+                    a.get("execution_role", ""),
+                    a.get("facilitated_by") or a.get("partner_name") or "",
+                    a.get("expected_participants") or "",
+                    a.get("salesforce_activity_id") or "",
+                    a.get("evidence_status") or "",
+                    a.get("budget_status") or "",
+                    a.get("verification_status") or a.get("ia_verification_status") or "",
+                    a.get("payment_status") or "",
                     a.get("budget_total", ""),
                 ]
             )
+
+        budget_col_idx = headers.index("Budget (UGX)") + 1
 
         if export in {"xlsx", "excel"}:
             from apps.core.excel import workbook_response
@@ -268,7 +424,7 @@ def my_plan_view(request):
                         "headers": headers,
                         "rows": rows,
                         # Budget is a number, and a plan people add up.
-                        "number_formats": {9: "#,##0"},
+                        "number_formats": {budget_col_idx: "#,##0"},
                     }
                 ],
             )
@@ -3343,3 +3499,56 @@ def day_package_view(request):
     except ValueError:
         return JsonResponse({"error": "date must be YYYY-MM-DD"}, status=400)
     return JsonResponse(build_day_package(request.user, day=target))
+
+
+@require_page_permission("my_plan")
+def my_plan_export_drawer_view(request):
+    """Drawer to customize period from (Month) to (Month) and export My Plan to Excel."""
+    from datetime import timedelta
+    from apps.core.fy import FY_MONTHS, fy_options, get_fy_date_range, get_operational_fy
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    raw_from_month = (
+        request.GET.get("from_month") or request.GET.get("month") or ""
+    ).strip()
+    raw_to_month = (request.GET.get("to_month") or "").strip()
+    selected_from_month = (
+        int(raw_from_month)
+        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
+        else 10
+    )
+    selected_to_month = (
+        int(raw_to_month)
+        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
+        else 9
+    )
+
+    fy_start, fy_end = get_fy_date_range(fy)
+    default_start_date = fy_start.strftime("%Y-%m-%d")
+    default_end_date = (fy_end - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    hidden_keys = ("district", "staff", "q")
+    hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    hidden_params["export"] = "xlsx"
+
+    context = {
+        "title": "Export My Plan",
+        "subtitle": "Customize period from (Month) to (Month) and download to Excel",
+        "export_url": "/my-plan/",
+        "selected_fy": fy,
+        "fy_options": fy_options(),
+        "months": FY_MONTHS,
+        "selected_from_month": selected_from_month,
+        "selected_to_month": selected_to_month,
+        "default_start_date": default_start_date,
+        "default_end_date": default_end_date,
+        "hidden_params": hidden_params,
+        "show_status_filter": True,
+        "show_activity_type_filter": True,
+    }
+    return render(
+        request,
+        "partials/oversight/export_customization_drawer.html",
+        context,
+    )
+

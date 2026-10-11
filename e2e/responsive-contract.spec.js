@@ -195,31 +195,31 @@ test.describe('Responsive contract — behaviours', () => {
     }
   });
 
-  test('a drawer on a phone is a sheet from the bottom edge; a tablet keeps the card', async ({ browser, baseURL, browserName, isMobile }) => {
+  test('a drawer on a phone is a centered narrower floating card; a tablet keeps the card', async ({ browser, baseURL, browserName, isMobile }) => {
     onlyChromiumDesktop({ browserName, isMobile });
     const { context, page } = await openAs(browser, baseURL, TOUCH_CONTEXT, { width: 390, height: 844 }, 'cceo@edify.org');
     try {
       await page.goto('/clusters');
       await page.locator('[hx-get="/clusters/create-drawer"]').first().click();
-      const sheet = page.locator('.drawer-surface.active');
-      await expect(sheet).toBeVisible();
+      const card = page.locator('.drawer-surface.active');
+      await expect(card).toBeVisible();
       await page.addStyleTag({ content: '*,*::before,*::after{transition:none!important;animation:none!important}' });
       for (const [width, height] of [[320, 568], [390, 844], [430, 932]]) {
         await page.setViewportSize({ width, height });
-        // The sheet re-lays out a frame or two after the resize: at 320x568 it
-        // measured 3px off at once and 0 within 200ms locally, and 6px on a CI
-        // runner. Read the bottom edge once it has settled.
+        // The drawer re-lays out after resize. Measure once settled.
         await expect.poll(async () => {
-          const settling = await sheet.boundingBox();
-          return Math.abs(settling.y + settling.height - height);
-        }).toBeLessThanOrEqual(3);
-        const box = await sheet.boundingBox();
-        // Edge to edge and flush with the bottom, within emulation rounding.
-        expect(Math.abs(box.x)).toBeLessThan(1);
-        expect(Math.abs(box.width - width)).toBeLessThan(2);
+          const settling = await card.boundingBox();
+          return Math.abs(settling.x + settling.width / 2 - width / 2);
+        }).toBeLessThanOrEqual(2);
+        const box = await card.boundingBox();
+        // Centered, narrower card not filling the screen width or height.
+        expect(box.x).toBeGreaterThanOrEqual(8);
+        expect(box.width).toBeLessThan(width);
+        expect(box.width).toBeLessThanOrEqual(Math.min(width - 24, 352));
         expect(box.y).toBeGreaterThanOrEqual(8);
-        expect(await sheet.evaluate(e => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(2);
-        const submit = sheet.locator('button[type="submit"]').last();
+        expect(box.y + box.height).toBeLessThanOrEqual(height);
+        expect(await card.evaluate(e => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(2);
+        const submit = card.locator('button[type="submit"]').last();
         if (await submit.count()) {
           const action = await submit.boundingBox();
           expect(action.y + action.height).toBeLessThanOrEqual(height);
@@ -227,9 +227,9 @@ test.describe('Responsive contract — behaviours', () => {
         }
       }
       await page.setViewportSize({ width: 834, height: 1194 });
-      const card = await sheet.boundingBox();
-      expect(Math.abs(card.x + card.width / 2 - 417)).toBeLessThan(2);
-      expect(card.x).toBeGreaterThanOrEqual(8);
+      const tabletCard = await card.boundingBox();
+      expect(Math.abs(tabletCard.x + tabletCard.width / 2 - 417)).toBeLessThan(2);
+      expect(tabletCard.x).toBeGreaterThanOrEqual(8);
     } finally {
       await context.close();
     }

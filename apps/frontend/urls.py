@@ -763,15 +763,30 @@ urlpatterns = [
         name="team_planning_oversight_export",
     ),
     path(
+        "team-planning-oversight/export-drawer",
+        oversight_views.planning_export_drawer_view,
+        name="team_planning_oversight_export_drawer",
+    ),
+    path(
         "country-planning-oversight/export",
         oversight_views.country_planning_export_view,
         name="country_planning_oversight_export",
+    ),
+    path(
+        "country-planning-oversight/export-drawer",
+        oversight_views.planning_export_drawer_view,
+        name="country_planning_oversight_export_drawer",
     ),
     path(
         "team-planning-oversight/projects/export",
         oversight_views.special_project_export_view,
         {"project_id": "all"},
         name="special_projects_export_all",
+    ),
+    path(
+        "team-planning-oversight/projects/export-drawer",
+        oversight_views.project_export_drawer_view,
+        name="special_projects_export_drawer",
     ),
     path(
         "team-planning-oversight/projects/<str:project_id>/export",
@@ -915,6 +930,16 @@ urlpatterns = [
         oversight_views.cluster_oversight_view,
         name="cluster_oversight",
     ),
+    path(
+        "cluster-oversight/export",
+        oversight_views.cluster_oversight_export_view,
+        name="cluster_oversight_export",
+    ),
+    path(
+        "cluster-oversight/export-drawer",
+        oversight_views.cluster_oversight_export_drawer_view,
+        name="cluster_oversight_export_drawer",
+    ),
     # Cluster Management (owner brief, 2026-10-08): one page whose sections
     # are tabs, and the page where the scores' weights are set. `scoring`
     # is declared before the section so it is not read as one.
@@ -969,6 +994,11 @@ urlpatterns = [
         "partner-oversight/export",
         oversight_views.partner_oversight_export_view,
         name="partner_oversight_export",
+    ),
+    path(
+        "partner-oversight/export-drawer",
+        oversight_views.partner_oversight_export_drawer_view,
+        name="partner_oversight_export_drawer",
     ),
     # Taking work back. The preview is a GET because it changes nothing and
     # must be safe to open; the two POSTs are the only writes.
@@ -1203,6 +1233,7 @@ urlpatterns = [
     path("today/snooze", today_views.today_snooze, name="today_snooze"),
     path("today/unsnooze", today_views.today_unsnooze, name="today_unsnooze"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
+    path("my-plan/", my_plan_views.my_plan_view),
     # The ticked activities, moved or cancelled together (owner, 2026-10-05).
     path(
         "activity-selection/reschedule",
@@ -1218,6 +1249,11 @@ urlpatterns = [
         "my-plan/day-package",
         my_plan_views.day_package_view,
         name="my_plan_day_package",
+    ),
+    path(
+        "my-plan/export-drawer",
+        my_plan_views.my_plan_export_drawer_view,
+        name="my_plan_export_drawer",
     ),
     path(
         "my-plan/<str:activity_id>",
