@@ -47,12 +47,12 @@
     <div x-show="periodMode === 'month_range'" class="space-y-2 pt-1">
       <div class="grid grid-cols-2 gap-2.5">
         <div>
-          <label for="export_from_month" class="block text-[11px] font-medium text-slate-600 mb-1">From (Month)</label>
+          <label for="export_from_month" class="block edify-text-caption font-medium text-slate-600 mb-1">From (Month)</label>
           <select
             name="from_month"
             id="export_from_month"
             x-model="fromMonth"
-            class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+            class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
           >
             {% for m_num, m_name in months %}
               <option value="{{ m_num }}" {% if m_num == selected_from_month %}selected{% endif %}>{{ m_name }}</option>
@@ -60,12 +60,12 @@
           </select>
         </div>
         <div>
-          <label for="export_to_month" class="block text-[11px] font-medium text-slate-600 mb-1">To (Month)</label>
+          <label for="export_to_month" class="block edify-text-caption font-medium text-slate-600 mb-1">To (Month)</label>
           <select
             name="to_month"
             id="export_to_month"
             x-model="toMonth"
-            class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+            class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
           >
             {% for m_num, m_name in months %}
               <option value="{{ m_num }}" {% if m_num == selected_to_month %}selected{% endif %}>{{ m_name }}</option>
@@ -78,34 +78,34 @@
     <!-- Custom Date Range -->
     <div x-show="periodMode === 'custom_dates'" x-cloak class="grid grid-cols-2 gap-2.5 pt-1">
       <div>
-        <label for="export_start_date" class="block text-[11px] font-medium text-slate-600 mb-1">Start Date</label>
+        <label for="export_start_date" class="block edify-text-caption font-medium text-slate-600 mb-1">Start Date</label>
         <input
           type="date"
           name="start_date"
           id="export_start_date"
           value="{{ default_start_date }}"
-          class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+          class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
         >
       </div>
       <div>
-        <label for="export_end_date" class="block text-[11px] font-medium text-slate-600 mb-1">End Date</label>
+        <label for="export_end_date" class="block edify-text-caption font-medium text-slate-600 mb-1">End Date</label>
         <input
           type="date"
           name="end_date"
           id="export_end_date"
           value="{{ default_end_date }}"
-          class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+          class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
         >
       </div>
     </div>
 
     <!-- Financial Year (FY) -->
     <div class="pt-1">
-      <label for="export_fy" class="block text-[11px] font-medium text-slate-600 mb-1">Financial Year</label>
+      <label for="export_fy" class="block edify-text-caption font-medium text-slate-600 mb-1">Financial Year</label>
       <select
         name="fy"
         id="export_fy"
-        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
       >
         {% for option in fy_options %}
           <option value="{{ option }}" {% if option == selected_fy %}selected{% endif %}>FY {{ option }}</option>
@@ -121,7 +121,7 @@
     <select
       name="status"
       id="export_status"
-      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
     >
       <option value="completed" selected>Completed Plans (Visits &amp; Trainings)</option>
       <option value="all">All Plan Statuses</option>
@@ -138,7 +138,7 @@
     <select
       name="activity_type"
       id="export_activity_type"
-      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-white text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
     >
       <option value="visits_trainings" selected>Visits &amp; Trainings</option>
       <option value="visits">Visits Only</option>
@@ -156,7 +156,7 @@
       </svg>
       <span>Export format: <strong>Microsoft Excel (.xlsx)</strong></span>
     </div>
-    <span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wider">Default</span>
+    <span class="edify-text-caption text-blue-600 font-semibold uppercase tracking-wider">Default</span>
   </div>
 
   <div class="drawer-footer">
