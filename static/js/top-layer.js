@@ -243,7 +243,8 @@
     scrollUp(state, need);
     var spot = place(panel);
     if (!spot || spot.need <= 0) return;
-    lengthen(panel, state, spot.need);
+    var centered = Boolean(state.trigger.closest(".type-center, [data-edify-drawer]"));
+    lengthen(panel, state, centered ? spot.need * 2 : spot.need);
     spot = place(panel);
     if (spot && spot.need > 0) scrollUp(state, spot.need);
   }
