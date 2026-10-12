@@ -1754,24 +1754,35 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                 school_lookup[s.id] = s
 
         from apps.activities.models import Activity
-        from apps.budget.models import CostSetting
+        from apps.budget.costing import (
+            CLUSTER_MEALS_RATE_KEY,
+            GROUP_TRAINING_MEALS_RATE_KEY,
+        )
+        from apps.budget.costing_service import planned_meal_rates
 
         act_obj_lookup = {a.id: a for a in Activity.objects.filter(id__in=act_ids)}
-        # A cluster meeting feeds its participants at the cluster meals rate
-        # and a cluster training at the group training meals rate (session
-        # costing spec, 2026-09-26); each defaults to the seeded 5,000.
-        active_meal_rates = {
-            rate.key: int(rate.unit_cost)
-            for rate in CostSetting.objects.filter(
-                key__in=["cluster_meetings_trainings_meals", "group_training_meals"],
-                catalogue__is_active=True,
-            )
-            if rate.unit_cost
+        # One participant's meal at each session, read from the session's
+        # own cost lines, else the catalogue: a cluster meeting feeds at the
+        # cluster meals rate and a cluster training at the group training
+        # meals rate (session costing spec, 2026-09-26). Never a literal.
+        meal_rates = {
+            **planned_meal_rates(
+                [
+                    a
+                    for a in act_obj_lookup.values()
+                    if a.activity_type in CLUSTER_MEETING_TYPES
+                ],
+                CLUSTER_MEALS_RATE_KEY,
+            ),
+            **planned_meal_rates(
+                [
+                    a
+                    for a in act_obj_lookup.values()
+                    if a.activity_type not in CLUSTER_MEETING_TYPES
+                ],
+                GROUP_TRAINING_MEALS_RATE_KEY,
+            ),
         }
-        meeting_meal_rate = active_meal_rates.get(
-            "cluster_meetings_trainings_meals", 5000
-        )
-        training_meal_rate = active_meal_rates.get("group_training_meals", 5000)
 
         for group in owner_groups:
             new_planned_trainings = []
@@ -1814,11 +1825,7 @@ def _partition_owner_groups_by_stream(owner_groups_or_items, request_user):
                         pps = max(1, total_p // len(target_schools))
                     else:
                         pps = 2
-                meal_unit_rate = (
-                    meeting_meal_rate
-                    if act_obj and act_obj.activity_type in CLUSTER_MEETING_TYPES
-                    else training_meal_rate
-                )
+                meal_unit_rate = meal_rates.get(act_id) or 0
                 per_school_meal_cost = pps * meal_unit_rate
 
                 if target_schools:
@@ -2743,12 +2750,13 @@ def _filter_export_items(items, request, period: dict) -> list:
     # 2. Plan Status filter
     status = (request.GET.get("status") or "").strip().lower()
     if status == "completed":
+        # By the work's status, never by its letters: "completion_started"
+        # is work still being completed.
         filtered = [
             it
             for it in filtered
             if getattr(it, "is_completed", False)
             or getattr(it, "activity_status", "") in COMPLETED_WORK_STATUSES
-            or "complet" in getattr(it, "activity_status", "").lower()
             or getattr(it, "delivery_phase", "") == "completed"
         ]
     elif status == "scheduled":
@@ -2845,7 +2853,7 @@ def team_planning_export_view(request):
     items = oversight.build_items(
         request.user,
         staff_id=(request.GET.get("team_member") or "").strip() or None,
-        filters=oversight.read_filters(request),
+        filters=oversight.export_filters(request),
         **_plan_period(period),
     )
     scope = oversight.resolve_oversight_scope(request.user)
@@ -2878,7 +2886,7 @@ def country_planning_export_view(request):
     items = oversight.build_items(
         request.user,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
-        filters=oversight.read_filters(request),
+        filters=oversight.export_filters(request),
         **_plan_period(period),
     )
     items = _filter_export_items(items, request, period)
@@ -2987,7 +2995,7 @@ def special_project_export_view(request, project_id: str = "all"):
     if kind != export_kinds.ALL:
         wants_training = kind in (export_kinds.GROUP_TRAININGS, export_kinds.TRAININGS)
         for proj in projects:
-            if kind == export_kinds.VISITS_TRAININGS:
+            if kind in (export_kinds.VISITS_TRAININGS, export_kinds.PLANNED):
                 continue
             if kind in (export_kinds.MEETINGS, export_kinds.ONLINE):
                 proj.school_rows = []
@@ -3953,11 +3961,13 @@ def partner_oversight_export_view(request):
         **_service_period(period),
     )
 
+    # The drawer's kind of work and plan status are the export's own, applied
+    # below; the workspace filter reads only the page's own values.
     ws_act = (request.GET.get("activity_type") or "").strip()
-    if ws_act in ("visits_trainings", "visits", "trainings", "all"):
+    if ws_act in export_kinds.KINDS:
         ws_act = ""
     ws_status = (request.GET.get("status") or "").strip()
-    if ws_status in ("all", "completed"):
+    if ws_status in export_kinds.STATUS_LABELS:
         ws_status = ""
 
     items = partner_oversight.filter_workspace(
@@ -3991,8 +4001,9 @@ def partner_oversight_export_view(request):
             if it.delivery_phase == "completed"
             or it.activity_status in _COMPLETE_STATUSES
         ]
-
-    from apps.core import export_kinds
+    elif req_status in export_kinds.LIVE_STATUSES:
+        # The page's own phase: a moved activity is still scheduled there.
+        items = [it for it in items if it.delivery_phase == req_status]
 
     items = export_kinds.filter_items(
         items,

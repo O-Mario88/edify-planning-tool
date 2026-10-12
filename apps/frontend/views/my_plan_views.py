@@ -1,6 +1,7 @@
 from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
+from apps.core import export_kinds
 from apps.ssa.plan_alignment import verdict_display
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
@@ -143,6 +144,30 @@ def _readiness_list(request, context) -> dict | None:
     }
 
 
+def _export_format(request) -> str:
+    """ "csv" or "xlsx" when this My Plan request is an export, else "". The
+    Export options drawer names the period without naming a format; its
+    request is a workbook."""
+    export = request.GET.get("export", "").strip().lower()
+    if not export and request.GET.get("format", "").strip().lower() in {
+        "xlsx",
+        "excel",
+    }:
+        export = "xlsx"
+    if export in {"csv", "xlsx", "excel"}:
+        return "csv" if export == "csv" else "xlsx"
+    if any(
+        k in request.GET
+        for k in ("from_month", "to_month", "start_date", "end_date", "period_type")
+    ):
+        return "xlsx"
+    return ""
+
+
+def _is_export_request(request) -> bool:
+    return bool(_export_format(request))
+
+
 @require_page_permission("my_plan")
 def my_plan_view(request):
     """The planning dashboard main view."""
@@ -165,6 +190,13 @@ def my_plan_view(request):
         "period": request.GET.get("period"),
         "q": request.GET.get("q", "").strip(),
     }
+    # An export reads the Export options drawer's kind of work and plan
+    # status itself, below, with their wider meanings. Handed to the page as
+    # its own filters they matched no activity ("visits_trainings" is no
+    # activity type) and every export came out blank (2026-10-12).
+    if _is_export_request(request):
+        query["activity_type"] = None
+        query["status"] = None
 
     context = get_my_plan(request.user, query)
     context["plan_list"] = _readiness_list(request, context)
@@ -196,24 +228,8 @@ def my_plan_view(request):
     # to export all of their plans into Excel." This is the personal plan every
     # one of them holds; the team and country plans export from their own
     # oversight pages. CSV stays, so existing links keep working.
-    export = request.GET.get("export", "").strip().lower()
-    if not export and request.GET.get("format", "").strip().lower() in {
-        "xlsx",
-        "excel",
-    }:
-        export = "xlsx"
-    if export in {"csv", "xlsx", "excel"} or any(
-        k in request.GET
-        for k in (
-            "from_month",
-            "to_month",
-            "start_date",
-            "end_date",
-            "period_type",
-        )
-    ):
-        if not export:
-            export = "xlsx"
+    export = _export_format(request)
+    if export:
         # Owner, 2026-09-27: "All exported plan should have school ID." The
         # School ID is the school's business code; a cluster session a row
         # stands for as a whole has none. A cluster training is listed once
@@ -310,13 +326,12 @@ def my_plan_view(request):
 
         req_status = (request.GET.get("status") or "").strip().lower()
         if req_status == "completed":
+            # By the work's status, never by the label's letters: "Not
+            # Complete" contains "complet", and matched (2026-10-12).
             feed = [
                 a
                 for a in feed
-                if a.get("raw_status") in COMPLETED_WORK_STATUSES
-                or "complet" in str(a.get("status", "")).lower()
-                or "complet" in str(a.get("status_label", "")).lower()
-                or "delivered" in str(a.get("status", "")).lower()
+                if a.get("is_completed") or a.get("status") in COMPLETED_WORK_STATUSES
             ]
         elif req_status == "scheduled":
             feed = [
@@ -3547,6 +3562,7 @@ def my_plan_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,

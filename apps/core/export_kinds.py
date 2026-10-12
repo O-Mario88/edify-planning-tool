@@ -26,6 +26,7 @@ from apps.core.activity_types import (
 )
 
 ALL = "all"
+PLANNED = "planned"
 VISITS_TRAININGS = "visits_trainings"
 VISITS = "visits"
 GROUP_TRAININGS = "group_trainings"
@@ -33,12 +34,15 @@ TRAININGS = "trainings"
 MEETINGS = "meetings"
 ONLINE = "online"
 
-#: The drawer's choices, in its order. ``visits_trainings`` opens selected:
-#: the plan the owner first asked to extract (2026-10-11) was "the completed
-#: (Visit and Training) plan". ``trainings`` (group and in-school together)
-#: is kept for the links that already ask for it.
+#: The drawer's choices, in its order. ``planned`` opens selected: the plan
+#: is "only planned activities (visits and trainings and cluster meetings)
+#: with dates of activity and their budget" (owner, 2026-10-12), so the
+#: default leaves out the programme events and the general work only.
+#: ``trainings`` (group and in-school together) is kept for the links that
+#: already ask for it.
 KIND_CHOICES = (
-    (VISITS_TRAININGS, "Visits & Trainings"),
+    (PLANNED, "Visits, trainings & cluster meetings"),
+    (VISITS_TRAININGS, "Visits & trainings"),
     (VISITS, "Visits only"),
     (GROUP_TRAININGS, "Group trainings only"),
     (MEETINGS, "Cluster meetings only"),
@@ -46,7 +50,22 @@ KIND_CHOICES = (
     (ALL, "All activities (meetings and events included)"),
 )
 
+#: The drawer's plan statuses, by their key. They are the export's own
+#: vocabulary (``scheduled`` is live work, moved or not, read through each
+#: page's own phase), never an activity's status.
+STATUS_LABELS = {
+    "all": "All planned activities",
+    "completed": "Completed only",
+    "scheduled": "Scheduled / live only",
+    "in_progress": "In progress only",
+}
+#: The statuses that name a phase of live work.
+LIVE_STATUSES = frozenset(k for k in STATUS_LABELS if k not in ("all", "completed"))
+
 _TYPES = {
+    PLANNED: frozenset(VISIT_TYPES)
+    | frozenset(TRAINING_TYPES)
+    | frozenset(CLUSTER_MEETING_TYPES),
     VISITS_TRAININGS: frozenset(VISIT_TYPES) | frozenset(TRAINING_TYPES),
     VISITS: frozenset(VISIT_TYPES),
     GROUP_TRAININGS: frozenset(CLUSTER_TRAINING_TYPES),
