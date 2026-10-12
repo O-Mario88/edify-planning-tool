@@ -510,6 +510,8 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
                 "School ID",
                 "School Name",
                 "District",
+                # Owner, 2026-10-12: the District Type beside the District.
+                "District Type",
                 "Cluster Name",
                 "Activity Purpose",
                 "SSA Intervention",
@@ -525,18 +527,26 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
                 "Venue",
             ],
         )
-        data = [cell.value for cell in next(sheet.iter_rows(min_row=2, max_row=2))]
-        self.assertEqual(data[1], "Student Activities")
+        cells = [cell.value for cell in next(sheet.iter_rows(min_row=2, max_row=2))]
+        data = dict(zip(headers, cells))
+        self.assertEqual(data["Activity"], "Student Activities")
         # A programme event is at no school, so it has no School ID.
-        self.assertIn(data[2], ("", None))
-        self.assertEqual(data[6], "Student Conference/Camps - Student camps")
+        self.assertIn(data["School ID"], ("", None))
+        self.assertIn(
+            data["District Type"], ("Primary District", "Secondary District", "Mixed")
+        )
+        self.assertEqual(
+            data["Activity Purpose"], "Student Conference/Camps - Student camps"
+        )
         # No SSA intervention measures a non-school activity.
-        self.assertEqual(data[7], "General")
-        self.assertEqual(data[9], "Group")
-        self.assertEqual(data[13], "Scheduled")
-        self.assertEqual(data[14], "Student Conference/Camps - Student camps")
-        self.assertEqual(data[15], 12)
-        self.assertEqual(data[16], 40)
+        self.assertEqual(data["SSA Intervention"], "General")
+        self.assertEqual(data["Delivery Mode"], "Group")
+        self.assertEqual(data["Status"], "Scheduled")
+        self.assertEqual(
+            data["Activity Title"], "Student Conference/Camps - Student camps"
+        )
+        self.assertEqual(data["Number of Schools"], 12)
+        self.assertEqual(data["Number of Participants"], 40)
         summary = workbook["Plan Summary"]
         summary_headers = [cell.value for cell in next(summary.iter_rows(max_row=1))]
         self.assertEqual(

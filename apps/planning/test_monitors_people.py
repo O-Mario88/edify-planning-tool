@@ -518,7 +518,7 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
         training.refresh_from_db()
         self.assertEqual(training.focus_intervention, "leadership")
 
-    def test_the_export_carries_the_training_name_intervention_and_school_ids(self):
+    def test_the_export_carries_the_training_name_and_intervention(self):
         session = Activity.objects.create(
             cluster=self.cluster,
             activity_type="cluster_training",
@@ -535,11 +535,20 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
             )
         self.client.force_login(self.cd_user)
         response = self.client.get(f"/country-planning-oversight/export?fy={FY}")
-        rows = list(
-            csv.DictReader(b"".join(response.streaming_content).decode().splitlines())
+        from apps.core import plan_export
+
+        tables = plan_export.tables_from_csv(
+            csv.reader(b"".join(response.streaming_content).decode().splitlines())
         )
-        trainings = [row for row in rows if row["Table"] == "Training"]
-        self.assertEqual({row["School ID"] for row in trainings}, {"PPL-1", "PPL-C"})
-        for row in trainings:
-            self.assertEqual(row["Training name"], "Discipleship Dynamics")
-            self.assertEqual(row["SSA intervention"], "Exposure to the Word of God")
+        # One row a session (owner, 2026-10-12: the training columns open on
+        # the Cluster Name and carry no School ID), with its training and its
+        # SSA intervention by name. The page still lists it once per invited
+        # school.
+        trainings = tables[plan_export.SESSION_SHEET]
+        self.assertEqual(len(trainings), 1)
+        self.assertEqual(trainings[0]["Cluster Name"], self.cluster.name)
+        self.assertEqual(trainings[0]["Training"], "Discipleship Dynamics")
+        self.assertEqual(
+            trainings[0]["SSA Intervention"], "Exposure to the Word of God"
+        )
+        self.assertNotIn("School ID", trainings[0])
