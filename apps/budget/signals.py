@@ -10,9 +10,9 @@ from apps.fund_requests.models import AdvanceRequest
     post_save, sender=AdvanceRequest, dispatch_uid="budget.sync_activity_cost_actuals"
 )
 def sync_activity_cost_actuals(sender, instance, **kwargs):
-    from .costing_service import sync_snapshot_actuals
+    from .costing_service import project_snapshot_actuals
 
-    sync_snapshot_actuals(instance.activity_id)
+    project_snapshot_actuals(instance.activity_id)
 
 
 __all__ = []

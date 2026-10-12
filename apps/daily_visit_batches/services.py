@@ -738,7 +738,7 @@ def _write_day_lines(
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
         _rate_card,
-        apply_to_activity,
+        apply_to_activities,
     )
     from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
     from apps.fund_requests.weekly_service import trigger_generate_for_activities
@@ -862,6 +862,7 @@ def _write_day_lines(
         return
 
     allocations = allocate_pool(pool, n)
+    priced = []
     for index, (activity, alloc) in enumerate(zip(activities, allocations)):
         costing_input, own = recipes[activity.id]
         lines = [
@@ -892,12 +893,11 @@ def _write_day_lines(
             cost_missing=bool(recipe_missing),
             missing_items=recipe_missing,
         )
-        apply_to_activity(
-            activity,
-            costing_input,
-            responsible_user_id=responsible_user_id,
-            precomputed_cost=cost,
-        )
+        priced.append((activity, costing_input, cost))
+    # The members are written together: what each needs read and locked is
+    # read and locked once for the day, not once a member
+    # (`apply_to_activities`).
+    apply_to_activities(priced, responsible_user_id=responsible_user_id)
 
     # The weekly request and the monthly draft follow the re-priced lines,
     # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.
