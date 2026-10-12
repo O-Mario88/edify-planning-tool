@@ -571,6 +571,66 @@ def planned_minimum_amounts(activities) -> dict:
     return amounts
 
 
+def catalogue_rate(key: str) -> int | None:
+    """The live catalogue's rate for ``key`` as staff planning reads one: the
+    CD's approved minimum, else the operational rate. None when the card
+    does not carry it."""
+    _, settings = _rate_card(active_catalogue())
+    setting = settings.get(key)
+    if setting is None:
+        return None
+    if setting.approved_minimum is not None:
+        return int(setting.approved_minimum)
+    return int(setting.unit_cost)
+
+
+def planned_meal_rates(activities, default_key: str) -> dict:
+    """What feeding one participant for one day costs at each activity, UGX:
+    the figure a cluster session's per-school rows are split by.
+
+    Read from the activity's own current cost snapshot: its meals line
+    (``apps.budget.costing.MEALS_RATE_KEYS``) re-priced through
+    ``minimum_share`` the way ``planned_minimum_amounts`` prices the whole
+    row, divided by the heads-times-days it was priced for. A session not
+    yet costed reads the live catalogue's ``default_key`` rate. None when
+    neither says. Nothing is assumed (owner, 2026-10-12: "delete the
+    hardcoded figure and fetch everything from the database"); the 5,000 the
+    plan tables used to show was a literal that no catalogue edit reached.
+    """
+    from .costing import MEALS_RATE_KEYS
+
+    ids = [a.id for a in activities]
+    if not ids:
+        return {}
+    snapshots = list(
+        ActivityCostSnapshot.objects.filter(
+            activity_id__in=ids, is_current=True
+        ).values_list(
+            "activity_id", "operational_rate_card_id", "operational_breakdown"
+        )
+    )
+    rates = {
+        (row.catalogue_id, row.key): row
+        for row in CostSetting.objects.filter(
+            catalogue_id__in={s[1] for s in snapshots if s[1]},
+        ).only("catalogue_id", "key", "approved_minimum", "unit_cost")
+    }
+    found = {}
+    for activity_id, rate_card_id, breakdown in snapshots:
+        for line in breakdown or ():
+            key = line.get("key")
+            if key not in MEALS_RATE_KEYS:
+                continue
+            qty = line.get("qty") or 0
+            share = minimum_share(line, setting_for_line(rates, rate_card_id, key))
+            if share is None or not qty:
+                continue
+            found[activity_id] = int(round(share / qty))
+            break
+    fallback = catalogue_rate(default_key)
+    return {i: found.get(i, fallback) for i in ids}
+
+
 def planning_preview_owner(principal, staff_id: str | None = None) -> str:
     """Resolve a staff member's day only within the planner's existing scope."""
     if not staff_id:

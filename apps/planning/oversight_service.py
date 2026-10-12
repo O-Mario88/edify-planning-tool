@@ -1462,21 +1462,31 @@ def apply_filters(items, filters: dict | None):
 
 def read_filters(request) -> dict:
     """The advanced filters present on this request, ignoring blanks."""
+    from apps.core import export_kinds
+
     filters = {}
     for key in FILTER_KEYS:
         val = (request.GET.get(key) or "").strip()
         if not val:
             continue
-        if key == "activity_type" and val in (
-            "visits_trainings",
-            "visits",
-            "trainings",
-            "all",
-        ):
+        # An Export options drawer's kind of work is not an activity type:
+        # the export applies it itself (``export_kinds``). Read as one, it
+        # matched no activity and emptied every export (2026-10-12).
+        if key == "activity_type" and val in export_kinds.KINDS:
             continue
         if key == "status" and val == "all":
             continue
         filters[key] = val
+    return filters
+
+
+def export_filters(request) -> dict:
+    """The advanced filters an export honours. The drawer's plan status
+    (completed, scheduled, in progress) is the export's own, read with its
+    wider meaning by ``_filter_export_items``, never an exact status here:
+    "completed" as one status is a fraction of completed work."""
+    filters = read_filters(request)
+    filters.pop("status", None)
     return filters
 
 

@@ -1941,6 +1941,21 @@ def get_frontend_context(principal, query: dict) -> dict:
             ):
                 _school_lookup[_s.id] = _s
 
+        # One participant's meal at each session, from the session's own cost
+        # lines (else the catalogue): the per-school share is heads × that.
+        from apps.budget.costing import GROUP_TRAINING_MEALS_RATE_KEY
+        from apps.budget.costing_service import planned_meal_rates
+
+        _acts_by_id = {a.id: a for a in activities}
+        _meal_rates = planned_meal_rates(
+            [
+                _acts_by_id[row["id"]]
+                for row in cluster_trainings_list
+                if row.get("id") in _acts_by_id
+            ],
+            GROUP_TRAINING_MEALS_RATE_KEY,
+        )
+
         # Reconstruct cluster_trainings_list
         _new_cluster_trainings_list = []
         for row in cluster_trainings_list:
@@ -1969,7 +1984,7 @@ def get_frontend_context(principal, query: dict) -> dict:
                     or []
                 )
 
-            act_obj = next((a for a in activities if a.id == _act_id), None)
+            act_obj = _acts_by_id.get(_act_id)
             pps = None
             if act_obj:
                 pps = getattr(act_obj, "participants_per_school", None) or getattr(
@@ -1981,7 +1996,8 @@ def get_frontend_context(principal, query: dict) -> dict:
                     pps = max(1, total_p // len(_target_schools))
                 else:
                     pps = 2
-            per_school_meal_cost = pps * 5000
+            _meal_rate = _meal_rates.get(_act_id)
+            per_school_meal_cost = pps * _meal_rate if _meal_rate is not None else None
             # An online training is free: no meal is served at any school
             # (owner, 2026-10-09; apps.activities.online_training).
             if act_obj and is_online_training(act_obj):

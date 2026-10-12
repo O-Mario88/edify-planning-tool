@@ -123,11 +123,15 @@
       id="export_status"
       class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
     >
+      {% comment %}The plan opens selected: what is planned, whatever its
+      status (owner, 2026-10-12: "only planned activities ... with dates of
+      activity and their budget"). Completed-only is a choice, not the
+      default that emptied every plan export before its first completion.{% endcomment %}
       {% if status_choices %}{% for value, text in status_choices %}<option value="{{ value }}"{% if forloop.first %} selected{% endif %}>{{ text }}</option>{% endfor %}{% else %}
-      <option value="completed" selected>Completed Plans (Visits &amp; Trainings)</option>
-      <option value="all">All Plan Statuses</option>
-      <option value="scheduled">Scheduled / Live Only</option>
-      <option value="in_progress">In Progress</option>
+      <option value="all" selected>All planned activities</option>
+      <option value="completed">Completed only</option>
+      <option value="scheduled">Scheduled / live only</option>
+      <option value="in_progress">In progress only</option>
       {% endif %}
     </select>
   </div>
