@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false, caughtUp = '';
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false, caughtUp = '', due = '', mustRead = false;
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -47,8 +47,13 @@
     if (loading || doc.hidden || !regions().length || busy()) return;
     // Asked for while it rests: changes are coming faster than it reads them.
     if (Date.now() < notBefore) { held = true; return; }
+    // The change this read was asked for is already on the page: a read
+    // that began after it (the page's own save, say) came back meanwhile.
+    if (!mustRead && due && caughtUp && due <= caughtUp) { wanted = false; due = ''; return; }
     wanted = false;
     loading = true;
+    mustRead = false;
+    due = '';
     spell = held ? Math.min(spell + 1, 4) : 0;
     held = false;
     var began = Date.now();
@@ -98,7 +103,7 @@
   // the whole page reloaded. A page with no live region still reloads.
   function saved() {
     if (!regions().length) { location.reload(); return; }
-    notBefore = 0; spell = 0; held = false;
+    notBefore = 0; spell = 0; held = false; mustRead = true;
     var tries = 0;
     (function once() {
       var host = doc.getElementById('drawer-container');
@@ -118,9 +123,13 @@
       var data;
       try { data = JSON.parse(event.data); } catch (_) { return; }
       refused = 0;
-      if (data.type === 'plan.changed') { if (!(data.at && caughtUp && data.at <= caughtUp)) soon(); }
+      if (data.type === 'plan.changed') {
+        if (data.at && caughtUp && data.at <= caughtUp) return;
+        if (data.at && data.at > due) due = data.at;
+        soon();
+      }
       // Back after being away: read again only if something changed meanwhile.
-      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) soon();
+      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) { if (data.changed > due) due = data.changed; soon(); }
       if (data.at) seen = data.at;
     };
     stream.onerror = function () {

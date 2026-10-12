@@ -201,6 +201,21 @@ test('the stream\'s echo of the page\'s own save is not read again; a later chan
   assert.equal(p.reads.length, 2);
 });
 
+test('the echo that arrives while the save is still being read is not read again either', async () => {
+  const p = page({ stamped: true, readMs: 600 });
+  await p.wait(2000);
+  const committed = p.now();
+  p.live.saved();
+  await p.wait(100);
+  assert.equal(p.reads.length, 1);
+  p.changed(committed); // the stream's notice lands while the read is in flight
+  await p.wait(4000);
+  assert.equal(p.reads.length, 1, 'read again for a change the first read already showed');
+  p.changed(); // and a change after the read is still read
+  await p.wait(1500);
+  assert.equal(p.reads.length, 2);
+});
+
 test('a save on a page with no live region reloads it, as before', async () => {
   const p = page({ regions: false });
   p.live.saved();
