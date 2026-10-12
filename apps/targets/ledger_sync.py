@@ -109,10 +109,13 @@ def _marks_in_hand(connection):
 
 
 def _marks_wait_for_commit(connection) -> bool:
+    """Inside a transaction the application opened, with the switch on. The
+    blocks a test case wraps its tests in do not count: they never commit."""
     from django.conf import settings
 
-    return connection.in_atomic_block and bool(
-        getattr(settings, "LEDGER_MARKS_AFTER_COMMIT", False)
+    return bool(getattr(settings, "LEDGER_MARKS_AFTER_COMMIT", False)) and any(
+        not getattr(block, "_from_testcase", False)
+        for block in connection.atomic_blocks
     )
 
 
