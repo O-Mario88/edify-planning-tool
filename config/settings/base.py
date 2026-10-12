@@ -989,6 +989,19 @@ LIVE_UPDATES_ENABLED = (
     not in ("0", "false", "no", "off")
 ) and not IS_TESTING
 
+# A save marks its officer's ledger for rebuilding (apps.targets.ledger_sync).
+# Written with the first row of the save, the mark's row stayed locked until
+# the save committed, and a second save for the same officer waited behind it
+# for all of that: in production the one-row write averaged 25.6 ms and waited
+# up to 22.9 s (2026-10-12). It is written the moment the save commits instead.
+# Off under the test runner, where a test's transaction never commits and the
+# mark would never be written; its own tests turn it on.
+# LEDGER_MARKS_AFTER_COMMIT=false writes it inside the save again.
+LEDGER_MARKS_AFTER_COMMIT = (
+    os.environ.get("LEDGER_MARKS_AFTER_COMMIT", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
 # A save that adds several visits to one day prices that day once, when the
 # last of them has joined it, rather than again after each
 # (apps.daily_visit_batches.services.each_day_priced_once; owner, 2026-10-06).

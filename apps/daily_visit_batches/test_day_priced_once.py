@@ -454,7 +454,11 @@ class TheFiguresAreTheSameTest(_ADayOfVisits):
         surplus = self.assertSameFigures(compared)
         # 15 + 40 pricings became 5 + 10.
         self.assertEqual(surplus["activity_cost_snapshot"], {"snapshot": 40})
-        self.assertLess(once, each * 0.6)
+        # Under 0.6 of the statements while every member of a day was written
+        # on its own. A day's members are written together now
+        # (`test_priced_together`), which took most from the way that prices
+        # most often: 1,769 statements against 1,071 when this was measured.
+        self.assertLess(once, each * 0.7)
 
     def test_a_day_away_among_schools_at_home(self):
         """One school in a secondary district makes the whole day a day away:

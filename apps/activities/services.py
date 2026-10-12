@@ -5118,24 +5118,12 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             # unless already locked — same rationale as everywhere else: reschedule
             # is the sanctioned post-approval escape hatch, so it isn't itself
             # blocked, but a locked batch's other members stay frozen).
-            _detach_from_daily_visit_batch(a)
-            from apps.daily_visit_batches.services import reschedule_within_batch
-
-            reschedule_within_batch(
-                activity=a,
-                new_date=a.planned_date,
-                reason=data.get("reason"),
-                principal=principal,
+            from apps.budget.costing_service import rate_cards_held
+            from apps.daily_visit_batches.services import (
+                day_to_join,
+                reschedule_within_batch,
             )
-            # The batch reprices and then calls trigger_generate_for_activity,
-            # which raises the NEW week's request and says nothing about the
-            # old one. The old week therefore kept its full amount while the
-            # new week gained the same amount again -- the same money
-            # requested twice, for work happening once. Staff school visits are
-            # the most common activity there is, and they all take this branch.
-            #
-            # sync_* regenerates every affected bucket, old and new, so the
-            # vacated week empties instead of being left holding a total.
+            from apps.fund_requests.follow import fund_requests_follow_once
             from apps.fund_requests.monthly_service import (
                 sync_monthly_drafts_for_activity,
             )
@@ -5143,8 +5131,50 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 sync_weekly_requests_for_activity,
             )
 
-            sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
-            sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+            # The day left, the day joined and the visit itself each ask for
+            # the owner's week and month to be re-filed. They are re-filed
+            # once, from the lines the move ends with
+            # (apps.fund_requests.follow). Both days price against the same
+            # published cards, read once for the move.
+            with rate_cards_held(), fund_requests_follow_once():
+                # A day that cannot take the visit says so before the day it
+                # would leave is re-priced: a refusal used to re-price every
+                # visit left on that day first, some 150 to 250 statements,
+                # and then undo it. The day is locked here and joined below
+                # as it was found. The calendar was asked of this date and
+                # this person at the top.
+                day = day_to_join(
+                    activity=a,
+                    new_date=a.planned_date,
+                    reason=data.get("reason"),
+                    principal=principal,
+                )
+                if (
+                    day["batch"] is not None
+                    and day["batch"].id == a.daily_visit_batch_id
+                ):
+                    # Moved within its own day: the day is found again once
+                    # the visit has left it, as it always was.
+                    day = None
+                _detach_from_daily_visit_batch(a)
+                reschedule_within_batch(
+                    activity=a,
+                    new_date=a.planned_date,
+                    reason=data.get("reason"),
+                    principal=principal,
+                    day=day,
+                )
+                # The batch reprices and then calls trigger_generate_for_activity,
+                # which raises the NEW week's request and says nothing about the
+                # old one. The old week therefore kept its full amount while the
+                # new week gained the same amount again -- the same money
+                # requested twice, for work happening once. Staff school visits are
+                # the most common activity there is, and they all take this branch.
+                #
+                # sync_* regenerates every affected bucket, old and new, so the
+                # vacated week empties instead of being left holding a total.
+                sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
+                sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
         else:
             # Re-price against the current catalogue so the budget line follows the
             # new schedule (rates may have changed; participant/period inputs may
