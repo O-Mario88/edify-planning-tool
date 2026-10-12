@@ -15457,6 +15457,29 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 848,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Refusal Drawer",
+      "purpose": "Reusable refusal drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/refusal_drawer.html",
+      "variants": [
+        "{{ refusal_tone|default:"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 11893,
       "deprecated_alternatives": [],
@@ -122159,7 +122182,7 @@
     "activity_states": 24,
     "all_routes": 1406,
     "api_routes": 363,
-    "component_templates": 692,
+    "component_templates": 693,
     "full_pages": 270,
     "mobile_contract_pass": 606,
     "nonvisual_actions": 288,

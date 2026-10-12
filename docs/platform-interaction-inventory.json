@@ -4,23 +4,23 @@
  "summary": {
   "by_evidence": {
    "browser-rendered": 849,
-   "none": 292,
+   "none": 293,
    "page-tested": 1551,
    "request-tested": 1422
   },
   "by_kind": {
-   "button": 1398,
+   "button": 1399,
    "disclosure": 75,
    "field": 1373,
    "link": 1201,
    "tab": 67
   },
-  "controls": 4114,
+  "controls": 4115,
   "high_consequence": 207,
   "state_changing": 467,
-  "templates_scanned": 699,
+  "templates_scanned": 700,
   "unresolved_destinations": 0,
-  "untested": 292,
+  "untested": 293,
   "untested_state_changing": 23
  },
  "templates": {
@@ -11046,6 +11046,10 @@
     "PROJECT_COORDINATOR"
    ]
   },
+  "partials/refusal_drawer.html": {
+   "pages": [],
+   "roles": []
+  },
   "partials/schools/_details.html": {
    "pages": [
     "/schools/<str:school_id>"
@@ -15634,6 +15638,7 @@
   {"accessible_name": "Budget", "destination": "/projects/{{ workspace_project.id }}#budget-execution", "destination_route": "/projects/<str:project_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-570235525756", "kind": "link", "line": 11, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/workspace_nav.html"},
   {"accessible_name": "Impact", "destination": "/projects/analytics?project={{ workspace_project.id }}", "destination_route": "/projects/analytics", "evidence": "request-tested", "high_consequence": false, "id": "INT-8FE447EE9F0F", "kind": "link", "line": 12, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/workspace_nav.html"},
   {"accessible_name": "Issues", "destination": "/projects/my-plan?project={{ workspace_project.id }}#project-attention", "destination_route": "/projects/my-plan", "evidence": "request-tested", "high_consequence": false, "id": "INT-986FE001E28B", "kind": "link", "line": 13, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/projects/workspace_nav.html"},
+  {"accessible_name": "Close", "destination": "", "destination_route": "", "evidence": "none", "high_consequence": false, "id": "INT-FE9913BB9CAA", "kind": "button", "line": 14, "method": "", "selector": "", "state_changing": false, "tag": "button", "template": "partials/refusal_drawer.html"},
   {"accessible_name": "{{ school.district.name }}", "destination": "/districts/{{ school.district.id }}", "destination_route": "/districts/<str:district_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-52CC8056ACEB", "kind": "link", "line": 18, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
   {"accessible_name": "{{ school.sub_county.name }}", "destination": "/schools?sub_county={{ school.sub_county.id }}", "destination_route": "/schools", "evidence": "request-tested", "high_consequence": false, "id": "INT-8DF35E934178", "kind": "link", "line": 22, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
   {"accessible_name": "{{ school.assigned_staff }}", "destination": "/staff/{{ school.account_owner_id }}", "destination_route": "/staff/<str:user_id>", "evidence": "request-tested", "high_consequence": false, "id": "INT-638422082001", "kind": "link", "line": 48, "method": "GET", "selector": "", "state_changing": false, "tag": "a", "template": "partials/schools/_details.html"},
