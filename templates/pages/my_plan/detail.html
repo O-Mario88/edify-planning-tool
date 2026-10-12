@@ -58,6 +58,16 @@
           </div>
         </div>
 
+        {% comment %}Who facilitates it (owner, 2026-10-12): Staff, or the
+        partner by name.{% endcomment %}
+        <div class="ad-field" data-facilitated-by>
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87M16 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Facilitated by</p>
+            <p class="ad-field__value">{{ facilitated_by_display|default:"Staff" }}</p>
+          </div>
+        </div>
+
         {% if training_profile %}
         {% comment %}Which training this is and how it is delivered (owner,
         2026-10-06). One that names none yet says so; Edit Activity is where

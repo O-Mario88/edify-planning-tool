@@ -2137,8 +2137,9 @@ def budget_export_drawer_view(request):
         export_url="/budget/export",
         title="Export Budget",
         subtitle=(
-            "The planned activities of the period, each with the budget of "
-            "its own cost lines, as one Excel workbook"
+            "The Activity cost plan of the period as the Budget page lays it "
+            "out, with the planned activities and cost lines behind it, as "
+            "one Excel workbook"
         ),
         hidden_keys=("budget_scope", "district", "staff", "date"),
     )

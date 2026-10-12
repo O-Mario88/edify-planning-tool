@@ -225,6 +225,22 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     return "Scheduled", "edify-primary-soft edify-primary-text edify-primary-border"
 
 
+def plan_row_district(row: dict) -> str:
+    """The district a plan row happens in: the school's for school work,
+    the cluster's for a cluster session, "—" when none is on record."""
+    blank = ("", "—", "Unknown", None)
+    school_row = bool(row.get("school_id")) or row.get("is_cluster_invited")
+    first, second = (
+        (row.get("school_district"), row.get("cluster_district"))
+        if school_row
+        else (row.get("cluster_district"), row.get("school_district"))
+    )
+    for value in (first, second, row.get("district")):
+        if value not in blank:
+            return value
+    return "—"
+
+
 def staff_my_plan_q(staff_ids, principal=None) -> Q:
     """Which activities are this staff member's own executable work.
 
@@ -2222,8 +2238,20 @@ def get_frontend_context(principal, query: dict) -> dict:
     _columns = completion_columns(
         (row["id"], row["activity_type"]) for rows in _plan_tables for row in rows
     )
+    # Every table names the District and the District Type of its rows
+    # (owner, 2026-10-12: "Add District and district type column ... to My
+    # Plan ... literally on all the tables"): Primary District, Secondary
+    # District, or Mixed for a day that crosses from the one into the other
+    # (apps.daily_visit_batches.district_marks). One read for all the tables.
+    from apps.daily_visit_batches.district_marks import district_type_labels, label_of
+
+    _district_types = district_type_labels(
+        row["id"] for rows in _plan_tables for row in rows
+    )
     for rows in _plan_tables:
         for row in rows:
+            row["district_type"] = label_of(_district_types, row["id"])
+            row["district"] = plan_row_district(row)
             row.update(
                 completion_fields(row["status"], _columns.get(row["id"], EMPTY_COLUMNS))
             )

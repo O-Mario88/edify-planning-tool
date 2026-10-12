@@ -160,6 +160,13 @@ def activity_budget_breakdown(
         label = ((setting.label or "").strip() if setting else "") or members[
             0
         ].label.split(" [Rate basis:", 1)[0]
+        # A day that crosses from the primary district into a secondary one
+        # is marked Mixed on its transport (owner, 2026-10-12); the catalogue
+        # names the rate, the line names the day.
+        from apps.daily_visit_batches.pricing import MIXED_TRANSPORT_LABEL
+
+        if any(member.label == MIXED_TRANSPORT_LABEL for member in members):
+            label = MIXED_TRANSPORT_LABEL
 
         allocation = (priced_line or {}).get("dailyAllocation")
         missing = bool(priced_line and priced_line.get("missing"))

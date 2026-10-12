@@ -2137,7 +2137,7 @@
    "audit_id": "KPI-SOURCE-110",
    "kind": "breakdown-row",
    "module": "apps/budget/breakdown.py",
-   "line": 198,
+   "line": 205,
    "label": null,
    "keys": [
     "amount",
@@ -2159,7 +2159,7 @@
    "audit_id": "KPI-SOURCE-111",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 881,
+   "line": 912,
    "label": null,
    "keys": [
     "amount",
@@ -2245,7 +2245,7 @@
    "audit_id": "KPI-SOURCE-115",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 2175,
+   "line": 2223,
    "label": null,
    "keys": [
     "amount",
@@ -2345,7 +2345,7 @@
    "audit_id": "KPI-SOURCE-120",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1229,
+   "line": 1271,
    "label": null,
    "keys": [
     "activity_ids",
@@ -2367,7 +2367,7 @@
    "audit_id": "KPI-SOURCE-121",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1345,
+   "line": 1390,
    "label": null,
    "keys": [
     "activity_count",
@@ -2390,7 +2390,7 @@
    "audit_id": "KPI-SOURCE-122",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1287,
+   "line": 1332,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -8543,7 +8543,7 @@
    "audit_id": "KPI-SOURCE-471",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 702,
+   "line": 659,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -8562,7 +8562,7 @@
    "audit_id": "KPI-SOURCE-472",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1799,
+   "line": 1756,
    "label": "SSA basis",
    "keys": [
     "label",
@@ -8579,7 +8579,7 @@
    "audit_id": "KPI-SOURCE-473",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1837,
+   "line": 1794,
    "label": "Officer",
    "keys": [
     "label",
@@ -8596,7 +8596,7 @@
    "audit_id": "KPI-SOURCE-474",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1838,
+   "line": 1795,
    "label": "Activity",
    "keys": [
     "label",
@@ -8613,7 +8613,7 @@
    "audit_id": "KPI-SOURCE-475",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1843,
+   "line": 1800,
    "label": "School or cluster",
    "keys": [
     "label",
@@ -8630,7 +8630,7 @@
    "audit_id": "KPI-SOURCE-476",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1844,
+   "line": 1801,
    "label": "Delivered",
    "keys": [
     "label",
@@ -8647,7 +8647,7 @@
    "audit_id": "KPI-SOURCE-477",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1845,
+   "line": 1802,
    "label": "Intervention",
    "keys": [
     "label",
@@ -8664,7 +8664,7 @@
    "audit_id": "KPI-SOURCE-478",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1850,
+   "line": 1807,
    "label": "Attendance",
    "keys": [
     "label",
@@ -8681,7 +8681,7 @@
    "audit_id": "KPI-SOURCE-479",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1851,
+   "line": 1808,
    "label": "Evidence",
    "keys": [
     "label",
@@ -8698,7 +8698,7 @@
    "audit_id": "KPI-SOURCE-480",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1859,
+   "line": 1816,
    "label": "Salesforce ID",
    "keys": [
     "label",
@@ -8715,7 +8715,7 @@
    "audit_id": "KPI-SOURCE-481",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1860,
+   "line": 1817,
    "label": "Purpose",
    "keys": [
     "label",
@@ -8732,7 +8732,7 @@
    "audit_id": "KPI-SOURCE-482",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1861,
+   "line": 1818,
    "label": "Outcome",
    "keys": [
     "label",
@@ -8749,7 +8749,7 @@
    "audit_id": "KPI-SOURCE-483",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1862,
+   "line": 1819,
    "label": "Observations",
    "keys": [
     "label",
@@ -8766,7 +8766,7 @@
    "audit_id": "KPI-SOURCE-484",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1863,
+   "line": 1820,
    "label": "Follow-up",
    "keys": [
     "label",
@@ -8783,7 +8783,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3312,
+   "line": 3275,
    "label": null,
    "keys": [
     "count",
@@ -8801,7 +8801,7 @@
    "audit_id": "KPI-SOURCE-486",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 3429,
+   "line": 3392,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -8824,7 +8824,7 @@
    "audit_id": "KPI-SOURCE-487",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 709,
+   "line": 666,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -8843,7 +8843,7 @@
    "audit_id": "KPI-SOURCE-488",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 719,
+   "line": 676,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -8862,7 +8862,7 @@
    "audit_id": "KPI-SOURCE-489",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1761,
+   "line": 1718,
    "label": "Officer",
    "keys": [
     "blank",
@@ -8882,7 +8882,7 @@
    "audit_id": "KPI-SOURCE-490",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1803,
+   "line": 1760,
    "label": "Why it departs from the SSA",
    "keys": [
     "label",
@@ -8937,7 +8937,7 @@
    "audit_id": "KPI-SOURCE-493",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3364,
+   "line": 3398,
    "label": null,
    "keys": [
     "count",
@@ -9050,7 +9050,7 @@
    "audit_id": "KPI-SOURCE-499",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3395,
+   "line": 3429,
    "label": "All team members",
    "keys": [
     "count",
@@ -9068,7 +9068,7 @@
    "audit_id": "KPI-SOURCE-500",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3401,
+   "line": 3435,
    "label": null,
    "keys": [
     "count",
@@ -11340,7 +11340,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1706,
+   "line": 1783,
    "label": "All Activities",
    "keys": [
     "count",
@@ -11359,7 +11359,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1715,
+   "line": 1792,
    "label": null,
    "keys": [
     "count",
@@ -11378,7 +11378,7 @@
    "audit_id": "KPI-SOURCE-626",
    "kind": "breakdown-row",
    "module": "apps/planning/partner_oversight_service.py",
-   "line": 1896,
+   "line": 1905,
    "label": null,
    "keys": [
     "count",

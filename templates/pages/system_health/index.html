@@ -864,7 +864,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">26. Daily Visit Batch mixing primary/secondary districts</span>
-<span class="text-[12px] text-slate-500 block">A single day's batch must never contain both primary and secondary district schools.</span>
+<span class="text-[12px] text-slate-500 block">A day that crosses from the primary district into a secondary one is Mixed and must be priced at the secondary district's rates.</span>
 </div>
 <div class="text-right shrink-0">
 {% if health.mixedDistrictBatches > 0 %}
@@ -998,7 +998,7 @@ data quality, district-rule violations, working-day overloads. -->
 <div class="flex items-center justify-between gap-3 pt-3">
 <div class="min-w-0">
 <span class="font-semibold text-[14px] text-slate-900 block">35. Visit days mixing primary and secondary districts</span>
-<span class="text-[12px] text-slate-500 block">Strict rule: no crossing from a primary district to a secondary district on the same day.</span>
+<span class="text-[12px] text-slate-500 block">A day that crosses from the primary district into a secondary one is Mixed: allowed, and paid at the secondary district's transport rate.</span>
 </div>
 <div class="text-right shrink-0">
 {% if health.routeIntelligence.mixedDistrictRouteDays > 0 %}

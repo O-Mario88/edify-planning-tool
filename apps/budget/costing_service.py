@@ -724,25 +724,49 @@ def _planning_day_context(
         or _days_of(input) > 1
     ):
         return input, 1
-    if input.get("districtType") == "secondary":
+    from apps.daily_visit_batches.pricing import (
+        day_district_mark,
+        pricing_district_type,
+    )
+    from apps.daily_visit_batches.services import member_district
+
+    batch = DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user_id,
+        visit_date=day,
+    ).first()
+    members = (
+        list(
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status__in=["cancelled", "deferred", "rejected"])
+            .select_related("school__district", "cluster__district", "event_district")
+        )
+        if batch
+        else []
+    )
+    # The day is priced as the save prices it (owner, 2026-10-12): work in
+    # the primary district and in a secondary one on the same day is a Mixed
+    # day at the secondary district's rates, never a refusal; two secondary
+    # districts are a Secondary day. Until then this preview answered "Choose
+    # a separate day for primary and secondary district activities" for a
+    # day the scheduler itself accepts.
+    mark = day_district_mark(
+        [
+            input.get("districtType") or "primary",
+            *(
+                district_type_for_staff(responsible_user_id, member_district(member))
+                for member in members
+            ),
+        ]
+    )
+    input["districtMark"] = mark
+    input["districtType"] = pricing_district_type(mark)
+    if input["districtType"] == "secondary":
         # The last of a run of days in a secondary district is the day the
         # traveller comes home: no night, no dinner (owner, 2026-10-05).
         from apps.daily_visit_batches.return_day import is_return_day
 
         input["returnDay"] = is_return_day(responsible_user_id, day)
-    batch = DailyVisitBatch.objects.filter(
-        responsible_user=responsible_user_id,
-        visit_date=day,
-    ).first()
-    if not batch:
-        return input, 1
-    if batch.district_type != (input.get("districtType") or "primary"):
-        raise BadRequest(
-            "Choose a separate day for primary and secondary district activities."
-        )
-    return input, 1 + batch.activities.filter(deleted_at__isnull=True).exclude(
-        status__in=["cancelled", "deferred", "rejected"]
-    ).count()
+    return input, 1 + len(members)
 
 
 def preview(
@@ -771,6 +795,9 @@ def preview(
                 line.allocation_index = 0
                 line.label = KEY_LABELS[line.key]
         cost.amount = sum(line.amount for line in cost.lines)
+    from apps.daily_visit_batches.pricing import MIXED_DAY, MIXED_TRANSPORT_LABEL
+
+    day_mark = input.get("districtMark") or ""
     # Every line is named as the CD Cost Catalogue names it (owner,
     # 2026-09-26: "everything should be fetched from the database"): the
     # rate and its label come from the same row; the code's label is kept
@@ -780,6 +807,10 @@ def preview(
         setting = settings.get(line.key)
         if setting is not None and (setting.label or "").strip():
             line.label = setting.label.strip()
+        # A day that crosses from the primary district into a secondary one
+        # says so on its transport, which is the secondary district's rate.
+        if day_mark == MIXED_DAY and line.key == "secondary_transport_per_day":
+            line.label = MIXED_TRANSPORT_LABEL
     missing = cost.missing_items
     blockers = [
         (

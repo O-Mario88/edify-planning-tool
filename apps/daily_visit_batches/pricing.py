@@ -95,6 +95,49 @@ KEY_LABELS = {
 }
 
 
+# How a day is marked, by where its work is (owner, 2026-10-12): "all plans
+# (Trainings, school visits and field events) in the primary district is
+# marked as Primary district and all that are in secondary district it is
+# marked as secondary district. Only those that are crossing from primary to
+# secondary on the same day can be mixed ... crossing from Primary to
+# secondary is Mixed and it uses secondary district transport cost.
+# Secondary to secondary remains secondary and fetches secondary costs."
+PRIMARY_DAY = "primary"
+SECONDARY_DAY = "secondary"
+MIXED_DAY = "mixed"
+DAY_MARK_LABELS = {
+    PRIMARY_DAY: "Primary District",
+    SECONDARY_DAY: "Secondary District",
+    MIXED_DAY: "Mixed",
+}
+TRANSPORT_KEYS = frozenset({"primary_transport_per_day", "secondary_transport_per_day"})
+#: The transport line of a day that crosses from the primary district into a
+#: secondary one. Its rate and its cost key are the secondary district's.
+MIXED_TRANSPORT_LABEL = "Transport Mixed District"
+
+
+def day_district_mark(district_types) -> str:
+    """Primary, Secondary or Mixed for one person's day, from the district
+    type of every activity on it. Two secondary districts are Secondary;
+    only the primary district with a secondary one is Mixed."""
+    types = {t or PRIMARY_DAY for t in district_types}
+    if SECONDARY_DAY in types:
+        return MIXED_DAY if PRIMARY_DAY in types else SECONDARY_DAY
+    return PRIMARY_DAY
+
+
+def pricing_district_type(mark: str) -> str:
+    """The rates a day fetches: a Mixed day pays the secondary district's."""
+    return PRIMARY_DAY if mark == PRIMARY_DAY else SECONDARY_DAY
+
+
+def day_line_label(key: str, mark: str = "") -> str:
+    """The name of a day's cost line; a Mixed day's transport says so."""
+    if mark == MIXED_DAY and key == "secondary_transport_per_day":
+        return MIXED_TRANSPORT_LABEL
+    return KEY_LABELS.get(key, key.replace("_", " ").title())
+
+
 # What the day a traveller comes home does not carry (owner, 2026-10-05:
 # "the fifth day they travel back and sleep and eat dinner from home. But
 # transport, breakfast and lunch remains"). Which day that is, is

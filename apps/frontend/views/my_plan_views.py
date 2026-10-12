@@ -231,49 +231,43 @@ def my_plan_view(request):
     # oversight pages. CSV stays, so existing links keep working.
     export = _export_format(request)
     if export:
-        # Owner, 2026-09-27: "All exported plan should have school ID." The
-        # School ID is the school's business code; a cluster session a row
-        # stands for as a whole has none. A cluster training is listed once
-        # per invited school, so its rows carry each school's own ID.
-        headers = [
-            "Activity ID",
-            "School ID",
-            "Type",
-            "School / Cluster",
-            "District",
-            "Cluster Planned From",
-            "Training Name",
-            "Mode of Delivery",
-            "Purpose of Visit / Topic",
-            "SSA Intervention",
-            "Planned Date",
-            "Status",
-            "Owner",
-            "Execution Role",
-            "Facilitated By",
-            "Participants",
-            "Salesforce ID",
-            "Evidence",
-            "Budget Status",
-            "Verification Status",
-            "Payment Status",
-            "Budget (UGX)",
-        ]
-        # Every table the page shows, the Core School and Programme School
-        # cards included — the export used to stop at the three general
-        # tables, so a Core School's visits and trainings never reached it.
-        feed = [
-            *context.get("core_school_visits", []),
-            *context.get("core_school_trainings", []),
-            *context.get("school_visits", []),
-            *context.get("cluster_trainings", []),
+        # One layout for every plan export (apps.core.plan_export; owner,
+        # 2026-10-12): the school visits, the trainings and cluster meetings,
+        # and the other activities, each a sheet with the columns of its own
+        # My Plan table plus the District Type. Every table the page shows
+        # feeds it, the Core School and Programme School cards included.
+        from apps.core import plan_export
+
+        # A cluster session is one row (its columns open on the Cluster Name
+        # and carry no School ID): the Group Trainings table's rows, not the
+        # per-school rows of "Schools with Planned Training". What is left
+        # of that table is the in-school trainings, which are school work.
+        sessions = [
+            *context.get("group_trainings", []),
             *context.get("cluster_meetings", []),
+        ]
+        session_ids = {row["id"] for row in sessions}
+        feed = [
             *(
-                row
-                for group in context.get("programme_school_work", [])
-                for row in group["rows"]
+                {**row, "export_kind": plan_export.VISIT}
+                for row in (
+                    *context.get("core_school_visits", []),
+                    *context.get("core_school_trainings", []),
+                    *context.get("school_visits", []),
+                    *context.get("cluster_trainings", []),
+                    *(
+                        row
+                        for group in context.get("programme_school_work", [])
+                        for row in group["rows"]
+                    ),
+                )
+                if row["id"] not in session_ids
             ),
-            *context.get("programme_activities", []),
+            *({**row, "export_kind": plan_export.SESSION} for row in sessions),
+            *(
+                {**row, "export_kind": plan_export.OTHER}
+                for row in context.get("programme_activities", [])
+            ),
         ]
 
         from datetime import date
@@ -360,95 +354,58 @@ def my_plan_view(request):
         rows = []
         seen = set()
         for a in feed:
-            is_cluster_row = a["activity_type"].startswith("cluster") and not a.get(
-                "is_cluster_invited"
-            )
-            school_code = "" if is_cluster_row else (a.get("school_id") or "")
-            key = (a["id"], school_code)
+            kind = a["export_kind"]
+            key = (a["id"], a.get("school_id") if kind == plan_export.VISIT else "")
             if key in seen:
                 continue
             seen.add(key)
             sequence = a.get("visit_number") or a.get("training_number") or ""
-            if a.get("is_cluster_invited"):
-                cluster_from = f"{a.get('cluster_name', '')} (Invited)"
-            elif a.get("delivery_type") == "in-school" or "in_school" in a.get(
-                "activity_type", ""
-            ):
-                cluster_from = "School Visit"
-            elif a.get("is_core"):
-                cluster_from = "Core School"
-            elif a.get("cluster_name"):
-                cluster_from = a.get("cluster_name", "")
-            else:
-                cluster_from = a.get("school_cluster_name", "")
-
-            training_name = (
-                a.get("training_name")
-                or a.get("meeting_training")
-                or a.get("activity_name")
-                or ""
+            activity = (
+                f"{a['activity_type_label']} ({sequence})"
+                if sequence
+                else a["activity_type_label"]
             )
-            mode_of_delivery = (
-                a.get("training_mode")
-                or a.get("meeting_kind")
-                or ("In-School" if not is_cluster_row else "Cluster Group")
-            )
+            school_work = kind == plan_export.VISIT
             rows.append(
-                [
-                    a["id"],
-                    school_code,
-                    f"{a['activity_type_label']} ({sequence})"
-                    if sequence
-                    else a["activity_type_label"],
-                    a["cluster_name"] if is_cluster_row else a["school_name"],
-                    a["cluster_district"] if is_cluster_row else a["school_district"],
-                    cluster_from,
-                    training_name,
-                    mode_of_delivery,
-                    a.get("purpose") or "",
-                    a.get("focus_intervention") or "",
-                    a["planned_date"] or "",
-                    a["status_label"],
-                    a.get("owner", ""),
-                    a.get("execution_role", ""),
-                    a.get("facilitated_by") or a.get("partner_name") or "",
-                    a.get("expected_participants") or "",
-                    a.get("salesforce_activity_id") or "",
-                    a.get("evidence_status") or "",
-                    a.get("budget_status") or "",
-                    a.get("verification_status")
-                    or a.get("ia_verification_status")
-                    or "",
-                    a.get("payment_status") or "",
-                    a.get("budget_total", ""),
-                ]
+                plan_export.row(
+                    kind,
+                    school_id=a.get("school_id") if school_work else "",
+                    school_name=a.get("school_name"),
+                    cluster_name=a.get("cluster_name"),
+                    venue=a.get("school_name") or a.get("cluster_name"),
+                    district=a.get("district"),
+                    district_type=a.get("district_type"),
+                    activity=activity,
+                    planned_date=a.get("planned_date"),
+                    executor=a.get("owner") or "Staff",
+                    purpose=a.get("purpose"),
+                    intervention=a.get("focus_intervention"),
+                    training=a.get("training_name")
+                    or a.get("meeting_training")
+                    or a.get("activity_name")
+                    or a.get("purpose")
+                    or a["activity_type_label"],
+                    participants=a.get("expected_participants"),
+                    cost=a.get("budget_total"),
+                    budget_status=a.get("budget_status"),
+                    verification=a.get("verification_status"),
+                    salesforce_id=a.get("salesforce_id"),
+                    evidence=a.get("evidence_label"),
+                    status=a.get("status_label"),
+                )
             )
-
-        budget_col_idx = headers.index("Budget (UGX)") + 1
 
         if export in {"xlsx", "excel"}:
             from apps.core.excel import workbook_response
 
-            return workbook_response(
-                "my_plan_export.xlsx",
-                [
-                    {
-                        "title": "My Plan",
-                        "headers": headers,
-                        "rows": rows,
-                        # Budget is a number, and a plan people add up.
-                        "number_formats": {budget_col_idx: "#,##0"},
-                    }
-                ],
-            )
+            return workbook_response("my_plan_export.xlsx", plan_export.sheets(rows))
 
         import csv
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
         writer = csv.writer(response)
-        writer.writerow(headers)
-        for row in rows:
+        for row in plan_export.csv_rows(rows):
             writer.writerow(row)
         return response
 
@@ -2098,14 +2055,20 @@ def _facilitator_context(user, activity) -> dict:
     training); the service repeats every check."""
     from apps.activities.facilitation import (
         FACILITATOR_EDITABLE_STATUSES,
+        facilitated_by_display,
         facilitator_label,
         takes_facilitator,
     )
     from apps.core.scoping import resolve_partner_ids
 
+    # Every activity's profile says who facilitates it (owner, 2026-10-12):
+    # "Staff", or "Partner (name)". Changing it stays a training's or a
+    # cluster meeting's.
+    shown = {"facilitated_by_display": facilitated_by_display(activity)}
     if not takes_facilitator(activity.activity_type):
-        return {}
+        return shown
     return {
+        **shown,
         "facilitated_by": facilitator_label(activity),
         "can_change_facilitator": (
             activity.delivery_type == "staff"

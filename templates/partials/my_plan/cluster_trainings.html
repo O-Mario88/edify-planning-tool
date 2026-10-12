@@ -35,6 +35,8 @@ to tick.{% endcomment %}
 {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th class="min-w-[90px]">School ID</th>
 <th class="min-w-[240px]">School / Cluster</th>
+<th class="min-w-[130px]">District</th>
+<th class="min-w-[130px]">District Type</th>
 <th class="min-w-[160px]">Cluster Planned From</th>
 <th class="min-w-[120px]">Executor</th>
 <th class="min-w-[150px]">Training Name</th>
@@ -65,6 +67,8 @@ to tick.{% endcomment %}
   <span class="text-slate-800">{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{% cluster_link row.cluster_name row.cluster_id empty="—" %}{% endif %}</span>
   {% endif %}
 </td>
+<td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
+<td class="text-slate-600 font-medium whitespace-nowrap" data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
 <td class="text-slate-700" data-label="Cluster Planned From">
   {% if row.is_cluster_invited %}
   <span class="inline-flex items-center gap-1">

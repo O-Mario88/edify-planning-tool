@@ -2168,7 +2168,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 124,
+   "line": 134,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2177,7 +2177,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 236,
+   "line": 246,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2186,7 +2186,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 279,
+   "line": 289,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,

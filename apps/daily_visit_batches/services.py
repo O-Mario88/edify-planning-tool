@@ -26,7 +26,17 @@ from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from .districts import accommodation_key_for_staff, district_type_for_staff
 from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
-from .pricing import ACCOMMODATION_KEYS, KEY_LABELS, allocate_pool, compute_daily_pool
+from .pricing import (
+    ACCOMMODATION_KEYS,
+    KEY_LABELS,
+    MIXED_DAY,
+    MIXED_TRANSPORT_LABEL,
+    allocate_pool,
+    compute_daily_pool,
+    day_district_mark,
+    day_line_label,
+    pricing_district_type,
+)
 from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
 
 
@@ -147,19 +157,28 @@ def batch_needs_repricing(batch) -> bool:
     )
     if members.count() != batch.school_count:
         return True
-    expected_type = (
-        "secondary"
-        if any(
-            district_type_for_staff(batch.responsible_user, member_district(member))
-            == "secondary"
-            for member in members.select_related(
-                "school__district", "cluster__district", "event_district"
-            )
+    mark = day_district_mark(
+        district_type_for_staff(batch.responsible_user, member_district(member))
+        for member in members.select_related(
+            "school__district", "cluster__district", "event_district"
         )
-        else "primary"
     )
+    expected_type = pricing_district_type(mark)
     if expected_type != batch.district_type:
         return True
+    # A day that crosses from the primary district into a secondary one is
+    # marked Mixed on its transport line (owner, 2026-10-12); a day priced
+    # before that mark, or one that no longer crosses, still says otherwise.
+    if expected_type == "secondary":
+        from apps.activities.models import ActivityScheduleCostLine
+
+        marked = ActivityScheduleCostLine.objects.filter(
+            activity__in=members,
+            cost_setting_key="secondary_transport_per_day",
+            label=MIXED_TRANSPORT_LABEL,
+        ).exists()
+        if marked != (mark == MIXED_DAY):
+            return True
     # The day the traveller comes home has no night and no dinner (owner,
     # 2026-10-05); a day priced before that rule, or whose neighbours have
     # since changed, still carries them, or lacks them.
@@ -743,10 +762,12 @@ def _write_day_lines(
         or "primary"
         for member in activities
     }
+    # Primary, Secondary or Mixed (owner, 2026-10-12): the primary district
+    # with a secondary one on the same day is Mixed and pays the secondary
+    # district's rates; two secondary districts are Secondary.
+    day_mark = day_district_mark(district_types)
     if district_types:
-        batch.district_type = (
-            "secondary" if "secondary" in district_types else "primary"
-        )
+        batch.district_type = pricing_district_type(day_mark)
     # The day the traveller comes home has no night and no dinner (owner,
     # 2026-10-05; apps.daily_visit_batches.return_day). Only a day in a
     # secondary district, now or as last priced, has neighbours to ask.
@@ -845,7 +866,7 @@ def _write_day_lines(
         costing_input, own = recipes[activity.id]
         lines = [
             CostLine(
-                label=KEY_LABELS.get(key, key.replace("_", " ").title()),
+                label=day_line_label(key, day_mark),
                 key=key,
                 unit=amount,
                 qty=1,
