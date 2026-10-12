@@ -158,8 +158,19 @@ class ExportScopeTest(FilterExportFixture):
 
         lines = self.export_rows(fy=self.fy)
         self.assertIn(list(plan_export.VISIT_HEADERS), lines)
-        self.assertIn(list(plan_export.SESSION_HEADERS), lines)
+        self.assertIn(list(plan_export.TRAINING_HEADERS), lines)
+        self.assertIn(list(plan_export.MEETING_HEADERS), lines)
+        self.assertIn(list(plan_export.PARTNER_HEADERS), lines)
         self.assertIn(list(plan_export.OTHER_HEADERS), lines)
+        # The sheets, in the owner's order, the Budget of those activities last.
+        self.assertEqual(
+            [
+                line[0]
+                for line in lines
+                if len(line) == 1 and line[0] in plan_export.SHEET_ORDER
+            ],
+            list(plan_export.SHEET_ORDER),
+        )
         self.assertEqual(
             plan_export.VISIT_HEADERS,
             (
@@ -181,7 +192,7 @@ class ExportScopeTest(FilterExportFixture):
             ),
         )
         self.assertEqual(
-            plan_export.SESSION_HEADERS,
+            plan_export.TRAINING_HEADERS,
             (
                 "Cluster Name",
                 "District",
@@ -204,7 +215,8 @@ class ExportScopeTest(FilterExportFixture):
                 row["District Type"],
                 ("Primary District", "Secondary District", "Mixed", ""),
             )
-            self.assertTrue(row["Executor"])
+            # Who does the work: the Executor, or the Partner on its sheet.
+            self.assertTrue(row.get("Executor") or row.get("Partner"))
 
     def test_the_export_carries_no_free_text_notes(self):
         """A plan, not a record store — evidence and notes stay behind."""
@@ -220,7 +232,8 @@ class FilterTest(FilterExportFixture):
     def test_filtering_by_activity_type_narrows_both_page_and_export(self):
         tables = self.export_tables(fy=self.fy, activity_type="training")
 
-        self.assertEqual(len(tables["Trainings & Cluster Meetings"]), 1)
+        self.assertEqual(len(tables["Group Trainings"]), 1)
+        self.assertEqual(tables["Cluster Meetings"], [])
         self.assertEqual(tables["School Visits"], [])
         self.assertEqual(tables["Other Activities"], [])
 

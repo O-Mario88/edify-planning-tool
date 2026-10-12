@@ -247,14 +247,20 @@ def my_plan_view(request):
         # and carry no School ID): the Group Trainings table's rows, not the
         # per-school rows of "Schools with Planned Training". What is left
         # of that table is the in-school trainings, which are school work.
-        sessions = [
-            *context.get("group_trainings", []),
-            *context.get("cluster_meetings", []),
-        ]
-        session_ids = {row["id"] for row in sessions}
+        trainings = list(context.get("group_trainings", []))
+        meetings = list(context.get("cluster_meetings", []))
+        session_ids = {row["id"] for row in (*trainings, *meetings)}
+
+        def _kind(row, kind):
+            # Work handed to a partner is a partner schedule whatever its
+            # kind (owner, 2026-10-12: "partner schedules on its sheet").
+            if row.get("execution_role") == "Partner" or row.get("partner_name"):
+                kind = plan_export.PARTNER
+            return {**row, "export_kind": kind}
+
         feed = [
             *(
-                {**row, "export_kind": plan_export.VISIT}
+                _kind(row, plan_export.VISIT)
                 for row in (
                     *context.get("core_school_visits", []),
                     *context.get("core_school_trainings", []),
@@ -268,9 +274,10 @@ def my_plan_view(request):
                 )
                 if row["id"] not in session_ids
             ),
-            *({**row, "export_kind": plan_export.SESSION} for row in sessions),
+            *(_kind(row, plan_export.TRAINING) for row in trainings),
+            *(_kind(row, plan_export.MEETING) for row in meetings),
             *(
-                {**row, "export_kind": plan_export.OTHER}
+                _kind(row, plan_export.OTHER)
                 for row in context.get("programme_activities", [])
             ),
         ]
@@ -370,10 +377,12 @@ def my_plan_view(request):
                 if sequence
                 else a["activity_type_label"]
             )
-            school_work = kind == plan_export.VISIT
+            school_work = kind in (plan_export.VISIT, plan_export.PARTNER)
             rows.append(
                 plan_export.row(
                     kind,
+                    activity_id=a["id"],
+                    partner=a.get("partner_name"),
                     school_id=a.get("school_id") if school_work else "",
                     school_name=a.get("school_name"),
                     cluster_name=a.get("cluster_name"),
