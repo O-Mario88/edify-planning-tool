@@ -70,12 +70,13 @@ def sync_monthly_drafts_for_activities(activities, *, prior_buckets=()) -> None:
     sync_monthly_periods(periods)
 
 
-def sync_monthly_periods(periods) -> None:
-    """Rebuild the monthly draft of each ``(owner, fy, month)``."""
+def sync_monthly_periods(periods, *, savepoint: bool = True) -> None:
+    """Rebuild the monthly draft of each ``(owner, fy, month)``.
+    `savepoint=False`: as for `generate_weekly_fund_request`."""
     if not periods:
         return
 
-    with transaction.atomic():
+    with transaction.atomic(savepoint=savepoint):
         # Clear mutable snapshots first.  This avoids a unique-line collision
         # when the activity changed owner and its cost lines move between two
         # draft requests in the same month.

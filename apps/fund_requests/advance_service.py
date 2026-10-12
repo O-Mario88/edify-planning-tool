@@ -53,10 +53,8 @@ def sync_for_activities(
     to its line and went with it, so there is none to drop, none to refresh
     and nothing on the new ones for a snapshot to be brought level with: the
     advances are only opened."""
-    from apps.budget.costing_service import (
-        saved_together,
-        snapshot_actuals_projected_once,
-    )
+    from apps.budget.costing_service import snapshot_actuals_projected_once
+    from apps.core.bulk import saved_together
     from apps.core.models import _normalize_datetime_value
 
     activities = list(activities)

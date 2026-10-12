@@ -32,10 +32,19 @@ def fund_requests_follow_once():
     """Rebuild each weekly request and monthly draft asked for inside this
     block once, when it ends. It must sit inside the save's transaction: a
     block that ends in an error rebuilds nothing, and the save is undone
-    with it. Blocks nest; the outermost one rebuilds."""
+    with it, as it is by a rebuild that fails. Blocks nest; the outermost
+    one rebuilds."""
+    from django.db import connection
+
     if _waiting.get() is not None:
         yield
         return
+    if not connection.in_atomic_block:
+        raise RuntimeError(
+            "fund_requests_follow_once() must run inside the save's "
+            "transaction: outside one, a failure before the block ends would "
+            "leave the week and the month unfiled for lines already written."
+        )
     waiting: dict = {"weeks": {}, "months": {}}
     token = _waiting.set(waiting)
     try:
@@ -46,8 +55,8 @@ def fund_requests_follow_once():
     from .weekly_service import generate_weekly_fund_request
 
     for owner, week_start in waiting["weeks"]:
-        generate_weekly_fund_request(owner, week_start.isoformat())
-    sync_monthly_periods(set(waiting["months"]))
+        generate_weekly_fund_request(owner, week_start.isoformat(), savepoint=False)
+    sync_monthly_periods(set(waiting["months"]), savepoint=False)
 
 
 def weeks_wait(buckets) -> bool:

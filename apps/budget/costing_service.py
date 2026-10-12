@@ -20,10 +20,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.bulk import saved_together
 from apps.core.exceptions import BadRequest
 
 from .costing import ActivityCost, CostLine, cost_for_activity, facilitation_fee_cost
@@ -1134,26 +1135,6 @@ def facilitation_fee_for(input: dict) -> ActivityCost:
     return facilitation_fee_cost(input, rates)
 
 
-def saved_together(model, rows) -> None:
-    """Send `post_save` for rows `bulk_create` has just written.
-
-    `bulk_create` sends no signals. Rows that used to be created one at a
-    time announced themselves to whatever listens (the advance's snapshot
-    projection, the traceability matrix's record of what a route writes);
-    written together, they still do."""
-    from django.db.models.signals import post_save
-
-    for row in rows:
-        post_save.send(
-            sender=model,
-            instance=row,
-            created=True,
-            update_fields=None,
-            raw=False,
-            using=row._state.db or "default",
-        )
-
-
 def apply_to_activity(
     activity: Activity,
     input: dict,
@@ -1229,7 +1210,9 @@ def apply_to_activities(
     saved with its cost alone, which `Activity.save` knows changes nothing a
     Core slot or a package credit reads. Without it every member's period
     fields are written, as a caller that set a date in memory and left the
-    writing of its week and month to this function expects."""
+    writing of its week and month to this function expects. The same caller
+    prices a day inside a transaction block of its own, which a refusal
+    undoes whole, so no savepoint is taken here for it."""
     if not items:
         return []
     from datetime import timedelta
@@ -1329,7 +1312,7 @@ def apply_to_activities(
     # exact vanishing-record scenario the guards describe (2026-08-12 audit
     # M-2). Locking also means a crash mid-sequence can no longer leave a
     # scheduled Activity with zero budget lines.
-    with transaction.atomic():
+    with transaction.atomic(savepoint=not (as_stored and connection.in_atomic_block)):
         # The lines as they stand: whose they are, and which were paid
         # straight to a vendor (read once for the guards and the rebuild).
         old_lines = list(
@@ -1912,5 +1895,4 @@ __all__ = [
     "sync_snapshot_actuals_many",
     "snapshot_actuals_projected_once",
     "project_snapshot_actuals",
-    "saved_together",
 ]

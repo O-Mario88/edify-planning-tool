@@ -234,37 +234,34 @@ def log(
                 else {"value": fields.payload}
             )
 
-            def _project_committed_audit() -> None:
-                try:
-                    from apps.realtime.domain_events import publish_audit_event
+            if deferred:
+                # The rows of one transaction are projected together when it
+                # commits (`_ProjectOnCommit`).
+                _project_with_the_rest(audit_row, fields, event_payload)
+            else:
 
-                    audit_seq = audit_row.seq
-                    if audit_seq is None:
-                        # Sealed by the commit callback registered before
-                        # this, which kept the numbers it gave out.
-                        audit_seq = _just_sealed.pop(audit_row.id, None)
-                    if audit_seq is None:
-                        audit_seq = (
-                            AuditLog.objects.filter(id=audit_row.id)
-                            .values_list("seq", flat=True)
-                            .first()
+                def _project_committed_audit() -> None:
+                    try:
+                        from apps.realtime.domain_events import publish_audit_event
+
+                        publish_audit_event(
+                            event_type=fields.action,
+                            subject_kind=fields.subject_kind,
+                            subject_id=fields.subject_id,
+                            actor_id=fields.actor_id,
+                            payload=event_payload,
+                            audit_seq=audit_row.seq,
+                            success=fields.success,
+                            reason=fields.reason,
                         )
-                    publish_audit_event(
-                        event_type=fields.action,
-                        subject_kind=fields.subject_kind,
-                        subject_id=fields.subject_id,
-                        actor_id=fields.actor_id,
-                        payload=event_payload,
-                        audit_seq=audit_seq,
-                        success=fields.success,
-                        reason=fields.reason,
-                    )
-                except Exception as exc:  # pragma: no cover - defensive seam
-                    logger.error(
-                        "Failed to project audit event (%s): %s", fields.action, exc
-                    )
+                    except Exception as exc:  # pragma: no cover - defensive seam
+                        logger.error(
+                            "Failed to project audit event (%s): %s",
+                            fields.action,
+                            exc,
+                        )
 
-            transaction.on_commit(_project_committed_audit)
+                transaction.on_commit(_project_committed_audit)
     except Exception as exc:  # noqa: BLE001 — default callers remain best-effort
         # `action` is whatever the caller passed and the exception text is
         # whatever the database said, so both are escaped as they enter the
@@ -454,6 +451,76 @@ class _JustSealed(threading.local):
 
 
 _just_sealed = _JustSealed()
+
+
+class _ProjectOnCommit:
+    """The audit rows one transaction wrote, projected together at its commit.
+
+    Each row used to be projected by a commit callback of its own: it read
+    back the number the seal had just given it and wrote one domain event,
+    two statements a row, and a reschedule that re-priced nine visits wrote
+    ten rows. The rows now wait here and their events are written in one
+    statement.
+
+    Kept in Django's own list of what to do on commit, so a savepoint that
+    rolls back takes the rows first written inside it with it. A row written
+    later from a savepoint that then rolls back is still listed here but is
+    no longer in the table: only rows the commit kept are projected (the seal
+    names them; a row it did not seal is looked for)."""
+
+    def __init__(self) -> None:
+        self.rows: list[tuple] = []
+
+    def __call__(self) -> None:
+        rows, self.rows = self.rows, []
+        try:
+            from apps.realtime.domain_events import publish_audit_events
+
+            seqs = {}
+            unsealed = []
+            for audit_row, _fields, _payload in rows:
+                seq = _just_sealed.pop(audit_row.id, None)
+                if seq is None:
+                    unsealed.append(audit_row.id)
+                else:
+                    seqs[audit_row.id] = seq
+            if unsealed:
+                seqs.update(
+                    AuditLog.objects.filter(id__in=unsealed).values_list("id", "seq")
+                )
+            publish_audit_events(
+                [
+                    {
+                        "event_type": fields.action,
+                        "subject_kind": fields.subject_kind,
+                        "subject_id": fields.subject_id,
+                        "actor_id": fields.actor_id,
+                        "payload": event_payload,
+                        "audit_seq": seqs[audit_row.id],
+                        "success": fields.success,
+                        "reason": fields.reason,
+                    }
+                    for audit_row, fields, event_payload in rows
+                    if audit_row.id in seqs
+                ]
+            )
+        except Exception as exc:  # pragma: no cover - defensive seam
+            logger.error("Failed to project audit events: %s", exc)
+
+
+def _project_with_the_rest(audit_row, fields, event_payload) -> None:
+    waiting = next(
+        (
+            callback
+            for _sids, callback, _robust in connection.run_on_commit
+            if isinstance(callback, _ProjectOnCommit)
+        ),
+        None,
+    )
+    if waiting is None:
+        waiting = _ProjectOnCommit()
+        transaction.on_commit(waiting)
+    waiting.rows.append((audit_row, fields, event_payload))
 
 
 def _seal_committed_rows() -> None:
