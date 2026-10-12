@@ -217,8 +217,11 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
 
     def test_the_ia_workspace_offers_verified_and_return_with_the_example(self):
         ia_user, _ = _staff("vr-ia3@t.test", "Ian IA", EdifyRole.IMPACT_ASSESSMENT)
+        # A lead's own field work: Impact Assessment's to verify. A CCEO's is
+        # their lead's, and the workspace offers IA no decision on it
+        # (test_lead_verifies_cceo_work).
         work = self._completion(
-            self.james.id,
+            self.rival_pl.id,
             status="awaiting_ia_verification",
             salesforce_activity_id="SV-6161",
         )

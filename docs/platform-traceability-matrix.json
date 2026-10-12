@@ -583,6 +583,7 @@
         "apps/core/enums.py",
         "apps/core/forbidden_links_middleware.py",
         "apps/core/fy.py",
+        "apps/core/htmx_saved.py",
         "apps/core/interventions.py",
         "apps/core/metrics/money.py",
         "apps/core/metrics/payload.py",
@@ -997,6 +998,7 @@
         "apps/hr/team_roster.py",
         "apps/messaging/services.py",
         "apps/partners/support_responsibility.py",
+        "apps/pl_review/services.py",
         "apps/planning/country_oversight/freshness.py",
         "apps/planning/country_oversight/rules.py",
         "apps/planning/fy_policy.py",
@@ -1866,6 +1868,7 @@
         "apps/core/enums.py",
         "apps/core/forbidden_links_middleware.py",
         "apps/core/fy.py",
+        "apps/core/htmx_saved.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
@@ -2156,6 +2159,7 @@
         "apps/core/enums.py",
         "apps/core/forbidden_links_middleware.py",
         "apps/core/fy.py",
+        "apps/core/htmx_saved.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
@@ -4911,9 +4915,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "cde31c10fdccb05581609570b0a276b72daa0890759f15b7e4e3348f55ff535d",
-    "sources": "527a036cac3eaf49fdba10737c427be394cd1b75eef6504504451fc3da437019",
-    "sourceCount": 254,
+    "payload": "b25e1cb41cb4c6a2114ef7c398d3e86a9224616807f85f8f2cffe98d695d7721",
+    "sources": "5e243b6527e8b1e7bc31f2af27dd4d0d1a7e32f1fcc2f4fa5bf73d03059648ae",
+    "sourceCount": 255,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

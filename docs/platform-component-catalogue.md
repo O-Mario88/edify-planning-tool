@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **691**
+Components and application partials: **692**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -447,6 +447,7 @@ Components and application partials: **691**
 | `partials/my_plan/offline_evidence_drawer.html` | application-partial | Reusable offline evidence drawer interface primitive | warning; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /offline/evidence-drawer | 0 |
 | `partials/my_plan/partner_ssa_completion_drawer.html` | application-partial | Reusable partner ssa completion drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/partner-ssa-complete | 0 |
 | `partials/my_plan/period_breakdown.html` | application-partial | Reusable period breakdown interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
+| `partials/my_plan/pl_review_drawer.html` | application-partial | Reusable pl review drawer interface primitive | info, warning; default, loading, empty | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/my_plan/programme_activities.html` | application-partial | Reusable programme activities interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/programme_school_work.html` | application-partial | Reusable programme school work interface primitive | canonical; default | inherits containing page contract | accessible name and label | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/readiness.html` | application-partial | Reusable readiness interface primitive | danger; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |

@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **691**
+- Shared component templates: **692**
 - Full pages: **270**
-- Partials and drawers: **334**
+- Partials and drawers: **333**
 - Permission-gated surfaces: **913**
 - Referenced by automated tests: **830**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -714,7 +714,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9508BC10E6 | /personal-time-off/request/ | Request Leave Drawer View | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6505F2DCFE | /pl/review-queue | Completion Reviews · Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C057B93829 | /pl/review-queue/<str:activity_id>/confirm | Pl Confirm | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-4A1A757947 | /pl/review-queue/<str:activity_id>/drawer | Pl Review Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4A1A757947 | /pl/review-queue/<str:activity_id>/drawer | Pl Review Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-5B9704236A | /pl/review-queue/<str:activity_id>/return | Pl Return | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-80D35194CE | /pl/review-queue/<str:activity_id>/return-drawer | Pl Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5F1957110F | /planning | Planning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

@@ -17,12 +17,12 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 121 | 31 | 2 | 2 | 6 | 19 | 80 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 50 | 10 | 1 | 11 | 0 | 0 | 29 |
-| `journey-03` | Standard staff school visit | ✓ | 12 | 125 | 33 | 3 | 8 | 10 | 26 | 80 |
-| `journey-04` | Cluster training | ✓ | 1 | 91 | 17 | 2 | 6 | 0 | 1 | 76 |
+| `journey-03` | Standard staff school visit | ✓ | 12 | 126 | 33 | 3 | 8 | 10 | 26 | 80 |
+| `journey-04` | Cluster training | ✓ | 1 | 92 | 17 | 2 | 6 | 0 | 1 | 76 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 73 | 27 | 2 | 2 | 1 | 4 | 91 |
 | `journey-06` | Special Project | ✓ | 1 | 131 | 29 | 4 | 9 | 6 | 19 | 80 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 99 | 27 | 4 | 10 | 9 | 23 | 80 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 97 | 25 | 3 | 6 | 7 | 18 | 79 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 100 | 27 | 4 | 10 | 9 | 23 | 80 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 98 | 25 | 3 | 6 | 7 | 18 | 79 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 67 | 15 | 0 | 0 | 1 | 4 | 25 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 118 | 35 | 2 | 2 | 7 | 25 | 80 |
 | `journey-11` | Professional Development | ✓ | 1 | 52 | 8 | 1 | 9 | 1 | 1 | 1 |
@@ -93,7 +93,7 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `acting_leadership`, `actions_sent`, `analytics`, `calendar`, `cce_training_feedback`, `closed_schools`, `cluster_management`, `cluster_oversight` _+44 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+115 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/closure_services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+116 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+21 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_closed`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed` _+2 more_ |
 | Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
@@ -113,7 +113,7 @@ Steps: Eligible schools → Scheduling → Cost → Attendance → Evidence → 
 | Permissions checked | `cluster.catchmentManage`, `project.assignSchool` |
 | Page gates checked | `analytics`, `calendar`, `closed_schools`, `cluster_detail`, `cluster_management`, `clusters`, `core_schools`, `dashboard` _+28 more_ |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py` _+81 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/editing.py`, `apps/activities/live.py`, `apps/activities/models.py`, `apps/activities/profile_activities.py` _+82 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ClusterActivityAttendance`, `audit.AuditLog`, `clusters.Cluster`, `clusters.ClusterServiceDistrict`, `clusters.SchoolClusterAssignment`, `clusters.SchoolClusterMembership` _+5 more_ |
 | Notifications raised | — |
 | Audit actions (evidence) | `activity.salesforce_id_entered` |
@@ -173,7 +173,7 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Permissions checked | `budget.approve`, `fundRequest.approveEscalated`, `payment.act`, `planning.view` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+89 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py`, `apps/activities/live.py` _+90 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `audit.AuditLog`, `audit.DomainEventLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch` _+15 more_ |
 | Notifications raised | `accountability_pl_approved`, `activity_submitted_for_review`, `activity_verified_by_pl`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready` _+1 more_ |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability` _+15 more_ |
@@ -193,7 +193,7 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+87 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/acting/middleware.py`, `apps/acting/models.py`, `apps/acting/services.py`, `apps/activities/day_off.py`, `apps/activities/duplicate_visits.py`, `apps/activities/facilitation.py` _+88 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleChange`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest` _+13 more_ |
 | Notifications raised | `accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.accountability_pl_approved` _+10 more_ |
