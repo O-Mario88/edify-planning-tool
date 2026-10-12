@@ -216,6 +216,22 @@ test('the echo that arrives while the save is still being read is not read again
   assert.equal(p.reads.length, 2);
 });
 
+test('the echo that arrives while the drawer is still closing is not read again', async () => {
+  const p = page({ stamped: true });
+  await p.wait(2000);
+  const committed = p.now();
+  p.state.drawerOpen = true;
+  p.live.saved();
+  p.changed(committed); // the stream's notice lands before the save's read begins
+  await p.wait(200);
+  p.state.drawerOpen = false;
+  await p.wait(6000);
+  assert.equal(p.reads.length, 1, 'read again for the change the save\'s own read showed');
+  p.changed();
+  await p.wait(1500);
+  assert.equal(p.reads.length, 2);
+});
+
 test('a save on a page with no live region reloads it, as before', async () => {
   const p = page({ regions: false });
   p.live.saved();

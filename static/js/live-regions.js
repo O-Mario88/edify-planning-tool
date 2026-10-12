@@ -45,15 +45,14 @@
   function refresh() {
     wanted = true;
     if (loading || doc.hidden || !regions().length || busy()) return;
-    // Asked for while it rests: changes are coming faster than it reads them.
-    if (Date.now() < notBefore) { held = true; return; }
     // The change this read was asked for is already on the page: a read
     // that began after it (the page's own save, say) came back meanwhile.
-    if (!mustRead && due && caughtUp && due <= caughtUp) { wanted = false; due = ''; return; }
+    if (!mustRead && due && caughtUp && due <= caughtUp) { wanted = false; return; }
+    // Asked for while it rests: changes are coming faster than it reads them.
+    if (Date.now() < notBefore) { held = true; return; }
     wanted = false;
     loading = true;
     mustRead = false;
-    due = '';
     spell = held ? Math.min(spell + 1, 4) : 0;
     held = false;
     var began = Date.now();
