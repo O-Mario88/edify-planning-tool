@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 
 import logging
+import threading
 from typing import Any
 
 from django.db import DEFAULT_DB_ALIAS, connection, connections, transaction
@@ -190,7 +191,12 @@ def log(
         # held for one short append. A rolled-back transaction takes its
         # unsealed rows with it, exactly as it took chained rows before.
         deferred = _inside_callers_transaction()
-        with transaction.atomic():
+        # A best-effort row is written under a savepoint, so that failing to
+        # write it leaves the caller's transaction usable. A required row has
+        # no such need: its failure is raised and undoes the caller's
+        # transaction, which is what `required` asks for. Two round trips a
+        # row, and a day's pricing writes one row a visit.
+        with transaction.atomic(savepoint=not (required and deferred)):
             if deferred:
                 prev_hash = next_seq = hash_value = None
                 _seal_after_commit()
@@ -234,7 +240,10 @@ def log(
 
                     audit_seq = audit_row.seq
                     if audit_seq is None:
-                        # Sealed by the commit callback registered before this.
+                        # Sealed by the commit callback registered before
+                        # this, which kept the numbers it gave out.
+                        audit_seq = _just_sealed.pop(audit_row.id, None)
+                    if audit_seq is None:
                         audit_seq = (
                             AuditLog.objects.filter(id=audit_row.id)
                             .values_list("seq", flat=True)
@@ -427,10 +436,31 @@ def _seal_after_commit(using: str = DEFAULT_DB_ALIAS) -> None:
     transaction.on_commit(_seal_committed_rows, using=using)
 
 
+class _JustSealed(threading.local):
+    """The sequence numbers the seal of the commit in hand gave out, by row.
+
+    A row written inside a caller's transaction has no number until the seal
+    that runs at the commit, and the projection of each such row then read
+    its number back, one statement a row: a reschedule that re-priced nine
+    visits read nine. The seal and the projections run one after the other on
+    the committing thread, so the seal leaves its numbers here and each
+    projection takes its own. A row not found here is read, as before."""
+
+    def __init__(self) -> None:
+        self.seqs: dict[str, int] = {}
+
+    def pop(self, row_id, default=None):
+        return self.seqs.pop(row_id, default)
+
+
+_just_sealed = _JustSealed()
+
+
 def _seal_committed_rows() -> None:
     try:
-        seal_pending()
+        _just_sealed.seqs = {row.id: row.seq for row in _seal_pending_rows()}
     except Exception as exc:  # noqa: BLE001 - the scheduled seal retries
+        _just_sealed.seqs = {}
         logger.error("Audit seal after commit failed: %s", exc)
 
 
@@ -441,6 +471,10 @@ def seal_pending(*, limit: int = 5000) -> int:
     of transactions still open are invisible here and wait for their own
     commit. Returns how many rows were sealed.
     """
+    return len(_seal_pending_rows(limit=limit))
+
+
+def _seal_pending_rows(*, limit: int = 5000) -> list:
     with transaction.atomic():
         _take_chain_lock()
         pending = list(
@@ -449,7 +483,7 @@ def seal_pending(*, limit: int = 5000) -> int:
             .order_by("created_at", "id")[:limit]
         )
         if not pending:
-            return 0
+            return []
         last = _chain_tail()
         prev_hash = last.hash if last else None
         next_seq = (last.seq + 1) if last else 1
@@ -460,7 +494,7 @@ def seal_pending(*, limit: int = 5000) -> int:
             prev_hash = row.hash
             next_seq += 1
         AuditLog.objects.bulk_update(pending, ["seq", "prev_hash", "hash"])
-    return len(pending)
+    return pending
 
 
 __all__ = ["log", "seal_pending", "verify_chain"]

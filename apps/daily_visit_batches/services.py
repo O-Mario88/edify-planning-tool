@@ -564,13 +564,20 @@ def remove_school(*, activity_id: str) -> dict:
         return {"batchId": batch.id}
 
 
-def reschedule_within_batch(
-    *, activity, new_date: date, reason: str | None, principal
-) -> None:
-    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
-    already be saved by the caller — see activities.services.reschedule) into
-    the new date's batch, subject to the same validation as fresh scheduling.
-    Call this AFTER detaching the activity from its old batch."""
+def _day_to_join(
+    *,
+    activity,
+    new_date: date,
+    reason,
+    principal,
+    lock: bool,
+    ask_calendar: bool = True,
+) -> dict:
+    """Whether `activity` may join `new_date`'s batch, and what joining needs:
+    the batch (locked for the join when `lock`), its catalogue, the day's
+    district type and the reason that stands. Raises the refusal otherwise.
+    The activity itself is never counted among the day's members: a visit
+    moved within its own day leaves it first."""
     school = activity.school
     if not school or not school.district_id:
         raise BadRequest(
@@ -585,11 +592,12 @@ def reschedule_within_batch(
     )
 
     staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
-    avail = SchedulingPolicyService.check(
-        resolve_scheduling_user(staff_id) if staff_id else None, new_date
-    )
-    if avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    if ask_calendar:
+        avail = SchedulingPolicyService.check(
+            resolve_scheduling_user(staff_id) if staff_id else None, new_date
+        )
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
     from apps.activities.services import _funding_owner_id
 
@@ -599,51 +607,97 @@ def reschedule_within_batch(
     # there as a primary-district day (`attach_activity_to_batch`), and it
     # moves as one: the day's type is worked out below from the districts
     # that are classified secondary.
+    batches = DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user_id, visit_date=new_date
+    )
+    batch = (batches.select_for_update() if lock else batches).first()
+    if batch and _is_locked(responsible_user_id, new_date):
+        raise BadRequest(
+            "This date's visits have already left draft status. Choose another date."
+        )
 
+    existing_activities = (
+        list(
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+            .exclude(id=activity.id)
+            .select_related(*_MEMBER_DISTRICT_RELATIONS)
+        )
+        if batch
+        else []
+    )
+    districts = [member_district(a) for a in existing_activities] + [school.district]
+    all_district_ids = {
+        d.id
+        for d in districts
+        if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+    }
+    incoming_type = "secondary" if all_district_ids else "primary"
+
+    catalogue = _catalogue_for_batch_date(new_date)
+    target = catalogue.required_school_visits_per_day if catalogue else 5
+    total_after = len(existing_activities) + 1
+    if total_after > target:
+        raise BadRequest(
+            f"You can only schedule {target} for this date, please choose another date."
+        )
+
+    effective_reason = (reason or "").strip() or (batch.reason if batch else None)
+    if total_after < target and not effective_reason:
+        raise ReasonRequiredError(
+            f"You scheduled {total_after} school(s). The CD target is {target} schools "
+            f"per day. This will increase cost per school. Reason required."
+        )
+    return {
+        "batch": batch,
+        "catalogue": catalogue,
+        "responsible_user_id": responsible_user_id,
+        "incoming_type": incoming_type,
+        "all_district_ids": all_district_ids,
+        "effective_reason": effective_reason,
+    }
+
+
+def assert_may_join_day(
+    *, activity, new_date: date, reason: str | None, principal
+) -> None:
+    """Refuse now what `reschedule_within_batch` would refuse after the day
+    the visit leaves has been re-priced: a blocked date, a day that has left
+    draft, a full day, a short day with no reason. It locks and writes
+    nothing; `reschedule_within_batch` asks again, under the lock. The
+    calendar is not asked here: the caller has just asked it of this date,
+    and `reschedule_within_batch` asks once more."""
+    _day_to_join(
+        activity=activity,
+        new_date=new_date,
+        reason=reason,
+        principal=principal,
+        lock=False,
+        ask_calendar=False,
+    )
+
+
+def reschedule_within_batch(
+    *, activity, new_date: date, reason: str | None, principal
+) -> None:
+    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
+    already be saved by the caller — see activities.services.reschedule) into
+    the new date's batch, subject to the same validation as fresh scheduling.
+    Call this AFTER detaching the activity from its old batch."""
     with transaction.atomic():
-        batch = (
-            DailyVisitBatch.objects.select_for_update()
-            .filter(responsible_user=responsible_user_id, visit_date=new_date)
-            .first()
+        day = _day_to_join(
+            activity=activity,
+            new_date=new_date,
+            reason=reason,
+            principal=principal,
+            lock=True,
         )
-        if batch and _is_locked(responsible_user_id, new_date):
-            raise BadRequest(
-                "This date's visits have already left draft status. Choose another date."
-            )
-
-        existing_activities = (
-            list(
-                batch.activities.filter(deleted_at__isnull=True)
-                .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-                .select_related(*_MEMBER_DISTRICT_RELATIONS)
-            )
-            if batch
-            else []
-        )
-        districts = [member_district(a) for a in existing_activities] + [
-            school.district
-        ]
-        all_district_ids = {
-            d.id
-            for d in districts
-            if d and district_type_for_staff(responsible_user_id, d) == "secondary"
-        }
-        incoming_type = "secondary" if all_district_ids else "primary"
-
-        catalogue = _catalogue_for_batch_date(new_date)
-        target = catalogue.required_school_visits_per_day if catalogue else 5
-        total_after = len(existing_activities) + 1
-        if total_after > target:
-            raise BadRequest(
-                f"You can only schedule {target} for this date, please choose another date."
-            )
-
-        effective_reason = (reason or "").strip() or (batch.reason if batch else None)
-        if total_after < target and not effective_reason:
-            raise ReasonRequiredError(
-                f"You scheduled {total_after} school(s). The CD target is {target} schools "
-                f"per day. This will increase cost per school. Reason required."
-            )
+        batch = day["batch"]
+        catalogue = day["catalogue"]
+        responsible_user_id = day["responsible_user_id"]
+        incoming_type = day["incoming_type"]
+        all_district_ids = day["all_district_ids"]
+        effective_reason = day["effective_reason"]
 
         if not batch:
             batch = DailyVisitBatch.objects.create(
@@ -933,5 +987,6 @@ __all__ = [
     "attach_activity_to_batch",
     "each_day_priced_once",
     "remove_school",
+    "assert_may_join_day",
     "reschedule_within_batch",
 ]

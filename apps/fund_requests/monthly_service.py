@@ -63,6 +63,15 @@ def sync_monthly_drafts_for_activities(activities, *, prior_buckets=()) -> None:
         ).values_list("responsible_user", "fiscal_year", "month")
         if owner and fy and month
     )
+    from .follow import months_wait
+
+    if months_wait(periods):
+        return
+    sync_monthly_periods(periods)
+
+
+def sync_monthly_periods(periods) -> None:
+    """Rebuild the monthly draft of each ``(owner, fy, month)``."""
     if not periods:
         return
 
@@ -141,4 +150,8 @@ def sync_monthly_drafts_for_activities(activities, *, prior_buckets=()) -> None:
             )
 
 
-__all__ = ["sync_monthly_drafts_for_activity", "sync_monthly_drafts_for_activities"]
+__all__ = [
+    "sync_monthly_drafts_for_activity",
+    "sync_monthly_drafts_for_activities",
+    "sync_monthly_periods",
+]

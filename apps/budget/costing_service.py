@@ -1134,6 +1134,26 @@ def facilitation_fee_for(input: dict) -> ActivityCost:
     return facilitation_fee_cost(input, rates)
 
 
+def saved_together(model, rows) -> None:
+    """Send `post_save` for rows `bulk_create` has just written.
+
+    `bulk_create` sends no signals. Rows that used to be created one at a
+    time announced themselves to whatever listens (the advance's snapshot
+    projection, the traceability matrix's record of what a route writes);
+    written together, they still do."""
+    from django.db.models.signals import post_save
+
+    for row in rows:
+        post_save.send(
+            sender=model,
+            instance=row,
+            created=True,
+            update_fields=None,
+            raw=False,
+            using=row._state.db or "default",
+        )
+
+
 def apply_to_activity(
     activity: Activity,
     input: dict,
@@ -1602,6 +1622,17 @@ def apply_to_activities(
         }
         from apps.audit.services import log as audit_log
 
+        # The revisions being superseded step down together and the new ones
+        # are written together, one statement each for the day.
+        now = timezone.now()
+        if previous_of:
+            ActivityCostSnapshot.objects.filter(
+                id__in=[previous.id for previous in previous_of.values()]
+            ).update(is_current=False, updated_at=now)
+            for previous in previous_of.values():
+                previous.is_current = False
+                previous.updated_at = now
+        snapshots = []
         for plan in plans:
             activity = plan["activity"]
             cost = plan["cost"]
@@ -1610,39 +1641,47 @@ def apply_to_activities(
             reference_card = plan["reference_card"]
             reference_cost = plan["reference_cost"]
             previous = previous_of.get(activity.id)
-            sequence = (previous.sequence + 1) if previous else 1
-            if previous:
-                previous.is_current = False
-                previous.save(update_fields=["is_current", "updated_at"])
-            snapshot = ActivityCostSnapshot.objects.create(
-                activity=activity,
-                sequence=sequence,
-                is_current=True,
-                activity_catalogue_item_id=activity.catalogue_item_id,
-                activity_catalogue_version=activity.catalogue_version,
-                costing_profile_version=activity.costing_profile_snapshot,
-                reference_rate_card=reference_card,
-                operational_rate_card=catalogue,
-                reference_cost=(
-                    int(reference_cost.amount)
-                    if reference_cost is not None and not reference_cost.cost_missing
-                    else None
-                ),
-                operational_cost=int(cost.amount),
-                calculation_inputs=dual["inputs"],
-                reference_breakdown=(
-                    [_serialize_line(line) for line in reference_cost.lines]
-                    if reference_cost is not None
-                    else []
-                ),
-                operational_breakdown=[_serialize_line(line) for line in cost.lines],
-                warnings=dual["warnings"],
-                missing_configuration=cost.missing_items,
-                calculated_at=timezone.now(),
-                calculated_by=responsible_user_id or activity.responsible_staff_id,
-                recalculation_reason=plan["input"].get("recalculationReason"),
-                supersedes=previous,
+            snapshots.append(
+                ActivityCostSnapshot(
+                    activity=activity,
+                    sequence=(previous.sequence + 1) if previous else 1,
+                    is_current=True,
+                    activity_catalogue_item_id=activity.catalogue_item_id,
+                    activity_catalogue_version=activity.catalogue_version,
+                    costing_profile_version=activity.costing_profile_snapshot,
+                    reference_rate_card=reference_card,
+                    operational_rate_card=catalogue,
+                    reference_cost=(
+                        int(reference_cost.amount)
+                        if reference_cost is not None
+                        and not reference_cost.cost_missing
+                        else None
+                    ),
+                    operational_cost=int(cost.amount),
+                    calculation_inputs=dual["inputs"],
+                    reference_breakdown=(
+                        [_serialize_line(line) for line in reference_cost.lines]
+                        if reference_cost is not None
+                        else []
+                    ),
+                    operational_breakdown=[
+                        _serialize_line(line) for line in cost.lines
+                    ],
+                    warnings=dual["warnings"],
+                    missing_configuration=cost.missing_items,
+                    calculated_at=timezone.now(),
+                    calculated_by=responsible_user_id or activity.responsible_staff_id,
+                    recalculation_reason=plan["input"].get("recalculationReason"),
+                    supersedes=previous,
+                )
             )
+        ActivityCostSnapshot.objects.bulk_create(snapshots)
+        saved_together(ActivityCostSnapshot, snapshots)
+
+        for plan, snapshot in zip(plans, snapshots):
+            activity = plan["activity"]
+            catalogue = plan["catalogue"]
+            reference_card = plan["reference_card"]
             audit_log(
                 action="activity.cost.calculated",
                 subject_kind="ActivityCostSnapshot",
@@ -1650,8 +1689,8 @@ def apply_to_activities(
                 actor_id=responsible_user_id or activity.responsible_staff_id,
                 payload={
                     "activityId": activity.id,
-                    "sequence": sequence,
-                    "operationalCost": int(cost.amount),
+                    "sequence": snapshot.sequence,
+                    "operationalCost": int(plan["cost"].amount),
                     "operationalRateCardVersion": (
                         catalogue.version if catalogue else None
                     ),
@@ -1671,6 +1710,7 @@ def apply_to_activities(
     sync_for_activities(
         [activity for activity in activities if not activity.cost_missing],
         responsible_user_id=responsible_user_id,
+        lines_just_written=True,
     )
     return [plan["cost"] for plan in plans]
 
@@ -1692,7 +1732,7 @@ _ACTUALS_FIELDS = (
 
 
 @contextmanager
-def snapshot_actuals_projected_once():
+def snapshot_actuals_projected_once(*, already_level: bool = False):
     """Bring each activity's snapshot level with its advances once, when the
     block ends, instead of after every advance saved inside it.
 
@@ -1701,7 +1741,14 @@ def snapshot_actuals_projected_once():
     saves one advance a cost line, so a visit with four fundable lines
     projected the same snapshot four times, six statements each, and a day of
     five did it twenty times. The projection reads the advances as they stand,
-    so the last one is the only one whose answer is kept."""
+    so the last one is the only one whose answer is kept.
+
+    `already_level`: the caller knows the advances saved inside the block
+    move no figure of the snapshot, so nothing is projected at all. True of
+    one case only, the advances opened for cost lines just written: the
+    snapshot was written with them at nought, the advances the old lines had
+    went with those lines, and the new ones are pending with no money on
+    them."""
     if _actuals_to_project.get() is not None:
         yield
         return
@@ -1711,7 +1758,8 @@ def snapshot_actuals_projected_once():
         yield
     finally:
         _actuals_to_project.reset(token)
-    sync_snapshot_actuals_many(pending)
+    if not already_level:
+        sync_snapshot_actuals_many(pending)
 
 
 def project_snapshot_actuals(activity_id: str) -> None:
@@ -1845,4 +1893,5 @@ __all__ = [
     "sync_snapshot_actuals_many",
     "snapshot_actuals_projected_once",
     "project_snapshot_actuals",
+    "saved_together",
 ]

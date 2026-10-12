@@ -35,13 +35,29 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     sync_for_activities([activity], responsible_user_id)
 
 
-def sync_for_activities(activities, responsible_user_id: str | None) -> None:
+def sync_for_activities(
+    activities,
+    responsible_user_id: str | None,
+    *,
+    lines_just_written: bool = False,
+) -> None:
     """`sync_for_activity` for several activities at once: the members of a
     day, whose lines were just written together
     (`apps.budget.costing_service.apply_to_activities`). Their lines and the
-    advances they already have are read together, and each activity's cost
-    snapshot is brought level with its advances once, not once an advance."""
-    from apps.budget.costing_service import snapshot_actuals_projected_once
+    advances they already have are read together, the advances to open are
+    written together, and each activity's cost snapshot is brought level with
+    its advances once, not once an advance.
+
+    `lines_just_written`: the cost writer has just cleared these activities'
+    lines and written new ones, inside this transaction. An advance belongs
+    to its line and went with it, so there is none to drop, none to refresh
+    and nothing on the new ones for a snapshot to be brought level with: the
+    advances are only opened."""
+    from apps.budget.costing_service import (
+        saved_together,
+        snapshot_actuals_projected_once,
+    )
+    from apps.core.models import _normalize_datetime_value
 
     activities = list(activities)
     unmoved = [
@@ -89,6 +105,55 @@ def sync_for_activities(activities, responsible_user_id: str | None) -> None:
         lines_of[line.activity_id].append(line)
     line_ids = {line.id for lines in lines_of.values() for line in lines}
 
+    def opened(activity, line, responsible, week) -> AdvanceRequest:
+        return AdvanceRequest(
+            activity=activity,
+            budget_line=line,
+            responsible_user_id=responsible,
+            fy=activity.fy,
+            quarter=activity.quarter,
+            month=activity.month,
+            week=week,
+            # What `save()` does to a clock value on its way in
+            # (apps.core.models.TimeStampedModel), done here for rows that
+            # are written together.
+            planned_date=_normalize_datetime_value(activity.scheduled_date)
+            if activity.scheduled_date is not None
+            else None,
+            amount=line.amount,
+            status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+        )
+
+    def week_of(activity):
+        # month/week: activity.planned_month/.planned_week are only
+        # populated when a caller happens to pass them explicitly at
+        # schedule time and are otherwise silently wrong — activity.month
+        # is set reliably by costing_service.apply_to_activity from the
+        # same scheduled_date, so use that + a week-of-month derived from
+        # it (the same formula used throughout the app for this).
+        return (
+            min(5, (activity.planned_date.day - 1) // 7 + 1)
+            if activity.planned_date
+            else None
+        )
+
+    if lines_just_written:
+        to_open = [
+            opened(
+                by_id[activity_id],
+                line,
+                responsible_user_id or by_id[activity_id].responsible_staff_id,
+                week_of(by_id[activity_id]),
+            )
+            for activity_id, lines in lines_of.items()
+            for line in lines
+        ]
+        if to_open:
+            AdvanceRequest.objects.bulk_create(to_open)
+            with snapshot_actuals_projected_once(already_level=True):
+                saved_together(AdvanceRequest, to_open)
+        return
+
     # The bulk-delete + per-line create/update must be atomic: a failure midway
     # would leave the advance-request set inconsistent with the activity's
     # budget lines (some deleted, some not yet recreated).
@@ -106,35 +171,15 @@ def sync_for_activities(activities, responsible_user_id: str | None) -> None:
             adv.budget_line_id: adv
             for adv in AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
         }
+        to_open = []
         for activity_id, lines in lines_of.items():
             activity = by_id[activity_id]
             responsible = responsible_user_id or activity.responsible_staff_id
-            # month/week: activity.planned_month/.planned_week are only
-            # populated when a caller happens to pass them explicitly at
-            # schedule time and are otherwise silently wrong — activity.month
-            # is set reliably by costing_service.apply_to_activity from the
-            # same scheduled_date, so use that + a week-of-month derived from
-            # it (the same formula used throughout the app for this).
-            week = (
-                min(5, (activity.planned_date.day - 1) // 7 + 1)
-                if activity.planned_date
-                else None
-            )
+            week = week_of(activity)
             for line in lines:
                 adv = advances.get(line.id)
                 if adv is None:
-                    AdvanceRequest.objects.create(
-                        activity=activity,
-                        budget_line=line,
-                        responsible_user_id=responsible,
-                        fy=activity.fy,
-                        quarter=activity.quarter,
-                        month=activity.month,
-                        week=week,
-                        planned_date=activity.scheduled_date,
-                        amount=line.amount,
-                        status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-                    )
+                    to_open.append(opened(activity, line, responsible, week))
                 elif adv.status in (
                     AdvanceRequestStatus.DRAFT_FROM_SCHEDULE,
                     AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
@@ -163,6 +208,9 @@ def sync_for_activities(activities, responsible_user_id: str | None) -> None:
                             "updated_at",
                         ]
                     )
+        if to_open:
+            AdvanceRequest.objects.bulk_create(to_open)
+            saved_together(AdvanceRequest, to_open)
 
 
 # ── Monthly/period approval routing ──────────────────────────────────────────

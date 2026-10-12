@@ -192,6 +192,10 @@ def trigger_generate_for_activities(
             planned_date = timezone.localtime(activity.scheduled_date).date()
             week_start = planned_date - timedelta(days=planned_date.weekday())
             buckets[(owner, week_start)] = None
+    from .follow import weeks_wait
+
+    if weeks_wait(buckets):
+        return
     for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 
@@ -222,6 +226,10 @@ def sync_weekly_requests_for_activities(activities, *, prior_buckets=()) -> None
         ).values_list("responsible_user", "week_start_date")
         if owner and week_start
     )
+    from .follow import weeks_wait
+
+    if weeks_wait(buckets):
+        return
     for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 

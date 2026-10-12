@@ -132,14 +132,85 @@ def announce(
     transaction.on_commit(lambda: _publish(key))
 
 
-def audience(
-    *, staff_ids=(), school_id=None, cluster_id=None, project_id=None, partner_ids=()
-) -> frozenset[str]:
-    """The user ids of everyone whose pages show a record with these."""
+def _line_users(staff: frozenset[str]) -> frozenset[str]:
+    """The users these staff are, and the users above them, `_LEVELS_UP` up."""
     from django.db.models import Q
 
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 
+    users: set[str] = set()
+    # An owner is written as a StaffProfile id or as a User id
+    # (apps.core.scoping.owner_ids): read both.
+    line: set[str] = set()
+    if staff:
+        for profile_id, user_id in StaffProfile.objects.filter(
+            Q(id__in=staff) | Q(user_id__in=staff)
+        ).values_list("id", "user_id"):
+            line.add(profile_id)
+            if user_id:
+                users.add(user_id)
+    known = set(line)
+    for _ in range(_LEVELS_UP):
+        if not line:
+            break
+        above = set()
+        for profile_id, user_id in StaffSupervisorAssignment.objects.filter(
+            supervisee_id__in=line
+        ).values_list("supervisor_id", "supervisor__user_id"):
+            if profile_id and profile_id not in known:
+                above.add(profile_id)
+                if user_id:
+                    users.add(user_id)
+        known |= above
+        line = above
+    return frozenset(users)
+
+
+def _country_users() -> frozenset[str]:
+    """The readers with the whole country in view."""
+    from apps.accounts.models import User
+    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
+
+    return frozenset(
+        User.objects.filter(
+            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
+        ).values_list("id", flat=True)
+    )
+
+
+def _same(key, read):
+    """A fresh read: `audience` asks the database every time."""
+    return read()
+
+
+def _kept(key, read):
+    """`read()`, remembered for as long as an audience is. The officer's line
+    and the country's readers are the same for every school of a day: a save
+    that re-priced nine visits at nine schools read each of them nine times,
+    forty statements after every such commit."""
+    now = time.monotonic()
+    with _audiences_lock:
+        kept = _audiences.get(key)
+        if kept and now - kept[0] < _AUDIENCE_SECONDS:
+            return kept[1]
+    found = read()
+    with _audiences_lock:
+        if len(_audiences) >= _AUDIENCE_KEPT:
+            _audiences.clear()
+        _audiences[key] = (now, found)
+    return found
+
+
+def audience(
+    *,
+    staff_ids=(),
+    school_id=None,
+    cluster_id=None,
+    project_id=None,
+    partner_ids=(),
+    _read=_same,
+) -> frozenset[str]:
+    """The user ids of everyone whose pages show a record with these."""
     staff = {str(i) for i in staff_ids if i}
     if school_id:
         from apps.schools.models import School
@@ -168,31 +239,8 @@ def audience(
     staff.discard(None)
     staff.discard("")
 
-    users: set[str] = set()
-    # An owner is written as a StaffProfile id or as a User id
-    # (apps.core.scoping.owner_ids): read both.
-    line: set[str] = set()
-    if staff:
-        for profile_id, user_id in StaffProfile.objects.filter(
-            Q(id__in=staff) | Q(user_id__in=staff)
-        ).values_list("id", "user_id"):
-            line.add(profile_id)
-            if user_id:
-                users.add(user_id)
-    known = set(line)
-    for _ in range(_LEVELS_UP):
-        if not line:
-            break
-        above = set()
-        for profile_id, user_id in StaffSupervisorAssignment.objects.filter(
-            supervisee_id__in=line
-        ).values_list("supervisor_id", "supervisor__user_id"):
-            if profile_id and profile_id not in known:
-                above.add(profile_id)
-                if user_id:
-                    users.add(user_id)
-        known |= above
-        line = above
+    line_of = frozenset(str(i) for i in staff)
+    users: set[str] = set(_read(("line", line_of), lambda: _line_users(line_of)))
 
     partners = [i for i in partner_ids if i]
     if partners:
@@ -204,13 +252,7 @@ def audience(
             )
         )
 
-    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
-
-    users.update(
-        User.objects.filter(
-            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
-        ).values_list("id", flat=True)
-    )
+    users.update(_read(("country",), _country_users))
     return frozenset(str(user) for user in users if user)
 
 
@@ -227,6 +269,7 @@ def _audience_for(key: tuple) -> frozenset[str]:
         cluster_id=cluster_id,
         project_id=project_id,
         partner_ids=partner_ids,
+        _read=_kept,
     )
     with _audiences_lock:
         if len(_audiences) >= _AUDIENCE_KEPT:
