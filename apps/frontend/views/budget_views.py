@@ -1576,10 +1576,20 @@ def weekly_fund_requests_view(request):
         return _budget_redirect(request, period=request.GET["period_tab"])
     fy = _page_fy(request)
 
-    # CSV export of the currently filtered requests (same pattern as /clusters).
-    if request.GET.get("export", "").strip() == "csv":
+    # The export of the currently filtered requests: the workbook the Export
+    # options drawer asks for (owner, 2026-10-12), or the CSV a link names.
+    export = request.GET.get("export", "").strip().lower()
+    if export in ("csv", "xlsx", "excel"):
+        from apps.core.permissions import RolePermissionService, render_access_denied
+
+        if not RolePermissionService.can_export(request.user, request.path):
+            return render_access_denied(
+                request, "Your role does not include data export."
+            )
         base = _scoped_base_querysets(request, fy)
-        return _export_weekly_fund_requests_csv(base["wfr_qs"])
+        if export == "csv":
+            return _export_weekly_fund_requests_csv(base["wfr_qs"])
+        return _export_weekly_fund_requests_xlsx(request, base["wfr_qs"], fy)
 
     context = _build_fund_requests_context(request)
     if request.headers.get("HX-Request") == "true":
@@ -1915,3 +1925,267 @@ def weekly_fund_request_disburse_action(request, request_id):
             messages.error(request, f"Error disbursing funds: {e}")
 
     return local_redirect(f"/fund-requests/weekly/{request_id}")
+
+
+#: The Weekly Advance Request drawer's status choices: the page's own filter.
+FUND_REQUEST_STATUS_CHOICES = (
+    ("", "All statuses"),
+    ("disbursed", "Disbursed"),
+    ("confirmed_for_advance", "Ready"),
+    ("pending_responsible_confirmation", "Draft"),
+    ("self_funded", "Self-funded"),
+)
+
+REQUEST_SHEET_HEADERS = (
+    "Request ID",
+    "Week Start",
+    "Week End",
+    "Requested By",
+    "Status",
+    "FY",
+    "Lines",
+    "Total Amount (UGX)",
+    "Disbursed (UGX)",
+)
+REQUEST_LINE_SHEET_HEADERS = (
+    "Request ID",
+    "Week Start",
+    "Requested By",
+    "Request Status",
+    "Activity ID",
+    "Planned Date",
+    "Activity Type",
+    "School ID",
+    "School",
+    "District",
+    "Cluster",
+    "Cost Item",
+    "Quantity",
+    "Unit Cost (UGX)",
+    "Amount (UGX)",
+)
+
+
+def _export_weekly_fund_requests_xlsx(request, wfr_qs, fy):
+    """The filtered requests and every cost line behind them, as a workbook.
+
+    The period, the kind of work and the status come from the Export options
+    drawer (``apps.frontend.views.oversight_views._period_filters``,
+    ``apps.core.export_kinds``). A request is in the period when its week
+    touches it; a line when its activity's planned day falls in it — the
+    budget an export carries is the planned activities' own lines, nothing
+    re-derived (owner, 2026-10-12).
+    """
+    from apps.accounts.models import User
+    from apps.core import export_kinds
+    from apps.core.excel import table_download
+    from apps.frontend.views.oversight_views import (
+        _period_filters,
+        export_period_bounds,
+    )
+    from apps.fund_requests.models import WeeklyFundRequestLine
+
+    period = _period_filters(request)
+    start, end = export_period_bounds(period)
+    kind = export_kinds.read_kind(request)
+    requests = list(
+        wfr_qs.filter(week_start_date__lte=end, week_end_date__gte=start)[:5000]
+    )
+    names = dict(
+        User.objects.filter(id__in={r.responsible_user for r in requests}).values_list(
+            "id", "name"
+        )
+    )
+    by_id = {r.id: r for r in requests}
+    lines = (
+        WeeklyFundRequestLine.objects.filter(
+            weekly_fund_request_id__in=list(by_id),
+            activity_budget_line__activity__deleted_at__isnull=True,
+        )
+        .select_related(
+            "activity_budget_line__activity__school__district",
+            "activity_budget_line__activity__cluster__district",
+        )
+        .order_by("weekly_fund_request__week_start_date", "id")
+    )
+    line_rows = []
+    counted: dict[str, int] = {}
+    for line in lines:
+        cost = line.activity_budget_line
+        activity = cost.activity
+        day = cost.planned_date or activity.planned_date
+        if day is None or not (start <= day <= end):
+            continue
+        if not export_kinds.keeps(
+            kind,
+            activity.activity_type,
+            online=(activity.programme_delivery_mode or "") == "online",
+        ):
+            continue
+        wfr = by_id[line.weekly_fund_request_id]
+        counted[wfr.id] = counted.get(wfr.id, 0) + 1
+        school = activity.school
+        cluster = activity.cluster
+        line_rows.append(
+            [
+                wfr.id,
+                wfr.week_start_date,
+                names.get(wfr.responsible_user, wfr.responsible_user),
+                wfr.status,
+                activity.id,
+                day,
+                activity.get_activity_type_display(),
+                getattr(school, "school_id", "") or "",
+                getattr(school, "name", "") or "",
+                getattr(getattr(school, "district", None), "name", "")
+                or getattr(getattr(cluster, "district", None), "name", "")
+                or "",
+                getattr(cluster, "name", "") or "",
+                line.description or line.line_item_type,
+                line.quantity,
+                line.unit_cost,
+                line.total_cost,
+            ]
+        )
+    # A request stays on the first sheet only while a line of it is on the
+    # second, so a kind or a period that leaves a request empty leaves it out.
+    request_rows = [
+        [
+            r.id,
+            r.week_start_date,
+            r.week_end_date,
+            names.get(r.responsible_user, r.responsible_user),
+            r.status,
+            r.fy,
+            counted.get(r.id, 0),
+            r.total_amount or 0,
+            r.disbursed_amount or 0,
+        ]
+        for r in requests
+        if counted.get(r.id)
+    ]
+    stamp = f"{start.isoformat()}-to-{end.isoformat()}"
+    return table_download(
+        request,
+        f"weekly-advance-requests-{fy}-{stamp}",
+        [
+            {
+                "title": "Requests",
+                "headers": list(REQUEST_SHEET_HEADERS),
+                "rows": request_rows,
+                "number_formats": {
+                    2: "d mmm yyyy",
+                    3: "d mmm yyyy",
+                    8: "#,##0",
+                    9: "#,##0",
+                },
+            },
+            {
+                "title": "Cost Lines",
+                "headers": list(REQUEST_LINE_SHEET_HEADERS),
+                "rows": line_rows,
+                "number_formats": {
+                    2: "d mmm yyyy",
+                    6: "d mmm yyyy",
+                    14: "#,##0",
+                    15: "#,##0",
+                },
+            },
+        ],
+    )
+
+
+@require_page_permission("fund_requests")
+def fund_requests_export_drawer_view(request):
+    """The Export options drawer of the Weekly Advance Request page."""
+    from apps.core.permissions import RolePermissionService, render_access_denied
+    from apps.frontend.views.oversight_views import export_drawer_context
+
+    if not RolePermissionService.can_export(request.user, "/fund-requests/weekly"):
+        return render_access_denied(request, "Your role does not include data export.")
+    context = export_drawer_context(
+        request,
+        export_url="/fund-requests/weekly",
+        title="Export Weekly Advance Requests",
+        subtitle=(
+            "The requests of the period and the planned activities' cost "
+            "lines behind them, as one Excel workbook"
+        ),
+        hidden_keys=("district", "staff", "q"),
+        fixed={"export": "xlsx"},
+    )
+    context.update(
+        status_label="Request Status",
+        status_choices=FUND_REQUEST_STATUS_CHOICES,
+        drawer_size="sm",
+    )
+    return render(
+        request, "partials/oversight/export_customization_drawer.html", context
+    )
+
+
+@require_page_permission("monthly_budget")
+def budget_export_drawer_view(request):
+    """The Export options drawer of the Budget page."""
+    from apps.core.permissions import RolePermissionService, render_access_denied
+    from apps.frontend.views.oversight_views import export_drawer_context
+
+    if not RolePermissionService.can_export(request.user, "/budget/export"):
+        return render_access_denied(request, "Your role does not include data export.")
+    context = export_drawer_context(
+        request,
+        export_url="/budget/export",
+        title="Export Budget",
+        subtitle=(
+            "The planned activities of the period, each with the budget of "
+            "its own cost lines, as one Excel workbook"
+        ),
+        hidden_keys=("budget_scope", "district", "staff", "date"),
+    )
+    context["drawer_size"] = "sm"
+    return render(
+        request, "partials/oversight/export_customization_drawer.html", context
+    )
+
+
+@require_page_permission("monthly_budget")
+def budget_export_view(request):
+    """The Budget as a workbook: the planned activities whose dates fall in the
+    period the drawer chose (else the page's year) and their budget, read
+    from the same lines the Budget page sums (owner, 2026-10-12: "an accurate
+    extract from the actual planned activities for that period")."""
+    from apps.budget.services import budget_export_sheets
+    from apps.core import export_kinds
+    from apps.core.excel import table_download
+    from apps.core.permissions import RolePermissionService, render_access_denied
+    from apps.frontend.views.oversight_views import (
+        _period_filters,
+        export_period_bounds,
+    )
+
+    if not RolePermissionService.can_export(request.user, request.path):
+        return render_access_denied(request, "Your role does not include data export.")
+    period = _period_filters(request)
+    start, end = export_period_bounds(period)
+    kind = export_kinds.read_kind(request)
+    status = (request.GET.get("status") or "").strip().lower()
+    query = {
+        "fy": period["fy"],
+        "budget_scope": (request.GET.get("budget_scope") or "").strip(),
+        "district": (request.GET.get("district") or "").strip(),
+        "staff": (request.GET.get("staff") or "").strip(),
+        "date": (request.GET.get("date") or start.isoformat()).strip(),
+        "plan_only": True,
+    }
+    stem = f"budget-{start.isoformat()}-to-{end.isoformat()}"
+    if kind != export_kinds.ALL:
+        stem += f"-{kind.replace('_', '-')}"
+    if status and status != "all":
+        stem += f"-{status}"
+    return table_download(
+        request,
+        stem,
+        budget_export_sheets(
+            request.user, query, start=start, end=end, kind=kind, status=status
+        ),
+    )

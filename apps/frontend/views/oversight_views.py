@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.rbac import Permission
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
+from apps.core import export_kinds
 from apps.core.permissions import (
     RolePermissionService,
     has_permission,
@@ -2717,7 +2718,6 @@ def _wants_excel(request) -> bool:
 
 def _filter_export_items(items, request, period: dict) -> list:
     """Apply custom period, completed status and activity type filtering for exports."""
-    from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
     from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
 
     filtered = list(items)
@@ -2758,6 +2758,8 @@ def _filter_export_items(items, request, period: dict) -> list:
             if getattr(it, "activity_status", "")
             in {
                 "scheduled",
+                # A moved activity is still a scheduled one.
+                "rescheduled",
                 "partner_scheduled",
                 "in_progress",
                 "staff_scheduled",
@@ -2778,23 +2780,16 @@ def _filter_export_items(items, request, period: dict) -> list:
             or getattr(it, "delivery_phase", "") == "in_progress"
         ]
 
-    # 3. Activity Type filter
-    act_type = (request.GET.get("activity_type") or "").strip().lower()
-    if act_type == "visits_trainings":
-        filtered = [
-            it
-            for it in filtered
-            if getattr(it, "activity_type", "") in VISIT_TYPES
-            or getattr(it, "activity_type", "") in TRAINING_TYPES
-        ]
-    elif act_type == "visits":
-        filtered = [
-            it for it in filtered if getattr(it, "activity_type", "") in VISIT_TYPES
-        ]
-    elif act_type == "trainings":
-        filtered = [
-            it for it in filtered if getattr(it, "activity_type", "") in TRAINING_TYPES
-        ]
+    # 3. What work (apps.core.export_kinds): visits, group trainings, cluster
+    # meetings, online trainings, visits and trainings, or everything.
+    from apps.core import export_kinds
+
+    filtered = export_kinds.filter_items(
+        filtered,
+        export_kinds.read_kind(request),
+        type_of=lambda it: getattr(it, "activity_type", ""),
+        id_of=lambda it: getattr(it, "activity_id", None),
+    )
 
     return filtered
 
@@ -2962,7 +2957,6 @@ def special_project_export_view(request, project_id: str = "all"):
     # Filter project schools by custom period if requested
     period = _period_filters(request)
     req_status = (request.GET.get("status") or "").strip().lower()
-    req_act = (request.GET.get("activity_type") or "").strip().lower()
     if (
         period.get("period") == "custom"
         and period.get("date_start")
@@ -2984,18 +2978,27 @@ def special_project_export_view(request, project_id: str = "all"):
                 if getattr(s, "activity_state_label", "").lower() == "completed"
                 or "complet" in getattr(s, "status_label", "").lower()
             ]
-    if req_act in ("visits_trainings", "visits", "trainings"):
+    # A project school's row names its training, or none for a visit; cluster
+    # meetings and online trainings are not project work, so those kinds
+    # leave the sheet empty rather than guess.
+    from apps.core import export_kinds
+
+    kind = export_kinds.read_kind(request)
+    if kind != export_kinds.ALL:
+        wants_training = kind in (export_kinds.GROUP_TRAININGS, export_kinds.TRAININGS)
         for proj in projects:
-            if req_act == "visits":
+            if kind == export_kinds.VISITS_TRAININGS:
+                continue
+            if kind in (export_kinds.MEETINGS, export_kinds.ONLINE):
+                proj.school_rows = []
+            elif wants_training:
+                proj.school_rows = [s for s in proj.school_rows if s.training_name]
+            else:
                 proj.school_rows = [
                     s
                     for s in proj.school_rows
                     if "visit" in getattr(s, "purpose_label", "").lower()
                     or not s.training_name
-                ]
-            elif req_act == "trainings":
-                proj.school_rows = [
-                    s for s in proj.school_rows if bool(s.training_name)
                 ]
 
     return table_download(
@@ -3989,23 +3992,14 @@ def partner_oversight_export_view(request):
             or it.activity_status in _COMPLETE_STATUSES
         ]
 
-    req_act = (request.GET.get("activity_type") or "").strip().lower()
-    if req_act == "visits_trainings":
-        from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+    from apps.core import export_kinds
 
-        items = [
-            it
-            for it in items
-            if it.activity_type in VISIT_TYPES or it.activity_type in TRAINING_TYPES
-        ]
-    elif req_act == "visits":
-        from apps.core.activity_types import VISIT_TYPES
-
-        items = [it for it in items if it.activity_type in VISIT_TYPES]
-    elif req_act == "trainings":
-        from apps.core.activity_types import TRAINING_TYPES
-
-        items = [it for it in items if it.activity_type in TRAINING_TYPES]
+    items = export_kinds.filter_items(
+        items,
+        export_kinds.read_kind(request),
+        type_of=lambda it: it.activity_type,
+        id_of=lambda it: getattr(it, "partner_activity_id", None),
+    )
 
     # The page's Export button asks for the workbook (owner, 2026-09-27: "It
     # should be export in excel not csv"); CSV stays the default for links.
@@ -4572,6 +4566,67 @@ def partner_return_resolve_submit_view(request):
     )
 
 
+def export_drawer_context(
+    request, *, export_url: str, title: str, subtitle: str, hidden_keys=(), fixed=None
+) -> dict:
+    """The Export options drawer's context: the page's year, the month range
+    and date range it opens on, and the page's own query carried as hidden
+    fields. ``fixed`` are parameters the export route needs whatever the
+    page sent (the Weekly Advance Request's ``export=xlsx``)."""
+    from apps.core.fy import (
+        FY_MONTHS,
+        fy_options,
+        get_fy_date_range,
+        get_operational_fy,
+    )
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    raw_from_month = (
+        request.GET.get("from_month") or request.GET.get("month") or ""
+    ).strip()
+    raw_to_month = (request.GET.get("to_month") or "").strip()
+    selected_from_month = (
+        int(raw_from_month)
+        if raw_from_month.isdigit() and 1 <= int(raw_from_month) <= 12
+        else 10
+    )
+    selected_to_month = (
+        int(raw_to_month)
+        if raw_to_month.isdigit() and 1 <= int(raw_to_month) <= 12
+        else 9
+    )
+    fy_start, fy_end = get_fy_date_range(fy)
+    hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    hidden_params.update(fixed or {})
+    return {
+        "title": title,
+        "subtitle": subtitle,
+        "export_url": export_url,
+        "selected_fy": fy,
+        "fy_options": fy_options(),
+        "months": FY_MONTHS,
+        "selected_from_month": selected_from_month,
+        "selected_to_month": selected_to_month,
+        "default_start_date": fy_start.strftime("%Y-%m-%d"),
+        "default_end_date": (fy_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "hidden_params": hidden_params,
+        "show_status_filter": True,
+        "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
+    }
+
+
+def export_period_bounds(period: dict) -> tuple:
+    """The first and last day (both included) an export covers: the custom
+    period the drawer chose, else the whole of the page's fiscal year."""
+    from apps.core.fy import get_fy_date_range
+
+    if period.get("period") == "custom" and period.get("date_start"):
+        return period["date_start"], period["date_end"] - timedelta(days=1)
+    fy_start, fy_end = get_fy_date_range(period["fy"])
+    return fy_start.date(), (fy_end - timedelta(days=1)).date()
+
+
 # ── Export Customization Drawers ─────────────────────────────────────────────
 @require_any_page_permission("team_planning_oversight", "country_planning_oversight")
 @require_export_permission
@@ -4637,6 +4692,7 @@ def planning_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,
@@ -4695,6 +4751,7 @@ def partner_oversight_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,
@@ -4765,6 +4822,7 @@ def project_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,
@@ -4823,6 +4881,7 @@ def cluster_oversight_export_drawer_view(request):
         "hidden_params": hidden_params,
         "show_status_filter": True,
         "show_activity_type_filter": True,
+        "kind_choices": export_kinds.KIND_CHOICES,
     }
     return render(
         request,

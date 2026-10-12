@@ -8954,7 +8954,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 14249,
+      "bytes": 14852,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -8968,7 +8968,7 @@
       ],
       "findings": [],
       "forms": 2,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Root",
       "purpose": "Reusable root interface primitive",
@@ -12229,11 +12229,13 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8119,
+      "bytes": 8485,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/budget/export-drawer",
         "/cluster-oversight/export-drawer",
         "/country-planning-oversight/export-drawer",
+        "/fund-requests/weekly/export-drawer",
         "/my-plan/export-drawer",
         "/partner-oversight/export-drawer",
         "/team-planning-oversight/export-drawer",
@@ -29337,6 +29339,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET /budget/export-drawer?fy={{ fy }}&amp;budget_scope={{ budget_scope }}&amp;district={{ selected_district|urlencode }}&amp;date={{ anchor|date:",
         "GET /country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}",
         "GET /country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
       ],
@@ -29437,6 +29440,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET /budget/export-drawer?fy={{ fy }}&amp;budget_scope={{ budget_scope }}&amp;district={{ selected_district|urlencode }}&amp;date={{ anchor|date:",
         "GET /country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}",
         "GET /country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
       ],
@@ -29513,6 +29517,182 @@
         "text-[14px]",
         "text-[15px]",
         "text-[18px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.budget_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:monthly_budget"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C2C05BC433",
+      "page_title": "Budget Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "monthly_budget",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The Budget as a workbook: the planned activities whose dates fall in the period the drawer chose (else the page's year) and their budget, read from the same lines the Budget page sums (owner, 2026-10-12: \"an accurate extract from the actual planned activities for that period\").",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/budget/export",
+      "route_name": "budget_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.budget_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:monthly_budget"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CB7896F8A1",
+      "page_title": "Budget Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "monthly_budget",
+      "primary_action": "Budget Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Export options drawer of the Budget page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/budget/export-drawer",
+      "route_name": "budget_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -48555,6 +48735,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48651,6 +48832,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48916,6 +49098,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49095,6 +49278,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49191,6 +49375,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49287,6 +49472,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49460,6 +49646,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49554,6 +49741,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49741,6 +49929,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49803,6 +49992,97 @@
       "templates": [
         "partials/fund_requests/root.html",
         "pages/fund_requests/weekly.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.fund_requests_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:fund_requests"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-2AE8732C2F",
+      "page_title": "Fund Requests Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "fund_requests",
+      "primary_action": "Fund Requests Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Export options drawer of the Weekly Advance Request page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/weekly/export-drawer",
+      "route_name": "fund_requests_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -110748,6 +111028,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.budget_views.budget_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "monthly_budget",
+      "required_permissions": [],
+      "route": "/budget/export",
+      "route_name": "budget_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.budget_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "monthly_budget",
+      "required_permissions": [],
+      "route": "/budget/export-drawer",
+      "route_name": "budget_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.budget_views.monthly_budget_view",
       "kind": "action",
       "methods": [
@@ -113928,6 +114234,20 @@
       "templates": [
         "partials/fund_requests/root.html",
         "pages/fund_requests/weekly.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.fund_requests_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/weekly/export-drawer",
+      "route_name": "fund_requests_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
       ]
     },
     {
@@ -121826,30 +122146,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 605,
+    "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1403,
+    "all_routes": 1406,
     "api_routes": 363,
     "component_templates": 691,
     "full_pages": 270,
-    "mobile_contract_pass": 605,
+    "mobile_contract_pass": 607,
     "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 619,
+      "interaction-fragment": 621,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
-      "report": 46
+      "report": 47
     },
-    "partials_and_drawers": 332,
-    "permission_gated": 910,
+    "partials_and_drawers": 334,
+    "permission_gated": 913,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 927,
+    "routed_surfaces": 930,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -121857,8 +122177,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 605,
-    "test_referenced": 827,
-    "theme_contract_pass": 605
+    "tablet_contract_pass": 607,
+    "test_referenced": 830,
+    "theme_contract_pass": 607
   }
 }

@@ -515,26 +515,8 @@
 }
 
 @media (max-width: 47.99rem) {
-  .drawer-surface.type-center {
-    inset: 0 !important;
-    margin: auto !important;
-    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    width: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
-    block-size: fit-content !important;
-    max-block-size: min(84svh, 44rem) !important;
-    height: auto !important;
-    max-height: min(84svh, 44rem) !important;
-    border-radius: var(--edify-drawer-radius, 1rem) !important;
-    border: 1px solid var(--edify-border) !important;
-    transform: translateY(0.75rem) scale(0.97);
-  }
-
-  .drawer-surface.type-center.active {
-    transform: none;
-  }
-
+  /* The phone card itself is sized once, in the mobile block at the foot of
+     this file; this block keeps only what that one does not say. */
   .drawer-surface.type-center::after {
     display: none;
   }
@@ -873,47 +855,8 @@
   }
 }
 
-/* ── Mobile: a sheet from the TOP, not the bottom ──────────────────────────
-   A bottom-anchored sheet lands exactly where the bottom navigation lives, so
-   the drawer's own footer — where Save and Cancel are — opened underneath the
-   nav bar and the sheet had to be fought past it. Anchoring to the top keeps
-   the drawer clear of the nav entirely and matches the direction the desktop
-   panel already comes from, so the gesture is the same on both.
-
-   Height is capped against the small viewport unit: `svh` is the viewport
-   with the mobile browser's chrome SHOWN, so the sheet does not grow under an
-   address bar that reappears on scroll. */
-@media (max-width: 767.98px) {
-  .drawer-surface,
-  .drawer-surface.type-center {
-    position: fixed !important;
-    inset: 0 !important;
-    margin: auto !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    width: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
-    block-size: fit-content !important;
-    height: auto !important;
-    max-block-size: min(84svh, 44rem) !important;
-    max-height: min(84svh, 44rem) !important;
-    border-radius: var(--drawer-radius, 1rem) !important;
-    border: 1px solid var(--edify-border) !important;
-    box-shadow: var(--drawer-shadow) !important;
-    overflow: hidden auto !important;
-    transform: translateY(0.75rem) scale(0.97) !important;
-    opacity: 0;
-  }
-  .drawer-surface.active,
-  .drawer-surface.type-center.active {
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}
+/* The phone card is drawn once, in the mobile block at the foot of this
+   file (owner, 2026-10-11: narrower, centred, never full-screen). */
 
 /* ── Accessibility: reduced motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -1934,26 +1877,8 @@
 }
 
 @media (max-width: 47.99rem) {
-  .drawer-surface.type-center {
-    inset: 0 !important;
-    margin: auto !important;
-    inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-inline-size: min(calc(100vw - 2.5rem), 22rem) !important;
-    width: min(calc(100vw - 2.5rem), 22rem) !important;
-    max-width: min(calc(100vw - 2.5rem), 22rem) !important;
-    block-size: fit-content !important;
-    height: auto !important;
-    max-block-size: min(84svh, 44rem) !important;
-    max-height: min(84svh, 44rem) !important;
-    border-radius: var(--edify-drawer-radius, 1rem) !important;
-    border: 1px solid var(--edify-border) !important;
-    transform: translateY(0.75rem) scale(0.97) !important;
-  }
-
-  .drawer-surface.type-center.active {
-    transform: none !important;
-  }
-
+  /* The phone card itself is sized once, in the mobile block at the foot of
+     this file; this block keeps only what that one does not say. */
   .drawer-surface.type-center::after {
     display: none;
   }
@@ -2186,6 +2111,7 @@
     box-shadow: var(--edify-drawer-shadow, var(--drawer-shadow)) !important;
     overflow: hidden auto !important;
     transform: translateY(0.75rem) scale(0.97) !important;
+    opacity: 0;
   }
 
   .drawer-surface.active,

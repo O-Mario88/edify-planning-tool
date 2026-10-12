@@ -1144,6 +1144,20 @@ urlpatterns = [
     # Budgets & Fund Requests
     path("budget", budget_views.budget_view, name="budget"),
     path("budget/", budget_views.budget_view),
+    # The Budget and the Weekly Advance Request export through the same Export
+    # options drawer as the plans (owner, 2026-10-12): a period, what work,
+    # which status; the budget is the planned activities' own cost lines.
+    path("budget/export", budget_views.budget_export_view, name="budget_export"),
+    path(
+        "budget/export-drawer",
+        budget_views.budget_export_drawer_view,
+        name="budget_export_drawer",
+    ),
+    path(
+        "fund-requests/weekly/export-drawer",
+        budget_views.fund_requests_export_drawer_view,
+        name="fund_requests_export_drawer",
+    ),
     path("budgets/monthly", budget_views.monthly_budget_view, name="monthly_budget"),
     path(
         "fund-requests/weekly",

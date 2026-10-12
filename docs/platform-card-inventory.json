@@ -6,8 +6,8 @@
   "with_card_key": 13,
   "untitled_surfaces": 596,
   "untitled_chrome": 153,
-  "untitled_nested": 192,
-  "untitled_headless": 251,
+  "untitled_nested": 191,
+  "untitled_headless": 252,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
   "ambiguous_titles": 1
@@ -586,22 +586,8 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 65,
+   "line": 79,
    "title": "Add administrative budget item",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
-   "branch_path": [
-    [
-     10,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 104,
-   "title": "Team cost summary",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
@@ -614,7 +600,21 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 124,
+   "line": 118,
+   "title": "Team cost summary",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     12,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 138,
    "title": "Administrative cost planActivity cost plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -623,32 +623,32 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 167,
+   "line": 181,
    "title": "Monthly Budget Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
    "branch_path": [
     [
-     19,
+     20,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 220,
+   "line": 234,
    "title": "Disbursement and Accountability",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
    "branch_path": [
     [
-     19,
+     20,
      0
     ],
     [
-     23,
+     24,
      0
     ]
    ]
@@ -6397,14 +6397,14 @@
   },
   {
    "template": "templates/partials/oversight/partner_workspace.html",
-   "line": 95,
+   "line": 98,
    "title": "Withdrawal requests ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-0 overflow-hidden",
    "branch_path": [
     [
-     12,
+     14,
      0
     ]
    ]

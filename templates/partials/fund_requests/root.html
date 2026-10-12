@@ -1,3 +1,4 @@
+{% load frontend_filters %}
 {% comment %}Fund Requests page root — re-rendered by HTMX on filter/action.
 Staff schedule activities; the system generates the budget and fund request
 automatically. There is no manual "enter an amount" step anywhere here.{% endcomment %}
@@ -62,14 +63,17 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
   Add Non-School Activity
 </button>
 {% endif %}
-<!-- Export button -->
-<a
-href="{% querystring export='csv' %}"
-class="btn btn-ghost h-8 shadow-sm"
->
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+{% comment %}Export options (owner, 2026-10-12): the requests of a period and
+every cost line behind them, as one Excel workbook; ?export=csv still answers
+a link that names it.{% endcomment %}
+{% if request.user|can_open:"/fund-requests/weekly/export-drawer" %}
+<button type="button" class="btn btn-ghost h-8 shadow-sm" data-fund-requests-export
+        hx-get="/fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}"
+        hx-target="#drawer-container" hx-swap="innerHTML" title="Export the weekly advance requests and their cost lines to Excel">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export
-</a>
+</button>
+{% endif %}
 
 <a href="/budget" class="btn btn-ghost h-8">Budget</a>
 </div>

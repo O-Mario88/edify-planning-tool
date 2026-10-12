@@ -260,7 +260,6 @@ def my_plan_view(request):
         ]
 
         from datetime import date
-        from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
         from apps.core.fy import get_operational_fy, month_range_to_dates
         from apps.planning.oversight_service import COMPLETED_WORK_STATUSES
 
@@ -334,18 +333,14 @@ def my_plan_view(request):
                 or "progress" in str(a.get("status_label", "")).lower()
             ]
 
-        req_act = (request.GET.get("activity_type") or "").strip().lower()
-        if req_act == "visits_trainings":
-            feed = [
-                a
-                for a in feed
-                if a.get("activity_type") in VISIT_TYPES
-                or a.get("activity_type") in TRAINING_TYPES
-            ]
-        elif req_act == "visits":
-            feed = [a for a in feed if a.get("activity_type") in VISIT_TYPES]
-        elif req_act == "trainings":
-            feed = [a for a in feed if a.get("activity_type") in TRAINING_TYPES]
+        from apps.core import export_kinds
+
+        feed = export_kinds.filter_items(
+            feed,
+            export_kinds.read_kind(request),
+            type_of=lambda a: a.get("activity_type"),
+            id_of=lambda a: a.get("id"),
+        )
         rows = []
         seen = set()
         for a in feed:

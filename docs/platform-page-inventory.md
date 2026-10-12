@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **927**
-- All registered routes: **1403**
+- Routed product surfaces: **930**
+- All registered routes: **1406**
 - API routes: **363**
 - Roles: **15**
 - Permission keys: **127**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **24**
 - Shared component templates: **691**
 - Full pages: **270**
-- Partials and drawers: **332**
-- Permission-gated surfaces: **910**
-- Referenced by automated tests: **827**
+- Partials and drawers: **334**
+- Permission-gated surfaces: **913**
+- Referenced by automated tests: **830**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -156,6 +156,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-86E2200E55 | /api/analytics/map-subcounties | Map Subcounty Metrics | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1BACC71B5F | /budget | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-04C3EE0B01 | /budget/ | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C2C05BC433 | /budget/export | Budget Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-CB7896F8A1 | /budget/export-drawer | Budget Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F5541CFE7 | /budgets/monthly | Monthly Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7ABC671B29 | /budgets/overview | Budget Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B1D64A4041 | /business-transformation | Business Transformation | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -385,6 +387,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-15785CF711 | /fund-requests/weekly/<str:request_id>/return | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-41CB76A0D0 | /fund-requests/weekly/<str:request_id>/return-drawer | Weekly Fund Request Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-2AE8732C2F | /fund-requests/weekly/export-drawer | Fund Requests Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9E1520AF65 | /fy | Fiscal Year Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B35FAC1878 | /health-safety | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EE2DB868E6 | /health-safety/<str:incident_id> | Incident Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
