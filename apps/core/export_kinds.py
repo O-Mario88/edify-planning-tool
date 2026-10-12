@@ -50,6 +50,18 @@ KIND_CHOICES = (
     (ALL, "All activities (meetings and events included)"),
 )
 
+#: The drawer's plan statuses, by their key. They are the export's own
+#: vocabulary (``scheduled`` is live work, moved or not, read through each
+#: page's own phase), never an activity's status.
+STATUS_LABELS = {
+    "all": "All planned activities",
+    "completed": "Completed only",
+    "scheduled": "Scheduled / live only",
+    "in_progress": "In progress only",
+}
+#: The statuses that name a phase of live work.
+LIVE_STATUSES = frozenset(k for k in STATUS_LABELS if k not in ("all", "completed"))
+
 _TYPES = {
     PLANNED: frozenset(VISIT_TYPES)
     | frozenset(TRAINING_TYPES)

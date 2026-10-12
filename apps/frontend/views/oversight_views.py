@@ -3967,7 +3967,7 @@ def partner_oversight_export_view(request):
     if ws_act in export_kinds.KINDS:
         ws_act = ""
     ws_status = (request.GET.get("status") or "").strip()
-    if ws_status in ("all", "completed", "scheduled", "in_progress"):
+    if ws_status in export_kinds.STATUS_LABELS:
         ws_status = ""
 
     items = partner_oversight.filter_workspace(
@@ -4001,7 +4001,8 @@ def partner_oversight_export_view(request):
             if it.delivery_phase == "completed"
             or it.activity_status in _COMPLETE_STATUSES
         ]
-    elif req_status in ("scheduled", "in_progress"):
+    elif req_status in export_kinds.LIVE_STATUSES:
+        # The page's own phase: a moved activity is still scheduled there.
         items = [it for it in items if it.delivery_phase == req_status]
 
     items = export_kinds.filter_items(
