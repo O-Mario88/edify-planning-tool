@@ -93,6 +93,19 @@ def last_change(user_id: str) -> str | None:
         return None
 
 
+def _school_holder_in_hand(record):
+    """Who holds the record's school, as a 1-tuple, when the school's row is
+    already loaded on the record; None when it would have to be read.
+
+    The members of a day are loaded with their schools, and each of them
+    announces when the day is re-priced: nine visits read nine schools' one
+    column after the commit."""
+    school = record._state.fields_cache.get("school") if record.school_id else None
+    if school is None or "account_owner_id" not in school.__dict__:
+        return None
+    return (str(school.account_owner_id or ""),)
+
+
 def announce_activity(activity) -> None:
     """An activity was saved or deleted."""
     announce(
@@ -101,6 +114,7 @@ def announce_activity(activity) -> None:
             getattr(activity, "monitored_by_staff_id", None),
         ),
         school_id=activity.school_id,
+        school_holder=_school_holder_in_hand(activity),
         cluster_id=activity.cluster_id,
         project_id=activity.project_id,
         partner_ids=(
@@ -117,9 +131,11 @@ def announce(
     cluster_id=None,
     project_id=None,
     partner_ids=(),
+    school_holder=None,
 ) -> None:
     """Push ``plan.changed`` to everyone these belong to, once the change
-    has committed."""
+    has committed. `school_holder`: who holds the school, as a 1-tuple, when
+    the caller has it in hand; read otherwise."""
     if not enabled():
         return
     key = (
@@ -128,6 +144,7 @@ def announce(
         str(cluster_id or ""),
         str(project_id or ""),
         tuple(sorted({str(i) for i in partner_ids if i})),
+        school_holder,
     )
     transaction.on_commit(lambda: _publish(key))
 
@@ -208,11 +225,14 @@ def audience(
     cluster_id=None,
     project_id=None,
     partner_ids=(),
+    school_holder=None,
     _read=_same,
 ) -> frozenset[str]:
     """The user ids of everyone whose pages show a record with these."""
     staff = {str(i) for i in staff_ids if i}
-    if school_id:
+    if school_id and school_holder is not None:
+        staff.add(school_holder[0])
+    elif school_id:
         from apps.schools.models import School
 
         staff.add(
@@ -262,13 +282,14 @@ def _audience_for(key: tuple) -> frozenset[str]:
         kept = _audiences.get(key)
         if kept and now - kept[0] < _AUDIENCE_SECONDS:
             return kept[1]
-    staff_ids, school_id, cluster_id, project_id, partner_ids = key
+    staff_ids, school_id, cluster_id, project_id, partner_ids, school_holder = key
     found = audience(
         staff_ids=staff_ids,
         school_id=school_id,
         cluster_id=cluster_id,
         project_id=project_id,
         partner_ids=partner_ids,
+        school_holder=school_holder,
         _read=_kept,
     )
     with _audiences_lock:

@@ -658,40 +658,53 @@ def _day_to_join(
     }
 
 
-def assert_may_join_day(
-    *, activity, new_date: date, reason: str | None, principal
-) -> None:
-    """Refuse now what `reschedule_within_batch` would refuse after the day
-    the visit leaves has been re-priced: a blocked date, a day that has left
-    draft, a full day, a short day with no reason. It locks and writes
-    nothing; `reschedule_within_batch` asks again, under the lock. The
-    calendar is not asked here: the caller has just asked it of this date,
-    and `reschedule_within_batch` asks once more."""
-    _day_to_join(
+def day_to_join(*, activity, new_date: date, reason: str | None, principal) -> dict:
+    """Lock `new_date`'s batch for `activity` to join and refuse now what
+    `reschedule_within_batch` would refuse only after the day the visit
+    leaves had been re-priced: a day that has left draft, a full day, a short
+    day with no reason. Returns the day as found, for
+    `reschedule_within_batch(day=...)` to join without asking again.
+
+    For a caller that is inside the move's transaction and has itself just
+    asked the calendar of this date and this person
+    (`activities.services.reschedule`): the REG-02 gate is not asked a second
+    time here. Its refusals turn on the date and on the person's leave, and
+    neither moves between the two askings."""
+    return _day_to_join(
         activity=activity,
         new_date=new_date,
         reason=reason,
         principal=principal,
-        lock=False,
+        lock=True,
         ask_calendar=False,
     )
 
 
 def reschedule_within_batch(
-    *, activity, new_date: date, reason: str | None, principal
+    *, activity, new_date: date, reason: str | None, principal, day: dict | None = None
 ) -> None:
     """Move an already-persisted Activity (its scheduled_date/fy/quarter must
     already be saved by the caller — see activities.services.reschedule) into
     the new date's batch, subject to the same validation as fresh scheduling.
-    Call this AFTER detaching the activity from its old batch."""
+    Call this AFTER detaching the activity from its old batch.
+
+    `day`: what `day_to_join` found, when the caller asked it before the
+    detach. Without it the day is locked and validated here, calendar gate
+    included, so no call site joins a day unasked."""
     with transaction.atomic():
-        day = _day_to_join(
-            activity=activity,
-            new_date=new_date,
-            reason=reason,
-            principal=principal,
-            lock=True,
-        )
+        if day is None:
+            day = _day_to_join(
+                activity=activity,
+                new_date=new_date,
+                reason=reason,
+                principal=principal,
+                lock=True,
+            )
+        elif day["batch"] is not None:
+            # Found before the detach, which may have re-priced this very day
+            # as a neighbour of the one left (`_settle_neighbouring_days`):
+            # joined as it stands now, under the lock taken then.
+            day["batch"].refresh_from_db()
         batch = day["batch"]
         catalogue = day["catalogue"]
         responsible_user_id = day["responsible_user_id"]
@@ -900,9 +913,10 @@ def _write_day_lines(
         "visit_count": allocation["visit_count"],
         "weights_used": allocation["weights_used"],
     }
-    batch.save()
+    # Read from the day's members, not from the row being saved: worked out
+    # first, it goes in with the one save.
     batch.actual_field_cost_per_school = actual_field_cost_per_school(batch)
-    batch.save(update_fields=["actual_field_cost_per_school", "updated_at"])
+    batch.save()
 
     # §9.1 — keep the transport company's obligation in step with the day.
     from apps.fund_requests.vendor_channel import ensure_transport_obligation
@@ -987,6 +1001,6 @@ __all__ = [
     "attach_activity_to_batch",
     "each_day_priced_once",
     "remove_school",
-    "assert_may_join_day",
+    "day_to_join",
     "reschedule_within_batch",
 ]

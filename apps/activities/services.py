@@ -5118,8 +5118,9 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             # unless already locked — same rationale as everywhere else: reschedule
             # is the sanctioned post-approval escape hatch, so it isn't itself
             # blocked, but a locked batch's other members stay frozen).
+            from apps.budget.costing_service import rate_cards_held
             from apps.daily_visit_batches.services import (
-                assert_may_join_day,
+                day_to_join,
                 reschedule_within_batch,
             )
             from apps.fund_requests.follow import fund_requests_follow_once
@@ -5133,23 +5134,31 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             # A day that cannot take the visit says so before the day it would
             # leave is re-priced: a refusal used to re-price every visit left
             # on that day first, some 150 to 250 statements, and then undo it.
-            assert_may_join_day(
+            # The day is locked here and joined below as it was found. The
+            # calendar was asked of this date and this person at the top.
+            day = day_to_join(
                 activity=a,
                 new_date=a.planned_date,
                 reason=data.get("reason"),
                 principal=principal,
             )
+            if day["batch"] is not None and day["batch"].id == a.daily_visit_batch_id:
+                # Moved within its own day: the day is found again once the
+                # visit has left it, as it always was.
+                day = None
             # The day left, the day joined and the visit itself each ask for
             # the owner's week and month to be re-filed. They are re-filed
             # once, from the lines the move ends with
-            # (apps.fund_requests.follow).
-            with fund_requests_follow_once():
+            # (apps.fund_requests.follow). Both days price against the same
+            # published cards, read once for the move.
+            with fund_requests_follow_once(), rate_cards_held():
                 _detach_from_daily_visit_batch(a)
                 reschedule_within_batch(
                     activity=a,
                     new_date=a.planned_date,
                     reason=data.get("reason"),
                     principal=principal,
+                    day=day,
                 )
                 # The batch reprices and then calls trigger_generate_for_activity,
                 # which raises the NEW week's request and says nothing about the
