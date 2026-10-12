@@ -227,7 +227,9 @@ def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
             continue
         if batch_needs_repricing(batch):
             with transaction.atomic():
-                _recalculate_and_write_lines(batch, None, batch.responsible_user)
+                _recalculate_and_write_lines(
+                    batch, None, batch.responsible_user, in_own_block=True
+                )
             repaired += 1
     return repaired
 
@@ -560,7 +562,9 @@ def remove_school(*, activity_id: str) -> dict:
         activity.daily_visit_batch = None
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
         catalogue = _catalogue_for_batch_date(batch.visit_date)
-        _recalculate_and_write_lines(batch, catalogue, batch.responsible_user)
+        _recalculate_and_write_lines(
+            batch, catalogue, batch.responsible_user, in_own_block=True
+        )
         return {"batchId": batch.id}
 
 
@@ -729,11 +733,17 @@ def reschedule_within_batch(
 
         activity.daily_visit_batch = batch
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
-        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+        _recalculate_and_write_lines(
+            batch, catalogue, responsible_user_id, in_own_block=True
+        )
 
 
 def _recalculate_and_write_lines(
-    batch: DailyVisitBatch, catalogue, responsible_user_id: str
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    in_own_block: bool = False,
 ) -> None:
     """Recompute the batch's shared pool, split it across every active member
     activity, and re-price each one via the existing apply_to_activity writer
@@ -741,7 +751,11 @@ def _recalculate_and_write_lines(
     unchanged), then resync the day's weekly fund request and monthly draft.
 
     The day before and the day after are re-priced with it when this day
-    changed which of them is the day the traveller comes home."""
+    changed which of them is the day the traveller comes home.
+
+    `in_own_block`: the caller has opened a transaction block for this day
+    and nothing else, so a refusal undoes the day by undoing that block and
+    the cost writer needs no savepoint of its own."""
     from apps.budget.costing_service import rate_cards_held
 
     # Priced now, with whoever is on it: nothing is left for a save in hand
@@ -752,7 +766,9 @@ def _recalculate_and_write_lines(
 
     # Every member prices against the same published cards: read them once.
     with rate_cards_held():
-        _write_day_lines(batch, catalogue, responsible_user_id)
+        _write_day_lines(
+            batch, catalogue, responsible_user_id, in_own_block=in_own_block
+        )
 
 
 #: A neighbouring day is re-priced only while it is still a plan: a day
@@ -788,7 +804,11 @@ def _settle_neighbouring_days(batch: DailyVisitBatch, away) -> None:
         try:
             with transaction.atomic():
                 _write_day_lines(
-                    neighbour, None, neighbour.responsible_user, settle_neighbours=False
+                    neighbour,
+                    None,
+                    neighbour.responsible_user,
+                    settle_neighbours=False,
+                    in_own_block=True,
                 )
         except BadRequest:
             # Its money has moved (the cost writer's finance locks).
@@ -801,6 +821,7 @@ def _write_day_lines(
     responsible_user_id: str,
     *,
     settle_neighbours: bool = True,
+    in_own_block: bool = False,
 ) -> None:
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
@@ -965,7 +986,12 @@ def _write_day_lines(
     # The members are written together: what each needs read and locked is
     # read and locked once for the day, not once a member
     # (`apply_to_activities`).
-    apply_to_activities(priced, responsible_user_id=responsible_user_id, as_stored=True)
+    apply_to_activities(
+        priced,
+        responsible_user_id=responsible_user_id,
+        as_stored=True,
+        savepoint=not in_own_block,
+    )
 
     # The weekly request and the monthly draft follow the re-priced lines,
     # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.

@@ -20,7 +20,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-from django.db import connection, transaction
+from django.db import transaction
 from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -1182,6 +1182,7 @@ def apply_to_activities(
     responsible_user_id: str | None = None,
     *,
     as_stored: bool = False,
+    savepoint: bool = True,
 ) -> list[ActivityCost]:
     """`apply_to_activity` for several activities at once: the members of a day.
 
@@ -1197,8 +1198,8 @@ def apply_to_activities(
     they always had, and the lines, snapshots and advances are written
     together. What a member ends with is what it ended with before: one new
     cost snapshot, one "cost calculated" audit entry, the same lines and the
-    same advances (`apps.budget.test_priced_together` holds the two ways to
-    each other). A refusal still undoes the whole day, because it is raised
+    same advances (`apps.daily_visit_batches.test_priced_together` holds the
+    two ways to each other). A refusal still undoes the whole day, because it is raised
     inside the caller's transaction before anything of the day is written.
 
     `items` is ``[(activity, input, precomputed_cost), ...]``; the costs come
@@ -1210,9 +1211,14 @@ def apply_to_activities(
     saved with its cost alone, which `Activity.save` knows changes nothing a
     Core slot or a package credit reads. Without it every member's period
     fields are written, as a caller that set a date in memory and left the
-    writing of its week and month to this function expects. The same caller
-    prices a day inside a transaction block of its own, which a refusal
-    undoes whole, so no savepoint is taken here for it."""
+    writing of its week and month to this function expects.
+
+    `savepoint=False`: the caller is inside a transaction block of its own
+    that a refusal here must undo whole (a visit leaving its day, joining
+    one, a neighbouring day re-priced), so a savepoint here adds two round
+    trips and nothing else. Any other caller keeps it: one that catches the
+    refusal and carries on in its transaction needs the writes undone to
+    here."""
     if not items:
         return []
     from datetime import timedelta
@@ -1312,7 +1318,7 @@ def apply_to_activities(
     # exact vanishing-record scenario the guards describe (2026-08-12 audit
     # M-2). Locking also means a crash mid-sequence can no longer leave a
     # scheduled Activity with zero budget lines.
-    with transaction.atomic(savepoint=not (as_stored and connection.in_atomic_block)):
+    with transaction.atomic(savepoint=savepoint):
         # The lines as they stand: whose they are, and which were paid
         # straight to a vendor (read once for the guards and the rebuild).
         old_lines = list(
