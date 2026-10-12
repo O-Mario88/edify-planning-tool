@@ -1,4 +1,9 @@
-from apps.core.htmx_errors import error_fragment, notice_fragment
+from apps.core.htmx_errors import (
+    error_fragment,
+    error_message,
+    notice_fragment,
+    refusal_drawer,
+)
 from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core import export_kinds
@@ -539,7 +544,7 @@ def _team_read_only(request, activity):
         return None
     from apps.core.scoping import TEAM_READ_ONLY_MESSAGE
 
-    return notice_fragment(TEAM_READ_ONLY_MESSAGE)
+    return refusal_drawer(request, TEAM_READ_ONLY_MESSAGE, title="Read only")
 
 
 def _can_cancel(activity, user) -> bool:
@@ -767,9 +772,11 @@ def partner_ssa_completion_drawer_view(request, activity_id):
             "SSA Support activity may complete it."
         )
     if a.status != "awaiting_ia_verification":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "The partner must submit the completed SSA evidence before scores "
-            "and enrolment can be recorded."
+            "and enrolment can be recorded.",
+            title="Not yet submitted",
         )
     return render(
         request,
@@ -885,7 +892,12 @@ def complete_drawer_view(request, activity_id):
             act = get_activity(a.id, request.user)
             attach_school_feedback()
         except Exception as e:
-            return error_fragment(e, action="Error starting completion", status=400)
+            return refusal_drawer(
+                request,
+                error_message(e, action="Error starting completion"),
+                title="Cannot complete",
+                tone="danger",
+            )
 
     evidence_list = list(evidence_records_for_activity(a.id, request.user))
     if paired_school_visit is not None:
@@ -1216,9 +1228,11 @@ def reschedule_drawer_view(request, activity_id):
     from apps.activities.editing import is_executed
 
     if is_executed(a):
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity has already been carried out, so it can no longer "
-            "be rescheduled. Only an activity that is still scheduled can be."
+            "be rescheduled. Only an activity that is still scheduled can be.",
+            title="Cannot reschedule",
         )
 
     # Rescheduling deliberately reuses the shared schedule drawer in its safe
@@ -2337,11 +2351,13 @@ def edit_activity_drawer_view(request, activity_id):
         )
     state = editing.edit_state(a, request.user)
     if state == "locked":
-        return notice_fragment(editing.LOCKED_REASON)
+        return refusal_drawer(request, editing.LOCKED_REASON, title="Cannot edit")
     if state != "open":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity is not yours to edit, or it is no longer a "
-            "scheduled plan."
+            "scheduled plan.",
+            title="Cannot edit",
         )
     return render(
         request,

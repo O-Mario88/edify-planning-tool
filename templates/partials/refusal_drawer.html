@@ -1,0 +1,16 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+A drawer that was asked for and cannot be offered (owner, 2026-10-12: the
+bare notice a refused drawer used to answer with landed in the drawer
+container at the top of the page and "pushes the entire content aside").
+The reason is read inside a small drawer, with Close, like every other
+drawer. Rendered by apps.core.htmx_errors.refusal_drawer.
+{% endcomment %}
+{% block drawer_title %}{{ refusal_title }}{% endblock %}
+{% block drawer_subtitle %}{{ refusal_subtitle }}{% endblock %}
+{% block drawer_body %}
+<div class="edify-note" data-tone="{{ refusal_tone|default:'info' }}" role="status" data-refusal-drawer>{{ refusal_message }}</div>
+<div class="drawer-footer">
+  <button type="button" @click="requestClose()" class="btn btn-primary h-8">Close</button>
+</div>
+{% endblock %}
