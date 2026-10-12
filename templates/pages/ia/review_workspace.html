@@ -94,8 +94,10 @@ Compare Side-by-Side
      target the canonical forms below, so this is one action implementation,
      not a second workflow. -->
 <div class="lg:hidden fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-[var(--edify-border)] bg-[var(--edify-surface)] p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-lg">
+  {% if lead_verifies %}<p class="edify-note col-span-2" data-tone="info" role="note">Verified by the officer's Program Lead on Completion Reviews.</p>{% else %}
   <button form="verify-form" type="submit" class="btn btn-primary min-h-11">Verified</button>
   <button type="button" class="btn min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]" @click="openReturn($event)">Return</button>
+  {% endif %}
 </div>
 
 <!-- Main Three-Panel Split Grid -->
@@ -432,6 +434,9 @@ Absent
 
 <!-- Action buttons at the bottom of the right panel -->
 <div class="hidden lg:block sticky bottom-0 z-20 space-y-2 border-t border-slate-100 pt-4 pb-[max(0rem,env(safe-area-inset-bottom))] edify-surface shrink-0">
+{% if lead_verifies %}
+<p class="edify-note" data-tone="info" role="note" data-lead-verifies>A CCEO's completion is verified by their Program Lead, on Completion Reviews. It is read-only here.</p>
+{% else %}
 <button
 form="verify-form"
 type="submit"
@@ -439,6 +444,7 @@ class="btn btn-primary w-full min-h-11"
 >
 Verified
 </button>
+{% endif %}
 <button
 @click="openReturn($event)"
 type="button"

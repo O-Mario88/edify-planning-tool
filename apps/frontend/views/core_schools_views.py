@@ -1,6 +1,7 @@
 from apps.core.metrics import render_precomputed_metric_item
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib import messages
 from django.utils.html import escape
@@ -1788,9 +1789,7 @@ def core_assign_partner_action(request):
             messages.success(
                 request, f"Core support assigned to {partner.name} successfully."
             )
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
     except Exception as e:
         return error_fragment(e, status=400)
 

@@ -49,12 +49,8 @@ three buttons (owner, 2026-09-26); a row with one action keeps its button.
           <td class="text-right" data-record-action data-label="Actions">
             {% firstof item.cluster_name item.context_label as session_name %}
             {% row_actions session_name %}
-              <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Open the completion from {% firstof item.executor_name member.name %}">View</button>
-              <form role="none" method="post" action="/pl/review-queue/{{ item.activity_id }}/confirm">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="row-menu__item" role="menuitem" aria-label="Verify the completion from {% firstof item.executor_name member.name %}">Verified</button>
-              </form>
+              {# Verify opens the completion with the uploaded form; Verified is decided inside it (owner, 2026-10-12). #}
+              <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Verify the completion from {% firstof item.executor_name member.name %}: read the uploaded form, then decide" data-session-verify>Verify</button>
               <button type="button" class="row-menu__item" role="menuitem" hx-get="/pl/review-queue/{{ item.activity_id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Return the completion from {% firstof item.executor_name member.name %} with a reason" data-session-return>Return</button>
             {% endrow_actions %}
           </td>

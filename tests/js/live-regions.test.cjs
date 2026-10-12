@@ -13,12 +13,15 @@ const fs = require('node:fs');
 
 const SCRIPT = fs.readFileSync('static/js/live-regions.js', 'utf8');
 
-function page({ readMs = 300 } = {}) {
+// Stamps compare as strings, as the server's ISO times do.
+const stamp = (t) => String(t).padStart(12, '0');
+
+function page({ readMs = 300, stamped = false, regions = true } = {}) {
   let now = 0;
   let seq = 0;
   const timers = new Map();
   const reads = [];
-  const state = { ticked: false, source: null, swaps: 0, opened: 0 };
+  const state = { ticked: false, source: null, swaps: 0, opened: 0, drawerOpen: false, reloads: 0 };
   const heard = {};
 
   const schedule = (fn, ms, every) => {
@@ -33,9 +36,9 @@ function page({ readMs = 300 } = {}) {
     activeElement: null,
     addEventListener(type, fn) { (heard[type] = heard[type] || []).push(fn); },
     dispatchEvent() {},
-    getElementById: () => null,
+    getElementById: (id) => (id === 'drawer-container' ? { childElementCount: state.drawerOpen ? 1 : 0 } : null),
     importNode: () => fresh,
-    querySelectorAll: () => [region],
+    querySelectorAll: () => (regions ? [region] : []),
     // busy(): the one question it asks the page besides the drawer.
     querySelector: (selector) => (state.ticked && selector.includes('td input[type="checkbox"]:checked') ? {} : null),
   };
@@ -43,7 +46,7 @@ function page({ readMs = 300 } = {}) {
   const sandbox = {
     document,
     window: { EventSource, addEventListener() {} },
-    location: { href: 'http://edify.test/work-plan' },
+    location: { href: 'http://edify.test/work-plan', reload() { state.reloads += 1; } },
     Date: { now: () => now },
     setTimeout: (fn, ms) => schedule(fn, ms, 0),
     clearTimeout: (id) => timers.delete(id),
@@ -52,7 +55,10 @@ function page({ readMs = 300 } = {}) {
     DOMParser: function DOMParser() { this.parseFromString = () => ({ getElementById: () => fresh }); },
     fetch: () => {
       reads.push(now);
-      return new Promise((resolve) => schedule(() => resolve({ ok: true, redirected: false, text: () => '<html></html>' }), readMs, 0));
+      const began = now;
+      // The server stamps a live read with its clock as the read began.
+      const headers = { get: (name) => (stamped && name === 'X-Edify-Live-At' ? stamp(began) : null) };
+      return new Promise((resolve) => schedule(() => resolve({ ok: true, redirected: false, headers, text: () => '<html></html>' }), readMs, 0));
     },
   };
   sandbox.EventSource = EventSource;
@@ -72,10 +78,10 @@ function page({ readMs = 300 } = {}) {
       await settle();
     }
   }
-  const changed = () => state.source.onmessage({ data: JSON.stringify({ type: 'plan.changed', at: String(now) }) });
+  const changed = (at = now) => state.source.onmessage({ data: JSON.stringify({ type: 'plan.changed', at: stamp(at) }) });
   // What the page hears from the document: a section settling, say.
   const hear = (type) => (heard[type] || []).forEach((fn) => fn({}));
-  return { reads, state, wait, changed, hear, now: () => now };
+  return { reads, state, wait, changed, hear, now: () => now, live: sandbox.window.EdifyLive };
 }
 
 test('a page passed through opens no stream, however soon a section of it settles', async () => {
@@ -160,4 +166,55 @@ test('nothing is read under a ticked row, and the change is not lost', async () 
   p.state.ticked = false;
   await p.wait(1500);
   assert.equal(p.reads.length, 1);
+});
+
+// A save made from the page (apps.core.htmx_saved, 2026-10-12: "saving takes
+// too long"): the regions are read once, and the stream's echo of that save
+// is not read again. The page used to reload whole and then read itself a
+// second time.
+test('a save reads the page once, as soon as its drawer has closed', async () => {
+  const p = page({ stamped: true });
+  await p.wait(2000);
+  p.state.drawerOpen = true;
+  p.live.saved();
+  await p.wait(200);
+  assert.equal(p.reads.length, 0, 'read under the closing drawer');
+  p.state.drawerOpen = false;
+  await p.wait(200);
+  assert.equal(p.reads.length, 1);
+  assert.equal(p.state.reloads, 0);
+});
+
+test('the stream\'s echo of the page\'s own save is not read again; a later change is', async () => {
+  const p = page({ stamped: true });
+  await p.wait(2000);
+  const committed = p.now();
+  p.live.saved();
+  await p.wait(100);
+  assert.equal(p.reads.length, 1);
+  await p.wait(400);
+  p.changed(committed); // the save, published before the read began
+  await p.wait(3000);
+  assert.equal(p.reads.length, 1, 'the echo was read again');
+  p.changed(); // somebody else's change, after the read
+  await p.wait(1000);
+  assert.equal(p.reads.length, 2);
+});
+
+test('a save on a page with no live region reloads it, as before', async () => {
+  const p = page({ regions: false });
+  p.live.saved();
+  assert.equal(p.state.reloads, 1);
+  assert.equal(p.reads.length, 0);
+});
+
+test('a slow page rests three times as long as its read took', async () => {
+  const p = page({ readMs: 3000 });
+  await p.wait(2000);
+  p.changed();
+  await p.wait(3600); // the read of three seconds has just ended
+  p.changed();
+  await p.wait(12000);
+  assert.equal(p.reads.length, 2);
+  assert.ok(p.reads[1] - p.reads[0] >= 3000 + 9000, `gap ${p.reads[1] - p.reads[0]} ms`);
 });

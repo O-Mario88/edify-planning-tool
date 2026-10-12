@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -15,9 +16,7 @@ from apps.hr.models import ExtraAssignment
 
 
 def _reload():
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("extra_work")

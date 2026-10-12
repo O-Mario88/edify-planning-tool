@@ -11,6 +11,7 @@ from apps.core.permissions import (
     get_scoped_object_or_404,
 )
 from django.contrib import messages
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
 import json
@@ -1464,9 +1465,7 @@ def cluster_facilitator_action(request, cluster_id):
         if partner
         else f"{cluster.name} is facilitated by Edify staff.",
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("cluster_detail")

@@ -11,7 +11,6 @@ from apps.accounts.models import (
 )
 from apps.activities.models import Activity, SchoolVisitFeedback
 from apps.activities.services import complete
-from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.frontend.views.visit_effectiveness_views import _visit_feedback_review
 from apps.geography.models import District, Region
@@ -81,7 +80,10 @@ class SchoolVisitFeedbackTest(TestCase):
             recorded_by=self.cceo.id,
         )
 
-    def test_completion_drawer_requires_finding_and_improvement_list(self):
+    def test_completion_drawer_no_longer_asks_for_feedback(self):
+        """Owner, 2026-10-12: "remove the feedback on the form completion
+        (Finding, how has the school improved) field so it does not feel like
+        another data entry." The form and the Salesforce ID complete a visit."""
         self.client.force_login(self.cceo)
         response = self.client.get(
             f"/my-plan/{self.visit.id}/complete-drawer",
@@ -89,23 +91,24 @@ class SchoolVisitFeedbackTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="feedback_finding"')
-        self.assertContains(response, 'name="school_improvements"')
-        self.assertContains(response, "what you found on the ground")
-        self.assertContains(response, "one improvement per line")
+        self.assertNotContains(response, 'name="feedback_finding"')
+        self.assertNotContains(response, 'name="school_improvements"')
+        self.assertNotContains(response, "what you found on the ground")
+        self.assertContains(response, 'name="salesforce_id"')
 
     @patch("apps.evidence.requirements.missing_evidence_kinds", return_value=[])
     @patch("apps.evidence.requirements.evidence_optional", return_value=True)
-    def test_visit_completion_rejects_missing_feedback(
+    def test_visit_completion_without_feedback_completes(
         self, _evidence_optional, _missing_evidence
     ):
-        with self.assertRaisesMessage(BadRequest, "what you found on the ground"):
-            complete(
-                self.visit.id,
-                {"salesforceId": "SVE-FEEDBACK-MISSING", "strict_validation": True},
-                self.cceo,
-            )
+        complete(
+            self.visit.id,
+            {"salesforceId": "SVE-FEEDBACK-MISSING", "strict_validation": True},
+            self.cceo,
+        )
 
+        self.visit.refresh_from_db()
+        self.assertEqual(self.visit.status, "submitted_to_pl")
         self.assertFalse(SchoolVisitFeedback.objects.exists())
 
     @patch("apps.evidence.requirements.missing_evidence_kinds", return_value=[])
