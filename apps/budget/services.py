@@ -2303,12 +2303,14 @@ def budget_export_sheets(
             online=(activity.programme_delivery_mode or "") == "online",
         ):
             return False
+        # The drawer's status: completed work, everything, or (any other
+        # choice) the work not yet completed.
         done = (activity.status or "") in COMPLETED_WORK_STATUSES
         if status == "completed":
             return done
-        if status in ("scheduled", "in_progress"):
-            return not done
-        return True
+        if status in ("", "all"):
+            return True
+        return not done
 
     lines = [line for line in lines if wanted(line)]
     names = dict(
