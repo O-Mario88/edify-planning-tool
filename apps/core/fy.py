@@ -100,6 +100,41 @@ def get_month_date_range(fy: str, month_of_fy: int) -> tuple[datetime, datetime]
     return start, end
 
 
+FY_MONTHS: tuple[tuple[int, str], ...] = (
+    (10, "October"),
+    (11, "November"),
+    (12, "December"),
+    (1, "January"),
+    (2, "February"),
+    (3, "March"),
+    (4, "April"),
+    (5, "May"),
+    (6, "June"),
+    (7, "July"),
+    (8, "August"),
+    (9, "September"),
+)
+
+
+def month_range_to_dates(fy: str, from_month: int, to_month: int) -> tuple[date, date]:
+    """Convert an FY month range [from_month, to_month] into start and end dates."""
+    import calendar
+
+    fy_num = int(fy)
+    order = (10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+    if from_month in order and to_month in order:
+        if order.index(from_month) > order.index(to_month):
+            from_month, to_month = to_month, from_month
+
+    start_year = fy_num - 1 if from_month >= 10 else fy_num
+    end_year = fy_num - 1 if to_month >= 10 else fy_num
+
+    start_date = date(start_year, from_month, 1)
+    _, last_day = calendar.monthrange(end_year, to_month)
+    end_date = date(end_year, to_month, last_day)
+    return start_date, end_date
+
+
 def get_cumulative_target_percentage(period: CumulativePeriod) -> int:
     """Cumulative target percentage expected by the end of a period."""
     if period == "Q1":
@@ -146,4 +181,6 @@ __all__ = [
     "get_month_date_range",
     "get_cumulative_target_percentage",
     "fy_options",
+    "FY_MONTHS",
+    "month_range_to_dates",
 ]

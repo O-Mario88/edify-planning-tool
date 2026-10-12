@@ -14,7 +14,19 @@
     {% slot eyebrow %}{% if is_programme_lead %}Programme Lead{% elif uses_member_tabs %}My Clusters{% else %}Leadership{% endif %}{% endslot %}
     {% slot description %}{% if uses_member_tabs %} Your clusters, group trainings and meetings, organised by team member. {% else %} Clusters, group trainings and meetings, organised by Programme Lead and team member. {% endif %}{% endslot %}
   {% slot aside %}
-    {% include "partials/oversight/period_filter_bar.html" with filter_label="Cluster oversight period" target_url="/cluster-oversight/" annual_only=True target_id="#cluster-workspace" %}
+    <div class="flex flex-wrap items-center gap-2">
+      {% include "partials/oversight/period_filter_bar.html" with filter_label="Cluster oversight period" target_url="/cluster-oversight/" annual_only=True target_id="#cluster-workspace" %}
+      <a class="edify-action-button secondary h-9 inline-flex items-center gap-1.5"
+         href="/cluster-oversight/export?fy={{ fy }}&amp;format=xlsx"
+         hx-get="/cluster-oversight/export-drawer?fy={{ fy }}"
+         hx-target="#drawer-container"
+         hx-swap="innerHTML"
+         aria-label="Export Cluster Plans to Excel"
+         title="Customize Period and Export to Excel">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>Export</span>
+      </a>
+    </div>
   {% endslot %}
   {% endpage_header %}
 

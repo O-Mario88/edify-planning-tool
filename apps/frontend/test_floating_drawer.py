@@ -164,16 +164,20 @@ class DrawerMotionTest(SimpleTestCase):
         css = _read("static/css/drawers.css")
         self.final = css[css.index("THE FLOATING DRAWER") :]
 
-    def test_a_phone_gets_a_sheet_from_the_bottom_edge(self):
-        """A sheet on a phone, the card from 48rem up (owner, 2026-09-23:
-        "Mobile: full-height or near-full-height sheet")."""
+    def test_a_phone_gets_a_centred_card(self):
+        """A narrower centred card on a phone too, never a full-screen sheet
+        (owner, 2026-10-11: "Style floating drawers to be narrower, centered,
+        and responsive on mobile screen sizes across the platform"); the card
+        from 48rem up is unchanged."""
         phone = self.final[self.final.index("@media (max-width: 47.99rem)") :]
-        self.assertIn("inset: auto 0 0 0 !important;", phone)
-        self.assertIn("inline-size: 100% !important;", phone)
-        self.assertIn("border-end-start-radius: 0 !important;", phone)
-        # svh, so browser chrome reappearing does not resize a sheet mid-form,
-        # and a strip of the page stays visible above it.
-        self.assertIn("max-block-size: calc(100svh - var(--edify-sheet-top-gap)", phone)
+        self.assertIn("inset: 0 !important;", phone)
+        self.assertIn("margin: auto !important;", phone)
+        self.assertIn(
+            "inline-size: min(calc(100vw - 2.5rem), 22rem) !important;", phone
+        )
+        # svh, so browser chrome reappearing does not resize the card mid-form.
+        self.assertIn("max-block-size: min(84svh, 44rem) !important;", phone)
+        self.assertNotIn("inset: auto 0 0 0", phone)
         # The action shelf clears the home indicator.
         self.assertIn("env(safe-area-inset-bottom)", phone)
 

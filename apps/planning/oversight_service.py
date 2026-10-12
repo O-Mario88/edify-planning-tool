@@ -1462,11 +1462,22 @@ def apply_filters(items, filters: dict | None):
 
 def read_filters(request) -> dict:
     """The advanced filters present on this request, ignoring blanks."""
-    return {
-        key: value
-        for key in FILTER_KEYS
-        if (value := (request.GET.get(key) or "").strip())
-    }
+    filters = {}
+    for key in FILTER_KEYS:
+        val = (request.GET.get(key) or "").strip()
+        if not val:
+            continue
+        if key == "activity_type" and val in (
+            "visits_trainings",
+            "visits",
+            "trainings",
+            "all",
+        ):
+            continue
+        if key == "status" and val == "all":
+            continue
+        filters[key] = val
+    return filters
 
 
 # ── Export ───────────────────────────────────────────────────────────────────
@@ -1517,10 +1528,12 @@ EXPORT_STREAMS = (
 EXPORT_COLUMNS = (
     ("Financial year", lambda i: i.fy),
     ("Table", lambda i: getattr(i, "export_table", "")),
+    ("Activity ID", lambda i: i.activity_id or ""),
     ("School ID", _export_school_id),
     ("School name", lambda i: i.school_name if i.school_id else ""),
     ("District", lambda i: i.district_name),
     ("Cluster", lambda i: i.cluster_name),
+    ("Cluster planned from", lambda i: getattr(i, "cluster_planned_from", "") or ""),
     ("Activity type", lambda i: i.activity_type),
     ("Training name", _training_name),
     ("SSA intervention", lambda i: _intervention_label(i.target_intervention)),

@@ -208,3 +208,116 @@ class FilterTest(FilterExportFixture):
             sorted(options["activity_types"]), ["school_visit", "training"]
         )
         self.assertEqual([name for _, name in options["partners"]], ["Partner X"])
+
+
+class CustomExportPeriodAndDrawerTest(FilterExportFixture):
+    def test_month_to_month_export_defaults_to_excel(self):
+        client = self.as_pl()
+        resp = client.get(
+            PL_EXPORT,
+            {
+                "fy": self.fy,
+                "period_type": "month_range",
+                "from_month": "10",
+                "to_month": "12",
+                "owner": self.james.id,
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertTrue(resp["Content-Disposition"].endswith('.xlsx"'))
+
+    def test_completed_visits_and_trainings_filtering_in_custom_month_range(self):
+        # Create a completed visit in November
+        nov_date = date(int(self.fy) - 1, 11, 15)
+        self._activity(
+            "school_visit",
+            self.james,
+            cost=25_000,
+        )
+        completed_act = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            quarter="Q1",
+            planned_date=nov_date,
+            planned_month=11,
+            status="completed",
+            responsible_staff_id=self.james.id,
+        )
+        ActivityScheduleCostLine.objects.create(
+            activity=completed_act,
+            cost_setting_key="k",
+            label="Fuel",
+            unit_cost=30_000,
+            quantity=1,
+            amount=30_000,
+        )
+
+        # Export as CSV with month range 10 to 12 and status completed
+        rows = self.export_rows(
+            fy=self.fy,
+            period_type="month_range",
+            from_month="10",
+            to_month="12",
+            status="completed",
+            activity_type="visits_trainings",
+            format="csv",
+        )
+        # Header + 1 completed row
+        self.assertEqual(len(rows) - 1, 1)
+        self.assertIn("completed", rows[1])
+
+    def test_drawers_render_successfully(self):
+        client = self.as_pl()
+        drawers = [
+            "/team-planning-oversight/export-drawer",
+            "/country-planning-oversight/export-drawer",
+            "/partner-oversight/export-drawer",
+            "/team-planning-oversight/projects/export-drawer",
+            "/cluster-oversight/export-drawer",
+            "/my-plan/export-drawer",
+        ]
+        for url in drawers:
+            with self.subTest(drawer=url):
+                resp = client.get(url, {"fy": self.fy})
+                self.assertEqual(resp.status_code, 200)
+                body = resp.content.decode()
+                self.assertIn("From (Month) to (Month)", body)
+                self.assertIn("from_month", body)
+                self.assertIn("to_month", body)
+                self.assertIn("Download Excel", body)
+                self.assertIn("format", body)
+                self.assertIn("xlsx", body)
+
+    def test_cluster_oversight_export_excel(self):
+        client = self.as_pl()
+        resp = client.get(
+            "/cluster-oversight/export", {"fy": self.fy, "format": "xlsx"}
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    def test_my_plan_custom_month_export_excel(self):
+        client = self.as_pl()
+        resp = client.get(
+            "/my-plan/",
+            {
+                "fy": self.fy,
+                "period_type": "month_range",
+                "from_month": "10",
+                "to_month": "12",
+                "export": "xlsx",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )

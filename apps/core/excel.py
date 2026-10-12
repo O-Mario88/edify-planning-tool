@@ -41,6 +41,24 @@ def workbook_response(filename: str, sheets: list[dict]) -> HttpResponse:
     ``number_formats`` maps a 1-based column index to an Excel format, for the
     money and count columns that otherwise arrive as bare integers.
     """
+    import datetime as _dt
+    import openpyxl.cell.cell as _cell
+
+    for _cls, _fmt in (
+        (_dt.date, "yyyy-mm-dd"),
+        (_dt.datetime, "yyyy-mm-dd h:mm:ss"),
+        (_dt.time, "h:mm:ss"),
+        (_dt.timedelta, "[hh]:mm:ss"),
+    ):
+        _cell.TIME_FORMATS[_cls] = _fmt
+        _cell._TYPES[_cls] = "d"
+        _now_d = type(_dt.date.today())
+        _cell.TIME_FORMATS[_now_d] = "yyyy-mm-dd"
+        _cell._TYPES[_now_d] = "d"
+        _now_dt = type(_dt.datetime.now())
+        _cell.TIME_FORMATS[_now_dt] = "yyyy-mm-dd h:mm:ss"
+        _cell._TYPES[_now_dt] = "d"
+
     from openpyxl import Workbook
     from openpyxl.utils import get_column_letter
 

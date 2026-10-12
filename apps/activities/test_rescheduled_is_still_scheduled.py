@@ -168,7 +168,11 @@ _OTHER_VOCABULARIES = {
     "apps/frontend/views/analytics_views.py": 1,
     "apps/frontend/views/extended_views.py": 1,
     "apps/frontend/views/ia_views.py": 1,
-    "apps/frontend/views/oversight_views.py": 2,
+    # The Export options' own status key ("scheduled" = not yet completed)
+    # and a Partner hand-over's delivery phase (2026-10-11) are not activity
+    # statuses.
+    "apps/frontend/views/my_plan_views.py": 1,
+    "apps/frontend/views/oversight_views.py": 4,
     "apps/frontend/views/partner_views.py": 1,
     "apps/frontend/views/planning_views.py": 1,
     "apps/messaging/services.py": 1,

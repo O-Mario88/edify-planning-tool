@@ -173,9 +173,9 @@
         "/country-planning-oversight/team/<str:staff_id>",
         "/dashboard",
         "/my-plan",
+        "/my-plan/",
         "/partner-oversight/",
-        "/team-planning-oversight/",
-        "/team-targets"
+        "/team-planning-oversight/"
       ],
       "findings": [],
       "forms": 0,
@@ -1119,8 +1119,8 @@
         "/dashboard",
         "/districts/<str:district_id>",
         "/my-plan",
-        "/partners/<str:partner_id>",
-        "/projects/<str:project_id>"
+        "/my-plan/",
+        "/partners/<str:partner_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -1149,8 +1149,8 @@
         "/dashboard",
         "/districts/<str:district_id>",
         "/my-plan",
-        "/partners/<str:partner_id>",
-        "/projects/<str:project_id>"
+        "/my-plan/",
+        "/partners/<str:partner_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -8954,7 +8954,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 14249,
+      "bytes": 14852,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -8968,7 +8968,7 @@
       ],
       "findings": [],
       "forms": 2,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Root",
       "purpose": "Reusable root interface primitive",
@@ -10215,7 +10215,8 @@
       "bytes": 1206,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10238,7 +10239,8 @@
       "bytes": 1439,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10320,7 +10322,8 @@
       "bytes": 6519,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10367,7 +10370,8 @@
       "bytes": 13306,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10442,7 +10446,8 @@
       "bytes": 6265,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10465,7 +10470,8 @@
       "bytes": 3915,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10489,7 +10495,8 @@
       "bytes": 8994,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10564,7 +10571,8 @@
       "bytes": 7695,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10585,7 +10593,8 @@
       "bytes": 7126,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10606,7 +10615,8 @@
       "bytes": 377,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10695,7 +10705,8 @@
       "bytes": 3059,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10740,7 +10751,8 @@
       "bytes": 9553,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 1,
@@ -10858,7 +10870,8 @@
       "bytes": 6247,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10879,7 +10892,8 @@
       "bytes": 945,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10958,7 +10972,8 @@
       "bytes": 3833,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -10979,7 +10994,8 @@
       "bytes": 5189,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11002,7 +11018,8 @@
       "bytes": 1335,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11023,7 +11040,8 @@
       "bytes": 6595,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11048,7 +11066,8 @@
       "bytes": 5230,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11075,7 +11094,8 @@
       "bytes": 743,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11122,7 +11142,8 @@
       "bytes": 5988,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11264,7 +11285,8 @@
       "bytes": 5297,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11285,7 +11307,8 @@
       "bytes": 2390,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -11507,7 +11530,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1504,
+      "bytes": 1903,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",
@@ -11517,7 +11540,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": " Export Menu",
       "purpose": "Reusable  export menu interface primitive",
@@ -12202,6 +12225,38 @@
       ]
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 8485,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/budget/export-drawer",
+        "/cluster-oversight/export-drawer",
+        "/country-planning-oversight/export-drawer",
+        "/fund-requests/weekly/export-drawer",
+        "/my-plan/export-drawer",
+        "/partner-oversight/export-drawer",
+        "/team-planning-oversight/export-drawer",
+        "/team-planning-oversight/projects/export-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Export Customization Drawer",
+      "purpose": "Reusable export customization drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/oversight/export_customization_drawer.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 5852,
       "deprecated_alternatives": [],
@@ -12494,14 +12549,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11983,
+      "bytes": 12431,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Partner Workspace",
       "purpose": "Reusable partner workspace interface primitive",
@@ -13232,6 +13287,7 @@
       "example_pages": [
         "/country-planning-oversight/",
         "/my-plan",
+        "/my-plan/",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -13260,6 +13316,7 @@
       "example_pages": [
         "/country-planning-oversight/",
         "/my-plan",
+        "/my-plan/",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -17226,7 +17283,8 @@
       "bytes": 11602,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/my-plan"
+        "/my-plan",
+        "/my-plan/"
       ],
       "findings": [],
       "forms": 0,
@@ -29281,6 +29339,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET /budget/export-drawer?fy={{ fy }}&amp;budget_scope={{ budget_scope }}&amp;district={{ selected_district|urlencode }}&amp;date={{ anchor|date:",
         "GET /country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}",
         "GET /country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
       ],
@@ -29381,6 +29440,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
+        "GET /budget/export-drawer?fy={{ fy }}&amp;budget_scope={{ budget_scope }}&amp;district={{ selected_district|urlencode }}&amp;date={{ anchor|date:",
         "GET /country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}",
         "GET /country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
       ],
@@ -29457,6 +29517,182 @@
         "text-[14px]",
         "text-[15px]",
         "text-[18px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.budget_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:monthly_budget"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C2C05BC433",
+      "page_title": "Budget Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "monthly_budget",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "The Budget as a workbook: the planned activities whose dates fall in the period the drawer chose (else the page's year) and their budget, read from the same lines the Budget page sums (owner, 2026-10-12: \"an accurate extract from the actual planned activities for that period\").",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/budget/export",
+      "route_name": "budget_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.budget_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:monthly_budget"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CB7896F8A1",
+      "page_title": "Budget Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "monthly_budget",
+      "primary_action": "Budget Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Export options drawer of the Budget page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/budget/export-drawer",
+      "route_name": "budget_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -32806,7 +33042,7 @@
       "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/oversight/cluster_oversight_workspace.html",
         "template:pages/oversight/cluster_oversight.html",
@@ -32818,7 +33054,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /cluster-oversight/export-drawer?fy={{ fy }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -32890,6 +33128,190 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_export_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:cluster_oversight"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-440F458C20",
+      "page_title": "Cluster Oversight Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "cluster_oversight",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Export cluster plans to Excel (or CSV).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/cluster-oversight/export",
+      "route_name": "cluster_oversight_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.cluster_oversight_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:cluster_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-DAF96AEC09",
+      "page_title": "Cluster Oversight Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cluster_oversight",
+      "primary_action": "Cluster Oversight Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period and export cluster oversight to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/cluster-oversight/export-drawer",
+      "route_name": "cluster_oversight_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -40443,6 +40865,102 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.planning_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-18E793C0E0",
+      "page_title": "Country Planning Oversight Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Country Planning Oversight Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period from (Month) to (Month) and export plans to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/country-planning-oversight/export-drawer",
+      "route_name": "country_planning_oversight_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -48217,6 +48735,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48313,6 +48832,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48578,6 +49098,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48757,6 +49278,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48853,6 +49375,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -48949,6 +49472,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49122,6 +49646,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49216,6 +49741,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49403,6 +49929,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "GET /work-plan/add",
+        "GET /fund-requests/weekly/export-drawer?fy={{ selected_fy }}&amp;district={{ selected_district|urlencode }}&amp;staff={{ selected_staff|urlencode }}",
         "GET /fund-requests/weekly"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49465,6 +49992,97 @@
       "templates": [
         "partials/fund_requests/root.html",
         "pages/fund_requests/weekly.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.fund_requests_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:fund_requests"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-2AE8732C2F",
+      "page_title": "Fund Requests Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "fund_requests",
+      "primary_action": "Fund Requests Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Export options drawer of the Weekly Advance Request page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/weekly/export-drawer",
+      "route_name": "fund_requests_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -66269,7 +66887,8 @@
         "GET /partner/invoices/new",
         "GET /activities/{{ row.a.id }}/evidence",
         "GET /my-plan/{{ row.a.id }}/reschedule-drawer",
-        "GET /partner/activities/{{ row.a.id }}/delivered-by"
+        "GET /partner/activities/{{ row.a.id }}/delivered-by",
+        "GET /my-plan/export-drawer{% querystring %}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -66302,6 +66921,122 @@
       ],
       "route": "/my-plan",
       "route_name": "my_plan",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/partner/activities/{{ row.a.id }}/start-action"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/partner/my_plan.html",
+        "partials/my_plan/workspace.html",
+        "pages/my_plan/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[14px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.my_plan_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/partner/my_plan.html",
+        "template:partials/my_plan/workspace.html",
+        "template:pages/my_plan/index.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "shared-page-header-component",
+      "htmx_endpoints": [
+        "GET /partner/invoices/new",
+        "GET /activities/{{ row.a.id }}/evidence",
+        "GET /my-plan/{{ row.a.id }}/reschedule-drawer",
+        "GET /partner/activities/{{ row.a.id }}/delivered-by",
+        "GET /my-plan/export-drawer{% querystring %}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-3985CDC627",
+      "page_title": "My Plan",
+      "page_type": "operational-queue",
+      "per_page_css": [
+        "css/components/core-progress.css"
+      ],
+      "permission_key": "my_plan",
+      "primary_action": "Send Invoice",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "The planning dashboard main view.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/",
+      "route_name": "",
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/partner/activities/{{ row.a.id }}/start-action"
@@ -67843,6 +68578,109 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.my_plan_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-637D222AB1",
+      "page_title": "My Plan Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "My Plan Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period from (Month) to (Month) and export My Plan to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/export-drawer",
+      "route_name": "my_plan_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -71978,6 +72816,7 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET /partner-oversight/export-drawer?member={{ member }}&activity_type={{ activity_type }}&status={{ status }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != ",
         "POST /partner-oversight/withdraw/review",
         "GET /partners/create"
       ],
@@ -72429,6 +73268,103 @@
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_oversight_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:partner_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-BAC6211984",
+      "page_title": "Partner Oversight Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partner_oversight",
+      "primary_action": "Partner Oversight Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period and export partner plans to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/partner-oversight/export-drawer",
+      "route_name": "partner_oversight_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -94775,6 +95711,8 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
+        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
+        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}",
         "GET {{ row.detail_url }}"
       ],
@@ -95042,6 +95980,102 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.planning_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-A88C4D0FA0",
+      "page_title": "Team Planning Oversight Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Team Planning Oversight Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period from (Month) to (Month) and export plans to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/team-planning-oversight/export-drawer",
+      "route_name": "team_planning_oversight_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -95218,6 +96252,102 @@
       "typography_exceptions": []
     },
     {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.project_export_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/oversight/export_customization_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:team_planning_oversight"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-1130838F9C",
+      "page_title": "Special Projects Export Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Special Projects Export Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Drawer to customize period and export special projects to Excel.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/team-planning-oversight/projects/export-drawer",
+      "route_name": "special_projects_export_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ export_url }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.services",
+        "apps.budget.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.pl_review.services",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
       "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
@@ -95331,6 +96461,8 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
+        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
+        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -95433,6 +96565,8 @@
         "GET /team-planning-oversight/",
         "GET /training-ceilings/set?fy={{ fy }}",
         "GET /training-ceilings/country/set?fy={{ fy }}",
+        "GET /team-planning-oversight/projects/export-drawer?fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
+        "GET /team-planning-oversight/projects/export-drawer?project={{ selected_project }}&amp;fy={{ fy }}{% if selected_stage %}&amp;stage={{ selected_stage }}{% endif %}{% if selected_project_status %}&amp;project_status={{ selected_project_status }}{% endif %}",
         "GET /planning-follow-ups/{{ request.GET.followup|urlencode }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -109894,6 +111028,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.budget_views.budget_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "monthly_budget",
+      "required_permissions": [],
+      "route": "/budget/export",
+      "route_name": "budget_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.budget_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "monthly_budget",
+      "required_permissions": [],
+      "route": "/budget/export-drawer",
+      "route_name": "budget_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.budget_views.monthly_budget_view",
       "kind": "action",
       "methods": [
@@ -110452,6 +111612,32 @@
       "templates": [
         "partials/oversight/cluster_oversight_workspace.html",
         "pages/oversight/cluster_oversight.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.cluster_oversight_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cluster_oversight",
+      "required_permissions": [],
+      "route": "/cluster-oversight/export",
+      "route_name": "cluster_oversight_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.cluster_oversight_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cluster_oversight",
+      "required_permissions": [],
+      "route": "/cluster-oversight/export-drawer",
+      "route_name": "cluster_oversight_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
       ]
     },
     {
@@ -111608,6 +112794,20 @@
       "route": "/country-planning-oversight/export",
       "route_name": "country_planning_oversight_export",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.planning_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/export-drawer",
+      "route_name": "country_planning_oversight_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.country_oversight_views.follow_up_view",
@@ -113034,6 +114234,20 @@
       "templates": [
         "partials/fund_requests/root.html",
         "pages/fund_requests/weekly.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.fund_requests_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/weekly/export-drawer",
+      "route_name": "fund_requests_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
       ]
     },
     {
@@ -115754,6 +116968,22 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.my_plan_views.my_plan_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/",
+      "route_name": "",
+      "templates": [
+        "pages/partner/my_plan.html",
+        "partials/my_plan/workspace.html",
+        "pages/my_plan/index.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.my_plan_views.activity_detail_view",
       "kind": "drawer",
       "methods": [
@@ -115953,6 +117183,20 @@
       "route": "/my-plan/day-package",
       "route_name": "my_plan_day_package",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.my_plan_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/export-drawer",
+      "route_name": "my_plan_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.pd_views.my_professional_development_view",
@@ -116638,6 +117882,20 @@
       "route": "/partner-oversight/export",
       "route_name": "partner_oversight_export",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_oversight_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/export-drawer",
+      "route_name": "partner_oversight_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.oversight_views.partner_return_resolve_drawer_view",
@@ -120160,6 +121418,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.oversight_views.planning_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/export-drawer",
+      "route_name": "team_planning_oversight_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.special_project_export_view",
       "kind": "export",
       "methods": [
@@ -120182,6 +121454,20 @@
       "route": "/team-planning-oversight/projects/export",
       "route_name": "special_projects_export_all",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.project_export_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/projects/export-drawer",
+      "route_name": "special_projects_export_drawer",
+      "templates": [
+        "partials/oversight/export_customization_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.oversight_views.team_planning_send_action_view",
@@ -120860,30 +122146,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 598,
+    "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1395,
+    "all_routes": 1406,
     "api_routes": 363,
-    "component_templates": 690,
-    "full_pages": 269,
-    "mobile_contract_pass": 598,
+    "component_templates": 691,
+    "full_pages": 270,
+    "mobile_contract_pass": 607,
     "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 613,
-      "operational-queue": 155,
+      "interaction-fragment": 621,
+      "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
-      "report": 45
+      "report": 47
     },
-    "partials_and_drawers": 326,
-    "permission_gated": 902,
+    "partials_and_drawers": 334,
+    "permission_gated": 913,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 919,
+    "routed_surfaces": 930,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -120891,8 +122177,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 598,
-    "test_referenced": 819,
-    "theme_contract_pass": 598
+    "tablet_contract_pass": 607,
+    "test_referenced": 830,
+    "theme_contract_pass": 607
   }
 }

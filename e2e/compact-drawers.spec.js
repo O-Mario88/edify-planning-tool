@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
-test('scheduling, assignment and cluster creation stay contained: a sheet on a phone, a centred card wider',async({page})=>{
+test('scheduling, assignment and cluster creation stay contained: a centred narrower card on a phone, a centred card wider',async({page})=>{
  test.setTimeout(180000);
  await signIn(page,'cceo@edify.org','edify',{acceptRequiredAgreements:false});
  // A Core School row's Schedule and Assign are entries in its one Actions
@@ -30,21 +30,18 @@ test('scheduling, assignment and cluster creation stay contained: a sheet on a p
    // after the move; it now answers inside it (audit, 2026-10-06). Measure where it comes to rest.
    await surface.evaluate(el=>Promise.all(el.getAnimations().map(moving=>moving.finished.catch(()=>{}))));
    const r=await surface.boundingBox();
-   // A phone gets a sheet from the bottom edge (2026-09-23); every wider
-   // screen keeps the centred card. The nested Core visit drawer is a
-   // base_drawer now too, so it is a sheet on a phone like the rest.
-   const sheet=width<768;
-   if(sheet){
-    // Edge to edge and flush with the bottom, within emulation rounding.
-    expect(Math.abs(r.x)).toBeLessThan(1);expect(Math.abs(r.width-width)).toBeLessThan(2);
-    expect(Math.abs(r.y+r.height-height)).toBeLessThanOrEqual(3);expect(r.y).toBeGreaterThanOrEqual(8);
+   // A phone gets a centered, narrower floating card; every wider
+   // screen also keeps the centred card.
+   expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
+   expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
+   expect(r.height).toBeLessThanOrEqual(height-16);
+   if(width<768){
+    expect(r.width).toBeLessThan(width);
+    expect(r.width).toBeLessThanOrEqual(Math.min(width-24,352));
    }else{
-    expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
-    expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
     expect(Math.abs(r.y+r.height/2-height/2)).toBeLessThan(2);
-    expect(r.height).toBeLessThanOrEqual(height-16);
+    expect(r.width).toBeLessThanOrEqual(800);
    }
-   if(width>=768)expect(r.width).toBeLessThanOrEqual(800);
    expect(await surface.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(2);
    const submit=surface.locator('button[type="submit"]').last();
    if(await submit.count() && await submit.isVisible()){

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **919**
-- All registered routes: **1395**
+- Routed product surfaces: **930**
+- All registered routes: **1406**
 - API routes: **363**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **690**
-- Full pages: **269**
-- Partials and drawers: **326**
-- Permission-gated surfaces: **902**
-- Referenced by automated tests: **819**
+- Shared component templates: **691**
+- Full pages: **270**
+- Partials and drawers: **334**
+- Permission-gated surfaces: **913**
+- Referenced by automated tests: **830**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -156,6 +156,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-86E2200E55 | /api/analytics/map-subcounties | Map Subcounty Metrics | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1BACC71B5F | /budget | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-04C3EE0B01 | /budget/ | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C2C05BC433 | /budget/export | Budget Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-CB7896F8A1 | /budget/export-drawer | Budget Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F5541CFE7 | /budgets/monthly | Monthly Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7ABC671B29 | /budgets/overview | Budget Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B1D64A4041 | /business-transformation | Business Transformation | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -198,6 +200,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-58D1EBBE03 | /cluster-management/<str:section> | · Cluster Management · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EFB5DF0B83 | /cluster-management/scoring | Scoring · Cluster Management · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-273FCBD571 | /cluster-oversight/ | Cluster Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-440F458C20 | /cluster-oversight/export | Cluster Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-DAF96AEC09 | /cluster-oversight/export-drawer | Cluster Oversight Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FA80612906 | /clusters/<str:cluster_id>/bulk-assign-drawer | Cluster Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -282,6 +286,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-27C7447FF6 | /country-planning-oversight/execution/snapshots/<str:snapshot_id> | Cpx Snapshot | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B4D7E70702 | /country-planning-oversight/execution/table | Cpx Table | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-18E793C0E0 | /country-planning-oversight/export-drawer | Country Planning Oversight Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6F857A0111 | /country-planning-oversight/follow-up | Cpo Follow Up | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BE4DC27E5B | /country-planning-oversight/follow-up/<str:followup_id>/<str:action> | Cpo Follow Up Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E08AE9527 | /country-planning-oversight/follow-ups-panel | Cpo Followups Panel | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -382,6 +387,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-15785CF711 | /fund-requests/weekly/<str:request_id>/return | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-41CB76A0D0 | /fund-requests/weekly/<str:request_id>/return-drawer | Weekly Fund Request Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-2AE8732C2F | /fund-requests/weekly/export-drawer | Fund Requests Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9E1520AF65 | /fy | Fiscal Year Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B35FAC1878 | /health-safety | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EE2DB868E6 | /health-safety/<str:incident_id> | Incident Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
@@ -582,6 +588,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-394F17A694 | /my-performance/documents | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-130CC03295 | /my-performance/values | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-81D22F3012 | /my-plan | My Plan | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3985CDC627 | /my-plan/ | My Plan | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1028B8B6D6 | /my-plan/<str:activity_id> | Activity Details | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3093D469A8 | /my-plan/<str:activity_id>/accountability | Accountability Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ACF62FD525 | /my-plan/<str:activity_id>/cancel | Cancel Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -597,6 +604,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-95DB260DE8 | /my-plan/<str:activity_id>/reschedule | Reschedule Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-34CF71A1B7 | /my-plan/<str:activity_id>/reschedule-drawer | Reschedule Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6937A8BBE4 | /my-plan/day-package | My Plan Day Package | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-637D222AB1 | /my-plan/export-drawer | My Plan Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A9CC7B99B9 | /my-professional-development | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66957B5B06 | /my-professional-development/ | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3674FD9513 | /my-professional-development/allocation-history | Pd Allocation History | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
@@ -648,6 +656,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-619586CF5E | /partner-oversight/allowance-grant | Partner Allowance Grant | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D3C1BC6314 | /partner-oversight/detail | Partner Oversight Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-43F04DB2BD | /partner-oversight/export | Partner Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-BAC6211984 | /partner-oversight/export-drawer | Partner Oversight Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B9AC68C949 | /partner-oversight/resolve | Partner Return Resolve Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-041F0272FC | /partner-oversight/resolve/submit | Partner Return Resolve Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9BAA4C5BFA | /partner-oversight/return | Partner Work Return Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -896,8 +905,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EA89AC9A38 | /team-planning-oversight/ | Planning Oversight | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-14E1DA418E | /team-planning-oversight/detail | Team Planning Oversight Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-368D278D44 | /team-planning-oversight/export | Team Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-A88C4D0FA0 | /team-planning-oversight/export-drawer | Team Planning Oversight Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-00521CFE7C | /team-planning-oversight/projects/<str:project_id>/export | Special Project Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1B3DAC63BA | /team-planning-oversight/projects/export | Special Projects Export All | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-1130838F9C | /team-planning-oversight/projects/export-drawer | Special Projects Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-71A3B9A8F5 | /team-planning-oversight/send | Team Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-040D721C96 | /team-targets | Planning Oversight · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-87A552B53C | /team-targets/ | Planning Oversight · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

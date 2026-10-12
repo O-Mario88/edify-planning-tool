@@ -1404,23 +1404,18 @@ def planned_lines_for_period(lines, start, end):
     return lines.filter(planned_period_q(start, end))
 
 
-def budget_workspace(principal, query: dict) -> dict:
-    """Return a role-scoped budget ledger backed by authoritative cost rows.
+def scoped_budget_lines(principal, query: dict, *, fiscal_years=None) -> dict:
+    """The cost lines a Budget page reads for this principal and query, before
+    the period is cut: role scope, My/Team/Country, the `staff` and `district`
+    narrowing, and never a cancelled or deleted activity's line.
 
-    Canonical schedule cost lines supply every amount.  Weekly and monthly
-    fund requests are snapshots of those lines, so their counts are surfaced
-    for traceability but their totals are never added again. This keeps the
-    page mathematically correct while still showing that scheduled work has
-    reached the funding workflow.
+    One place, so the Budget page and the Budget export (owner, 2026-10-12:
+    "make sure the budget is an accurate extract from the actual planned
+    activities for that period") read the same lines. ``fiscal_years`` lets
+    an export whose period crosses 1 October read both years; the page reads
+    its own year (and the two a crossing week touches).
     """
-    from apps.accounts.models import User
     from apps.activities.models import ActivityScheduleCostLine
-    from apps.fund_requests.models import (
-        FundRequest,
-        FundRequestPeriod,
-        WeeklyFundRequest,
-    )
-    from apps.monthly_work_plan.models import AdminBudgetLine
 
     scope = resolve_user_scope(principal)
     try:
@@ -1514,7 +1509,9 @@ def budget_workspace(principal, query: dict) -> dict:
         str(get_operational_fy(periods["week"]["end"])),
     }
     week_years = {str(fy)} | (week_touches if str(fy) in week_touches else set())
-    in_year = Q(fiscal_year=fy)
+    if fiscal_years:
+        week_years = {str(year) for year in fiscal_years}
+    in_year = Q(fiscal_year__in=sorted(week_years))
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
             fiscal_year__in=week_years,
@@ -1575,6 +1572,58 @@ def budget_workspace(principal, query: dict) -> dict:
             | Q(activity__event_district_id=requested_district)
         )
         include_admin = False
+
+    return {
+        "scope": scope,
+        "anchor": anchor,
+        "fy": fy,
+        "periods": periods,
+        "selected_period": selected_period,
+        "selected": selected,
+        "is_program_lead": is_program_lead,
+        "country_allowed": country_allowed,
+        "admin_allowed": admin_allowed,
+        "budget_scope": budget_scope,
+        "owner_ids": owner_ids,
+        "include_admin": include_admin,
+        "requested_staff": requested_staff,
+        "week_years": week_years,
+        "in_year": in_year,
+        "base_lines": base_lines,
+        "requested_district": requested_district,
+    }
+
+
+def budget_workspace(principal, query: dict) -> dict:
+    """Return a role-scoped budget ledger backed by authoritative cost rows.
+
+    Canonical schedule cost lines supply every amount.  Weekly and monthly
+    fund requests are snapshots of those lines, so their counts are surfaced
+    for traceability but their totals are never added again. This keeps the
+    page mathematically correct while still showing that scheduled work has
+    reached the funding workflow.
+    """
+    from apps.accounts.models import User
+    from apps.fund_requests.models import (
+        FundRequest,
+        FundRequestPeriod,
+        WeeklyFundRequest,
+    )
+    from apps.monthly_work_plan.models import AdminBudgetLine
+
+    scoped = scoped_budget_lines(principal, query)
+    anchor = scoped["anchor"]
+    fy = scoped["fy"]
+    periods = scoped["periods"]
+    selected_period = scoped["selected_period"]
+    selected = scoped["selected"]
+    is_program_lead = scoped["is_program_lead"]
+    budget_scope = scoped["budget_scope"]
+    owner_ids = scoped["owner_ids"]
+    include_admin = scoped["include_admin"]
+    week_years = scoped["week_years"]
+    in_year = scoped["in_year"]
+    base_lines = scoped["base_lines"]
 
     if query.get("plan_only"):
         include_admin = False
@@ -2145,3 +2194,245 @@ __all__ = [
     "board",
     "budget_workspace",
 ]
+
+
+# ── The Budget export ────────────────────────────────────────────────────────
+#: The cost line fields the export reads, and the activity fields beside them.
+_EXPORT_LINE_FIELDS = (
+    "activity_id",
+    "responsible_user",
+    "amount",
+    "label",
+    "cost_setting_key",
+    "line_item_type",
+    "quantity",
+    "unit_cost",
+    "planned_date",
+    "partner_id",
+    "fiscal_year",
+)
+_EXPORT_ACTIVITY_FIELDS = (
+    "id",
+    "activity_type",
+    "status",
+    "planned_date",
+    "delivery_type",
+    "programme_delivery_mode",
+    "fy",
+    "activity_purpose_text",
+    "school__school_id",
+    "school__name",
+    "school__district__name",
+    "cluster__name",
+    "cluster__district__name",
+    "event_district__name",
+    "assigned_partner_id",
+)
+
+ACTIVITY_SHEET_HEADERS = (
+    "Activity ID",
+    "Financial Year",
+    "Planned Date",
+    "Activity Type",
+    "Delivery",
+    "Purpose",
+    "School ID",
+    "School",
+    "District",
+    "Cluster",
+    "Responsible",
+    "Partner",
+    "Activity Status",
+    "Budget (UGX)",
+)
+LINE_SHEET_HEADERS = (
+    "Activity ID",
+    "Planned Date",
+    "Activity Type",
+    "School ID",
+    "School",
+    "District",
+    "Cost Item",
+    "Cost Key",
+    "Quantity",
+    "Unit Cost (UGX)",
+    "Amount (UGX)",
+    "Responsible",
+)
+SUMMARY_SHEET_HEADERS = ("Activity Type", "Activities", "Budget (UGX)")
+MONEY = "#,##0"
+
+
+def budget_export_sheets(
+    principal, query: dict, *, start: date, end: date, kind: str = "all", status=""
+) -> list[dict]:
+    """The planned activities of [start, end] and their budget, as the sheets
+    of one workbook: an activity a row with its budget, every cost line
+    behind it, and the total by activity type.
+
+    Every figure is the sum of the activity's own cost lines — the lines the
+    Budget page sums and the fund request snapshots — read through
+    ``scoped_budget_lines``, so the export cannot name an activity the page
+    would not, nor a shilling the plan does not hold. An in-school training
+    costs nothing of its own (its visit carries the day) and an online group
+    training has no lines, so neither inflates a total. ``kind`` is one of
+    ``apps.core.export_kinds``; ``status`` keeps completed work, or work not
+    yet completed, or everything.
+    """
+    from apps.accounts.models import User
+    from apps.core import export_kinds
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
+    years = sorted({str(get_operational_fy(start)), str(get_operational_fy(end))})
+    scoped = scoped_budget_lines(
+        principal, {**query, "fy": query.get("fy") or years[0]}, fiscal_years=years
+    )
+    lines = cost_line_rows(
+        planned_lines_for_period(scoped["base_lines"], start, end).order_by(
+            "planned_date", "activity_id", "id"
+        ),
+        _EXPORT_LINE_FIELDS,
+        _EXPORT_ACTIVITY_FIELDS,
+    )
+
+    def wanted(line) -> bool:
+        activity = line.activity
+        if not export_kinds.keeps(
+            kind,
+            activity.activity_type,
+            online=(activity.programme_delivery_mode or "") == "online",
+        ):
+            return False
+        # The drawer's status: completed work, everything, or (any other
+        # choice) the work not yet completed.
+        done = (activity.status or "") in COMPLETED_WORK_STATUSES
+        if status == "completed":
+            return done
+        if status in ("", "all"):
+            return True
+        return not done
+
+    lines = [line for line in lines if wanted(line)]
+    names = dict(
+        User.objects.filter(
+            id__in={line.responsible_user for line in lines if line.responsible_user}
+        ).values_list("id", "name")
+    )
+    from apps.partners.models import Partner
+
+    partners = dict(
+        Partner.objects.filter(
+            id__in={
+                line.activity.assigned_partner_id
+                for line in lines
+                if line.activity.assigned_partner_id
+            }
+        ).values_list("id", "name")
+    )
+
+    def district_of(activity) -> str:
+        return (
+            activity.school__district__name
+            or activity.cluster__district__name
+            or activity.event_district__name
+            or ""
+        )
+
+    def delivery_of(activity) -> str:
+        words = []
+        if activity.delivery_type == "partner":
+            words.append("Partner")
+        if (activity.programme_delivery_mode or "") == "online":
+            words.append("Online")
+        return " ".join(words) or "Staff"
+
+    activities: dict[str, dict] = {}
+    line_rows = []
+    for line in lines:
+        activity = line.activity
+        day = line.planned_date or activity.planned_date
+        kind_label = _activity_choice_label("activity_type", activity.activity_type)
+        row = activities.get(activity.id)
+        if row is None:
+            row = activities[activity.id] = {
+                "id": activity.id,
+                "fy": activity.fy or line.fiscal_year or "",
+                "date": day,
+                "kind": kind_label,
+                "delivery": delivery_of(activity),
+                "purpose": activity.activity_purpose_text or "",
+                "school_id": activity.school__school_id or "",
+                "school": activity.school__name or "",
+                "district": district_of(activity),
+                "cluster": activity.cluster__name or "",
+                "responsible": names.get(line.responsible_user or "", ""),
+                "partner": partners.get(activity.assigned_partner_id or "", ""),
+                "status": _activity_choice_label("status", activity.status),
+                "budget": 0,
+            }
+        row["budget"] += int(line.amount or 0)
+        line_rows.append(
+            [
+                activity.id,
+                day,
+                kind_label,
+                activity.school__school_id or "",
+                activity.school__name or "",
+                district_of(activity),
+                line.label or line.line_item_type or "",
+                line.cost_setting_key or "",
+                line.quantity,
+                line.unit_cost,
+                int(line.amount or 0),
+                names.get(line.responsible_user or "", ""),
+            ]
+        )
+
+    by_kind: dict[str, list] = {}
+    for row in activities.values():
+        by_kind.setdefault(row["kind"], [0, 0])
+        by_kind[row["kind"]][0] += 1
+        by_kind[row["kind"]][1] += row["budget"]
+    summary = [[k, n, total] for k, (n, total) in sorted(by_kind.items())]
+    summary.append(
+        ["Total", len(activities), sum(r["budget"] for r in activities.values())]
+    )
+
+    return [
+        {
+            "title": "Planned Activities",
+            "headers": list(ACTIVITY_SHEET_HEADERS),
+            "rows": [
+                [
+                    r["id"],
+                    r["fy"],
+                    r["date"],
+                    r["kind"],
+                    r["delivery"],
+                    r["purpose"],
+                    r["school_id"],
+                    r["school"],
+                    r["district"],
+                    r["cluster"],
+                    r["responsible"],
+                    r["partner"],
+                    r["status"],
+                    r["budget"],
+                ]
+                for r in activities.values()
+            ],
+            "number_formats": {3: "d mmm yyyy", 14: MONEY},
+        },
+        {
+            "title": "Cost Lines",
+            "headers": list(LINE_SHEET_HEADERS),
+            "rows": line_rows,
+            "number_formats": {2: "d mmm yyyy", 10: MONEY, 11: MONEY},
+        },
+        {
+            "title": "Summary",
+            "headers": list(SUMMARY_SHEET_HEADERS),
+            "rows": summary,
+            "number_formats": {3: MONEY},
+        },
+    ]

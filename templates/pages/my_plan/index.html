@@ -34,8 +34,12 @@ that links to it. Open Calendar moved beside the period tabs (filters.html).
 {% endcomment %}
 <a
 href="{% querystring export='xlsx' %}"
+hx-get="/my-plan/export-drawer{% querystring %}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
 class="btn btn-ghost h-8 shadow-sm"
 aria-label="Export this plan to Excel"
+title="Customize Period and Export to Excel"
 >
 <svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export

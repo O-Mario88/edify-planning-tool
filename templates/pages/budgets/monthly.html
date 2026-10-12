@@ -22,6 +22,20 @@
         {{ weekly_request_count }} weekly request{{ weekly_request_count|pluralize }} · {{ source_description }}
         {% endif %}
       </div>
+      {% comment %}The budget of a period as one Excel workbook (owner,
+      2026-10-12): the planned activities whose dates fall in it, each with
+      its budget from its own cost lines, the lines, and a total by type.
+      The drawer chooses the period, the work and the status.{% endcomment %}
+      {% if request.user|can_open:"/budget/export" %}
+      <div class="edify-page-header__controls">
+        <button type="button" class="edify-action-button secondary h-9 inline-flex items-center gap-1.5" data-budget-export
+                hx-get="/budget/export-drawer?fy={{ fy }}&amp;budget_scope={{ budget_scope }}&amp;district={{ selected_district|urlencode }}&amp;date={{ anchor|date:'Y-m-d' }}"
+                hx-target="#drawer-container" hx-swap="innerHTML" title="Export the planned activities and their budget to Excel">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Export</span>
+        </button>
+      </div>
+      {% endif %}
     </div>
     {% if is_program_lead %}
     {# Selected tab uses the shared edify-selected-surface, not a hand-rolled pill: one selected state across period cards, tabs and workflow stages. #}
