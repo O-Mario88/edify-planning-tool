@@ -128,7 +128,15 @@ class TheOwnersColumnsTest(_ColumnsFixture):
     def test_the_workbook_s_first_sheet_is_exactly_the_columns(self):
         _response, book = self.workbook(self.ia_user, "/projects/export")
         sheet = book["Project Schools"]
-        self.assertEqual([cell.value for cell in sheet[1]], list(school_table.COLUMNS))
+        # The table's columns, with the District Type after the District
+        # (owner, 2026-10-12: "district type ... in all exports").
+        headings = [cell.value for cell in sheet[1]]
+        self.assertEqual(headings, list(school_table.EXPORT_COLUMNS))
+        at = headings.index("District Type")
+        self.assertEqual(headings[at - 1], "District")
+        self.assertEqual(
+            [h for h in headings if h != "District Type"], list(school_table.COLUMNS)
+        )
 
 
 class WhatEachCellSaysTest(_ColumnsFixture):
@@ -209,7 +217,7 @@ class WhatEachCellSaysTest(_ColumnsFixture):
             self.ia_user, f"/projects/{self.project.id}/export"
         )
         sheet = book["Project Schools"]
-        column = school_table.COLUMNS.index("SSA Improvement") + 1
+        column = school_table.EXPORT_COLUMNS.index("SSA Improvement") + 1
         formats = {
             sheet.cell(row, column).number_format for row in range(2, sheet.max_row + 1)
         }

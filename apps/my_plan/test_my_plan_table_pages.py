@@ -96,4 +96,12 @@ class MyPlanPagesItsTablesAtFiftyTest(TestCase):
     def test_the_export_still_carries_every_visit(self):
         response = self.client.get(f"/my-plan?fy={FY}&export=csv")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode().count("School Visit"), VISITS)
+        import csv
+        import io
+
+        from apps.core import plan_export
+
+        tables = plan_export.tables_from_csv(
+            csv.reader(io.StringIO(response.content.decode()))
+        )
+        self.assertEqual(len(tables[plan_export.VISIT_SHEET]), VISITS)

@@ -158,18 +158,43 @@ class PlanExportTest(TestCase):
             **extra,
         }
 
-    def _ids(self, rows) -> set:
-        header = rows[0]
-        at = header.index("Activity ID")
-        return {row[at] for row in rows[1:]}
+    #: What each fixture activity reads as in the export's sheets
+    #: (apps.core.plan_export): the sheet it is on and how it is named there.
+    VISIT = ("School Visits", "School Visit")
+    MEETING = ("Trainings & Cluster Meetings", "Cluster Meeting")
+    TRAINING = ("Trainings & Cluster Meetings", "Cluster Training")
+
+    def _work(self, response) -> list:
+        """The exported work, a (sheet, name) per row, sorted."""
+        from openpyxl import load_workbook
+
+        book = load_workbook(io.BytesIO(response.content), read_only=True)
+        found = []
+        for sheet in book.worksheets:
+            rows = [list(row) for row in sheet.iter_rows(values_only=True)]
+            header = rows[0]
+            named = header.index("Activity" if "Activity" in header else "Training")
+            found += [(sheet.title, row[named]) for row in rows[1:]]
+        return sorted(found)
+
+    def _statuses(self, response) -> list:
+        from openpyxl import load_workbook
+
+        book = load_workbook(io.BytesIO(response.content), read_only=True)
+        out = []
+        for sheet in book.worksheets:
+            rows = [list(row) for row in sheet.iter_rows(values_only=True)]
+            out += [row[rows[0].index("Status")] for row in rows[1:]]
+        return out
 
     def test_my_plan_exports_the_plan_as_the_drawer_opens(self):
         client = Client()
         client.force_login(self.cceo_user)
         response = client.get("/my-plan/", {**self._drawer_query(), "export": "xlsx"})
         self.assertEqual(response.status_code, 200)
-        ids = self._ids(_sheet(response))
-        self.assertEqual(ids, {self.visit.id, self.meeting.id, self.training.id})
+        self.assertEqual(
+            self._work(response), sorted([self.VISIT, self.MEETING, self.TRAINING])
+        )
 
     def test_completed_only_is_completed_work_not_a_label_with_the_word(self):
         """ "Not Complete" has "complet" in it; the old filter kept every row."""
@@ -183,12 +208,15 @@ class PlanExportTest(TestCase):
             "/my-plan/",
             {**self._drawer_query(status="completed"), "export": "xlsx"},
         )
-        self.assertEqual(self._ids(_sheet(response)), {done.id})
+        # One row of the three visits: the completed one.
+        self.assertEqual(self._work(response), [self.VISIT])
+        self.assertEqual(len(self._statuses(response)), 1)
         client.force_login(self.pl_user)
         response = client.get(
             "/team-planning-oversight/export", self._drawer_query(status="completed")
         )
-        self.assertEqual(self._ids(_sheet(response)), {done.id})
+        self.assertEqual(self._work(response), [self.VISIT])
+        self.assertEqual(self._statuses(response), ["Completed"])
 
     def test_my_plan_exports_one_kind_when_asked(self):
         client = Client()
@@ -197,7 +225,7 @@ class PlanExportTest(TestCase):
             "/my-plan/",
             {**self._drawer_query(activity_type="group_trainings"), "export": "xlsx"},
         )
-        self.assertEqual(self._ids(_sheet(response)), {self.training.id})
+        self.assertEqual(self._work(response), [self.TRAINING])
 
     def test_my_plan_drawer_offers_the_kinds_and_opens_on_the_plan(self):
         client = Client()
@@ -211,10 +239,10 @@ class PlanExportTest(TestCase):
         client = Client()
         client.force_login(self.pl_user)
         expected = {
-            export_kinds.PLANNED: {self.visit.id, self.meeting.id, self.training.id},
-            export_kinds.GROUP_TRAININGS: {self.training.id},
-            export_kinds.MEETINGS: {self.meeting.id},
-            export_kinds.VISITS: {self.visit.id},
+            export_kinds.PLANNED: [self.VISIT, self.MEETING, self.TRAINING],
+            export_kinds.GROUP_TRAININGS: [self.TRAINING],
+            export_kinds.MEETINGS: [self.MEETING],
+            export_kinds.VISITS: [self.VISIT],
         }
         for kind, ids in expected.items():
             response = client.get(
@@ -222,7 +250,7 @@ class PlanExportTest(TestCase):
                 self._drawer_query(activity_type=kind),
             )
             self.assertEqual(response.status_code, 200, kind)
-            self.assertEqual(self._ids(_sheet(response)), ids, kind)
+            self.assertEqual(self._work(response), sorted(ids), kind)
 
 
 class GroupTrainingMealRateTest(TestCase):

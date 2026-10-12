@@ -435,9 +435,15 @@ class PagePayloadBudgetTest(TestCase):
     #: 2026-10-08): one entry is five elements and the shell draws the
     #: sidebar twice (desktop and the phone's menu), so every page gained
     #: ten. /my-plan stood at 1963 before it; the other pages had the room.
+    #:
+    #: /my-plan was 290 KB / 1985. Raised on 2026-10-12 (measured 286 KB /
+    #: 2035) for the District and District Type columns on every My Plan
+    #: table (owner: "Add District and district type column ... to My Plan
+    #: ... literally on all the tables"): a cell a row for each column the
+    #: table did not have, and its heading. The rows are the cost.
     CCEO_PAGES = (
         ("/dashboard", 535, 2765),
-        ("/my-plan", 290, 1985),
+        ("/my-plan", 295, 2050),
         ("/schools", 362, 3400),
         ("/planning", 175, 950),
         ("/notifications", 365, 1880),

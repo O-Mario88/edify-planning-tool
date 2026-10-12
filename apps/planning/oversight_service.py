@@ -1597,6 +1597,83 @@ def stream_rows(owner_groups):
                 yield item
 
 
+def plan_export_rows(items) -> list[dict]:
+    """The items as `apps.core.plan_export` rows: the school visits, the
+    trainings and cluster meetings, and the other activities, each with its
+    District and District Type (owner, 2026-10-12).
+
+    A cluster session is one row however many schools it invites — the
+    owner's columns for a training open on the Cluster Name and carry no
+    School ID — so an item listed once per invited school is exported once.
+    An in-school training is school work and sits with the visits.
+    """
+    from apps.core import plan_export
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES
+    from apps.daily_visit_batches.district_marks import (
+        district_type_labels,
+        label_of,
+    )
+
+    items = list(items)
+    ids = [i.activity_id for i in items if i.activity_id]
+    district_types = district_type_labels(ids)
+    budget_statuses = plan_export.budget_status_labels(ids)
+    session_types = set(CLUSTER_MEETING_TYPES) | set(TRAINING_TYPES)
+
+    rows, seen = [], set()
+    for i in items:
+        is_session = i.activity_type in session_types and not i.is_in_school_training
+        kind = (
+            plan_export.SESSION
+            if is_session
+            else plan_export.VISIT
+            if i.school_id
+            else plan_export.OTHER
+        )
+        key = (
+            i.activity_id or i.partner_assignment_id or id(i),
+            "" if kind != plan_export.VISIT else i.school_id,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        if i.cost_on_school_visit:
+            budget_status = "In School Visit"
+        else:
+            budget_status = budget_statuses.get(i.activity_id, "No Budget")
+        intervention = _intervention_label(i.target_intervention)
+        purpose = "" if i.purpose_of_visit == "—" else i.purpose_of_visit
+        rows.append(
+            plan_export.row(
+                kind,
+                school_id=_export_school_id(i),
+                school_name=i.school_name,
+                cluster_name=i.cluster_name or i.school_name or i.non_school_context,
+                venue=i.non_school_context or i.cluster_name,
+                district=i.district_name,
+                district_type=label_of(district_types, i.activity_id),
+                activity=plan_export.activity_label(i.activity_type),
+                planned_date=i.planned_date,
+                executor=i.executor_name,
+                purpose=purpose,
+                intervention=intervention,
+                training=_training_name(i)
+                or (plan_export.activity_label(i.activity_type) if is_session else ""),
+                participants=i.participants,
+                cost=i.planned_cost,
+                budget_status=budget_status,
+                verification=plan_export.verification_label(
+                    i.activity_status, i.ia_status
+                ),
+                salesforce_id=i.salesforce_id,
+                evidence=i.evidence_label or _label(i.evidence_status),
+                status=i.completion_gap
+                or _label(i.activity_status or i.assignment_status),
+            )
+        )
+    return rows
+
+
 # ── Folds ────────────────────────────────────────────────────────────────────
 def summarize(items) -> dict:
     """Every headline number, folded from the items shown underneath them.

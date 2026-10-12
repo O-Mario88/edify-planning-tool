@@ -114,6 +114,21 @@
     </div>
   </div>
 
+  {% if whose_choices %}
+  {% comment %}The Country Director and Impact Assessment export everyone at
+  once (owner, 2026-10-12); one Program Lead's team is the narrower choice.{% endcomment %}
+  <div class="space-y-1">
+    <label for="export_whose" class="block edify-text-caption font-semibold text-slate-700">Whose Plans</label>
+    <select
+      name="program_lead"
+      id="export_whose"
+      class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-focus-surface text-[12px] text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"
+    >
+      {% for value, text, chosen in whose_choices %}<option value="{{ value }}"{% if chosen %} selected{% endif %}>{{ text }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
   <!-- Plan Status Filter -->
   {% if show_status_filter|default:True %}
   <div class="space-y-1">

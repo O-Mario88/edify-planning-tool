@@ -2802,26 +2802,51 @@ def _filter_export_items(items, request, period: dict) -> list:
     return filtered
 
 
-def _export_response(items, filename: str, *, request_user, excel: bool = False):
-    """Exactly the rows the page is showing, as CSV or as a workbook.
+#: The drawer's "Whose plans" choice that is nobody in particular.
+EVERYONE = "all"
 
-    The items go through the same partition the page draws its four tables
-    with (`_partition_owner_groups_by_stream`), so every row the page lists
-    is a row of the export — a cluster training once per invited school, with
-    that school's ID — and the Training Name and SSA intervention columns the
-    page shows travel with it (owner, 2026-09-29). Both formats come from the
-    same `export_rows`, so they can never disagree with each other.
+
+def _export_program_lead(request) -> str | None:
+    """The one Program Lead an export was narrowed to, or None for everyone."""
+    selected = (request.GET.get("program_lead") or "").strip()
+    return None if selected in ("", EVERYONE) else selected
+
+
+def _whose_choices(selected: str = "") -> list[tuple[str, str, bool]]:
+    """Everyone first and chosen by default, then each Program Lead's team."""
+    leads = [
+        (pl["id"], f"{pl['name']}'s team") for pl in oversight.system_program_leads()
+    ]
+    keys = {key for key, _ in leads}
+    chosen = selected if selected in keys else EVERYONE
+    return [
+        (key, label, key == chosen) for key, label in [(EVERYONE, "Everyone"), *leads]
+    ]
+
+
+def _export_response(items, filename: str, *, request_user, excel: bool = False):
+    """The rows the page is showing, as a workbook or as CSV, in the one
+    layout every plan export uses (`apps.core.plan_export`; owner,
+    2026-10-12): a sheet of school visits, a sheet of trainings and cluster
+    meetings and a sheet of other activities, each with the owner's columns
+    and a District and District Type.
+
+    The items are the ones the page's tables are drawn from, one per
+    activity: a cluster session is one row with its own participants and
+    cost (its columns carry no School ID), where the page's "Schools with
+    Planned Training" table lists it once per invited school. Both formats
+    come from the same rows.
     """
-    groups = _partition_owner_groups_by_stream(list(items), request_user)
-    rows = list(oversight.export_rows(oversight.stream_rows(groups)))
-    headers, body = (rows[0], rows[1:]) if rows else ([], [])
+    from apps.core import plan_export
+
+    del request_user  # kept in the signature for the callers
+    rows = oversight.plan_export_rows(items)
 
     if excel:
         from apps.core.excel import workbook_response
 
         return workbook_response(
-            filename.replace(".csv", ".xlsx"),
-            [{"title": "Plan", "headers": headers, "rows": body}],
+            filename.replace(".csv", ".xlsx"), plan_export.sheets(rows)
         )
 
     import csv
@@ -2834,7 +2859,7 @@ def _export_response(items, filename: str, *, request_user, excel: bool = False)
 
     writer = csv.writer(_Echo())
     response = StreamingHttpResponse(
-        (writer.writerow(row) for row in rows),
+        (writer.writerow(row) for row in plan_export.csv_rows(rows)),
         content_type="text/csv",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -2858,12 +2883,21 @@ def team_planning_export_view(request):
     )
     scope = oversight.resolve_oversight_scope(request.user)
     if scope.is_country:
-        sys_pls = oversight.system_program_leads()
-        _, _, visible = _program_lead_tabs(
-            items,
-            (request.GET.get("program_lead") or "").strip(),
-            program_leads=sys_pls,
-        )
+        # The Country Director and Impact Assessment export everyone at once
+        # (owner, 2026-10-12: "make sure the cd and ia can export for
+        # everyone at once not by program lead as currently it is"). The
+        # page's tabs show one Program Lead at a time; the export followed
+        # them, and with no tab named it took the first Lead's alone. One
+        # Lead's team is now a choice in the drawer.
+        selected_lead = (request.GET.get("program_lead") or "").strip()
+        if selected_lead in ("", EVERYONE):
+            visible = items
+        else:
+            _, _, visible = _program_lead_tabs(
+                items,
+                selected_lead,
+                program_leads=oversight.system_program_leads(),
+            )
     else:
         # The export follows the tab the page shows, Whole team by default.
         _, _, visible = _team_owner_tabs(
@@ -2885,7 +2919,7 @@ def country_planning_export_view(request):
     period = _period_filters(request)
     items = oversight.build_items(
         request.user,
-        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+        program_lead_id=_export_program_lead(request),
         filters=oversight.export_filters(request),
         **_plan_period(period),
     )
@@ -4688,8 +4722,16 @@ def planning_export_drawer_view(request):
 
     hidden_keys = ("owner", "program_lead", "team_member", "view", "tab")
     hidden_params = {k: request.GET.get(k) for k in hidden_keys if request.GET.get(k)}
+    # A country reader chooses whose plans in the drawer, Everyone by
+    # default, so the tab the page happens to be on does not narrow it.
+    whose_choices = []
+    if scope.is_country or is_country:
+        hidden_params.pop("program_lead", None)
+        hidden_params.pop("owner", None)
+        whose_choices = _whose_choices()
 
     context = {
+        "whose_choices": whose_choices,
         "title": title,
         "subtitle": subtitle,
         "export_url": export_url,
@@ -4929,31 +4971,9 @@ def cluster_oversight_export_view(request):
     ]
     items = _filter_export_items(items, request, period)
 
-    groups = _partition_owner_groups_by_stream(list(items), request.user)
-    rows = list(oversight.export_rows(oversight.stream_rows(groups)))
-    headers, body = (rows[0], rows[1:]) if rows else ([], [])
-
-    if _wants_excel(request):
-        from apps.core.excel import workbook_response
-
-        return workbook_response(
-            f"cluster-oversight-{fy}.xlsx",
-            [{"title": "Cluster Plans", "headers": headers, "rows": body}],
-        )
-
-    import csv
-    from django.http import StreamingHttpResponse
-
-    class _Echo:
-        def write(self, value):
-            return value
-
-    writer = csv.writer(_Echo())
-    response = StreamingHttpResponse(
-        (writer.writerow(row) for row in rows),
-        content_type="text/csv",
+    return _export_response(
+        items,
+        f"cluster-oversight-{fy}.csv",
+        request_user=request.user,
+        excel=_wants_excel(request),
     )
-    response["Content-Disposition"] = (
-        f'attachment; filename="cluster-oversight-{fy}.csv"'
-    )
-    return response

@@ -206,3 +206,25 @@ def facilitator_label(activity, partner_name: str = "") -> str:
         Partner.objects.filter(id=partner_id).values_list("name", flat=True).first()
         or "Partner"
     )
+
+
+def facilitated_by_display(activity) -> str:
+    """Who facilitates an activity, as its profile says it (owner,
+    2026-10-12: "on the activity profile ... add facilitated by: Either
+    staff Or partner (Partner Name)"): "Staff", or "Partner (name)".
+
+    A partner facilitates the work it delivers itself (the assigned partner)
+    and the staff-run training or meeting it was named on in "Facilitated
+    by" (the facilitating partner). Everything else is staff.
+    """
+    from apps.partners.models import Partner
+
+    partner_id = getattr(activity, "facilitating_partner_id", None) or (
+        getattr(activity, "assigned_partner_id", None)
+        if getattr(activity, "delivery_type", "") == "partner"
+        else None
+    )
+    if not partner_id:
+        return STAFF_FACILITATOR_LABEL
+    name = Partner.objects.filter(id=partner_id).values_list("name", flat=True).first()
+    return f"Partner ({name})" if name else "Partner"

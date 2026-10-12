@@ -2956,7 +2956,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2498,
+      "bytes": 2449,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -10289,7 +10289,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10690,
+      "bytes": 10706,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -10443,7 +10443,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6265,
+      "bytes": 6456,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10492,7 +10492,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8994,
+      "bytes": 9324,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10568,7 +10568,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7695,
+      "bytes": 7886,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10590,7 +10590,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7126,
+      "bytes": 7317,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10867,7 +10867,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6247,
+      "bytes": 6438,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10991,7 +10991,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5189,
+      "bytes": 5519,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11015,7 +11015,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1335,
+      "bytes": 1529,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11139,7 +11139,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5988,
+      "bytes": 6318,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -12229,7 +12229,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8780,
+      "bytes": 9548,
       "deprecated_alternatives": [],
       "example_pages": [
         "/budget/export-drawer",
