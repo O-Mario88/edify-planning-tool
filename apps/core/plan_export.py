@@ -143,6 +143,20 @@ def _number(value):
         return _text(value)
 
 
+def _day(value):
+    """A planned date as a date, whether a row carries one or its ISO text."""
+    import datetime as _dt
+
+    if isinstance(value, _dt.datetime):
+        return value.date()
+    if isinstance(value, _dt.date):
+        return value
+    try:
+        return _dt.date.fromisoformat(str(value or "")[:10])
+    except ValueError:
+        return None
+
+
 def row(kind: str, **fields) -> dict:
     """One exported activity. ``kind`` is VISIT, TRAINING, MEETING, PARTNER or
     OTHER; the fields are the cells: school_id, school_name, cluster_name,
@@ -236,6 +250,9 @@ SHEET_ORDER = (*(title for _, title, _, _ in _LAYOUTS), BUDGET_SHEET)
 
 
 def budget_sheet(rows: Iterable[dict]) -> dict:
+    # Owner, 2026-10-12, on the first version: "use the actual budget format
+    # and use that exactly" — nothing of this sheet is written here; every
+    # row, heading, style and the period line is the Budget export's.
     """The Budget page's Activity cost plan for exactly the activities on the
     sheets before it, from their own cost lines (owner, 2026-10-12: "the
     budget should be fetched direct from those planned activities").
@@ -276,14 +293,12 @@ def budget_sheet(rows: Iterable[dict]) -> dict:
             id__in={line.responsible_user for line in lines if line.responsible_user}
         ).values_list("id", "name")
     )
-    count = len(ids)
-    sheet = cost_plan_sheet(
-        budget_groups(lines, names),
-        period_label=(
-            f"The budget of the {count} activit{'y' if count == 1 else 'ies'} "
-            "on the sheets before this one, from their own cost lines"
-        ),
-    )
+    # The Budget export's own period line ("Period: 1 Oct 2026 – 30 Sep
+    # 2027"), over the days the exported activities are planned on, so the
+    # sheet is the Budget's Activity cost plan word for word.
+    days = sorted(d for d in (_day(r.get("planned_date")) for r in rows) if d)
+    period_label = f"Period: {days[0]:%-d %b %Y} – {days[-1]:%-d %b %Y}" if days else ""
+    sheet = cost_plan_sheet(budget_groups(lines, names), period_label=period_label)
     sheet["title"] = BUDGET_SHEET
     return sheet
 

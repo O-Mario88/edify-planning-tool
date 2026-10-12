@@ -85,8 +85,49 @@ class PlanExportSheetsTest(FilterExportFixture):
         self.assertEqual(budget[0][5], expected)
         self.assertEqual(budget[-1][5], expected)
         self.assertNotIn(99_000, [cell for row in budget for cell in row])
-        # Another team's visit is on no sheet, so its money is in no budget.
-        self.assertIn("4 activities", str(budget[2][0]))
+        # Exactly the Budget export's Activity cost plan (owner, 2026-10-12:
+        # "use the actual budget format and use that exactly"): the same
+        # sheet `cost_plan_sheet` gives the Budget page's export for these
+        # lines, row for row, styles included.
+        from apps.accounts.models import User
+        from apps.budget.services import (
+            _EXPORT_ACTIVITY_FIELDS,
+            _EXPORT_LINE_FIELDS,
+            COST_PLAN_CAPTION,
+            budget_groups,
+            cost_line_rows,
+            cost_plan_sheet,
+        )
+
+        lines = cost_line_rows(
+            ActivityScheduleCostLine.objects.filter(activity__in=exported).order_by(
+                "planned_date", "activity_id", "id"
+            ),
+            _EXPORT_LINE_FIELDS,
+            _EXPORT_ACTIVITY_FIELDS,
+        )
+        names = dict(User.objects.values_list("id", "name"))
+        day = self.visit.planned_date
+        page = cost_plan_sheet(
+            budget_groups(lines, names),
+            period_label=f"Period: {day:%-d %b %Y} – {day:%-d %b %Y}",
+        )
+        blank = lambda rows: [[c for c in r] + [None] * (6 - len(r)) for r in rows]  # noqa: E731
+        self.assertEqual(blank(budget), blank(page["rows"]))
+        self.assertEqual(budget[0][0], "Activity cost plan")
+        self.assertEqual(budget[1][0], COST_PLAN_CAPTION)
+        made = plan_export.budget_sheet(
+            [{"activity_id": a.id, "planned_date": day} for a in exported]
+        )
+        for key in (
+            "row_styles",
+            "widths",
+            "number_formats",
+            "align",
+            "filter",
+            "freeze",
+        ):
+            self.assertEqual(made[key], page[key], key)
 
     def test_the_csv_carries_the_same_sheets_and_no_budget_table(self):
         lines = self.export_rows(fy=self.fy)
