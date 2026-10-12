@@ -541,6 +541,10 @@ class Activity(SoftDeleteModel):
             remember(instance)
         return instance
 
+    #: What a save that only re-prices the work writes
+    #: (`apps.budget.costing_service.apply_to_activities`).
+    COST_ONLY_FIELDS = frozenset({"est_cost_cents", "cost_missing", "updated_at"})
+
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
         # Normalize direct model/admin/import writes before Django prepares the
@@ -550,6 +554,17 @@ class Activity(SoftDeleteModel):
             self.scheduled_date = _normalize_datetime_value(self.scheduled_date)
         self._link_training_intervention(kwargs.get("update_fields"))
         super().save(*args, **kwargs)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and self.COST_ONLY_FIELDS.issuperset(
+            update_fields
+        ):
+            # Only the cost was written. The Core slot mirror and the package
+            # credit below read the work's status, date, school, kind and
+            # year, none of which this save touched, and the save that last
+            # touched them ran both. A day's re-pricing saves every visit on
+            # it this way: nine visits asked for nine slot reads and, after
+            # the commit, nine credits that found nothing to do.
+            return
         try:
             from apps.core_schools.models import CoreActivitySlot
             from apps.core_schools.services import resync_plan_completion

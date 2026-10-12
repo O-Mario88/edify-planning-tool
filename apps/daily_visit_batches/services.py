@@ -965,7 +965,7 @@ def _write_day_lines(
     # The members are written together: what each needs read and locked is
     # read and locked once for the day, not once a member
     # (`apply_to_activities`).
-    apply_to_activities(priced, responsible_user_id=responsible_user_id)
+    apply_to_activities(priced, responsible_user_id=responsible_user_id, as_stored=True)
 
     # The weekly request and the monthly draft follow the re-priced lines,
     # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.

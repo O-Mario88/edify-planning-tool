@@ -1185,9 +1185,22 @@ def apply_to_activity(
     )[0]
 
 
+_PERIOD_FIELDS = (
+    "planned_date",
+    "week_start_date",
+    "week_end_date",
+    "fiscal_year",
+    "month",
+    "quarter",
+    "fy",
+)
+
+
 def apply_to_activities(
     items: list[tuple[Activity, dict, ActivityCost | None]],
     responsible_user_id: str | None = None,
+    *,
+    as_stored: bool = False,
 ) -> list[ActivityCost]:
     """`apply_to_activity` for several activities at once: the members of a day.
 
@@ -1208,7 +1221,15 @@ def apply_to_activities(
     inside the caller's transaction before anything of the day is written.
 
     `items` is ``[(activity, input, precomputed_cost), ...]``; the costs come
-    back in the same order."""
+    back in the same order.
+
+    `as_stored`: the caller read these activities from the database inside
+    this transaction and has not changed them since (a day's members are).
+    A member whose period fields already hold what its date gives is then
+    saved with its cost alone, which `Activity.save` knows changes nothing a
+    Core slot or a package credit reads. Without it every member's period
+    fields are written, as a caller that set a date in memory and left the
+    writing of its week and month to this function expects."""
     if not items:
         return []
     from datetime import timedelta
@@ -1233,6 +1254,7 @@ def apply_to_activities(
 
         # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
         scheduled_date = activity.scheduled_date
+        periods_before = tuple(getattr(activity, field) for field in _PERIOD_FIELDS)
         planned_date = None
         week_start = None
         week_end = None
@@ -1264,6 +1286,9 @@ def apply_to_activities(
         plans.append(
             {
                 "activity": activity,
+                "periods_moved": not as_stored
+                or periods_before
+                != tuple(getattr(activity, field) for field in _PERIOD_FIELDS),
                 "input": input,
                 "dual": dual,
                 "catalogue": catalogue,
@@ -1600,13 +1625,7 @@ def apply_to_activities(
                 update_fields=[
                     "est_cost_cents",
                     "cost_missing",
-                    "planned_date",
-                    "week_start_date",
-                    "week_end_date",
-                    "fiscal_year",
-                    "month",
-                    "quarter",
-                    "fy",
+                    *(_PERIOD_FIELDS if plan["periods_moved"] else ()),
                     "updated_at",
                 ]
             )
