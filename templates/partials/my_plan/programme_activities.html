@@ -35,6 +35,8 @@ to tick.{% endcomment %}
 {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th class="min-w-[90px]">Venue ID</th>
 <th class="min-w-[240px]">School / Venue Name</th>
+<th class="min-w-[130px]">District</th>
+<th class="min-w-[130px]">District Type</th>
 <th class="min-w-[130px]">Activity</th>
 <th class="min-w-[110px]">Date</th>
 <th class="min-w-[120px]">Budget status</th>
@@ -59,6 +61,8 @@ to tick.{% endcomment %}
   <span class="text-slate-400">—</span>
   {% endif %}
 </td>
+<td class="text-slate-600 font-medium" data-label="District">{{ row.district|default:"—" }}</td>
+<td class="text-slate-600 font-medium whitespace-nowrap" data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
 <td class="font-semibold text-slate-600" data-label="Activity">{% firstof row.activity_type_label row.purpose "—" %}</td>
 <td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td data-label="Budget status" class="whitespace-nowrap">

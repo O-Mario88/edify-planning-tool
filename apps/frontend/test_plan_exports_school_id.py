@@ -110,12 +110,17 @@ class MyPlanExportTest(_ExportFixture):
             )
         )
 
-        self.assertEqual(rows[0][:3], ["Activity ID", "School ID", "Type"])
-        by_school = {row[1]: row for row in rows[1:]}
+        # The School Visits sheet, in the owner's columns (2026-10-12).
+        self.assertEqual(
+            rows[0][:5],
+            ["School ID", "School Name", "District", "District Type", "Activity"],
+        )
+        by_school = {row[0]: row for row in rows[1:]}
         self.assertIn("EXP-CLIENT-7", by_school)
         # The Core School card used to be left out of the file altogether.
         self.assertIn("EXP-CORE-3", by_school)
-        self.assertIn("(V1)", by_school["EXP-CORE-3"][2])
+        self.assertIn("(V1)", by_school["EXP-CORE-3"][4])
+        self.assertEqual(by_school["EXP-CLIENT-7"][2], "Export District")
 
     def test_the_csv_carries_it_too(self):
         visit = self._visit(self.client_school)
@@ -128,8 +133,10 @@ class MyPlanExportTest(_ExportFixture):
         ).content.decode()
         rows = list(csv.reader(io.StringIO(body)))
 
-        self.assertEqual(rows[0][1], "School ID")
-        self.assertIn("EXP-CLIENT-7", [row[1] for row in rows[1:]])
+        # The CSV is the same sheets one after another: name, headings, rows.
+        self.assertEqual(rows[0], ["School Visits"])
+        self.assertEqual(rows[1][0], "School ID")
+        self.assertIn("EXP-CLIENT-7", [row[0] for row in rows[2:] if row])
 
 
 class OversightExportColumnsTest(TestCase):

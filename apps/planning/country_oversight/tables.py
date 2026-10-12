@@ -181,6 +181,9 @@ PLANNED_DATE = C("date", "Planned Date", is_date=True, blank=AWAITING_PARTNER)
 #: The planning details a workbook carries for analysis (owner, 2026-10-02:
 #: "export all the above with all planning details").
 DETAILS = (
+    # Primary District, Secondary District or Mixed (owner, 2026-10-12:
+    # "district type ... in all exports"); filled when the sheet is written.
+    C("district_type", "District Type"),
     C("purpose", "Purpose"),
     C("project", "Project"),
     C("partner", "Partner"),
@@ -1010,6 +1013,7 @@ class _Book:
             or activity.expected_participants
             or "",
             "cost": self.costs.get(activity.id, 0),
+            "_activity": activity.id,
             "salesforce": activity.salesforce_activity_id or "",
             "evidence": self.evidence.get(activity.evidence_status, ""),
             "ia": self.verification.get(activity.ia_verification_status, ""),
@@ -1775,6 +1779,16 @@ def _blank(column: Column, row: dict) -> str:
 def sheet(table: Table) -> dict:
     """The whole table as one workbook sheet: every column, details included."""
     columns = table.spec.columns
+    if any(column.key == "district_type" for column in columns):
+        # One read for the sheet (apps.daily_visit_batches.district_marks):
+        # only the workbook carries the column, so only it pays for it.
+        from apps.daily_visit_batches.district_marks import district_type_labels
+
+        labels = district_type_labels(
+            row["_activity"] for row in table.rows if row.get("_activity")
+        )
+        for row in table.rows:
+            row["district_type"] = labels.get(row.get("_activity"), "")
 
     def cell(row, column):
         value = row.get(column.key)

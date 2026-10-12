@@ -20,7 +20,7 @@
         <th scope="row">{{ row.item }}</th>
         <td>{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}{{ row.activity_count }}{% else %}{{ row.days }}{% endif %}</td>
         <td>{{ row.people }}</td>
-        <td>{% if row.mixed_rate %}Mixed{% else %}{{ row.rate|ugx }}{% endif %}</td>
+        <td>{{ row.rate|ugx }}</td>
         <td>{% if row.vendor_total and not row.staff_total %}—{% else %}{{ row.staff_total|ugx }}{% endif %}</td>
         <td>{{ row.total|ugx }}</td>
       </tr>

@@ -466,6 +466,8 @@ def work_plan_export(request):
         "School ID",
         "School Name",
         "District",
+        # Primary District, Secondary District or Mixed (owner, 2026-10-12).
+        "District Type",
         "Cluster Name",
         "Activity Purpose",
         "SSA Intervention",
@@ -481,6 +483,11 @@ def work_plan_export(request):
         "Venue",
     ]
     sheet.append(headers)
+    from apps.daily_visit_batches.district_marks import district_type_labels
+
+    district_types = district_type_labels(
+        row["id"] for row in context["detail_rows"] if row.get("id")
+    )
     for row in context["detail_rows"]:
         sheet.append(
             [
@@ -489,6 +496,7 @@ def work_plan_export(request):
                 row["school_code"],
                 row["school_name"],
                 row["district_name"],
+                district_types.get(row.get("id"), ""),
                 row["cluster_name"],
                 row["activity_purpose"],
                 row["focus_intervention"],
@@ -506,8 +514,28 @@ def work_plan_export(request):
         )
 
     style_header(sheet)
-    style_body(sheet, {12: "#,##0"})
-    widths = [20, 16, 12, 34, 18, 26, 26, 26, 14, 20, 28, 18, 18, 14, 38, 18, 21, 28]
+    style_body(sheet, {headers.index("Cost (UGX)") + 1: "#,##0"})
+    widths = [
+        20,
+        16,
+        12,
+        34,
+        18,
+        20,
+        26,
+        26,
+        26,
+        14,
+        20,
+        28,
+        18,
+        18,
+        14,
+        38,
+        18,
+        21,
+        28,
+    ]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "A2"

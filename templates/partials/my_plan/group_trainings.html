@@ -37,6 +37,7 @@ to tick.{% endcomment %}
 {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
 <th class="min-w-[180px]">Cluster Name</th>
 <th class="min-w-[120px]">District</th>
+<th class="min-w-[130px]">District Type</th>
 <th class="min-w-[110px]">Planned Date</th>
 <th class="min-w-[120px]">Executor</th>
 <th class="min-w-[180px]">Training</th>
@@ -57,6 +58,7 @@ to tick.{% endcomment %}
 {% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{% cluster_link row.cluster_name row.cluster_id %}{% endif %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.cluster_district|default:"—" }}</td>
+<td class="text-slate-600 font-medium whitespace-nowrap" data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
 <td class="font-bold text-slate-700 tabular-nums whitespace-nowrap" data-label="Planned Date">{{ row.planned_date|date:"j M Y"|default:"Unscheduled" }}{% include "partials/my_plan/day_off_flag.html" %}</td>
 <td class="text-slate-700" data-label="Executor">{{ row.owner|default:"Staff" }}</td>
 <td class="text-slate-600 text-xs" data-label="Purpose">{% firstof row.training_name row.activity_name row.purpose "Group Training" %}</td>

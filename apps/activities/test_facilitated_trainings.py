@@ -362,6 +362,49 @@ class FacilitatedTrainingTest(APITestCase):
         self.assertEqual(facilitator_label(activity), STAFF_FACILITATOR_LABEL)
         self.assertIsNone(self._fee_line(activity).partner_id)
 
+    def test_the_activity_profile_says_staff_or_the_partner_by_name(self):
+        """Owner, 2026-10-12: "on the activity profile ... add facilitated
+        by: Either staff Or partner (Partner Name)"."""
+        from apps.activities.facilitation import facilitated_by_display
+
+        by_staff = self._schedule(facilitatingPartnerId="")
+        self.assertEqual(facilitated_by_display(by_staff), "Staff")
+        self.client.force_login(self.cceo)
+        page = self.client.get(f"/my-plan/{by_staff.id}").content.decode()
+        self.assertIn("Facilitated by", page)
+        field = page.split("data-facilitated-by>", 1)[1].split(
+            "</div>\n        </div>", 1
+        )[0]
+        self.assertIn(">Staff<", field)
+
+        activity_services.set_facilitator(by_staff.id, self.partner.id, self.cceo)
+        by_staff.refresh_from_db()
+        self.assertEqual(
+            facilitated_by_display(by_staff), "Partner (Facilitating Partner Org)"
+        )
+        page = self.client.get(f"/my-plan/{by_staff.id}").content.decode()
+        self.assertIn("Partner (Facilitating Partner Org)", page)
+        # The drawer says the same words.
+        drawer = self.client.get(
+            f"/my-plan/{by_staff.id}", HTTP_HX_REQUEST="true"
+        ).content.decode()
+        self.assertIn("Partner (Facilitating Partner Org)", drawer)
+
+    def test_work_a_partner_delivers_is_facilitated_by_that_partner(self):
+        from apps.activities.facilitation import facilitated_by_display
+
+        visit = Activity(
+            activity_type="school_visit",
+            delivery_type="partner",
+            assigned_partner_id=self.partner.id,
+        )
+        self.assertEqual(
+            facilitated_by_display(visit), "Partner (Facilitating Partner Org)"
+        )
+        self.assertEqual(
+            facilitated_by_display(Activity(activity_type="school_visit")), "Staff"
+        )
+
     def test_facilitated_by_is_for_trainings_and_cluster_meetings(self):
         for kind in (
             "cluster_training",
