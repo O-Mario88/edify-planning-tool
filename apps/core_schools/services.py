@@ -6,7 +6,7 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from apps.core.calendar_policy import SchedulingPolicyService, resolve_scheduling_user
+from apps.core.calendar_policy import SchedulingPolicyService
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
@@ -389,13 +389,11 @@ def _apply_slot_action(slot: CoreActivitySlot, action: str, data: dict) -> dict:
         if scheduled_for:
             # REG-02 (restored by owner decision, 2026-09-22) — a core slot
             # must never land on a date Planning/My Plan would have blocked.
-            _avail = SchedulingPolicyService.check(
-                resolve_scheduling_user(slot.assigned_staff_id), scheduled_for
+            _refused = SchedulingPolicyService.refusal(
+                slot.assigned_staff_id, scheduled_for
             )
-            if _avail["status"] == "blocked":
-                raise BadRequest(
-                    "Scheduling blocked: " + " · ".join(_avail["blockers"])
-                )
+            if _refused:
+                raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
         slot.scheduled_month = data.get("scheduledMonth")
         slot.scheduled_week = data.get("scheduledWeek")
         slot.scheduled_for = scheduled_for
@@ -502,11 +500,9 @@ def schedule_follow_up(plan_id: str, data: dict, principal) -> dict:
     if scheduled_for:
         # REG-02 (restored by owner decision, 2026-09-22) — same calendar gate
         # every other scheduling surface applies.
-        _avail = SchedulingPolicyService.check(
-            resolve_scheduling_user(assignee), scheduled_for
-        )
-        if _avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+        _refused = SchedulingPolicyService.refusal(assignee, scheduled_for)
+        if _refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
     plan.follow_up_scheduled_for = scheduled_for
     plan.follow_up_assignee = assignee
     plan.save(update_fields=["follow_up_scheduled_for", "follow_up_assignee"])

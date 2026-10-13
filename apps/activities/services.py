@@ -2529,19 +2529,17 @@ def _create(
     # the leave check entirely.
     if scheduled_date:
         check_staff_id = responsible_staff_id or monitored_by_staff_id
-        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
-        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        refused = _SchedulingPolicyService.refusal(check_staff_id, scheduled_date)
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
         # `check` coerces a plain date itself, so pass end_date straight in:
         # wrapping it in an aware datetime first only adds a timezone in which
         # a midnight boundary could shift the day being checked.
         if end_date and end_date != local_day(scheduled_date):
-            end_check = _SchedulingPolicyService.check(resp_user, end_date)
-            if end_check["status"] == "blocked":
+            refused = _SchedulingPolicyService.refusal(check_staff_id, end_date)
+            if refused:
                 raise BadRequest(
-                    "Scheduling blocked on the end date: "
-                    + " · ".join(end_check["blockers"])
+                    "Scheduling blocked on the end date: " + " · ".join(refused)
                 )
 
     # A paused or closed Special Project must stop absorbing new commitments —
@@ -4963,12 +4961,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # REG-02 gate. Without it a blocked date is reachable by rescheduling even
     # when create() refused it — the asymmetry calendar_policy.py exists to
     # prevent.
-    _staff = a.responsible_staff_id or a.monitored_by_staff_id
-    _avail = _SchedulingPolicyService.check(
-        _user_for_staff_identity(_staff) if _staff else None, new_date
+    _refused = _SchedulingPolicyService.refusal(
+        a.responsible_staff_id or a.monitored_by_staff_id, new_date
     )
-    if _avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+    if _refused:
+        raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
 
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
@@ -5577,14 +5574,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
 
         # REG-02 gate on the partner intake, keyed to the assigning staff
         # member — the partner has no leave record here, the assigner does.
-        avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(pa.assigning_staff_id)
-            if pa.assigning_staff_id
-            else None,
-            scheduled_date,
+        refused = _SchedulingPolicyService.refusal(
+            pa.assigning_staff_id, scheduled_date
         )
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
 
         catalogue_item = pa.catalogue_item
         selected_catalogue_id = data.get("catalogueItemId")
@@ -6062,12 +6056,11 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
 
         # REG-02 gate, same reason as reschedule(): the partner reschedule must
         # not reach a date the partner intake refused.
-        _staff = a.responsible_staff_id or a.monitored_by_staff_id
-        _avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(_staff) if _staff else None, new_date
+        _refused = _SchedulingPolicyService.refusal(
+            a.responsible_staff_id or a.monitored_by_staff_id, new_date
         )
-        if _avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+        if _refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(_refused))
 
         a.partner_date_set_by = _date_author(
             principal,
