@@ -37,7 +37,13 @@ from .pricing import (
     day_line_label,
     pricing_district_type,
 )
-from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
+from .return_day import (
+    ONE_DAY,
+    away_on,
+    days_standing,
+    is_return_day,
+    priced_as_return_day,
+)
 
 
 #: The days waiting for their price while a save that adds several visits is
@@ -121,13 +127,57 @@ def each_day_priced_once(*, leaving_too: bool = False):
     finally:
         _days_to_price.reset(token)
         _after_pricing.reset(after_token)
-    # Every day of the block prices against the same published cards.
-    with rate_cards_held():
+    # Every day of the block prices against the same published cards. Where
+    # days a visit left are among them, each is read from its members as
+    # they stand while the others are priced (`_where_days_stand`).
+    with (
+        rate_cards_held(),
+        days_standing(_where_days_stand(days) if leaving_too else {}),
+    ):
         for batch_id, (catalogue, responsible_user_id) in days.items():
             batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
             _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
     for then in afterwards or ():
         then()
+
+
+def _where_days_stand(days: dict) -> dict:
+    """``{(responsible_user, day): away}`` for the days waiting to be priced,
+    read from who is on each now: away when it has a live member and prices
+    as a secondary-district day, as `_write_day_lines` will find it."""
+    from apps.activities.models import Activity
+
+    if len(days) < 2:
+        return {}
+    batches = {
+        batch.id: batch for batch in DailyVisitBatch.objects.filter(id__in=list(days))
+    }
+    members: dict[str, list] = {batch_id: [] for batch_id in batches}
+    for member in (
+        Activity.objects.filter(
+            daily_visit_batch_id__in=list(batches), deleted_at__isnull=True
+        )
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related(*_MEMBER_DISTRICT_RELATIONS)
+    ):
+        members[member.daily_visit_batch_id].append(member)
+    standing = {}
+    for batch_id, batch in batches.items():
+        _catalogue, responsible_user_id = days[batch_id]
+        district_types = {
+            district_type_for_staff(responsible_user_id, member_district(member))
+            or "primary"
+            for member in members[batch_id]
+        }
+        district_type = (
+            pricing_district_type(day_district_mark(district_types))
+            if district_types
+            else batch.district_type
+        )
+        standing[(batch.responsible_user, batch.visit_date)] = bool(
+            members[batch_id] and district_type == "secondary"
+        )
+    return standing
 
 
 def _leaving_waits() -> bool:
