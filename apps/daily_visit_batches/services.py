@@ -227,7 +227,9 @@ def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
             continue
         if batch_needs_repricing(batch):
             with transaction.atomic():
-                _recalculate_and_write_lines(batch, None, batch.responsible_user)
+                _recalculate_and_write_lines(
+                    batch, None, batch.responsible_user, in_own_block=True
+                )
             repaired += 1
     return repaired
 
@@ -560,17 +562,26 @@ def remove_school(*, activity_id: str) -> dict:
         activity.daily_visit_batch = None
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
         catalogue = _catalogue_for_batch_date(batch.visit_date)
-        _recalculate_and_write_lines(batch, catalogue, batch.responsible_user)
+        _recalculate_and_write_lines(
+            batch, catalogue, batch.responsible_user, in_own_block=True
+        )
         return {"batchId": batch.id}
 
 
-def reschedule_within_batch(
-    *, activity, new_date: date, reason: str | None, principal
-) -> None:
-    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
-    already be saved by the caller — see activities.services.reschedule) into
-    the new date's batch, subject to the same validation as fresh scheduling.
-    Call this AFTER detaching the activity from its old batch."""
+def _day_to_join(
+    *,
+    activity,
+    new_date: date,
+    reason,
+    principal,
+    lock: bool,
+    ask_calendar: bool = True,
+) -> dict:
+    """Whether `activity` may join `new_date`'s batch, and what joining needs:
+    the batch (locked for the join when `lock`), its catalogue, the day's
+    district type and the reason that stands. Raises the refusal otherwise.
+    The activity itself is never counted among the day's members: a visit
+    moved within its own day leaves it first."""
     school = activity.school
     if not school or not school.district_id:
         raise BadRequest(
@@ -585,11 +596,12 @@ def reschedule_within_batch(
     )
 
     staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
-    avail = SchedulingPolicyService.check(
-        resolve_scheduling_user(staff_id) if staff_id else None, new_date
-    )
-    if avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    if ask_calendar:
+        avail = SchedulingPolicyService.check(
+            resolve_scheduling_user(staff_id) if staff_id else None, new_date
+        )
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
     from apps.activities.services import _funding_owner_id
 
@@ -599,51 +611,110 @@ def reschedule_within_batch(
     # there as a primary-district day (`attach_activity_to_batch`), and it
     # moves as one: the day's type is worked out below from the districts
     # that are classified secondary.
+    batches = DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user_id, visit_date=new_date
+    )
+    batch = (batches.select_for_update() if lock else batches).first()
+    if batch and _is_locked(responsible_user_id, new_date):
+        raise BadRequest(
+            "This date's visits have already left draft status. Choose another date."
+        )
 
+    existing_activities = (
+        list(
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+            .exclude(id=activity.id)
+            .select_related(*_MEMBER_DISTRICT_RELATIONS)
+        )
+        if batch
+        else []
+    )
+    districts = [member_district(a) for a in existing_activities] + [school.district]
+    all_district_ids = {
+        d.id
+        for d in districts
+        if d and district_type_for_staff(responsible_user_id, d) == "secondary"
+    }
+    incoming_type = "secondary" if all_district_ids else "primary"
+
+    catalogue = _catalogue_for_batch_date(new_date)
+    target = catalogue.required_school_visits_per_day if catalogue else 5
+    total_after = len(existing_activities) + 1
+    if total_after > target:
+        raise BadRequest(
+            f"You can only schedule {target} for this date, please choose another date."
+        )
+
+    effective_reason = (reason or "").strip() or (batch.reason if batch else None)
+    if total_after < target and not effective_reason:
+        raise ReasonRequiredError(
+            f"You scheduled {total_after} school(s). The CD target is {target} schools "
+            f"per day. This will increase cost per school. Reason required."
+        )
+    return {
+        "batch": batch,
+        "catalogue": catalogue,
+        "responsible_user_id": responsible_user_id,
+        "incoming_type": incoming_type,
+        "all_district_ids": all_district_ids,
+        "effective_reason": effective_reason,
+    }
+
+
+def day_to_join(*, activity, new_date: date, reason: str | None, principal) -> dict:
+    """Lock `new_date`'s batch for `activity` to join and refuse now what
+    `reschedule_within_batch` would refuse only after the day the visit
+    leaves had been re-priced: a day that has left draft, a full day, a short
+    day with no reason. Returns the day as found, for
+    `reschedule_within_batch(day=...)` to join without asking again.
+
+    For a caller that is inside the move's transaction and has itself just
+    asked the calendar of this date and this person
+    (`activities.services.reschedule`): the REG-02 gate is not asked a second
+    time here. Its refusals turn on the date and on the person's leave, and
+    neither moves between the two askings."""
+    return _day_to_join(
+        activity=activity,
+        new_date=new_date,
+        reason=reason,
+        principal=principal,
+        lock=True,
+        ask_calendar=False,
+    )
+
+
+def reschedule_within_batch(
+    *, activity, new_date: date, reason: str | None, principal, day: dict | None = None
+) -> None:
+    """Move an already-persisted Activity (its scheduled_date/fy/quarter must
+    already be saved by the caller — see activities.services.reschedule) into
+    the new date's batch, subject to the same validation as fresh scheduling.
+    Call this AFTER detaching the activity from its old batch.
+
+    `day`: what `day_to_join` found, when the caller asked it before the
+    detach. Without it the day is locked and validated here, calendar gate
+    included, so no call site joins a day unasked."""
     with transaction.atomic():
-        batch = (
-            DailyVisitBatch.objects.select_for_update()
-            .filter(responsible_user=responsible_user_id, visit_date=new_date)
-            .first()
-        )
-        if batch and _is_locked(responsible_user_id, new_date):
-            raise BadRequest(
-                "This date's visits have already left draft status. Choose another date."
+        if day is None:
+            day = _day_to_join(
+                activity=activity,
+                new_date=new_date,
+                reason=reason,
+                principal=principal,
+                lock=True,
             )
-
-        existing_activities = (
-            list(
-                batch.activities.filter(deleted_at__isnull=True)
-                .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-                .select_related(*_MEMBER_DISTRICT_RELATIONS)
-            )
-            if batch
-            else []
-        )
-        districts = [member_district(a) for a in existing_activities] + [
-            school.district
-        ]
-        all_district_ids = {
-            d.id
-            for d in districts
-            if d and district_type_for_staff(responsible_user_id, d) == "secondary"
-        }
-        incoming_type = "secondary" if all_district_ids else "primary"
-
-        catalogue = _catalogue_for_batch_date(new_date)
-        target = catalogue.required_school_visits_per_day if catalogue else 5
-        total_after = len(existing_activities) + 1
-        if total_after > target:
-            raise BadRequest(
-                f"You can only schedule {target} for this date, please choose another date."
-            )
-
-        effective_reason = (reason or "").strip() or (batch.reason if batch else None)
-        if total_after < target and not effective_reason:
-            raise ReasonRequiredError(
-                f"You scheduled {total_after} school(s). The CD target is {target} schools "
-                f"per day. This will increase cost per school. Reason required."
-            )
+        elif day["batch"] is not None:
+            # Found before the detach, which may have re-priced this very day
+            # as a neighbour of the one left (`_settle_neighbouring_days`):
+            # joined as it stands now, under the lock taken then.
+            day["batch"].refresh_from_db()
+        batch = day["batch"]
+        catalogue = day["catalogue"]
+        responsible_user_id = day["responsible_user_id"]
+        incoming_type = day["incoming_type"]
+        all_district_ids = day["all_district_ids"]
+        effective_reason = day["effective_reason"]
 
         if not batch:
             batch = DailyVisitBatch.objects.create(
@@ -662,11 +733,17 @@ def reschedule_within_batch(
 
         activity.daily_visit_batch = batch
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
-        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+        _recalculate_and_write_lines(
+            batch, catalogue, responsible_user_id, in_own_block=True
+        )
 
 
 def _recalculate_and_write_lines(
-    batch: DailyVisitBatch, catalogue, responsible_user_id: str
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    in_own_block: bool = False,
 ) -> None:
     """Recompute the batch's shared pool, split it across every active member
     activity, and re-price each one via the existing apply_to_activity writer
@@ -674,7 +751,11 @@ def _recalculate_and_write_lines(
     unchanged), then resync the day's weekly fund request and monthly draft.
 
     The day before and the day after are re-priced with it when this day
-    changed which of them is the day the traveller comes home."""
+    changed which of them is the day the traveller comes home.
+
+    `in_own_block`: the caller has opened a transaction block for this day
+    and nothing else, so a refusal undoes the day by undoing that block and
+    the cost writer needs no savepoint of its own."""
     from apps.budget.costing_service import rate_cards_held
 
     # Priced now, with whoever is on it: nothing is left for a save in hand
@@ -685,7 +766,9 @@ def _recalculate_and_write_lines(
 
     # Every member prices against the same published cards: read them once.
     with rate_cards_held():
-        _write_day_lines(batch, catalogue, responsible_user_id)
+        _write_day_lines(
+            batch, catalogue, responsible_user_id, in_own_block=in_own_block
+        )
 
 
 #: A neighbouring day is re-priced only while it is still a plan: a day
@@ -721,7 +804,11 @@ def _settle_neighbouring_days(batch: DailyVisitBatch, away) -> None:
         try:
             with transaction.atomic():
                 _write_day_lines(
-                    neighbour, None, neighbour.responsible_user, settle_neighbours=False
+                    neighbour,
+                    None,
+                    neighbour.responsible_user,
+                    settle_neighbours=False,
+                    in_own_block=True,
                 )
         except BadRequest:
             # Its money has moved (the cost writer's finance locks).
@@ -734,11 +821,12 @@ def _write_day_lines(
     responsible_user_id: str,
     *,
     settle_neighbours: bool = True,
+    in_own_block: bool = False,
 ) -> None:
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
         _rate_card,
-        apply_to_activity,
+        apply_to_activities,
     )
     from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
     from apps.fund_requests.weekly_service import trigger_generate_for_activities
@@ -846,9 +934,10 @@ def _write_day_lines(
         "visit_count": allocation["visit_count"],
         "weights_used": allocation["weights_used"],
     }
-    batch.save()
+    # Read from the day's members, not from the row being saved: worked out
+    # first, it goes in with the one save.
     batch.actual_field_cost_per_school = actual_field_cost_per_school(batch)
-    batch.save(update_fields=["actual_field_cost_per_school", "updated_at"])
+    batch.save()
 
     # §9.1 — keep the transport company's obligation in step with the day.
     from apps.fund_requests.vendor_channel import ensure_transport_obligation
@@ -862,6 +951,7 @@ def _write_day_lines(
         return
 
     allocations = allocate_pool(pool, n)
+    priced = []
     for index, (activity, alloc) in enumerate(zip(activities, allocations)):
         costing_input, own = recipes[activity.id]
         lines = [
@@ -892,12 +982,16 @@ def _write_day_lines(
             cost_missing=bool(recipe_missing),
             missing_items=recipe_missing,
         )
-        apply_to_activity(
-            activity,
-            costing_input,
-            responsible_user_id=responsible_user_id,
-            precomputed_cost=cost,
-        )
+        priced.append((activity, costing_input, cost))
+    # The members are written together: what each needs read and locked is
+    # read and locked once for the day, not once a member
+    # (`apply_to_activities`).
+    apply_to_activities(
+        priced,
+        responsible_user_id=responsible_user_id,
+        as_stored=True,
+        savepoint=not in_own_block,
+    )
 
     # The weekly request and the monthly draft follow the re-priced lines,
     # exactly as _apply_schedule_cost_snapshot does on the solo-pricing path.
@@ -933,5 +1027,6 @@ __all__ = [
     "attach_activity_to_batch",
     "each_day_priced_once",
     "remove_school",
+    "day_to_join",
     "reschedule_within_batch",
 ]

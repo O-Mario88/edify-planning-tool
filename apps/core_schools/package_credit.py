@@ -317,12 +317,20 @@ def schedule_package_credit(activity) -> None:
     # its school and its slots for one visit (2026-10-12). Django drops the list
     # on rollback, so nothing is remembered past the transaction; outside one,
     # the callback runs at once and the list is empty.
+    # Only a credit still WAITING answers a new request: one that has run
+    # (a test runner executes callbacks and leaves them listed; so does any
+    # caller that runs them early) read the row as it was then, and a later
+    # save in the same transaction must be credited again.
     connection = transaction.get_connection()
     for entry in connection.run_on_commit:
-        if getattr(entry[1], "credits_activity", None) == activity_id:
+        waiting = entry[1]
+        if getattr(waiting, "credits_activity", None) == activity_id and not getattr(
+            waiting, "ran", False
+        ):
             return
 
     def _credit():
+        _credit.ran = True
         _credit_safely(activity_id)
 
     _credit.credits_activity = activity_id

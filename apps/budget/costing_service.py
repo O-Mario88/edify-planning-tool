@@ -24,6 +24,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.bulk import saved_together
 from apps.core.exceptions import BadRequest
 
 from .costing import ActivityCost, CostLine, cost_for_activity, facilitation_fee_cost
@@ -1160,57 +1161,140 @@ def apply_to_activity(
 
     Returns the ActivityCost (amount + lines) so callers can return a preview in
     the same response as the schedule."""
-    input = _profiled_input(input)
-    fy = input.get("fy") or activity.fy
-    dual = calculate_dual({**input, "fy": fy})
-    catalogue = dual["operationalCard"]
-    rates, settings_by_key = _rate_card(catalogue)
-    from apps.activities.online_training import is_online_training
+    return apply_to_activities(
+        [(activity, input, precomputed_cost)], responsible_user_id=responsible_user_id
+    )[0]
 
-    if precomputed_cost is None and is_online_training(activity):
-        # A Group Training delivered online is free whoever asks for its
-        # price (owner, 2026-10-09; apps.activities.online_training).
-        precomputed_cost = ActivityCost()
-    cost = precomputed_cost if precomputed_cost is not None else dual["operational"]
-    reference_card = dual["referenceCard"]
-    reference_cost = dual["reference"]
 
-    catalogue_id = catalogue.id if catalogue else None
-    catalogue_version = catalogue.version if catalogue else None
+_PERIOD_FIELDS = (
+    "planned_date",
+    "week_start_date",
+    "week_end_date",
+    "fiscal_year",
+    "month",
+    "quarter",
+    "fy",
+)
 
-    # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
+
+def apply_to_activities(
+    items: list[tuple[Activity, dict, ActivityCost | None]],
+    responsible_user_id: str | None = None,
+    *,
+    as_stored: bool = False,
+    savepoint: bool = True,
+) -> list[ActivityCost]:
+    """`apply_to_activity` for several activities at once: the members of a day.
+
+    A day's pool is shared, so a visit joining or leaving a day re-prices every
+    visit on it. Priced one after another, each member read and locked its own
+    advances, weekly requests and monthly requests, cleared and wrote its own
+    lines and opened its own advances, about fifty statements a member: in
+    production a single reschedule between two five-visit days ran 693 to 809
+    statements and took 3.5 to 4.6 seconds (2026-10-12).
+
+    Here the rows every member needs are read and locked together, the guards
+    are then asked of each member in turn, in the order and with the words
+    they always had, and the lines, snapshots and advances are written
+    together. What a member ends with is what it ended with before: one new
+    cost snapshot, one "cost calculated" audit entry, the same lines and the
+    same advances (`apps.daily_visit_batches.test_priced_together` holds the
+    two ways to each other). A refusal still undoes the whole day, because it is raised
+    inside the caller's transaction before anything of the day is written.
+
+    `items` is ``[(activity, input, precomputed_cost), ...]``; the costs come
+    back in the same order.
+
+    `as_stored`: the caller read these activities from the database inside
+    this transaction and has not changed them since (a day's members are).
+    A member whose period fields already hold what its date gives is then
+    saved with its cost alone, which `Activity.save` knows changes nothing a
+    Core slot or a package credit reads. Without it every member's period
+    fields are written, as a caller that set a date in memory and left the
+    writing of its week and month to this function expects.
+
+    `savepoint=False`: the caller is inside a transaction block of its own
+    that a refusal here must undo whole (a visit leaving its day, joining
+    one, a neighbouring day re-priced), so a savepoint here adds two round
+    trips and nothing else. Any other caller keeps it: one that catches the
+    refusal and carries on in its transaction needs the writes undone to
+    here."""
+    if not items:
+        return []
     from datetime import timedelta
+
     from apps.activities.facilitation import line_partner_id
+    from apps.activities.online_training import is_online_training
     from apps.core.fy import get_operational_fy, get_quarter_for_date
 
-    scheduled_date = activity.scheduled_date
-    planned_date = None
-    week_start = None
-    week_end = None
-    month = None
-    quarter = None
-    fiscal_year = None
+    plans = []
+    for activity, input, precomputed_cost in items:
+        input = _profiled_input(input)
+        fy = input.get("fy") or activity.fy
+        dual = calculate_dual({**input, "fy": fy})
+        catalogue = dual["operationalCard"]
+        rates, settings_by_key = _rate_card(catalogue)
 
-    if scheduled_date:
-        # A schedule is shown in the team's operational timezone.  Using the
-        # raw UTC date here can put an evening booking into the wrong My Plan
-        # week/month (and overwrite the correct values derived at creation).
-        planned_date = timezone.localtime(scheduled_date).date()
-        # Monday is weekday 0, Sunday is 6
-        week_start = planned_date - timedelta(days=planned_date.weekday())
-        week_end = week_start + timedelta(days=6)
-        month = planned_date.month
-        quarter = get_quarter_for_date(planned_date)
-        fiscal_year = get_operational_fy(planned_date)
+        if precomputed_cost is None and is_online_training(activity):
+            # A Group Training delivered online is free whoever asks for its
+            # price (owner, 2026-10-09; apps.activities.online_training).
+            precomputed_cost = ActivityCost()
+        cost = precomputed_cost if precomputed_cost is not None else dual["operational"]
 
-        # Save these on the activity
-        activity.planned_date = planned_date
-        activity.week_start_date = week_start
-        activity.week_end_date = week_end
-        activity.fiscal_year = fiscal_year
-        activity.month = month
-        activity.quarter = quarter
-        activity.fy = fiscal_year
+        # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
+        scheduled_date = activity.scheduled_date
+        periods_before = tuple(getattr(activity, field) for field in _PERIOD_FIELDS)
+        planned_date = None
+        week_start = None
+        week_end = None
+        month = None
+        quarter = None
+        fiscal_year = None
+
+        if scheduled_date:
+            # A schedule is shown in the team's operational timezone.  Using the
+            # raw UTC date here can put an evening booking into the wrong My Plan
+            # week/month (and overwrite the correct values derived at creation).
+            planned_date = timezone.localtime(scheduled_date).date()
+            # Monday is weekday 0, Sunday is 6
+            week_start = planned_date - timedelta(days=planned_date.weekday())
+            week_end = week_start + timedelta(days=6)
+            month = planned_date.month
+            quarter = get_quarter_for_date(planned_date)
+            fiscal_year = get_operational_fy(planned_date)
+
+            # Save these on the activity
+            activity.planned_date = planned_date
+            activity.week_start_date = week_start
+            activity.week_end_date = week_end
+            activity.fiscal_year = fiscal_year
+            activity.month = month
+            activity.quarter = quarter
+            activity.fy = fiscal_year
+
+        plans.append(
+            {
+                "activity": activity,
+                "periods_moved": not as_stored
+                or periods_before
+                != tuple(getattr(activity, field) for field in _PERIOD_FIELDS),
+                "input": input,
+                "dual": dual,
+                "catalogue": catalogue,
+                "settings_by_key": settings_by_key,
+                "cost": cost,
+                "reference_card": dual["referenceCard"],
+                "reference_cost": dual["reference"],
+                "periods": (
+                    planned_date,
+                    week_start,
+                    week_end,
+                    month,
+                    quarter,
+                    fiscal_year,
+                ),
+            }
+        )
 
     from apps.fund_requests.models import (
         MONEY_MOVED_ADVANCE_STATUSES,
@@ -1219,8 +1303,12 @@ def apply_to_activity(
         FundRequest,
         FundRequestStatus,
         WeeklyFundRequest,
+        WeeklyFundRequestLine,
     )
     from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
+
+    activities = [plan["activity"] for plan in plans]
+    activity_ids = [activity.id for activity in activities]
 
     # The finance-lock guards, the clear-and-rebuild of the cost lines and the
     # activity's own cost-field save must all happen in ONE transaction, with
@@ -1230,54 +1318,34 @@ def apply_to_activity(
     # exact vanishing-record scenario the guards describe (2026-08-12 audit
     # M-2). Locking also means a crash mid-sequence can no longer leave a
     # scheduled Activity with zero budget lines.
-    with transaction.atomic():
-        # Lock every advance on this activity's lines. A concurrent
+    with transaction.atomic(savepoint=savepoint):
+        # The lines as they stand: whose they are, and which were paid
+        # straight to a vendor (read once for the guards and the rebuild).
+        old_lines = list(
+            ActivityScheduleCostLine.objects.filter(
+                activity_id__in=activity_ids
+            ).values_list("id", "activity_id", "cost_setting_key", "vendor_paid")
+        )
+        activity_of_line = {line_id: owner for line_id, owner, _k, _v in old_lines}
+        line_ids_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
+        vendor_paid_of: dict[str, set] = {
+            activity_id: set() for activity_id in activity_ids
+        }
+        for line_id, owner, key, vendor_paid in old_lines:
+            line_ids_of[owner].append(line_id)
+            if vendor_paid:
+                vendor_paid_of[owner].add(key)
+        all_line_ids = list(activity_of_line)
+
+        # Lock every advance on these activities' lines. A concurrent
         # confirm_advance()/weekly submit updating one of these rows now
         # blocks until this transaction commits (or commits first, in which
         # case the guards below see the confirmed status and refuse).
-        locked_advances = list(
-            AdvanceRequest.objects.select_for_update(of=("self",)).filter(
-                budget_line__activity=activity
-            )
-        )
-        # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
-        # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
-        # the lines below would silently erase that financial record. Once
-        # money has actually moved, this snapshot is locked history; the
-        # caller must use a formal amendment/variance workflow instead.
-        #
-        # Asked of the canonical set rather than a copy of it. The copy had
-        # drifted two states behind: ACCOUNTABILITY_PL_PENDING and
-        # REIMBURSEMENT_PL_PENDING are money-moved — the first is a disbursed
-        # advance whose accountability is with the PL, the second an employee's
-        # own spend awaiting repayment — and neither appeared here, so
-        # rescheduling in either state passed the guard and CASCADE-deleted the
-        # disbursed figures with the cost lines.
-        if any(adv.status in MONEY_MOVED_ADVANCE_STATUSES for adv in locked_advances):
-            raise BadRequest(
-                "This activity already has a disbursed or accounted advance — its "
-                "cost snapshot is locked. Use a budget amendment instead of "
-                "rescheduling to change its cost."
-            )
-
-        # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
-        # rebuild would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
-        # confirmation silently vanishes and is recreated as pending) while the
-        # approved weekly request keeps its stale total with a missing line.
-        # The unstick path is the accountant returning the advance.
-        if any(
-            adv.status
-            in (
-                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-            )
-            for adv in locked_advances
+        advances_of: dict[str, list] = {activity_id: [] for activity_id in activity_ids}
+        for advance in AdvanceRequest.objects.select_for_update(of=("self",)).filter(
+            budget_line_id__in=all_line_ids
         ):
-            raise BadRequest(
-                "This activity's advance is already confirmed and sitting in the "
-                "accountant's queue. Ask the accountant to return the advance "
-                "first, then reschedule."
-            )
+            advances_of[activity_of_line[advance.budget_line_id]].append(advance)
 
         # A submitted or approved weekly request is its own finance snapshot.
         # Its child advances can still be pending at this point, so the
@@ -1287,23 +1355,24 @@ def apply_to_activity(
         # the frozen ones. A RETURNED request is back in the owner's hands —
         # re-pricing is the legitimate next step, and the generator rebuilds
         # its lines from the corrected schedule.
-        carrying_wfr_ids = list(
-            WeeklyFundRequest.objects.filter(
-                lines__activity_budget_line__activity=activity
+        weekly_ids_of: dict[str, set] = {
+            activity_id: set() for activity_id in activity_ids
+        }
+        for weekly_id, line_id in (
+            WeeklyFundRequestLine.objects.filter(
+                activity_budget_line_id__in=all_line_ids
             )
-            .values_list("id", flat=True)
+            .values_list("weekly_fund_request_id", "activity_budget_line_id")
             .distinct()
-        )
-        locked_wfrs = list(
-            WeeklyFundRequest.objects.select_for_update().filter(
-                id__in=carrying_wfr_ids
+        ):
+            weekly_ids_of[activity_of_line[line_id]].add(weekly_id)
+        carrying_weekly_ids = set().union(*weekly_ids_of.values())
+        locked_weekly = {
+            weekly.id: weekly
+            for weekly in WeeklyFundRequest.objects.select_for_update().filter(
+                id__in=carrying_weekly_ids
             )
-        )
-        if any(w.status not in REBUILDABLE_WEEKLY_STATUSES for w in locked_wfrs):
-            raise BadRequest(
-                "This activity is already included in a submitted or approved "
-                "weekly fund request. Return that request before changing its cost."
-            )
+        }
 
         # A submitted/approved MONTHLY FundRequest is equally a finance
         # snapshot, but its items reference cost lines by a bare CharField id
@@ -1312,11 +1381,6 @@ def apply_to_activity(
         # is back in the owner's hands (matching services.submit's
         # resubmittable set — the plain RETURNED trio alone made every
         # returned_by_* monthly request an un-fixable dead end).
-        line_ids = list(
-            ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
-                "id", flat=True
-            )
-        )
         repriceable_fr_statuses = [
             FundRequestStatus.DRAFT,
             FundRequestStatus.RETURNED,
@@ -1326,16 +1390,26 @@ def apply_to_activity(
             FundRequestStatus.RETURNED_BY_RVP,
             FundRequestStatus.RETURNED_BY_ACCOUNTANT,
         ]
-        carrying_fr_ids = list(
-            FundRequest.objects.filter(
-                items__activity_schedule_cost_line_id__in=line_ids
+        from apps.fund_requests.models import FundRequestItem
+
+        monthly_ids_of: dict[str, set] = {
+            activity_id: set() for activity_id in activity_ids
+        }
+        for monthly_id, line_id in (
+            FundRequestItem.objects.filter(
+                activity_schedule_cost_line_id__in=all_line_ids
             )
-            .values_list("id", flat=True)
+            .values_list("fund_request_id", "activity_schedule_cost_line_id")
             .distinct()
-        )
-        locked_frs = list(
-            FundRequest.objects.select_for_update().filter(id__in=carrying_fr_ids)
-        )
+        ):
+            monthly_ids_of[activity_of_line[line_id]].add(monthly_id)
+        carrying_monthly_ids = set().union(*monthly_ids_of.values())
+        locked_monthly = {
+            monthly.id: monthly
+            for monthly in FundRequest.objects.select_for_update().filter(
+                id__in=carrying_monthly_ids
+            )
+        }
         # A planner's own change to the plan is not refused by a monthly
         # request in its approval chain: the request follows the plan, and
         # its items are pointed at the rebuilt lines below (owner,
@@ -1346,198 +1420,384 @@ def apply_to_activity(
             follows_plan_change,
         )
 
-        if any(
-            fr.status not in repriceable_fr_statuses and not follows_plan_change(fr)
-            for fr in locked_frs
-        ):
-            raise BadRequest(
-                "This activity is already included in a submitted or approved "
-                "monthly fund request. Return that request before changing its cost."
-            )
+        # Each member is asked in turn, and of each the same questions in the
+        # same order as when it was priced alone, so the day is refused for
+        # the same member and in the same words.
+        for activity in activities:
+            locked_advances = advances_of[activity.id]
+            # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
+            # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
+            # the lines below would silently erase that financial record. Once
+            # money has actually moved, this snapshot is locked history; the
+            # caller must use a formal amendment/variance workflow instead.
+            #
+            # Asked of the canonical set rather than a copy of it. The copy had
+            # drifted two states behind: ACCOUNTABILITY_PL_PENDING and
+            # REIMBURSEMENT_PL_PENDING are money-moved — the first is a disbursed
+            # advance whose accountability is with the PL, the second an employee's
+            # own spend awaiting repayment — and neither appeared here, so
+            # rescheduling in either state passed the guard and CASCADE-deleted the
+            # disbursed figures with the cost lines.
+            if any(
+                adv.status in MONEY_MOVED_ADVANCE_STATUSES for adv in locked_advances
+            ):
+                raise BadRequest(
+                    "This activity already has a disbursed or accounted advance — its "
+                    "cost snapshot is locked. Use a budget amendment instead of "
+                    "rescheduling to change its cost."
+                )
+
+            # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
+            # rebuild would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
+            # confirmation silently vanishes and is recreated as pending) while the
+            # approved weekly request keeps its stale total with a missing line.
+            # The unstick path is the accountant returning the advance.
+            if any(
+                adv.status
+                in (
+                    AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                    AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+                )
+                for adv in locked_advances
+            ):
+                raise BadRequest(
+                    "This activity's advance is already confirmed and sitting in the "
+                    "accountant's queue. Ask the accountant to return the advance "
+                    "first, then reschedule."
+                )
+
+            if any(
+                locked_weekly[weekly_id].status not in REBUILDABLE_WEEKLY_STATUSES
+                for weekly_id in weekly_ids_of[activity.id]
+                if weekly_id in locked_weekly
+            ):
+                raise BadRequest(
+                    "This activity is already included in a submitted or approved "
+                    "weekly fund request. Return that request before changing its cost."
+                )
+
+            if any(
+                fr.status not in repriceable_fr_statuses and not follows_plan_change(fr)
+                for fr in (
+                    locked_monthly[monthly_id]
+                    for monthly_id in monthly_ids_of[activity.id]
+                    if monthly_id in locked_monthly
+                )
+            ):
+                raise BadRequest(
+                    "This activity is already included in a submitted or approved "
+                    "monthly fund request. Return that request before changing its cost."
+                )
 
         # Finance's vendor-booking decision (hotel paid direct) must survive
         # a re-price: capture which accommodation keys were vendor-paid and
         # re-stamp them on the rebuilt rows.
-        vendor_paid_keys = set(
-            ActivityScheduleCostLine.objects.filter(
-                activity=activity, vendor_paid=True
-            ).values_list("cost_setting_key", flat=True)
-        )
         # The night is one booking under either accommodation rate: a line
         # re-priced from the CCEO's rate onto its traveller's keeps it.
         from apps.daily_visit_batches.pricing import ACCOMMODATION_KEYS
 
-        if vendor_paid_keys & ACCOMMODATION_KEYS:
-            vendor_paid_keys |= ACCOMMODATION_KEYS
-        ActivityScheduleCostLine.objects.filter(activity=activity).delete()
-
-        # Tag Core activity budget lines
-        tag = None
-        if activity.activity_type == "core_visit":
-            tag = (
-                "Core Partner Activity"
-                if activity.delivery_type == "partner"
-                else "Core Visit"
-            )
-        elif activity.activity_type == "core_training":
-            tag = (
-                "Core Partner Activity"
-                if activity.delivery_type == "partner"
-                else "Core Training"
-            )
-
-        # §9: each budget line carries its own service/allocation date so a
-        # multi-day activity crossing a month (or quarter/FY) boundary lands
-        # its cost in the periods the work actually happens in. Single-month
-        # activities keep the activity's own period stamps unchanged.
-        line_specs = _programme_period_specs(cost, activity, planned_date)
-
-        def _line_periods(service_date):
-            if service_date is None:
-                return planned_date, week_start, week_end, month, quarter, fiscal_year
-            ws = service_date - timedelta(days=service_date.weekday())
-            return (
-                service_date,
-                ws,
-                ws + timedelta(days=6),
-                service_date.month,
-                get_quarter_for_date(service_date),
-                get_operational_fy(service_date),
-            )
+        for vendor_paid_keys in vendor_paid_of.values():
+            if vendor_paid_keys & ACCOMMODATION_KEYS:
+                vendor_paid_keys |= ACCOMMODATION_KEYS
+        ActivityScheduleCostLine.objects.filter(activity_id__in=activity_ids).delete()
 
         rows = []
-        for line, service_date, qty, amount, key_suffix in line_specs:
-            l_date, l_ws, l_we, l_month, l_quarter, l_fy = _line_periods(service_date)
-            rows.append(
-                ActivityScheduleCostLine(
-                    activity=activity,
-                    cost_setting_key=f"{line.key}{key_suffix}",
-                    label=line.label,
-                    unit_cost=0 if line.unit is None else int(line.unit),
-                    quantity=int(qty),
-                    amount=int(amount),
-                    cost_setting_version=(
-                        settings_by_key[line.key].version
-                        if line.key in settings_by_key
-                        else 1
-                    ),
-                    catalogue_id=catalogue_id,
-                    catalogue_version=catalogue_version,
-                    activity_catalogue_item_id=activity.catalogue_item_id,
-                    activity_catalogue_version=activity.catalogue_version,
-                    costing_profile=activity.costing_profile_snapshot,
-                    line_item_type=_line_item_type(line.key),
-                    vendor_paid=line.key in vendor_paid_keys,
-                    currency="UGX",
-                    description=f"[{tag}] {line.label}" if tag else line.label,
-                    total_cost=int(amount),
-                    planned_date=l_date,
-                    week_start_date=l_ws,
-                    week_end_date=l_we,
-                    month=l_month,
-                    quarter=l_quarter,
-                    fiscal_year=l_fy,
-                    responsible_user=responsible_user_id
-                    or activity.responsible_staff_id,
-                    responsible_role=None,
-                    school=activity.school,
-                    cluster=activity.cluster,
-                    # Every line of partner-delivered work is the partner's;
-                    # of a partner-facilitated training, only the fee
-                    # (apps.activities.facilitation).
-                    partner_id=line_partner_id(activity, _line_item_type(line.key)),
-                    project_id=activity.project_id,
-                )
-            )
-        ActivityScheduleCostLine.objects.bulk_create(rows)
-        # No monthly request is left naming a line that no longer exists.
-        carry_monthly_requests(activity, locked_frs, line_ids)
-        activity.est_cost_cents = int(cost.amount)
-        activity.cost_missing = cost.cost_missing or catalogue is None
-        activity.save(
-            update_fields=[
-                "est_cost_cents",
-                "cost_missing",
-                "planned_date",
-                "week_start_date",
-                "week_end_date",
-                "fiscal_year",
-                "month",
-                "quarter",
-                "fy",
-                "updated_at",
+        for plan in plans:
+            activity = plan["activity"]
+            cost = plan["cost"]
+            catalogue = plan["catalogue"]
+            settings_by_key = plan["settings_by_key"]
+            vendor_paid_keys = vendor_paid_of[activity.id]
+            planned_date, week_start, week_end, month, quarter, fiscal_year = plan[
+                "periods"
             ]
-        )
+            catalogue_id = catalogue.id if catalogue else None
+            catalogue_version = catalogue.version if catalogue else None
+
+            # Tag Core activity budget lines
+            tag = None
+            if activity.activity_type == "core_visit":
+                tag = (
+                    "Core Partner Activity"
+                    if activity.delivery_type == "partner"
+                    else "Core Visit"
+                )
+            elif activity.activity_type == "core_training":
+                tag = (
+                    "Core Partner Activity"
+                    if activity.delivery_type == "partner"
+                    else "Core Training"
+                )
+
+            # §9: each budget line carries its own service/allocation date so a
+            # multi-day activity crossing a month (or quarter/FY) boundary lands
+            # its cost in the periods the work actually happens in. Single-month
+            # activities keep the activity's own period stamps unchanged.
+            line_specs = _programme_period_specs(cost, activity, planned_date)
+
+            def _line_periods(service_date, periods=plan["periods"]):
+                if service_date is None:
+                    return periods
+                ws = service_date - timedelta(days=service_date.weekday())
+                return (
+                    service_date,
+                    ws,
+                    ws + timedelta(days=6),
+                    service_date.month,
+                    get_quarter_for_date(service_date),
+                    get_operational_fy(service_date),
+                )
+
+            for line, service_date, qty, amount, key_suffix in line_specs:
+                l_date, l_ws, l_we, l_month, l_quarter, l_fy = _line_periods(
+                    service_date
+                )
+                rows.append(
+                    ActivityScheduleCostLine(
+                        activity=activity,
+                        cost_setting_key=f"{line.key}{key_suffix}",
+                        label=line.label,
+                        unit_cost=0 if line.unit is None else int(line.unit),
+                        quantity=int(qty),
+                        amount=int(amount),
+                        cost_setting_version=(
+                            settings_by_key[line.key].version
+                            if line.key in settings_by_key
+                            else 1
+                        ),
+                        catalogue_id=catalogue_id,
+                        catalogue_version=catalogue_version,
+                        activity_catalogue_item_id=activity.catalogue_item_id,
+                        activity_catalogue_version=activity.catalogue_version,
+                        costing_profile=activity.costing_profile_snapshot,
+                        line_item_type=_line_item_type(line.key),
+                        vendor_paid=line.key in vendor_paid_keys,
+                        currency="UGX",
+                        description=f"[{tag}] {line.label}" if tag else line.label,
+                        total_cost=int(amount),
+                        planned_date=l_date,
+                        week_start_date=l_ws,
+                        week_end_date=l_we,
+                        month=l_month,
+                        quarter=l_quarter,
+                        fiscal_year=l_fy,
+                        responsible_user=responsible_user_id
+                        or activity.responsible_staff_id,
+                        responsible_role=None,
+                        school=activity.school,
+                        cluster=activity.cluster,
+                        # Every line of partner-delivered work is the partner's;
+                        # of a partner-facilitated training, only the fee
+                        # (apps.activities.facilitation).
+                        partner_id=line_partner_id(activity, _line_item_type(line.key)),
+                        project_id=activity.project_id,
+                    )
+                )
+        ActivityScheduleCostLine.objects.bulk_create(rows)
+
+        for plan in plans:
+            activity = plan["activity"]
+            cost = plan["cost"]
+            # No monthly request is left naming a line that no longer exists.
+            carry_monthly_requests(
+                activity,
+                [
+                    locked_monthly[monthly_id]
+                    for monthly_id in sorted(monthly_ids_of[activity.id])
+                    if monthly_id in locked_monthly
+                ],
+                line_ids_of[activity.id],
+            )
+            activity.est_cost_cents = int(cost.amount)
+            activity.cost_missing = cost.cost_missing or plan["catalogue"] is None
+            activity.save(
+                update_fields=[
+                    "est_cost_cents",
+                    "cost_missing",
+                    *(_PERIOD_FIELDS if plan["periods_moved"] else ()),
+                    "updated_at",
+                ]
+            )
 
         # Preserve every recalculation as a revision. The reference result is
         # metadata only; the payable line rows above continue to equal the
         # operational amount exactly.
-        previous = (
-            ActivityCostSnapshot.objects.select_for_update()
-            .filter(activity=activity, is_current=True)
-            .first()
-        )
-        sequence = (previous.sequence + 1) if previous else 1
-        if previous:
-            previous.is_current = False
-            previous.save(update_fields=["is_current", "updated_at"])
-        snapshot = ActivityCostSnapshot.objects.create(
-            activity=activity,
-            sequence=sequence,
-            is_current=True,
-            activity_catalogue_item_id=activity.catalogue_item_id,
-            activity_catalogue_version=activity.catalogue_version,
-            costing_profile_version=activity.costing_profile_snapshot,
-            reference_rate_card=reference_card,
-            operational_rate_card=catalogue,
-            reference_cost=(
-                int(reference_cost.amount)
-                if reference_cost is not None and not reference_cost.cost_missing
-                else None
-            ),
-            operational_cost=int(cost.amount),
-            calculation_inputs=dual["inputs"],
-            reference_breakdown=(
-                [_serialize_line(line) for line in reference_cost.lines]
-                if reference_cost is not None
-                else []
-            ),
-            operational_breakdown=[_serialize_line(line) for line in cost.lines],
-            warnings=dual["warnings"],
-            missing_configuration=cost.missing_items,
-            calculated_at=timezone.now(),
-            calculated_by=responsible_user_id or activity.responsible_staff_id,
-            recalculation_reason=input.get("recalculationReason"),
-            supersedes=previous,
-        )
+        previous_of = {
+            snapshot.activity_id: snapshot
+            for snapshot in ActivityCostSnapshot.objects.select_for_update().filter(
+                activity_id__in=activity_ids, is_current=True
+            )
+        }
         from apps.audit.services import log as audit_log
 
-        audit_log(
-            action="activity.cost.calculated",
-            subject_kind="ActivityCostSnapshot",
-            subject_id=snapshot.id,
-            actor_id=responsible_user_id or activity.responsible_staff_id,
-            payload={
-                "activityId": activity.id,
-                "sequence": sequence,
-                "operationalCost": int(cost.amount),
-                "operationalRateCardVersion": catalogue_version,
-                "referenceConfigured": snapshot.reference_cost is not None,
-                "referenceRateCardVersion": (
-                    reference_card.version if reference_card else None
-                ),
-            },
-            required=True,
-        )
+        # The revisions being superseded step down together and the new ones
+        # are written together, one statement each for the day.
+        now = timezone.now()
+        if previous_of:
+            ActivityCostSnapshot.objects.filter(
+                id__in=[previous.id for previous in previous_of.values()]
+            ).update(is_current=False, updated_at=now)
+            for previous in previous_of.values():
+                previous.is_current = False
+                previous.updated_at = now
+        snapshots = []
+        for plan in plans:
+            activity = plan["activity"]
+            cost = plan["cost"]
+            catalogue = plan["catalogue"]
+            dual = plan["dual"]
+            reference_card = plan["reference_card"]
+            reference_cost = plan["reference_cost"]
+            previous = previous_of.get(activity.id)
+            snapshots.append(
+                ActivityCostSnapshot(
+                    activity=activity,
+                    sequence=(previous.sequence + 1) if previous else 1,
+                    is_current=True,
+                    activity_catalogue_item_id=activity.catalogue_item_id,
+                    activity_catalogue_version=activity.catalogue_version,
+                    costing_profile_version=activity.costing_profile_snapshot,
+                    reference_rate_card=reference_card,
+                    operational_rate_card=catalogue,
+                    reference_cost=(
+                        int(reference_cost.amount)
+                        if reference_cost is not None
+                        and not reference_cost.cost_missing
+                        else None
+                    ),
+                    operational_cost=int(cost.amount),
+                    calculation_inputs=dual["inputs"],
+                    reference_breakdown=(
+                        [_serialize_line(line) for line in reference_cost.lines]
+                        if reference_cost is not None
+                        else []
+                    ),
+                    operational_breakdown=[
+                        _serialize_line(line) for line in cost.lines
+                    ],
+                    warnings=dual["warnings"],
+                    missing_configuration=cost.missing_items,
+                    calculated_at=timezone.now(),
+                    calculated_by=responsible_user_id or activity.responsible_staff_id,
+                    recalculation_reason=plan["input"].get("recalculationReason"),
+                    supersedes=previous,
+                )
+            )
+        ActivityCostSnapshot.objects.bulk_create(snapshots)
+        saved_together(ActivityCostSnapshot, snapshots)
+
+        for plan, snapshot in zip(plans, snapshots):
+            activity = plan["activity"]
+            catalogue = plan["catalogue"]
+            reference_card = plan["reference_card"]
+            audit_log(
+                action="activity.cost.calculated",
+                subject_kind="ActivityCostSnapshot",
+                subject_id=snapshot.id,
+                actor_id=responsible_user_id or activity.responsible_staff_id,
+                payload={
+                    "activityId": activity.id,
+                    "sequence": snapshot.sequence,
+                    "operationalCost": int(plan["cost"].amount),
+                    "operationalRateCardVersion": (
+                        catalogue.version if catalogue else None
+                    ),
+                    "referenceConfigured": snapshot.reference_cost is not None,
+                    "referenceRateCardVersion": (
+                        reference_card.version if reference_card else None
+                    ),
+                },
+                required=True,
+            )
 
     # Auto-create weekly advance requests from the freshly-written budget lines
     # (the responsible user confirms before the Accountant may disburse). Only
     # when not cost-missing — a blocked activity carries no fundable advance.
-    if not activity.cost_missing:
-        from apps.fund_requests.advance_service import sync_for_activity
+    from apps.fund_requests.advance_service import sync_for_activities
 
-        sync_for_activity(activity, responsible_user_id=responsible_user_id)
-    return cost
+    sync_for_activities(
+        [activity for activity in activities if not activity.cost_missing],
+        responsible_user_id=responsible_user_id,
+        lines_just_written=True,
+    )
+    return [plan["cost"] for plan in plans]
+
+
+#: The activities whose advances changed inside `snapshot_actuals_projected_once`
+#: and whose snapshot is therefore still to be brought level. None outside one.
+_actuals_to_project: ContextVar[set | None] = ContextVar(
+    "snapshot_actuals_to_project", default=None
+)
+
+_ACTUALS_FIELDS = (
+    "amount_disbursed",
+    "actual_accounted_spend",
+    "unused_balance",
+    "reimbursement_amount",
+    "approved_operating_limit",
+    "cost_status",
+)
+
+
+@contextmanager
+def snapshot_actuals_projected_once(*, already_level: bool = False):
+    """Bring each activity's snapshot level with its advances once, when the
+    block ends, instead of after every advance saved inside it.
+
+    Every saved advance asks for its activity's snapshot to be projected
+    (`apps.budget.signals`). Opening the advances of a freshly priced activity
+    saves one advance a cost line, so a visit with four fundable lines
+    projected the same snapshot four times, six statements each, and a day of
+    five did it twenty times. The projection reads the advances as they stand,
+    so the last one is the only one whose answer is kept.
+
+    `already_level`: the caller knows the advances saved inside the block
+    move no figure of the snapshot, so nothing is projected at all. True of
+    one case only, the advances opened for cost lines just written: the
+    snapshot was written with them at nought, the advances the old lines had
+    went with those lines, and the new ones are pending with no money on
+    them."""
+    if _actuals_to_project.get() is not None:
+        yield
+        return
+    pending: set[str] = set()
+    token = _actuals_to_project.set(pending)
+    try:
+        yield
+    finally:
+        _actuals_to_project.reset(token)
+    if not already_level:
+        sync_snapshot_actuals_many(pending)
+
+
+def project_snapshot_actuals(activity_id: str) -> None:
+    """Project this activity's advances into its snapshot: now, or when the
+    `snapshot_actuals_projected_once` block in hand ends."""
+    pending = _actuals_to_project.get()
+    if pending is None:
+        sync_snapshot_actuals(activity_id)
+    else:
+        pending.add(activity_id)
+
+
+def _project_actuals(snapshot, totals: dict, confirmed) -> None:
+    """Write the advance totals onto `snapshot` (unsaved). `confirmed` says
+    whether an advance of the activity is confirmed or with the accountant,
+    and is only asked when no money has moved."""
+    disbursed = int(totals.get("disbursed") or 0)
+    actual = int(totals.get("actual") or 0)
+    reimbursed = int(totals.get("reimbursed") or 0)
+    snapshot.amount_disbursed = disbursed
+    snapshot.actual_accounted_spend = actual
+    snapshot.unused_balance = max(0, disbursed - actual)
+    snapshot.reimbursement_amount = reimbursed
+    if actual:
+        snapshot.cost_status = "accounted"
+    elif disbursed:
+        snapshot.cost_status = "disbursed"
+    elif confirmed():
+        snapshot.approved_operating_limit = snapshot.operational_cost
+        snapshot.cost_status = "approved"
 
 
 def sync_snapshot_actuals(activity_id: str) -> None:
@@ -1566,36 +1826,68 @@ def sync_snapshot_actuals(activity_id: str) -> None:
             returned=Sum("returned_amount"),
             reimbursed=Sum("reimbursed_amount"),
         )
-        disbursed = int(totals["disbursed"] or 0)
-        actual = int(totals["actual"] or 0)
-        reimbursed = int(totals["reimbursed"] or 0)
-        snapshot.amount_disbursed = disbursed
-        snapshot.actual_accounted_spend = actual
-        snapshot.unused_balance = max(0, disbursed - actual)
-        snapshot.reimbursement_amount = reimbursed
-        if actual:
-            snapshot.cost_status = "accounted"
-        elif disbursed:
-            snapshot.cost_status = "disbursed"
-        elif advances.filter(
-            status__in=(
-                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-            )
-        ).exists():
-            snapshot.approved_operating_limit = snapshot.operational_cost
-            snapshot.cost_status = "approved"
-        snapshot.save(
-            update_fields=[
-                "amount_disbursed",
-                "actual_accounted_spend",
-                "unused_balance",
-                "reimbursement_amount",
-                "approved_operating_limit",
-                "cost_status",
-                "updated_at",
-            ]
+        _project_actuals(
+            snapshot,
+            totals,
+            lambda: advances.filter(
+                status__in=(
+                    AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                    AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+                )
+            ).exists(),
         )
+        snapshot.save(update_fields=[*_ACTUALS_FIELDS, "updated_at"])
+
+
+def sync_snapshot_actuals_many(activity_ids) -> None:
+    """`sync_snapshot_actuals` for several activities: the snapshots are read
+    and locked together and the advances are totalled in one statement. A
+    snapshot the totals leave as it stands is not written again."""
+    from django.db.models import Sum
+
+    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+
+    activity_ids = sorted(set(activity_ids))
+    if not activity_ids:
+        return
+    if len(activity_ids) == 1:
+        sync_snapshot_actuals(activity_ids[0])
+        return
+    with transaction.atomic():
+        snapshots = list(
+            ActivityCostSnapshot.objects.select_for_update().filter(
+                activity_id__in=activity_ids, is_current=True
+            )
+        )
+        if not snapshots:
+            return
+        advances = AdvanceRequest.objects.filter(activity_id__in=activity_ids)
+        totals_of = {
+            row["activity_id"]: row
+            for row in advances.values("activity_id").annotate(
+                disbursed=Sum("disbursed_amount"),
+                actual=Sum("accounted_amount"),
+                returned=Sum("returned_amount"),
+                reimbursed=Sum("reimbursed_amount"),
+            )
+        }
+        confirmed_ids = set(
+            advances.filter(
+                status__in=(
+                    AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                    AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+                )
+            ).values_list("activity_id", flat=True)
+        )
+        for snapshot in snapshots:
+            before = tuple(getattr(snapshot, field) for field in _ACTUALS_FIELDS)
+            _project_actuals(
+                snapshot,
+                totals_of.get(snapshot.activity_id, {}),
+                lambda: snapshot.activity_id in confirmed_ids,
+            )
+            if tuple(getattr(snapshot, field) for field in _ACTUALS_FIELDS) != before:
+                snapshot.save(update_fields=[*_ACTUALS_FIELDS, "updated_at"])
 
 
 __all__ = [
@@ -1604,5 +1896,9 @@ __all__ = [
     "management_preview",
     "preview",
     "apply_to_activity",
+    "apply_to_activities",
     "sync_snapshot_actuals",
+    "sync_snapshot_actuals_many",
+    "snapshot_actuals_projected_once",
+    "project_snapshot_actuals",
 ]

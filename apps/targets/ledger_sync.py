@@ -40,25 +40,115 @@ def _fy_of(value) -> str | None:
     return None
 
 
-def mark(owner_ids, fys) -> None:
-    """Mark these owners (user or staff-profile ids) dirty for these years."""
+def _pairs(owner_ids, fys) -> set[tuple[str, str]]:
+    return {(str(owner), str(fy)) for owner in owner_ids if owner for fy in fys if fy}
+
+
+def _write_marks(pairs) -> None:
     from apps.targets.models import TargetLedgerDirty
 
-    owner_ids = sorted({str(o) for o in owner_ids if o})
-    fys = sorted({str(fy) for fy in fys if fy})
-    if not owner_ids or not fys:
+    pairs = sorted(pairs)
+    if not pairs:
         return
     now = timezone.now()
     TargetLedgerDirty.objects.bulk_create(
         [
             TargetLedgerDirty(owner_id=owner, fy=fy, marked_at=now)
-            for owner in owner_ids
-            for fy in fys
+            for owner, fy in pairs
         ],
         update_conflicts=True,
         unique_fields=["owner_id", "fy"],
         update_fields=["marked_at"],
     )
+
+
+def mark(owner_ids, fys) -> None:
+    """Mark these owners (user or staff-profile ids) dirty for these years."""
+    _write_marks(_pairs(owner_ids, fys))
+
+
+# ── The mark is written when the save commits ────────────────────────────────
+# A mark is one row an officer and year, upserted. Written inside the save, its
+# row stayed locked from the save's first write to its commit, so a second save
+# for the same officer (a second tab, a click repeated because the first was
+# slow, the re-pricing sweep) waited behind the whole of the first: in
+# production the one-row write averaged 25.6 ms over 26,777 calls and waited up
+# to 22.9 s (pg_stat_statements, 2026-10-12).
+#
+# A save now only remembers whom to mark, and the marks are written in one
+# statement the moment its transaction commits: the row is locked for that
+# statement and no longer. The rebuild is as correct as before, because it
+# reads its marks first, rebuilds, and clears only the marks it read, by the
+# time they were written (`refresh_many`): a mark that lands after the read
+# survives it. What changes is one window: a page that reads the ledger
+# between the commit and the mark shows the figures as they were, and the
+# next read is right. A save that rolls back marks nobody, where it used to
+# mark and lose the mark with the rollback, which is the same thing.
+#
+# Kept on the connection, in Django's own list of what to do on commit, so a
+# savepoint that rolls back takes the marks first asked for inside it with it.
+# A mark asked for later from a savepoint that then rolls back is kept: one
+# rebuild that was not needed. `LEDGER_MARKS_AFTER_COMMIT=false` writes the
+# mark inside the save again.
+class _MarksOnCommit:
+    """The officers and years to mark when the transaction in hand commits."""
+
+    def __init__(self) -> None:
+        self.pairs: set[tuple[str, str]] = set()
+
+    def __call__(self) -> None:
+        pairs, self.pairs = self.pairs, set()
+        _write_marks(pairs)
+
+
+def _marks_in_hand(connection):
+    for _sids, callback, _robust in connection.run_on_commit:
+        if isinstance(callback, _MarksOnCommit):
+            return callback
+    return None
+
+
+def _marks_wait_for_commit(connection) -> bool:
+    """Inside a transaction the application opened, with the switch on. The
+    blocks a test case wraps its tests in do not count: they never commit."""
+    from django.conf import settings
+
+    return bool(getattr(settings, "LEDGER_MARKS_AFTER_COMMIT", False)) and any(
+        not getattr(block, "_from_testcase", False)
+        for block in connection.atomic_blocks
+    )
+
+
+def mark_when_committed(owner_ids, fys) -> None:
+    """Mark these owners for these years when the transaction in hand commits;
+    at once where there is none."""
+    from django.db import transaction
+
+    pairs = _pairs(owner_ids, fys)
+    if not pairs:
+        return
+    connection = transaction.get_connection()
+    if not _marks_wait_for_commit(connection):
+        _write_marks(pairs)
+        return
+    waiting = _marks_in_hand(connection)
+    if waiting is None:
+        waiting = _MarksOnCommit()
+        # robust: the save has committed by then, and a mark that could not
+        # be written must not answer it with an error. `target_ledger_sync`
+        # rebuilds every officer within the half hour.
+        transaction.on_commit(waiting, robust=True)
+    waiting.pairs |= pairs
+
+
+def write_marks_in_hand() -> None:
+    """Write now the marks waiting for this transaction's commit: for a read
+    of the ledger made inside the transaction that changed its sources."""
+    from django.db import transaction
+
+    waiting = _marks_in_hand(transaction.get_connection())
+    if waiting is not None:
+        waiting()
 
 
 def mark_sources(pairs) -> None:
@@ -109,6 +199,7 @@ def refresh_many(users, fy: str) -> None:
     owners = set().union(*ids_of.values()) if ids_of else set()
     if not owners:
         return
+    write_marks_in_hand()
     marks = list(
         TargetLedgerDirty.objects.filter(fy=fy, owner_id__in=owners).values_list(
             "id", "owner_id", "marked_at"
@@ -150,6 +241,11 @@ def _changed(owner_field, date_field, relevant=None):
             return
         owners = {was_owner, current[0]}
         fys = {_fy_of(was_date), _fy_of(current[1])}
+        from django.db import transaction
+
+        if _marks_wait_for_commit(transaction.get_connection()):
+            mark_when_committed(owners, fys)
+            return
         if _already_marked(instance, owners, fys):
             return
         mark(owners, fys)
