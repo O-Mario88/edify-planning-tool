@@ -208,7 +208,25 @@ def my_plan_view(request):
         query["activity_type"] = None
         query["status"] = None
 
-    context = get_my_plan(request.user, query)
+    # The person's own Planned and remaining reads every school they hold
+    # and was more than a quarter of this page's time. The page is answered
+    # without it and asks for it once it has been drawn
+    # (my_plan_panel_views). It stays in the answer where the answer is the
+    # figures themselves, or the list of schools behind one of them, which
+    # the reader has just asked to be shown; an export never draws it.
+    from apps.frontend.views.my_plan_panel_views import plans_visits
+
+    wants_figures = request.GET.get(
+        "format", ""
+    ).strip().lower() == "readiness-json" or bool(
+        (request.GET.get("list") or "").strip()
+    )
+    context = get_my_plan(request.user, query, with_readiness=wants_figures)
+    context["readiness_later"] = (
+        not wants_figures
+        and not _is_export_request(request)
+        and plans_visits(request.user)
+    )
     context["plan_list"] = _readiness_list(request, context)
     context["topbar_search"] = {
         "placeholder": "Search my plan…",
@@ -464,14 +482,17 @@ def my_plan_view(request):
     # My Training Summary (owner, 2026-10-06): the reader's own training
     # ceilings and what they have scheduled under them, never another
     # officer's (apps.planning.training_ceilings.own_summary).
-    from apps.planning.training_ceilings import own_summary, summary_totals
+    # It sits under Planned and remaining and comes with it, once the page
+    # has been drawn, for whoever that table is left out for
+    # (my_plan_panel_views).
+    if not context.get("readiness_later"):
+        from apps.frontend.views.my_plan_panel_views import training_summary
 
-    context["my_training_summary"] = own_summary(
-        request.user, str(context.get("fy") or get_operational_fy())
-    )
-    # The line over the card, in the Project Capacity shape (owner,
-    # 2026-10-06): trainings, ceilings, schools scheduled, balance, excess.
-    context["my_training_totals"] = summary_totals(context["my_training_summary"])
+        context.update(
+            training_summary(
+                request.user, str(context.get("fy") or get_operational_fy())
+            )
+        )
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)

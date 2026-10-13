@@ -246,7 +246,9 @@ class OnMyPlanTest(_Fixture):
             (line["planned"], line["target"], line["remaining"]), (1, 10, 9)
         )
 
-        page = self.client.get("/my-plan")
+        # The table is asked for by My Plan once it is drawn.
+        self.assertContains(self.client.get("/my-plan"), 'hx-get="/my-plan/readiness')
+        page = self.client.get("/my-plan/readiness")
         self.assertContains(page, "Schools assigned to a project")
         self.assertContains(page, "Your project ceilings add up to 10 schools")
         self.assertContains(page, 'data-plan-count="project_added"')

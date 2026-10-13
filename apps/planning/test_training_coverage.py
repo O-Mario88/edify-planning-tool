@@ -580,7 +580,9 @@ class ThePagesShowIt(CoverageFixture):
         handovers = self.the_owner_s_example()
         self.partner_dates(handovers[0], day=10)
 
-        response = self.client_for(self.user).get(f"/my-plan?fy={self.fy}")
+        # The summary comes with Planned and remaining, which My Plan asks
+        # for once it is drawn (my_plan_panel_views).
+        response = self.client_for(self.user).get(f"/my-plan/readiness?fy={self.fy}")
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()

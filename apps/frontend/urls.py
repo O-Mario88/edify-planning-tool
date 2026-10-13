@@ -26,6 +26,7 @@ from .views import (
     country_oversight_views,
     partner_review_views,
     budget_views,
+    my_plan_panel_views,
     my_plan_views,
     analytics_views,
     staff_views,
@@ -1271,6 +1272,12 @@ urlpatterns = [
         "my-plan/export-drawer",
         my_plan_views.my_plan_export_drawer_view,
         name="my_plan_export_drawer",
+    ),
+    # Planned and remaining, asked for once My Plan has been drawn.
+    path(
+        "my-plan/readiness",
+        my_plan_panel_views.my_plan_readiness_view,
+        name="my_plan_readiness",
     ),
     path(
         "my-plan/<str:activity_id>",

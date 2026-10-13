@@ -759,8 +759,14 @@ def _own_readiness(principal, fy):
         return None
 
 
-def get_frontend_context(principal, query: dict) -> dict:
-    """Consolidated planning dashboard feed resolver for the HTML frontend."""
+def get_frontend_context(
+    principal, query: dict, *, with_readiness: bool = True
+) -> dict:
+    """Consolidated planning dashboard feed resolver for the HTML frontend.
+
+    `with_readiness=False` leaves the person's Planned and remaining out:
+    the page asks for it once it has been drawn (the My Plan readiness
+    panel), and an export never shows it."""
     today = date.today()
 
     # 1. Resolve User Scope
@@ -2102,136 +2108,151 @@ def get_frontend_context(principal, query: dict) -> dict:
 
         cluster_trainings_list = _new_cluster_trainings_list
 
-    # 9. Right Rail: Planning Insights
+    # 9. Planning Insights: what is on today, what needs attention and the
+    # next step. My Plan stopped drawing this rail (the Dashboard carries it;
+    # templates/partials/my_plan/workspace.html), and its four reads of the
+    # plan were still made on every load of the page. They are made when
+    # something reads one of the three, which the page does not.
+    def _planning_insights():
+        today_activities = (
+            qs.filter(planned_date=today)
+            .select_related("school", "school__district", "cluster")
+            .order_by("created_at")
+        )
+        upcoming_today = []
+        for a in today_activities:
+            assigned_partner = "None"
+            if a.delivery_type == "partner" and a.assigned_partner_id:
+                assigned_partner = partners_map.get(a.assigned_partner_id, "Partner")
+            elif a.responsible_staff_id:
+                assigned_partner = users_map.get(a.responsible_staff_id, "Staff")
 
-    today_activities = (
-        qs.filter(planned_date=today)
-        .select_related("school", "school__district", "cluster")
-        .order_by("created_at")
-    )
-    upcoming_today = []
-    for a in today_activities:
-        assigned_partner = "None"
-        if a.delivery_type == "partner" and a.assigned_partner_id:
-            assigned_partner = partners_map.get(a.assigned_partner_id, "Partner")
-        elif a.responsible_staff_id:
-            assigned_partner = users_map.get(a.responsible_staff_id, "Staff")
-
-        upcoming_today.append(
-            {
-                "id": a.id,
-                "time": "08:30 AM",
-                "title": a.school.name
-                if a.school
-                else (
-                    a.cluster.name
-                    if a.cluster
-                    else (a.activity_name_snapshot or a.venue or "Activity")
-                ),
-                "purpose": (
-                    a.activity_purpose_text
-                    or (
-                        visit_purpose_label(a.purpose_type, fallback="")
-                        if a.purpose_type
-                        else ""
+            upcoming_today.append(
+                {
+                    "id": a.id,
+                    "time": "08:30 AM",
+                    "title": a.school.name
+                    if a.school
+                    else (
+                        a.cluster.name
+                        if a.cluster
+                        else (a.activity_name_snapshot or a.venue or "Activity")
+                    ),
+                    "purpose": (
+                        a.activity_purpose_text
+                        or (
+                            visit_purpose_label(a.purpose_type, fallback="")
+                            if a.purpose_type
+                            else ""
+                        )
+                        or a.get_activity_type_display()
+                    ),
+                    "district": (
+                        a.school.district.name if a.school.district_id else "Unknown"
                     )
-                    or a.get_activity_type_display()
-                ),
-                "district": (
-                    a.school.district.name if a.school.district_id else "Unknown"
-                )
-                if a.school
-                else (
-                    a.cluster.district.name
-                    if a.cluster
-                    else (a.event_district.name if a.event_district_id else "Unknown")
-                ),
-                "assigned_partner": assigned_partner,
-            }
-        )
+                    if a.school
+                    else (
+                        a.cluster.district.name
+                        if a.cluster
+                        else (
+                            a.event_district.name if a.event_district_id else "Unknown"
+                        )
+                    ),
+                    "assigned_partner": assigned_partner,
+                }
+            )
 
-    attention_needed = []
+        attention_needed = []
 
-    # 1. Rescheduled Activities
-    rescheduled_acts = qs.filter(reschedule_count__gt=0).select_related(
-        "school", "cluster"
-    )[:3]
-    for r in rescheduled_acts:
-        attention_needed.append(
-            {
-                "id": r.id,
-                "type": "Rescheduled",
-                "badge_class": "bg-orange-50 text-orange-700 border-orange-200",
-                "title": r.school.name
-                if r.school
-                else (r.cluster.name if r.cluster else "Activity"),
-                "issue": f"Rescheduled {r.reschedule_count} times.",
-                "detail": f"New date: {r.planned_date.strftime('%b %d, %Y') if r.planned_date else 'N/A'}",
-            }
-        )
+        # 1. Rescheduled Activities
+        rescheduled_acts = qs.filter(reschedule_count__gt=0).select_related(
+            "school", "cluster"
+        )[:3]
+        for r in rescheduled_acts:
+            attention_needed.append(
+                {
+                    "id": r.id,
+                    "type": "Rescheduled",
+                    "badge_class": "bg-orange-50 text-orange-700 border-orange-200",
+                    "title": r.school.name
+                    if r.school
+                    else (r.cluster.name if r.cluster else "Activity"),
+                    "issue": f"Rescheduled {r.reschedule_count} times.",
+                    "detail": f"New date: {r.planned_date.strftime('%b %d, %Y') if r.planned_date else 'N/A'}",
+                }
+            )
 
-    # UPLOAD-OFF (owner, 2026-10-13): no completion waits on a file any more.
-    # # 2. Awaiting Evidence
-    # awaiting_evidence_acts = qs.filter(
-    #     status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
-    # ).select_related("school", "school__district", "cluster")[:3]
-    # for ae in awaiting_evidence_acts:
-    #     attention_needed.append(
-    #         {
-    #             "id": ae.id,
-    #             "type": "Awaiting Evidence",
-    #             "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
-    #             "title": ae.school.name
-    #             if ae.school
-    #             else (ae.cluster.name if ae.cluster else "Activity"),
-    #             "issue": "Completion submitted without uploading required files.",
-    #             "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
-    #         }
-    #     )
+        # UPLOAD-OFF (owner, 2026-10-13): no completion waits on a file any more.
+        # # 2. Awaiting Evidence
+        # awaiting_evidence_acts = qs.filter(
+        #     status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
+        # ).select_related("school", "school__district", "cluster")[:3]
+        # for ae in awaiting_evidence_acts:
+        #     attention_needed.append(
+        #         {
+        #             "id": ae.id,
+        #             "type": "Awaiting Evidence",
+        #             "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
+        #             "title": ae.school.name
+        #             if ae.school
+        #             else (ae.cluster.name if ae.cluster else "Activity"),
+        #             "issue": "Completion submitted without uploading required files.",
+        #             "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
+        #         }
+        #     )
 
-    # 3. SF ID Missing
-    sf_missing_acts = qs.filter(
-        status__in=COMPLETED_WORK_STATUSES, salesforce_activity_id__isnull=True
-    ).select_related("school", "school__district", "cluster")[:3]
-    for sf in sf_missing_acts:
-        attention_needed.append(
-            {
-                "id": sf.id,
-                "type": "Activity SF ID Missing",
-                "badge_class": "bg-red-50 text-red-700 border-red-200",
-                "title": sf.school.name
-                if sf.school
-                else (sf.cluster.name if sf.cluster else "Activity"),
-                "issue": "Activity lacks a Salesforce confirmation ID.",
-                "detail": "Action: Add Salesforce Activity ID.",
-            }
-        )
+        # 3. SF ID Missing
+        sf_missing_acts = qs.filter(
+            status__in=COMPLETED_WORK_STATUSES, salesforce_activity_id__isnull=True
+        ).select_related("school", "school__district", "cluster")[:3]
+        for sf in sf_missing_acts:
+            attention_needed.append(
+                {
+                    "id": sf.id,
+                    "type": "Activity SF ID Missing",
+                    "badge_class": "bg-red-50 text-red-700 border-red-200",
+                    "title": sf.school.name
+                    if sf.school
+                    else (sf.cluster.name if sf.cluster else "Activity"),
+                    "issue": "Activity lacks a Salesforce confirmation ID.",
+                    "detail": "Action: Add Salesforce Activity ID.",
+                }
+            )
 
-    next_recommended_action = {
-        "title": "You're on track!",
-        "message": "Your plans are well aligned with district priorities.",
-        "badge_class": "bg-emerald-50 border-emerald-100 text-emerald-800",
-        "action_text": "View Weekly Recommendations",
-        "action_url": "#",
-    }
-    if attention_needed:
-        first_alert = attention_needed[0]
-        if first_alert["type"] == "Awaiting Evidence":
-            next_recommended_action = {
-                "title": "Upload evidence",
-                "message": f"Upload files/documents for {first_alert['title']}.",
-                "badge_class": "bg-amber-50 border-amber-100 text-amber-800",
-                "action_text": "Upload Evidence",
-                "action_url": f"/my-plan/{first_alert['id']}",
-            }
-        elif first_alert["type"] == "Activity SF ID Missing":
-            next_recommended_action = {
-                "title": "Enter Activity SF ID",
-                "message": f"Add Salesforce Activity ID for {first_alert['title']}.",
-                "badge_class": "bg-red-50 border-red-100 text-red-800",
-                "action_text": "Enter SF ID",
-                "action_url": f"/my-plan/{first_alert['id']}",
-            }
+        next_recommended_action = {
+            "title": "You're on track!",
+            "message": "Your plans are well aligned with district priorities.",
+            "badge_class": "bg-emerald-50 border-emerald-100 text-emerald-800",
+            "action_text": "View Weekly Recommendations",
+            "action_url": "#",
+        }
+        if attention_needed:
+            first_alert = attention_needed[0]
+            if first_alert["type"] == "Awaiting Evidence":
+                next_recommended_action = {
+                    "title": "Upload evidence",
+                    "message": f"Upload files/documents for {first_alert['title']}.",
+                    "badge_class": "bg-amber-50 border-amber-100 text-amber-800",
+                    "action_text": "Upload Evidence",
+                    "action_url": f"/my-plan/{first_alert['id']}",
+                }
+            elif first_alert["type"] == "Activity SF ID Missing":
+                next_recommended_action = {
+                    "title": "Enter Activity SF ID",
+                    "message": f"Add Salesforce Activity ID for {first_alert['title']}.",
+                    "badge_class": "bg-red-50 border-red-100 text-red-800",
+                    "action_text": "Enter SF ID",
+                    "action_url": f"/my-plan/{first_alert['id']}",
+                }
+        return {
+            "upcoming_today": upcoming_today,
+            "attention_needed": attention_needed,
+            "next_recommended_action": next_recommended_action,
+        }
+
+    from django.utils.functional import SimpleLazyObject
+
+    _insights = SimpleLazyObject(_planning_insights)
 
     breakdown = {
         "week": planned_this_week,
@@ -2365,7 +2386,7 @@ def get_frontend_context(principal, query: dict) -> dict:
         "past_due_count": past_due_count,
         # The person's own year in four parts: planned, target and remaining
         # (apps.planning.readiness). None for a role that plans no visits.
-        "readiness": _own_readiness(principal, fy),
+        "readiness": _own_readiness(principal, fy) if with_readiness else None,
         # Each card carries every row of the selected period. `*_all` stays
         # because counts, KPIs and the CSV export read it; it is now the same
         # list as the card's own.
@@ -2410,8 +2431,10 @@ def get_frontend_context(principal, query: dict) -> dict:
         "upcoming": upcoming_list,
         "finance_pending": finance_pending_list,
         "viewer_is_partner": bool(scope.partner_ids),
-        "upcoming_today": upcoming_today,
-        "attention_needed": attention_needed,
-        "next_recommended_action": next_recommended_action,
+        "upcoming_today": SimpleLazyObject(lambda: _insights["upcoming_today"]),
+        "attention_needed": SimpleLazyObject(lambda: _insights["attention_needed"]),
+        "next_recommended_action": SimpleLazyObject(
+            lambda: _insights["next_recommended_action"]
+        ),
         "breakdown": breakdown,
     }

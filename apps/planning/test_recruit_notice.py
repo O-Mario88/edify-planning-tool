@@ -128,7 +128,8 @@ class OnThePagesTests(PeopleFixture):
 
     def test_my_plan_tells_the_person(self):
         self.client.force_login(self.cara_user)
-        response = self.client.get(f"/my-plan?fy={FY}")
+        # Under Planned and remaining, which My Plan asks for once drawn.
+        response = self.client.get(f"/my-plan/readiness?fy={FY}")
         page = text(response)
         self.assertIn("Your target is 560 visits a year", page)
         self.assertIn(
