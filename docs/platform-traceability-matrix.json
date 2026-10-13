@@ -139,6 +139,7 @@
         "apps/projects/models.py",
         "apps/projects/signals.py",
         "apps/projects/staff_priorities.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -659,6 +660,7 @@
         "apps/projects/signals.py",
         "apps/realtime/bus.py",
         "apps/realtime/domain_events.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -1563,6 +1565,7 @@
         "apps/projects/services.py",
         "apps/projects/signals.py",
         "apps/projects/ssa_impact.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -1924,6 +1927,7 @@
         "apps/projects/signals.py",
         "apps/realtime/bus.py",
         "apps/realtime/domain_events.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -2213,6 +2217,7 @@
         "apps/planning/visit_requests.py",
         "apps/projects/models.py",
         "apps/projects/signals.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -2705,6 +2710,7 @@
         "apps/projects/models.py",
         "apps/projects/signals.py",
         "apps/projects/staff_priorities.py",
+        "apps/routes/after_save.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
         "apps/schools/data_quality.py",
@@ -4927,9 +4933,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "8cda829dbd5237d8a3e851510d84a05a04c5c8803d9e5920ca830e2efe8c2b1f",
-    "sources": "1784bdab635995431409f624292ef6347028cdf5f3fd74da653e1cd0070a4882",
-    "sourceCount": 257,
+    "payload": "b0ba174d89b00d1322b172ec5ebb67cad46eb083b0a83513c8ca494d37d76ace",
+    "sources": "88efe229e22b842e8ebddaa48c28a7363f04d7f134e73023a55e0f7c7d361db2",
+    "sourceCount": 258,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

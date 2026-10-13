@@ -717,16 +717,13 @@ def _day_to_join(
     # validated the date; no future call site may silently skip this gate.
     from apps.core.calendar_policy import (
         SchedulingPolicyService,
-        resolve_scheduling_user,
     )
 
     staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
     if ask_calendar:
-        avail = SchedulingPolicyService.check(
-            resolve_scheduling_user(staff_id) if staff_id else None, new_date
-        )
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        refused = SchedulingPolicyService.refusal(staff_id, new_date)
+        if refused:
+            raise BadRequest("Scheduling blocked: " + " · ".join(refused))
 
     from apps.activities.services import _funding_owner_id
 
@@ -1142,11 +1139,9 @@ def _sync_route_batch(batch: DailyVisitBatch) -> None:
     """Keep the route-feasibility twin (DailyVisitRouteBatch) in step with this
     costing batch. Advisory only — a route problem must never break pricing."""
     try:
-        from apps.routes.engine import DailyVisitRouteBatchService
+        from apps.routes.after_save import rebuild_after_save
 
-        DailyVisitRouteBatchService.rebuild_for(
-            batch.responsible_user, batch.visit_date
-        )
+        rebuild_after_save(batch.responsible_user, batch.visit_date)
     except Exception:  # noqa: BLE001 — route intelligence is advisory
         pass
 
