@@ -32,20 +32,49 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     new lines get a fresh PENDING_RESPONSIBLE_CONFIRMATION request. Already-
     confirmed/disbursed requests for a line are preserved (a reschedule re-prices
     the line; we refresh amount but do not reset a confirmed/disbursed advance)."""
-    responsible = responsible_user_id or activity.responsible_staff_id
+    sync_for_activities([activity], responsible_user_id)
+
+
+def sync_for_activities(
+    activities,
+    responsible_user_id: str | None,
+    *,
+    lines_just_written: bool = False,
+) -> None:
+    """`sync_for_activity` for several activities at once: the members of a
+    day, whose lines were just written together
+    (`apps.budget.costing_service.apply_to_activities`). Their lines and the
+    advances they already have are read together, the advances to open are
+    written together, and each activity's cost snapshot is brought level with
+    its advances once, not once an advance.
+
+    `lines_just_written`: the cost writer has just cleared these activities'
+    lines and written new ones, inside this transaction. An advance belongs
+    to its line and went with it, so there is none to drop, none to refresh
+    and nothing on the new ones for a snapshot to be brought level with: the
+    advances are only opened."""
+    from apps.budget.costing_service import snapshot_actuals_projected_once
+    from apps.core.bulk import saved_together
+    from apps.core.models import _normalize_datetime_value
+
+    activities = list(activities)
+    unmoved = [
+        AdvanceRequestStatus.DISBURSED,
+        AdvanceRequestStatus.ACCOUNTED,
+        AdvanceRequestStatus.REIMBURSED,
+    ]
     # Partner-delivered work is paid through the PartnerPayment workflow after
     # IA clearance — its cost lines must never mirror into the staff advance
     # channel, or the same cost becomes payable twice (staff advance + partner
     # payment). Drop any advances a previous sync created, except ones whose
     # money already moved (those settle through accountability/return).
-    if activity.delivery_type == "partner":
-        AdvanceRequest.objects.filter(activity=activity).exclude(
-            status__in=[
-                AdvanceRequestStatus.DISBURSED,
-                AdvanceRequestStatus.ACCOUNTED,
-                AdvanceRequestStatus.REIMBURSED,
-            ]
-        ).delete()
+    for activity in activities:
+        if activity.delivery_type == "partner":
+            AdvanceRequest.objects.filter(activity=activity).exclude(
+                status__in=unmoved
+            ).delete()
+    activities = [a for a in activities if a.delivery_type != "partner"]
+    if not activities:
         return
     # A line worth nothing funds nothing: the 2026-09-06 catalogue's
     # per-activity rates default to 0 until the Country Director sets them,
@@ -58,33 +87,81 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     from apps.fund_requests.fundable import vendor_direct_filter
 
     from apps.activities.facilitation import PARTNER_FEE_LINES
+    from apps.activities.models import ActivityScheduleCostLine
 
     # A partner-facilitated training's fee is the partner's, paid through its
     # invoice (apps.activities.facilitation): it gets no staff advance, and
     # one a previous sync opened is dropped below like any vanished line.
-    lines = list(
-        activity.schedule_cost_lines.exclude(amount=0)
+    by_id = {activity.id: activity for activity in activities}
+    lines_of: dict[str, list] = {activity_id: [] for activity_id in by_id}
+    for line in (
+        ActivityScheduleCostLine.objects.filter(activity_id__in=list(by_id))
+        .exclude(amount=0)
         .exclude(vendor_direct_filter())
         .exclude(PARTNER_FEE_LINES)
-    )
-    line_ids = {line.id for line in lines}
+    ):
+        lines_of[line.activity_id].append(line)
+    line_ids = {line.id for lines in lines_of.values() for line in lines}
+
+    def opened(activity, line, responsible, week) -> AdvanceRequest:
+        return AdvanceRequest(
+            activity=activity,
+            budget_line=line,
+            responsible_user_id=responsible,
+            fy=activity.fy,
+            quarter=activity.quarter,
+            month=activity.month,
+            week=week,
+            # What `save()` does to a clock value on its way in
+            # (apps.core.models.TimeStampedModel), done here for rows that
+            # are written together.
+            planned_date=_normalize_datetime_value(activity.scheduled_date)
+            if activity.scheduled_date is not None
+            else None,
+            amount=line.amount,
+            status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+        )
+
+    def week_of(activity):
+        # month/week: activity.planned_month/.planned_week are only
+        # populated when a caller happens to pass them explicitly at
+        # schedule time and are otherwise silently wrong — activity.month
+        # is set reliably by costing_service.apply_to_activity from the
+        # same scheduled_date, so use that + a week-of-month derived from
+        # it (the same formula used throughout the app for this).
+        return (
+            min(5, (activity.planned_date.day - 1) // 7 + 1)
+            if activity.planned_date
+            else None
+        )
+
+    if lines_just_written:
+        to_open = [
+            opened(
+                by_id[activity_id],
+                line,
+                responsible_user_id or by_id[activity_id].responsible_staff_id,
+                week_of(by_id[activity_id]),
+            )
+            for activity_id, lines in lines_of.items()
+            for line in lines
+        ]
+        if to_open:
+            AdvanceRequest.objects.bulk_create(to_open)
+            with snapshot_actuals_projected_once(already_level=True):
+                saved_together(AdvanceRequest, to_open)
+        return
 
     # The bulk-delete + per-line create/update must be atomic: a failure midway
     # would leave the advance-request set inconsistent with the activity's
     # budget lines (some deleted, some not yet recreated).
-    with transaction.atomic():
+    with transaction.atomic(), snapshot_actuals_projected_once():
         # Drop requests for budget lines that no longer exist — UNLESS the advance is
         # already disbursed/accounted/reimbursed (those are past cancellation and the
         # financial record must persist for audit/reconciliation).
-        AdvanceRequest.objects.filter(activity=activity).exclude(
+        AdvanceRequest.objects.filter(activity_id__in=list(by_id)).exclude(
             budget_line_id__in=line_ids
-        ).exclude(
-            status__in=[
-                AdvanceRequestStatus.DISBURSED,
-                AdvanceRequestStatus.ACCOUNTED,
-                AdvanceRequestStatus.REIMBURSED,
-            ]
-        ).delete()
+        ).exclude(status__in=unmoved).delete()
 
         # One advance per line at most (uniq_advance_per_budget_line), read
         # together rather than one query a line.
@@ -92,60 +169,46 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
             adv.budget_line_id: adv
             for adv in AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
         }
-        for line in lines:
-            adv = advances.get(line.id)
-            # month/week: activity.planned_month/.planned_week are only
-            # populated when a caller happens to pass them explicitly at
-            # schedule time and are otherwise silently wrong — activity.month
-            # is set reliably by costing_service.apply_to_activity from the
-            # same scheduled_date, so use that + a week-of-month derived from
-            # it (the same formula used throughout the app for this).
-            week = (
-                min(5, (activity.planned_date.day - 1) // 7 + 1)
-                if activity.planned_date
-                else None
-            )
-            if adv is None:
-                AdvanceRequest.objects.create(
-                    activity=activity,
-                    budget_line=line,
-                    responsible_user_id=responsible,
-                    fy=activity.fy,
-                    quarter=activity.quarter,
-                    month=activity.month,
-                    week=week,
-                    planned_date=activity.scheduled_date,
-                    amount=line.amount,
-                    status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-                )
-            elif adv.status in (
-                AdvanceRequestStatus.DRAFT_FROM_SCHEDULE,
-                AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-                AdvanceRequestStatus.RETURNED,
-            ):
-                # Refresh mutable fields (amount may change on reschedule) —
-                # but only while the advance is still in its owner's hands. A
-                # confirmed/submitted/paid advance's requested amount is part
-                # of the financial record; the costing-service locks normally
-                # prevent reaching here in those states, and this guard keeps
-                # repair/backfill callers equally safe (2026-08-12 audit L-6).
-                adv.amount = line.amount
-                adv.responsible_user_id = responsible or adv.responsible_user_id
-                adv.fy, adv.quarter = activity.fy, activity.quarter
-                adv.month, adv.week = activity.month, week
-                adv.planned_date = activity.scheduled_date
-                adv.save(
-                    update_fields=[
-                        "amount",
-                        "responsible_user_id",
-                        "fy",
-                        "quarter",
-                        "month",
-                        "week",
-                        "planned_date",
-                        "updated_at",
-                    ]
-                )
+        to_open = []
+        for activity_id, lines in lines_of.items():
+            activity = by_id[activity_id]
+            responsible = responsible_user_id or activity.responsible_staff_id
+            week = week_of(activity)
+            for line in lines:
+                adv = advances.get(line.id)
+                if adv is None:
+                    to_open.append(opened(activity, line, responsible, week))
+                elif adv.status in (
+                    AdvanceRequestStatus.DRAFT_FROM_SCHEDULE,
+                    AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+                    AdvanceRequestStatus.RETURNED,
+                ):
+                    # Refresh mutable fields (amount may change on reschedule) —
+                    # but only while the advance is still in its owner's hands. A
+                    # confirmed/submitted/paid advance's requested amount is part
+                    # of the financial record; the costing-service locks normally
+                    # prevent reaching here in those states, and this guard keeps
+                    # repair/backfill callers equally safe (2026-08-12 audit L-6).
+                    adv.amount = line.amount
+                    adv.responsible_user_id = responsible or adv.responsible_user_id
+                    adv.fy, adv.quarter = activity.fy, activity.quarter
+                    adv.month, adv.week = activity.month, week
+                    adv.planned_date = activity.scheduled_date
+                    adv.save(
+                        update_fields=[
+                            "amount",
+                            "responsible_user_id",
+                            "fy",
+                            "quarter",
+                            "month",
+                            "week",
+                            "planned_date",
+                            "updated_at",
+                        ]
+                    )
+        if to_open:
+            AdvanceRequest.objects.bulk_create(to_open)
+            saved_together(AdvanceRequest, to_open)
 
 
 # ── Monthly/period approval routing ──────────────────────────────────────────
@@ -1207,6 +1270,7 @@ def _serialize(adv: AdvanceRequest) -> dict:
 
 __all__ = [
     "sync_for_activity",
+    "sync_for_activities",
     "confirm_advance",
     "self_funded",
     "not_requested",

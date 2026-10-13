@@ -93,6 +93,19 @@ def last_change(user_id: str) -> str | None:
         return None
 
 
+def _school_holder_in_hand(record):
+    """Who holds the record's school, as a 1-tuple, when the school's row is
+    already loaded on the record; None when it would have to be read.
+
+    The members of a day are loaded with their schools, and each of them
+    announces when the day is re-priced: nine visits read nine schools' one
+    column after the commit."""
+    school = record._state.fields_cache.get("school") if record.school_id else None
+    if school is None or "account_owner_id" not in school.__dict__:
+        return None
+    return (str(school.account_owner_id or ""),)
+
+
 def announce_activity(activity) -> None:
     """An activity was saved or deleted."""
     announce(
@@ -101,6 +114,7 @@ def announce_activity(activity) -> None:
             getattr(activity, "monitored_by_staff_id", None),
         ),
         school_id=activity.school_id,
+        school_holder=_school_holder_in_hand(activity),
         cluster_id=activity.cluster_id,
         project_id=activity.project_id,
         partner_ids=(
@@ -117,9 +131,11 @@ def announce(
     cluster_id=None,
     project_id=None,
     partner_ids=(),
+    school_holder=None,
 ) -> None:
     """Push ``plan.changed`` to everyone these belong to, once the change
-    has committed."""
+    has committed. `school_holder`: who holds the school, as a 1-tuple, when
+    the caller has it in hand; read otherwise."""
     if not enabled():
         return
     key = (
@@ -128,45 +144,16 @@ def announce(
         str(cluster_id or ""),
         str(project_id or ""),
         tuple(sorted({str(i) for i in partner_ids if i})),
+        school_holder,
     )
     transaction.on_commit(lambda: _publish(key))
 
 
-def audience(
-    *, staff_ids=(), school_id=None, cluster_id=None, project_id=None, partner_ids=()
-) -> frozenset[str]:
-    """The user ids of everyone whose pages show a record with these."""
+def _line_users(staff: frozenset[str]) -> frozenset[str]:
+    """The users these staff are, and the users above them, `_LEVELS_UP` up."""
     from django.db.models import Q
 
-    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
-
-    staff = {str(i) for i in staff_ids if i}
-    if school_id:
-        from apps.schools.models import School
-
-        staff.add(
-            School.objects.filter(id=school_id)
-            .values_list("account_owner_id", flat=True)
-            .first()
-        )
-    if cluster_id:
-        from apps.clusters.models import Cluster
-
-        staff.add(
-            Cluster.objects.filter(id=cluster_id)
-            .values_list("responsible_staff_id", flat=True)
-            .first()
-        )
-    if project_id:
-        from apps.projects.models import Project
-
-        staff.add(
-            Project.objects.filter(id=project_id)
-            .values_list("manager_staff_id", flat=True)
-            .first()
-        )
-    staff.discard(None)
-    staff.discard("")
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 
     users: set[str] = set()
     # An owner is written as a StaffProfile id or as a User id
@@ -193,6 +180,87 @@ def audience(
                     users.add(user_id)
         known |= above
         line = above
+    return frozenset(users)
+
+
+def _country_users() -> frozenset[str]:
+    """The readers with the whole country in view."""
+    from apps.accounts.models import User
+    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
+
+    return frozenset(
+        User.objects.filter(
+            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
+        ).values_list("id", flat=True)
+    )
+
+
+def _same(key, read):
+    """A fresh read: `audience` asks the database every time."""
+    return read()
+
+
+def _kept(key, read):
+    """`read()`, remembered for as long as an audience is. The officer's line
+    and the country's readers are the same for every school of a day: a save
+    that re-priced nine visits at nine schools read each of them nine times,
+    forty statements after every such commit."""
+    now = time.monotonic()
+    with _audiences_lock:
+        kept = _audiences.get(key)
+        if kept and now - kept[0] < _AUDIENCE_SECONDS:
+            return kept[1]
+    found = read()
+    with _audiences_lock:
+        if len(_audiences) >= _AUDIENCE_KEPT:
+            _audiences.clear()
+        _audiences[key] = (now, found)
+    return found
+
+
+def audience(
+    *,
+    staff_ids=(),
+    school_id=None,
+    cluster_id=None,
+    project_id=None,
+    partner_ids=(),
+    school_holder=None,
+    _read=_same,
+) -> frozenset[str]:
+    """The user ids of everyone whose pages show a record with these."""
+    staff = {str(i) for i in staff_ids if i}
+    if school_id and school_holder is not None:
+        staff.add(school_holder[0])
+    elif school_id:
+        from apps.schools.models import School
+
+        staff.add(
+            School.objects.filter(id=school_id)
+            .values_list("account_owner_id", flat=True)
+            .first()
+        )
+    if cluster_id:
+        from apps.clusters.models import Cluster
+
+        staff.add(
+            Cluster.objects.filter(id=cluster_id)
+            .values_list("responsible_staff_id", flat=True)
+            .first()
+        )
+    if project_id:
+        from apps.projects.models import Project
+
+        staff.add(
+            Project.objects.filter(id=project_id)
+            .values_list("manager_staff_id", flat=True)
+            .first()
+        )
+    staff.discard(None)
+    staff.discard("")
+
+    line_of = frozenset(str(i) for i in staff)
+    users: set[str] = set(_read(("line", line_of), lambda: _line_users(line_of)))
 
     partners = [i for i in partner_ids if i]
     if partners:
@@ -204,13 +272,7 @@ def audience(
             )
         )
 
-    from apps.core.scoping import COUNTRY_SCHEDULING_ROLES
-
-    users.update(
-        User.objects.filter(
-            active_role__in=COUNTRY_SCHEDULING_ROLES, is_active=True
-        ).values_list("id", flat=True)
-    )
+    users.update(_read(("country",), _country_users))
     return frozenset(str(user) for user in users if user)
 
 
@@ -220,13 +282,15 @@ def _audience_for(key: tuple) -> frozenset[str]:
         kept = _audiences.get(key)
         if kept and now - kept[0] < _AUDIENCE_SECONDS:
             return kept[1]
-    staff_ids, school_id, cluster_id, project_id, partner_ids = key
+    staff_ids, school_id, cluster_id, project_id, partner_ids, school_holder = key
     found = audience(
         staff_ids=staff_ids,
         school_id=school_id,
         cluster_id=cluster_id,
         project_id=project_id,
         partner_ids=partner_ids,
+        school_holder=school_holder,
+        _read=_kept,
     )
     with _audiences_lock:
         if len(_audiences) >= _AUDIENCE_KEPT:

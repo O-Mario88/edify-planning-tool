@@ -2,7 +2,7 @@
 {% comment %}
 Verify a CCEO's completion (owner, 2026-10-12: "PL should click verify, then
 the uploaded form"). The lead reads the completion as submitted and the forms
-the officer uploaded — each one shown here, with Open and Download — and then
+the officer uploaded — a photo shown here, a PDF opened in a new tab, each with Download — and then
 decides: Verified confirms it against Salesforce and marks it complete; Return
 sends it back with the reason the officer reads. Opened by the Verify row
 action on Completion Reviews, Cluster Oversight and the lead's week, by a
@@ -40,11 +40,12 @@ the quarantine, never a storage path.
     <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="block rounded-surface bg-slate-50 overflow-hidden" aria-label="Open {% firstof e.original_name 'the form' %} full size">
       <img src="/api/evidence/{{ e.id }}/file" alt="{% firstof e.original_name 'Uploaded form' %}" loading="lazy" class="w-full max-h-72 object-contain">
     </a>
-    {% elif e.mime_type == "application/pdf" or e.pdf_rendition_storage_key %}
-    <embed src="/api/evidence/{{ e.id }}/file" type="application/pdf" class="w-full h-72 rounded-surface border border-slate-200 bg-slate-50" title="{% firstof e.original_name 'Uploaded form' %}">
+    {% else %}
+    {# A PDF is not embedded: the site's content security policy refuses plugin content (object-src 'none'), so the box stayed blank. Open shows it in a new tab. #}
+    <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="btn btn-secondary h-8" data-open-form>Open the form</a>
     {% endif %}
     <div class="flex items-center gap-4 edify-text-caption font-semibold">
-      <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="edify-primary-text hover:underline">Open</a>
+      {% if e.mime_type and "image" in e.mime_type %}<a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="edify-primary-text hover:underline">Open</a>{% endif %}
       <a href="/api/evidence/{{ e.id }}/file?download=1" class="edify-primary-text hover:underline">Download</a>
     </div>
   </article>

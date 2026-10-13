@@ -64,12 +64,16 @@ def parse_date(d_str: str) -> date:
 
 
 def generate_weekly_fund_request(
-    responsible_user_id: str, week_start_date_str: str
+    responsible_user_id: str, week_start_date_str: str, *, savepoint: bool = True
 ) -> WeeklyFundRequest | None:
     """Generate or update the WeeklyFundRequest for a user and week start date.
 
     Finds all scheduled, non-cancelled activities for that week owned by the user,
-    aggregates their budget lines, and writes/updates the WeeklyFundRequest."""
+    aggregates their budget lines, and writes/updates the WeeklyFundRequest.
+
+    `savepoint=False`: for a caller inside a transaction that a failure here
+    must undo whole (`apps.fund_requests.follow`), which a savepoint adds
+    nothing to."""
     week_start = parse_date(week_start_date_str)
     # Ensure it's a Monday to keep the database constraint stable
     week_start = week_start - timedelta(days=week_start.weekday())
@@ -97,7 +101,7 @@ def generate_weekly_fund_request(
     total_amount = sum(line.amount for line in lines)
     fy = get_operational_fy(week_start)
 
-    with transaction.atomic():
+    with transaction.atomic(savepoint=savepoint):
         # Check if request already exists
         wfr = WeeklyFundRequest.objects.filter(
             responsible_user=responsible_user_id, week_start_date=week_start
@@ -192,6 +196,10 @@ def trigger_generate_for_activities(
             planned_date = timezone.localtime(activity.scheduled_date).date()
             week_start = planned_date - timedelta(days=planned_date.weekday())
             buckets[(owner, week_start)] = None
+    from .follow import weeks_wait
+
+    if weeks_wait(buckets):
+        return
     for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 
@@ -222,6 +230,10 @@ def sync_weekly_requests_for_activities(activities, *, prior_buckets=()) -> None
         ).values_list("responsible_user", "week_start_date")
         if owner and week_start
     )
+    from .follow import weeks_wait
+
+    if weeks_wait(buckets):
+        return
     for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 

@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 
 import logging
+import threading
 from typing import Any
 
 from django.db import DEFAULT_DB_ALIAS, connection, connections, transaction
@@ -190,7 +191,12 @@ def log(
         # held for one short append. A rolled-back transaction takes its
         # unsealed rows with it, exactly as it took chained rows before.
         deferred = _inside_callers_transaction()
-        with transaction.atomic():
+        # A best-effort row is written under a savepoint, so that failing to
+        # write it leaves the caller's transaction usable. A required row has
+        # no such need: its failure is raised and undoes the caller's
+        # transaction, which is what `required` asks for. Two round trips a
+        # row, and a day's pricing writes one row a visit.
+        with transaction.atomic(savepoint=not (required and deferred)):
             if deferred:
                 prev_hash = next_seq = hash_value = None
                 _seal_after_commit()
@@ -228,34 +234,34 @@ def log(
                 else {"value": fields.payload}
             )
 
-            def _project_committed_audit() -> None:
-                try:
-                    from apps.realtime.domain_events import publish_audit_event
+            if deferred:
+                # The rows of one transaction are projected together when it
+                # commits (`_ProjectOnCommit`).
+                _project_with_the_rest(audit_row, fields, event_payload)
+            else:
 
-                    audit_seq = audit_row.seq
-                    if audit_seq is None:
-                        # Sealed by the commit callback registered before this.
-                        audit_seq = (
-                            AuditLog.objects.filter(id=audit_row.id)
-                            .values_list("seq", flat=True)
-                            .first()
+                def _project_committed_audit() -> None:
+                    try:
+                        from apps.realtime.domain_events import publish_audit_event
+
+                        publish_audit_event(
+                            event_type=fields.action,
+                            subject_kind=fields.subject_kind,
+                            subject_id=fields.subject_id,
+                            actor_id=fields.actor_id,
+                            payload=event_payload,
+                            audit_seq=audit_row.seq,
+                            success=fields.success,
+                            reason=fields.reason,
                         )
-                    publish_audit_event(
-                        event_type=fields.action,
-                        subject_kind=fields.subject_kind,
-                        subject_id=fields.subject_id,
-                        actor_id=fields.actor_id,
-                        payload=event_payload,
-                        audit_seq=audit_seq,
-                        success=fields.success,
-                        reason=fields.reason,
-                    )
-                except Exception as exc:  # pragma: no cover - defensive seam
-                    logger.error(
-                        "Failed to project audit event (%s): %s", fields.action, exc
-                    )
+                    except Exception as exc:  # pragma: no cover - defensive seam
+                        logger.error(
+                            "Failed to project audit event (%s): %s",
+                            fields.action,
+                            exc,
+                        )
 
-            transaction.on_commit(_project_committed_audit)
+                transaction.on_commit(_project_committed_audit)
     except Exception as exc:  # noqa: BLE001 — default callers remain best-effort
         # `action` is whatever the caller passed and the exception text is
         # whatever the database said, so both are escaped as they enter the
@@ -427,10 +433,101 @@ def _seal_after_commit(using: str = DEFAULT_DB_ALIAS) -> None:
     transaction.on_commit(_seal_committed_rows, using=using)
 
 
+class _JustSealed(threading.local):
+    """The sequence numbers the seal of the commit in hand gave out, by row.
+
+    A row written inside a caller's transaction has no number until the seal
+    that runs at the commit, and the projection of each such row then read
+    its number back, one statement a row: a reschedule that re-priced nine
+    visits read nine. The seal and the projections run one after the other on
+    the committing thread, so the seal leaves its numbers here and each
+    projection takes its own. A row not found here is read, as before."""
+
+    def __init__(self) -> None:
+        self.seqs: dict[str, int] = {}
+
+    def pop(self, row_id, default=None):
+        return self.seqs.pop(row_id, default)
+
+
+_just_sealed = _JustSealed()
+
+
+class _ProjectOnCommit:
+    """The audit rows one transaction wrote, projected together at its commit.
+
+    Each row used to be projected by a commit callback of its own: it read
+    back the number the seal had just given it and wrote one domain event,
+    two statements a row, and a reschedule that re-priced nine visits wrote
+    ten rows. The rows now wait here and their events are written in one
+    statement.
+
+    Kept in Django's own list of what to do on commit, so a savepoint that
+    rolls back takes the rows first written inside it with it. A row written
+    later from a savepoint that then rolls back is still listed here but is
+    no longer in the table: only rows the commit kept are projected (the seal
+    names them; a row it did not seal is looked for)."""
+
+    def __init__(self) -> None:
+        self.rows: list[tuple] = []
+
+    def __call__(self) -> None:
+        rows, self.rows = self.rows, []
+        try:
+            from apps.realtime.domain_events import publish_audit_events
+
+            seqs = {}
+            unsealed = []
+            for audit_row, _fields, _payload in rows:
+                seq = _just_sealed.pop(audit_row.id, None)
+                if seq is None:
+                    unsealed.append(audit_row.id)
+                else:
+                    seqs[audit_row.id] = seq
+            if unsealed:
+                seqs.update(
+                    AuditLog.objects.filter(id__in=unsealed).values_list("id", "seq")
+                )
+            publish_audit_events(
+                [
+                    {
+                        "event_type": fields.action,
+                        "subject_kind": fields.subject_kind,
+                        "subject_id": fields.subject_id,
+                        "actor_id": fields.actor_id,
+                        "payload": event_payload,
+                        "audit_seq": seqs[audit_row.id],
+                        "success": fields.success,
+                        "reason": fields.reason,
+                    }
+                    for audit_row, fields, event_payload in rows
+                    if audit_row.id in seqs
+                ]
+            )
+        except Exception as exc:  # pragma: no cover - defensive seam
+            logger.error("Failed to project audit events: %s", exc)
+
+
+def _project_with_the_rest(audit_row, fields, event_payload) -> None:
+    waiting = next(
+        (
+            callback
+            for _sids, callback, _robust in connection.run_on_commit
+            if isinstance(callback, _ProjectOnCommit)
+        ),
+        None,
+    )
+    if waiting is None:
+        waiting = _ProjectOnCommit()
+        transaction.on_commit(waiting)
+    waiting.rows.append((audit_row, fields, event_payload))
+
+
 def _seal_committed_rows() -> None:
     try:
-        seal_pending()
+        _just_sealed.seqs = {row.id: row.seq for row in _seal_pending_rows()}
     except Exception as exc:  # noqa: BLE001 - the scheduled seal retries
+        _just_sealed.seqs = {}
         logger.error("Audit seal after commit failed: %s", exc)
 
 
@@ -441,6 +538,10 @@ def seal_pending(*, limit: int = 5000) -> int:
     of transactions still open are invisible here and wait for their own
     commit. Returns how many rows were sealed.
     """
+    return len(_seal_pending_rows(limit=limit))
+
+
+def _seal_pending_rows(*, limit: int = 5000) -> list:
     with transaction.atomic():
         _take_chain_lock()
         pending = list(
@@ -449,7 +550,7 @@ def seal_pending(*, limit: int = 5000) -> int:
             .order_by("created_at", "id")[:limit]
         )
         if not pending:
-            return 0
+            return []
         last = _chain_tail()
         prev_hash = last.hash if last else None
         next_seq = (last.seq + 1) if last else 1
@@ -460,7 +561,7 @@ def seal_pending(*, limit: int = 5000) -> int:
             prev_hash = row.hash
             next_seq += 1
         AuditLog.objects.bulk_update(pending, ["seq", "prev_hash", "hash"])
-    return len(pending)
+    return pending
 
 
 __all__ = ["log", "seal_pending", "verify_chain"]

@@ -68,9 +68,11 @@ class VerifyOpensTheUploadedFormTest(ReviewFixture):
             self.assertIn(f'data-evidence-file="{record.id}"', html)
             self.assertIn(f'href="/api/evidence/{record.id}/file"', html)
             self.assertIn(f'href="/api/evidence/{record.id}/file?download=1"', html)
-        # The PDF is embedded, the photo shown, so the lead reads the form here.
-        self.assertIn(f'<embed src="/api/evidence/{form.id}/file"', html)
+        # The photo is shown; the PDF opens in a new tab (the site's content
+        # security policy refuses embedded plugin content, so none is tried).
         self.assertIn(f'<img src="/api/evidence/{photo.id}/file"', html)
+        self.assertIn("data-open-form", html)
+        self.assertNotIn("<embed", html)
         self.assertNotIn(hidden.id, html)
         self.assertIn("Visit Form — uploaded", html)
         # Then decides: Verified posts the confirm; Return opens the reason.
