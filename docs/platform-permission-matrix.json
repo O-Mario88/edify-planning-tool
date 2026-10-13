@@ -14116,6 +14116,25 @@
    "view": "apps.frontend.views.my_plan_views.my_plan_export_drawer_view"
   },
   {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/readiness",
+   "route_name": "my_plan_readiness",
+   "view": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view"
+  },
+  {
    "page_permission": "my_professional_development",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19704,27 +19723,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 460,
-  "Admin": 1110,
+  "Accountant": 461,
+  "Admin": 1111,
   "BusinessTransformationOfficer": 242,
-  "CCEO": 584,
-  "CountryDirector": 846,
+  "CCEO": 585,
+  "CountryDirector": 847,
   "HumanResources": 330,
-  "ImpactAssessment": 715,
+  "ImpactAssessment": 716,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 238,
-  "PartnerFieldOfficer": 238,
-  "Program Lead": 694,
-  "ProjectCoordinator": 488,
+  "PartnerAdmin": 239,
+  "PartnerFieldOfficer": 239,
+  "Program Lead": 695,
+  "ProjectCoordinator": 489,
   "RegionalProgramLead": 356,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1207,
-  "routes_total": 1406,
+  "routes_guarded": 1208,
+  "routes_total": 1407,
   "routes_unguarded": 199,
   "surfaces_no_role_can_reach": 0
  },

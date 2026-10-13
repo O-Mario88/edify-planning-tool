@@ -12,7 +12,18 @@ that are also with a Partner (booked twice), and Core schools with more than
 the two staff and two Partner visits of the package.
 Shown to the two roles that plan visits only.
 {% endcomment %}
-{% if readiness %}
+{% if readiness_later %}
+{% comment %}Asked for once the page has been drawn (owner, 2026-10-13: the
+load in a second or less): the table reads every school the reader holds, and
+the plan below it no longer waits for that. The training summary under it
+comes with it. The page's own query string goes along, so the year and the
+links are the page's. The place is held at about the table's height, so the
+plan below it does not jump when the table arrives.{% endcomment %}
+<div id="my-plan-readiness" class="min-h-[300px]" data-my-plan-readiness-later aria-live="polite" aria-busy="true"
+     hx-get="/my-plan/readiness{% querystring %}" hx-trigger="load" hx-swap="outerHTML">
+  <p class="edify-text-caption edify-text-muted">Working out your planned and remaining, and your training summary…</p>
+</div>
+{% elif readiness %}
 {% data_table name="my-plan-readiness" %}
   {% slot title %}Planned and remaining · FY {{ selected_fy|default:fy }}{% endslot %}
   {% slot summary %}Readiness {{ readiness.score }}% · {{ readiness.schools_total|intcomma }} schools held{% endslot %}

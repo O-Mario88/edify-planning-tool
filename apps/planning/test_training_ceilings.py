@@ -1549,7 +1549,11 @@ class WhoSeesTheSummary(CeilingFixture):
         self.assertEqual([r.name for r in own.rows], ["Leadership"])
 
     def test_my_plan_shows_the_officer_their_own_summary_only(self):
-        response = self.client_for(self.user).get(f"/my-plan?period=fy&fy={self.fy}")
+        # The summary comes with Planned and remaining, which My Plan asks
+        # for once it is drawn, with the page's own query string.
+        response = self.client_for(self.user).get(
+            f"/my-plan/readiness?period=fy&fy={self.fy}"
+        )
 
         self.assertEqual(response.status_code, 200)
         rows = response.context["my_training_summary"]

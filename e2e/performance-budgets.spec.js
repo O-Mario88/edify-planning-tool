@@ -83,6 +83,8 @@ async function settle(page) {
 }
 
 // [account, page, whether the page fetches sections after it is shown]
+// My Plan fetches one (Planned and remaining, 2026-10-13) into a place it
+// holds at the table's height, so it stays held to the bound on layout shift.
 const FIRST_FRAME_PAGES = [
   ['cceo1@edify.org', '/planning', false],
   ['cceo1@edify.org', '/my-plan', false],
