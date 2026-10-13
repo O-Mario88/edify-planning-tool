@@ -196,7 +196,10 @@ class _Fixture(TestCase):
 
 
 class ColumnValuesTest(_Fixture):
-    def test_the_stored_id_and_the_uploaded_form(self):
+    def test_the_stored_id_alone_and_no_form_is_read(self):
+        """UPLOAD-OFF (owner, 2026-10-13): the Salesforce ID is the whole of
+        completing. A file that is on record is not read, and its half is
+        always satisfied."""
         visit = self._act(D1, salesforce_activity_id="SVE-1234")
         self._evidence(visit, "visit_form")
         training = self._act(
@@ -214,7 +217,7 @@ class ColumnValuesTest(_Fixture):
             columns[visit.id],
             {
                 "salesforce_id": "SVE-1234",
-                "evidence_label": "Visit Form",
+                "evidence_label": "",
                 "salesforce_ok": True,
                 "evidence_ok": True,
             },
@@ -223,18 +226,17 @@ class ColumnValuesTest(_Fixture):
             columns[training.id],
             {
                 "salesforce_id": "TS-5678",
-                "evidence_label": "Attendance",
+                "evidence_label": "",
                 "salesforce_ok": True,
                 "evidence_ok": True,
             },
         )
-        # Blank reads NOT_IN_SF and NO_EVIDENCE on the page; a quarantined
-        # file is not evidence, as completion counts it.
+        # Blank reads NOT_IN_SF on the page; no file is looked for.
         empty = {
             "salesforce_id": "",
             "evidence_label": "",
             "salesforce_ok": False,
-            "evidence_ok": False,
+            "evidence_ok": True,
         }
         self.assertEqual(columns[bare.id], empty)
         self.assertEqual(columns[hidden.id], empty)
@@ -252,9 +254,9 @@ class ColumnValuesTest(_Fixture):
         self.assertEqual(
             (items[0].salesforce_id, items[0].evidence_label), ("SVE-9", "")
         )
-        # Verified, but the visit form is not in: not complete, and says so.
-        self.assertFalse(items[0].is_complete)
-        self.assertEqual(items[0].completion_gap, MISSING_EVIDENCE)
+        # Verified with its Salesforce ID: complete, with no form asked for.
+        self.assertTrue(items[0].is_complete)
+        self.assertEqual(items[0].completion_gap, "")
         self.assertEqual((items[1].salesforce_id, items[1].evidence_label), ("", ""))
         self.assertEqual(items[1].completion_gap, "")
 
@@ -280,7 +282,7 @@ class MyPlanTest(_Fixture):
         )
         open_early = self._act(early)
         open_mid = self._act(mid, status="in_progress")
-        # Marked completed, but neither half is in: not complete.
+        # Marked completed, but the Salesforce ID is not in: not complete.
         legacy = self._act(late, status="completed")
         self.client.force_login(self.cceo)
         response = self.client.get(
@@ -288,35 +290,34 @@ class MyPlanTest(_Fixture):
         )
         self.assertEqual(response.status_code, 200)
         rows = response.context["school_visits"]
-        # Complete only with both columns green: the submitted visit without
-        # its form and the legacy one sit with the open work, by date.
+        # Complete with the Salesforce ID in (the form is no longer asked
+        # for): the submitted visit sits with the complete work, and the
+        # legacy one, with no ID, with the open work, by date.
         self.assertEqual(
             [r["id"] for r in rows],
             [
                 open_early.id,
-                submitted.id,
                 open_mid.id,
                 open_late.id,
                 legacy.id,
                 done_early.id,
+                submitted.id,
             ],
         )
         by_id = {r["id"]: r for r in rows}
         self.assertEqual(by_id[done_early.id]["salesforce_id"], "SVE-1")
-        self.assertEqual(by_id[done_early.id]["evidence_label"], "Visit Form")
+        self.assertEqual(by_id[done_early.id]["evidence_label"], "")
         self.assertTrue(by_id[done_early.id]["shows_complete"])
-        self.assertEqual(by_id[submitted.id]["status_label"], MISSING_EVIDENCE)
-        self.assertEqual(by_id[legacy.id]["status_label"], MISSING_BOTH)
+        self.assertTrue(by_id[submitted.id]["is_complete"])
+        self.assertEqual(by_id[submitted.id]["completion_gap"], "")
+        self.assertEqual(by_id[legacy.id]["status_label"], MISSING_SF)
         self.assertFalse(by_id[legacy.id]["shows_complete"])
         html = response.content.decode()
-        for text in (
-            ">Salesforce ID</th>",
-            ">Evidence</th>",
-            NOT_IN_SF,
-            NO_EVIDENCE,
-            "SVE-2",
-        ):
+        for text in (">Salesforce ID</th>", NOT_IN_SF, "SVE-2"):
             self.assertIn(text, html)
+        # The Evidence column left the tables with the upload.
+        for text in (">Evidence</th>", NO_EVIDENCE, MISSING_EVIDENCE, MISSING_BOTH):
+            self.assertNotIn(text, html)
 
 
 class OversightOrderTest(_Fixture):
@@ -333,7 +334,7 @@ class OversightOrderTest(_Fixture):
         self._evidence(done, "visit_form")
         late = self._act(D3)
         early = self._act(D1)
-        # Verified, but neither half is in: not complete.
+        # Verified, but the Salesforce ID is not in: not complete.
         half = self._act(D1, status="ia_verified")
 
         def item(activity):
@@ -363,7 +364,7 @@ class OversightOrderTest(_Fixture):
         )
         self.assertEqual(visits[-1].salesforce_id, "SVE-7")
         self.assertTrue(visits[-1].shows_complete)
-        self.assertEqual(visits[1].completion_gap, MISSING_BOTH)
+        self.assertEqual(visits[1].completion_gap, MISSING_SF)
         self.assertFalse(visits[1].shows_complete)
 
     def test_partner_monitoring_keeps_hand_backs_first_then_open_by_date(self):
@@ -386,7 +387,7 @@ class OversightOrderTest(_Fixture):
                 school_name=school,
             )
 
-        # Submitted to IA with the Salesforce ID and the visit form: complete.
+        # Submitted to IA with the Salesforce ID: complete.
         delivered = self._act(
             D1,
             status="awaiting_ia_verification",
@@ -394,7 +395,8 @@ class OversightOrderTest(_Fixture):
             salesforce_activity_id="SVE-8",
         )
         self._evidence(delivered, "visit_form")
-        # Submitted without either half: not complete, and says so.
+        # Handed in without a Salesforce ID: not complete, and waiting on the
+        # reviewer who enters it, so the row names nothing as missing.
         bare = self._act(D1, status="awaiting_ia_verification", delivery_type="partner")
         items = [
             item(
@@ -418,13 +420,16 @@ class OversightOrderTest(_Fixture):
             ["returned", "bare", "early", "late", "undated", "done"],
         )
         by_key = {i.partner_assignment_id: i for i in items}
-        self.assertEqual(by_key["bare"].completion_gap, MISSING_BOTH)
+        self.assertEqual(by_key["bare"].completion_gap, "")
+        self.assertFalse(by_key["bare"].is_complete)
         self.assertEqual(by_key["done"].salesforce_id, "SVE-8")
 
 
 class TemplateTest(SimpleTestCase):
-    """Every planned activities table draws Salesforce ID and Evidence just
-    before Status, from the one shared cell partial, and pins its actions."""
+    """Every planned activities table draws Salesforce ID just before
+    Status, from the one shared cell partial, and pins its actions. The
+    Evidence heading that sat between them is commented out with the upload
+    (UPLOAD-OFF, owner 2026-10-13), never live."""
 
     TABLES = {
         "templates/partials/my_plan/school_visits.html": 1,
@@ -451,11 +456,18 @@ class TemplateTest(SimpleTestCase):
         for path, count in self.TABLES.items():
             source = (ROOT / path).read_text()
             with self.subTest(path=path):
+                # Template comments are not drawn: read the page without them.
+                live = re.sub(r"\{#.*?#\}", "", source)
                 heads = re.findall(
-                    r">Salesforce ID</th>\s*<th[^>]*>Evidence</th>\s*<th[^>]*>Status</th>",
-                    source,
+                    r">Salesforce ID</th>\s*<th[^>]*>Status</th>",
+                    live,
                 )
                 self.assertEqual(len(heads), count)
+                self.assertNotRegex(live, r"<th[^>]*>Evidence</th>")
+                self.assertEqual(
+                    len(re.findall(r"\{# UPLOAD-OFF[^\n]*>Evidence</th> #\}", source)),
+                    count,
+                )
                 if path not in self.UNPINNED:
                     self.assertEqual(
                         source.count("data-pinned-actions"),

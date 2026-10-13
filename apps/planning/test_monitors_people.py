@@ -218,7 +218,8 @@ class TheExecutionMonitor(PeopleFixture):
         self.assertEqual((cara.planned, cara.due, cara.delivered), (8, 7, 4))
         self.assertEqual(cara.visits_delivered, 4)
         self.assertEqual(cara.complete, 1)
-        self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 3))
+        # No form is asked for (UPLOAD-OFF, owner 2026-10-13): it was (3, 3).
+        self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 0))
         # The day itself is not late, and returned work is its own list.
         self.assertEqual((cara.overdue, cara.returned), (1, 1))
         self.assertEqual((cara.verified, cara.awaiting_ia), (1, 1))

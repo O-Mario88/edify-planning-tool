@@ -17,4 +17,7 @@ Context: `row` with `salesforce_id`, `salesforce_ok`, `evidence_label` and
 classes.
 {% endcomment %}
 <td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Salesforce ID" data-salesforce-id>{% if row.salesforce_id %}<span class="font-mono font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.salesforce_id }}</span>{% else %}<span class="text-slate-400">Not in SF</span>{% endif %}</td>
+{# UPLOAD-OFF (owner, 2026-10-13): activities are completed with the visit ID and the training ID alone, so the Evidence cell is switched off, not deleted. Remove the comment tags to bring it back, and the Evidence heading in each table that includes this partial. #}
+{% comment %}UPLOAD-OFF
 <td class="{{ completion_cell_class|default:'whitespace-nowrap' }}" data-label="Evidence" data-evidence>{% if row.evidence_ok %}<span class="font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ row.evidence_label }}</span>{% elif row.evidence_label %}<span class="text-amber-700" data-tone="warning" title="Uploaded, but not the form this activity is completed with">{{ row.evidence_label }}</span>{% else %}<span class="text-slate-400">No Evidence Uploaded</span>{% endif %}</td>
+{% endcomment %}

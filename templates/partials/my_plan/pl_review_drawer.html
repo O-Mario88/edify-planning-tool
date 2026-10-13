@@ -1,16 +1,20 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% comment %}
-Verify a CCEO's completion (owner, 2026-10-12: "PL should click verify, then
-the uploaded form"). The lead reads the completion as submitted and the forms
-the officer uploaded — each one shown here, with Open and Download — and then
-decides: Verified confirms it against Salesforce and marks it complete; Return
-sends it back with the reason the officer reads. Opened by the Verify row
-action on Completion Reviews, Cluster Oversight and the lead's week, by a
-To-Do, and by Partner Monitoring's Trainings table (where the decision is
-called Confirm Verification). Served by my_plan_views.pl_review_drawer; the
-POST is decided again by apps.pl_review.services.confirm. Files are always
-served through /api/evidence/<id>/file, which checks the reader's reach and
-the quarantine, never a storage path.
+Verify a CCEO's completion (owner, 2026-10-12: "PL should click verify").
+The lead reads the completion as submitted and the visit ID or training ID
+the officer completed it with, checks that record in Salesforce, and then
+decides: Verified confirms it and marks it complete; Return sends it back
+with the reason the officer reads. Opened by the Verify row action on
+Completion Reviews, Cluster Oversight and the lead's week, by a To-Do, and by
+Partner Monitoring's Trainings table (where the decision is called Confirm
+Verification). Served by my_plan_views.pl_review_drawer; the POST is decided
+again by apps.pl_review.services.confirm.
+
+UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly visit ID
+and training IDs to complete the activities ... just comment the code out, we
+may need it later"): the Uploaded form section below is switched off, not
+deleted. Remove the comment tags around it, and the matching lines in the
+view, to bring it back.
 {% endcomment %}
 {% block drawer_title %}{{ form_title }}{% endblock %}
 {% block drawer_subtitle %}{{ form_subtitle }}{% endblock %}
@@ -28,6 +32,21 @@ the quarantine, never a storage path.
   {% endfor %}
 </dl>
 
+<section class="space-y-2" aria-labelledby="pl-review-id" data-completion-id>
+  <h3 id="pl-review-id" class="edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce ID{% endif %}</h3>
+  {% if salesforce_id %}
+  <p class="rounded-surface border border-slate-200 px-3 py-2 font-mono text-[14px] font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ salesforce_id }}</p>
+  <p class="edify-text-caption text-slate-500">Find this record in Salesforce and check it against the details above before you decide.</p>
+  {% elif salesforce_kind %}
+  <div class="edify-note" data-tone="warning" role="status" data-no-salesforce-id>
+    <p class="edify-note__body">No {% if salesforce_kind == "training" %}training ID{% else %}visit ID{% endif %} was entered with this completion. Return it to the officer with the reason.</p>
+  </div>
+  {% else %}
+  <p class="edify-text-caption text-slate-500">This activity has no Salesforce record, so it carries no ID.</p>
+  {% endif %}
+</section>
+
+{% comment %}UPLOAD-OFF (owner, 2026-10-13)
 <section class="space-y-2" aria-labelledby="pl-review-forms" data-uploaded-forms>
   <h3 id="pl-review-forms" class="edify-text-caption font-semibold text-slate-600">Uploaded form{{ evidence|length|pluralize }}</h3>
   {% for e in evidence %}
@@ -61,6 +80,7 @@ the quarantine, never a storage path.
   </ul>
   {% endif %}
 </section>
+{% endcomment %}
 
 <form method="post" action="{{ form_action }}" class="hr-drawer-form">
   {% csrf_token %}

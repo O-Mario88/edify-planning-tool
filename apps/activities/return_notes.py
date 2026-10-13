@@ -38,9 +38,11 @@ COMMON_REASONS = (
     "Salesforce ID entered, but no participants in Salesforce",
     "Participants not entered in Salesforce",
     "Activity ID missing or wrong in Salesforce",
-    "Attendance form missing or unreadable",
-    "Participant numbers do not match the attendance form",
-    "Evidence missing or unclear",
+    # UPLOAD-OFF (owner, 2026-10-13): these three named an uploaded form.
+    # "Attendance form missing or unreadable",
+    # "Participant numbers do not match the attendance form",
+    # "Evidence missing or unclear",
+    "Participant numbers do not match Salesforce",
     "Wrong school, cluster or activity date",
 )
 

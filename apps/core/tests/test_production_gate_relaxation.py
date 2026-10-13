@@ -13,6 +13,8 @@ regression in the underlying rule is caught rather than silently skipped.
 
 from __future__ import annotations
 
+import unittest
+
 import datetime
 
 from freezegun import freeze_time
@@ -181,6 +183,10 @@ class ProductionGateRelaxationTest(TestCase):
         )
         return activity
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_complete_evidence_requirement_fires_when_strict(self):
         from apps.activities.services import complete
 
@@ -193,6 +199,10 @@ class ProductionGateRelaxationTest(TestCase):
             )
         self.assertIn("Required evidence missing", str(ctx.exception.detail))
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_submit_for_review_evidence_requirement_fires_when_strict(self):
         """This gate had NO opt-in flag before, so no test could reach it."""
         from apps.activities.services import submit_for_review

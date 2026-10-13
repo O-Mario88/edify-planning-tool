@@ -1,11 +1,15 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% comment %}
 Verify & Confirm Partner work from Partner Monitoring (owner, 2026-09-26).
-The reviewer sees what the Partner submitted — every evidence file, and the
-checklist the activity requires — and records the Salesforce Activity ID that
-confirms it. With no evidence there is nothing to confirm: the drawer says so
-and offers Return instead. The POST is decided again by ia_confirm
+The reviewer records the Salesforce Activity ID that confirms the work the
+Partner handed in. The POST is decided again by ia_confirm
 (apps/frontend/views/partner_review_views.py).
+
+UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly visit ID
+and training IDs to complete the activities ... just comment the code out, we
+may need it later"): the drawer used to list every evidence file and the
+checklist the activity requires, and offered Return in place of Verify when
+there was no file. Both are switched off below, not deleted.
 {% endcomment %}
 {% block drawer_title %}{% if a %}Verify {% firstof a.school.name a.cluster.name "Partner work" %}{% else %}Not available{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% if a %}Submitted by {{ partner_name }}{% endif %}{% endblock %}
@@ -26,6 +30,7 @@ and offers Return instead. The POST is decided again by ia_confirm
     {% if a.submitted_to_ia_at %}<div class="flex gap-2"><dt class="text-slate-500">Submitted:</dt><dd class="font-semibold text-slate-800">{{ a.submitted_to_ia_at|date:"j M Y" }}</dd></div>{% endif %}
   </dl>
 
+  {% comment %}UPLOAD-OFF (owner, 2026-10-13)
   <section class="space-y-2" aria-labelledby="partner-verify-evidence">
     <h3 id="partner-verify-evidence" class="edify-text-caption font-semibold text-slate-600">Evidence submitted</h3>
     {% if evidence %}
@@ -50,13 +55,14 @@ and offers Return instead. The POST is decided again by ia_confirm
     </ul>
     {% endif %}
   </section>
+  {% endcomment %}
 
   <div class="space-y-1">
-    <label for="partner-verify-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce Activity ID <span class="text-rose-500">*</span></label>
+    <label for="partner-verify-sf" class="block edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce Activity ID{% endif %} <span class="text-rose-500">*</span></label>
     {% if a.salesforce_activity_id %}
     <input id="partner-verify-sf" type="text" value="{{ a.salesforce_activity_id }}" readonly class="w-full">
     {% else %}
-    <input id="partner-verify-sf" name="salesforce_id" type="text" required maxlength="64" autocomplete="off" placeholder="The activity's ID in Salesforce" class="w-full">
+    <input id="partner-verify-sf" name="salesforce_id" type="text" required maxlength="64" autocomplete="off" placeholder="{% if salesforce_kind == "training" %}TS-…{% elif salesforce_kind == "visit" %}SV-… or SVE-…{% else %}The activity's ID in Salesforce{% endif %}" class="w-full">
     {% endif %}
   </div>
   <div class="space-y-1">
@@ -66,6 +72,12 @@ and offers Return instead. The POST is decided again by ia_confirm
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    {# UPLOAD-OFF (owner, 2026-10-13): Verify no longer waits on a file; Return sits beside it for a submission that is wrong. #}
+    <button type="button" class="btn btn-secondary h-8"
+            hx-get="/partner-oversight/return?activity_id={{ a.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            hx-disabled-elt="this">Return with reason</button>
+    <button type="submit" class="btn btn-primary h-8">Verify &amp; Confirm</button>
+    {% comment %}UPLOAD-OFF
     {% if evidence %}
     <button type="submit" class="btn btn-primary h-8">Verify &amp; Confirm</button>
     {% else %}
@@ -73,6 +85,7 @@ and offers Return instead. The POST is decided again by ia_confirm
             hx-get="/partner-oversight/return?activity_id={{ a.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
             hx-disabled-elt="this">Return with reason</button>
     {% endif %}
+    {% endcomment %}
   </div>
 </form>
 {% endif %}

@@ -5,7 +5,7 @@
   {% paginate section.rows section.kind 20 as pager %}
   <div class="overflow-x-auto">
     <table class="edify-record-table w-full text-left" aria-label="{{ section.label }} school plans" data-pinned-actions>
-      <thead><tr><th>School ID</th><th>School name</th><th>District</th><th>District Type</th><th>Activity</th><th>Planned date</th><th>Salesforce ID</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>School ID</th><th>School name</th><th>District</th><th>District Type</th><th>Activity</th><th>Planned date</th><th>Salesforce ID</th>{# UPLOAD-OFF (owner, 2026-10-13): <th>Evidence</th> #}<th>Status</th><th>Actions</th></tr></thead>
       <tbody>{% for row in pager.rows %}<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
         <td>{{ row.school_id }}</td><td><a href="{{ row.place_url }}" class="font-semibold hover:underline">{{ row.school_name }}</a></td><td data-label="District">{{ row.district|default:"—" }}</td><td data-label="District Type" data-district-type>{{ row.district_type|default:"—" }}</td>
         <td>{{ row.activity_type_label }}</td><td>{{ row.planned_date|date:"j M Y"|default:"Awaiting schedule" }}{% include "partials/my_plan/day_off_flag.html" %}</td>

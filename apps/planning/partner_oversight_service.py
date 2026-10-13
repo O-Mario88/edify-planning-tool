@@ -1309,7 +1309,8 @@ def _set_next_action(item) -> None:
     elif item.evidence_status in ("", "none"):
         item.next_action_owner, item.next_action = (
             item.partner_name or "Partner",
-            "Execute and upload evidence",
+            # UPLOAD-OFF (owner, 2026-10-13): was "Execute and upload evidence".
+            "Deliver and hand in the work",
         )
     else:
         item.next_action_owner, item.next_action = (

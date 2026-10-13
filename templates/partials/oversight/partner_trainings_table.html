@@ -29,7 +29,7 @@ drawer, so this page stays read-only (no write from the table itself).
         <th scope="col">SSA Intervention</th>
         <th scope="col">Training Date</th>
         <th scope="col">Salesforce ID</th>
-        <th scope="col">Evidence</th>
+        {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col">Evidence</th> #}
         <th scope="col">Status</th>
         <th scope="col" class="text-right">Cost</th>
         <th scope="col" class="school-plan-table__actions">Action</th>
@@ -71,7 +71,7 @@ drawer, so this page stays read-only (no write from the table itself).
             {% endif %}
           </td>
         </tr>
-      {% empty %}<tr><td colspan="10" class="partner-plan-table__empty">No trainings facilitated by this Partner for the selected team.</td></tr>{% endfor %}</tbody>
+      {% empty %}<tr><td colspan="9" class="partner-plan-table__empty">No trainings facilitated by this Partner for the selected team.</td></tr>{% endfor %}</tbody>
     </table>
   </div>
   {% include "components/table_pager.html" with pager=page param="partner_trainings_page" pagination_label="Trainings facilitated" %}

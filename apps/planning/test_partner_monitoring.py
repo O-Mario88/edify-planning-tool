@@ -578,11 +578,15 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
             headers={"HX-Request": "true"},
         )
 
-    def test_the_verify_drawer_shows_the_evidence_and_asks_for_the_salesforce_id(self):
+    def test_the_verify_drawer_asks_for_the_salesforce_id_and_shows_no_file(self):
+        """UPLOAD-OFF (owner, 2026-10-13): the work is confirmed on its visit
+        or training ID; the file the Partner once uploaded is not listed."""
         body = self.drawer("verify").content.decode()
         self.assertIn('hx-post="/partner-oversight/verify/submit"', body)
-        self.assertIn("visit.pdf", body)
+        self.assertNotIn("visit.pdf", body)
+        self.assertNotIn("/api/evidence/", body)
         self.assertIn('name="salesforce_id"', body)
+        self.assertIn("Visit ID", body)
         self.assertIn("Verify &amp; Confirm", body)
 
     def test_verify_and_confirm_confirms_the_work(self):
@@ -596,30 +600,49 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
         self.assertEqual(self.activity.status, "ia_verified")
         self.assertEqual(self.activity.salesforce_activity_id, "SVE-PM-0001")
 
-    def test_with_no_evidence_there_is_nothing_to_confirm_only_to_return(self):
+    def test_with_no_file_the_work_can_still_be_confirmed_or_returned(self):
+        """UPLOAD-OFF (owner, 2026-10-13): it was "with no evidence there is
+        nothing to confirm, only to return". No file is asked for now, so the
+        drawer offers Verify and Return alike."""
         from apps.evidence.models import EvidenceRecord
 
         EvidenceRecord.objects.filter(activity_id=self.activity.id).delete()
         body = self.drawer("verify").content.decode()
-        self.assertIn("data-no-evidence", body)
-        self.assertNotIn('type="submit"', body)
+        self.assertNotIn("data-no-evidence", body)
+        self.assertIn('type="submit"', body)
         self.assertIn(f"/partner-oversight/return?activity_id={self.activity.id}", body)
+        response = self.client.post(
+            "/partner-oversight/verify/submit",
+            {"activity_id": self.activity.id, "salesforce_id": "SVE-PM-0002"},
+            headers={"HX-Request": "true"},
+        )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "ia_verified")
 
-    def test_the_return_drawer_offers_the_owners_reasons_first(self):
+    def test_the_return_drawer_offers_the_common_reasons_and_none_about_a_file(self):
+        """UPLOAD-OFF (owner, 2026-10-13): "Evidence not uploaded" and "Wrong
+        file uploaded as evidence" led the list; nobody can act on either."""
         body = self.drawer("return").content.decode()
         self.assertIn('hx-post="/partner-oversight/return/submit"', body)
-        first = body.index("Evidence not uploaded")
-        self.assertLess(first, body.index("Wrong file uploaded as evidence"))
-        self.assertLess(
-            body.index("Wrong file uploaded as evidence"),
-            body.index("Participants not entered in Salesforce"),
-        )
+        self.assertIn("Participants not entered in Salesforce", body)
+        self.assertIn("Activity ID missing or wrong in Salesforce", body)
+        for gone in (
+            "Evidence not uploaded",
+            "Wrong file uploaded as evidence",
+            "Attendance form missing or unreadable",
+            "Evidence missing or unclear",
+        ):
+            self.assertNotIn(gone, body)
         self.assertRegex(body, r'<textarea[^>]*name="comment"[^>]*required')
 
     def test_return_needs_a_written_reason(self):
         response = self.client.post(
             "/partner-oversight/return/submit",
-            {"activity_id": self.activity.id, "reasons": ["Evidence not uploaded"]},
+            {
+                "activity_id": self.activity.id,
+                "reasons": ["Participants not entered in Salesforce"],
+            },
             headers={"HX-Request": "true"},
         )
         self.assertEqual(response.status_code, 400)
@@ -632,8 +655,11 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
             "/partner-oversight/return/submit",
             {
                 "activity_id": self.activity.id,
-                "reasons": ["Wrong file uploaded as evidence", "Not a listed reason"],
-                "comment": "The file is last term's visit form.",
+                "reasons": [
+                    "Activity ID missing or wrong in Salesforce",
+                    "Not a listed reason",
+                ],
+                "comment": "The ID is last term's visit.",
             },
             headers={"HX-Request": "true"},
         )
@@ -643,8 +669,8 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
         self.assertEqual(self.activity.ia_verification_status, "returned")
         note = self.activity.pl_review_note
         self.assertTrue(note.startswith("Returned by James (CCEO): "), note)
-        self.assertIn("Wrong file uploaded as evidence", note)
-        self.assertIn("last term's visit form", note)
+        self.assertIn("Activity ID missing or wrong in Salesforce", note)
+        self.assertIn("last term's visit", note)
         self.assertNotIn("Not a listed reason", note)
 
     def test_impact_assessment_returns_on_its_own_status(self):
@@ -652,7 +678,10 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
 
         return_partner_work(
             self.activity.id,
-            {"reasons": ["Evidence not uploaded"], "comment": "Nothing attached."},
+            {
+                "reasons": ["Participants not entered in Salesforce"],
+                "comment": "Nobody is listed.",
+            },
             self.ia_user,
         )
         self.activity.refresh_from_db()

@@ -1160,8 +1160,9 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_complete_share",
             totals.complete,
             totals.delivered,
-            helper=f"{totals.missing_salesforce:,} no SF ID · "
-            f"{totals.missing_evidence:,} no form",
+            # UPLOAD-OFF (owner, 2026-10-13): it went on
+            # f" · {totals.missing_evidence:,} no form".
+            helper=f"{totals.missing_salesforce:,} no SF ID",
             icon="clipboard",
             drill=f"{execution_url}&list=missing_salesforce",
             empty="Nothing delivered yet",

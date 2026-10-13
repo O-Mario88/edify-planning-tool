@@ -51,6 +51,8 @@
     </div>
 
     <div class="space-y-5">
+      {# UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the Evidence card shows only for a submission that already holds files from before. Drop this `if` (and its endif) to show it always again. #}
+      {% if evidence %}
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
         <h2 class="edify-section__heading">Evidence</h2>
         {% if evidence_checklist %}
@@ -81,6 +83,7 @@
         <p class="text-[13px] font-semibold text-rose-600">No evidence files on this submission.</p>
         {% endif %}
       </div>
+      {% endif %}
 
       {% if a.pl_review_note or history %}
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">

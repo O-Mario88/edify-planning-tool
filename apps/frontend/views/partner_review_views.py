@@ -28,9 +28,12 @@ from apps.core.permissions import RolePermissionService, require_page_permission
 #: The two reasons the owner named, then the reasons every other return offers
 #: (apps.activities.return_notes), so a Partner reads one vocabulary whoever
 #: sent the work back.
+#:
+#: UPLOAD-OFF (owner, 2026-10-13): both named an upload nobody can make now,
+#: so neither is offered; a Partner reads the common reasons alone.
 PARTNER_RETURN_REASONS = (
-    "Evidence not uploaded",
-    "Wrong file uploaded as evidence",
+    # "Evidence not uploaded",
+    # "Wrong file uploaded as evidence",
 )
 
 
@@ -89,27 +92,31 @@ def _decided(message: str) -> HttpResponse:
 
 @require_page_permission("partner_oversight")
 def partner_verify_drawer_view(request):
-    """What the Partner submitted, and the Salesforce ID that confirms it."""
-    from apps.evidence.models import EvidenceRecord
-    from apps.evidence.requirements import checklist
+    """The Partner's submission, and the Salesforce ID that confirms it."""
+    from apps.activities.services import sf_kind_for_activity
+
+    # UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so none is read.
+    # from apps.evidence.models import EvidenceRecord
+    # from apps.evidence.requirements import checklist
 
     template = "partials/oversight/partner_verify_drawer.html"
     activity, refusal = _reviewable(request, request.GET.get("activity_id"))
     if activity is None:
         return _refusal(request, template, refusal)
-    evidence = list(
-        EvidenceRecord.objects.filter(
-            activity_id=activity.id, quarantined=False
-        ).order_by("-created_at")
-    )
+    # evidence = list(
+    #     EvidenceRecord.objects.filter(
+    #         activity_id=activity.id, quarantined=False
+    #     ).order_by("-created_at")
+    # )
     return render(
         request,
         template,
         {
             "a": activity,
             "partner_name": _partner_name(activity),
-            "evidence": evidence,
-            "evidence_checklist": checklist(activity),
+            # "evidence": evidence,
+            # "evidence_checklist": checklist(activity),
+            "salesforce_kind": sf_kind_for_activity(activity),
             "drawer_size": "md",
         },
     )

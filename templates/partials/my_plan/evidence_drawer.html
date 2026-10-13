@@ -20,6 +20,9 @@ evidence_file_<kind>, and the server joins them into one PDF in that order.
 Partner work never shows the Salesforce ID here (asks_salesforce_id): the
 partner uploads, and staff complete the work in the Salesforce ID drawer.
 {% endcomment %}
+{# UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not deleted. The routes that serve this drawer and take its form are commented out (apps/frontend/urls.py), so the form below is commented out with them; remove the comment tags, and uncomment the routes, to bring the upload back. #}
+<p class="edify-note" data-tone="info" data-upload-off>Uploads are switched off. Activities are completed with the visit ID or the training ID.</p>
+{% comment %}UPLOAD-OFF
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
 
@@ -108,9 +111,7 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
     {% endfor %}
 
     {% if asks_salesforce_id %}
-    {% comment %} Required for staff — their upload carries its Salesforce
-    entry (owner, 2026-08-19). Partner work never shows it: staff record it
-    in the Salesforce ID drawer, which completes that work. {% endcomment %}
+    {# Required for staff — their upload carries its Salesforce entry (owner, 2026-08-19). Partner work never shows it: staff record it in the Salesforce ID drawer, which completes that work. #}
     <div class="space-y-1">
       <label for="ev-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>
       <input id="ev-sf" name="salesforce_id" type="text" maxlength="30" required
@@ -144,4 +145,5 @@ partner uploads, and staff complete the work in the Salesforce ID drawer.
   {% endif %}
 
 </div>
+{% endcomment %}
 {% endblock %}

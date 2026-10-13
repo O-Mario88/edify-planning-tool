@@ -146,8 +146,9 @@ class ClusterSessionStatusTest(TestCase):
         session = self._session(
             "cluster_training", "submitted_to_pl", self.cceo, complete=True
         )
-        # Verify opens the completion with its uploaded form; the decision is
-        # posted from that drawer, never from the row (owner, 2026-10-12).
+        # Verify opens the completion with its training ID; the decision is
+        # posted from that drawer, never from the row (owner, 2026-10-12). The
+        # uploaded form it showed is switched off (UPLOAD-OFF, 2026-10-13).
         verify = f'hx-get="/pl/review-queue/{session.id}/drawer"'
         confirm = f'action="/pl/review-queue/{session.id}/confirm"'
 
@@ -163,7 +164,9 @@ class ClusterSessionStatusTest(TestCase):
             f"/pl/review-queue/{session.id}/drawer", headers={"HX-Request": "true"}
         )
         self.assertContains(drawer, confirm)
-        self.assertContains(drawer, "attendance.pdf")
+        self.assertNotContains(drawer, "attendance.pdf")
+        self.assertContains(drawer, "Training ID")
+        self.assertContains(drawer, session.salesforce_activity_id)
 
         back = f"/cluster-oversight/?fy={self.fy}"
         response = self.client.post(

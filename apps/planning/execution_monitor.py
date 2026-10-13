@@ -61,7 +61,9 @@ RETURNED_STATUSES = frozenset(("returned", "returned_by_pl", "returned_by_ia"))
 LISTS = (
     ("overdue", "Past date, not delivered"),
     ("missing_salesforce", "Delivered, missing the Salesforce ID"),
-    ("missing_evidence", "Delivered, missing the form"),
+    # UPLOAD-OFF (owner, 2026-10-13): no form is asked for, so no list of
+    # work missing one. Uncomment with the upload.
+    # ("missing_evidence", "Delivered, missing the form"),
     ("awaiting_ia", "Awaiting IA verification"),
     ("returned", "Returned for correction"),
 )
@@ -71,7 +73,8 @@ LIST_LABELS = dict(LISTS)
 LIST_COLUMNS = (
     ("overdue", "Past date", "danger"),
     ("missing_salesforce", "No SF ID", "warning"),
-    ("missing_evidence", "No form", "warning"),
+    # UPLOAD-OFF (owner, 2026-10-13): the "No form" column left the table.
+    # ("missing_evidence", "No form", "warning"),
     ("awaiting_ia", "Awaiting IA", "info"),
     ("returned", "Returned", "danger"),
 )
@@ -232,7 +235,7 @@ def execution_monitor(
     """
     from apps.activities.completion_columns import (
         completion_records,
-        expected_evidence,
+        # UPLOAD-OFF (owner, 2026-10-13): expected_evidence,
     )
     from apps.activities.models import Activity
     from apps.partners.models import PartnerAssignment
@@ -335,7 +338,7 @@ def execution_monitor(
     delivered_ids = [
         r[0] for r in records if r[4] != "partner" and r[2] in delivered_statuses
     ]
-    salesforce, evidence = completion_records(delivered_ids)
+    salesforce, _evidence = completion_records(delivered_ids)
 
     wanted_lead = (
         program_lead_id if program_lead_id not in (None, "", "all", "All") else None
@@ -422,9 +425,12 @@ def execution_monitor(
         sf_ok = ev_ok = False
         if is_delivered:
             person.delivered += 1
-            kinds = evidence.get(activity_id, set())
             sf_ok = bool(salesforce.get(activity_id))
-            ev_ok = expected_evidence(activity_type)[0] in kinds
+            # UPLOAD-OFF (owner, 2026-10-13): delivered work is complete with
+            # its Salesforce ID alone; the form half is always met. It read:
+            # kinds = evidence.get(activity_id, set())
+            # ev_ok = expected_evidence(activity_type)[0] in kinds
+            ev_ok = True
             if sf_ok and ev_ok:
                 person.complete += 1
             if not sf_ok:

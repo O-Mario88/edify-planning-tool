@@ -3,7 +3,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("upload", views.EvidenceUploadView.as_view(), name="upload"),
+    # UPLOAD-OFF (owner, 2026-10-13): no new files are taken. Files already
+    # stored are still read through the routes below. Uncomment to bring the
+    # upload back.
+    # path("upload", views.EvidenceUploadView.as_view(), name="upload"),
     path(
         "activity/<str:activity_id>",
         views.EvidenceActivityListView.as_view(),

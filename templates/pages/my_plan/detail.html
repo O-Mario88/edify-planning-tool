@@ -211,7 +211,7 @@
 {% if can_complete %}
       <p class="ad-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 4.97-3.4 8.94-8 10-4.6-1.06-8-5.03-8-10V6l8-3z"/></svg>
-        Ensure all evidence and notes are updated before completing.
+        Have the Salesforce visit ID or training ID ready before completing.
       </p>
       {% else %}
       <p class="ad-note" data-team-read-only>
@@ -244,6 +244,8 @@
     </div>
 
     {# ── Verification evidence ─────────────────────────────────────────── #}
+    {# UPLOAD-OFF (owner, 2026-10-13): activities are completed with the visit ID and the training ID alone. The card stays for activities that already hold files; its empty state and drop zone are switched off, not deleted. #}
+    {% if evidence_list %}
     <section class="ad-card">
       <header class="ad-card__head">
         <span class="ad-card__icon" aria-hidden="true">
@@ -265,14 +267,11 @@
         </li>
         {% endfor %}
       </ul>
+      {% comment %}UPLOAD-OFF
       {% else %}
-      {% comment %}Uploading is part of completing, which is the officer's:
-      a reader who may not run the activity is told there is none yet (owner,
-      2026-10-08).{% endcomment %}
+      {# Uploading is part of completing, which is the officer's: a reader who may not run the activity is told there is none yet (owner, 2026-10-08). #}
       {% if can_complete %}
-      {% comment %}The drop zone opens the same completion drawer that owns the
-      upload rather than posting from here — one upload path, not two.
-      {% endcomment %}
+      {# The drop zone opens the same completion drawer that owns the upload rather than posting from here — one upload path, not two. #}
       <button type="button" class="ad-drop"
               hx-get="/my-plan/{{ act.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.9A5 5 0 1115.9 6 4.5 4.5 0 1117 16h-1m-4-4v9m0-9l-3 3m3-3l3 3"/></svg>
@@ -283,8 +282,10 @@
       {% else %}
       <p class="ad-note">No evidence uploaded yet for this activity.</p>
       {% endif %}
+      {% endcomment %}
       {% endif %}
     </section>
+    {% endif %}
 
     {# ── Activity timeline ─────────────────────────────────────────────── #}
     <section class="ad-card">
@@ -320,7 +321,7 @@
 
   <aside class="ad-tip">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
-    <p><strong>Quick tip</strong> Complete the activity and upload evidence to provide proof of execution and impact.</p>
+    <p><strong>Quick tip</strong> Complete the activity with its Salesforce visit ID or training ID.</p>
     <a href="/help" class="ad-tip__link">View activity guidelines</a>
   </aside>
 </div>

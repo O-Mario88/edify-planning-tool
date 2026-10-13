@@ -13,7 +13,7 @@
     {% paginate rows "rows_page" as rows_pager %}
 <table class="edify-record-table sp-table">
       <caption class="sr-only">{{ title }} for {{ period_label }}</caption>
-      <thead><tr><th scope="col">School ID</th><th scope="col">School / Cluster</th><th scope="col">District</th><th scope="col">Project</th>{% if kind != 'visits' %}<th scope="col">Focus</th>{% endif %}<th scope="col">Planned date</th><th scope="col">Purpose</th>{% if kind == 'partners' %}<th scope="col">Partner</th><th scope="col">Evidence</th>{% elif kind == 'trainings' %}<th scope="col">Participants</th>{% endif %}<th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+      <thead><tr><th scope="col">School ID</th><th scope="col">School / Cluster</th><th scope="col">District</th><th scope="col">Project</th>{% if kind != 'visits' %}<th scope="col">Focus</th>{% endif %}<th scope="col">Planned date</th><th scope="col">Purpose</th>{% if kind == 'partners' %}<th scope="col">Partner</th>{# UPLOAD-OFF (owner, 2026-10-13): <th scope="col">Evidence</th> #}{% elif kind == 'trainings' %}<th scope="col">Participants</th>{% endif %}<th scope="col">Status</th><th scope="col">Action</th></tr></thead>
       <tbody>
         {% for row in rows_pager.rows %}
         <tr>
@@ -25,7 +25,7 @@
           {% if kind != 'visits' %}<td data-label="Focus">{{ row.focus }}</td>{% endif %}
           <td class="sp-table__date" data-label="Planned date">{% if row.planned_date %}{{ row.planned_date|date:"M j, D" }}{% else %}Not scheduled{% endif %}</td>
           <td data-label="Purpose"><span class="sp-table__purpose">{{ row.purpose|truncatechars:52 }}</span></td>
-          {% if kind == 'partners' %}<td data-label="Partner">{{ row.partner }}</td><td data-label="Evidence"><span class="sp-badge sp-badge--{{ row.evidence_tone }}">{{ row.evidence }}</span></td>{% elif kind == 'trainings' %}<td data-label="Participants">{{ row.participants }}</td>{% endif %}
+          {% if kind == 'partners' %}<td data-label="Partner">{{ row.partner }}</td>{# UPLOAD-OFF (owner, 2026-10-13): <td data-label="Evidence"><span class="sp-badge sp-badge--{{ row.evidence_tone }}">{{ row.evidence }}</span></td> #}{% elif kind == 'trainings' %}<td data-label="Participants">{{ row.participants }}</td>{% endif %}
           <td data-label="Status"><span class="sp-badge sp-badge--{{ row.status_tone }}">{{ row.status }}</span></td>
           <td class="sp-table__action" data-label="Action"><a href="{{ row.action.url }}" hx-get="{{ row.action.url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.action.text }} for {{ row.school }}">{{ row.action.text }}</a></td>
         </tr>

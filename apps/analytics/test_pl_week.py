@@ -658,14 +658,15 @@ class PLWeekTest(TestCase):
             "Focus Intervention",
             "Cost",
             "Salesforce ID",
-            "Evidence",
             "Status",
             "Actions",
         ):
             self.assertIn(f">{column}</th>", html)
-        # Nothing entered or uploaded yet, and it says so.
+        # Nothing entered yet, and it says so. The Evidence column left the
+        # table with the upload (UPLOAD-OFF, owner 2026-10-13).
         self.assertIn("Not in SF", html)
-        self.assertIn("No Evidence Uploaded", html)
+        self.assertNotIn(">Evidence</th>", html)
+        self.assertNotIn("No Evidence Uploaded", html)
         self.assertIn('hx-post="/dashboard/pl-week-send/', html)
         self.assertIn("Send to Amos", html)
 

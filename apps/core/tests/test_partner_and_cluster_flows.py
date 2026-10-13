@@ -130,7 +130,7 @@ class PartnerAndClusterFlowTest(APITestCase):
         )[0]
 
     # ── Demo Flow 4: partner workflow ────────────────────────────────────────
-    def test_assign_to_partner_then_partner_schedules_and_uploads_evidence(self):
+    def test_assign_to_partner_then_partner_schedules_and_it_is_completed_by_id(self):
         school = self._school("FLOW-PARTNER-1")
         StaffSchoolAssignment.objects.create(staff=self.cceo_staff, school_id=school.id)
         self._ssa(school)
@@ -186,16 +186,14 @@ class PartnerAndClusterFlowTest(APITestCase):
         queue = self._get("/api/partners/me/activities", 200)
         self.assertTrue(any(row["id"] == activity_id for row in queue))
 
-        # Partner unlocks completion + uploads evidence.
+        # Partner unlocks completion. UPLOAD-OFF (owner, 2026-10-13: "remove
+        # the upload and use strictly visit ID and training IDs to complete
+        # the activities"): the partner uploaded a visit form here and the
+        # assigning staff accepted it; the upload door is closed now and the
+        # work is completed with its Salesforce ID alone.
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
-        evidence = self._upload_evidence(activity_id)
-
-        # Assigning staff reviews (accepts) the partner evidence.
+        self._upload_is_switched_off(activity_id)
         self._as(self.cceo)
-        reviewed = self._post(
-            f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200
-        )
-        self.assertEqual(reviewed["status"], "accepted")
 
         # Staff (CCEO) enters the SVE- Activity Code and submits completion.
         # §10 direct IA handoff (2026-08-19): PARTNER-delivered work routes
@@ -209,8 +207,11 @@ class PartnerAndClusterFlowTest(APITestCase):
             200,
         )
         self.assertEqual(completed["status"], "awaiting_ia_verification")
-        # Evidence had to be accepted before the partner submission was allowed.
+        # Completion marks the evidence step met, with no file on record.
         self.assertEqual(completed["evidenceStatus"], "accepted")
+        self.assertFalse(
+            EvidenceRecord.objects.filter(activity_id=activity_id).exists()
+        )
 
         # Activity no longer in the partner queue (handed off past the partner).
         self._as(partner_user)
@@ -272,16 +273,10 @@ class PartnerAndClusterFlowTest(APITestCase):
         my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
         self.assertTrue(any(item["id"] == activity_id for item in my_plan["items"]))
 
-        # Completion unlocks; upload the attendance form (PDF-only law).
+        # Completion unlocks. UPLOAD-OFF (owner, 2026-10-13): the attendance
+        # form was uploaded and previewed here; the upload door is closed now.
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
-        docx = self._upload_docx(activity_id)
-        record = EvidenceRecord.objects.get(id=docx["id"])
-        self.assertEqual(record.file_extension, ".pdf")
-
-        # PDF renders natively — the inline-view contract answers ready with
-        # the file itself, or an honest pending/failed; never a 500.
-        preview = self._post(f"/api/evidence/{docx['id']}/prepare-view", {}, 200)
-        self.assertIn(preview["previewStatus"], ("ready", "pending", "failed"))
+        self._upload_is_switched_off(activity_id)
 
         # Completion requires attendance + a TS- code (training prefix).
         no_attendance = self.client.post(
@@ -360,6 +355,28 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.assertEqual(response.status_code, expected, response.content)
         return response.json()
 
+    def _upload_is_switched_off(self, activity_id: str) -> None:
+        """The API upload route is commented out: nothing is stored."""
+        response = self.client.post(
+            "/api/evidence/upload",
+            {
+                "activityId": activity_id,
+                "kind": "visit_form",
+                "file": SimpleUploadedFile(
+                    "visit-form.pdf",
+                    b"%PDF-1.4\n% a form nobody takes\n",
+                    content_type="application/pdf",
+                ),
+            },
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 404, response.content[:200])
+        self.assertFalse(
+            EvidenceRecord.objects.filter(activity_id=activity_id).exists()
+        )
+
+    # The two helpers below posted the upload while it existed. They are kept,
+    # unused, for the day the upload is switched back on (UPLOAD-OFF).
     def _upload_evidence(self, activity_id: str) -> dict:
         response = self.client.post(
             "/api/evidence/upload",

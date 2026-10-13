@@ -77,7 +77,7 @@ class FinanceBlockedSqlTest(TestCase):
             self._activity(**{**clean, "status": "scheduled"}),
             self._activity(**{**clean, "status": "closed"}),
             self._activity(**{**clean, "status": "accountant_confirmed"}),
-            self._activity(**{**clean, "evidence": False}),
+            self._activity(**{**clean, "evidence": False}),  # not blocked
             self._activity(**{**clean, "budget": False}),
             self._activity(**{**clean, "salesforce_activity_id": None}),
             self._activity(**{**clean, "salesforce_activity_id": ""}),
@@ -141,9 +141,11 @@ class FinanceBlockedSqlTest(TestCase):
         response = self.client.get("/accounts/blocked")
         self.assertEqual(response.status_code, 200)
         page = response.context["blocked"]
-        # Seven of the twelve scenarios are blocked (see _scenarios).
-        self.assertEqual(len(page), 7)
-        self.assertContains(response, "Evidence Missing")
+        # Six of the twelve scenarios are blocked (see _scenarios). It was
+        # seven: the one with no evidence file is no longer held, because the
+        # upload is switched off (UPLOAD-OFF, owner 2026-10-13).
+        self.assertEqual(len(page), 6)
+        self.assertNotContains(response, "Evidence Missing")
         self.assertContains(response, "Budget Line Missing")
 
     def test_the_page_costs_the_same_at_any_size(self):

@@ -245,19 +245,23 @@ def invoice_basis(principal, kind: str, anchor: date, instalment: str) -> dict:
 
 
 def _completed_with_evidence(activities) -> set[str]:
-    """The ids of the activities that are completed with their evidence: IA
-    has verified them and at least one evidence file is on record. One query
-    for the whole period."""
-    from apps.evidence.models import EvidenceRecord
+    """The ids of the activities that are completed: IA has verified them.
 
+    UPLOAD-OFF (owner, 2026-10-13): it also asked for at least one evidence
+    file on record. Work is completed with its Salesforce ID alone now, so
+    verification is the whole test; the file test is commented out below.
+    """
     cleared = [a.id for a in activities if a.status in _CLEARED_STATUSES]
-    if not cleared:
-        return set()
-    return set(
-        EvidenceRecord.objects.filter(activity_id__in=cleared, quarantined=False)
-        .values_list("activity_id", flat=True)
-        .distinct()
-    )
+    return set(cleared)
+    # from apps.evidence.models import EvidenceRecord
+    #
+    # if not cleared:
+    #     return set()
+    # return set(
+    #     EvidenceRecord.objects.filter(activity_id__in=cleared, quarantined=False)
+    #     .values_list("activity_id", flat=True)
+    #     .distinct()
+    # )
 
 
 def _line_facts(activity) -> dict:
@@ -296,8 +300,7 @@ def submit_invoice(
     if not basis["items"]:
         raise BadRequest(
             "Nothing is invoiceable for that period — the advance may already "
-            "be invoiced, or the work is not yet completed with its evidence "
-            "and verified by IA."
+            "be invoiced, or the work is not yet completed and verified by IA."
         )
     if entered_total not in (None, ""):
         try:

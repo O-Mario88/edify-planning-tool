@@ -31,6 +31,14 @@ order.
 
 A read: it owns no table and writes nothing. Two queries answer a page of
 rows, however many there are.
+
+UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly visit ID
+and training IDs to complete the activities ... just comment the code out, we
+may need it later"). The upload is switched off, so the Salesforce ID is the
+whole of completing: the Evidence half below is commented out, every row
+reads `evidence_ok` True and a blank `evidence_label`, and the tables no
+longer show the column. One query answers a page. Uncomment the lines marked
+UPLOAD-OFF to bring the second half back.
 """
 
 from __future__ import annotations
@@ -136,7 +144,9 @@ def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
     if not ids:
         return {}, {}
     from apps.activities.models import Activity
-    from apps.evidence.models import EvidenceRecord
+
+    # UPLOAD-OFF (owner, 2026-10-13):
+    # from apps.evidence.models import EvidenceRecord
 
     salesforce = {
         activity_id: (value or "").strip()
@@ -145,10 +155,11 @@ def completion_records(activity_ids) -> tuple[dict[str, str], dict[str, set]]:
         )
     }
     evidence: dict[str, set] = defaultdict(set)
-    for activity_id, kind in EvidenceRecord.objects.filter(
-        activity_id__in=ids, quarantined=False
-    ).values_list("activity_id", "kind"):
-        evidence[activity_id].add(kind)
+    # UPLOAD-OFF (owner, 2026-10-13): no upload, so nothing to read.
+    # for activity_id, kind in EvidenceRecord.objects.filter(
+    #     activity_id__in=ids, quarantined=False
+    # ).values_list("activity_id", "kind"):
+    #     evidence[activity_id].add(kind)
     return salesforce, evidence
 
 
@@ -166,7 +177,10 @@ def completion_columns(pairs) -> dict[str, dict]:
             "salesforce_id": sf,
             "evidence_label": evidence_label(activity_type, kinds),
             "salesforce_ok": bool(sf),
-            "evidence_ok": expected_evidence(activity_type)[0] in kinds,
+            # UPLOAD-OFF (owner, 2026-10-13): the Salesforce ID alone
+            # completes an activity, so the form half is always satisfied.
+            # "evidence_ok": expected_evidence(activity_type)[0] in kinds,
+            "evidence_ok": True,
         }
     return out
 

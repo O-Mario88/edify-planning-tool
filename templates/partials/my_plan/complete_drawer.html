@@ -20,6 +20,8 @@ class="space-y-4 text-[12px] font-semibold text-slate-600"
 </div>
 {% endif %}
 
+{# UPLOAD-OFF (owner, 2026-10-13): an activity is completed with its visit ID or training ID alone. The Evidence section (the file inputs, the checklist and the list of uploaded files) is switched off, not deleted; remove the comment tags around it to bring it back. #}
+{% comment %}UPLOAD-OFF
 <!-- Evidence -->
 <div class="space-y-2">
 <h4 class="text-[13px] font-semibold text-slate-800">Evidence</h4>
@@ -88,9 +90,9 @@ class="w-full edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 
 </div>
 {% endif %}
 </div>
+{% endcomment %}
 
 {% if act.ssaCollectionExpected %}
-<hr class="border-slate-100">
 {% comment %}The model holds the radio's own string value. Alpine will not
 overwrite a radio's value when a static value= attribute is present, so the
 old `:value="true"`/`:value="false"` bindings were inert and the model never
@@ -139,9 +141,8 @@ field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
 </select>
 </div>
 </div>
-{% endif %}
-
 <hr class="border-slate-100">
+{% endif %}
 
 <!-- Completion details -->
 <div class="space-y-4">
@@ -166,19 +167,23 @@ placeholder="SV-… or SVE-…" value="{{ paired_school_visit.salesforceActivity
 class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </div>
-{% else %}
+{% elif salesforce_kind %}
 <div class="space-y-1">
-<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">Salesforce activity ID <span class="text-rose-500">*</span></label>
+<label for="salesforce_id" class="block edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce activity ID{% endif %} <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="salesforce_id"
 id="salesforce_id"
 required
-placeholder="e.g. SV-11223344, SVE-11223344 or TS-998877"
+placeholder="{% if salesforce_kind == "training" %}e.g. TS-998877{% elif salesforce_kind == "visit" %}e.g. SV-11223344 or SVE-11223344{% else %}e.g. SV-11223344, SVE-11223344 or TS-998877{% endif %}"
 value="{{ act.salesforceActivityId|default:'' }}"
 class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] focus:outline-none focus:ring-2 edify-primary-focus"
 >
+<p class="edify-text-caption text-slate-500">{% if salesforce_kind == "training" %}The training ID from Salesforce completes this activity.{% else %}The visit ID from Salesforce completes this activity.{% endif %}</p>
 </div>
+{% else %}
+{# Work Salesforce does not record (its record type is None) has no ID to enter. #}
+<p class="edify-text-caption text-slate-500">This activity has no Salesforce record, so it needs no ID. Submit to complete it.</p>
 {% endif %}
 
 <!-- Accountability (If accountability pending) — submits for Accountant review,
@@ -419,8 +424,8 @@ class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] 
 <hr class="border-slate-100">
 {% comment %}The school visit feedback fields (Finding, how the school improved)
 left this form on 2026-10-12 (owner: completion "should not feel like another
-data entry"). The form and the Salesforce ID complete a visit; the notes below
-stay optional for every activity.{% endcomment %}
+data entry"). The Salesforce ID completes a visit (the uploaded form left on
+2026-10-13); the notes below stay optional for every activity.{% endcomment %}
 <div class="space-y-3">
 <div class="space-y-1">
 <h4 class="text-[13px] font-semibold text-slate-800">What you observed <span class="font-normal text-slate-500">(optional)</span></h4>

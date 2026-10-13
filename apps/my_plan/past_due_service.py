@@ -445,8 +445,11 @@ def _build_rows(activity_ids, *, own_ids, today) -> list[dict[str, Any]]:
             "expected_participants": a.expected_participants or "—",
             "delivery_type": a.delivery_type,
             "reminder_sent": a.id in active_reminder_act_ids,
+            # UPLOAD-OFF (owner, 2026-10-13): a gap is a missing Salesforce
+            # ID now, entered in its own drawer; it used to open the upload
+            # drawer (f"/activities/{a.id}/evidence").
             "complete_url": (
-                f"/activities/{a.id}/evidence"
+                f"/activities/{a.id}/salesforce-id"
                 if gap
                 else f"/my-plan/{a.id}/complete-drawer"
             ),

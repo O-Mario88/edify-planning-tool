@@ -338,7 +338,10 @@ class ClosureEligibilityService:
 
         return ClosureFacts(
             activity_executed=executed,
-            evidence_uploaded=fact("evidence"),
+            # UPLOAD-OFF (owner, 2026-10-13): no file is asked for, so the
+            # "Evidence Missing" blocker never holds an activity. It read
+            # `fact("evidence")`.
+            evidence_uploaded=True,
             salesforce_id_entered=salesforce_id_entered,
             ia_verified=ia_verified,
             finance_required=finance_required,

@@ -450,12 +450,13 @@ class CompletedWorkIsPaidInFullTest(_Fixture):
         )
         self.assertEqual(self._lines("clearance"), {})
 
-    def test_completed_means_verified_with_evidence_on_file(self):
-        """What the balance has always required, and what the accountant's
-        payment step refuses without."""
+    def test_completed_means_verified_and_no_file_is_asked_for(self):
+        """UPLOAD-OFF (owner, 2026-10-13): completed used to mean verified
+        with evidence on file. Work is completed with its Salesforce ID now,
+        so verified work with no file is payable in full all the same."""
         self._complete(self.done, evidence=False)
-        self.assertEqual(self._lines("clearance"), {})
-        self.assertIn(self.done.id, self._lines("advance"))
+        self.assertEqual(self._lines("clearance"), {self.done.id: 40_000})
+        self.assertNotIn(self.done.id, self._lines("advance"))
 
         other = self._visit(self.north_school, 9, 50_000)
         self._complete(other, status="awaiting_ia_verification")

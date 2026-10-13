@@ -23,11 +23,11 @@ gates partner payment.
 
   <div class="edify-data-list">
     <div class="edify-data-row"><span class="edify-data-row__label">Delivered</span><span class="edify-data-row__value">{{ a.actual_delivery_date|date:"d M Y"|default:"Not recorded" }}</span></div>
-    <div class="edify-data-row"><span class="edify-data-row__label">Evidence</span><span class="edify-data-row__value">{{ evidence_count }} file(s)</span></div>
+    {# UPLOAD-OFF (owner, 2026-10-13): <div class="edify-data-row"><span class="edify-data-row__label">Evidence</span><span class="edify-data-row__value">{{ evidence_count }} file(s)</span></div> #}
     <div class="edify-data-row"><span class="edify-data-row__label">Attendance</span><span class="edify-data-row__value">{% if a.teachers_attended or a.leaders_attended %}{{ a.teachers_attended|default:0 }} teachers · {{ a.leaders_attended|default:0 }} leaders{% else %}—{% endif %}</span></div>
   </div>
 
-  <p class="edify-text-caption text-slate-500">Completing verifies the evidence and stores the reference you enter. The system does not contact Salesforce, and the partner becomes eligible for payment but is not marked paid.</p>
+  <p class="edify-text-caption text-slate-500">Completing verifies the work and stores the Salesforce ID you enter. The system does not contact Salesforce, and the partner becomes eligible for payment but is not marked paid.</p>
 
   <div class="space-y-1">
     <label for="iac-sf-id" class="block edify-text-caption font-semibold text-slate-600">Salesforce ID <span class="text-rose-500">*</span></label>

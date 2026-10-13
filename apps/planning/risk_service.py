@@ -319,8 +319,10 @@ def _evidence_outstanding(item, today: date) -> PlanningRisk | None:
     return PlanningRisk(
         key="evidence_outstanding",
         severity=HIGH,
-        reason="The activity has been delivered but no evidence has been uploaded.",
-        recommended_action="Upload the evidence pack",
+        # UPLOAD-OFF (owner, 2026-10-13): was "...no evidence has been
+        # uploaded." / "Upload the evidence pack".
+        reason="The activity was started but has not been completed with its Salesforce ID.",
+        recommended_action="Complete it with the Salesforce ID",
         route=f"/activities/{item.activity_id}",
         owner_id=item.operational_owner_id,
         owner_name=item.operational_owner_name,

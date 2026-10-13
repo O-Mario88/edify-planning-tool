@@ -24,7 +24,7 @@
           <th scope="col">School or cluster</th>
           <th scope="col">Record type</th>
           <th scope="col">Submitted by</th>
-          <th scope="col">Evidence status</th>
+          {# UPLOAD-OFF (owner, 2026-10-13): <th scope="col">Evidence status</th> #}
           <th scope="col">Salesforce ID status</th>
           <th scope="col">Submission date</th>
           <th scope="col">Age</th>
@@ -49,9 +49,11 @@
             <span class="block">{{ act.responsibleStaffName|default:"Unassigned" }}</span>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.deliveryType|title }}</span>
           </td>
+          {% comment %}UPLOAD-OFF (owner, 2026-10-13)
           <td>
             <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
           </td>
+          {% endcomment %}
           <td>
             <span class="status-pill {% if missing_sf_mode %}danger{% else %}warning{% endif %}">{{ act.salesforce_status }}</span>
             <span class="block mt-1 font-mono edify-text-caption">{{ act.salesforceActivityId|default:"" }}</span>
@@ -74,7 +76,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="11">
+          <td colspan="10">
             {% if drilldowns %}{% include "components/empty_state.html" with title="Nothing matches this view" message="No records in your country match the filter applied from the dashboard." tone="success" %}{% else %}{% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}{% endif %}
           </td>
         </tr>
@@ -97,7 +99,7 @@
       </div>
       <p class="text-sm text-[var(--edify-text-muted)]">{{ act.next_action_status }}</p>
       <div class="flex flex-wrap gap-2">
-        <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
+        {# UPLOAD-OFF (owner, 2026-10-13): <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span> #}
         <span class="status-pill warning">{{ act.salesforce_status }}</span>
       </div>
       <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary min-h-11 w-full">Review</a>

@@ -352,7 +352,9 @@ class CompletionReviewsPageTest(ReviewFixture):
         self.assertContains(response, f'hx-get="{QUEUE_URL}/{work.id}/return-drawer"')
         self.assertContains(response, ">Return</button>")
         self.assertContains(response, "SV-77")
-        self.assertContains(response, "visit-photo.jpg")
+        # UPLOAD-OFF (owner, 2026-10-13): the file the officer once uploaded
+        # is not listed; the lead verifies on the Salesforce ID.
+        self.assertNotContains(response, "visit-photo.jpg")
 
     def test_a_drawer_for_another_team_refuses_and_offers_nothing(self):
         rival = self._completion(self.rival.id, school=self.rival_school)

@@ -26,6 +26,9 @@ or whether it is partner work, and asks only for what it can:
 Submit goes to the field outbox (field-outbox.js), which sends it, pages and
 all, once the phone is back online; a refusal is kept there with its reason.
 {% endcomment %}
+{# UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not deleted. The routes that serve this drawer and take its form are commented out (apps/frontend/urls.py), so the form below is commented out with them; remove the comment tags, and uncomment the routes, to bring the upload back. #}
+<p class="edify-note" data-tone="info" data-upload-off>Uploads are switched off. Activities are completed with the visit ID or the training ID.</p>
+{% comment %}UPLOAD-OFF
 <div class="space-y-4 text-[12px] font-semibold text-slate-600">
   <div id="evidence-errors" aria-live="polite"></div>
 
@@ -116,4 +119,5 @@ all, once the phone is back online; a refusal is kept there with its reason.
     </div>
   </form>
 </div>
+{% endcomment %}
 {% endblock %}

@@ -2602,17 +2602,15 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.cceo_user)
         response = self.client.get("/visits")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Submitted")
-        self.assertContains(response, "Missing")
-
-        # And an accepted (IA-approved) evidence state also renders as
-        # submitted, not blank.
-        with_evidence.evidence_status = "accepted"
-        with_evidence.save(update_fields=["evidence_status"])
-        without_evidence.delete()
-        response = self.client.get("/visits")
-        self.assertContains(response, "Submitted")
+        # UPLOAD-OFF (owner, 2026-10-13): the Evidence column left /visits
+        # with the upload, so neither badge is drawn whatever the state. The
+        # two assertions it replaces read "Submitted" and "Missing" here, and
+        # "Submitted" without "Missing" once the evidence was accepted.
+        self.assertNotContains(response, ">Evidence</th>")
+        self.assertNotContains(response, 'data-label="Evidence"')
         self.assertNotContains(response, "Missing")
+        self.assertContains(response, with_evidence.school.name)
+        self.assertTrue(without_evidence.pk)
 
 
 class GlobalSearchAndMapScopingTests(TestCase):

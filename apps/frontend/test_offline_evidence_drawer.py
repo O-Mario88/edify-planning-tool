@@ -10,6 +10,8 @@ saved by the field outbox and checked by the server when it is sent.
 
 from __future__ import annotations
 
+import unittest
+
 from pathlib import Path
 
 from django.conf import settings
@@ -24,6 +26,10 @@ PLACEHOLDER = "__EDIFY_ACTIVITY_ID__"
 
 
 class OfflineEvidenceDrawerTest(TestCase):
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_renders_anonymously_for_any_activity(self):
         res = self.client.get("/offline/evidence-drawer")
         self.assertEqual(res.status_code, 200)
@@ -55,6 +61,10 @@ class OfflineEvidenceDrawerTest(TestCase):
         if cookie_token and cookie_token.value:
             self.assertNotIn(cookie_token.value, body)
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_the_salesforce_id_is_for_staff_only(self):
         body = self.client.get("/offline/evidence-drawer").content.decode()
         self.assertIn("staff: document.body.dataset.edifyFieldRole === 'staff'", body)

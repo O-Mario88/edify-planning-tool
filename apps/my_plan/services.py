@@ -536,19 +536,38 @@ def compute_next_action(a, today) -> dict:
             "description": "In Progress",
         }
 
-    # 4. Completed but no evidence -> Upload Evidence
-    if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
+    # UPLOAD-OFF (owner, 2026-10-13): there is no upload step. Work that is
+    # begun and not yet handed in is completed with its visit or training ID.
+    # # 4. Completed but no evidence -> Upload Evidence
+    # if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
+    #     return {
+    #         "text": "Upload Evidence",
+    #         "action": "evidence",
+    #         "url": f"/activities/{a.id}/evidence",
+    #         "description": "Evidence missing",
+    #     }
+    if (
+        a.evidence_status == "none"
+        and a.status in _WORKED_STATUSES
+        and a.status != "completed"
+    ):
         return {
-            "text": "Upload Evidence",
-            "action": "evidence",
-            "url": f"/activities/{a.id}/evidence",
-            "description": "Evidence missing",
+            "text": "Complete Activity",
+            "action": "complete",
+            "url": (
+                f"/partner/activities/{a.id}/evidence"
+                if a.delivery_type == "partner"
+                else f"/activities/{a.id}/complete"
+            ),
+            "description": "Enter the Salesforce ID to complete",
         }
 
-    # 5. Evidence uploaded but no Activity SF ID -> Enter Activity SF ID
+    # 5. No Activity SF ID -> Enter Activity SF ID. With the upload switched
+    # off (owner, 2026-10-13) this no longer waits for a file: it was
+    # `a.evidence_status == "uploaded"`.
     if (
         a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
+        and a.evidence_status in ("none", "uploaded")
         and not a.salesforce_activity_id
     ):
         return {
@@ -561,7 +580,8 @@ def compute_next_action(a, today) -> dict:
     # 5.5 Ready to Submit for Review
     if (
         a.status in _WORKED_STATUSES
-        and a.evidence_status == "uploaded"
+        # UPLOAD-OFF (owner, 2026-10-13): was `== "uploaded"`.
+        and a.evidence_status in ("none", "uploaded")
         and a.salesforce_activity_id
     ):
         ssa_done = True
@@ -2139,23 +2159,24 @@ def get_frontend_context(principal, query: dict) -> dict:
             }
         )
 
-    # 2. Awaiting Evidence
-    awaiting_evidence_acts = qs.filter(
-        status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
-    ).select_related("school", "school__district", "cluster")[:3]
-    for ae in awaiting_evidence_acts:
-        attention_needed.append(
-            {
-                "id": ae.id,
-                "type": "Awaiting Evidence",
-                "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
-                "title": ae.school.name
-                if ae.school
-                else (ae.cluster.name if ae.cluster else "Activity"),
-                "issue": "Completion submitted without uploading required files.",
-                "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
-            }
-        )
+    # UPLOAD-OFF (owner, 2026-10-13): no completion waits on a file any more.
+    # # 2. Awaiting Evidence
+    # awaiting_evidence_acts = qs.filter(
+    #     status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
+    # ).select_related("school", "school__district", "cluster")[:3]
+    # for ae in awaiting_evidence_acts:
+    #     attention_needed.append(
+    #         {
+    #             "id": ae.id,
+    #             "type": "Awaiting Evidence",
+    #             "badge_class": "bg-amber-50 text-amber-700 border-amber-200",
+    #             "title": ae.school.name
+    #             if ae.school
+    #             else (ae.cluster.name if ae.cluster else "Activity"),
+    #             "issue": "Completion submitted without uploading required files.",
+    #             "detail": f"Evidence due: {ae.planned_date.strftime('%b %d, %Y') if ae.planned_date else 'N/A'}",
+    #         }
+    #     )
 
     # 3. SF ID Missing
     sf_missing_acts = qs.filter(

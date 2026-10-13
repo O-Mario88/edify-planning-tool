@@ -160,17 +160,21 @@ class NextActionCoversRealStatusesTests(TestCase):
         defaults.update(kw)
         return Activity.objects.create(**defaults)
 
-    def test_completion_started_asks_for_evidence(self):
+    def test_completion_started_asks_to_complete(self):
+        """UPLOAD-OFF (owner, 2026-10-13): this step asked for the evidence
+        upload. There is none now, so begun work asks to be completed with its
+        Salesforce ID."""
         from apps.my_plan.services import compute_next_action
 
         act = self._act()
         action = compute_next_action(act, date.today())
         self.assertEqual(
             action["action"],
-            "evidence",
-            "start_completion writes completion_started; the evidence step "
+            "complete",
+            "start_completion writes completion_started; the complete step "
             "must fire on it or the CCEO never gets the To-Do",
         )
+        self.assertNotIn("/evidence", action["url"])
 
     def test_evidence_uploaded_asks_for_salesforce_id(self):
         from apps.my_plan.services import compute_next_action
