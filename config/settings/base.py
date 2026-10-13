@@ -989,6 +989,18 @@ LIVE_UPDATES_ENABLED = (
     not in ("0", "false", "no", "off")
 ) and not IS_TESTING
 
+# The route check of a day (order, distance, whether it fits, what to
+# suggest) is advice beside the plan and was worked out inside every save
+# that priced the day: about thirty statements a day of school visits. It is
+# worked out once the save has committed, off the request
+# (apps.routes.after_save). Off under the test runner, where a test's
+# transaction never commits. ROUTE_CHECK_AFTER_SAVE=false works it out inside
+# the save again.
+ROUTE_CHECK_AFTER_SAVE = (
+    os.environ.get("ROUTE_CHECK_AFTER_SAVE", "true").strip().lower()
+    not in ("0", "false", "no", "off")
+) and not IS_TESTING
+
 # A save marks its officer's ledger for rebuilding (apps.targets.ledger_sync).
 # Written with the first row of the save, the mark's row stayed locked until
 # the save committed, and a second save for the same officer waited behind it

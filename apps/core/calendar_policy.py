@@ -147,6 +147,27 @@ class SchedulingPolicyService:
     known yet — the always-on Sunday/holiday/blackout gate still applies."""
 
     @staticmethod
+    def refusal(staff_or_user_id, check_date) -> list[str]:
+        """Why this date is refused for this person: empty when it is not.
+
+        For the doors that only ask in order to refuse (create, reschedule,
+        a partner's date, a visit joining a day). While the calendar warns
+        and never refuses (`CALENDAR_BLOCKS_REFUSE` off, the owner's decision
+        of 2026-09-30) there is nothing they could be told, and the person,
+        the holidays, the blocks, the leave and the week's workload are not
+        read to find that out: seven statements a time, asked two to four
+        times by one save of an in-school training (profiled 2026-10-13).
+        With the switch on, this is `check`, as before.
+        """
+        if not CALENDAR_BLOCKS_REFUSE:
+            return []
+        verdict = SchedulingPolicyService.check(
+            resolve_scheduling_user(staff_or_user_id) if staff_or_user_id else None,
+            check_date,
+        )
+        return list(verdict["blockers"]) if verdict["status"] == "blocked" else []
+
+    @staticmethod
     def check(user, check_date) -> dict:
         d = _coerce_date(check_date)
         if d is None:
