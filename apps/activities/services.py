@@ -3689,17 +3689,24 @@ def _normalize_school_improvements(raw) -> list[str]:
 
 
 def _validate_school_visit_feedback(data: dict) -> tuple[str, list[str]]:
+    """The school feedback as posted, trimmed and bounded.
+
+    Neither half is demanded any more (owner, 2026-10-12: completing a visit
+    "should not feel like another data entry"); what an officer does write is
+    kept on the school's profile as before.
+    """
     finding = str(data.get("feedbackFinding") or "").strip()
     improvements = _normalize_school_improvements(data.get("schoolImprovements"))
-    if not finding:
-        raise BadRequest("Record what you found on the ground during the school visit.")
     if len(finding) > 3000:
         raise BadRequest("The school visit finding must be 3,000 characters or fewer.")
-    if not improvements:
-        raise BadRequest(
-            "List at least one way the school has improved since the last visit."
-        )
     return finding, improvements
+
+
+def _school_feedback_posted(data: dict) -> bool:
+    return bool(
+        str(data.get("feedbackFinding") or "").strip()
+        or _normalize_school_improvements(data.get("schoolImprovements"))
+    )
 
 
 @transaction.atomic
@@ -3925,15 +3932,11 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "Upload each required document before submitting completion."
             )
 
-    # A visit is not complete without the school's field feedback. Evidence is
-    # validated first so callers receive the platform's established completion
-    # gate before the newer, activity-specific form requirements.
-    if a.activity_type in VISIT_TYPES and (
-        not _is_testing
-        or data.get("strict_validation")
-        or data.get("feedbackFinding") is not None
-        or data.get("schoolImprovements") is not None
-    ):
+    # The school's field feedback (what was found, how the school improved) is
+    # kept when the officer wrote some, never demanded (owner, 2026-10-12: the
+    # completion form "should not feel like another data entry"). The form and
+    # the Salesforce ID are what complete a visit.
+    if a.activity_type in VISIT_TYPES and _school_feedback_posted(data):
         visit_feedback = _validate_school_visit_feedback(data)
 
     # A follow-up visit names the training it followed up, at completion,
@@ -3993,11 +3996,14 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     # Partner-delivered work goes DIRECTLY to IA (§10) whoever presses the
     # button — a monitoring CCEO submitting on the partner's behalf must not
     # detour it through PL review (2026-08-19 audit: the role-only ternary
-    # was a hidden approval gate reachable through the API).
-    is_cceo = principal.active_role == "CCEO"
+    # was a hidden approval gate reachable through the API). A CCEO's own
+    # staff work goes to their Programme Lead whoever presses the button
+    # (owner, 2026-10-12; apps.pl_review.services.routes_to_lead).
+    from apps.pl_review.services import routes_to_lead
+
     next_status = (
         "submitted_to_pl"
-        if is_cceo and a.delivery_type != "partner"
+        if routes_to_lead(a, principal)
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
@@ -4224,13 +4230,16 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     # nothing of its own.
     _bind_followed_up_training(a, data)
 
-    # Same §10 partner-aware routing as complete(): partner-delivered work
-    # goes directly to IA even when the monitoring CCEO presses submit —
-    # the role-only ternary here was the second half of the hidden PL gate
-    # the 2026-08-19 audit flagged.
+    # Same routing as complete(): partner-delivered work goes directly to IA
+    # even when the monitoring CCEO presses submit — the role-only ternary
+    # here was the second half of the hidden PL gate the 2026-08-19 audit
+    # flagged — and a CCEO's staff work goes to their Programme Lead whoever
+    # presses submit (owner, 2026-10-12).
+    from apps.pl_review.services import routes_to_lead
+
     next_status = (
         "submitted_to_pl"
-        if principal.active_role == "CCEO" and a.delivery_type != "partner"
+        if routes_to_lead(a, principal)
         else "awaiting_ia_verification"
     )
     with transaction.atomic():

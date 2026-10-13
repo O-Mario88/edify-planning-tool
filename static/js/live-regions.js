@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false;
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false, caughtUp = '', due = '', mustRead = false;
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -45,15 +45,24 @@
   function refresh() {
     wanted = true;
     if (loading || doc.hidden || !regions().length || busy()) return;
+    // The change this read was asked for is already on the page: a read
+    // that began after it (the page's own save, say) came back meanwhile.
+    if (!mustRead && due && caughtUp && due <= caughtUp) { wanted = false; return; }
     // Asked for while it rests: changes are coming faster than it reads them.
     if (Date.now() < notBefore) { held = true; return; }
     wanted = false;
     loading = true;
+    mustRead = false;
     spell = held ? Math.min(spell + 1, 4) : 0;
     held = false;
     var began = Date.now();
     fetch(location.href, { credentials: 'same-origin', headers: { 'X-Requested-With': 'EdifyLive' } })
       .then(function (response) {
+        // The server's clock as this read began: a change stamped before it
+        // is already on the page this read brings (the page's own save,
+        // echoed back by the stream), so its notice is not read again.
+        var at = response.headers && response.headers.get && response.headers.get('X-Edify-Live-At');
+        if (at && at > caughtUp) caughtUp = at;
         if (response.ok && !response.redirected) return response.text();
         // Signed out, or the page is gone: nothing left to keep up with.
         refused = 9;
@@ -63,10 +72,12 @@
       .then(function (html) {
         loading = false;
         // A busy day does not turn into a page reading itself without pause:
-        // it rests a second, or as long as the read took. While changes keep
-        // arriving during the rest, each rest is twice the last, to sixteen
-        // seconds; one that ends with nothing waiting starts again at one.
-        notBefore = Date.now() + Math.max(1000 << spell, Date.now() - began);
+        // it rests a second, or three times as long as the read took (a read
+        // costs the server what it took; a page of three seconds is read at
+        // most every nine). While changes keep arriving during the rest, each
+        // rest is twice the last, to sixteen seconds; one that ends with
+        // nothing waiting starts again at one.
+        notBefore = Date.now() + Math.max(1000 << spell, 3 * (Date.now() - began));
         if (!html) return;
         // Something was opened while the page was being read: wait again.
         if (busy()) { wanted = true; return; }
@@ -86,6 +97,20 @@
     soonTimer = setTimeout(refresh, 400);
   }
 
+  // A save made from this page (a drawer's answer, apps.core.htmx_saved):
+  // the regions are read once, now, as soon as the drawer has closed — not
+  // the whole page reloaded. A page with no live region still reloads.
+  function saved() {
+    if (!regions().length) { location.reload(); return; }
+    notBefore = 0; spell = 0; held = false; mustRead = true;
+    var tries = 0;
+    (function once() {
+      var host = doc.getElementById('drawer-container');
+      if (host && host.childElementCount && tries++ < 20) { setTimeout(once, 50); return; }
+      refresh();
+    })();
+  }
+
   function close() {
     if (stream) { stream.close(); stream = null; }
   }
@@ -97,9 +122,13 @@
       var data;
       try { data = JSON.parse(event.data); } catch (_) { return; }
       refused = 0;
-      if (data.type === 'plan.changed') soon();
+      if (data.type === 'plan.changed') {
+        if (data.at && caughtUp && data.at <= caughtUp) return;
+        if (data.at && data.at > due) due = data.at;
+        soon();
+      }
       // Back after being away: read again only if something changed meanwhile.
-      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) soon();
+      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) { if (data.changed > due) due = data.changed; soon(); }
       if (data.at) seen = data.at;
     };
     stream.onerror = function () {
@@ -125,5 +154,5 @@
   // stream sooner, a section that settles in its first second included.
   setTimeout(function () { stayed = true; open(); }, 1500);
 
-  window.EdifyLive = Object.freeze({ refresh: refresh, busy: busy });
+  window.EdifyLive = Object.freeze({ refresh: refresh, busy: busy, saved: saved });
 })();

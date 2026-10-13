@@ -544,7 +544,7 @@ class TrainingsCarryTheirIntervention(PeopleFixture):
         # the Cluster Name and carry no School ID), with its training and its
         # SSA intervention by name. The page still lists it once per invited
         # school.
-        trainings = tables[plan_export.SESSION_SHEET]
+        trainings = tables[plan_export.TRAINING_SHEET]
         self.assertEqual(len(trainings), 1)
         self.assertEqual(trainings[0]["Cluster Name"], self.cluster.name)
         self.assertEqual(trainings[0]["Training"], "Discipleship Dynamics")

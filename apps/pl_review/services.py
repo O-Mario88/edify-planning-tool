@@ -14,12 +14,91 @@ submitter.
 
 from __future__ import annotations
 
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.audit.services import log as audit_log
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import EdifyRole
+
+#: The statuses a completion waits on its Programme Lead in. Program Leads
+#: verify their CCEOs' field work — visits, trainings and cluster meetings
+#: (owner, 2026-10-12) — so a CCEO's staff-delivered completion is the lead's
+#: whichever path filed it: the review path writes ``submitted_to_pl``; an
+#: older path, or a submission somebody else pressed for the officer, left it
+#: ``awaiting_ia_verification`` with Impact Assessment, where the lead could
+#: not clear it. Partner work is never here: it is verified where its
+#: Salesforce entry and payment are decided.
+LEAD_REVIEWABLE_STATUSES = ("submitted_to_pl", "awaiting_ia_verification")
+
+
+def _cceo_profiles():
+    from apps.accounts.models import StaffProfile
+
+    return StaffProfile.objects.filter(
+        user__roles__contains=[EdifyRole.CCEO.value], deleted_at__isnull=True
+    )
+
+
+def cceo_owner_q(field: str = "responsible_staff_id") -> Q:
+    """Work owned by a CCEO, in either id space.
+
+    ``Activity.responsible_staff_id`` holds a StaffProfile id or a User id
+    depending on the path that wrote it (``scoping.owner_ids``), so both are
+    asked. Two subqueries, no literal id list, however many officers there
+    are.
+    """
+    profiles = _cceo_profiles()
+    return Q(**{f"{field}__in": profiles.values("id")}) | Q(
+        **{f"{field}__in": profiles.values("user_id")}
+    )
+
+
+def lead_verified_q() -> Q:
+    """Staff-delivered work whose completion the owner's Programme Lead
+    verifies — the work Impact Assessment's staff queue must not offer."""
+    return cceo_owner_q() & ~Q(delivery_type="partner")
+
+
+def cceo_owner_ids() -> frozenset[str]:
+    """Every id a CCEO's work may be filed under, for callers deciding row by
+    row (Cluster Oversight) without a query per row."""
+    ids: set[str] = set()
+    for profile_id, user_id in _cceo_profiles().values_list("id", "user_id"):
+        ids.add(str(profile_id))
+        if user_id:
+            ids.add(str(user_id))
+    return frozenset(ids)
+
+
+def owner_is_cceo(activity) -> bool:
+    owner = _owning_staff_id(activity)
+    return (
+        bool(owner) and _cceo_profiles().filter(Q(id=owner) | Q(user_id=owner)).exists()
+    )
+
+
+def lead_verifies(activity) -> bool:
+    """Whether this completion is the Programme Lead's to verify, not IA's."""
+    return activity.delivery_type != "partner" and owner_is_cceo(activity)
+
+
+def routes_to_lead(activity, principal) -> bool:
+    """Where a completion goes when it is submitted: the supervising Programme
+    Lead for a CCEO's staff-delivered work, Impact Assessment otherwise.
+
+    Read from the work's OWNER as well as the submitter's role: a completion a
+    lead or an Admin presses Submit on for an officer is still the officer's
+    field work, and used to detour to Impact Assessment, where the lead could
+    not clear it (owner, 2026-10-12). Partner work goes to IA whoever presses
+    the button (§10, 2026-08-19 audit).
+    """
+    if activity.delivery_type == "partner":
+        return False
+    if getattr(principal, "active_role", "") == EdifyRole.CCEO.value:
+        return True
+    return owner_is_cceo(activity)
 
 
 def _reviewer_staff_ids(principal) -> set[str]:
@@ -113,10 +192,16 @@ def review_rule(principal):
 
 
 def _queue_queryset(principal):
-    """The completions waiting on THIS reviewer, as an unevaluated queryset."""
-    from django.db.models import Q
+    """The completions waiting on THIS reviewer, as an unevaluated queryset.
 
-    qs = Activity.objects.filter(deleted_at__isnull=True, status="submitted_to_pl")
+    Work the review path filed under the lead, and a CCEO's staff-delivered
+    work an older path left with Impact Assessment: both are the lead's to
+    clear (LEAD_REVIEWABLE_STATUSES).
+    """
+    qs = Activity.objects.filter(deleted_at__isnull=True).filter(
+        Q(status="submitted_to_pl")
+        | (Q(status="awaiting_ia_verification") & lead_verified_q())
+    )
     if _is_admin(principal):
         return qs
     reviewable = _reviewer_staff_ids(principal)
@@ -273,9 +358,10 @@ def review_register(principal, *, cceo: str = "", today=None) -> dict:
     for a in activities:
         owner = _owning_staff_id(a) or ""
         # The completion row is written at the moment of submission and not
-        # again until review, so it dates the wait; updated_at is the fallback
-        # for rows submitted before completions carried one.
-        since = submitted.get(a.id) or a.updated_at
+        # again until review, so it dates the wait; work an older path sent to
+        # Impact Assessment is dated by that submission; updated_at is the
+        # fallback for rows submitted before completions carried either.
+        since = submitted.get(a.id) or a.submitted_to_ia_at or a.updated_at
         waited = max((today - timezone.localtime(since).date()).days, 0) if since else 0
         when = a.actual_delivery_date or a.planned_date
         if when is None and a.scheduled_date:
@@ -366,8 +452,12 @@ def _lock_reviewable(activity_id: str, principal) -> Activity:
 def _check_reviewable(a: Activity | None, principal) -> Activity:
     if not a:
         raise NotFoundError("Activity not found.")
-    if a.status != "submitted_to_pl":
+    if a.status not in LEAD_REVIEWABLE_STATUSES:
         raise BadRequest("Activity is not awaiting PL review.")
+    if a.status == "awaiting_ia_verification" and not lead_verifies(a):
+        # Partner work, or a lead's or coordinator's own field work: Impact
+        # Assessment's, as it always was.
+        raise BadRequest("This work is verified by Impact Assessment.")
     if _is_admin(principal):
         return a
     owner = _owning_staff_id(a)
@@ -411,6 +501,18 @@ def _close_review_notice(activity) -> None:
         pass
 
 
+def _close_ia_notice(activity) -> None:
+    """Impact Assessment was told this work was waiting for them; it is not."""
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition(
+            "activity_submitted_for_verification", "activity", str(activity.id)
+        )
+    except Exception:  # noqa: BLE001 - never fail a review over bookkeeping
+        pass
+
+
 def confirm(activity_id: str, principal) -> dict:
     """PL approves and verifies a CCEO completion and evidence directly.
 
@@ -420,6 +522,7 @@ def confirm(activity_id: str, principal) -> dict:
     IA verifies evidence for partner completed activities to process partner payments.
     """
     from django.db import transaction
+    from apps.activities.ia_models import IAVerification
     from apps.activities.services import _serialize
     from apps.core.enums import ActivityStatus, EvidenceStatus, VerificationStatus
     from apps.evidence.models import EvidenceRecord
@@ -431,6 +534,7 @@ def confirm(activity_id: str, principal) -> dict:
 
     with transaction.atomic():
         a = _lock_reviewable(activity_id, principal)
+        was_with_ia = a.status == "awaiting_ia_verification"
         a.status = ActivityStatus.IA_VERIFIED
         a.ia_verification_status = VerificationStatus.CONFIRMED
         a.pl_reviewed_at = reviewed_at
@@ -455,9 +559,18 @@ def confirm(activity_id: str, principal) -> dict:
             reviewed_by=principal.user_id,
             reviewed_at=reviewed_at,
         )
+        # The IA workspace's own record, where the work had one: it must not
+        # go on reading "pending" for work the lead has cleared.
+        IAVerification.objects.filter(activity=a).update(
+            status=VerificationStatus.CONFIRMED,
+            verified_by=principal.user_id,
+            verified_at=reviewed_at,
+        )
 
         _audit("pl_review_confirm", a, principal)
         _close_review_notice(a)
+        if was_with_ia:
+            _close_ia_notice(a)
 
         confirmed = a
         transaction.on_commit(lambda: record_activity_progress(confirmed))

@@ -9,10 +9,16 @@ Planned Date, Executor, Training, SSA Intervention, Participants, Cost,
 Budget status, Verification, Salesforce ID, Evidence, Status."
 
 Those are My Plan's own tables with a District Type beside the District, so
-an export reads like the page it was taken from. A workbook holds one sheet
-for each: the school visits, the trainings and cluster meetings, and the
-other activities (a district meeting, a field event, a conference), which
-keep the same order of columns around the place they happen at.
+an export reads like the page it was taken from. Owner, 2026-10-12, later:
+"put visits on its sheet, group training on its sheet, cluster meetings on
+its sheet, partner schedules on its sheet and the budget for those selected
+activities in the last sheet and the budget should be fetched direct from
+those planned activities." So a workbook holds, in this order: School
+Visits, Group Trainings, Cluster Meetings, Partner Schedules (work handed to
+a partner, whatever its kind), Other Activities (a district meeting, a field
+event, a conference) and, last, Budget — the Budget page's Activity cost
+plan laid out from the cost lines of exactly the activities on the sheets
+before it (`budget_sheet`).
 
 Each exporter hands over plain rows (`row(...)`); nothing here queries the
 plan, so My Plan, Team and Country Planning Oversight and Cluster Oversight
@@ -24,15 +30,20 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 VISIT = "visit"
-SESSION = "session"
+TRAINING = "training"
+MEETING = "meeting"
+PARTNER = "partner"
 OTHER = "other"
 
 MONEY = "#,##0"
 DATE = "d mmm yyyy"
 
 VISIT_SHEET = "School Visits"
-SESSION_SHEET = "Trainings & Cluster Meetings"
+TRAINING_SHEET = "Group Trainings"
+MEETING_SHEET = "Cluster Meetings"
+PARTNER_SHEET = "Partner Schedules"
 OTHER_SHEET = "Other Activities"
+BUDGET_SHEET = "Budget"
 
 VISIT_HEADERS = (
     "School ID",
@@ -51,12 +62,35 @@ VISIT_HEADERS = (
     "Evidence",
     "Status",
 )
+#: The owner's Training / Cluster Meeting columns; both sheets share them.
 SESSION_HEADERS = (
     "Cluster Name",
     "District",
     "District Type",
     "Planned Date",
     "Executor",
+    "Training",
+    "SSA Intervention",
+    "Participants",
+    "Cost (UGX)",
+    "Budget Status",
+    "Verification",
+    "Salesforce ID",
+    "Evidence",
+    "Status",
+)
+TRAINING_HEADERS = SESSION_HEADERS
+MEETING_HEADERS = SESSION_HEADERS
+#: Work a partner delivers: who the partner is, where, and the same tail.
+PARTNER_HEADERS = (
+    "Partner",
+    "Activity",
+    "School ID",
+    "School Name",
+    "Cluster Name",
+    "District",
+    "District Type",
+    "Planned Date",
     "Training",
     "SSA Intervention",
     "Participants",
@@ -83,7 +117,13 @@ OTHER_HEADERS = (
     "Evidence",
     "Status",
 )
-ALL_HEADERS = (VISIT_HEADERS, SESSION_HEADERS, OTHER_HEADERS)
+ALL_HEADERS = (
+    VISIT_HEADERS,
+    TRAINING_HEADERS,
+    MEETING_HEADERS,
+    PARTNER_HEADERS,
+    OTHER_HEADERS,
+)
 
 _BLANKS = ("—", "-", "Unknown", "None")
 
@@ -103,12 +143,27 @@ def _number(value):
         return _text(value)
 
 
+def _day(value):
+    """A planned date as a date, whether a row carries one or its ISO text."""
+    import datetime as _dt
+
+    if isinstance(value, _dt.datetime):
+        return value.date()
+    if isinstance(value, _dt.date):
+        return value
+    try:
+        return _dt.date.fromisoformat(str(value or "")[:10])
+    except ValueError:
+        return None
+
+
 def row(kind: str, **fields) -> dict:
-    """One exported activity. ``kind`` is VISIT, SESSION or OTHER; the fields
-    are the cells: school_id, school_name, cluster_name, venue, district,
-    district_type, activity, planned_date, executor, purpose, intervention,
-    training, participants, cost, budget_status, verification, salesforce_id,
-    evidence, status."""
+    """One exported activity. ``kind`` is VISIT, TRAINING, MEETING, PARTNER or
+    OTHER; the fields are the cells: school_id, school_name, cluster_name,
+    venue, district, district_type, activity, planned_date, executor, partner,
+    purpose, intervention, training, participants, cost, budget_status,
+    verification, salesforce_id, evidence, status — and ``activity_id``, which
+    the Budget sheet reads the activity's cost lines by."""
     return {"kind": kind, **fields}
 
 
@@ -154,6 +209,22 @@ def _session(r: dict) -> list:
     ]
 
 
+def _partner(r: dict) -> list:
+    return [
+        _text(r.get("partner")) or _text(r.get("executor")),
+        _text(r.get("activity")),
+        _text(r.get("school_id")),
+        _text(r.get("school_name")),
+        _text(r.get("cluster_name")),
+        *_place(r),
+        r.get("planned_date") or "",
+        _text(r.get("training")),
+        _text(r.get("intervention")),
+        _number(r.get("participants")),
+        *_tail(r),
+    ]
+
+
 def _other(r: dict) -> list:
     return [
         _text(r.get("activity")),
@@ -169,14 +240,73 @@ def _other(r: dict) -> list:
 
 _LAYOUTS = (
     (VISIT, VISIT_SHEET, VISIT_HEADERS, _visit),
-    (SESSION, SESSION_SHEET, SESSION_HEADERS, _session),
+    (TRAINING, TRAINING_SHEET, TRAINING_HEADERS, _session),
+    (MEETING, MEETING_SHEET, MEETING_HEADERS, _session),
+    (PARTNER, PARTNER_SHEET, PARTNER_HEADERS, _partner),
     (OTHER, OTHER_SHEET, OTHER_HEADERS, _other),
 )
 
+SHEET_ORDER = (*(title for _, title, _, _ in _LAYOUTS), BUDGET_SHEET)
 
-def sheets(rows: Iterable[dict]) -> list[dict]:
+
+def budget_sheet(rows: Iterable[dict]) -> dict:
+    # Owner, 2026-10-12, on the first version: "use the actual budget format
+    # and use that exactly" — nothing of this sheet is written here; every
+    # row, heading, style and the period line is the Budget export's.
+    """The Budget page's Activity cost plan for exactly the activities on the
+    sheets before it, from their own cost lines (owner, 2026-10-12: "the
+    budget should be fetched direct from those planned activities").
+
+    `budget_groups` and `cost_plan_sheet` are the Budget page's own ledger,
+    so a figure here is the figure the page prints for the same activity: an
+    item a row under a band per activity type, a subtotal each, a Grand total.
+    An activity with no cost line (an online group training, an in-school
+    training whose visit carries the day) adds nothing, as on the page.
+    """
+    from apps.accounts.models import User
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.budget.services import (
+        _EXPORT_ACTIVITY_FIELDS,
+        _EXPORT_LINE_FIELDS,
+        budget_groups,
+        cost_line_rows,
+        cost_plan_sheet,
+    )
+
+    ids = list(
+        dict.fromkeys(r.get("activity_id") for r in rows if r.get("activity_id"))
+    )
+    lines = []
+    for start in range(0, len(ids), 5000):
+        lines.extend(
+            cost_line_rows(
+                ActivityScheduleCostLine.objects.filter(
+                    activity_id__in=ids[start : start + 5000],
+                    activity__deleted_at__isnull=True,
+                ).order_by("planned_date", "activity_id", "id"),
+                _EXPORT_LINE_FIELDS,
+                _EXPORT_ACTIVITY_FIELDS,
+            )
+        )
+    names = dict(
+        User.objects.filter(
+            id__in={line.responsible_user for line in lines if line.responsible_user}
+        ).values_list("id", "name")
+    )
+    # The Budget export's own period line ("Period: 1 Oct 2026 – 30 Sep
+    # 2027"), over the days the exported activities are planned on, so the
+    # sheet is the Budget's Activity cost plan word for word.
+    days = sorted(d for d in (_day(r.get("planned_date")) for r in rows) if d)
+    period_label = f"Period: {days[0]:%-d %b %Y} – {days[-1]:%-d %b %Y}" if days else ""
+    sheet = cost_plan_sheet(budget_groups(lines, names), period_label=period_label)
+    sheet["title"] = BUDGET_SHEET
+    return sheet
+
+
+def sheets(rows: Iterable[dict], *, budget: bool = True) -> list[dict]:
     """The workbook: a sheet a kind, each with its own columns, every sheet
-    present so a reader sees an empty kind as empty rather than missing."""
+    present so a reader sees an empty kind as empty rather than missing, and
+    the Budget of those activities last."""
     rows = list(rows)
     out = []
     for kind, title, headers, cells in _LAYOUTS:
@@ -192,6 +322,8 @@ def sheets(rows: Iterable[dict]) -> list[dict]:
                 },
             }
         )
+    if budget:
+        out.append(budget_sheet(rows))
     return out
 
 
@@ -200,7 +332,8 @@ def csv_rows(rows: Iterable[dict]):
     sheet's name, its heading row and its rows, a blank line between."""
     for sheet in sheets(rows):
         yield [sheet["title"]]
-        yield sheet["headers"]
+        if sheet["headers"]:
+            yield sheet["headers"]
         yield from sheet["rows"]
         yield []
 
@@ -211,7 +344,10 @@ def tables_from_csv(lines: Iterable[list]) -> dict[str, list[dict]]:
     tables: dict[str, list[dict]] = {}
     title, headers = None, None
     for line in lines:
-        if len(line) == 1 and line[0] in titles:
+        if len(line) == 1 and line[0] == BUDGET_SHEET:
+            # The ledger has no heading row; it is not a table of activities.
+            title, headers = None, None
+        elif len(line) == 1 and line[0] in titles:
             title, headers = line[0], None
             tables[title] = []
         elif title and headers is None and line:

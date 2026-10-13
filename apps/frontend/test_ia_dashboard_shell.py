@@ -81,13 +81,25 @@ class IaShellFixture(TestCase):
         cls.ke_cceo = _user(
             "shell-ke@t.org", "Kip Shell", EdifyRole.CCEO.value, country="Kenya"
         )
+        # Whose staff work Impact Assessment verifies: a Programme Lead's own
+        # field work. A CCEO's is verified by their lead (owner, 2026-10-12)
+        # and is not in this queue (apps/pl_review/test_lead_verifies_cceo_work).
+        cls.lead = _user(
+            "shell-lead@t.org", "Cara Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        cls.ke_lead = _user(
+            "shell-ke-lead@t.org",
+            "Kip Lead",
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            country="Kenya",
+        )
 
         now = timezone.now()
         cls.staff_work = cls._activity(
-            cls.ug_school, cls.cceo, "SF-SH-1", submitted=now - timedelta(hours=30)
+            cls.ug_school, cls.lead, "SF-SH-1", submitted=now - timedelta(hours=30)
         )
         cls.fresh_work = cls._activity(
-            cls.ug_school, cls.cceo, "SF-SH-2", submitted=now - timedelta(hours=2)
+            cls.ug_school, cls.lead, "SF-SH-2", submitted=now - timedelta(hours=2)
         )
         EvidenceRecord.objects.create(
             activity=cls.fresh_work,
@@ -98,19 +110,19 @@ class IaShellFixture(TestCase):
         )
         cls.own_work = cls._activity(cls.ug_school, cls.ia, "SF-SH-OWN")
         cls.partner_work = cls._activity(
-            cls.ug_school, cls.cceo, "SF-SH-P", delivery_type="partner"
+            cls.ug_school, cls.lead, "SF-SH-P", delivery_type="partner"
         )
-        cls.no_sf_work = cls._activity(cls.ug_school, cls.cceo, "")
-        cls.kenya_work = cls._activity(cls.ke_school, cls.ke_cceo, "SF-SH-KE")
+        cls.no_sf_work = cls._activity(cls.ug_school, cls.lead, "")
+        cls.kenya_work = cls._activity(cls.ke_school, cls.ke_lead, "SF-SH-KE")
         cls.completed_no_sf = cls._activity(
-            cls.ug_school, cls.cceo, "", status="completed"
+            cls.ug_school, cls.lead, "", status="completed"
         )
-        cls._activity(cls.ke_school, cls.ke_cceo, "", status="completed")
+        cls._activity(cls.ke_school, cls.ke_lead, "", status="completed")
         stale = cls._activity(
-            cls.ug_school, cls.cceo, "SF-SH-R", status="returned_by_ia"
+            cls.ug_school, cls.lead, "SF-SH-R", status="returned_by_ia"
         )
         ke_stale = cls._activity(
-            cls.ke_school, cls.ke_cceo, "SF-SH-KR", status="returned_by_ia"
+            cls.ke_school, cls.ke_lead, "SF-SH-KR", status="returned_by_ia"
         )
         Activity.objects.filter(id__in=[stale.id, ke_stale.id]).update(
             updated_at=now - timedelta(days=10)
@@ -147,7 +159,7 @@ class IaShellFixture(TestCase):
             activity=cls.kenya_work, duplicate_of=cls.kenya_work, reason="same day"
         )
         verified = cls._activity(
-            cls.ug_school, cls.cceo, "SF-SH-V", status="ia_verified"
+            cls.ug_school, cls.lead, "SF-SH-V", status="ia_verified"
         )
         VerificationSample.objects.create(
             activity=verified, original_verifier=cls.ia2.id
@@ -156,7 +168,7 @@ class IaShellFixture(TestCase):
             activity=verified, original_verifier=cls.ia.id
         )
         ke_verified = cls._activity(
-            cls.ke_school, cls.ke_cceo, "SF-SH-KV", status="ia_verified"
+            cls.ke_school, cls.ke_lead, "SF-SH-KV", status="ia_verified"
         )
         VerificationSample.objects.create(
             activity=ke_verified, original_verifier=cls.ia2.id
@@ -607,7 +619,7 @@ class IaDashboardQueryBudgetTest(IaShellFixture):
                 region=self.ug_school.region,
                 district=self.ug_district,
             )
-            self._activity(school, self.cceo, f"SF-G-{i}")
+            self._activity(school, self.lead, f"SF-G-{i}")
         large = {view: self._count(view) for view in self.BUDGETS}
         for view, budget in self.BUDGETS.items():
             with self.subTest(view=view):
@@ -627,7 +639,7 @@ class IaDashboardQueryBudgetTest(IaShellFixture):
         measure()
         small = measure()
         for i in range(25):
-            self._activity(self.ug_school, self.cceo, f"SF-T-{i}")
+            self._activity(self.ug_school, self.lead, f"SF-T-{i}")
         large = measure()
         self.assertLessEqual(large, small)
         # Measured at 10: scope, the waiting rows and five aggregates.

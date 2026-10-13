@@ -26,11 +26,11 @@ name="salesforce_id"
 id="salesforce_id"
 required
 aria-describedby="salesforce-id-help"
-placeholder="e.g. SVE-11223344 or TS-998877"
+placeholder="e.g. SV-11223344, SVE-11223344 or TS-998877"
 value="{{ act.salesforce_activity_id|default:'' }}"
 class="min-h-11 w-full rounded-control border border-slate-200 px-3 text-[16px] sm:text-[13px] font-semibold focus:outline-none focus:ring-2 edify-primary-focus"
 >
-<p id="salesforce-id-help" class="edify-text-caption text-slate-500">The unique ID of this activity's Salesforce record.</p>
+<p id="salesforce-id-help" class="edify-text-caption text-slate-500">SV- or SVE- for a visit, TS- for a training, or the record's own Salesforce ID — any one of them.</p>
 </div>
 
 <div class="drawer-footer">

@@ -146,6 +146,9 @@ class ClusterSessionStatusTest(TestCase):
         session = self._session(
             "cluster_training", "submitted_to_pl", self.cceo, complete=True
         )
+        # Verify opens the completion with its uploaded form; the decision is
+        # posted from that drawer, never from the row (owner, 2026-10-12).
+        verify = f'hx-get="/pl/review-queue/{session.id}/drawer"'
         confirm = f'action="/pl/review-queue/{session.id}/confirm"'
 
         response = self._page(self.pl)
@@ -154,7 +157,13 @@ class ClusterSessionStatusTest(TestCase):
             '<span class="cluster-session-status" data-status-tone="pending">'
             "PL Pending</span>",
         )
-        self.assertContains(response, confirm)
+        self.assertContains(response, verify)
+        self.assertNotContains(response, confirm)
+        drawer = self.client.get(
+            f"/pl/review-queue/{session.id}/drawer", headers={"HX-Request": "true"}
+        )
+        self.assertContains(drawer, confirm)
+        self.assertContains(drawer, "attendance.pdf")
 
         back = f"/cluster-oversight/?fy={self.fy}"
         response = self.client.post(
@@ -189,13 +198,27 @@ class ClusterSessionStatusTest(TestCase):
         )
         # A CCEO's completion is the Lead's to verify, never IA's.
         self.assertContains(response, "PL Pending")
-        self.assertNotContains(response, f"/pl/review-queue/{cceo_work.id}/confirm")
+        self.assertNotContains(response, f"/pl/review-queue/{cceo_work.id}/drawer")
 
         # The Lead reads their own session as waiting on IA, with nothing to do.
         response = self._page(self.pl)
         self.assertContains(response, "IA Pending")
         self.assertNotContains(response, f"/ia/verification/{own.id}/")
-        self.assertNotContains(response, f"/pl/review-queue/{own.id}/confirm")
+        self.assertNotContains(response, f"/pl/review-queue/{own.id}/drawer")
+
+    def test_a_cceo_completion_left_with_ia_is_still_the_leads(self):
+        """An older path filed a CCEO's completion with Impact Assessment. It
+        reads PL Pending, the lead is offered Verify, and IA is not (owner,
+        2026-10-12: the lead clears their members' work)."""
+        stuck = self._session("cluster_meeting", "awaiting_ia_verification", self.cceo)
+        rows = _sessions(cluster_oversight_table_data(self.pl, fy=self.fy))
+        self.assertEqual(rows[stuck.id].session_status, "PL Pending")
+        self.assertTrue(rows[stuck.id].pl_verify)
+        self.assertEqual(rows[stuck.id].ia_verify_url, "")
+        rows = _sessions(cluster_oversight_table_data(self.ia, fy=self.fy))
+        self.assertEqual(rows[stuck.id].session_status, "PL Pending")
+        self.assertFalse(rows[stuck.id].pl_verify)
+        self.assertEqual(rows[stuck.id].ia_verify_url, "")
 
     def test_only_the_supervising_lead_is_offered_verify(self):
         cd = _create_user("cd@status.test", EdifyRole.COUNTRY_DIRECTOR)

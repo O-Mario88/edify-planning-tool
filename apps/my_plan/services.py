@@ -613,7 +613,7 @@ def compute_next_action(a, today) -> dict:
             "text": "View Status",
             "action": "view_status",
             "url": f"/my-plan/{a.id}",
-            "description": "Waiting for IA Verification",
+            "description": "Waiting for verification",
         }
 
     # 8. IA verified but finance pending -> View Accounts Status.

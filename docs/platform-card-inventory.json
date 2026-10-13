@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 664,
+  "titled_cards": 663,
   "templates": 253,
   "distinct_titles": 631,
   "with_card_key": 13,
-  "untitled_surfaces": 596,
+  "untitled_surfaces": 597,
   "untitled_chrome": 153,
-  "untitled_nested": 191,
+  "untitled_nested": 192,
   "untitled_headless": 252,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 25,
+  "titles_in_several_templates": 24,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -86,10 +86,6 @@
   "regional performance": [
    "templates/partials/dashboards/cd/operations.html",
    "templates/partials/ia/_geography_cards.html"
-  ],
-  "school visit feedback": [
-   "templates/pages/partner/activity_workroom.html",
-   "templates/partials/schools/_participation.html"
   ],
   "schools needing urgent attention": [
    "templates/partials/dashboards/cceo/week.html",
@@ -1807,7 +1803,7 @@
   },
   {
    "template": "templates/pages/ia/review_workspace.html",
-   "line": 105,
+   "line": 107,
    "title": "Activity Summary",
    "heading_level": 4,
    "has_card_key": false,
@@ -1816,7 +1812,7 @@
   },
   {
    "template": "templates/pages/ia/review_workspace.html",
-   "line": 238,
+   "line": 240,
    "title": "School Self-Assessment Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -1825,7 +1821,7 @@
   },
   {
    "template": "templates/pages/ia/review_workspace.html",
-   "line": 278,
+   "line": 280,
    "title": "Participant Attendance Verification",
    "heading_level": 3,
    "has_card_key": false,
@@ -1834,7 +1830,7 @@
   },
   {
    "template": "templates/pages/ia/review_workspace.html",
-   "line": 341,
+   "line": 343,
    "title": "Verification Checklist",
    "heading_level": 4,
    "has_card_key": false,
@@ -2159,7 +2155,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 39,
+   "line": 40,
    "title": "Activity Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -2168,7 +2164,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 134,
+   "line": 135,
    "title": "Execution Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2177,7 +2173,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 246,
+   "line": 247,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2186,7 +2182,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 289,
+   "line": 290,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2213,7 +2209,7 @@
   },
   {
    "template": "templates/pages/my_plan/pl_queue.html",
-   "line": 27,
+   "line": 31,
    "title": "Waiting on you",
    "heading_level": 2,
    "has_card_key": false,
@@ -2281,24 +2277,6 @@
     [
      11,
      1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/partner/activity_workroom.html",
-   "line": 182,
-   "title": "School visit feedback",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 bg-slate-50 p-4 space-y-4",
-   "branch_path": [
-    [
-     11,
-     1
-    ],
-    [
-     24,
-     0
     ]
    ]
   },
