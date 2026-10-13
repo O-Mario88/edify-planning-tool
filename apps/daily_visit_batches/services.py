@@ -37,7 +37,13 @@ from .pricing import (
     day_line_label,
     pricing_district_type,
 )
-from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
+from .return_day import (
+    ONE_DAY,
+    away_on,
+    days_standing,
+    is_return_day,
+    priced_as_return_day,
+)
 
 
 #: The days waiting for their price while a save that adds several visits is
@@ -45,10 +51,16 @@ from .return_day import ONE_DAY, away_on, is_return_day, priced_as_return_day
 _days_to_price: contextvars.ContextVar[dict | None] = contextvars.ContextVar(
     "daily_visit_batches_days_to_price", default=None
 )
+#: What waits for those days to be priced, in the order it was asked for
+#: (`once_days_are_priced`). None unless the block in hand also makes a day
+#: wait that a visit leaves (`each_day_priced_once(leaving_too=True)`).
+_after_pricing: contextvars.ContextVar[list | None] = contextvars.ContextVar(
+    "daily_visit_batches_after_pricing", default=None
+)
 
 
 @contextmanager
-def each_day_priced_once():
+def each_day_priced_once(*, leaving_too: bool = False):
     """Price a day once for all the visits this block adds to it.
 
     A visit joining a day re-prices every visit already on it, because the
@@ -76,10 +88,24 @@ def each_day_priced_once():
     because what follows it (the week it left is re-filed from its lines)
     reads the result.
 
+    `leaving_too`: a day a visit leaves waits as well. For a group of moves
+    or cancellations (`apps.activities.group_actions`), which re-priced the
+    day left and the day joined once for every visit of the group: three
+    visits moved off a day of ten priced nine, eight and seven of it, then
+    one, two and three of the day they joined, thirty pricings where ten are
+    the end of it. Two things make that safe there and nowhere else: the
+    week and month are re-filed when the group ends
+    (`apps.fund_requests.follow`), not after each visit, and what has to
+    read a visit's new lines says so (`once_days_are_priced`). The caller
+    must be ready for the pricing to refuse when the block ends, which undoes
+    everything inside it.
+
     ``PRICE_A_DAY_ONCE_PER_SAVE=false`` prices after every visit again.
     """
     from django.conf import settings
     from django.db import connection
+
+    from apps.budget.costing_service import rate_cards_held
 
     if _days_to_price.get() is not None or not getattr(
         settings, "PRICE_A_DAY_ONCE_PER_SAVE", True
@@ -93,14 +119,109 @@ def each_day_priced_once():
             "scheduled visits with no cost."
         )
     days: dict[str, tuple] = {}
+    afterwards: list | None = [] if leaving_too else None
     token = _days_to_price.set(days)
+    after_token = _after_pricing.set(afterwards)
     try:
         yield
     finally:
         _days_to_price.reset(token)
-    for batch_id, (catalogue, responsible_user_id) in days.items():
-        batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
-        _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+        _after_pricing.reset(after_token)
+    # Every day of the block prices against the same published cards. Where
+    # days a visit left are among them, each is read from its members as
+    # they stand while the others are priced (`_where_days_stand`).
+    with (
+        rate_cards_held(),
+        days_standing(_where_days_stand(days) if leaving_too else {}),
+    ):
+        for batch_id, (catalogue, responsible_user_id) in days.items():
+            batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
+            _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+    for then in afterwards or ():
+        then()
+
+
+def _where_days_stand(days: dict) -> dict:
+    """``{(responsible_user, day): away}`` for the days waiting to be priced,
+    read from who is on each now: away when it has a live member and prices
+    as a secondary-district day, as `_write_day_lines` will find it."""
+    from apps.activities.models import Activity
+
+    if len(days) < 2:
+        return {}
+    batches = {
+        batch.id: batch for batch in DailyVisitBatch.objects.filter(id__in=list(days))
+    }
+    members: dict[str, list] = {batch_id: [] for batch_id in batches}
+    for member in (
+        Activity.objects.filter(
+            daily_visit_batch_id__in=list(batches), deleted_at__isnull=True
+        )
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related(*_MEMBER_DISTRICT_RELATIONS)
+    ):
+        members[member.daily_visit_batch_id].append(member)
+    standing = {}
+    for batch_id, batch in batches.items():
+        _catalogue, responsible_user_id = days[batch_id]
+        district_types = {
+            district_type_for_staff(responsible_user_id, member_district(member))
+            or "primary"
+            for member in members[batch_id]
+        }
+        district_type = (
+            pricing_district_type(day_district_mark(district_types))
+            if district_types
+            else batch.district_type
+        )
+        standing[(batch.responsible_user, batch.visit_date)] = bool(
+            members[batch_id] and district_type == "secondary"
+        )
+    return standing
+
+
+def _leaving_waits() -> bool:
+    """Whether the block in hand also makes a day wait that a visit leaves."""
+    return _after_pricing.get() is not None
+
+
+def once_days_are_priced(then) -> None:
+    """Do `then()` once the days the block in hand is holding back have been
+    priced; at once where no day is being held back for a visit that moved.
+
+    For whatever reads the lines a move leaves a visit with: the note a
+    reschedule writes on them would otherwise be written on the lines the
+    pricing is about to replace."""
+    afterwards = _after_pricing.get()
+    if afterwards is None:
+        then()
+    else:
+        afterwards.append(then)
+
+
+def priced_once_mark():
+    """Where the block in hand stands, for `priced_once_back_to`. None
+    outside one."""
+    days = _days_to_price.get()
+    if days is None:
+        return None
+    afterwards = _after_pricing.get()
+    return (dict(days), len(afterwards) if afterwards is not None else 0)
+
+
+def priced_once_back_to(mark) -> None:
+    """Forget what has been asked of the block in hand since `mark`: for a
+    step inside it that was undone to a savepoint, whose days stand as they
+    were and whose notes have nothing to be written on."""
+    days = _days_to_price.get()
+    if mark is None or days is None:
+        return
+    kept, notes = mark
+    days.clear()
+    days.update(kept)
+    afterwards = _after_pricing.get()
+    if afterwards is not None:
+        del afterwards[notes:]
 
 
 def _price_when_the_save_ends(batch, catalogue, responsible_user_id: str) -> bool:
@@ -562,9 +683,13 @@ def remove_school(*, activity_id: str) -> dict:
         activity.daily_visit_batch = None
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
         catalogue = _catalogue_for_batch_date(batch.visit_date)
-        _recalculate_and_write_lines(
-            batch, catalogue, batch.responsible_user, in_own_block=True
-        )
+        if not (
+            _leaving_waits()
+            and _price_when_the_save_ends(batch, catalogue, batch.responsible_user)
+        ):
+            _recalculate_and_write_lines(
+                batch, catalogue, batch.responsible_user, in_own_block=True
+            )
         return {"batchId": batch.id}
 
 
@@ -733,9 +858,13 @@ def reschedule_within_batch(
 
         activity.daily_visit_batch = batch
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
-        _recalculate_and_write_lines(
-            batch, catalogue, responsible_user_id, in_own_block=True
-        )
+        if not (
+            _leaving_waits()
+            and _price_when_the_save_ends(batch, catalogue, responsible_user_id)
+        ):
+            _recalculate_and_write_lines(
+                batch, catalogue, responsible_user_id, in_own_block=True
+            )
 
 
 def _recalculate_and_write_lines(
@@ -1026,6 +1155,9 @@ __all__ = [
     "schedule_visits",
     "attach_activity_to_batch",
     "each_day_priced_once",
+    "once_days_are_priced",
+    "priced_once_mark",
+    "priced_once_back_to",
     "remove_school",
     "day_to_join",
     "reschedule_within_batch",
