@@ -5199,7 +5199,8 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             _apply_schedule_cost_snapshot(a, data, principal=principal)
             a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
 
-        if old_date != new_date:
+        # (A plan given its first date has no move to note.)
+        if old_date and new_date and old_date != new_date:
             from apps.daily_visit_batches.costs_follow import reschedule_note
             from apps.daily_visit_batches.services import once_days_are_priced
             from apps.hr.leave_services import LeaveBudgetImpactService

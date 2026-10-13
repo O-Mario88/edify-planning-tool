@@ -990,13 +990,6 @@ def _do_cost_reprice_sweep() -> int:
     import time
 
     from apps.budget.repricing import reprice_stale_plans
-    from apps.daily_visit_batches.costs_follow import sweep as costs_follow_sweep
-
-    # First what a save left to be priced after its answer and a lost
-    # process never did (apps.daily_visit_batches.costs_follow).
-    followed = costs_follow_sweep()
-    if any(followed.values()):
-        logger.info("Costs to follow sweep: %s", followed)
 
     result = reprice_stale_plans(deadline=time.monotonic() + 60, skip_refused=True)
     report = {outcome: len(plans) for outcome, plans in result.items()}
@@ -1005,9 +998,27 @@ def _do_cost_reprice_sweep() -> int:
     return report["repriced"]
 
 
+def _settle_costs_left_to_follow() -> None:
+    """What a save left to be priced after its answer and a lost process
+    never did (apps.daily_visit_batches.costs_follow). The person who saved
+    settles it on their next click; this is for when there is none."""
+    try:
+        from apps.daily_visit_batches.costs_follow import sweep
+
+        followed = sweep()
+    except Exception:  # noqa: BLE001 — the re-price sweep still runs
+        logger.exception("Costs to follow sweep failed")
+        return
+    if followed["held"]:
+        logger.warning("Costs to follow sweep: %s", followed)
+    elif any(followed.values()):
+        logger.info("Costs to follow sweep: %s", followed)
+
+
 def cost_reprice_sweep_job():
     if not _enabled():
         return
+    _settle_costs_left_to_follow()
     run_tracked_job("cost_reprice_sweep", _do_cost_reprice_sweep)
 
 
