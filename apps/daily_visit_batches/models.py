@@ -125,3 +125,35 @@ class ActivityWorkloadWeight(TimeStampedModel):
             ),
         ]
         indexes = [models.Index(fields=["activity_type", "active"])]
+
+
+class CostsToFollow(TimeStampedModel):
+    """What a save left to be done after its answer: the days to price, the
+    weeks and months to file, the notes to write
+    (apps.daily_visit_batches.costs_follow).
+
+    A row lives for about a second. It is written in the save's own
+    transaction and deleted in the transaction that does what it says, so a
+    process lost in between loses nothing: the next request from the person
+    who saved, any step that sends or pays a fund request, and a scheduled
+    sweep all settle what they find. A row that could not be done is held
+    with its reason."""
+
+    id = models.BigAutoField(primary_key=True)
+    #: User ids whose days, weeks or months these are.
+    owners = models.JSONField(default=list)
+    asked_by = models.CharField(max_length=30, blank=True, default="")
+    asked_by_role = models.CharField(max_length=40, blank=True, default="")
+    #: days, together, weeks, months, notes, change (see costs_follow._do).
+    steps = models.JSONField(default=dict)
+    #: The request the save came in on, for the audit rows the pricing writes.
+    provenance = models.JSONField(default=dict)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    held_at = models.DateTimeField(null=True, blank=True)
+    held_reason = models.CharField(max_length=500, blank=True, default="")
+
+    class Meta:
+        db_table = "daily_visit_costs_to_follow"
+
+    def __str__(self) -> str:
+        return f"CostsToFollow({self.id}, owners={self.owners})"

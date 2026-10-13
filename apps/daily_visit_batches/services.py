@@ -59,6 +59,13 @@ _after_pricing: contextvars.ContextVar[list | None] = contextvars.ContextVar(
 )
 
 
+#: The save in hand that keeps its days, weeks and notes for after its
+#: answer (`apps.daily_visit_batches.costs_follow`), or None.
+_kept_for_later: contextvars.ContextVar = contextvars.ContextVar(
+    "daily_visit_batches_kept_for_later", default=None
+)
+
+
 @contextmanager
 def each_day_priced_once(*, leaving_too: bool = False):
     """Price a day once for all the visits this block adds to it.
@@ -105,11 +112,15 @@ def each_day_priced_once(*, leaving_too: bool = False):
     from django.conf import settings
     from django.db import connection
 
-    from apps.budget.costing_service import rate_cards_held
-
     if _days_to_price.get() is not None or not getattr(
         settings, "PRICE_A_DAY_ONCE_PER_SAVE", True
     ):
+        kept = _kept_for_later.get()
+        if leaving_too and kept is not None:
+            # A group inside a save that answers first: its days are priced
+            # after the answer the way this block would have priced them,
+            # each read from its members while the others are priced.
+            kept.together = True
         yield
         return
     if not connection.in_atomic_block:
@@ -127,18 +138,28 @@ def each_day_priced_once(*, leaving_too: bool = False):
     finally:
         _days_to_price.reset(token)
         _after_pricing.reset(after_token)
-    # Every day of the block prices against the same published cards. Where
-    # days a visit left are among them, each is read from its members as
-    # they stand while the others are priced (`_where_days_stand`).
+    price_kept_days(days, together=leaving_too)
+    for then, _note in afterwards or ():
+        then()
+
+
+def price_kept_days(days: dict, *, together: bool, beside: dict | None = None) -> None:
+    """Price the days a block kept back, in the order they were asked for.
+
+    `together`: days a visit left are among them, so each is read from its
+    members as they stand while the others are priced (`_where_days_stand`).
+    `beside`: the days to read that way where they are more than the days
+    priced here (some are left to be priced after these). Every day prices
+    against the same published cards."""
+    from apps.budget.costing_service import rate_cards_held
+
     with (
         rate_cards_held(),
-        days_standing(_where_days_stand(days) if leaving_too else {}),
+        days_standing(_where_days_stand(beside or days) if together else {}),
     ):
         for batch_id, (catalogue, responsible_user_id) in days.items():
             batch = DailyVisitBatch.objects.select_for_update().get(id=batch_id)
             _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
-    for then in afterwards or ():
-        then()
 
 
 def _where_days_stand(days: dict) -> dict:
@@ -185,18 +206,26 @@ def _leaving_waits() -> bool:
     return _after_pricing.get() is not None
 
 
-def once_days_are_priced(then) -> None:
+def once_days_are_priced(then, *, note: dict | None = None) -> None:
     """Do `then()` once the days the block in hand is holding back have been
     priced; at once where no day is being held back for a visit that moved.
 
     For whatever reads the lines a move leaves a visit with: the note a
     reschedule writes on them would otherwise be written on the lines the
-    pricing is about to replace."""
+    pricing is about to replace.
+
+    `note`: what `then` does, as plain data (`costs_follow.NOTES` names the
+    kinds). A save that answers before its days are priced writes the note
+    down and does it after the answer; a `then` with no note keeps such a
+    save from answering first."""
     afterwards = _after_pricing.get()
-    if afterwards is None:
+    if afterwards is None or (
+        _kept_for_later.get() is not None and not _days_to_price.get()
+    ):
+        # Nothing is waiting to be priced: the lines are the ones to write on.
         then()
     else:
-        afterwards.append(then)
+        afterwards.append((then, note))
 
 
 def priced_once_mark():
@@ -941,21 +970,30 @@ def _settle_neighbouring_days(batch: DailyVisitBatch, away) -> None:
             continue
 
 
-def _write_day_lines(
+def _plan_day(
     batch: DailyVisitBatch,
     catalogue,
     responsible_user_id: str,
     *,
-    settle_neighbours: bool = True,
-    in_own_block: bool = False,
-) -> None:
-    from apps.budget.costing import ActivityCost, CostLine
+    with_recipes: bool = True,
+) -> dict:
+    """Work a day out without writing it: who is on it, whether it is a day
+    away and the day the traveller comes home, the pool it shares and each
+    member's own recipe. Sets the district type the day prices as on `batch`,
+    unsaved. Refuses, as the pricing always has, a day whose rates are
+    missing.
+
+    `_write_day_lines` writes what this returns. A save that answers before
+    its days are priced (`apps.daily_visit_batches.costs_follow`) asks it
+    alone, and without the recipes (`with_recipes=False`), so that such a
+    day is still refused by the save."""
+    from apps.activities.services import _costing_input
+    from apps.budget.costing import cost_for_activity
     from apps.budget.costing_service import (
+        _profiled_input,
         _rate_card,
-        apply_to_activities,
+        _with_linked_rates,
     )
-    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
-    from apps.fund_requests.weekly_service import trigger_generate_for_activities
 
     catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
     rates, _settings_by_key = _rate_card(catalogue)
@@ -1009,12 +1047,8 @@ def _write_day_lines(
 
     # Each member's own recipe, computed ONCE here because the day's pool
     # depends on it and the loop below needs it again.
-    from apps.activities.services import _costing_input
-    from apps.budget.costing import cost_for_activity
-    from apps.budget.costing_service import _profiled_input, _with_linked_rates
-
-    recipes: dict[str, tuple[dict, ActivityCost]] = {}
-    for member in activities:
+    recipes: dict = {}
+    for member in activities if with_recipes else ():
         member_input = {
             **_costing_input(member, {}),
             "plannedDate": batch.visit_date,
@@ -1028,6 +1062,38 @@ def _write_day_lines(
                 rates,
             ),
         )
+    return {
+        "catalogue": catalogue,
+        "activities": activities,
+        "day_mark": day_mark,
+        "is_away": is_away,
+        "away": away,
+        "pool": pool,
+        "recipes": recipes,
+    }
+
+
+def _write_day_lines(
+    batch: DailyVisitBatch,
+    catalogue,
+    responsible_user_id: str,
+    *,
+    settle_neighbours: bool = True,
+    in_own_block: bool = False,
+) -> None:
+    from apps.budget.costing import ActivityCost, CostLine
+    from apps.budget.costing_service import apply_to_activities
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activities
+    from apps.fund_requests.weekly_service import trigger_generate_for_activities
+
+    day = _plan_day(batch, catalogue, responsible_user_id)
+    catalogue = day["catalogue"]
+    activities = day["activities"]
+    day_mark = day["day_mark"]
+    away = day["away"]
+    pool = day["pool"]
+    recipes = day["recipes"]
+    n = len(activities)
 
     # The day always carries its lunch (session costing spec, 2026-09-26):
     # the participants' meals are each session's own line, the staff

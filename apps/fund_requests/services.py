@@ -24,6 +24,11 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     at schedule time, so the request total is provably the sum of its line items.
     Blocked if any in-period activity is cost-missing or has no budget lines.
     The cost lines are prefetched (one query) instead of queried per activity."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     fy = data.get("fy") or get_operational_fy()
     period = data.get("period", "monthly")
     period_key = data.get("periodKey") or _period_key(fy, period, data)
@@ -596,6 +601,11 @@ def _review_accountability_locked(
 
 def regenerate(period: str, principal, strict: bool = True) -> dict:
     """Idempotent manual regeneration (weekly/monthly)."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     data = {"period": period, "fy": get_operational_fy()}
     return submit(data, principal, strict=strict)
 

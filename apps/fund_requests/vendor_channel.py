@@ -86,15 +86,42 @@ def set_accommodation_vendor_paid(line_id: str, vendor_paid: bool, principal) ->
     return {"id": line.id, "vendorPaid": line.vendor_paid}
 
 
-def ensure_transport_obligation(batch):
-    """§9.1 — one vendor obligation per mission day. Created/refreshed from
-    the batch's pooled transport component while pending; immutable once
-    paid (a re-priced day never silently rewrites a settled invoice)."""
+TRANSPORT_PAID = (
+    "Transport for this day has already been paid. Finance must reconcile it "
+    "before changing the daily allocation."
+)
+
+
+def paid_transport_amounts(batch_ids) -> dict:
+    """``{batch id: amount}`` for the days among these whose transport has
+    been paid. One read, for a save that answers before its days are priced
+    (`apps.daily_visit_batches.costs_follow`): it refuses a paid day whose
+    re-pricing would leave the provider a different amount, as
+    `ensure_transport_obligation` does when the pricing reaches it."""
     from .finance_models import TransportPayment
+
+    batch_ids = list(batch_ids)
+    if not batch_ids:
+        return {}
+    return dict(
+        TransportPayment.objects.filter(
+            batch_id__in=batch_ids, status="paid"
+        ).values_list("batch_id", "amount")
+    )
+
+
+def school_transport_amount(batch, pool) -> int:
+    """What the provider is owed for `batch` once it is priced with `pool`."""
     from apps.daily_visit_batches.pricing import allocate_component
 
+    return _school_transport(batch, pool, allocate_component)
+
+
+def _school_transport(batch, pool, allocate_component) -> int:
+    """What the transport provider is owed for `batch` priced with `pool`:
+    the shares of the members that are at a school."""
     daily_transport = sum(
-        int(v) for k, v in (batch.rate_snapshot or {}).items() if "transport" in k
+        int(amount) for key, amount in (pool or {}).items() if "transport" in key
     )
     members = list(
         batch.activities.filter(deleted_at__isnull=True)
@@ -104,18 +131,26 @@ def ensure_transport_obligation(batch):
     # Only school-anchored transport goes to the provider. Other members'
     # shares enter their staff request; invoicing the whole pool as well
     # would pay those shares twice on mixed visit/training days.
-    transport_amount = sum(
+    return sum(
         share
         for member, share in zip(
             members, allocate_component(daily_transport, len(members))
         )
         if member.school_id
     )
+
+
+def ensure_transport_obligation(batch):
+    """§9.1 — one vendor obligation per mission day. Created/refreshed from
+    the batch's pooled transport component while pending; immutable once
+    paid (a re-priced day never silently rewrites a settled invoice)."""
+    from .finance_models import TransportPayment
+    from apps.daily_visit_batches.pricing import allocate_component
+
+    transport_amount = _school_transport(batch, batch.rate_snapshot, allocate_component)
     settled = TransportPayment.objects.filter(batch=batch, status="paid").first()
     if settled and settled.amount != transport_amount:
-        raise BadRequest(
-            "Transport for this day has already been paid. Finance must reconcile it before changing the daily allocation."
-        )
+        raise BadRequest(TRANSPORT_PAID)
     if not transport_amount:
         TransportPayment.objects.filter(batch=batch, status="pending").delete()
         return None
