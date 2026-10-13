@@ -1771,23 +1771,28 @@
   },
   {
    "template": "templates/pages/ia/partner_review.html",
-   "line": 54,
+   "line": 56,
    "title": "Evidence",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
+   "branch_path": [
+    [
+     15,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/ia/partner_review.html",
-   "line": 86,
+   "line": 89,
    "title": "Return history",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     21,
+     22,
      0
     ]
    ]
@@ -2173,16 +2178,21 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 247,
+   "line": 249,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "ad-card",
-   "branch_path": []
+   "branch_path": [
+    [
+     18,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 290,
+   "line": 291,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,
@@ -2200,7 +2210,7 @@
   },
   {
    "template": "templates/pages/my_plan/evidence_packet.html",
-   "line": 131,
+   "line": 136,
    "title": "Completeness Checklist",
    "heading_level": 3,
    "has_card_key": false,
@@ -2268,7 +2278,7 @@
   },
   {
    "template": "templates/pages/partner/activity_workroom.html",
-   "line": 74,
+   "line": 76,
    "title": "Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2309,7 +2319,7 @@
   },
   {
    "template": "templates/pages/partner/evidence.html",
-   "line": 29,
+   "line": 32,
    "title": "Recent Uploads",
    "heading_level": 2,
    "has_card_key": false,

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **930**
-- All registered routes: **1406**
-- API routes: **363**
+- Routed product surfaces: **927**
+- All registered routes: **1402**
+- API routes: **362**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
 - Shared component templates: **693**
 - Full pages: **270**
-- Partials and drawers: **333**
-- Permission-gated surfaces: **913**
-- Referenced by automated tests: **830**
+- Partials and drawers: **331**
+- Permission-gated surfaces: **911**
+- Referenced by automated tests: **827**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -82,8 +82,6 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-12D828B528 | /activities/<str:activity_id>/closure/close | Close Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6089148B64 | /activities/<str:activity_id>/complete | Complete Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-370EF7938B | /activities/<str:activity_id>/complete/action | Complete Activity Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-103AEF5887 | /activities/<str:activity_id>/evidence | Evidence Upload Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-FCDBCAD3AE | /activities/<str:activity_id>/evidence/action | Evidence Upload Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7D426C803E | /activities/<str:activity_id>/evidence/detail | Evidence Packet | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-25ACE59C68 | /activities/<str:activity_id>/facilitator | Activity Facilitator Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FCEE2736D1 | /activities/<str:activity_id>/partner-ssa-complete | Partner Ssa Completion Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -633,7 +631,6 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-62A35A018A | /offboarding/new | Offboarding Start Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8D06EDDD8A | /offboarding/start | Offboarding Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-08B3C226D4 | /offline | Offline | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-8FC9361881 | /offline/evidence-drawer | Offline Evidence Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-99A6BD1230 | /onboarding | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3DFE6D3724 | /onboarding/<str:plan_id> | Onboarding Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1E22EB77D2 | /onboarding/<str:plan_id>/record | Onboarding Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -670,7 +667,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-1F7D5AC355 | /partner-oversight/withdraw/submit | Partner Withdrawal Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-237AD341EA | /partner/activities | Activities · Partner Portal · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A6BC345317 | /partner/activities/<str:activity_id>/delivered-by | Partner Delivery Member | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-523407557E | /partner/activities/<str:activity_id>/evidence | Evidence · · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-523407557E | /partner/activities/<str:activity_id>/evidence | Complete · · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4B2A1D5071 | /partner/activities/<str:activity_id>/start-action | Partner Activity Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-93D5071A1C | /partner/activities/<str:activity_id>/submit-action | Partner Activity Submit | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-CA17CE1A77 | /partner/assigned-activities | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

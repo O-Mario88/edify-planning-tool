@@ -9,7 +9,11 @@ Planned Date, Executor, Training, SSA Intervention, Participants, Cost,
 Budget status, Verification, Salesforce ID, Evidence, Status."
 
 Those are My Plan's own tables with a District Type beside the District, so
-an export reads like the page it was taken from. Owner, 2026-10-12, later:
+an export reads like the page it was taken from. The Evidence column the
+owner named left every sheet on 2026-10-13 with the upload ("remove the upload
+and use strictly visit ID and training IDs ... removing upload evidence column
+from the tables as well"); it is commented out below, marked UPLOAD-OFF.
+Owner, 2026-10-12, later:
 "put visits on its sheet, group training on its sheet, cluster meetings on
 its sheet, partner schedules on its sheet and the budget for those selected
 activities in the last sheet and the budget should be fetched direct from
@@ -59,7 +63,7 @@ VISIT_HEADERS = (
     "Budget Status",
     "Verification",
     "Salesforce ID",
-    "Evidence",
+    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
     "Status",
 )
 #: The owner's Training / Cluster Meeting columns; both sheets share them.
@@ -76,7 +80,7 @@ SESSION_HEADERS = (
     "Budget Status",
     "Verification",
     "Salesforce ID",
-    "Evidence",
+    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
     "Status",
 )
 TRAINING_HEADERS = SESSION_HEADERS
@@ -98,7 +102,7 @@ PARTNER_HEADERS = (
     "Budget Status",
     "Verification",
     "Salesforce ID",
-    "Evidence",
+    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
     "Status",
 )
 OTHER_HEADERS = (
@@ -114,7 +118,7 @@ OTHER_HEADERS = (
     "Budget Status",
     "Verification",
     "Salesforce ID",
-    "Evidence",
+    # UPLOAD-OFF (owner, 2026-10-13): "Evidence",
     "Status",
 )
 ALL_HEADERS = (
@@ -173,7 +177,7 @@ def _tail(r: dict) -> list:
         _text(r.get("budget_status")),
         _text(r.get("verification")),
         _text(r.get("salesforce_id")),
-        _text(r.get("evidence")),
+        # UPLOAD-OFF (owner, 2026-10-13): _text(r.get("evidence")),
         _text(r.get("status")),
     ]
 

@@ -187,7 +187,7 @@ class ExportScopeTest(FilterExportFixture):
                 "Budget Status",
                 "Verification",
                 "Salesforce ID",
-                "Evidence",
+                # "Evidence" left with the upload (UPLOAD-OFF, 2026-10-13).
                 "Status",
             ),
         )
@@ -206,7 +206,7 @@ class ExportScopeTest(FilterExportFixture):
                 "Budget Status",
                 "Verification",
                 "Salesforce ID",
-                "Evidence",
+                # "Evidence" left with the upload (UPLOAD-OFF, 2026-10-13).
                 "Status",
             ),
         )

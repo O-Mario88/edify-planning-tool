@@ -194,6 +194,15 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     ):
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
+        # Work handed to the Program Lead waits on the Program Lead (owner,
+        # 2026-10-12: "PL should click verify"). It read "IA Pending" like
+        # work with Impact Assessment, beside a Verification cell that said
+        # "PL pending"; seen once the ID alone completed a visit (2026-10-13).
+        if status == "submitted_to_pl" and ia == "pending":
+            return (
+                "PL Pending",
+                "edify-primary-soft edify-primary-text edify-primary-border",
+            )
         if ia == "pending":
             return (
                 "IA Pending",

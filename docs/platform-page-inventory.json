@@ -165,7 +165,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1721,
+      "bytes": 2030,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -266,7 +266,7 @@
         "/activities/<str:activity_id>",
         "/activities/<str:activity_id>/attendance",
         "/activities/<str:activity_id>/complete",
-        "/activities/<str:activity_id>/evidence"
+        "/activities/<str:activity_id>/facilitator"
       ],
       "findings": [],
       "forms": 0,
@@ -320,10 +320,7 @@
       "accessibility_requirements": [],
       "bytes": 4447,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/activities/<str:activity_id>/evidence",
-        "/offline/evidence-drawer"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3844,7 +3841,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11839,
+      "bytes": 11915,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/profile"
@@ -6760,7 +6757,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4442,
+      "bytes": 4390,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -6935,7 +6932,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 17725,
+      "bytes": 17839,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -7856,7 +7853,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 41008,
+      "bytes": 41122,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -9764,7 +9761,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3537,
+      "bytes": 3575,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -10289,7 +10286,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10706,
+      "bytes": 10988,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -10319,7 +10316,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6519,
+      "bytes": 6718,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10345,7 +10342,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8116,
+      "bytes": 8318,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -10443,7 +10440,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6456,
+      "bytes": 6494,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10492,7 +10489,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9324,
+      "bytes": 9362,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10518,7 +10515,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22776,
+      "bytes": 23800,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10568,7 +10565,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7886,
+      "bytes": 7924,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10590,7 +10587,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7317,
+      "bytes": 7355,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10673,11 +10670,9 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8721,
+      "bytes": 9174,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/activities/<str:activity_id>/evidence"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -10694,6 +10689,7 @@
       "tables": 0,
       "template": "partials/my_plan/evidence_drawer.html",
       "variants": [
+        "info",
         "success",
         "warning"
       ]
@@ -10867,7 +10863,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6438,
+      "bytes": 6476,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -10918,11 +10914,9 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 7173,
+      "bytes": 7659,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/offline/evidence-drawer"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -10938,6 +10932,7 @@
       "tables": 0,
       "template": "partials/my_plan/offline_evidence_drawer.html",
       "variants": [
+        "info",
         "warning"
       ]
     },
@@ -10994,7 +10989,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4562,
+      "bytes": 5869,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -11013,12 +11008,13 @@
       "template": "partials/my_plan/pl_review_drawer.html",
       "variants": [
         "info",
+        "success",
         "warning"
       ]
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5519,
+      "bytes": 5557,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11042,7 +11038,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1529,
+      "bytes": 1567,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11143,7 +11139,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1674,
+      "bytes": 1676,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -11166,7 +11162,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6318,
+      "bytes": 6356,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
@@ -11217,7 +11213,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1856,
+      "bytes": 2067,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/ssa-upload"
@@ -11262,7 +11258,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3139,
+      "bytes": 3313,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/submit"
@@ -11453,7 +11449,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3993,
+      "bytes": 4031,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools-oversight/"
@@ -11773,7 +11769,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 33207,
+      "bytes": 33359,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/team/<str:staff_id>",
@@ -11916,7 +11912,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5034,
+      "bytes": 5054,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/",
@@ -12076,7 +12072,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6611,
+      "bytes": 6685,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
@@ -12203,7 +12199,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9900,
+      "bytes": 9973,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/detail"
@@ -12224,7 +12220,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6610,
+      "bytes": 6686,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12374,7 +12370,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 11214,
+      "bytes": 11287,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/detail"
@@ -12470,7 +12466,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5346,
+      "bytes": 5383,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -12497,12 +12493,12 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4804,
+      "bytes": 5801,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Partner Verify Drawer",
       "purpose": "Reusable partner verify drawer interface primitive",
@@ -12551,7 +12547,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 7782,
+      "bytes": 7896,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -15145,7 +15141,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3152,
+      "bytes": 3228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/my-plan"
@@ -22715,210 +22711,6 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
-      "backend_module": "apps.frontend.views.my_plan_views",
-      "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/my_plan/evidence_drawer.html",
-        "test:referenced-by-automated-test",
-        "permission:my_plan"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /activities/{{ act.id }}/evidence/action"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-103AEF5887",
-      "page_title": "Evidence Upload Drawer",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "my_plan",
-      "primary_action": "0\">Submit",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate evidence upload drawer within the frontend workflow.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PARTNER",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/activities/<str:activity_id>/evidence",
-      "route_name": "evidence_upload_drawer",
-      "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/activities/{{ act.id }}/evidence/action"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.clusters.services",
-        "apps.core.scoping",
-        "apps.evidence.models",
-        "apps.evidence.services",
-        "apps.fund_requests.models",
-        "apps.my_plan.services",
-        "apps.partners.models",
-        "apps.pl_review.services",
-        "apps.projects.models",
-        "apps.schools.models",
-        "apps.ssa.services"
-      ],
-      "shared_layout": [
-        "components/drawers/base_drawer.html"
-      ],
-      "state_coverage": {
-        "disabled": true,
-        "empty": true,
-        "error": true,
-        "loading": false
-      },
-      "surface_kind": "drawer",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/my_plan/evidence_drawer.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[16px]"
-      ]
-    },
-    {
-      "accessibility_status": "not-applicable-nonvisual",
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.my_plan_views",
-      "backend_view": "apps.frontend.views.my_plan_views.evidence_upload_action",
-      "card_count": 0,
-      "charts": false,
-      "drawers": false,
-      "evidence": [
-        "test:referenced-by-automated-test",
-        "permission:my_plan"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "not-applicable-nonvisual-action",
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "not-applicable-nonvisual",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-FCDBCAD3AE",
-      "page_title": "Evidence Upload Action",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "my_plan",
-      "primary_action": "Evidence Upload Action",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate evidence upload action within the frontend workflow.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "manual-review-required",
-      "role_access": [
-        "ACCOUNTANT",
-        "ADMIN",
-        "CCEO",
-        "CD",
-        "IA",
-        "PARTNER",
-        "PL",
-        "PROJECT_COORDINATOR"
-      ],
-      "route": "/activities/<str:activity_id>/evidence/action",
-      "route_name": "evidence_upload_action",
-      "search": "shared topbar search or none",
-      "secondary_actions": [],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.budget.models",
-        "apps.clusters.services",
-        "apps.core.scoping",
-        "apps.evidence.models",
-        "apps.evidence.services",
-        "apps.fund_requests.models",
-        "apps.my_plan.services",
-        "apps.partners.models",
-        "apps.pl_review.services",
-        "apps.projects.models",
-        "apps.schools.models",
-        "apps.ssa.services"
-      ],
-      "shared_layout": [
-        "standalone-document-or-fragment"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "action",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "not-applicable-nonvisual",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "not-applicable-nonvisual",
-      "theme_status": "not-applicable-nonvisual",
-      "todos": false,
-      "typography_exceptions": []
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [
-        "/api/evidence/{{ ev.id }}/file",
-        "/api/evidence/{{ ev.id }}/file?download=1"
-      ],
-      "app": "frontend",
-      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.evidence_packet_view",
@@ -23641,7 +23433,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Upload SSA",
+      "primary_action": "Save SSA scores",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate ssa evidence upload drawer within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -43479,7 +43271,7 @@
       "permission_key": "dashboard",
       "primary_action": "Dashboard Pl Week Send",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "This Week's \"Send to <officer>\" (owner, 2026-09-26): remind an officer to complete work they have not completed \u2014 upload the evidence and enter the Salesforce ID \u2014 whether it is past its day or due later this week.",
+      "purpose": "This Week's \"Send to <officer>\" (owner, 2026-09-26): remind an officer to complete work they have not completed \u2014 enter the Salesforce ID \u2014 whether it is past its day or due later this week.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -71238,85 +71030,6 @@
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.7,
-      "backend_module": "apps.frontend.views.pwa_views",
-      "backend_view": "apps.frontend.views.pwa_views.offline_evidence_drawer",
-      "card_count": 0,
-      "charts": false,
-      "drawers": true,
-      "evidence": [
-        "template:partials/my_plan/offline_evidence_drawer.html",
-        "test:referenced-by-automated-test",
-        "permission:unmapped"
-      ],
-      "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /activities/__EDIFY_ACTIVITY_ID__/evidence/action"
-      ],
-      "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
-      "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
-      "modals": false,
-      "module": "frontend",
-      "notifications": false,
-      "page_id": "UI-PAGE-8FC9361881",
-      "page_title": "Offline Evidence Drawer",
-      "page_type": "interaction-fragment",
-      "per_page_css": [],
-      "permission_key": "",
-      "primary_action": "0\">Submit",
-      "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "The upload drawer without signal (owner, 2026-09-26: \"make the upload drawer open offline too\"): precached by the worker beside the offline page and served for /activities/<id>/evidence when the network fails, with the tapped activity's id put in.",
-      "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
-      "role_access": [],
-      "route": "/offline/evidence-drawer",
-      "route_name": "offline_evidence_drawer",
-      "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/activities/__EDIFY_ACTIVITY_ID__/evidence/action"
-      ],
-      "services_and_models": [],
-      "shared_layout": [
-        "components/drawers/base_drawer.html"
-      ],
-      "state_coverage": {
-        "disabled": true,
-        "empty": false,
-        "error": true,
-        "loading": false
-      },
-      "surface_kind": "drawer",
-      "table_pattern": "none",
-      "tables": false,
-      "tablet_status": "pass-automated-contract",
-      "tabs": {
-        "count": 0,
-        "type": "none"
-      },
-      "templates": [
-        "partials/my_plan/offline_evidence_drawer.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
-      "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[16px]"
-      ]
-    },
-    {
-      "accessibility_status": "pass-automated-contract",
-      "api_endpoints": [],
-      "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.hr_views",
@@ -73899,7 +73612,7 @@
       "permission_key": "partner_oversight",
       "primary_action": "Partner Verify Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "What the Partner submitted, and the Salesforce ID that confirms it.",
+      "purpose": "The Partner's submission, and the Salesforce ID that confirms it.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -74629,7 +74342,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-523407557E",
-      "page_title": "Evidence \u00b7 \u00b7 Edify",
+      "page_title": "Complete \u00b7 \u00b7 Edify",
       "page_type": "record-detail",
       "per_page_css": [],
       "permission_key": "partner_evidence",
@@ -74817,7 +74530,7 @@
       "permission_key": "partner_evidence",
       "primary_action": "Partner Activity Submit",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "\u00a79.4 Submit Evidence to IA \u2014 the one authoritative gate (`complete`), with actuals and no Salesforce ID (IA enters that at confirmation).",
+      "purpose": "\u00a79.4 Submit to IA \u2014 the one authoritative gate (`complete`), with actuals and the visit or training ID when the partner has it (IA enters it at confirmation otherwise). No file: UPLOAD-OFF, owner 2026-10-13.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
@@ -102146,33 +101859,6 @@
       "templates": []
     },
     {
-      "callback": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view",
-      "kind": "drawer",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "my_plan",
-      "required_permissions": [],
-      "route": "/activities/<str:activity_id>/evidence",
-      "route_name": "evidence_upload_drawer",
-      "templates": [
-        "partials/my_plan/evidence_drawer.html"
-      ]
-    },
-    {
-      "callback": "apps.frontend.views.my_plan_views.evidence_upload_action",
-      "kind": "action",
-      "methods": [
-        "GET",
-        "POST"
-      ],
-      "page_permission": "my_plan",
-      "required_permissions": [],
-      "route": "/activities/<str:activity_id>/evidence/action",
-      "route_name": "evidence_upload_action",
-      "templates": []
-    },
-    {
       "callback": "apps.frontend.views.my_plan_views.evidence_packet_view",
       "kind": "page",
       "methods": [
@@ -107729,25 +107415,6 @@
       ],
       "route": "/api/evidence(?:/|)activity/<str:activity_id>",
       "route_name": "activity-list",
-      "templates": []
-    },
-    {
-      "callback": "apps.evidence.views.view",
-      "kind": "api",
-      "methods": [
-        "DELETE",
-        "GET",
-        "PATCH",
-        "POST",
-        "PUT",
-        "TRACE"
-      ],
-      "page_permission": "",
-      "required_permissions": [
-        "activity.complete"
-      ],
-      "route": "/api/evidence(?:/|)upload",
-      "route_name": "upload",
       "templates": []
     },
     {
@@ -117608,20 +117275,6 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.pwa_views.offline_evidence_drawer",
-      "kind": "drawer",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "",
-      "required_permissions": [],
-      "route": "/offline/evidence-drawer",
-      "route_name": "offline_evidence_drawer",
-      "templates": [
-        "partials/my_plan/offline_evidence_drawer.html"
-      ]
-    },
-    {
       "callback": "apps.frontend.views.hr_views.onboarding_view",
       "kind": "page",
       "methods": [
@@ -122178,30 +121831,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 606,
+    "accessibility_contract_pass": 604,
     "activity_states": 24,
-    "all_routes": 1406,
-    "api_routes": 363,
+    "all_routes": 1402,
+    "api_routes": 362,
     "component_templates": 693,
     "full_pages": 270,
-    "mobile_contract_pass": 606,
-    "nonvisual_actions": 288,
+    "mobile_contract_pass": 604,
+    "nonvisual_actions": 287,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 621,
+      "interaction-fragment": 618,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 333,
-    "permission_gated": 913,
+    "partials_and_drawers": 331,
+    "permission_gated": 911,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 930,
+    "routed_surfaces": 927,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -122209,8 +121862,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 606,
-    "test_referenced": 830,
-    "theme_contract_pass": 606
+    "tablet_contract_pass": 604,
+    "test_referenced": 827,
+    "theme_contract_pass": 604
   }
 }

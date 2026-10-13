@@ -81,11 +81,13 @@ class FieldNavigationRoleTest(SimpleTestCase):
         for label in (
             "Assigned Schools",
             "Assigned Activities",
-            "Evidence",
             "Completed & Payments",
         ):
             with self.subTest(label=label):
                 self.assertIn(label, labels)
+        # The Evidence link left with the upload (UPLOAD-OFF, owner
+        # 2026-10-13): a page of uploads nobody can make.
+        self.assertNotIn("Evidence", labels)
         self.assertEqual(groups["DAILY"]["items"][0]["label"], "Assigned Schools")
 
     def test_admin_carries_both_the_platform_and_field_workspaces(self):
