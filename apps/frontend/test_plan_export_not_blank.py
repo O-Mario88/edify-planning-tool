@@ -161,8 +161,8 @@ class PlanExportTest(TestCase):
     #: What each fixture activity reads as in the export's sheets
     #: (apps.core.plan_export): the sheet it is on and how it is named there.
     VISIT = ("School Visits", "School Visit")
-    MEETING = ("Trainings & Cluster Meetings", "Cluster Meeting")
-    TRAINING = ("Trainings & Cluster Meetings", "Cluster Training")
+    MEETING = ("Cluster Meetings", "Cluster Meeting")
+    TRAINING = ("Group Trainings", "Cluster Training")
 
     def _work(self, response) -> list:
         """The exported work, a (sheet, name) per row, sorted."""
@@ -171,6 +171,8 @@ class PlanExportTest(TestCase):
         book = load_workbook(io.BytesIO(response.content), read_only=True)
         found = []
         for sheet in book.worksheets:
+            if sheet.title == "Budget":
+                continue
             rows = [list(row) for row in sheet.iter_rows(values_only=True)]
             header = rows[0]
             named = header.index("Activity" if "Activity" in header else "Training")
@@ -183,6 +185,8 @@ class PlanExportTest(TestCase):
         book = load_workbook(io.BytesIO(response.content), read_only=True)
         out = []
         for sheet in book.worksheets:
+            if sheet.title == "Budget":
+                continue
             rows = [list(row) for row in sheet.iter_rows(values_only=True)]
             out += [row[rows[0].index("Status")] for row in rows[1:]]
         return out

@@ -145,11 +145,16 @@ def _ia_staff_queue(request, activities=None):
     one here too offered a second door that skipped that step. The reader's own
     field work is not here either: they may not verify it (a colleague does,
     or the Country Director as fallback verifier)."""
+    from apps.pl_review.services import lead_verified_q
+
     base = activities if activities is not None else _ia_activities(request)
     queue = (
         base.filter(status=ActivityStatus.AWAITING_IA_VERIFICATION)
         .exclude(delivery_type="partner")
         .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+        # A CCEO's field work is verified by their Programme Lead (owner,
+        # 2026-10-12), whichever path filed it: Completion Reviews lists it.
+        .exclude(lead_verified_q())
     )
     own = _ia_own_ids(request)
     if own:
@@ -662,11 +667,15 @@ def ia_review_workspace_view(request, activity_id):
         )
 
     from apps.activities.verification_analytics import _partner_names, _staff_names
+    from apps.pl_review.services import lead_verifies
 
     _ws_names = _staff_names({a.responsible_staff_id})
     _ws_partners = _partner_names({a.assigned_partner_id})
     context = {
         "act": a,
+        # A CCEO's completion is their Programme Lead's to verify (owner,
+        # 2026-10-12): the workspace reads it, and says whose decision it is.
+        "lead_verifies": lead_verifies(a),
         "owner_name": _ws_names.get(
             a.responsible_staff_id, a.responsible_staff_id or "Unassigned"
         ),
@@ -723,6 +732,13 @@ def ia_verify_action(request, activity_id):
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
+    from apps.pl_review.services import lead_verifies
+
+    if lead_verifies(a):
+        return HttpResponseForbidden(
+            "A CCEO's completion is verified by their Program Lead, on "
+            "Completion Reviews."
+        )
 
     if request.method == "POST":
         checklist_data = {

@@ -719,12 +719,13 @@ class InSchoolTrainingPairTest(StandardSupportBase):
 
     def test_invalid_visit_id_rolls_back_training_salesforce_reservation(self):
         training, visit = self._scheduled_pair_ready_for_completion()
+        # SV- is a visit too since 2026-10-12; a training's TS- is not.
         with self.assertRaisesMessage(BadRequest, "SVE-"):
             complete_in_school_training_pair(
                 training.id,
                 {
                     "trainingSalesforceId": "TS-PAIR-ROLLBACK",
-                    "visitSalesforceId": "SV-WRONG-PREFIX",
+                    "visitSalesforceId": "TS-WRONG-PREFIX",
                     "teachersAttended": 2,
                     "leadersAttended": 0,
                 },
@@ -756,6 +757,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIn('name="visit_salesforce_id"', html)
         self.assertIn('name="training_evidence_file"', html)
         self.assertIn('name="visit_evidence_file"', html)
-        self.assertIn('name="feedback_finding"', html)
-        self.assertIn('name="school_improvements"', html)
+        # The school feedback fields left the form (owner, 2026-10-12).
+        self.assertNotIn('name="feedback_finding"', html)
+        self.assertNotIn('name="school_improvements"', html)
         self.assertIn("Submit training + visit", html)

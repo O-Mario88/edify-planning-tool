@@ -115,3 +115,36 @@ def notice_fragment(message: str, *, status: int = 400) -> HttpResponse:
     to be written that way will not necessarily.
     """
     return HttpResponse(format_html(FRAGMENT, message), status=status)
+
+
+def refusal_drawer(
+    request,
+    message: str,
+    *,
+    title: str = "Not available",
+    subtitle: str = "",
+    tone: str = "info",
+    status: int = 400,
+):
+    """A drawer that cannot be offered, said inside a small drawer.
+
+    A drawer view that refused on GET used to answer with ``notice_fragment``:
+    htmx swapped that bare block into the drawer container at the top of the
+    page, where it sat in the page's flow and pushed everything down (owner,
+    2026-10-12). The refusal now opens as a drawer with Close, in the same
+    place the drawer would have been.
+    """
+    from django.shortcuts import render
+
+    return render(
+        request,
+        "partials/refusal_drawer.html",
+        {
+            "refusal_title": title,
+            "refusal_subtitle": subtitle,
+            "refusal_message": message,
+            "refusal_tone": tone,
+            "drawer_size": "sm",
+        },
+        status=status,
+    )

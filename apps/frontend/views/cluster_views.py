@@ -1,7 +1,7 @@
 from django.utils.html import format_html
 from django.utils.html import escape
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.htmx_errors import error_fragment
+from apps.core.htmx_errors import error_fragment, error_message, refusal_drawer
 from apps.core.permissions import (
     has_permission,
     require_export_permission,
@@ -11,6 +11,7 @@ from apps.core.permissions import (
     get_scoped_object_or_404,
 )
 from django.contrib import messages
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
 import json
@@ -1464,9 +1465,7 @@ def cluster_facilitator_action(request, cluster_id):
         if partner
         else f"{cluster.name} is facilitated by Edify staff.",
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("cluster_detail")
@@ -1896,7 +1895,12 @@ def cluster_detail_drawer_view(request, cluster_id):
         # Was an f-string: unescaped, and it printed whatever the exception
         # said. This one had no `status=`, which is why the earlier sweep of
         # these fragments walked past it.
-        return error_fragment(e, action="Could not open the cluster")
+        return refusal_drawer(
+            request,
+            error_message(e, action="Could not open the cluster"),
+            title="Cluster",
+            tone="danger",
+        )
 
 
 @require_page_permission("planning")
@@ -2425,7 +2429,12 @@ def cluster_bulk_schedule_drawer_view(request, cluster_id):
     except (BadRequest, Forbidden, NotFoundError) as exc:
         return drawer(str(getattr(exc, "detail", exc)), posted, status=400)
     except Exception as exc:  # noqa: BLE001 — the service's sentence, shown as is
-        return error_fragment(exc, action="Could not schedule the day", status=400)
+        return refusal_drawer(
+            request,
+            error_message(exc, action="Could not schedule the day"),
+            title="Cannot schedule",
+            tone="danger",
+        )
     from apps.frontend.views.planning_views import (
         _ceiling_notice,
         _my_plan_url_for_scheduled_date,

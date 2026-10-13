@@ -10518,7 +10518,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24374,
+      "bytes": 22776,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -10947,7 +10947,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4830,
+      "bytes": 4876,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/partner-ssa-complete"
@@ -10988,6 +10988,33 @@
       "tables": 0,
       "template": "partials/my_plan/period_breakdown.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 4562,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Pl Review Drawer",
+      "purpose": "Reusable pl review drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/pl_review_drawer.html",
+      "variants": [
+        "info",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -11116,7 +11143,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1613,
+      "bytes": 1674,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -12049,13 +12076,13 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6852,
+      "bytes": 6611,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cluster-oversight/"
       ],
       "findings": [],
-      "forms": 1,
+      "forms": 0,
       "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Cluster Activity Table",
@@ -15428,6 +15455,29 @@
       "tables": 0,
       "template": "partials/pwa_launch.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 848,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Refusal Drawer",
+      "purpose": "Reusable refusal drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/refusal_drawer.html",
+      "variants": [
+        "{{ refusal_tone|default:"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -24399,6 +24449,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -29009,6 +29060,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -52978,6 +53030,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53067,6 +53120,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53151,6 +53205,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53315,6 +53370,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53411,6 +53467,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53501,6 +53558,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -53588,6 +53646,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -54961,6 +55020,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58596,6 +58656,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58685,6 +58746,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58780,6 +58842,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58868,6 +58931,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -58956,6 +59020,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59045,6 +59110,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59133,6 +59199,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59223,6 +59290,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59319,6 +59387,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59405,6 +59474,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59489,6 +59559,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59573,6 +59644,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -59657,6 +59729,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60776,6 +60849,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60873,6 +60947,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -60963,6 +61038,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -61047,6 +61123,7 @@
         "apps.geography.models",
         "apps.notifications.models",
         "apps.partners.models",
+        "apps.pl_review.services",
         "apps.schools.models",
         "apps.ssa.models"
       ],
@@ -78545,8 +78622,7 @@
       "route_name": "pl_review_queue",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "{{ queue_url }}",
-        "{{ queue_url }}/{{ row.id }}/confirm"
+        "{{ queue_url }}"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -78683,7 +78759,7 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
@@ -78694,22 +78770,19 @@
       "charts": false,
       "drawers": true,
       "evidence": [
-        "template:partials/hr/form_drawer.html",
         "test:referenced-by-automated-test",
         "permission:pl_review_queue"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "GET {{ form_secondary.hx_get }}"
-      ],
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
@@ -78722,7 +78795,7 @@
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Open: the whole completion, read-only, with Approve at the foot.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "PL"
@@ -78730,9 +78803,7 @@
       "route": "/pl/review-queue/<str:activity_id>/drawer",
       "route_name": "pl_review_drawer",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "{{ form_action }}"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -78753,7 +78824,7 @@
         "apps.ssa.services"
       ],
       "shared_layout": [
-        "components/drawers/base_drawer.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -78761,20 +78832,18 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "drawer",
+      "surface_kind": "action",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "pass-automated-contract",
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "partials/hr/form_drawer.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -118627,7 +118696,7 @@
     },
     {
       "callback": "apps.frontend.views.my_plan_views.pl_review_drawer",
-      "kind": "drawer",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -118635,9 +118704,7 @@
       "required_permissions": [],
       "route": "/pl/review-queue/<str:activity_id>/drawer",
       "route_name": "pl_review_drawer",
-      "templates": [
-        "partials/hr/form_drawer.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.my_plan_views.pl_return_action",
@@ -122111,14 +122178,14 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 607,
+    "accessibility_contract_pass": 606,
     "activity_states": 24,
     "all_routes": 1406,
     "api_routes": 363,
-    "component_templates": 691,
+    "component_templates": 693,
     "full_pages": 270,
-    "mobile_contract_pass": 607,
-    "nonvisual_actions": 287,
+    "mobile_contract_pass": 606,
+    "nonvisual_actions": 288,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
@@ -122130,7 +122197,7 @@
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 334,
+    "partials_and_drawers": 333,
     "permission_gated": 913,
     "permission_keys": 127,
     "roles": 15,
@@ -122142,8 +122209,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 607,
+    "tablet_contract_pass": 606,
     "test_referenced": 830,
-    "theme_contract_pass": 607
+    "theme_contract_pass": 606
   }
 }

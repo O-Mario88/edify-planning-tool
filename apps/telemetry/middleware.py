@@ -45,7 +45,15 @@ class InteractionTelemetryMiddleware:
 
     def __call__(self, request):
         started = time.monotonic()
+        # A live region reading its page again (static/js/live-regions.js)
+        # learns the server's clock as its read began, so it can tell the
+        # stream's notice of a change this read already shows — its own save,
+        # echoed back — from a change that came after (2026-10-12).
+        live_read = request.headers.get("X-Requested-With") == "EdifyLive"
+        began = timezone.now().isoformat() if live_read else None
         response = self.get_response(request)
+        if began is not None:
+            response["X-Edify-Live-At"] = began
         try:
             self._record(request, response, started)
         except Exception:  # noqa: BLE001 — telemetry must never break a request

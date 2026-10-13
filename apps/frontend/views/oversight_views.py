@@ -17,6 +17,7 @@ from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
+from apps.core.htmx_saved import saved_in_place
 from apps.core.rbac import Permission
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from apps.core import export_kinds
@@ -4423,7 +4424,7 @@ def partner_allowance_drawer(request):
 
 @require_page_permission("partner_oversight")
 def partner_allowance_grant_action(request):
-    from django.http import HttpResponse, HttpResponseForbidden
+    from django.http import HttpResponseForbidden
 
     if request.method != "POST":
         return HttpResponseForbidden("POST required")
@@ -4456,9 +4457,7 @@ def partner_allowance_grant_action(request):
         success=True,
         reason=f"School {request.POST.get('school_id')}: {request.POST.get('reason', '')[:150]}",
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 # ── Cluster Oversight & Core Schools Oversight ─────────────────────────────

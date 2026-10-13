@@ -2653,7 +2653,7 @@ def project_edit_drawer_view(request, project_id):
     is refused by the service, not by this view.
     """
     from apps.core.exceptions import Forbidden, NotFoundError
-    from apps.core.htmx_errors import error_fragment
+    from apps.core.htmx_errors import error_fragment, error_message, refusal_drawer
     from apps.projects.models import (
         PROJECT_INTERVENTION_CHOICES,
         ProjectCategory,
@@ -2664,7 +2664,7 @@ def project_edit_drawer_view(request, project_id):
     try:
         project = _project_for_editing(request, project_id)
     except (Forbidden, NotFoundError) as exc:
-        return error_fragment(exc, status=403)
+        return refusal_drawer(request, error_message(exc), title="Project", status=403)
 
     if request.method == "POST":
         payload = request.POST.dict()

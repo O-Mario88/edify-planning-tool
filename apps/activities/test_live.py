@@ -341,7 +341,9 @@ class LiveRegionsContract(SimpleTestCase):
             "REGION + ' td input[type=\"checkbox\"]:checked:not(:disabled), '",
             script,
         )
-        self.assertIn("Math.max(1000 << spell, Date.now() - began)", script)
+        # A read costs the server what it took: the rest is three times that,
+        # or a second (2026-10-12).
+        self.assertIn("Math.max(1000 << spell, 3 * (Date.now() - began))", script)
         self.assertIn("spell = held ? Math.min(spell + 1, 4) : 0;", script)
 
     def test_the_listener_is_loaded_by_the_shell_and_names_the_event(self):

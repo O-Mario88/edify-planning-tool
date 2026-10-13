@@ -311,7 +311,30 @@ def schedule_package_credit(activity) -> None:
     if outside_package(activity.project_id):
         return
     activity_id = activity.id
-    transaction.on_commit(lambda: _credit_safely(activity_id))
+    # Once per activity per transaction. Creating a plan saves the Activity
+    # several times (its catalogue snapshot, its SSA alignment, its cost), and
+    # each save asked for the same credit after commit: five reads of the plan,
+    # its school and its slots for one visit (2026-10-12). Django drops the list
+    # on rollback, so nothing is remembered past the transaction; outside one,
+    # the callback runs at once and the list is empty.
+    # Only a credit still WAITING answers a new request: one that has run
+    # (a test runner executes callbacks and leaves them listed; so does any
+    # caller that runs them early) read the row as it was then, and a later
+    # save in the same transaction must be credited again.
+    connection = transaction.get_connection()
+    for entry in connection.run_on_commit:
+        waiting = entry[1]
+        if getattr(waiting, "credits_activity", None) == activity_id and not getattr(
+            waiting, "ran", False
+        ):
+            return
+
+    def _credit():
+        _credit.ran = True
+        _credit_safely(activity_id)
+
+    _credit.credits_activity = activity_id
+    transaction.on_commit(_credit)
 
 
 def _credit_safely(activity_id: str) -> None:

@@ -4,7 +4,8 @@
 {% block title %}Activity Details — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
+{# Read again in place after a save in one of its drawers, and when the plan this reader sees changes (static/js/live-regions.js). #}
+<div id="activity-detail" class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto" data-live-region>
 
   <div class="edify-page-header">
     <div class="min-w-0 edify-page-header__lead">

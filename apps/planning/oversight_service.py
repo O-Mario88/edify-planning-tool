@@ -1598,9 +1598,9 @@ def stream_rows(owner_groups):
 
 
 def plan_export_rows(items) -> list[dict]:
-    """The items as `apps.core.plan_export` rows: the school visits, the
-    trainings and cluster meetings, and the other activities, each with its
-    District and District Type (owner, 2026-10-12).
+    """The items as `apps.core.plan_export` rows: the school visits, the group
+    trainings, the cluster meetings, the partner schedules and the other
+    activities, each with its District and District Type (owner, 2026-10-12).
 
     A cluster session is one row however many schools it invites — the
     owner's columns for a training open on the Cluster Name and carry no
@@ -1623,13 +1623,20 @@ def plan_export_rows(items) -> list[dict]:
     rows, seen = [], set()
     for i in items:
         is_session = i.activity_type in session_types and not i.is_in_school_training
-        kind = (
-            plan_export.SESSION
-            if is_session
-            else plan_export.VISIT
-            if i.school_id
-            else plan_export.OTHER
-        )
+        # Work handed to a partner is a partner schedule whatever its kind
+        # (owner, 2026-10-12: "partner schedules on its sheet").
+        if i.is_partner_work:
+            kind = plan_export.PARTNER
+        elif is_session:
+            kind = (
+                plan_export.MEETING
+                if i.activity_type in CLUSTER_MEETING_TYPES
+                else plan_export.TRAINING
+            )
+        elif i.school_id:
+            kind = plan_export.VISIT
+        else:
+            kind = plan_export.OTHER
         key = (
             i.activity_id or i.partner_assignment_id or id(i),
             "" if kind != plan_export.VISIT else i.school_id,
@@ -1646,6 +1653,8 @@ def plan_export_rows(items) -> list[dict]:
         rows.append(
             plan_export.row(
                 kind,
+                activity_id=i.activity_id,
+                partner=i.partner_name,
                 school_id=_export_school_id(i),
                 school_name=i.school_name,
                 cluster_name=i.cluster_name or i.school_name or i.non_school_context,
