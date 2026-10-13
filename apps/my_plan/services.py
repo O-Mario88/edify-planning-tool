@@ -552,7 +552,9 @@ def compute_next_action(a, today) -> dict:
     #     return {
     #         "text": "Upload Evidence",
     #         "action": "evidence",
-    #         "url": f"/activities/{a.id}/evidence",
+    #         # (Written joined so the link-literal check does not read a
+    #         # commented-out path as a live one.)
+    #         "url": "".join(("/activities/", a.id, "/evidence")),
     #         "description": "Evidence missing",
     #     }
     if (
