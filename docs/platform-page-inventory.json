@@ -10216,7 +10216,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -10240,7 +10241,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -11063,16 +11065,19 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 6595,
+      "accessibility_requirements": [
+        "announced dynamic state"
+      ],
+      "bytes": 7402,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Readiness",
       "purpose": "Reusable readiness interface primitive",
@@ -11094,7 +11099,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -11115,6 +11121,27 @@
         "success",
         "warning"
       ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 378,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/readiness"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Readiness Panel",
+      "purpose": "Reusable readiness panel interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/readiness_panel.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -13315,6 +13342,7 @@
         "/country-planning-oversight/",
         "/my-plan",
         "/my-plan/",
+        "/my-plan/readiness",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -13344,6 +13372,7 @@
         "/country-planning-oversight/",
         "/my-plan",
         "/my-plan/",
+        "/my-plan/readiness",
         "/planning-monitor/",
         "/team-planning-oversight/",
         "/team-targets",
@@ -17334,7 +17363,8 @@
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan",
-        "/my-plan/"
+        "/my-plan/",
+        "/my-plan/readiness"
       ],
       "findings": [],
       "forms": 0,
@@ -68754,6 +68784,88 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_panel_views",
+      "backend_view": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/my_plan/readiness_panel.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-BA9943EE09",
+      "page_title": "My Plan Readiness",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "My Plan Readiness",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The person's own Planned and remaining and their training summary, for the place My Plan left.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/readiness",
+      "route_name": "my_plan_readiness",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.my_plan.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/readiness_panel.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.pd_views",
       "backend_view": "apps.frontend.views.pd_views.my_professional_development_view",
@@ -117233,6 +117345,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.my_plan_panel_views.my_plan_readiness_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/readiness",
+      "route_name": "my_plan_readiness",
+      "templates": [
+        "partials/my_plan/readiness_panel.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.pd_views.my_professional_development_view",
       "kind": "partial",
       "methods": [
@@ -122178,30 +122304,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 606,
+    "accessibility_contract_pass": 607,
     "activity_states": 24,
-    "all_routes": 1406,
+    "all_routes": 1407,
     "api_routes": 363,
-    "component_templates": 693,
+    "component_templates": 694,
     "full_pages": 270,
-    "mobile_contract_pass": 606,
+    "mobile_contract_pass": 607,
     "nonvisual_actions": 288,
     "page_types": {
       "administration-or-configuration": 23,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 621,
+      "interaction-fragment": 622,
       "operational-queue": 156,
       "planning-or-creation": 14,
       "record-detail": 30,
       "report": 47
     },
-    "partials_and_drawers": 333,
-    "permission_gated": 913,
+    "partials_and_drawers": 334,
+    "permission_gated": 914,
     "permission_keys": 127,
     "roles": 15,
-    "routed_surfaces": 930,
+    "routed_surfaces": 931,
     "scheduled_jobs": 37,
     "severity_counts": {
       "critical": 0,
@@ -122209,8 +122335,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 606,
-    "test_referenced": 830,
-    "theme_contract_pass": 606
+    "tablet_contract_pass": 607,
+    "test_referenced": 831,
+    "theme_contract_pass": 607
   }
 }
