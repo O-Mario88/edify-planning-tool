@@ -806,44 +806,6 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
-   "route": "/activities/<str:activity_id>/evidence",
-   "route_name": "evidence_upload_drawer",
-   "view": "apps.frontend.views.my_plan_views.evidence_upload_drawer_view"
-  },
-  {
-   "page_permission": "my_plan",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
-    "PartnerAdmin",
-    "PartnerFieldOfficer",
-    "Admin"
-   ],
-   "route": "/activities/<str:activity_id>/evidence/action",
-   "route_name": "evidence_upload_action",
-   "view": "apps.frontend.views.my_plan_views.evidence_upload_action"
-  },
-  {
-   "page_permission": "my_plan",
-   "required_permissions": [],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
-    "PartnerAdmin",
-    "PartnerFieldOfficer",
-    "Admin"
-   ],
    "route": "/activities/<str:activity_id>/evidence/detail",
    "route_name": "evidence_packet",
    "view": "apps.frontend.views.my_plan_views.evidence_packet_view"
@@ -4529,23 +4491,6 @@
    ],
    "route": "/api/evidence(?:/|)activity/<str:activity_id>",
    "route_name": "activity-list",
-   "view": "apps.evidence.views.view"
-  },
-  {
-   "page_permission": "",
-   "required_permissions": [
-    "activity.complete"
-   ],
-   "role_exclusive": false,
-   "roles": [
-    "CCEO",
-    "Program Lead",
-    "PartnerAdmin",
-    "PartnerFieldOfficer",
-    "Admin"
-   ],
-   "route": "/api/evidence(?:/|)upload",
-   "route_name": "upload",
    "view": "apps.evidence.views.view"
   },
   {
@@ -19723,28 +19668,28 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 461,
-  "Admin": 1111,
+  "Accountant": 459,
+  "Admin": 1108,
   "BusinessTransformationOfficer": 242,
-  "CCEO": 585,
-  "CountryDirector": 847,
+  "CCEO": 582,
+  "CountryDirector": 845,
   "HumanResources": 330,
-  "ImpactAssessment": 716,
+  "ImpactAssessment": 714,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
-  "PartnerAdmin": 239,
-  "PartnerFieldOfficer": 239,
-  "Program Lead": 695,
-  "ProjectCoordinator": 489,
+  "PartnerAdmin": 236,
+  "PartnerFieldOfficer": 236,
+  "Program Lead": 692,
+  "ProjectCoordinator": 487,
   "RegionalProgramLead": 356,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1208,
-  "routes_total": 1407,
-  "routes_unguarded": 199,
+  "routes_guarded": 1205,
+  "routes_total": 1403,
+  "routes_unguarded": 198,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -20958,13 +20903,6 @@
    "route": "/offline",
    "route_name": "offline",
    "view": "apps.frontend.views.pwa_views.offline"
-  },
-  {
-   "page_permission": "",
-   "required_permissions": [],
-   "route": "/offline/evidence-drawer",
-   "route_name": "offline_evidence_drawer",
-   "view": "apps.frontend.views.pwa_views.offline_evidence_drawer"
   },
   {
    "page_permission": "",
