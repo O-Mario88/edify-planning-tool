@@ -108,7 +108,8 @@ class FacilitatedTrainingsTest(PartnerOversightFixture):
                 "SSA Intervention",
                 "Training Date",
                 "Salesforce ID",
-                "Evidence",
+                # "Evidence" sat here until the upload was switched off
+                # (UPLOAD-OFF, owner 2026-10-13).
                 "Status",
                 "Cost",
                 "Action",
@@ -119,7 +120,7 @@ class FacilitatedTrainingsTest(PartnerOversightFixture):
         self.assertIn("UGX 150,000", table)  # the fee, not the whole budget
         self.assertIn(">Upcoming<", table)
         self.assertIn("Not in SF", table)
-        self.assertIn("No Evidence Uploaded", table)
+        self.assertNotIn("No Evidence Uploaded", table)
         # It sits on the Clusters tab, beside the cluster work and sessions
         # the Partner holds itself (owner, 2026-10-02).
         self.assertEqual(body.count("data-partner-monitoring-table"), 2)
@@ -131,7 +132,9 @@ class FacilitatedTrainingsTest(PartnerOversightFixture):
         table = body.split("data-partner-trainings-table", 1)[1].split("</table>", 1)[0]
         self.assertIn(">Completed<", table)
         self.assertIn("TS-FAC-0001", table)
-        self.assertIn("Attendance", table)
+        # The attendance form's cell left the table with the upload
+        # (UPLOAD-OFF, owner 2026-10-13).
+        self.assertNotIn('data-label="Evidence"', table)
         self.assertIn(
             f'hx-get="/pl/review-queue/{training.id}/drawer?from=partner-trainings"',
             table,

@@ -54,11 +54,13 @@ class IAWorkflowTests(TestCase):
         )
         self.actor_id = self.actor.id
 
-    def test_verification_checks_missing_evidence(self):
-        """Checks recommend missing evidence when no evidence is uploaded."""
+    def test_verification_checks_ask_for_no_file(self):
+        """UPLOAD-OFF (owner, 2026-10-13): the check recommended "missing
+        evidence" when nothing was uploaded. No file is asked for now, so it
+        is met with nothing on record."""
         checks = IAVerificationService.get_verification_checks(self.activity)
-        self.assertFalse(checks["evidence_exists"])
-        self.assertIn("No evidence", checks["evidence_desc"])
+        self.assertTrue(checks["evidence_exists"])
+        self.assertIn("No file is asked for", checks["evidence_desc"])
 
     def test_certify_activity_updates_status(self):
         """Certifying an activity changes status to ia_verified and logs history."""

@@ -272,12 +272,14 @@ class CompletionReviewsPageTest(ReviewFixture):
             "Date",
             "Intervention",
             "Attendance",
-            "Evidence",
             "Salesforce ID",
             "Days waiting",
         ):
             with self.subTest(heading=heading):
                 self.assertIn(f">{heading}</th>", body)
+        # The Evidence column left the register with the upload (UPLOAD-OFF,
+        # owner 2026-10-13).
+        self.assertNotIn(">Evidence</th>", body)
         self.assertIn(f'data-review-row="{session.id}"', body)
         self.assertNotIn(f'data-review-row="{mine.id}"', body)
         self.assertNotIn(f'data-review-row="{rival.id}"', body)

@@ -14,6 +14,8 @@ opens the upload drawer for staff work instead.
 
 from __future__ import annotations
 
+import unittest
+
 import io
 
 from django.contrib.auth import get_user_model
@@ -115,6 +117,10 @@ class EvidenceDrawerSubmitTest(TestCase):
 
     # -- the drawer --------------------------------------------------------
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_staff_work_has_one_form_the_salesforce_id_and_submit(self):
         html = self._drawer(self.cceo, self.visit)
         self.assertEqual(html.count("<form "), 1)
@@ -125,6 +131,10 @@ class EvidenceDrawerSubmitTest(TestCase):
         main = html.split('name="evidence_file_visit_form"', 1)[1].split(">", 1)[0]
         self.assertIn("multiple", main)
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_partner_work_has_the_upload_only(self):
         for viewer in (self.partner_user, self.cceo):
             with self.subTest(viewer=viewer.email):
@@ -133,13 +143,25 @@ class EvidenceDrawerSubmitTest(TestCase):
                 self.assertIn('name="evidence_file_visit_form"', html)
                 self.assertIn(">Submit</button>", html)
 
-    def test_the_salesforce_drawer_on_staff_work_opens_the_upload_drawer(self):
+    def test_the_salesforce_drawer_on_staff_work_is_its_own_drawer(self):
+        """UPLOAD-OFF (owner, 2026-10-13): this door opened the upload drawer
+        for staff work, where the form and the ID went in together. With the
+        upload switched off it opens the Salesforce ID drawer itself."""
         html = self._drawer(self.cceo, self.visit, path="salesforce-id")
-        self.assertIn('name="evidence_file_visit_form"', html)
-        self.assertIn(">Submit</button>", html)
+        self.assertNotIn('name="evidence_file_visit_form"', html)
+        self.assertNotIn('type="file"', html)
+        self.assertIn('name="salesforce_id"', html)
+        self.assertIn(
+            f'hx-post="/activities/{self.visit.id}/salesforce-id/action"', html
+        )
+        self.assertIn("Save Salesforce ID", html)
 
     # -- Submit --------------------------------------------------------------
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_submit_saves_the_pages_and_the_salesforce_id_together(self):
         response = self._submit(
             self.cceo,
@@ -160,6 +182,10 @@ class EvidenceDrawerSubmitTest(TestCase):
         self.assertEqual(columns["evidence_label"], "Visit Form")
         self.assertTrue(columns["salesforce_ok"] and columns["evidence_ok"])
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_submit_saves_the_salesforce_id_on_its_own(self):
         response = self._submit(
             self.cceo, self.visit, {"salesforce_id": "SVE-EDS-0002"}
@@ -169,11 +195,19 @@ class EvidenceDrawerSubmitTest(TestCase):
         self.assertEqual(self.visit.salesforce_activity_id, "SVE-EDS-0002")
         self.assertFalse(EvidenceRecord.objects.filter(activity=self.visit).exists())
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_submit_with_nothing_says_what_to_add(self):
         response = self._submit(self.cceo, self.visit, {"salesforce_id": ""})
         self.assertEqual(response.status_code, 400)
         self.assertIn(b"then Submit", response.content)
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_a_staff_form_still_needs_its_salesforce_id(self):
         response = self._submit(
             self.cceo, self.visit, {"evidence_file_visit_form": [photo()]}
@@ -182,6 +216,10 @@ class EvidenceDrawerSubmitTest(TestCase):
         self.assertIn(b"Enter the Salesforce ID", response.content)
         self.assertFalse(EvidenceRecord.objects.filter(activity=self.visit).exists())
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_the_salesforce_id_is_locked_after_ia_confirmation(self):
         self.visit.salesforce_activity_id = "SVE-EDS-0003"
         self.visit.ia_verification_status = "confirmed"
@@ -195,6 +233,10 @@ class EvidenceDrawerSubmitTest(TestCase):
         self.visit.refresh_from_db()
         self.assertEqual(self.visit.salesforce_activity_id, "SVE-EDS-0003")
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_a_partner_submit_saves_the_upload_and_never_a_salesforce_id(self):
         response = self._submit(
             self.partner_user,
@@ -211,6 +253,10 @@ class EvidenceDrawerSubmitTest(TestCase):
             EvidenceRecord.objects.get(activity=self.partner_visit).kind, "visit_form"
         )
 
+    @unittest.skip(
+        "UPLOAD-OFF (owner, 2026-10-13): the upload is switched off, not "
+        "deleted; this tests the commented-out code. Remove the skip with it."
+    )
     def test_a_request_saved_offline_before_this_change_still_uploads(self):
         """The field outbox replays the form as it was saved: the one-form
         field (evidence_file + evidence_kind), with every page in it."""

@@ -638,7 +638,7 @@ def activity_detail_view(request, activity_id):
     from apps.my_plan.services import status_tone
 
     scheduled_at = a.scheduled_date or a.created_at
-    has_evidence = bool(evidence_list)
+    # UPLOAD-OFF (owner, 2026-10-13): has_evidence = bool(evidence_list)
     is_complete = a.status in COMPLETED_WORK_STATUSES
     timeline = [
         {
@@ -647,12 +647,14 @@ def activity_detail_view(request, activity_id):
             "done": bool(a.scheduled_date or a.planned_date),
             "detail": "" if (a.scheduled_date or a.planned_date) else "Not scheduled",
         },
-        {
-            "label": "Evidence upload",
-            "when": evidence_list[0].created_at if has_evidence else None,
-            "done": has_evidence,
-            "detail": f"{len(evidence_list)} file(s)" if has_evidence else "Pending",
-        },
+        # UPLOAD-OFF (owner, 2026-10-13): no upload step between scheduling
+        # and completion.
+        # {
+        #     "label": "Evidence upload",
+        #     "when": evidence_list[0].created_at if has_evidence else None,
+        #     "done": has_evidence,
+        #     "detail": f"{len(evidence_list)} file(s)" if has_evidence else "Pending",
+        # },
         {
             "label": "Activity completion",
             "when": a.updated_at if is_complete else None,
@@ -3390,21 +3392,23 @@ def evidence_center_view(request):
     rows = []
     for activity in page_obj.object_list:
         if active_tab == "pending":
+            # UPLOAD-OFF (owner, 2026-10-13): the row offered "Upload
+            # evidence" in the upload drawer
+            # (f"/activities/{activity.id}/evidence", drawer). There is no
+            # upload, so it opens the activity.
             action = {
-                "label": "Upload evidence",
-                "url": f"/activities/{activity.id}/evidence",
-                "drawer": True,
+                "label": "View details",
+                "url": f"/my-plan/{activity.id}",
+                "drawer": False,
             }
         elif active_tab == "sf_missing":
-            # Staff enter their own work's ID in the upload drawer; the
-            # Salesforce ID drawer is for completing partner work.
+            # UPLOAD-OFF (owner, 2026-10-13): staff entered their own work's
+            # ID in the upload drawer (f"/activities/{activity.id}/evidence");
+            # the Salesforce ID drawer takes it for staff and partner work
+            # alike now.
             action = {
                 "label": "Enter SF ID",
-                "url": (
-                    f"/activities/{activity.id}/salesforce-id"
-                    if activity.delivery_type == "partner"
-                    else f"/activities/{activity.id}/evidence"
-                ),
+                "url": f"/activities/{activity.id}/salesforce-id",
                 "drawer": True,
             }
         elif active_tab == "verified":

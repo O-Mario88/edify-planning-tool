@@ -184,8 +184,11 @@ class PartnerJourneyThroughTheDoorsTest(TestCase):
         activity.refresh_from_db()
         self.assertEqual(activity.status, "completion_started")
 
-        # 4. Evidence goes up through the partner's workroom.
-        self.client.post(
+        # 4. No file goes up. The partner's visit form was uploaded here
+        #    until the upload was switched off (UPLOAD-OFF, owner 2026-10-13:
+        #    "use strictly visit ID and training IDs to complete the
+        #    activities"); the door is closed and nothing is stored.
+        upload = self.client.post(
             f"/activities/{activity.id}/evidence/action",
             {
                 "evidence_kind": "visit_form",
@@ -196,12 +199,14 @@ class PartnerJourneyThroughTheDoorsTest(TestCase):
                 ),
             },
         )
-        self.assertEqual(
-            EvidenceRecord.objects.filter(
-                activity_id=activity.id, quarantined=False
-            ).count(),
-            1,
+        self.assertEqual(upload.status_code, 404)
+        self.assertFalse(
+            EvidenceRecord.objects.filter(activity_id=activity.id).exists()
         )
+        workroom = self.client.get(f"/partner/activities/{activity.id}/evidence")
+        self.assertEqual(workroom.status_code, 200)
+        self.assertNotContains(workroom, "Upload Evidence")
+        self.assertNotContains(workroom, 'type="file"')
 
         # 5. The partner submits the work to IA.
         submit = self.client.post(

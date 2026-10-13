@@ -264,23 +264,9 @@ class FacilitatedTrainingTest(APITestCase):
         )
         activity.status = "ia_verified"
         activity.save(update_fields=["status"])
-        # ... and for its evidence (owner, 2026-10-08: "upon completion and
-        # evidence upload"), which the accountant's payment step has always
-        # refused to pay without.
-        clearance = invoice_basis(
-            self.partner_user, "month", date(2026, 7, 1), "clearance"
-        )
-        self.assertFalse(
-            [i for i in clearance["items"] if i["activity"].id == activity.id]
-        )
-        from apps.evidence.models import EvidenceRecord
-
-        EvidenceRecord.objects.create(
-            activity=activity,
-            kind="photo",
-            uri="facilitated-training.jpg",
-            uploaded_by=self.cceo_staff.user_id,
-        )
+        # It waited for its evidence as well (owner, 2026-10-08: "upon
+        # completion and evidence upload"). The upload is switched off
+        # (UPLOAD-OFF, owner 2026-10-13), so verification is the whole wait.
         clearance = invoice_basis(
             self.partner_user, "month", date(2026, 7, 1), "clearance"
         )

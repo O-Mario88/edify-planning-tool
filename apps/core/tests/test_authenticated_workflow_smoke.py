@@ -171,15 +171,12 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self.assertEqual(my_plan["items"][0]["id"], activity_id)
 
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
-        evidence = self._upload_evidence(activity_id)
+        # UPLOAD-OFF (owner, 2026-10-13: "remove the upload and use strictly
+        # visit ID and training IDs to complete the activities"). The visit
+        # form was uploaded here and accepted by the Program Lead; the upload
+        # door is closed now and the Salesforce ID completes the visit.
+        self._upload_is_switched_off(activity_id)
 
-        self._as(self.pl)
-        reviewed = self._post(
-            f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200
-        )
-        self.assertEqual(reviewed["status"], "accepted")
-
-        self._as(self.cceo)
         completed = self._post(
             f"/api/activities/{activity_id}/complete",
             {"salesforceId": "SVE-JUL10"},
@@ -277,6 +274,23 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self.assertEqual(response.status_code, expected, response.content)
         return response.json()
 
+    def _upload_is_switched_off(self, activity_id: str) -> None:
+        response = self.client.post(
+            "/api/evidence/upload",
+            {
+                "activityId": activity_id,
+                "kind": "visit_form",
+                "file": SimpleUploadedFile(
+                    "visit-form.pdf",
+                    b"%PDF-1.4\n% a form nobody takes\n",
+                    content_type="application/pdf",
+                ),
+            },
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 404, response.content[:200])
+
+    # Kept, unused, for the day the upload is switched back on (UPLOAD-OFF).
     def _upload_evidence(self, activity_id: str) -> dict:
         response = self.client.post(
             "/api/evidence/upload",

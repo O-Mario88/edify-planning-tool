@@ -75,7 +75,7 @@ id="activity-detail-tab-evidence" type="button" role="tab" aria-controls="activi
 class="pb-2 text-[12px] font-semibold border-b-2 transition-all"
 :class="activeTab === 'evidence' ? 'border-[var(--edify-primary)] text-[var(--edify-accent-text)]' : 'border-transparent text-slate-500'"
 >
-Evidence &amp; SF ID ({{ evidence_list|length }})
+{# UPLOAD-OFF (owner, 2026-10-13): the tab read "Evidence &amp; SF ID (N)" with N the files uploaded. #}Salesforce ID
 </button>
 </div>
 
@@ -152,10 +152,12 @@ Cancel activity
 {% if act.salesforce_activity_id %}
 <p class="text-[13px] font-semibold text-slate-800">{{ act.salesforce_activity_id }}</p>
 {% else %}
-<p class="text-[12px] text-slate-500 font-medium">No Activity SF ID uploaded yet.</p>
+<p class="text-[12px] text-slate-500 font-medium">No Salesforce ID entered yet.</p>
 {% endif %}
 </div>
 
+{# UPLOAD-OFF (owner, 2026-10-13): the list shows only where an activity still holds files from before; its empty state is switched off. #}
+{% if evidence_list %}
 <div class="space-y-2">
 <h4 class="edify-text-caption font-semibold text-slate-600">Uploaded evidence</h4>
 {% if evidence_list %}
@@ -172,10 +174,13 @@ Cancel activity
 </div>
 {% endfor %}
 </div>
+{% comment %}UPLOAD-OFF
 {% else %}
 <p class="text-[12px] text-slate-500 font-medium">No evidence files uploaded yet.</p>
+{% endcomment %}
 {% endif %}
 </div>
+{% endif %}
 </div>
 
 <div class="drawer-footer">
