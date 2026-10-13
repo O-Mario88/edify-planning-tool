@@ -1,0 +1,77 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% comment %}
+Verify a CCEO's completion (owner, 2026-10-12: "PL should click verify, then
+the uploaded form"). The lead reads the completion as submitted and the forms
+the officer uploaded — a photo shown here, a PDF opened in a new tab, each with Download — and then
+decides: Verified confirms it against Salesforce and marks it complete; Return
+sends it back with the reason the officer reads. Opened by the Verify row
+action on Completion Reviews, Cluster Oversight and the lead's week, by a
+To-Do, and by Partner Monitoring's Trainings table (where the decision is
+called Confirm Verification). Served by my_plan_views.pl_review_drawer; the
+POST is decided again by apps.pl_review.services.confirm. Files are always
+served through /api/evidence/<id>/file, which checks the reader's reach and
+the quarantine, never a storage path.
+{% endcomment %}
+{% block drawer_title %}{{ form_title }}{% endblock %}
+{% block drawer_subtitle %}{{ form_subtitle }}{% endblock %}
+
+{% block drawer_body %}
+{% if form_empty %}
+<div class="edify-note" data-tone="info" role="note">{{ form_empty }}</div>
+{% else %}
+<dl class="hr-drawer-facts">
+  {% for fact in form_facts %}
+  <div class="hr-drawer-facts__row">
+    <dt>{{ fact.label }}</dt>
+    <dd>{{ fact.value|default:"—"|linebreaksbr }}</dd>
+  </div>
+  {% endfor %}
+</dl>
+
+<section class="space-y-2" aria-labelledby="pl-review-forms" data-uploaded-forms>
+  <h3 id="pl-review-forms" class="edify-text-caption font-semibold text-slate-600">Uploaded form{{ evidence|length|pluralize }}</h3>
+  {% for e in evidence %}
+  <article class="space-y-2 rounded-surface border border-slate-200 p-3" data-evidence-file="{{ e.id }}">
+    <div class="flex items-center justify-between gap-3 text-[13px]">
+      <span class="truncate font-semibold text-slate-800" title="{% firstof e.original_name e.kind %}">{% firstof e.original_name e.uri "Unnamed file" %}</span>
+      <span class="pill pill-neutral shrink-0">{{ e.get_kind_display }}</span>
+    </div>
+    {% if e.mime_type and "image" in e.mime_type %}
+    <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="block rounded-surface bg-slate-50 overflow-hidden" aria-label="Open {% firstof e.original_name 'the form' %} full size">
+      <img src="/api/evidence/{{ e.id }}/file" alt="{% firstof e.original_name 'Uploaded form' %}" loading="lazy" class="w-full max-h-72 object-contain">
+    </a>
+    {% else %}
+    {# A PDF is not embedded: the site's content security policy refuses plugin content (object-src 'none'), so the box stayed blank. Open shows it in a new tab. #}
+    <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="btn btn-secondary h-8" data-open-form>Open the form</a>
+    {% endif %}
+    <div class="flex items-center gap-4 edify-text-caption font-semibold">
+      {% if e.mime_type and "image" in e.mime_type %}<a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="edify-primary-text hover:underline">Open</a>{% endif %}
+      <a href="/api/evidence/{{ e.id }}/file?download=1" class="edify-primary-text hover:underline">Download</a>
+    </div>
+  </article>
+  {% empty %}
+  <div class="edify-note" data-tone="warning" role="status" data-no-evidence>
+    <p class="edify-note__body">No form was uploaded with this completion. Return it to the officer with the reason.</p>
+  </div>
+  {% endfor %}
+  {% if evidence_checklist %}
+  <ul class="space-y-1 edify-text-caption text-slate-600" aria-label="Forms this activity requires">
+    {% for item in evidence_checklist %}
+    <li class="{% if item.uploaded %}text-emerald-700{% else %}text-rose-600{% endif %}">{{ item.label }} — {% if item.uploaded %}uploaded{% else %}missing{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<form method="post" action="{{ form_action }}" class="hr-drawer-form">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ form_next }}">
+  {% if form_note %}<div class="edify-note" data-tone="info" role="note">{{ form_note }}</div>{% endif %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="button" class="btn btn-secondary h-8" hx-get="{{ form_secondary.hx_get }}" hx-target="#drawer-container" hx-swap="innerHTML" data-drawer-secondary>{{ form_secondary.label }}</button>
+    {% if can_verify %}<button type="submit" class="btn btn-primary h-8">{{ form_submit }}</button>{% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

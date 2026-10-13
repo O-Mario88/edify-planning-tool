@@ -33,7 +33,7 @@ from apps.activity_catalogue.models import (
 )
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.htmx_errors import error_fragment
+from apps.core.htmx_errors import error_fragment, refusal_drawer
 from apps.core.permissions import (
     RolePermissionService,
     has_permission,
@@ -134,10 +134,8 @@ def ssa_mapping_drawer(request, item_id):
         return _drawer_refusal()
     item = ActivityCatalogueItem.objects.filter(id=item_id).first()
     if item is None:
-        return error_fragment(
-            BadRequest("That activity is not in the catalogue."),
-            action="SSA Mapping",
-            status=400,
+        return refusal_drawer(
+            request, "That activity is not in the catalogue.", title="SSA Mapping"
         )
 
     resolved = im.mapping_for(item)

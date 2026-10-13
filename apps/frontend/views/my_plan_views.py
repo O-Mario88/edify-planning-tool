@@ -1,6 +1,11 @@
-from apps.core.htmx_errors import error_fragment, notice_fragment
+from apps.core.htmx_errors import (
+    error_fragment,
+    error_message,
+    notice_fragment,
+    refusal_drawer,
+)
 from apps.core.redirects import local_redirect
-from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core import export_kinds
 from apps.ssa.plan_alignment import verdict_display
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,6 +17,7 @@ from apps.core.permissions import (
 )
 from apps.core.rbac import Permission
 from django.contrib import messages
+from apps.core.htmx_saved import saved_in_place
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from django.core.paginator import Paginator
@@ -259,14 +265,20 @@ def my_plan_view(request):
         # and carry no School ID): the Group Trainings table's rows, not the
         # per-school rows of "Schools with Planned Training". What is left
         # of that table is the in-school trainings, which are school work.
-        sessions = [
-            *context.get("group_trainings", []),
-            *context.get("cluster_meetings", []),
-        ]
-        session_ids = {row["id"] for row in sessions}
+        trainings = list(context.get("group_trainings", []))
+        meetings = list(context.get("cluster_meetings", []))
+        session_ids = {row["id"] for row in (*trainings, *meetings)}
+
+        def _kind(row, kind):
+            # Work handed to a partner is a partner schedule whatever its
+            # kind (owner, 2026-10-12: "partner schedules on its sheet").
+            if row.get("execution_role") == "Partner" or row.get("partner_name"):
+                kind = plan_export.PARTNER
+            return {**row, "export_kind": kind}
+
         feed = [
             *(
-                {**row, "export_kind": plan_export.VISIT}
+                _kind(row, plan_export.VISIT)
                 for row in (
                     *context.get("core_school_visits", []),
                     *context.get("core_school_trainings", []),
@@ -280,9 +292,10 @@ def my_plan_view(request):
                 )
                 if row["id"] not in session_ids
             ),
-            *({**row, "export_kind": plan_export.SESSION} for row in sessions),
+            *(_kind(row, plan_export.TRAINING) for row in trainings),
+            *(_kind(row, plan_export.MEETING) for row in meetings),
             *(
-                {**row, "export_kind": plan_export.OTHER}
+                _kind(row, plan_export.OTHER)
                 for row in context.get("programme_activities", [])
             ),
         ]
@@ -382,10 +395,12 @@ def my_plan_view(request):
                 if sequence
                 else a["activity_type_label"]
             )
-            school_work = kind == plan_export.VISIT
+            school_work = kind in (plan_export.VISIT, plan_export.PARTNER)
             rows.append(
                 plan_export.row(
                     kind,
+                    activity_id=a["id"],
+                    partner=a.get("partner_name"),
                     school_id=a.get("school_id") if school_work else "",
                     school_name=a.get("school_name"),
                     cluster_name=a.get("cluster_name"),
@@ -559,7 +574,7 @@ def _team_read_only(request, activity):
         return None
     from apps.core.scoping import TEAM_READ_ONLY_MESSAGE
 
-    return notice_fragment(TEAM_READ_ONLY_MESSAGE)
+    return refusal_drawer(request, TEAM_READ_ONLY_MESSAGE, title="Read only")
 
 
 def _can_cancel(activity, user) -> bool:
@@ -787,9 +802,11 @@ def partner_ssa_completion_drawer_view(request, activity_id):
             "SSA Support activity may complete it."
         )
     if a.status != "awaiting_ia_verification":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "The partner must submit the completed SSA evidence before scores "
-            "and enrolment can be recorded."
+            "and enrolment can be recorded.",
+            title="Not yet submitted",
         )
     return render(
         request,
@@ -844,9 +861,7 @@ def partner_ssa_completion_action(request, activity_id):
             "score_count": len(payload["scores"]),
         },
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -907,7 +922,12 @@ def complete_drawer_view(request, activity_id):
             act = get_activity(a.id, request.user)
             attach_school_feedback()
         except Exception as e:
-            return error_fragment(e, action="Error starting completion", status=400)
+            return refusal_drawer(
+                request,
+                error_message(e, action="Error starting completion"),
+                title="Cannot complete",
+                tone="danger",
+            )
 
     evidence_list = list(evidence_records_for_activity(a.id, request.user))
     if paired_school_visit is not None:
@@ -980,9 +1000,6 @@ def complete_drawer_view(request, activity_id):
         "needs_netsuite_id": needs_netsuite_id,
         "disbursed_amount": disbursed_amount,
         "is_paired_in_school_training": paired_school_visit is not None,
-        "requires_school_feedback": (
-            paired_school_visit is not None or a.activity_type in VISIT_TYPES
-        ),
         "paired_school_visit": (
             get_activity(paired_school_visit.id, request.user)
             if paired_school_visit is not None
@@ -1151,9 +1168,7 @@ def accountability_action(request, activity_id):
             "amount_returned": amount_returned,
         },
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -1211,9 +1226,7 @@ def confirm_reimbursement_receipt_action(request, activity_id):
         success=True,
         payload={"advance_id": adv.id, "amount": adv.reimbursed_amount},
     )
-    response = HttpResponse("<script>window.location.reload();</script>")
-    response["HX-Trigger"] = "close-drawer"
-    return response
+    return saved_in_place()
 
 
 @require_page_permission("my_plan")
@@ -1245,9 +1258,11 @@ def reschedule_drawer_view(request, activity_id):
     from apps.activities.editing import is_executed
 
     if is_executed(a):
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity has already been carried out, so it can no longer "
-            "be rescheduled. Only an activity that is still scheduled can be."
+            "be rescheduled. Only an activity that is still scheduled can be.",
+            title="Cannot reschedule",
         )
 
     # Rescheduling deliberately reuses the shared schedule drawer in its safe
@@ -1363,9 +1378,7 @@ def reschedule_activity_action(request, activity_id):
                     },
                 )
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("<script>window.location.reload();</script>")
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                return saved_in_place()
             messages.success(request, "Activity rescheduled successfully.")
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
@@ -1667,12 +1680,9 @@ def complete_activity_action(request, activity_id):
                     response = HttpResponse(
                         f"<script>window.location.assign({json.dumps(onetest_next)});</script>"
                     )
-                else:
-                    response = HttpResponse(
-                        "<script>window.location.reload();</script>"
-                    )
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                    response["HX-Trigger"] = "close-drawer"
+                    return response
+                return saved_in_place()
             messages.success(
                 request,
                 (
@@ -1851,16 +1861,23 @@ def pl_review_drawer(request, activity_id):
     the lead reads the completion here rather than on the officer's page.
     """
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.evidence.models import EvidenceRecord
+    from apps.evidence.requirements import checklist, evidence_optional
     from apps.pl_review.services import reviewable_activity
 
+    template = "partials/my_plan/pl_review_drawer.html"
     try:
         activity = reviewable_activity(activity_id, request.user)
     except (BadRequest, Forbidden, NotFoundError) as exc:
-        return _drawer(
+        return render(
             request,
-            title="Completion review",
-            subtitle="Not waiting on you",
-            empty=str(getattr(exc, "detail", exc)),
+            template,
+            {
+                "form_title": "Verify completion",
+                "form_subtitle": "Not waiting on you",
+                "form_empty": str(getattr(exc, "detail", exc)),
+                "drawer_size": "md",
+            },
         )
     # The two decisions a reviewer holds, named the same on every surface
     # (owner, 2026-09-24): Verified, or Return with the reason. Partner
@@ -1871,23 +1888,43 @@ def pl_review_drawer(request, activity_id):
         if request.GET.get("from") == "partner-trainings"
         else "Verified"
     )
-    return _drawer(
+    # The uploaded forms themselves (owner, 2026-10-12: "click verify, then
+    # the uploaded form"), newest first, each shown in the drawer. The facts
+    # list them by name as well, so the Return drawer's shorter list stays
+    # the same; here the files take the Evidence line's place.
+    evidence = list(
+        EvidenceRecord.objects.filter(
+            activity_id=activity.id, quarantined=False
+        ).order_by("-created_at")[:20]
+    )
+    return render(
         request,
-        title="Completion review",
-        subtitle=activity.activity_name_snapshot
-        or activity.get_activity_type_display(),
-        facts=_review_facts(activity),
-        action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
-        submit=decision,
-        secondary={
-            "label": "Return",
-            "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
+        template,
+        {
+            "form_title": "Verify completion",
+            "form_subtitle": activity.activity_name_snapshot
+            or activity.get_activity_type_display(),
+            "form_facts": [
+                fact for fact in _review_facts(activity) if fact["label"] != "Evidence"
+            ],
+            "evidence": evidence,
+            "evidence_checklist": checklist(activity),
+            # Nothing to confirm without the form: the lead returns it instead.
+            "can_verify": bool(evidence) or evidence_optional(activity),
+            "form_action": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
+            "form_submit": decision,
+            "form_secondary": {
+                "label": "Return",
+                "hx_get": f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return-drawer",
+            },
+            "form_note": (
+                f"{decision} confirms the completion against Salesforce and marks "
+                "it complete. Return sends it back to the officer with your "
+                "reason — for example, participants not entered in Salesforce."
+            ),
+            "form_next": request.META.get("HTTP_HX_CURRENT_URL", ""),
+            "drawer_size": "md",
         },
-        note=(
-            f"{decision} confirms the completion against Salesforce and marks "
-            "it complete. Return sends it back to the officer with your "
-            "reason — for example, participants not entered in Salesforce."
-        ),
     )
 
 
@@ -2051,9 +2088,7 @@ def start_activity_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2110,9 +2145,7 @@ def facilitator_drawer_view(request, activity_id):
         except Exception as exc:
             return error_fragment(exc, action="Facilitator not changed", status=400)
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
         return local_redirect("/my-plan")
 
     from apps.activities.facilitation import session_noun
@@ -2348,11 +2381,13 @@ def edit_activity_drawer_view(request, activity_id):
         )
     state = editing.edit_state(a, request.user)
     if state == "locked":
-        return notice_fragment(editing.LOCKED_REASON)
+        return refusal_drawer(request, editing.LOCKED_REASON, title="Cannot edit")
     if state != "open":
-        return notice_fragment(
+        return refusal_drawer(
+            request,
             "This activity is not yours to edit, or it is no longer a "
-            "scheduled plan."
+            "scheduled plan.",
+            title="Cannot edit",
         )
     return render(
         request,
@@ -2437,9 +2472,7 @@ def edit_activity_action(request, activity_id):
         },
     )
     if request.headers.get("HX-Request") == "true":
-        response = HttpResponse("<script>window.location.reload();</script>")
-        response["HX-Trigger"] = "close-drawer"
-        return response
+        return saved_in_place()
     return local_redirect(f"/my-plan/{result.get('id') or activity_id}")
 
 
@@ -2569,9 +2602,7 @@ def cancel_activity_action(request, activity_id):
             )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2746,9 +2777,7 @@ def evidence_upload_action(request, activity_id):
             return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2832,9 +2861,7 @@ def salesforce_id_action(request, activity_id):
             except Exception as e:
                 return error_fragment(e, status=400)
             if request.headers.get("HX-Request") == "true":
-                response = HttpResponse("<script>window.location.reload();</script>")
-                response["HX-Trigger"] = "close-drawer"
-                return response
+                return saved_in_place()
             return local_redirect(f"/my-plan/{activity_id}")
 
         kind = sf_kind(a.activity_type)
@@ -2857,9 +2884,7 @@ def salesforce_id_action(request, activity_id):
             return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -2942,9 +2967,7 @@ def submit_for_review_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -3103,9 +3126,7 @@ def attendance_upload_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 
@@ -3205,9 +3226,7 @@ def ssa_evidence_upload_action(request, activity_id):
         )
 
         if request.headers.get("HX-Request") == "true":
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
+            return saved_in_place()
 
     return local_redirect(f"/my-plan/{activity_id}")
 

@@ -69,11 +69,11 @@
            autocomplete="off"
            enterkeyhint="done"
            aria-describedby="partner-ssa-salesforce-hint"
-           placeholder="SVE-…"
+           placeholder="SV-… or SVE-…"
            value="{{ a.salesforce_activity_id|default_if_none:'' }}"
            required
            class="min-h-11 w-full rounded-control border border-[var(--border-card)] edify-surface px-3 text-[16px] sm:text-[13px] font-semibold tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-    <p id="partner-ssa-salesforce-hint" class="edify-text-caption text-slate-500">The school visit ID, starting SVE-.</p>
+    <p id="partner-ssa-salesforce-hint" class="edify-text-caption text-slate-500">The school visit ID — SV- or SVE-, or the record's own Salesforce ID.</p>
   </div>
 
   <div class="space-y-1">

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **692**
+Components and application partials: **694**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -447,6 +447,7 @@ Components and application partials: **692**
 | `partials/my_plan/offline_evidence_drawer.html` | application-partial | Reusable offline evidence drawer interface primitive | warning; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /offline/evidence-drawer | 0 |
 | `partials/my_plan/partner_ssa_completion_drawer.html` | application-partial | Reusable partner ssa completion drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/partner-ssa-complete | 0 |
 | `partials/my_plan/period_breakdown.html` | application-partial | Reusable period breakdown interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
+| `partials/my_plan/pl_review_drawer.html` | application-partial | Reusable pl review drawer interface primitive | info, warning; default, loading, empty | inherits containing page contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/my_plan/programme_activities.html` | application-partial | Reusable programme activities interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/programme_school_work.html` | application-partial | Reusable programme school work interface primitive | canonical; default | inherits containing page contract | accessible name and label | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/readiness.html` | application-partial | Reusable readiness interface primitive | danger; default | inherits containing page contract | announced dynamic state | /my-plan<br>/my-plan/<br>/my-plan/readiness | 0 |
@@ -616,6 +617,7 @@ Components and application partials: **692**
 | `partials/projects/workspace_nav.html` | application-partial | Reusable workspace nav interface primitive | canonical; default | inherits containing page contract | accessible name and label | /projects/<str:project_id><br>/projects/analytics<br>/projects/my-plan<br>/projects/planning | 0 |
 | `partials/pwa_head.html` | application-partial | Reusable pwa head interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/pwa_launch.html` | application-partial | Reusable pwa launch interface primitive | canonical; default, loading | explicit responsive contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
+| `partials/refusal_drawer.html` | application-partial | Reusable refusal drawer interface primitive | {{ refusal_tone|default:; default | inherits containing page contract | announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/schools/_details.html` | application-partial | Reusable  details interface primitive | info, warning, {{ visit_status.tone }}; default | explicit responsive contract | inherits semantic parent contract | /schools/<str:school_id> | 0 |
 | `partials/schools/_participation.html` | application-partial | Reusable  participation interface primitive | canonical; default | inherits containing page contract | accessible name and label | /schools/<str:school_id> | 0 |
 | `partials/schools/_ssa_records.html` | application-partial | Reusable  ssa records interface primitive | warning, {{ d.tone }}, {{ h.tone }}, {{ pair.tone }}; default, empty | explicit responsive contract | accessible name and label | /schools/<str:school_id> | 0 |
