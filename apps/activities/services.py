@@ -5183,10 +5183,16 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
 
         if old_date != new_date:
+            from apps.daily_visit_batches.services import once_days_are_priced
             from apps.hr.leave_services import LeaveBudgetImpactService
 
-            LeaveBudgetImpactService.handle_reschedule(
-                a, old_date, new_date, data.get("reason", "Rescheduling")
+            # Written on the lines the move leaves the visit with: at once,
+            # or, in a group of moves whose days are priced when the group
+            # ends, once they have been.
+            once_days_are_priced(
+                lambda: LeaveBudgetImpactService.handle_reschedule(
+                    a, old_date, new_date, data.get("reason", "Rescheduling")
+                )
             )
 
     # §25 — the partner delivering this did not move it and must not find out
