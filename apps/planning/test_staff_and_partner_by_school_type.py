@@ -188,7 +188,8 @@ class OnThePagesTests(PeopleFixture):
         self._work(self.cara, "school_visit")
         self.partner_visit(self.client_school)
         self.client.force_login(self.cara_user)
-        response = self.client.get(f"/my-plan?fy={FY}")
+        # Planned and remaining is asked for by My Plan once it is drawn.
+        response = self.client.get(f"/my-plan/readiness?fy={FY}")
         self.assertEqual(response.status_code, 200)
         figures = response.context["readiness"]
         self.assertEqual(
@@ -202,6 +203,7 @@ class OnThePagesTests(PeopleFixture):
         self._work(self.cara, "school_visit", school=self.core)
         self.partner_visit(self.core)
         self.client.force_login(self.cara_user)
-        page = self.client.get(f"/my-plan?fy={FY}").content.decode()
+        page = self.client.get(f"/my-plan/readiness?fy={FY}").content.decode()
+        self.assertIn("data-my-plan-queues", page)
         self.assertNotIn("data-both-client", page)
         self.assertNotIn("data-core-over", page)

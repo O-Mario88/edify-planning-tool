@@ -1924,6 +1924,7 @@
     "/my-performance/values",
     "/my-plan",
     "/my-plan/",
+    "/my-plan/readiness",
     "/my-professional-development",
     "/my-professional-development/",
     "/my-targets",
@@ -8515,7 +8516,8 @@
   "partials/my_plan/_readiness_count.html": {
    "pages": [
     "/my-plan",
-    "/my-plan/"
+    "/my-plan/",
+    "/my-plan/readiness"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -8905,7 +8907,8 @@
   "partials/my_plan/readiness_list.html": {
    "pages": [
     "/my-plan",
-    "/my-plan/"
+    "/my-plan/",
+    "/my-plan/readiness"
    ],
    "roles": [
     "ACCOUNTANT",
@@ -10153,6 +10156,7 @@
     "/country-planning-oversight/",
     "/my-plan",
     "/my-plan/",
+    "/my-plan/readiness",
     "/planning-monitor/",
     "/team-planning-oversight/",
     "/team-targets",
@@ -10177,6 +10181,7 @@
     "/country-planning-oversight/",
     "/my-plan",
     "/my-plan/",
+    "/my-plan/readiness",
     "/planning-monitor/",
     "/team-planning-oversight/",
     "/team-targets",
@@ -11760,7 +11765,8 @@
   "partials/trainings/my_summary.html": {
    "pages": [
     "/my-plan",
-    "/my-plan/"
+    "/my-plan/",
+    "/my-plan/readiness"
    ],
    "roles": [
     "ACCOUNTANT",

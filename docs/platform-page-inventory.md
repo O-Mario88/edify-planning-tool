@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **930**
-- All registered routes: **1406**
+- Routed product surfaces: **931**
+- All registered routes: **1407**
 - API routes: **363**
 - Roles: **15**
 - Permission keys: **127**
 - Scheduled jobs: **37**
 - Activity states: **24**
-- Shared component templates: **691**
+- Shared component templates: **692**
 - Full pages: **270**
-- Partials and drawers: **334**
-- Permission-gated surfaces: **913**
-- Referenced by automated tests: **830**
+- Partials and drawers: **335**
+- Permission-gated surfaces: **914**
+- Referenced by automated tests: **831**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -605,6 +605,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-34CF71A1B7 | /my-plan/<str:activity_id>/reschedule-drawer | Reschedule Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6937A8BBE4 | /my-plan/day-package | My Plan Day Package | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-637D222AB1 | /my-plan/export-drawer | My Plan Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-BA9943EE09 | /my-plan/readiness | My Plan Readiness | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A9CC7B99B9 | /my-professional-development | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66957B5B06 | /my-professional-development/ | My Professional Development | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3674FD9513 | /my-professional-development/allocation-history | Pd Allocation History | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
