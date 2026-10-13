@@ -32,8 +32,8 @@ view, to bring it back.
   {% endfor %}
 </dl>
 
-<section class="space-y-2" aria-labelledby="pl-review-id" data-completion-id>
-  <h3 id="pl-review-id" class="edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce ID{% endif %}</h3>
+<section class="space-y-2" aria-labelledby="completion-id-title" data-completion-id>
+  <h3 id="completion-id-title" class="edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce ID{% endif %}</h3>
   {% if salesforce_id %}
   <p class="rounded-surface border border-slate-200 px-3 py-2 font-mono text-[14px] font-semibold text-emerald-700 dark:text-emerald-400" data-tone="success">{{ salesforce_id }}</p>
   <p class="edify-text-caption text-slate-500">Find this record in Salesforce and check it against the details above before you decide.</p>
@@ -47,8 +47,8 @@ view, to bring it back.
 </section>
 
 {% comment %}UPLOAD-OFF (owner, 2026-10-13)
-<section class="space-y-2" aria-labelledby="pl-review-forms" data-uploaded-forms>
-  <h3 id="pl-review-forms" class="edify-text-caption font-semibold text-slate-600">Uploaded form{{ evidence|length|pluralize }}</h3>
+<section class="space-y-2" aria-labelledby="uploaded-forms-title" data-uploaded-forms>
+  <h3 id="uploaded-forms-title" class="edify-text-caption font-semibold text-slate-600">Uploaded form{{ evidence|length|pluralize }}</h3>
   {% for e in evidence %}
   <article class="space-y-2 rounded-surface border border-slate-200 p-3" data-evidence-file="{{ e.id }}">
     <div class="flex items-center justify-between gap-3 text-[13px]">
