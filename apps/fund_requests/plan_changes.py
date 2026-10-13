@@ -323,19 +323,26 @@ _change_in_hand: contextvars.ContextVar = contextvars.ContextVar(
 
 
 @contextlib.contextmanager
-def planner_change(principal=None, activity=None):
+def planner_change(principal=None, activity=None, *, what: str | None = None):
     """A planner is changing their own plan: an edit, a new date.
 
     Inside this block a monthly request in its approval chain does not refuse
     the re-pricing the change needs; it follows the plan. Blocks nest (Edit
     calls Reschedule); the outermost one reports what moved, once, when it
     ends without an error.
+
+    `what` names the change where it is more than one activity ("3
+    activities"): a group of moves is one change, reported once.
     """
     outer = _change_in_hand.get()
     if outer is not None:
         yield outer
         return
-    change = {"principal": principal, "what": _named(activity), "totals": {}}
+    change = {
+        "principal": principal,
+        "what": what or _named(activity),
+        "totals": {},
+    }
     token = _change_in_hand.set(change)
     try:
         yield change
