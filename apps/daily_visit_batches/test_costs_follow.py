@@ -578,7 +578,10 @@ class ThePersonWhoSavedWaitsForTheirFiguresTest(_AnswerFirst):
             return HttpResponse("saved")
 
         response = costs_follow.CostsFollowMiddleware(view)(self._request(cookie=False))
-        self.assertEqual(response.cookies[costs_follow.COOKIE].value, "1")
+        self.assertEqual(
+            response.cookies[costs_follow.COOKIE].value,
+            str(CostsToFollow.objects.get().id),
+        )
         self.assertTrue(response.cookies[costs_follow.COOKIE]["httponly"])
         self.assertTrue(CostsToFollow.objects.exists())
 
@@ -595,6 +598,44 @@ class ThePersonWhoSavedWaitsForTheirFiguresTest(_AnswerFirst):
         response = costs_follow.CostsFollowMiddleware(view)(self._request(cookie=True))
         self.assertEqual(seen, [0])
         self.assertEqual(response.cookies[costs_follow.COOKIE]["max-age"], 0)
+
+    def test_the_cookie_names_the_rows_and_the_page_is_told_it_is_after_them(self):
+        """The notice of a pricing names its rows; so does the answer to the
+        request that waited for them, so the page that saved knows the
+        notice whatever the two clocks say (`live.after_costs`)."""
+        created = self.plan(MON, self.near[:3])["created"]
+
+        def view(_request):
+            with override_settings(SAVES_ANSWER_FIRST=True):
+                self.move(created[0], TUE)
+            return HttpResponse("saved")
+
+        saved = costs_follow.CostsFollowMiddleware(view)(self._request(cookie=False))
+        row = CostsToFollow.objects.get()
+        self.assertEqual(saved.cookies[costs_follow.COOKIE].value, str(row.id))
+        self.assertNotIn(costs_follow.AFTER_HEADER, saved)
+
+        request = self._request(cookie=False)
+        request.COOKIES[costs_follow.COOKIE] = str(row.id)
+        page = costs_follow.CostsFollowMiddleware(
+            lambda _request: HttpResponse("page")
+        )(request)
+        self.assertFalse(CostsToFollow.objects.exists())
+        self.assertEqual(page[costs_follow.AFTER_HEADER], str(row.id))
+
+    def test_a_cookie_is_read_as_row_numbers_and_nothing_else(self):
+        self.assertEqual(costs_follow._rows_named("12.13"), ["12", "13"])
+        self.assertEqual(costs_follow._rows_named("1"), ["1"])
+        self.assertEqual(
+            costs_follow._rows_named("12.<script>.-3.1e4. 5.14"), ["12", "14"]
+        )
+        self.assertEqual(costs_follow._rows_named(None), [])
+        request = self._request(cookie=False)
+        request.COOKIES[costs_follow.COOKIE] = "not-a-row"
+        page = costs_follow.CostsFollowMiddleware(
+            lambda _request: HttpResponse("page")
+        )(request)
+        self.assertNotIn(costs_follow.AFTER_HEADER, page)
 
     def test_a_request_without_the_cookie_asks_nothing(self):
         middleware = costs_follow.CostsFollowMiddleware(
@@ -666,6 +707,22 @@ class EveryOpenPageIsToldOnceTheCostsAreInTest(_AnswerFirst):
         pushed.assert_called()
         told = {user for call in pushed.call_args_list for user in call.args[0]}
         self.assertIn(self.user.id, told)
+
+    def test_the_notice_of_a_pricing_names_the_rows_it_settled(self):
+        self._moved(first=True)
+        row = CostsToFollow.objects.get()
+        with mock.patch("apps.realtime.bus.bus.publish_many") as pushed:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.assertEqual(costs_follow.settle(), 1)
+        self.assertEqual(
+            {call.args[1].get("after") for call in pushed.call_args_list},
+            {str(row.id)},
+        )
+
+    def test_a_notice_of_anything_else_names_nothing(self):
+        pushed, _thread = self._moved(first=False)
+        for call in pushed.call_args_list:
+            self.assertNotIn("after", call.args[1])
 
     def test_what_the_save_asked_is_told_after_the_pricing(self):
         from apps.activities import live

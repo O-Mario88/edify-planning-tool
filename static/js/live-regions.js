@@ -10,7 +10,7 @@
   'use strict';
   if (window.EdifyLive || !window.EventSource) return;
   var doc = document, REGION = '[data-live-region][id]';
-  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false, caughtUp = '', due = '', mustRead = false;
+  var stream = null, seen = '', wanted = false, loading = false, soonTimer = 0, retryTimer = 0, notBefore = 0, refused = 0, held = false, spell = 0, stayed = false, caughtUp = '', due = '', mustRead = false, shown = {}, owed = [];
 
   function regions() { return doc.querySelectorAll(REGION); }
 
@@ -21,6 +21,13 @@
     var at = doc.activeElement;
     return !!(at && at.closest && at.closest(REGION) &&
       at.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select'));
+  }
+
+  // A notice that names the costs it follows (a save answers before its
+  // day is priced, and is announced once it is) is already on a page whose
+  // read waited for those costs: the read's answer names them too.
+  function covered(names) {
+    return !!names && names.split('.').every(function (id) { return shown[id]; });
   }
 
   function swap(old, fresh) {
@@ -48,11 +55,13 @@
     // The change this read was asked for is already on the page: a read
     // that began after it (the page's own save, say) came back meanwhile.
     if (!mustRead && due && caughtUp && due <= caughtUp) { wanted = false; return; }
+    if (!mustRead && owed.length && owed.every(covered)) { owed = []; wanted = false; return; }
     // Asked for while it rests: changes are coming faster than it reads them.
     if (Date.now() < notBefore) { held = true; return; }
     wanted = false;
     loading = true;
     mustRead = false;
+    owed = [];
     spell = held ? Math.min(spell + 1, 4) : 0;
     held = false;
     var began = Date.now();
@@ -63,6 +72,8 @@
         // echoed back by the stream), so its notice is not read again.
         var at = response.headers && response.headers.get && response.headers.get('X-Edify-Live-At');
         if (at && at > caughtUp) caughtUp = at;
+        var after = response.headers && response.headers.get && response.headers.get('X-Edify-Live-After');
+        if (after) after.split('.').forEach(function (id) { shown[id] = 1; });
         if (response.ok && !response.redirected) return response.text();
         // Signed out, or the page is gone: nothing left to keep up with.
         refused = 9;
@@ -124,11 +135,13 @@
       refused = 0;
       if (data.type === 'plan.changed') {
         if (data.at && caughtUp && data.at <= caughtUp) return;
+        if (covered(data.after)) return;
+        owed.push(data.after || '');
         if (data.at && data.at > due) due = data.at;
         soon();
       }
       // Back after being away: read again only if something changed meanwhile.
-      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) { if (data.changed > due) due = data.changed; soon(); }
+      else if (data.type === 'connected' && seen && data.changed && data.changed > seen) { owed.push(''); if (data.changed > due) due = data.changed; soon(); }
       if (data.at) seen = data.at;
     };
     stream.onerror = function () {

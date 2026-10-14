@@ -68,6 +68,10 @@ logger = logging.getLogger(__name__)
 COOKIE = "edify_costs_following"
 COOKIE_SECONDS = 120
 
+#: What a page that waited for its costs is told it is after: their rows,
+#: as the notice of their pricing names them (`apps.activities.live`).
+AFTER_HEADER = "X-Edify-Live-After"
+
 #: How many times a row is tried before it is held for a person to look at.
 MAX_ATTEMPTS = 5
 
@@ -434,7 +438,9 @@ def _settle_in_a_thread(row_ids, *, tell=(), askers=frozenset()) -> None:
             try:
                 from apps.activities import live
 
-                live.publish(tell)
+                with live.after_costs() as named:
+                    named.extend(row_ids)
+                    live.publish(tell)
             except Exception:  # noqa: BLE001 — a page left stale, no more
                 logger.warning("Costs to follow: announcing failed", exc_info=True)
             connections.close_all()
@@ -514,9 +520,14 @@ def settle(
         rows = rows.filter(Q(asked_by=user) | Q(owners__contains=[user]))
     if older_than is not None:
         rows = rows.filter(created_at__lte=timezone.now() - older_than)
+    from apps.activities import live
+
     done = 0
-    with transaction.atomic():
+    # What the pricing announces when it commits names these rows, so the
+    # page that waited for them knows the notice (`live.after_costs`).
+    with live.after_costs() as named, transaction.atomic():
         found = list(rows.select_for_update().order_by("id"))
+        named.extend(row.id for row in found)
         # A day that a later row prices again is left to that row: priced
         # here as well it would be written twice with the same members. So
         # three visits scheduled onto one day by one save are priced once,
@@ -693,6 +704,11 @@ def _do(row, *, leave=frozenset()) -> None:
 # ── The person who saved waits for their own figures ───────────────────────
 
 
+def _rows_named(cookie: str | None) -> list[str]:
+    """The row ids a cookie names, as digits; anything else in it is left."""
+    return [part for part in (cookie or "").split(".")[:50] if part.isdigit()]
+
+
 class CostsFollowMiddleware:
     """A request from someone whose save is still being priced waits for it.
 
@@ -709,24 +725,26 @@ class CostsFollowMiddleware:
     def __call__(self, request):
         _asked_here.set([])
         waited = False
+        after: list = []
         if request.COOKIES.get(COOKIE):
             user_id = str(getattr(getattr(request, "user", None), "id", "") or "")
             if user_id:
                 waited = True
                 try:
                     settle(user=user_id)
-                    # And for its notice to have gone out, where the thread
-                    # doing it is in this process: the page this request
-                    # brings is then known to be later than the notice, and
-                    # does not read itself again on hearing it.
-                    wait(5.0, asked_by=user_id)
+                    # The rows this browser's saves wrote down are settled:
+                    # the page this request brings is after them, and says so
+                    # (`AFTER_HEADER`), so that their notice is not read again.
+                    after = _rows_named(request.COOKIES.get(COOKIE))
                 except Exception:  # noqa: BLE001 — never blocks the page
                     logger.exception("Costs to follow: settling first failed")
         response = self.get_response(request)
+        if after:
+            response[AFTER_HEADER] = ".".join(after)
         if _asked_here.get():
             response.set_cookie(
                 COOKIE,
-                "1",
+                ".".join(str(row_id) for row_id in _asked_here.get()),
                 max_age=COOKIE_SECONDS,
                 httponly=True,
                 samesite="Lax",

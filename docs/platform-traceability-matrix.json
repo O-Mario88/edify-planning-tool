@@ -99,7 +99,6 @@
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/templatetags/acting.py",
         "apps/frontend/templatetags/components.py",
         "apps/frontend/templatetags/frontend_filters.py",
@@ -621,7 +620,6 @@
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/templatetags/acting.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/views/budget_views.py",
@@ -1001,7 +999,6 @@
         "apps/daily_visit_batches/costs_follow.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/templatetags/acting.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/templatetags/row_actions.py",
@@ -1533,7 +1530,6 @@
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/templatetags/acting.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/templatetags/row_actions.py",
@@ -1909,7 +1905,6 @@
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/views/my_plan_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/follow.py",
@@ -2685,7 +2680,6 @@
         "apps/daily_visit_batches/workload.py",
         "apps/documents/services.py",
         "apps/documents/signals.py",
-        "apps/evidence/form_document.py",
         "apps/frontend/templatetags/acting.py",
         "apps/frontend/templatetags/components.py",
         "apps/frontend/templatetags/frontend_filters.py",
@@ -4959,9 +4953,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "612dad4d99109a3f589929a10dfbc850e7828bc8e40290821e9c3dec974f7ce4",
-    "sources": "86b9fce198e1b0864c140ab0bf880f2f56e262125399130e8316877a884a2e9f",
-    "sourceCount": 260,
+    "payload": "630cff5d95d6cdf55744607b1f6084af867b4a947daa0cc7a6789559d5a2e059",
+    "sources": "dd9db5d4d3939985f9f452bc117ed9c35b93262f464e9f89066be4f6197ee3ed",
+    "sourceCount": 259,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }
