@@ -41,6 +41,8 @@ audience of a school is worked out once a minute, not once a save.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import logging
 import threading
 import time
@@ -68,6 +70,11 @@ _AUDIENCE_KEPT = 2000
 #: already told a moment ago is not told again. Shorter than the pause the
 #: page takes before it reads itself again, so nothing committed is missed.
 _QUIET_SECONDS = 0.3
+
+#: The written-down costs the notices being pushed follow (`after_costs`).
+_after: contextvars.ContextVar[list | None] = contextvars.ContextVar(
+    "live_after_costs", default=None
+)
 
 _audiences: dict[tuple, tuple[float, frozenset[str]]] = {}
 _audiences_lock = threading.Lock()
@@ -159,16 +166,20 @@ def announce(
     if costs is not None:
         costs.tell.append(key)
         return
-    transaction.on_commit(_Tell(key, save_in_hand(connection)))
+    transaction.on_commit(_Tell(key, save_in_hand(connection), _after.get()))
 
 
 class _Tell:
     """One announcement, made when its transaction commits."""
 
-    def __init__(self, key: tuple, save) -> None:
+    def __init__(self, key: tuple, save, named=None) -> None:
         self.key = key
         #: The save it was asked in (`costs_follow.save_in_hand`).
         self.save = save
+        #: The written-down costs it follows, where it was asked while they
+        #: were being priced (`after_costs`): kept from the asking, because
+        #: the commit's hooks may run after that block has ended.
+        self.named = named
         #: The costs that follow that save (`wait_for_costs`), or None.
         self.after = None
 
@@ -178,7 +189,7 @@ class _Tell:
             # Told by whoever prices the days, when they are priced.
             costs.tell.append(self.key)
             return
-        _publish(self.key)
+        _publish(self.key, self.named)
 
 
 def wait_for_costs(connection, costs, save) -> None:
@@ -198,6 +209,27 @@ def wait_for_costs(connection, costs, save) -> None:
                 first = at
     if first is not None:
         hooks.insert(first, (set(connection.savepoint_ids), costs.herald, True))
+
+
+@contextlib.contextmanager
+def after_costs():
+    """The notices pushed inside this block name the written-down costs they
+    follow: the block yields the list to put their ids in
+    (apps.daily_visit_batches.costs_follow).
+
+    A page compares a notice's time with the time its last read began, to
+    tell a change it already shows from one it does not. The page that saved
+    reads itself once the costs are in, and the notice of those costs is
+    stamped a moment after: by the clock it looks newer than the read that
+    already shows it, and the page read itself twice (seen with the save on
+    one server process and the read on another, 2026-10-14). Named, the
+    notice is known whatever the clocks say."""
+    named: list = []
+    token = _after.set(named)
+    try:
+        yield named
+    finally:
+        _after.reset(token)
 
 
 def publish(keys) -> None:
@@ -356,7 +388,7 @@ def _audience_for(key: tuple) -> frozenset[str]:
     return found
 
 
-def _publish(key: tuple) -> None:
+def _publish(key: tuple, named=None) -> None:
     try:
         user_ids = _audience_for(key)
     except Exception:  # noqa: BLE001 - announcing never breaks the change
@@ -379,8 +411,15 @@ def _publish(key: tuple) -> None:
         cache.set_many({_stamp_key(user): at for user in due}, timeout=_STAMP_SECONDS)
     except Exception:  # noqa: BLE001
         logger.debug("live stamp not kept", exc_info=True)
+    event = {"type": EVENT, "at": at}
+    named = named if named is not None else _after.get()
+    if named:
+        # The page that saved has read itself since these costs were priced
+        # and is told so by its own read (`X-Edify-Live-After`); it knows
+        # this notice by them and does not read itself again.
+        event["after"] = ".".join(str(row_id) for row_id in named)
     try:
-        bus.publish_many(due, {"type": EVENT, "at": at})
+        bus.publish_many(due, event)
     except Exception:  # noqa: BLE001 - committed work stays committed
         logger.warning("live push failed", exc_info=True)
 
