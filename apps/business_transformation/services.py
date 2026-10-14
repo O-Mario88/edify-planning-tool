@@ -2520,11 +2520,16 @@ def _intervention_school_portfolio_context(
     schools = schools.distinct().order_by("name", "school_id")
     portfolio_school_ids = list(schools.values_list("id", flat=True))
 
+    # The year before and this year: a school has one SSA a year (owner,
+    # 2026-10-14), so its movement is last year's reading to this year's, as
+    # every SSA chart compares them (owner, 2026-10-09). Inside one year
+    # there is nothing to move between.
     score_rows = list(
         SsaScore.objects.filter(
             ssa_record__school_id__in=portfolio_school_ids,
             ssa_record__verification_status="confirmed",
-            ssa_record__fy=fy,
+            ssa_record__deleted_at__isnull=True,
+            ssa_record__fy__in=[str(int(fy) - 1), str(fy)],
             intervention=intervention,
         )
         .order_by("ssa_record__school_id", "ssa_record__date_of_ssa")

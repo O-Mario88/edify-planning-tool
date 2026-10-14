@@ -1,7 +1,8 @@
 """
 SSA (School Self-Assessment) models — ports of SsaRecord, SsaScore.
 
-An SSA record holds 8 intervention scores (0–10) for a school on a date. Every
+An SSA record holds 8 intervention scores (0–10) for a school on a date, one
+record a school a financial year (owner, 2026-10-14; apps.ssa.creation). Every
 record lands `pending` whoever keyed it — field staff, Impact Assessment, a
 file import or a partner — and counts only once a verifier other than its
 collector confirms it (IA review, owner, 2026-09-13; apps.ssa.services).
@@ -108,6 +109,24 @@ class SsaRecord(SoftDeleteModel):
             # taken, per person: on a CD dashboard rebuilding 48 CCEOs it read
             # 39,000 rows 48 times to find a handful each.
             models.Index(fields=["collected_by_user_id"]),
+        ]
+        constraints = [
+            # One SSA per school per financial year (owner, 2026-10-14:
+            # "Manual SSA entry and SSA upload are simply two ways of creating
+            # the same authoritative SSA record"). A record waiting for its
+            # verifier holds the year as a confirmed one does, so two people
+            # cannot key the same school's year while the first waits; a
+            # returned or flagged record, and a deleted one, leave it free.
+            # apps.ssa.creation reads the same rule before every write; this
+            # index is what holds when two writes race.
+            models.UniqueConstraint(
+                fields=["school", "fy"],
+                condition=models.Q(
+                    deleted_at__isnull=True,
+                    verification_status__in=["pending", "confirmed"],
+                ),
+                name="uniq_live_ssa_school_fy",
+            ),
         ]
 
     def save(self, *args, **kwargs):

@@ -235,6 +235,11 @@ class SupersessionTests(RecommendationFixture):
         stale = SsaRecommendation.objects.first()
         self.assertIn(stale.state, LIVE_STATES)
 
+        # One SSA a school a year (owner, 2026-10-14): the fresher reading
+        # takes the year once the stale one is archived.
+        SsaRecord.objects.filter(school=self.school, fy=FY).update(
+            deleted_at=timezone.now()
+        )
         self._confirmed_ssa(scores={SsaIntervention.LEADERSHIP: 7.5})
         retired = supersede_stale(self.school, fy=FY, principal=self.user)
 

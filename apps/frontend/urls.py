@@ -598,6 +598,11 @@ urlpatterns = [
         name="add_to_cluster_drawer",
     ),
     path(
+        "schools/<str:school_id>/ssa-entry",
+        school_views.school_ssa_entry_view,
+        name="school_ssa_entry",
+    ),
+    path(
         "schools/<str:school_id>/edit-drawer",
         school_views.school_edit_drawer_view,
         name="school_edit_drawer",

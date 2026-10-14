@@ -84,6 +84,10 @@ class Command(BaseCommand):
                         avg = round(sum(s for _, s in scores) / 8, 1)
                         collector = row.get("collectorType", "staff").strip() or "staff"
                         partner_collected = collector == "partner"
+                        # One SSA a school a year (apps.ssa.creation).
+                        from apps.ssa.creation import assert_year_free
+
+                        assert_year_free(school, get_operational_fy(date))
                         record = SsaRecord.objects.create(
                             school=school,
                             date_of_ssa=date,

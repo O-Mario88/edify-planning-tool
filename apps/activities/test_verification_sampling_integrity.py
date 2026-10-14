@@ -83,7 +83,8 @@ class SampleIntegrityTest(TestCase):
         return SsaRecord.objects.create(
             school=school,
             date_of_ssa=timezone.now() - timedelta(days=day),
-            fy="2026",
+            # A year each: a school has one SSA a year (owner, 2026-10-14).
+            fy=str(2027 - day),
             quarter="Q4",
             verification_status="confirmed",
             verified_by_user_id=verifier.id,

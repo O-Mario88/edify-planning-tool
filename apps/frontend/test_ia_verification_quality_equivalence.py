@@ -1269,7 +1269,9 @@ class VerificationQualityOracleTests(TestCase):
             for status in ("confirmed", "pending", "returned"):
                 record = SsaRecord.objects.create(
                     school=row,
-                    fy="2026",
+                    # The pending one is the year before's: a school has one
+                    # live SSA a year (owner, 2026-10-14).
+                    fy="2025" if status == "pending" else "2026",
                     quarter="Q3",
                     date_of_ssa=now - timedelta(days=30 + m),
                     verification_status=status,

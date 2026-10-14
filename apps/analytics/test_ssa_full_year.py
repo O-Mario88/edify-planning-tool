@@ -49,14 +49,14 @@ class SsaFullYearTest(TestCase):
             is_active=True,
         )
 
-    def _ssa(self, average, *, fy=None, quarter="", days_ago=0):
+    def _ssa(self, average, *, fy=None, quarter="", days_ago=0, status="confirmed"):
         record = SsaRecord.objects.create(
             school=self.school,
             fy=fy or self.fy,
             quarter=quarter,
             date_of_ssa=timezone.now() - timedelta(days=days_ago),
             average_score=average,
-            verification_status="confirmed",
+            verification_status=status,
         )
         SsaScore.objects.bulk_create(
             SsaScore(ssa_record=record, intervention=item.value, score=average)
@@ -72,7 +72,9 @@ class SsaFullYearTest(TestCase):
         return response
 
     def test_the_page_opens_on_the_full_year_with_its_latest_record(self):
-        self._ssa(5.0, quarter="Q1", days_ago=200)
+        # One live SSA a school a year (owner, 2026-10-14): an earlier
+        # reading of the year was returned and counts nowhere.
+        self._ssa(5.0, quarter="Q1", days_ago=200, status="returned")
         self._ssa(7.0, quarter="", days_ago=3)  # entered with no quarter
 
         response = self._dashboard()
@@ -88,7 +90,6 @@ class SsaFullYearTest(TestCase):
 
     def test_a_quarter_still_narrows_to_that_quarter(self):
         self._ssa(5.0, quarter="Q1", days_ago=200)
-        self._ssa(7.0, quarter="", days_ago=3)
 
         dashboard = self._dashboard(quarter="Q1").context["dashboard"]
 

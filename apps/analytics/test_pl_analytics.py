@@ -549,24 +549,20 @@ class CceoAverageSsaWeightingTest(PLAnalyticsTest):
     """
 
     def test_average_ssa_weights_by_record_not_by_school(self):
-        # cceo_a1 owns A1 (already has one FY record at 7.0) and A3 (8.0).
-        # Add a second confirmed record on A1 at 1.0. Record-weighted mean is
-        # (7.0 + 1.0 + 8.0) / 3 = 5.33; school-weighted would be
-        # ((7.0 + 1.0) / 2 + 8.0) / 2 = 6.0. Those native scores remain far
-        # enough apart that this test can tell them apart.
-        self._ssa(self.sch_a1, FY, 1.0)
+        # cceo_a1 owns A1 (one FY record at 7.0) and A3 (8.0). A school has
+        # one SSA a year (owner, 2026-10-14; the database refuses a second),
+        # so the record-weighted and school-weighted means are the same:
+        # (7.0 + 8.0) / 2 = 7.5. A second confirmed record on A1 is refused.
+        from django.db import IntegrityError, transaction
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self._ssa(self.sch_a1, FY, 1.0)
 
         pls = resolve_pl_scope(self.pl_a, {})
         rows = PLAnalyticsService.cceo_performance(pls, FY, None, {})["rows"]
         row = next(r for r in rows if r["staff_id"] == self.cceo_a1_sp.id)
 
-        self.assertAlmostEqual(
-            float(row["avg_ssa"]),
-            5.3,
-            places=1,
-            msg="average SSA stopped weighting by record — a school with two "
-            "confirmed SSAs is now counted the same as one with a single SSA",
-        )
+        self.assertAlmostEqual(float(row["avg_ssa"]), 7.5, places=1)
 
 
 class TeamTimelineGroupingTest(PLAnalyticsTest):

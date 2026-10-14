@@ -59,15 +59,18 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
     from apps.core.fy import get_operational_fy
     from apps.ssa.models import SsaRecord, SsaScore
 
+    # Dated back deliberately. You plan THIS cycle's intervention work
+    # against the assessment you already hold, so a planning SSA is months
+    # old. Stamping it `now()` made it indistinguishable from an assessment
+    # collected on the visit being walked, which quietly satisfied the
+    # SSA-01 verification gate and made the door walk below prove nothing.
+    # Last year's: the visit walked below collects this year's, and a school
+    # has one SSA a year (owner, 2026-10-14).
+    taken = timezone.now() - datetime.timedelta(days=400)
     record = SsaRecord.objects.create(
         school=school,
-        fy=fy or get_operational_fy(),
-        # Dated back deliberately. You plan THIS cycle's intervention work
-        # against the assessment you already hold, so a planning SSA is months
-        # old. Stamping it `now()` made it indistinguishable from an assessment
-        # collected on the visit being walked, which quietly satisfied the
-        # SSA-01 verification gate and made the door walk below prove nothing.
-        date_of_ssa=timezone.now() - datetime.timedelta(days=120),
+        fy=fy or get_operational_fy(taken),
+        date_of_ssa=taken,
         average_score=score,
         verification_status="confirmed",
     )

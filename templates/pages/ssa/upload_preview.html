@@ -40,6 +40,12 @@ Unmatched School IDs ({{ unmatched_count }})
 >
 Blocked Rows ({{ blocked_count }})
 </button>
+<button data-edify-tab type="button"
+@click="tab = 'skipped'"
+:aria-pressed="tab === 'skipped'"
+>
+Skipped — SSA Already Exists ({{ skipped_count }})
+</button>
 </div>
 
 <!-- Tab Contents -->
@@ -66,7 +72,7 @@ Blocked Rows ({{ blocked_count }})
 <td class="px-4 py-3.5">{{ r.date_of_ssa }}</td>
 <td class="px-4 py-3.5">
 <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 edify-text-caption rounded-pill font-bold">
-{{ r.scores.values|length }} scores parsed
+{{ r.score_count }} scores parsed
 </span>
 </td>
 </tr>
@@ -141,6 +147,36 @@ Blocked Rows ({{ blocked_count }})
 </tbody>
 </table>
 {% include "components/table_pager.html" with pager=blocked_rows_pager param="blocked_rows_page" %}
+</div>
+
+<!-- Skipped Tab: one SSA a school a year (owner, 2026-10-14) -->
+<div x-show="tab === 'skipped'">
+{% paginate skipped_rows "skipped_rows_page" as skipped_rows_pager %}
+<table class="w-full text-[12px] text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100">
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">School ID</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Reason</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for r in skipped_rows_pager.rows %}
+<tr class="hover:bg-slate-50/20">
+<td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
+<td class="px-4 py-3.5 text-slate-900 font-bold">ID: {{ r.school_id }}</td>
+<td class="px-4 py-3.5">{{ r.date_of_ssa|default:"—" }}</td>
+<td class="px-4 py-3.5 text-amber-600 text-[12px]">{{ r.validation_errors|join:"; " }} · the existing record is kept</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="4" class="px-4 py-8 text-center text-slate-400 font-semibold">No skipped rows in this batch.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=skipped_rows_pager param="skipped_rows_page" %}
 </div>
 
 </div>

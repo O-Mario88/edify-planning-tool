@@ -898,6 +898,10 @@ class SSAImportRow(TimeStampedModel):
         ("ready", "Ready"),
         ("unmatched", "Unmatched School ID"),
         ("blocked", "Blocked"),
+        # The school's year already has an SSA, or an earlier row of the file
+        # gives it one: skipped, never imported (owner, 2026-10-14: one SSA a
+        # school a year; apps.ssa.creation).
+        ("duplicate", "Skipped: SSA already exists"),
     )
     id = CuidField()
     batch = models.ForeignKey(
@@ -913,6 +917,12 @@ class SSAImportRow(TimeStampedModel):
     class Meta:
         db_table = "ssa_import_row"
         ordering = ["row_number"]
+
+    @property
+    def score_count(self) -> int:
+        """The intervention scores parsed; the pass-through keys that ride in
+        `scores` (school name, district, the row's year) start with "_"."""
+        return sum(1 for key in (self.scores or {}) if not str(key).startswith("_"))
 
 
 class UnmatchedSSARecord(TimeStampedModel):

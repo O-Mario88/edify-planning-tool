@@ -56,13 +56,14 @@ class SsaWorkspaceReadsTest(TestCase):
                 region=region,
                 district=districts[n % 3],
             )
-            # Two confirmed records this year (the later one counts), one
-            # last year, and one this year that is not confirmed.
+            # One confirmed record this year, an earlier one of the year that
+            # was returned, one last year, and another unconfirmed one this
+            # year (one live SSA a school a year, owner 2026-10-14).
             for fy, days_ago, status, average in (
-                (cls.fy, 30, "confirmed", 5.0 + n / 10),
+                (cls.fy, 30, "returned", 5.0 + n / 10),
                 (cls.fy, 5, "confirmed", 6.0 + n / 10),
                 (previous, 400, "confirmed", 4.0 + n / 10),
-                (cls.fy, 1, "pending", 9.9),
+                (cls.fy, 1, "returned", 9.9),
             ):
                 record = SsaRecord.objects.create(
                     school=school,
