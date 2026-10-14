@@ -17996,6 +17996,23 @@
    "view": "apps.frontend.views.school_views.school_reopen_action"
   },
   {
+   "page_permission": "school_profile",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "BusinessTransformationOfficer",
+    "Admin"
+   ],
+   "route": "/schools/<str:school_id>/ssa-entry",
+   "route_name": "school_ssa_entry",
+   "view": "apps.frontend.views.school_views.school_ssa_entry_view"
+  },
+  {
    "page_permission": "school_directory",
    "required_permissions": [],
    "role_exclusive": false,
@@ -19749,26 +19766,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 462,
-  "Admin": 1112,
-  "BusinessTransformationOfficer": 243,
-  "CCEO": 586,
-  "CountryDirector": 848,
+  "Admin": 1113,
+  "BusinessTransformationOfficer": 244,
+  "CCEO": 587,
+  "CountryDirector": 849,
   "HumanResources": 330,
-  "ImpactAssessment": 717,
+  "ImpactAssessment": 718,
   "MfiLoanOfficer": 138,
   "MfiPartnerAdmin": 141,
   "PartnerAdmin": 240,
   "PartnerFieldOfficer": 240,
-  "Program Lead": 696,
-  "ProjectCoordinator": 490,
+  "Program Lead": 697,
+  "ProjectCoordinator": 491,
   "RegionalProgramLead": 357,
   "RegionalVicePresident": 430
  },
  "summary": {
   "page_keys_declared": 186,
   "page_keys_in_navigation": 203,
-  "routes_guarded": 1209,
-  "routes_total": 1408,
+  "routes_guarded": 1210,
+  "routes_total": 1409,
   "routes_unguarded": 199,
   "surfaces_no_role_can_reach": 0
  },

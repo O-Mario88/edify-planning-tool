@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 662,
+  "titled_cards": 663,
   "templates": 253,
-  "distinct_titles": 632,
+  "distinct_titles": 633,
   "with_card_key": 13,
   "untitled_surfaces": 599,
   "untitled_chrome": 153,
@@ -2953,7 +2953,7 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 47,
+   "line": 51,
    "title": "Rows not imported",
    "heading_level": 2,
    "has_card_key": false,
@@ -2967,7 +2967,21 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 82,
+   "line": 90,
+   "title": "Skipped \u2014 SSA already exists",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/ssa/upload_result.html",
+   "line": 129,
    "title": "Next Action Steps",
    "heading_level": 3,
    "has_card_key": false,
@@ -2976,7 +2990,7 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 87,
+   "line": 134,
    "title": "SSA Verification Queue &rarr;",
    "heading_level": 4,
    "has_card_key": false,
@@ -2985,7 +2999,7 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 97,
+   "line": 144,
    "title": "Unmatched SSA Queue &rarr;",
    "heading_level": 4,
    "has_card_key": false,
@@ -2994,7 +3008,7 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 107,
+   "line": 154,
    "title": "Open Collection Worklist &rarr;",
    "heading_level": 4,
    "has_card_key": false,
@@ -3003,7 +3017,7 @@
   },
   {
    "template": "templates/pages/ssa/upload_result.html",
-   "line": 117,
+   "line": 164,
    "title": "SSA Upload History &rarr;",
    "heading_level": 4,
    "has_card_key": false,
