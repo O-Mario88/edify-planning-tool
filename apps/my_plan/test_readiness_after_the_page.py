@@ -165,9 +165,7 @@ class TheRailThePageStoppedDrawingTest(PeopleFixture):
             step = context["next_recommended_action"]["title"]
         self.assertEqual((today, attention), ([], []))
         self.assertEqual(step, "You're on track!")
-        # Today's work, the rescheduled and those missing a Salesforce ID:
-        # three reads, made on the first of the three. Work awaiting evidence
-        # was a fourth until the upload was switched off (UPLOAD-OFF, owner
-        # 2026-10-13).
-        self.assertEqual(len(reading), 3)
+        # Today's work, the rescheduled, those awaiting evidence and those
+        # missing a Salesforce ID: four reads, made on the first of the three.
+        self.assertEqual(len(reading), 4)
         self.assertFalse([q for q in building if '"reschedule_count" > 0' in q["sql"]])
