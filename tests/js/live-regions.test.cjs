@@ -21,7 +21,8 @@ function page({ readMs = 300, stamped = false, regions = true } = {}) {
   let seq = 0;
   const timers = new Map();
   const reads = [];
-  const state = { ticked: false, source: null, swaps: 0, opened: 0, drawerOpen: false, reloads: 0 };
+  // `after`: the costs a read's answer says the page is now after.
+  const state = { ticked: false, source: null, swaps: 0, opened: 0, drawerOpen: false, reloads: 0, after: null };
   const heard = {};
 
   const schedule = (fn, ms, every) => {
@@ -57,7 +58,8 @@ function page({ readMs = 300, stamped = false, regions = true } = {}) {
       reads.push(now);
       const began = now;
       // The server stamps a live read with its clock as the read began.
-      const headers = { get: (name) => (stamped && name === 'X-Edify-Live-At' ? stamp(began) : null) };
+      const named = state.after;
+      const headers = { get: (name) => (stamped && name === 'X-Edify-Live-At' ? stamp(began) : name === 'X-Edify-Live-After' ? named : null) };
       return new Promise((resolve) => schedule(() => resolve({ ok: true, redirected: false, headers, text: () => '<html></html>' }), readMs, 0));
     },
   };
@@ -78,7 +80,8 @@ function page({ readMs = 300, stamped = false, regions = true } = {}) {
       await settle();
     }
   }
-  const changed = (at = now) => state.source.onmessage({ data: JSON.stringify({ type: 'plan.changed', at: stamp(at) }) });
+  // `after`: the costs the notice says it follows, where it follows any.
+  const changed = (at = now, after) => state.source.onmessage({ data: JSON.stringify({ type: 'plan.changed', at: stamp(at), ...(after ? { after } : {}) }) });
   // What the page hears from the document: a section settling, say.
   const hear = (type) => (heard[type] || []).forEach((fn) => fn({}));
   return { reads, state, wait, changed, hear, now: () => now, live: sandbox.window.EdifyLive };
@@ -248,4 +251,76 @@ test('a slow page rests three times as long as its read took', async () => {
   await p.wait(12000);
   assert.equal(p.reads.length, 2);
   assert.ok(p.reads[1] - p.reads[0] >= 3000 + 9000, `gap ${p.reads[1] - p.reads[0]} ms`);
+});
+
+// A save answers before its day is priced, and its notice goes out once the
+// pricing has committed. The page that saved reads itself once the costs are
+// in, and by the clock that notice is newer than the read that already shows
+// it: with the save on one server process and the read on another, the page
+// read itself twice after every save (2026-10-14). The notice names the costs
+// it follows, and the read's answer names the costs it waited for.
+test('the notice of costs the page has already read past is not read again, though its time is later', async () => {
+  const p = page({ stamped: true, readMs: 600 });
+  await p.wait(2000);
+  p.state.after = '12';
+  p.live.saved();
+  await p.wait(100);
+  assert.equal(p.reads.length, 1);
+  p.changed(p.now() + 50, '12'); // stamped after the read began, heard while it is in flight
+  await p.wait(6000);
+  assert.equal(p.reads.length, 1, 'read again for costs the first read waited for');
+  p.changed(p.now(), '12'); // and heard again once the read is back
+  await p.wait(3000);
+  assert.equal(p.reads.length, 1);
+  p.state.after = null;
+  p.changed(); // somebody else's change is still read
+  await p.wait(1500);
+  assert.equal(p.reads.length, 2);
+});
+
+test('a page that did not wait for those costs reads itself when told of them', async () => {
+  const p = page({ stamped: true });
+  await p.wait(2000);
+  p.changed(p.now(), '12'); // another person's page: its reads name no costs
+  await p.wait(1500);
+  assert.equal(p.reads.length, 1);
+  p.changed(p.now(), '12');
+  await p.wait(3000);
+  assert.equal(p.reads.length, 2);
+});
+
+test('a notice of other costs, or of anything else beside it, is read', async () => {
+  const p = page({ stamped: true, readMs: 600 });
+  await p.wait(2000);
+  p.state.after = '12';
+  p.live.saved();
+  await p.wait(100);
+  p.changed(p.now() + 50, '12');
+  p.changed(p.now() + 60, '13'); // a second save's costs, which this read did not wait for
+  await p.wait(6000);
+  assert.equal(p.reads.length, 2, 'the costs it had not read past were not read');
+
+  const q = page({ stamped: true, readMs: 600 });
+  await q.wait(2000);
+  q.state.after = '12';
+  q.live.saved();
+  await q.wait(100);
+  q.changed(q.now() + 50, '12');
+  q.changed(q.now() + 60); // and a plain change beside the page's own
+  await q.wait(6000);
+  assert.equal(q.reads.length, 2, 'a change beside the page\'s own costs was not read');
+});
+
+test('a save of several records names them all, and all must have been read past', async () => {
+  const p = page({ stamped: true, readMs: 600 });
+  await p.wait(2000);
+  p.state.after = '12.13';
+  p.live.saved();
+  await p.wait(100);
+  p.changed(p.now() + 50, '12.13');
+  await p.wait(6000);
+  assert.equal(p.reads.length, 1);
+  p.changed(p.now(), '13.14');
+  await p.wait(3000);
+  assert.equal(p.reads.length, 2);
 });

@@ -544,6 +544,15 @@ class Activity(SoftDeleteModel):
     #: What a save that only re-prices the work writes
     #: (`apps.budget.costing_service.apply_to_activities`).
     COST_ONLY_FIELDS = frozenset({"est_cost_cents", "cost_missing", "updated_at"})
+    #: What neither a Core slot nor a package credit reads: the cost, the
+    #: day's batch the work is priced with, the other half of an in-school
+    #: training, and the SSA alignment note with its sources.
+    BESIDE_THE_PACKAGE_FIELDS = COST_ONLY_FIELDS | {
+        "daily_visit_batch",
+        "paired_school_visit",
+        "ssa_alignment",
+        "recommendation_source",
+    }
 
     def save(self, *args, **kwargs):
         # ``scheduled_date`` is an instant, not a date-only planning field.
@@ -555,15 +564,18 @@ class Activity(SoftDeleteModel):
         self._link_training_intervention(kwargs.get("update_fields"))
         super().save(*args, **kwargs)
         update_fields = kwargs.get("update_fields")
-        if update_fields is not None and self.COST_ONLY_FIELDS.issuperset(
+        if update_fields is not None and self.BESIDE_THE_PACKAGE_FIELDS.issuperset(
             update_fields
         ):
-            # Only the cost was written. The Core slot mirror and the package
-            # credit below read the work's status, date, school, kind and
-            # year, none of which this save touched, and the save that last
-            # touched them ran both. A day's re-pricing saves every visit on
-            # it this way: nine visits asked for nine slot reads and, after
-            # the commit, nine credits that found nothing to do.
+            # Nothing the package reads was written. The Core slot mirror and
+            # the package credit below read the work's status, date, school,
+            # kind and year, none of which this save touched, and the save
+            # that last touched them ran both. A day's re-pricing saves every
+            # visit on it this way: nine visits asked for nine slot reads
+            # and, after the commit, nine credits that found nothing to do.
+            # Scheduling an in-school training saved its two records ten
+            # times, six of them to note the day's batch, the pair and the
+            # SSA alignment (2026-10-13).
             return
         try:
             from apps.core_schools.models import CoreActivitySlot

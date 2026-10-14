@@ -1173,7 +1173,12 @@ def _price_pair_training_at_zero(
         .first()
     )
     if visit is not None:
-        _apply_schedule_cost_snapshot(visit, {}, principal=principal)
+        from apps.daily_visit_batches.costs_follow import price_on_its_way
+
+        # A visit just scheduled by a save that answers first has no lines
+        # for a moment: its day is written down to be priced.
+        if not price_on_its_way(visit):
+            _apply_schedule_cost_snapshot(visit, {}, principal=principal)
 
 
 # A client school's package is one visit and one training per fiscal year.
@@ -3341,7 +3346,12 @@ def _create(
         # so it is not priced yet either — the same rule as undated work.
         # Approval prices it (apps.planning.visit_requests.approve).
         if not skip_cost_snapshot and activity.scheduled_date and not approval_owner_id:
-            _apply_schedule_cost_snapshot(activity, data, principal=principal)
+            from apps.daily_visit_batches.costs_follow import costs_follow
+
+            # The new activity is stored and checked in the answer; the day
+            # it joins is priced after it.
+            with costs_follow(principal):
+                _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Planning and scheduling must both be on the tamper-evident audit chain.
     # An undated draft is a real planning authorization but it is not yet
     # money-bearing work, so do not mislabel it as scheduled.
@@ -5012,9 +5022,19 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # activity's saved schedule out of sync with its budget lines.
     # A new date is the planner's own change to the plan: a monthly request
     # in its approval chain follows it (apps.fund_requests.plan_changes).
-    from apps.fund_requests.plan_changes import planner_change
+    from apps.daily_visit_batches.costs_follow import costs_follow
+    from apps.fund_requests.plan_changes import change_in_hand, planner_change
 
-    with planner_change(principal, a), transaction.atomic():
+    # The move answers once it is stored and checked; the days it touches
+    # are priced after the answer (apps.daily_visit_batches.costs_follow).
+    # Not inside a larger change (Edit), which reports once for all of it
+    # from figures it reads before it ends.
+    on_its_own = change_in_hand() is None
+    with (
+        planner_change(principal, a),
+        transaction.atomic(),
+        costs_follow(principal, when=on_its_own),
+    ):
         # Serialise concurrent reschedules of the same activity: without the
         # row lock two simultaneous submissions interleave their cost-line
         # rebuilds and fund-request syncs, and one reschedule_count increment
@@ -5215,17 +5235,21 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
             _apply_schedule_cost_snapshot(a, data, principal=principal)
             a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
 
-        if old_date != new_date:
+        # (A plan given its first date has no move to note.)
+        if old_date and new_date and old_date != new_date:
+            from apps.daily_visit_batches.costs_follow import reschedule_note
             from apps.daily_visit_batches.services import once_days_are_priced
             from apps.hr.leave_services import LeaveBudgetImpactService
 
             # Written on the lines the move leaves the visit with: at once,
-            # or, in a group of moves whose days are priced when the group
-            # ends, once they have been.
+            # or, where the days are priced later (a group of moves, a save
+            # that answers first), once they have been.
+            note_reason = data.get("reason", "Rescheduling")
             once_days_are_priced(
                 lambda: LeaveBudgetImpactService.handle_reschedule(
-                    a, old_date, new_date, data.get("reason", "Rescheduling")
-                )
+                    a, old_date, new_date, note_reason
+                ),
+                note=reschedule_note(a, old_date, new_date, note_reason),
             )
 
     # §25 — the partner delivering this did not move it and must not find out
@@ -6343,7 +6367,9 @@ def _cancel_or_defer(
         if not str(data.get("reason") or "").strip():
             raise BadRequest("Give a reason this activity is being cancelled.")
     handover_outcome = ""
-    with transaction.atomic():
+    from apps.daily_visit_batches.costs_follow import costs_follow
+
+    with transaction.atomic(), costs_follow(principal):
         a = Activity.objects.select_for_update().get(pk=a.pk)
         # Read before the status changes: whether the day on a Partner's work
         # was the Partner's own decides what cancelling it undoes.

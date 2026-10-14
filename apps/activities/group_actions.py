@@ -314,12 +314,19 @@ def _together(picks, *, act, skip, within, count: int) -> Outcome:
     """
     from contextlib import nullcontext
 
+    from apps.daily_visit_batches.costs_follow import costs_follow
     from apps.daily_visit_batches.services import each_day_priced_once
     from apps.fund_requests.follow import fund_requests_follow_once
 
     with transaction.atomic():
         with within(count) if within else nullcontext():
-            with fund_requests_follow_once(), each_day_priced_once(leaving_too=True):
+            # The group answers once every unit is stored and checked; its
+            # days are priced after the answer, each once, as here.
+            with (
+                costs_follow(),
+                fund_requests_follow_once(),
+                each_day_priced_once(leaving_too=True),
+            ):
                 return _one_at_a_time(picks, act=act, skip=skip)
 
 
