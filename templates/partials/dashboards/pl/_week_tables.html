@@ -25,7 +25,11 @@ the dark themes (static/css/components/pl-week.css).
 {% comment %}The officer's own week draws only the tables that hold work
 (owner, 2026-09-26: polish): an empty one is one line fewer to read past.
 {% endcomment %}
-{% if week.solo and not section.count %}
+{% if section.is_figure %}
+{% comment %}One figure's records (owner, 2026-10-14): only the tables that
+hold them, and one line when there are none.{% endcomment %}
+{% if not section.count %}<p class="plwk-list__none" data-pl-week-none="{{ section.key }}">Nothing {{ section.label|lower }}.</p>{% endif %}
+{% elif week.solo and not section.count %}
 {% include "components/empty_state.html" with message="Nothing left to complete this week." hint="Past-due work, of any age, is listed above in What needs you now." compact="true" %}
 {% endif %}
 {% comment %}Overdue draws only the tables that hold work too (owner,
@@ -36,7 +40,7 @@ week would push it down the page for nothing. With none, one line says so.
 <p class="plwk-list__none" data-pl-week-none="{{ section.key }}">Nothing {{ week.overdue_label|lower }}.</p>
 {% endif %}
 {% for table in section.tables %}
-{% if table.count or not week.solo and not section.is_overdue %}
+{% if table.count or not week.solo and not section.is_overdue and not section.is_figure %}
 <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 edify-surface-raised shadow-xs" data-pl-week-table="{{ table.key }}" data-pl-week-table-list="{{ section.key }}">
   {# The title band is named here, not left to micro-ux.js, so an empty list keeps it too. #}
   <div class="edify-table-titlebar px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
@@ -68,7 +72,7 @@ week would push it down the page for nothing. With none, one line says so.
     {% with selectable=table_pager.rows|any_attr:"can_pick" %}
     {% if table.key == "visits" %}
     <table class="w-full min-w-[840px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
@@ -115,7 +119,7 @@ week would push it down the page for nothing. With none, one line says so.
     </table>
     {% elif table.key == "trainings" %}
     <table class="w-full min-w-[920px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}
@@ -164,7 +168,7 @@ week would push it down the page for nothing. With none, one line says so.
     </table>
     {% else %}
     <table class="w-full min-w-[880px] border-collapse text-left text-xs edify-record-table" data-pinned-actions>
-      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% else %}due this week{% endif %}.</caption>
+      <caption class="sr-only">{{ table.title }}: {{ person.name }}, {% if section.is_overdue %}{{ week.overdue_label|lower }}{% elif section.is_figure %}{{ section.label|lower }}{% else %}due this week{% endif %}.</caption>
       <thead class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 font-semibold uppercase tracking-wider text-xs">
         <tr>
           {% if selectable %}{% include "partials/activities/pick_head.html" %}{% endif %}

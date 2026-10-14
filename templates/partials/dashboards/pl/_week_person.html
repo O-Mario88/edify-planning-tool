@@ -35,21 +35,28 @@ have their own tabs.
   {% endif %}
 
   {% comment %}The week in figures (owner, 2026-09-30: no repeated tabs and
-  figures). Each list below carries its own count on its heading.{% endcomment %}
+  figures). Each list below carries its own count on its heading.
+  Each figure is the link to its records (owner, 2026-10-14): pressed, the
+  tables below list exactly the rows it counts — verified work included when
+  Verified is pressed — and pressed again, or Show all, the two lists come
+  back. person.facts is apps.analytics.pl_week_service.PLWeek.facts.{% endcomment %}
   <div class="plwk-bar" data-pl-week-bar>
-    <div class="plwk-facts" role="list" aria-label="{% if person.is_me %}Your week{% else %}{{ person.name }}'s week{% endif %} in figures">
-      <span class="plwk-fact" role="listitem"><strong>{{ person.planned }}</strong> planned this week</span>
-      <span class="plwk-fact" role="listitem" data-tone="success" title="Verified, or with Impact Assessment: done, and off the lists"><strong>{{ person.closed }}</strong> verified</span>
-      {% if not person.is_me %}<span class="plwk-fact" role="listitem"{% if person.awaiting_you %} data-tone="info"{% endif %}><strong>{{ person.awaiting_you }}</strong> awaiting your verification</span>{% endif %}
-      <span class="plwk-fact" role="listitem"{% if person.behind %} data-tone="danger"{% endif %}><strong>{{ person.behind }}</strong> past their day, not completed</span>
-      {% if week.solo %}<a class="plwk-fact" role="listitem" href="#what-needs-you-now"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> past due, any age</a>{% endif %}
+    <div class="plwk-facts" role="group" aria-label="{% if person.is_me %}Your week{% else %}{{ person.name }}'s week{% endif %} in figures">
+      {% for fact in person.facts %}
+      <a class="plwk-fact" href="/dashboard?{{ fact.query }}" hx-get="/dashboard?{{ fact.query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" data-pl-week-fact="{{ fact.key }}"{% if fact.tone %} data-tone="{{ fact.tone }}"{% endif %}{% if fact.active %} aria-current="true"{% endif %} title="{% if fact.active %}Show all of {% if person.is_me %}your{% else %}{{ person.name }}'s{% endif %} lists again{% else %}List the {{ fact.count }} {{ fact.words }}{% endif %}"><strong>{{ fact.count }}</strong> {{ fact.words }}</a>
+      {% endfor %}
+      {% if week.solo %}<a class="plwk-fact" href="#what-needs-you-now"{% if person.overdue_count %} data-tone="danger"{% endif %}><strong>{{ person.overdue_count }}</strong> past due, any age</a>{% endif %}
     </div>
+    {% if person.show %}
+    <a class="plwk-arrow" href="/dashboard?{{ person.clear_query }}" hx-get="/dashboard?{{ person.clear_query }}" hx-target="#pl-week-panel" hx-swap="innerHTML" hx-push-url="true" data-pl-week-fact-clear>Show all <span aria-hidden="true">&times;</span></a>
+    {% endif %}
   </div>
 
   {% for section in person.sections %}
   <section class="plwk-list space-y-4" aria-labelledby="pl-week-list-{{ section.key }}" data-pl-week-list="{{ section.key }}">
-    {% comment %}The officer's own week is one list, so it needs no heading.{% endcomment %}
-    {% if person.sections|length > 1 %}
+    {% comment %}The officer's own week is one list, so it needs no heading;
+    a figure's list is named, so the page says what it is showing.{% endcomment %}
+    {% if person.sections|length > 1 or section.is_figure %}
     <h3 id="pl-week-list-{{ section.key }}" class="plwk-listname"{% if section.is_overdue and section.count %} data-tone="danger"{% endif %}>{{ section.label }} <span class="plwk-list__count">{{ section.count }}</span></h3>
     {% endif %}
     {% include "partials/dashboards/pl/_week_tables.html" %}

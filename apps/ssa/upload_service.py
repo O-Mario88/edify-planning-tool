@@ -301,8 +301,17 @@ def upload_ssa_file(file, principal) -> dict:
                             )
                             status = "blocked"
                             counts["failed"] += 1
-                except Exception as exc:
-                    validation_errors.append(f"Date error: {exc}")
+                except Exception:
+                    # The row's reason in the uploader's words; the detail,
+                    # which can carry internals, stays in the server log.
+                    logger.warning(
+                        "SSA upload row %s: assessment date not read",
+                        row_number,
+                        exc_info=True,
+                    )
+                    validation_errors.append(
+                        "Date error: the assessment date could not be read."
+                    )
                     status = "blocked"
                     counts["failed"] += 1
 

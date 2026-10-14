@@ -284,6 +284,7 @@ def _cceo_week(request, user, *, past_due_total: int | None = None) -> dict:
         week=request.GET.get("week"),
         solo=True,
         past_due_total=past_due_total,
+        show=request.GET.get("show", ""),
     )
 
 
@@ -341,6 +342,7 @@ def _program_lead_dashboard(request, avatar_initials: str):
             fy=fy,
             who=who,
             week=request.GET.get("week"),
+            show=request.GET.get("show", ""),
         )
         if hx_target == "pl-week-panel":
             # One of the week's own tabs or arrows: the panel alone.
