@@ -56,7 +56,7 @@
         {# One button that opens one PDF (owner, 2026-10-14); the card used to list every file uploaded, the same one three times if it was uploaded three times. #}
         {% if uploaded_form %}
         <div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
-        <p class="edify-text-caption text-slate-500">Opens the uploaded form as one PDF in a new tab, where it can be read and downloaded.</p>
+        <p class="edify-text-caption text-slate-500">Opens the uploaded form as one PDF, with a Download button.</p>
         {% else %}
         <p class="text-[13px] font-semibold text-rose-600" data-no-evidence>No {{ form_name }} on this submission.</p>
         {% endif %}

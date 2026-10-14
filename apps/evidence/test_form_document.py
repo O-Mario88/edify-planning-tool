@@ -107,6 +107,42 @@ class FormDocumentTest(UploadFixture):
         self.assertIn("Visit Form - EDS School.pdf", response["Content-Disposition"])
         self.assertEqual(response["X-Content-Type-Options"], "nosniff")
 
+    def test_it_may_be_framed_by_this_site_and_no_other_address_may(self):
+        """The popup holds it in a frame (owner, 2026-10-14: "make the pdf
+        upload view a popup with download button"); a single file's own
+        address stays unframeable."""
+        record = self._record(self.partner_visit, "visit.pdf", pdf())
+        response = self._open(self.cceo, self.partner_visit)
+        self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
+        self.assertEqual(
+            response["Content-Security-Policy"],
+            "default-src 'none'; frame-ancestors 'self'",
+        )
+        single = self.client.get(f"/api/evidence/{record.id}/file")
+        self.assertEqual(single.status_code, 200)
+        self.assertEqual(single["X-Frame-Options"], "DENY")
+
+    def test_the_popup_shows_the_pdf_with_download_and_close(self):
+        from django.template.loader import render_to_string
+
+        self._record(self.partner_visit, "visit.pdf", pdf())
+        html = render_to_string(
+            "components/uploaded_form_link.html",
+            {"form": form_document.uploaded_form(self.partner_visit)},
+        )
+        address = f"/api/evidence/activity/{self.partner_visit.id}/form"
+        self.assertIn("<dialog", html)
+        self.assertIn("View Uploaded Visit Form</span>", html)
+        self.assertIn(f"$refs.frame.src = '{address}'", html)
+        self.assertIn(f'href="{address}?download=1"', html)
+        self.assertIn("<iframe", html)
+        # The frame has no address until the popup opens: a page of rows
+        # does not fetch a PDF per row.
+        self.assertNotRegex(html, r"<iframe[^>]*\ssrc=")
+        self.assertIn("This device cannot show a PDF inside the page", html)
+        self.assertNotIn('type="submit"', html)
+        self.assertNotIn("<form", html)
+
     def test_it_can_be_downloaded(self):
         self._record(self.partner_visit, "visit.pdf", pdf())
         response = self._open(self.cceo, self.partner_visit, download="1")

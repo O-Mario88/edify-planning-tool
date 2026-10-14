@@ -585,7 +585,18 @@ class VerifyAndReturnPartnerWorkTest(MonitoringFixture):
         body = self.drawer("verify").content.decode()
         self.assertIn('hx-post="/partner-oversight/verify/submit"', body)
         self.assertEqual(body.count("View Uploaded Visit Form</span>"), 1)
-        self.assertIn(f'href="/api/evidence/activity/{self.activity.id}/form"', body)
+        # It opens a popup with the PDF and a Download button (owner,
+        # 2026-10-14: "make the pdf upload view a popup with download button").
+        address = f"/api/evidence/activity/{self.activity.id}/form"
+        self.assertEqual(body.count("data-uploaded-form-popup"), 1)
+        self.assertIn(f"$refs.frame.src = '{address}'", body)
+        self.assertIn(f'href="{address}?download=1"', body)
+        self.assertIn(">Download</span>", body)
+        self.assertIn("data-uploaded-form-close", body)
+        # The drawer is a form: nothing in the popup may submit it.
+        popup = body.split("data-uploaded-form-viewer", 1)[1].split("</dialog>", 1)[0]
+        self.assertNotIn('type="submit"', popup)
+        self.assertNotIn("<form", popup)
         self.assertNotIn("visit.pdf", body)
         self.assertNotIn("<img", body)
         self.assertNotIn("<embed", body)

@@ -108,11 +108,11 @@ server holds the same rule (apps.evidence.form_document.add_form_pages).
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
                 <div class="min-w-0">
-                  <p class="font-semibold" x-text="'Page ' + (i + 1)"></p>
+                  <p class="font-semibold" x-text="(held ? 'New page ' : 'Page ') + (i + 1)"></p>
                   <p class="edify-text-caption font-medium text-slate-500 truncate" x-text="p.name + ' · ' + p.size"></p>
                 </div>
               </div>
-              <button type="button" @click="remove(i)" :aria-label="'Remove page ' + (i + 1)"
+              <button type="button" @click="remove(i)" :aria-label="'Remove ' + (held ? 'new page ' : 'page ') + (i + 1)"
                       class="edify-text-caption font-semibold edify-primary-text hover:underline px-2 py-1 shrink-0">
                 Remove
               </button>

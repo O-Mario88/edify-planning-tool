@@ -2,19 +2,63 @@
 The one way an uploaded form is opened (owner, 2026-10-14: "from the verifiers
 side, no need to show the uploaded image, just use the link View Uploaded
 {visit form} or {Training attendance} in a beautiful button which allow them
-to click and open the upload in PDF which can be downloaded").
+to click and open the upload in PDF which can be downloaded"; then: "can you
+make the pdf upload view a popup with download button").
 
 Context: `form`, from apps.evidence.form_document.uploaded_form: `label`
-("View Uploaded Visit Form" / "View Uploaded Training Attendance") and `url`
-(/api/evidence/activity/<id>/form), which answers the activity's form as ONE
-PDF, however many pages and however many times it was uploaded. It opens in a
-new tab, where the browser's own viewer reads and downloads it; the file is
-never embedded in the page (the site's content security policy refuses it).
+("View Uploaded Visit Form" / "View Uploaded Training Attendance"), `name`
+and `url` (/api/evidence/activity/<id>/form), which answers the activity's
+form as ONE PDF, however many pages and however many times it was uploaded.
+
+The button opens a popup over the page (a native <dialog>, so it sits in the
+browser's top layer above the drawer it was opened from) holding the PDF in
+the browser's own viewer, with Download and Close. The frame is given its
+address only when the popup opens and loses it when the popup closes, so a
+page of rows does not fetch a PDF per row. The address allows itself to be
+framed by this site only (apps.evidence.form_document.document_response); an
+<embed> is refused by the site's content security policy.
+
+A browser that cannot show a PDF inside a page (navigator.pdfViewerEnabled
+false: Chrome on Android) gets a line saying so in place of an empty frame,
+and the same Download.
+
+It is often used inside another form (the Verify drawer), so nothing here is
+a form control that submits: every button is type="button". It is drawn with
+utility classes the built stylesheet already holds, and no inline style: no
+stylesheet of the popup's own is loaded on every page that offers it, and the
+shared stylesheets are at their size ceiling. The CSS build reads every word
+in a template, comments too, so the state is named `showsPdf`: a name that is
+also a utility, negated in an expression, would be built as one.
 {% endcomment %}
-<a href="{{ form.url }}" target="_blank" rel="noopener"
-   class="btn btn-primary min-h-11 gap-2 justify-center"
-   data-uploaded-form="{{ form.kind }}"
-   aria-label="{{ form.label }} (opens the PDF in a new tab)">
-  <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5M9 13h6M9 17h6"/></svg>
-  <span>{{ form.label }}</span>
-</a>
+<span class="contents" x-data="{ showsPdf: navigator.pdfViewerEnabled !== false }" data-uploaded-form-viewer>
+  <button type="button" class="btn btn-primary min-h-11 gap-2 justify-center"
+          data-uploaded-form="{{ form.kind }}"
+          aria-haspopup="dialog"
+          @click="if (showsPdf) { $refs.frame.src = '{{ form.url }}'; } $refs.viewer.showModal()">
+    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+    <span>{{ form.label }}</span>
+  </button>
+  <dialog x-ref="viewer" closedby="any" aria-label="Uploaded {{ form.name }}"
+          class="edify-surface rounded-overlay overflow-hidden text-left w-full max-w-4xl mx-auto mt-8 p-0 border border-[var(--border-card)]"
+          :class="showsPdf ? 'h-[75vh]' : ''"
+          data-uploaded-form-popup
+          @click.self="$refs.viewer.close()"
+          @close="$refs.frame.removeAttribute('src')">
+    <div class="flex flex-col h-full">
+      <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--border-card)]">
+        <p class="text-[13px] font-semibold text-slate-800 truncate">Uploaded {{ form.name }}</p>
+        <span class="flex items-center gap-2 shrink-0">
+          <a href="{{ form.url }}?download=1" download class="btn btn-primary h-8 gap-2" data-uploaded-form-download>
+            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Download</span>
+          </a>
+          <button type="button" class="btn btn-secondary h-8" @click="$refs.viewer.close()" data-uploaded-form-close>Close</button>
+        </span>
+      </div>
+      <iframe x-ref="frame" x-show="showsPdf" title="Uploaded {{ form.name }}" class="flex-1 w-full border-0"></iframe>
+      <div x-show="!showsPdf" x-cloak class="p-4">
+        <p class="edify-note" data-tone="info">This device cannot show a PDF inside the page. Download the {{ form.name }} to read it.</p>
+      </div>
+    </div>
+  </dialog>
+</span>

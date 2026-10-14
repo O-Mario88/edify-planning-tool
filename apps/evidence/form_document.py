@@ -332,8 +332,12 @@ def document_response(activity_id: str, principal, *, download: bool = False):
             bool(download), filename
         )
     response["X-Content-Type-Options"] = "nosniff"
-    response["Content-Security-Policy"] = "default-src 'none'"
-    response["X-Frame-Options"] = "DENY"
+    # The form is read in a popup on the page that offers it (owner,
+    # 2026-10-14: "make the pdf upload view a popup with download button"), so
+    # this one address may be framed, by this site and no other. Every other
+    # evidence address stays unframeable.
+    response["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'self'"
+    response["X-Frame-Options"] = "SAMEORIGIN"
     for record, _data in held:
         EvidenceRecord.objects.filter(id=record.id).update(
             view_count=record.view_count + 1

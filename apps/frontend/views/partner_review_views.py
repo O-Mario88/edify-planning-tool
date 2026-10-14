@@ -95,6 +95,7 @@ def partner_verify_drawer_view(request):
     "no need to show the uploaded image, just use the link View Uploaded
     {visit form} or {Training attendance}"), however many pages it has and
     however many times it was uploaded."""
+    from apps.activities.services import sf_kind_for_activity
     from apps.evidence import form_document
 
     template = "partials/oversight/partner_verify_drawer.html"
@@ -109,6 +110,8 @@ def partner_verify_drawer_view(request):
             "partner_name": _partner_name(activity),
             "uploaded_form": form_document.uploaded_form(activity),
             "form_name": form_document.form_name(activity),
+            # The ID that confirms it: "visit", "training" or None.
+            "salesforce_kind": sf_kind_for_activity(activity),
             "drawer_size": "md",
         },
     )

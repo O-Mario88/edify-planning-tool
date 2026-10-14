@@ -810,7 +810,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1361,
+      "bytes": 4297,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence",
@@ -827,11 +827,14 @@
       "purpose": "Reusable uploaded form link interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "open"
       ],
       "tables": 0,
       "template": "components/uploaded_form_link.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -10702,7 +10705,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10514,
+      "bytes": 10565,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -12552,7 +12555,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 4437,
+      "bytes": 4700,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],

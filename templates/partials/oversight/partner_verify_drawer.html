@@ -8,9 +8,10 @@ ia_confirm (apps/frontend/views/partner_review_views.py).
 
 The form is ONE button, "View Uploaded Visit Form" or "View Uploaded Training
 Attendance" (owner, 2026-10-14: "no need to show the uploaded image, just use
-the link ... in a beautiful button"). It opens one PDF in a new tab, however
-many pages the form has and however many times it was uploaded; the drawer
-used to list every file (components/uploaded_form_link.html).
+the link ... in a beautiful button"; "make the pdf upload view a popup with
+download button"). It opens one PDF in a popup, however many pages the form
+has and however many times it was uploaded; the drawer used to list every
+file (components/uploaded_form_link.html).
 {% endcomment %}
 {% block drawer_title %}{% if a %}Verify {% firstof a.school.name a.cluster.name "Partner work" %}{% else %}Not available{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% if a %}Submitted by {{ partner_name }}{% endif %}{% endblock %}
@@ -35,7 +36,7 @@ used to list every file (components/uploaded_form_link.html).
     <h3 id="partner-verify-evidence" class="edify-text-caption font-semibold text-slate-600">{{ form_name }}</h3>
     {% if uploaded_form %}
     <div class="grid">{% include "components/uploaded_form_link.html" with form=uploaded_form %}</div>
-    <p class="edify-text-caption text-slate-500">Opens the uploaded form as one PDF in a new tab, where it can be read and downloaded.</p>
+    <p class="edify-text-caption text-slate-500">Opens the uploaded form as one PDF, with a Download button.</p>
     {% else %}
     <div class="edify-note" data-tone="warning" role="status" data-no-evidence>
       <p class="edify-note__body">No {{ form_name }} was uploaded with this submission. Return it to {% partner_link partner_name partner_id %} with the reason.</p>
@@ -44,11 +45,11 @@ used to list every file (components/uploaded_form_link.html).
   </section>
 
   <div class="space-y-1">
-    <label for="partner-verify-sf" class="block edify-text-caption font-semibold text-slate-600">Salesforce Activity ID <span class="text-rose-500">*</span></label>
+    <label for="partner-verify-sf" class="block edify-text-caption font-semibold text-slate-600">{% if salesforce_kind == "training" %}Training ID{% elif salesforce_kind == "visit" %}Visit ID{% else %}Salesforce Activity ID{% endif %} <span class="text-rose-500">*</span></label>
     {% if a.salesforce_activity_id %}
     <input id="partner-verify-sf" type="text" value="{{ a.salesforce_activity_id }}" readonly class="w-full">
     {% else %}
-    <input id="partner-verify-sf" name="salesforce_id" type="text" required maxlength="64" autocomplete="off" placeholder="The activity's ID in Salesforce" class="w-full">
+    <input id="partner-verify-sf" name="salesforce_id" type="text" required maxlength="64" autocomplete="off" placeholder="{% if salesforce_kind == "training" %}TS-…{% elif salesforce_kind == "visit" %}SV-… or SVE-…{% else %}The activity's ID in Salesforce{% endif %}" class="w-full">
     {% endif %}
   </div>
   <div class="space-y-1">

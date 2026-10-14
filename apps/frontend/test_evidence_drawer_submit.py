@@ -330,8 +330,6 @@ class EvidenceDrawerSubmitTest(UploadFixture):
         self.assertIn('name="another_page_visit_form"', html)
         # The one button, and no list of the files behind it.
         self.assertEqual(html.count("View Uploaded Visit Form</span>"), 1)
-        self.assertIn(
-            f'href="/api/evidence/activity/{self.partner_visit.id}/form"', html
-        )
+        self.assertIn(f"/api/evidence/activity/{self.partner_visit.id}/form", html)
         self.assertNotIn("Already uploaded", html)
         self.assertNotRegex(html, r"/api/evidence/[a-z0-9]+/file")
