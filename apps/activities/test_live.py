@@ -277,7 +277,12 @@ class LiveRegionsContract(SimpleTestCase):
         # The same tables as a filter sends them back (hx-swap-oob).
         ("partials/core_schools/matrix_response.html", 'id="core-lifecycle-tables"'),
         ("pages/oversight/team_planning.html", 'id="school-oversight"'),
-        ("pages/my_plan/pl_queue.html", 'id="completion-reviews"'),
+        # The register the Completion Reviews page includes (owner,
+        # 2026-10-14: it is also drawn on the lead's dashboard).
+        (
+            "partials/my_plan/completion_reviews_register.html",
+            'id="completion-reviews"',
+        ),
     )
 
     #: A summary strip that sits outside its page's live part is a region of

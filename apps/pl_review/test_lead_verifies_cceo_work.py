@@ -140,7 +140,7 @@ class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):
         self.assertEqual(rows[0]["days_waiting"], 2)
 
         client = self.as_user(self.pl_user)
-        response = client.get(QUEUE_URL)
+        response = self.register(client)
         self.assertContains(response, f'data-review-row="{work.id}"')
         response = client.post(f"{QUEUE_URL}/{work.id}/confirm", {"next": QUEUE_URL})
         self.assertEqual(response.status_code, 302)

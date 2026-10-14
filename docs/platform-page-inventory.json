@@ -10579,6 +10579,39 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
+      "bytes": 6488,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/pl/review-queue",
+        "/planning-monitor/",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Completion Reviews Register",
+      "purpose": "Reusable completion reviews register interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/my_plan/completion_reviews_register.html",
+      "variants": [
+        "warning",
+        "{{ row.evidence_tone }}",
+        "{{ row.wait_tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
       "bytes": 1723,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -12282,7 +12315,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6686,
+      "bytes": 7418,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning-monitor/",
@@ -12292,7 +12325,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Execution Workspace",
       "purpose": "Reusable execution workspace interface primitive",
@@ -78709,7 +78742,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.pl_queue_view",
       "card_count": 0,
@@ -78720,14 +78753,12 @@
         "test:referenced-by-automated-test",
         "permission:pl_review_queue"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "shared-page-header-component",
       "htmx_endpoints": [
-        "GET {{ queue_url }}/{{ row.id }}/drawer",
-        "GET {{ queue_url }}/{{ row.id }}/return-drawer",
         "GET {{ autoload_drawer }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -78754,9 +78785,7 @@
       "route": "/pl/review-queue",
       "route_name": "pl_review_queue",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "{{ queue_url }}"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -78781,13 +78810,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "shared-table-scroll",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -101028,6 +101057,21 @@
         "retryable": true
       },
       {
+        "cron": "daily 17:00 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 17,
+          "minute": 0
+        },
+        "description": "Tells each Programme Lead, at the end of the day, how many of their officers' completed activities wait on them to verify; closes the notice from the day before.",
+        "expected_runtime_seconds": 30,
+        "idempotency_note": "Keyed per lead per day (context_id verify-<date>); a re-run on the same day sends nothing.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "verification_reminders",
+        "retryable": true
+      },
+      {
         "cron": "hourly at :05",
         "cron_kwargs": {
           "minute": 5
@@ -122350,7 +122394,7 @@
     "activity_states": 24,
     "all_routes": 1408,
     "api_routes": 364,
-    "component_templates": 695,
+    "component_templates": 696,
     "full_pages": 270,
     "mobile_contract_pass": 607,
     "nonvisual_actions": 288,
@@ -122370,7 +122414,7 @@
     "permission_keys": 127,
     "roles": 15,
     "routed_surfaces": 931,
-    "scheduled_jobs": 37,
+    "scheduled_jobs": 38,
     "severity_counts": {
       "critical": 0,
       "high": 0,

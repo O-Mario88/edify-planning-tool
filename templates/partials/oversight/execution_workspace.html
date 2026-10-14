@@ -17,6 +17,15 @@ the activities behind it.
 
   {% if not monitor_embedded %}{% include "partials/oversight/_execution_filters.html" %}{% endif %}
 
+  {% comment %}Completion Reviews, for a Programme Lead (owner, 2026-10-14:
+  "move the page under execution and completion tab page so the PL can access
+  it from their dashboard direct"): the officers' completed work waiting on
+  the lead, above the team's delivery it is part of.{% endcomment %}
+  {% if completion_reviews %}
+  {% include "partials/my_plan/completion_reviews_register.html" with rows=completion_reviews.rows filters=completion_reviews.filters queue_url="/pl/review-queue" reviews_embedded=True %}
+  {% if completion_reviews.autoload %}<div hidden hx-get="{{ completion_reviews.autoload }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-review-autoload></div>{% endif %}
+  {% endif %}
+
   {% data_table name="execution" %}
     {% slot title %}Execution &amp; completion · FY {{ fy }}{% endslot %}
     {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete{% endslot %}

@@ -410,6 +410,36 @@ class PLWeekTest(TestCase):
                 # leaves the overdue list behind.
                 self.assertNotIn("list=", " ".join(t["query"] for t in week["tabs"]))
 
+    def test_completed_work_leaves_overdue_for_completion_reviews(self):
+        # Owner, 2026-10-14: "overdue should only have schools that dont
+        # have Salesforce ID any school completed should disappear from the
+        # overdue page and move to completion and review table".
+        late = self._act(self.a1_sp, self.s1, LAST_MONDAY)
+        completed = self._act(
+            self.a1_sp,
+            self.s1,
+            LAST_MONDAY + timedelta(days=1),
+            status="submitted_to_pl",
+            salesforce_activity_id="SVE-OVERDUE1",
+        )
+        # Sent in without its ID: still the officer's to finish.
+        no_id = self._act(
+            self.a1_sp,
+            self.s1,
+            LAST_MONDAY + timedelta(days=2),
+            status="submitted_to_pl",
+        )
+        for who in (self.a1_sp.id, ""):
+            with self.subTest(who=who or EVERYONE):
+                person = self._week(who=who)["person"]
+                rows = self._table(person, "visits", OVERDUE)
+                self.assertEqual([r["id"] for r in rows], [late.id, no_id.id])
+        # It waits where the lead verifies it.
+        from apps.pl_review.services import review_register
+
+        waiting = [row["id"] for row in review_register(self.pl)["rows"]]
+        self.assertIn(completed.id, waiting)
+
     def test_the_lead_s_own_rows_keep_their_own_menu(self):
         self._act(self.pl_sp, self.s2, LAST_MONDAY)
         person = self._week(who=ME)["person"]

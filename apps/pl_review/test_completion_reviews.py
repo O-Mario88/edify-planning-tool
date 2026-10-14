@@ -141,6 +141,15 @@ class ReviewFixture(TestCase):
         client.force_login(user)
         return client
 
+    def register(self, client, **query):
+        """The register where a Programme Lead reads it (owner, 2026-10-14):
+        the Execution & Completion tab their dashboard carries."""
+        return client.get(
+            "/planning-monitor/",
+            {"view": "execution", **query},
+            headers={"X-Edify-Embed": "dashboard"},
+        )
+
 
 class OneReviewRuleTest(ReviewFixture):
     def test_the_supervising_lead_may_review_in_either_id_space(self):
@@ -261,7 +270,7 @@ class CompletionReviewsPageTest(ReviewFixture):
         mine = self._completion(self.pl.id)
         rival = self._completion(self.rival.id, school=self.rival_school)
 
-        response = self.as_user(self.pl_user).get(QUEUE_URL)
+        response = self.register(self.as_user(self.pl_user))
 
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
@@ -312,17 +321,19 @@ class CompletionReviewsPageTest(ReviewFixture):
     def test_the_officer_filter_appears_only_when_it_narrows(self):
         self._completion(self.james.id)
         client = self.as_user(self.pl_user)
-        self.assertNotContains(client.get(QUEUE_URL), 'name="cceo"')
+        self.assertNotContains(self.register(client), 'name="cceo"')
 
         marys = self._completion(self.mary.id, school=self.mary_school)
-        page = client.get(QUEUE_URL)
+        page = self.register(client)
         self.assertContains(page, 'name="cceo"')
 
-        narrowed = client.get(QUEUE_URL, {"cceo": self.mary.id})
-        self.assertEqual([r["id"] for r in narrowed.context["rows"]], [marys.id])
+        narrowed = self.register(client, cceo=self.mary.id)
+        rows = narrowed.context["completion_reviews"]["rows"]
+        self.assertEqual([r["id"] for r in rows], [marys.id])
         # The User id reaches the same officer.
-        by_user = client.get(QUEUE_URL, {"cceo": self.mary_user.id})
-        self.assertEqual([r["id"] for r in by_user.context["rows"]], [marys.id])
+        by_user = self.register(client, cceo=self.mary_user.id)
+        rows = by_user.context["completion_reviews"]["rows"]
+        self.assertEqual([r["id"] for r in rows], [marys.id])
 
     def test_roles_without_the_queue_are_refused(self):
         for user in (self.james_user, self.cd_user, self.rival_user):
@@ -404,11 +415,11 @@ class CompletionReviewsPageTest(ReviewFixture):
         client = self.as_user(self.pl_user)
 
         self.assertContains(
-            client.get(QUEUE_URL, {"open": work.id}),
+            self.register(client, open=work.id),
             f'hx-get="{QUEUE_URL}/{work.id}/drawer" hx-trigger="load"',
         )
         self.assertNotContains(
-            client.get(QUEUE_URL, {"open": rival.id}), "data-review-autoload"
+            self.register(client, open=rival.id), "data-review-autoload"
         )
 
 
@@ -494,11 +505,14 @@ class CompletionReviewsQueryBudgetTest(ReviewFixture):
 
     def _queries(self):
         client = self.as_user(self.pl_user)
-        client.get(QUEUE_URL)  # warm per-process caches
+        self.register(client)  # warm per-process caches
         with CaptureQueriesContext(connection) as captured:
-            response = client.get(QUEUE_URL)
+            response = self.register(client)
         self.assertEqual(response.status_code, 200)
-        return len(captured.captured_queries), len(response.context["rows"])
+        return (
+            len(captured.captured_queries),
+            len(response.context["completion_reviews"]["rows"]),
+        )
 
     def test_the_register_costs_the_same_for_two_completions_or_twelve(self):
         self._add(2)
