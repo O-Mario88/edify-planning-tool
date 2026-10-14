@@ -220,8 +220,28 @@ class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):
         )
         with self.assertRaises(Forbidden):
             services.confirm(own.id, self.james_user)
-        self.assertFalse(services.verifies_own_work(self.james_user))
-        self.assertTrue(services.verifies_own_work(self.pl_user))
+        self.assertFalse(services.lead_clears_own_work(self.james_user))
+        self.assertTrue(services.lead_clears_own_work(self.pl_user))
+
+    def test_a_lead_never_clears_partner_work_they_monitor(self):
+        # Their own field work only (owner, 2026-10-14). Partner work is
+        # Impact Assessment's, which pays it (§10), even one an older path
+        # left waiting on the lead.
+        partner_work = self._completion(
+            None,
+            status="submitted_to_pl",
+            delivery_type="partner",
+            monitored_by_staff_id=self.pl.id,
+            assigned_partner_id="p1",
+            salesforce_activity_id="SVE-9006",
+        )
+        self.assertFalse(services.may_review(self.pl_user, partner_work))
+        listed = [row["id"] for row in services.review_register(self.pl_user)["rows"]]
+        self.assertNotIn(partner_work.id, listed)
+        with self.assertRaises(Forbidden):
+            services.confirm(partner_work.id, self.pl_user)
+        partner_work.refresh_from_db()
+        self.assertEqual(partner_work.status, "submitted_to_pl")
 
 
 class RoutingReadsTheOwnerTest(ReviewFixture):
@@ -265,6 +285,15 @@ class RoutingReadsTheOwnerTest(ReviewFixture):
         self.assertTrue(services.routes_to_lead(lead_work, self.pl_user))
         self.assertTrue(services.routes_to_lead(lead_work, self.admin_user))
         self.assertFalse(services.routes_to_lead(partner_work, self.james_user))
+        # A lead pressing Submit on work of staff no lead verifies (a
+        # coordinator's, at a school the lead holds) sends it to IA, not to a
+        # lead's queue where nobody could clear it.
+        _, coordinator = _staff(
+            "rt-pc@t.test", "Pat Coordinator", EdifyRole.PROJECT_COORDINATOR
+        )
+        coordinator_work = self._completion(coordinator.id)
+        self.assertFalse(services.routes_to_lead(coordinator_work, self.pl_user))
+        self.assertFalse(services.lead_verifies(coordinator_work))
         self.assertTrue(services.lead_verifies(cceo_work))
         self.assertFalse(services.lead_verifies(partner_work))
         self.assertTrue(services.lead_verifies(lead_work))

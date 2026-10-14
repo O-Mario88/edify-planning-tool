@@ -90,33 +90,54 @@ def is_officer_completed(status) -> bool:
     return (status or "") in OFFICER_COMPLETED_STATUSES
 
 
+def plan_day(planned_date, scheduled_date) -> date | None:
+    """The day work is planned for: its planned date, or else the local day of
+    the scheduled time an older or Partner-dated row carries on its own — the
+    way My Plan and Partner oversight read it."""
+    from apps.core.clock import local_day
+
+    return planned_date or local_day(scheduled_date)
+
+
 def delivered_day(actual_delivery_date, execution_started_at) -> date | None:
     """The day the work was done: the delivery date the officer recorded, or
     else the day they pressed Complete — the day Country Execution reads too
     (apps.planning.country_execution.dataset)."""
-    if actual_delivery_date:
-        return actual_delivery_date
-    if execution_started_at is None:
-        return None
-    from django.utils import timezone
+    from apps.core.clock import local_day
 
-    if timezone.is_aware(execution_started_at):
-        return timezone.localtime(execution_started_at).date()
-    return execution_started_at.date()
+    return actual_delivery_date or local_day(execution_started_at)
 
 
 def early_day(
-    planned_date, scheduled_date, actual_delivery_date, execution_started_at
+    planned_date,
+    scheduled_date,
+    actual_delivery_date,
+    execution_started_at,
+    finished_by: date | None = None,
 ) -> date | None:
-    """The day the work was done when that is before its planned day, else
-    None. Whether it is finished is the status's question (finished_early)."""
-    from django.utils import timezone
+    """The day the work was done when that is provably before its planned
+    day, else None. Whether it is finished is the status's question
+    (finished_early).
 
-    planned = planned_date or (
-        timezone.localtime(scheduled_date).date() if scheduled_date else None
-    )
-    done = delivered_day(actual_delivery_date, execution_started_at)
-    return done if planned and done and done < planned else None
+    A recorded delivery date says the day. Without one, the press of Complete
+    is only the earliest the work can have been done — it opens the drawer,
+    often before the visit — so the work is early only when it was also
+    finished before the planned day: by ``finished_by``, the day it reached IA
+    or its lead reviewed it, or else today, which any completed row is done
+    by."""
+    planned = plan_day(planned_date, scheduled_date)
+    if planned is None:
+        return None
+    if actual_delivery_date:
+        return actual_delivery_date if actual_delivery_date < planned else None
+    started = delivered_day(None, execution_started_at)
+    if started is None:
+        return None
+    if finished_by is None:
+        from django.utils import timezone
+
+        finished_by = timezone.localdate()
+    return started if finished_by < planned else None
 
 
 #: A row's state, drawn as the whole row's ink (owner, 2026-10-14: "All
@@ -227,6 +248,11 @@ def _records(
     from apps.activities.models import Activity
     from apps.evidence.models import EvidenceRecord
 
+    from django.utils import timezone
+
+    from apps.core.clock import local_day
+
+    today = timezone.localdate()
     salesforce: dict[str, str] = {}
     asked: set[str] = set()
     for (
@@ -237,6 +263,8 @@ def _records(
         scheduled_date,
         actual_delivery_date,
         execution_started_at,
+        submitted_to_ia_at,
+        pl_reviewed_at,
     ) in Activity.objects.filter(id__in=ids).values_list(
         "id",
         "salesforce_activity_id",
@@ -245,11 +273,28 @@ def _records(
         "scheduled_date",
         "actual_delivery_date",
         "execution_started_at",
+        "submitted_to_ia_at",
+        "pl_reviewed_at",
     ):
         salesforce[activity_id] = (value or "").strip()
         if early is not None:
+            # Done no later than it reached IA, or its lead reviewed it, or
+            # today, whichever came first.
+            finished_by = min(
+                d
+                for d in (
+                    today,
+                    local_day(submitted_to_ia_at),
+                    local_day(pl_reviewed_at),
+                )
+                if d is not None
+            )
             early[activity_id] = early_day(
-                planned_date, scheduled_date, actual_delivery_date, execution_started_at
+                planned_date,
+                scheduled_date,
+                actual_delivery_date,
+                execution_started_at,
+                finished_by,
             )
         # apps.evidence.form_document.takes_upload, read in bulk.
         if (delivery_type or "") == "partner":
@@ -337,7 +382,12 @@ def annotate(
         )
         for name, value in values.items():
             setattr(item, name, value)
-        item.row_state = row_state(status, getattr(item, "planned_date", None), today)
+        # Partner oversight rows carry their day as scheduled_date (the
+        # Partner's date, already a day): read it where no plan date is set.
+        day = plan_day(
+            getattr(item, "planned_date", None), getattr(item, "scheduled_date", None)
+        )
+        item.row_state = row_state(status, day, today)
     return items
 
 

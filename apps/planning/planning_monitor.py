@@ -1073,9 +1073,8 @@ def training_reach(principal, fy: str) -> dict[str, tuple[int, int]]:
     tab reads training against (OfficerMonitor.training_schools), read the
     same way. A school is trained once an in-school training at it, or a
     group training it attended, is completed — submitted with its training
-    ID or verified (completion_columns.OFFICER_COMPLETED_STATUSES).
+    ID or verified (_delivered_statuses, the set the Planning tab counts by).
     """
-    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
     from apps.planning.country_oversight import rules
     from apps.schools.lifecycle_service import active_schools
 
@@ -1106,9 +1105,8 @@ def training_reach(principal, fy: str) -> dict[str, tuple[int, int]]:
     }
     if schools:
         school_ids = operating.values("id")
-        done = frozenset(OFFICER_COMPLETED_STATUSES)
-        _count_activities(schools, school_ids, fy, delivered=done)
-        _count_cluster_sessions(schools, school_ids, fy, delivered=done)
+        _count_activities(schools, school_ids, fy)
+        _count_cluster_sessions(schools, school_ids, fy)
     reach: dict[str, tuple[int, int]] = {}
     for school in schools.values():
         held, trained = reach.get(school.officer_id, (0, 0))
@@ -1347,26 +1345,24 @@ def _counted_visits(qs):
 
 
 def _delivered_statuses():
-    from apps.planning.school_planning_badges import (
-        AWAITING_VERIFICATION_STATUSES,
-        VERIFIED_STATUSES,
-    )
+    """Completed work: submitted with its visit or training ID, or verified
+    (owner, 2026-10-14: "count exact number of completed visits or
+    trainings"). The Execution tab beside this one counts the same set, so the
+    two tabs agree on what is done; work started and not yet submitted is
+    not."""
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
 
-    return AWAITING_VERIFICATION_STATUSES | VERIFIED_STATUSES
+    return OFFICER_COMPLETED_STATUSES
 
 
-def _count_activities(
-    schools: dict, school_ids, fy: str, *, delivered: frozenset | None = None
-) -> None:
+def _count_activities(schools: dict, school_ids, fy: str) -> None:
     """Counted visits and in-school trainings at each school, planned and
-    delivered. A Partner's visit counts once the Partner has dated it.
-    ``delivered`` is the statuses read as done (_delivered_statuses unless
-    given)."""
+    delivered. A Partner's visit counts once the Partner has dated it."""
     from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity
     from apps.planning.country_oversight import rules
 
-    delivered = delivered or _delivered_statuses()
+    delivered = _delivered_statuses()
     # The school's SSA-measured support. Alumni work (a project no SSA
     # intervention measures) is not a visit or a training here and does not
     # put the school in a Partner's hands.
@@ -1563,9 +1559,7 @@ def _count_partner_handovers(schools: dict, school_ids) -> None:
             schools[school_id].partner_pending += n
 
 
-def _count_cluster_sessions(
-    schools: dict, school_ids, fy: str, *, delivered: frozenset | None = None
-) -> None:
+def _count_cluster_sessions(schools: dict, school_ids, fy: str) -> None:
     """Group trainings and cluster meetings each school is invited to.
 
     By name — ClusterActivityAttendance, written when the session is
@@ -1577,7 +1571,7 @@ def _count_cluster_sessions(
     from apps.activities.models import Activity, ClusterActivityAttendance
     from apps.core.activity_types import CLUSTER_MEETING_TYPES
 
-    delivered = delivered or _delivered_statuses()
+    delivered = _delivered_statuses()
     sessions = _planned(Activity.objects.filter(fy=fy, cluster_id__isnull=False))
     meeting_types = {str(t) for t in CLUSTER_MEETING_TYPES}
     training_types = {str(t) for t in TRAINING_TYPES}
@@ -1597,9 +1591,11 @@ def _count_cluster_sessions(
         if school is None:
             continue
         if activity_type in meeting_types:
+            # A cluster meeting is not a training (owner, 2026-10-03):
+            # attending one never makes the school trained.
             school.meeting = True
-        else:
-            school.group_training = True
+            continue
+        school.group_training = True
         if attended and status in delivered:
             school.training_done = True
 

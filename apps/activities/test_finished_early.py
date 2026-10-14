@@ -107,6 +107,38 @@ class WhatFinishedEarlyMeans(FinishedEarlyWorld):
         self.assertIsNone(early_day(self.ahead, None, self.ahead, None))
         self.assertIsNone(early_day(self.ahead, None, None, None))
 
+    def test_pressing_complete_early_is_not_finishing_early(self):
+        # Complete was pressed to open the drawer two days before the planned
+        # day, and the work was submitted after it, with no delivery date
+        # recorded: the press is only the earliest it can have been done.
+        planned = self.today - timedelta(days=3)
+        pressed = _at(planned - timedelta(days=2))
+        self.assertIsNone(early_day(planned, None, None, pressed))
+        # Proof it was finished before the planned day makes it early: the
+        # lead reviewed it, or it reached IA, the day before.
+        self.assertEqual(
+            early_day(planned, None, None, pressed, planned - timedelta(days=1)),
+            planned - timedelta(days=2),
+        )
+        late = self.work(
+            planned,
+            status="submitted_to_pl",
+            salesforce_activity_id="SV-70001",
+            execution_started_at=pressed,
+        )
+        columns = completion_columns([(late.id, late.activity_type)])
+        self.assertFalse(
+            completion_fields(late.status, columns[late.id])["finished_early"]
+        )
+
+    def test_a_row_dated_only_by_its_scheduled_time_goes_red_once_past(self):
+        from apps.activities.completion_columns import ROW_OVERDUE, plan_day, row_state
+
+        past = self.today - timedelta(days=2)
+        day = plan_day(None, _at(past, 9))
+        self.assertEqual(day, past)
+        self.assertEqual(row_state("scheduled", day, self.today), ROW_OVERDUE)
+
     def test_only_complete_work_done_before_its_day_is_finished_early(self):
         columns = completion_columns(
             (a.id, a.activity_type) for a in (self.early, self.on_day, self.upcoming)

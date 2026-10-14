@@ -1997,7 +1997,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         source_models=("activities.Activity",),
         numerator="Staff work delivered",
         denominator=(
-            "Staff work with a planned date on or before today, or already " "delivered"
+            "Staff work with a planned date on or before today, or already delivered"
         ),
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,

@@ -240,7 +240,10 @@ def _decorate_sessions(principal, items) -> None:
         # The owner of a completion under review, as pl_review reads it.
         owner = item.planned_by_id
         item.pl_verify = bool(
-            may_review and item.activity_id and lead_held and may_review(owner)
+            may_review
+            and item.activity_id
+            and lead_held
+            and may_review(owner, partner=item.is_partner_work)
         )
         # Partner work is verified on Partner Evidence, which carries the
         # Salesforce entry step; a lead's own staff work in the IA review

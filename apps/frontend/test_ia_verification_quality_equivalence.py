@@ -74,6 +74,7 @@ FROZEN = "2026-09-24 06:30:00"
 def _reference_ia_activity_rollup(queryset, geography_field):
     from django.db.models import Count
 
+    from apps.pl_review.services import lead_verified_q
     from apps.targets.performance import ACHIEVED_STATUSES
 
     return {
@@ -84,8 +85,12 @@ def _reference_ia_activity_rollup(queryset, geography_field):
             planned=Count("id"),
             achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
             verified=Count("id", filter=Q(ia_verification_status="confirmed")),
+            # Awaiting IA leaves out a CCEO's and a lead's staff work, which a
+            # Programme Lead verifies (owner, 2026-10-14).
             waiting=Count(
-                "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+                "id",
+                filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+                & ~lead_verified_q(),
             ),
             returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
         )

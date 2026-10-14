@@ -441,19 +441,12 @@ def _course_name(course) -> str:
 def activity_day(activity) -> date | None:
     """The day an activity is dated, read the way My Plan reads it: the
     planned date, falling back to the scheduled timestamp an older row carries
-    on its own."""
+    on its own (completion_columns.plan_day)."""
     if activity is None:
         return None
-    if activity.planned_date:
-        return activity.planned_date
-    moment = activity.scheduled_date
-    if not moment:
-        return None
-    from django.utils import timezone
+    from apps.activities.completion_columns import plan_day
 
-    if timezone.is_naive(moment):
-        return moment.date()
-    return timezone.localtime(moment).date()
+    return plan_day(activity.planned_date, activity.scheduled_date)
 
 
 def describe_work(

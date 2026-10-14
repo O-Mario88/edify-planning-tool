@@ -445,7 +445,8 @@ once, the table scripts moved rows before Alpine had seen them and every menu
 inside the region was left dead.
 
 Production needs the ASGI workers and Redis the stream was built for
-(`Procfile`). `LIVE_UPDATES_ENABLED=false` switches the announcements off
-without a deploy; under the test runner they are off unless a test turns
+(`Procfile`). The announcements are off by default since 2026-10-14 (pages
+update on Refresh and none opens the stream); `LIVE_UPDATES_ENABLED=true`
+switches them back on without a deploy; under the test runner they are off unless a test turns
 them on, so they add nothing to the suite's query counts. Locally the stream
 needs `manage.py runserver` without `--noasgi`.

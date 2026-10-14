@@ -11,7 +11,7 @@ The rule this module enforces: a completion is reviewable only by the person who
 supervises the staff member who submitted it (or an Admin), and never by the
 submitter, except a Programme Lead's own field work, which the lead verifies
 (owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the PL to
-verify everything"; verifies_own_work).
+verify everything"; lead_clears_own_work).
 """
 
 from __future__ import annotations
@@ -103,20 +103,27 @@ def routes_to_lead(activity, principal) -> bool:
     lead or an Admin presses Submit on for an officer is still the officer's
     field work, and used to detour to Impact Assessment, where the lead could
     not clear it (owner, 2026-10-12). A lead's own work is the lead's too
-    (owner, 2026-10-14). Partner work goes to IA whoever presses the button
-    (§10, 2026-08-19 audit).
+    (owner, 2026-10-14), found by its owner like a CCEO's: a lead pressing
+    Submit on work of staff no lead verifies (a coordinator's, at a school the
+    lead holds) sends it to IA, never to a lead's queue nobody could clear.
+    Partner work goes to IA whoever presses the button (§10, 2026-08-19
+    audit).
     """
     if activity.delivery_type == "partner":
         return False
-    if getattr(principal, "active_role", "") in LEAD_VERIFIED_ROLES:
+    if getattr(principal, "active_role", "") == EdifyRole.CCEO.value:
         return True
     return owner_is_lead_verified(activity)
 
 
-def verifies_own_work(principal) -> bool:
-    """A Programme Lead verifies their own field work (owner, 2026-10-14:
-    "The PL verifies it"). Read from the role HELD as well as the one in use:
-    an officer acting as a lead for a month does not clear their own work."""
+def lead_clears_own_work(principal) -> bool:
+    """A Programme Lead verifies their own staff field work (owner,
+    2026-10-14: "The PL verifies it"). Read from the role HELD as well as the
+    one in use: an officer acting as a lead for a month does not clear their
+    own work. Partner work the lead monitors is never theirs to clear (§10).
+
+    Not `apps.core.permissions.verifies_own_work`, which answers the opposite
+    question (is this person responsible for the work, so must be refused)."""
     lead = EdifyRole.COUNTRY_PROGRAM_LEAD.value
     return getattr(principal, "active_role", "") == lead and lead in (
         getattr(principal, "roles", None) or []
@@ -195,25 +202,33 @@ def may_review(principal, activity) -> bool:
     """
     if activity is None:
         return False
-    return review_rule(principal)(_owning_staff_id(activity))
+    return review_rule(principal)(
+        _owning_staff_id(activity), partner=activity.delivery_type == "partner"
+    )
 
 
 def review_rule(principal):
     """`may_review` for many rows: whose completions this reviewer may decide.
 
-    Returns a predicate over the owning staff id (either id space). The
-    reviewer's reach is resolved once, so a table can ask it of every row
-    without a query per row — Cluster Oversight offers Verify only where the
-    decision itself would accept it.
+    Returns a predicate over the owning staff id (either id space), told
+    whether the row is partner work. The reviewer's reach is resolved once, so
+    a table can ask it of every row without a query per row — Cluster
+    Oversight offers Verify only where the decision itself would accept it.
     """
     if _is_admin(principal):
-        return lambda owner: True
+        return lambda owner, partner=False: True
     mine = _own_ids(principal)
     reviewable = _reviewer_staff_ids(principal)
-    if verifies_own_work(principal):
-        reviewable = reviewable | mine
-        mine = set()
-    return lambda owner: bool(owner) and owner not in mine and owner in reviewable
+    clears_own = lead_clears_own_work(principal)
+
+    def rule(owner, partner=False) -> bool:
+        if not owner:
+            return False
+        if owner in mine:
+            return clears_own and not partner
+        return owner in reviewable
+
+    return rule
 
 
 def _queue_queryset(principal):
@@ -221,8 +236,9 @@ def _queue_queryset(principal):
 
     Work the review path filed under the lead, and a CCEO's or a lead's
     staff-delivered work an older path left with Impact Assessment: both are
-    the lead's to clear (LEAD_REVIEWABLE_STATUSES). A lead's own completions
-    are listed for them too (verifies_own_work).
+    the lead's to clear (LEAD_REVIEWABLE_STATUSES). A lead's own staff
+    completions are listed for them too (lead_clears_own_work); partner work
+    they monitor never is (§10).
     """
     qs = Activity.objects.filter(deleted_at__isnull=True).filter(
         Q(status="submitted_to_pl")
@@ -232,24 +248,22 @@ def _queue_queryset(principal):
         return qs
     reviewable = _reviewer_staff_ids(principal)
     mine = _own_ids(principal)
-    if verifies_own_work(principal):
-        reviewable = reviewable | mine
-        mine = set()
-    if not reviewable:
+    clears_own = lead_clears_own_work(principal)
+    if not reviewable and not clears_own:
         return qs.none()
-    # Staff-delivered work is attributed by responsible_staff_id; partner
-    # work by the monitoring staff member. Nobody else's own submission is
-    # surfaced to them, whichever id space it was written in.
-    return qs.filter(
-        Q(responsible_staff_id__in=reviewable)
-        | Q(
-            responsible_staff_id__isnull=True,
-            monitored_by_staff_id__in=reviewable,
+
+    def filed_under(ids) -> Q:
+        # Staff-delivered work is attributed by responsible_staff_id; partner
+        # work by the monitoring staff member — in either id space.
+        return Q(responsible_staff_id__in=ids) | Q(
+            responsible_staff_id__isnull=True, monitored_by_staff_id__in=ids
         )
-    ).exclude(
-        Q(responsible_staff_id__in=mine)
-        | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=mine)
-    )
+
+    # Nobody else's own submission is surfaced to them.
+    waiting = filed_under(reviewable) & ~filed_under(mine)
+    if clears_own:
+        waiting |= Q(responsible_staff_id__in=mine) & ~Q(delivery_type="partner")
+    return qs.filter(waiting)
 
 
 def _people(owner_ids) -> tuple[dict[str, str], dict[str, str]]:
@@ -491,7 +505,7 @@ def _check_reviewable(a: Activity | None, principal) -> Activity:
         return a
     owner = _owning_staff_id(a)
     if owner and owner in _own_ids(principal):
-        if verifies_own_work(principal):
+        if lead_clears_own_work(principal) and a.delivery_type != "partner":
             return a
         raise Forbidden("You cannot review your own completion.")
     if owner not in _reviewer_staff_ids(principal):

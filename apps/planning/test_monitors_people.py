@@ -192,6 +192,54 @@ class ThePlanningMonitorFollowsPeople(PeopleFixture):
         self.assertEqual(monitor["totals"].partner_scheduled, 1)
 
 
+class TheTwoTabsAgreeOnTrained(PeopleFixture):
+    """The Planning tab and the Execution tab beside it count the same
+    schools trained: completed work only — submitted with its training ID, or
+    verified (owner, 2026-10-14) — and never a cluster meeting (owner,
+    2026-10-03)."""
+
+    def test_started_training_and_meetings_train_no_school(self):
+        self._work(self.cara, "in_school_training", status="evidence_uploaded")
+        meeting = Activity.objects.create(
+            cluster=self.cluster,
+            activity_type="cluster_meeting",
+            status="ia_verified",
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.cara.id,
+        )
+        ClusterActivityAttendance.objects.create(
+            activity=meeting, school=self.core, invited=True, attended=True
+        )
+        planning = planning_monitor(self.cd_user, fy=FY)
+        officer = self._row(
+            [o for lead in planning["leads"] for o in lead.officers], self.cara
+        )
+        execution = execution_monitor(self.cd_user, fy=FY, today=TODAY)
+        person = self._row(
+            [p for team in execution["teams"] for p in team.people], self.cara
+        )
+        self.assertEqual(officer.schools_trained, 0)
+        self.assertEqual(person.schools_trained, 0)
+
+    def test_submitted_training_trains_on_both_tabs(self):
+        self._work(
+            self.cara,
+            "in_school_training",
+            status="submitted_to_pl",
+            salesforce_activity_id="TS-9",
+        )
+        planning = planning_monitor(self.cd_user, fy=FY)
+        officer = self._row(
+            [o for lead in planning["leads"] for o in lead.officers], self.cara
+        )
+        execution = execution_monitor(self.cd_user, fy=FY, today=TODAY)
+        person = self._row(
+            [p for team in execution["teams"] for p in team.people], self.cara
+        )
+        self.assertEqual((officer.schools_trained, person.schools_trained), (1, 1))
+
+
 class TheExecutionMonitor(PeopleFixture):
     def _people(self, **kwargs):
         monitor = execution_monitor(self.cd_user, fy=FY, today=TODAY, **kwargs)
@@ -303,6 +351,52 @@ class TheExecutionMonitor(PeopleFixture):
         self.assertEqual((cara.delivered_due, cara.due), (3, 4))
         self.assertEqual((cara.due_progress, cara.overdue), (75, 1))
         self.assertEqual(cara.visits_delivered, 3)
+
+    def _session(self, activity_type, school, *, status="submitted_to_pl"):
+        session = Activity.objects.create(
+            cluster=self.cluster,
+            activity_type=activity_type,
+            status=status,
+            fy=FY,
+            planned_date=DAY,
+            responsible_staff_id=self.cara.id,
+            salesforce_activity_id=f"CS-{activity_type}-{school.school_id}",
+        )
+        ClusterActivityAttendance.objects.create(
+            activity=session, school=school, invited=True, attended=True
+        )
+        return session
+
+    def test_a_cluster_meeting_trains_no_school(self):
+        # Owner, 2026-10-03: "A cluster meeting is not a training". Attending
+        # a completed one leaves the school untrained; attending a completed
+        # group training trains it.
+        self._session("cluster_meeting", self.client_school)
+        self._session("cluster_training", self.core)
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.training_portfolio, cara.schools_trained), (2, 1))
+        self.assertEqual(cara.remaining_to_train, 1)
+
+    def test_a_team_remaining_is_the_sum_of_its_people(self):
+        # One officer past their 560 does not cover for another short of it.
+        from apps.planning.execution_monitor import PersonExecution, TeamExecution
+
+        ahead = PersonExecution(
+            key="a", name="A", lead_id="", lead_name="", visits_target=560
+        )
+        ahead.visits_delivered = 600
+        ahead.training_portfolio, ahead.schools_trained = 10, 10
+        behind = PersonExecution(
+            key="b", name="B", lead_id="", lead_name="", visits_target=560
+        )
+        behind.visits_delivered = 100
+        behind.training_portfolio, behind.schools_trained = 10, 4
+        team = TeamExecution(key="t", name="T", people=[ahead, behind])
+        self.assertEqual(
+            (ahead.remaining_to_visit, behind.remaining_to_visit), (0, 460)
+        )
+        self.assertEqual(team.remaining_to_visit, 460)
+        self.assertEqual(team.remaining_to_train, 6)
 
     def test_the_list_behind_a_count(self):
         late = self._work(self.cara, "school_visit")

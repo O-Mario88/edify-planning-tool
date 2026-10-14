@@ -37,3 +37,14 @@ def saved_in_place(trigger: str = "close-drawer") -> HttpResponse:
     )
     response["HX-Trigger"] = trigger
     return response
+
+
+def saved_and_reloaded(trigger: str = "close-drawer") -> HttpResponse:
+    """Close the drawer and read the whole page again: the money desks, left
+    reloading on purpose when everything else moved to Refresh (PR #265). A
+    finance row still showing its old state after its money moved invites a
+    second disbursement or clearance on it."""
+    response = HttpResponse("")
+    response["HX-Trigger"] = trigger
+    response["HX-Refresh"] = "true"
+    return response

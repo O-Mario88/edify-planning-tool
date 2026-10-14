@@ -84,7 +84,7 @@ _told = threading.local()
 def enabled() -> bool:
     """Off under the test runner, where it would add its queries to every
     query count in the suite; its own tests turn it on."""
-    return bool(getattr(settings, "LIVE_UPDATES_ENABLED", True))
+    return bool(getattr(settings, "LIVE_UPDATES_ENABLED", False))
 
 
 def _stamp_key(user_id: str) -> str:
