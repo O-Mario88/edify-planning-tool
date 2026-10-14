@@ -62,6 +62,12 @@ OFFICER_COMPLETED_STATUSES = frozenset(
     ("submitted_to_pl", "awaiting_ia_verification", *COMPLETED_WORK_STATUSES)
 )
 
+#: Done before its planned day (owner, 2026-10-14: "the activities finished
+#: early should be taken off the calendar and on My Plan tables, planning
+#: oversight marked complete so we can be able to track"). The calendar leaves
+#: every completed activity off (OFFICER_COMPLETED_STATUSES).
+FINISHED_EARLY = "Completed Early"
+
 NOT_IN_SF = "Not in SF"
 NO_EVIDENCE = "No Evidence Uploaded"
 MISSING_SF = "Missing Salesforce ID"
@@ -76,11 +82,79 @@ EMPTY = {
     "evidence_label": "",
     "salesforce_ok": False,
     "evidence_ok": False,
+    "early_on": None,
 }
 
 
 def is_officer_completed(status) -> bool:
     return (status or "") in OFFICER_COMPLETED_STATUSES
+
+
+def delivered_day(actual_delivery_date, execution_started_at) -> date | None:
+    """The day the work was done: the delivery date the officer recorded, or
+    else the day they pressed Complete — the day Country Execution reads too
+    (apps.planning.country_execution.dataset)."""
+    if actual_delivery_date:
+        return actual_delivery_date
+    if execution_started_at is None:
+        return None
+    from django.utils import timezone
+
+    if timezone.is_aware(execution_started_at):
+        return timezone.localtime(execution_started_at).date()
+    return execution_started_at.date()
+
+
+def early_day(
+    planned_date, scheduled_date, actual_delivery_date, execution_started_at
+) -> date | None:
+    """The day the work was done when that is before its planned day, else
+    None. Whether it is finished is the status's question (finished_early)."""
+    from django.utils import timezone
+
+    planned = planned_date or (
+        timezone.localtime(scheduled_date).date() if scheduled_date else None
+    )
+    done = delivered_day(actual_delivery_date, execution_started_at)
+    return done if planned and done and done < planned else None
+
+
+#: A row's state, drawn as the whole row's ink (owner, 2026-10-14: "All
+#: completed activities, visit, trainings, cluster meetings should be in green
+#: the entire row. and overdue in red, not yet due in normal black color on
+#: light mode and white on blue and dark mode"). The template writes
+#: data-done / data-overdue on the <tr>; components/row-state.css colours it.
+ROW_DONE = "done"
+ROW_OVERDUE = "overdue"
+
+#: Work that is off the plan or sent back is neither late nor done.
+_NEVER_OVERDUE = frozenset(
+    (
+        "returned",
+        "returned_by_pl",
+        "returned_by_ia",
+        "cancelled",
+        "rejected",
+        "deferred",
+        "not_planned",
+        "awaiting_owner_approval",
+    )
+)
+
+
+def row_state(status, planned_day, today: date | None = None) -> str:
+    """ROW_DONE for completed work (the calendar leaves it off), ROW_OVERDUE
+    for work whose planned day has passed and that is not done, "" for the
+    rest — work still ahead, today's included."""
+    if is_officer_completed(status):
+        return ROW_DONE
+    if (status or "") in _NEVER_OVERDUE or planned_day is None:
+        return ""
+    if today is None:
+        from django.utils import timezone
+
+        today = timezone.localdate()
+    return ROW_OVERDUE if planned_day < today else ""
 
 
 def is_complete(status, columns: dict) -> bool:
@@ -139,10 +213,14 @@ def evidence_label(activity_type, kinds: Iterable[str]) -> str:
     return ", ".join(names)
 
 
-def _records(activity_ids) -> tuple[dict[str, str], dict[str, set], set[str]]:
+def _records(
+    activity_ids, early: dict | None = None
+) -> tuple[dict[str, str], dict[str, set], set[str]]:
     """Each activity's stored Salesforce ID; the kinds of evidence uploaded
     for the activities that are asked for an upload (not quarantined); and
-    which activities those are. Two queries at most, one when none is asked."""
+    which activities those are. Two queries at most, one when none is asked.
+    ``early``, when given, is filled with the day each activity was done
+    where that is before its planned day (early_day)."""
     ids = [i for i in dict.fromkeys(activity_ids or ()) if i]
     if not ids:
         return {}, {}, set()
@@ -151,10 +229,28 @@ def _records(activity_ids) -> tuple[dict[str, str], dict[str, set], set[str]]:
 
     salesforce: dict[str, str] = {}
     asked: set[str] = set()
-    for activity_id, value, delivery_type in Activity.objects.filter(
-        id__in=ids
-    ).values_list("id", "salesforce_activity_id", "delivery_type"):
+    for (
+        activity_id,
+        value,
+        delivery_type,
+        planned_date,
+        scheduled_date,
+        actual_delivery_date,
+        execution_started_at,
+    ) in Activity.objects.filter(id__in=ids).values_list(
+        "id",
+        "salesforce_activity_id",
+        "delivery_type",
+        "planned_date",
+        "scheduled_date",
+        "actual_delivery_date",
+        "execution_started_at",
+    ):
         salesforce[activity_id] = (value or "").strip()
+        if early is not None:
+            early[activity_id] = early_day(
+                planned_date, scheduled_date, actual_delivery_date, execution_started_at
+            )
         # apps.evidence.form_document.takes_upload, read in bulk.
         if (delivery_type or "") == "partner":
             asked.add(activity_id)
@@ -179,7 +275,8 @@ def completion_columns(pairs) -> dict[str, dict]:
     "evidence_ok"}} for (activity id, activity type) pairs. Ids that are None
     (a handover not yet scheduled) are skipped: they read EMPTY."""
     pairs = [(i, t) for i, t in pairs if i]
-    salesforce, evidence, asked = _records([i for i, _ in pairs])
+    early: dict[str, date | None] = {}
+    salesforce, evidence, asked = _records([i for i, _ in pairs], early)
     out = {}
     for activity_id, activity_type in pairs:
         kinds = evidence.get(activity_id, set())
@@ -196,20 +293,24 @@ def completion_columns(pairs) -> dict[str, dict]:
             "evidence_ok": (
                 expected_evidence(activity_type)[0] in kinds if upload_asked else True
             ),
+            "early_on": early.get(activity_id),
         }
     return out
 
 
 def completion_fields(status, columns: dict) -> dict:
     """The columns plus the verdict for one row: `is_complete`,
-    `completion_gap`, and `shows_complete` — whether the Actions column may
-    offer its complete state: a verified status, both columns green."""
+    `completion_gap`, `shows_complete` — whether the Actions column may
+    offer its complete state: a verified status, both columns green — and
+    `finished_early`: complete, on a day before the one planned (the tables
+    then read FINISHED_EARLY)."""
     complete = is_complete(status, columns)
     return {
         **columns,
         "is_complete": complete,
         "completion_gap": completion_gap(status, columns),
         "shows_complete": complete and (status or "") in COMPLETED_WORK_STATUSES,
+        "finished_early": complete and columns.get("early_on") is not None,
     }
 
 
@@ -220,19 +321,23 @@ def annotate(
     type_attr: str = "activity_type",
     status_attr: str = "activity_status",
 ):
-    """Set the columns, `is_complete` and `completion_gap` on service-layer
-    items (the oversight dataclasses), two queries for the lot."""
+    """Set the columns, `is_complete`, `completion_gap` and `row_state` on
+    service-layer items (the oversight dataclasses), two queries for the lot."""
     items = list(items)
     columns = completion_columns(
         (getattr(item, id_attr, None), getattr(item, type_attr, "")) for item in items
     )
+    from django.utils import timezone
+
+    today = timezone.localdate()
     for item in items:
+        status = getattr(item, status_attr, "")
         values = completion_fields(
-            getattr(item, status_attr, ""),
-            columns.get(getattr(item, id_attr, None) or "", EMPTY),
+            status, columns.get(getattr(item, id_attr, None) or "", EMPTY)
         )
         for name, value in values.items():
             setattr(item, name, value)
+        item.row_state = row_state(status, getattr(item, "planned_date", None), today)
     return items
 
 

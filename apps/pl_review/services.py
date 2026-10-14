@@ -9,7 +9,9 @@ could confirm their own.
 
 The rule this module enforces: a completion is reviewable only by the person who
 supervises the staff member who submitted it (or an Admin), and never by the
-submitter.
+submitter, except a Programme Lead's own field work, which the lead verifies
+(owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the PL to
+verify everything"; verifies_own_work).
 """
 
 from __future__ import annotations
@@ -24,8 +26,8 @@ from apps.core.rbac import EdifyRole
 
 #: The statuses a completion waits on its Programme Lead in. Program Leads
 #: verify their CCEOs' field work — visits, trainings and cluster meetings
-#: (owner, 2026-10-12) — so a CCEO's staff-delivered completion is the lead's
-#: whichever path filed it: the review path writes ``submitted_to_pl``; an
+#: (owner, 2026-10-12) — and their own (2026-10-14), so such a staff-delivered
+#: completion is the lead's whichever path filed it: the review path writes ``submitted_to_pl``; an
 #: older path, or a submission somebody else pressed for the officer, left it
 #: ``awaiting_ia_verification`` with Impact Assessment, where the lead could
 #: not clear it. Partner work is never here: it is verified where its
@@ -33,72 +35,92 @@ from apps.core.rbac import EdifyRole
 LEAD_REVIEWABLE_STATUSES = ("submitted_to_pl", "awaiting_ia_verification")
 
 
-def _cceo_profiles():
+#: The roles whose staff-delivered work a Programme Lead verifies, never
+#: Impact Assessment (owner, 2026-10-14: "IA does not verify CCEO and PL work.
+#: it is the PL to verify everything"): a CCEO's by their lead, and a lead's
+#: own by the lead (owner, same day: "The PL verifies it").
+LEAD_VERIFIED_ROLES = (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+
+
+def _lead_verified_profiles():
     from apps.accounts.models import StaffProfile
 
-    return StaffProfile.objects.filter(
-        user__roles__contains=[EdifyRole.CCEO.value], deleted_at__isnull=True
-    )
+    holds = Q()
+    for role in LEAD_VERIFIED_ROLES:
+        holds |= Q(user__roles__contains=[role])
+    return StaffProfile.objects.filter(holds, deleted_at__isnull=True)
 
 
-def cceo_owner_q(field: str = "responsible_staff_id") -> Q:
-    """Work owned by a CCEO, in either id space.
+def lead_verified_owner_q(field: str = "responsible_staff_id") -> Q:
+    """Work owned by a CCEO or a Programme Lead, in either id space.
 
     ``Activity.responsible_staff_id`` holds a StaffProfile id or a User id
     depending on the path that wrote it (``scoping.owner_ids``), so both are
     asked. Two subqueries, no literal id list, however many officers there
     are.
     """
-    profiles = _cceo_profiles()
+    profiles = _lead_verified_profiles()
     return Q(**{f"{field}__in": profiles.values("id")}) | Q(
         **{f"{field}__in": profiles.values("user_id")}
     )
 
 
 def lead_verified_q() -> Q:
-    """Staff-delivered work whose completion the owner's Programme Lead
-    verifies — the work Impact Assessment's staff queue must not offer."""
-    return cceo_owner_q() & ~Q(delivery_type="partner")
+    """Staff-delivered work whose completion a Programme Lead verifies — the
+    work Impact Assessment's staff queue must not offer."""
+    return lead_verified_owner_q() & ~Q(delivery_type="partner")
 
 
-def cceo_owner_ids() -> frozenset[str]:
-    """Every id a CCEO's work may be filed under, for callers deciding row by
-    row (Cluster Oversight) without a query per row."""
+def lead_verified_owner_ids() -> frozenset[str]:
+    """Every id a CCEO's or a lead's work may be filed under, for callers
+    deciding row by row (Cluster Oversight) without a query per row."""
     ids: set[str] = set()
-    for profile_id, user_id in _cceo_profiles().values_list("id", "user_id"):
+    for profile_id, user_id in _lead_verified_profiles().values_list("id", "user_id"):
         ids.add(str(profile_id))
         if user_id:
             ids.add(str(user_id))
     return frozenset(ids)
 
 
-def owner_is_cceo(activity) -> bool:
+def owner_is_lead_verified(activity) -> bool:
     owner = _owning_staff_id(activity)
     return (
-        bool(owner) and _cceo_profiles().filter(Q(id=owner) | Q(user_id=owner)).exists()
+        bool(owner)
+        and _lead_verified_profiles().filter(Q(id=owner) | Q(user_id=owner)).exists()
     )
 
 
 def lead_verifies(activity) -> bool:
-    """Whether this completion is the Programme Lead's to verify, not IA's."""
-    return activity.delivery_type != "partner" and owner_is_cceo(activity)
+    """Whether this completion is a Programme Lead's to verify, not IA's."""
+    return activity.delivery_type != "partner" and owner_is_lead_verified(activity)
 
 
 def routes_to_lead(activity, principal) -> bool:
-    """Where a completion goes when it is submitted: the supervising Programme
-    Lead for a CCEO's staff-delivered work, Impact Assessment otherwise.
+    """Where a completion goes when it is submitted: a Programme Lead for a
+    CCEO's or a lead's staff-delivered work, Impact Assessment otherwise.
 
     Read from the work's OWNER as well as the submitter's role: a completion a
     lead or an Admin presses Submit on for an officer is still the officer's
     field work, and used to detour to Impact Assessment, where the lead could
-    not clear it (owner, 2026-10-12). Partner work goes to IA whoever presses
-    the button (§10, 2026-08-19 audit).
+    not clear it (owner, 2026-10-12). A lead's own work is the lead's too
+    (owner, 2026-10-14). Partner work goes to IA whoever presses the button
+    (§10, 2026-08-19 audit).
     """
     if activity.delivery_type == "partner":
         return False
-    if getattr(principal, "active_role", "") == EdifyRole.CCEO.value:
+    if getattr(principal, "active_role", "") in LEAD_VERIFIED_ROLES:
         return True
-    return owner_is_cceo(activity)
+    return owner_is_lead_verified(activity)
+
+
+def verifies_own_work(principal) -> bool:
+    """A Programme Lead verifies their own field work (owner, 2026-10-14:
+    "The PL verifies it"). Read from the role HELD as well as the one in use:
+    an officer acting as a lead for a month does not clear their own work."""
+    lead = EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    return getattr(principal, "active_role", "") == lead and lead in (
+        getattr(principal, "roles", None) or []
+    )
 
 
 def _reviewer_staff_ids(principal) -> set[str]:
@@ -188,15 +210,19 @@ def review_rule(principal):
         return lambda owner: True
     mine = _own_ids(principal)
     reviewable = _reviewer_staff_ids(principal)
+    if verifies_own_work(principal):
+        reviewable = reviewable | mine
+        mine = set()
     return lambda owner: bool(owner) and owner not in mine and owner in reviewable
 
 
 def _queue_queryset(principal):
     """The completions waiting on THIS reviewer, as an unevaluated queryset.
 
-    Work the review path filed under the lead, and a CCEO's staff-delivered
-    work an older path left with Impact Assessment: both are the lead's to
-    clear (LEAD_REVIEWABLE_STATUSES).
+    Work the review path filed under the lead, and a CCEO's or a lead's
+    staff-delivered work an older path left with Impact Assessment: both are
+    the lead's to clear (LEAD_REVIEWABLE_STATUSES). A lead's own completions
+    are listed for them too (verifies_own_work).
     """
     qs = Activity.objects.filter(deleted_at__isnull=True).filter(
         Q(status="submitted_to_pl")
@@ -205,12 +231,15 @@ def _queue_queryset(principal):
     if _is_admin(principal):
         return qs
     reviewable = _reviewer_staff_ids(principal)
+    mine = _own_ids(principal)
+    if verifies_own_work(principal):
+        reviewable = reviewable | mine
+        mine = set()
     if not reviewable:
         return qs.none()
-    mine = _own_ids(principal)
     # Staff-delivered work is attributed by responsible_staff_id; partner
-    # work by the monitoring staff member. Never surface the reviewer's
-    # own submission, whichever id space it was written in.
+    # work by the monitoring staff member. Nobody else's own submission is
+    # surfaced to them, whichever id space it was written in.
     return qs.filter(
         Q(responsible_staff_id__in=reviewable)
         | Q(
@@ -455,13 +484,15 @@ def _check_reviewable(a: Activity | None, principal) -> Activity:
     if a.status not in LEAD_REVIEWABLE_STATUSES:
         raise BadRequest("Activity is not awaiting PL review.")
     if a.status == "awaiting_ia_verification" and not lead_verifies(a):
-        # Partner work, or a lead's or coordinator's own field work: Impact
+        # Partner work, or a coordinator's own field work: Impact
         # Assessment's, as it always was.
         raise BadRequest("This work is verified by Impact Assessment.")
     if _is_admin(principal):
         return a
     owner = _owning_staff_id(a)
     if owner and owner in _own_ids(principal):
+        if verifies_own_work(principal):
+            return a
         raise Forbidden("You cannot review your own completion.")
     if owner not in _reviewer_staff_ids(principal):
         raise Forbidden("This completion belongs to another Program Lead's team.")

@@ -149,7 +149,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
             {% for row in past_due_school_visits_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-overdue
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.school_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
@@ -319,7 +319,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
             {% for row in past_due_cluster_trainings_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-overdue
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
@@ -489,7 +489,7 @@ CCEO dashboard; 2026-09-24 A+ audit, P-4).{% endcomment %}
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
             {% for row in past_due_cluster_meetings_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-overdue
                 x-show="matchesScope({{ row.is_own|yesno:'true,false' }})">
               {% if selectable %}{% if row.is_own %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
               <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>

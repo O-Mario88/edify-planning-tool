@@ -43,6 +43,7 @@ from datetime import date, timedelta
 from apps.ssa.models import SsaRecord
 from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
+from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
 from apps.activities.day_off import day_off_marks
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
@@ -228,20 +229,18 @@ _CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
         "evidence_uploaded",
         "evidence_accepted",
         "salesforce_id_required",
-        "submitted_to_pl",
         "returned_by_pl",
-        "awaiting_ia_verification",
         "returned",
         "returned_by_ia",
     ),
-    "completed": tuple(COMPLETED_WORK_STATUSES),
+    # Completed work is never drawn (OFFICER_COMPLETED_STATUSES, owner
+    # 2026-10-14), so there is no "Completed" family to filter to.
     "cancelled": ("cancelled", "rejected"),
 }
 
 _CALENDAR_STATUS_OPTIONS = (
     ("scheduled", "Scheduled"),
     ("in_progress", "In progress"),
-    ("completed", "Completed"),
     ("cancelled", "Cancelled / rejected"),
 )
 
@@ -325,6 +324,10 @@ def calendar_view(request):
         activities = activities.exclude(
             status__in=["cancelled", "rejected", "awaiting_owner_approval"]
         )
+        # Completed work is off the calendar entirely (owner, 2026-10-14:
+        # "All completed activities should be off the calendar completely");
+        # My Plan and Planning Oversight list it, in green.
+        activities = activities.exclude(status__in=OFFICER_COMPLETED_STATUSES)
         if selected_status:
             activities = activities.filter(
                 status__in=_CALENDAR_STATUS_FAMILIES[selected_status]

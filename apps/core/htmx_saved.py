@@ -5,28 +5,35 @@ My Plan answered with ``<script>window.location.reload()</script>``: the
 browser threw the page away and asked for it again — My Plan is 2–5 seconds
 of server work and then the whole page's styling and scripts over again —
 and 400 ms later the live stream's notice of the same save read the page a
-second time. One save was three renders of the page.
+second time. One save was three renders of the page. From 2026-10-12 a save
+read the page's live regions once instead.
 
-The answer is now a call to the page's live regions (static/js/live-regions.js
-``EdifyLive.saved``): the drawer closes, the regions that show the plan are
-read once and swapped in place, and the stream's echo of this save is
-recognised and skipped. A page with no live region reloads as before, so
-nothing is left stale.
+Owner, 2026-10-14: "behave like salesforce where a user has to refresh for
+the data to be updated", and asked whether one's own save should still show
+at once: "everything is updated upon refresh icon clicked. so that the save,
+reschedule, schedule, complete, cancel... functionalities can be fast". So a
+save now reads nothing: the drawer closes, a confirmation says it is saved,
+and the page shows what it showed until Refresh (the browser's, or the
+installed app's beside Back and Forward). static/js/live-regions.js no
+longer follows the plan either.
 """
 
 from __future__ import annotations
 
 from django.http import HttpResponse
+from django.template.loader import render_to_string
 
-#: Read the page's live regions again; reload only where there are none.
-SAVED_SCRIPT = (
-    "<script>(window.EdifyLive && window.EdifyLive.saved) "
-    "? window.EdifyLive.saved() : window.location.reload();</script>"
-)
+#: What the confirmation says.
+SAVED_MESSAGE = "Saved. Press Refresh to see it on the page."
 
 
 def saved_in_place(trigger: str = "close-drawer") -> HttpResponse:
-    """Close the drawer and bring the page up to date without reloading it."""
-    response = HttpResponse(SAVED_SCRIPT)
+    """Close the drawer and say it is saved; the page is read again only when
+    the reader presses Refresh."""
+    response = HttpResponse(
+        render_to_string(
+            "partials/planning/saved_toast.html", {"message": SAVED_MESSAGE}
+        )
+    )
     response["HX-Trigger"] = trigger
     return response

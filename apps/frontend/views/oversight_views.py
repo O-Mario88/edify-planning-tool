@@ -1151,7 +1151,9 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             "execution_due_delivered",
             totals.delivered_due,
             totals.due,
-            helper=f"{totals.delivered_due:,} of {totals.due:,} due to date",
+            # Delivered work counts whatever day it was planned for (owner,
+            # 2026-10-14), so the whole is what is due or already done.
+            helper=f"{totals.delivered_due:,} of {totals.due:,} due or delivered",
             icon="check",
             empty="Nothing due yet",
         ),
@@ -1175,11 +1177,11 @@ def _execution_kpis(totals, *, execution_url: str) -> list[dict]:
             empty="Nothing delivered yet",
         ),
         render_kpi_item(
-            "execution_awaiting_ia",
-            MetricValue.measured(totals.awaiting_ia),
+            "execution_awaiting_pl",
+            MetricValue.measured(totals.awaiting_pl),
             helper=f"{totals.verified:,} verified",
             icon="check",
-            drilldown_url=f"{execution_url}&list=awaiting_ia",
+            drilldown_url=f"{execution_url}&list=awaiting_pl",
         ),
         share(
             "execution_partner_delivered",

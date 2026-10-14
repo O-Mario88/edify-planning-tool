@@ -81,16 +81,17 @@ class IaShellFixture(TestCase):
         cls.ke_cceo = _user(
             "shell-ke@t.org", "Kip Shell", EdifyRole.CCEO.value, country="Kenya"
         )
-        # Whose staff work Impact Assessment verifies: a Programme Lead's own
-        # field work. A CCEO's is verified by their lead (owner, 2026-10-12)
-        # and is not in this queue (apps/pl_review/test_lead_verifies_cceo_work).
+        # Whose staff work Impact Assessment verifies: a coordinator's own
+        # field work. A CCEO's and a Programme Lead's are verified by a lead
+        # (owner, 2026-10-12 and 2026-10-14) and are not in this queue
+        # (apps/pl_review/test_lead_verifies_cceo_work).
         cls.lead = _user(
-            "shell-lead@t.org", "Cara Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+            "shell-lead@t.org", "Cara Lead", EdifyRole.PROJECT_COORDINATOR.value
         )
         cls.ke_lead = _user(
             "shell-ke-lead@t.org",
             "Kip Lead",
-            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.PROJECT_COORDINATOR.value,
             country="Kenya",
         )
 

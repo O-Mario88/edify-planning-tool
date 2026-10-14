@@ -222,8 +222,87 @@ class TheExecutionMonitor(PeopleFixture):
         self.assertEqual((cara.missing_salesforce, cara.missing_evidence), (3, 0))
         # The day itself is not late, and returned work is its own list.
         self.assertEqual((cara.overdue, cara.returned), (1, 1))
-        self.assertEqual((cara.verified, cara.awaiting_ia), (1, 1))
+        self.assertEqual((cara.verified, cara.awaiting_pl), (1, 1))
         self.assertEqual(cara.target_progress, 1)
+
+    def test_only_completed_work_counts_and_what_remains(self):
+        # Owner, 2026-10-14: "count exact number of completed visits or
+        # trainings and add a column of Remaining to Visit and Remaining to
+        # Train"; training is read against the whole portfolio, never the
+        # 560 ("Training should be the entire portfolio").
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            salesforce_activity_id="SV-1",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="submitted_to_pl",
+            salesforce_activity_id="SV-2",
+        )
+        # Started, an old upload in, not submitted: not completed.
+        self._work(self.cara, "school_visit", status="evidence_uploaded")
+        # Trains PPL-1, and is one of her counted visits too.
+        self._work(
+            self.cara,
+            "in_school_training",
+            status="submitted_to_pl",
+            salesforce_activity_id="TS-1",
+        )
+        self._work(self.cara, "in_school_training", school=self.core)
+        people, monitor = self._people()
+        cara = self._row(people, self.cara)
+        self.assertEqual((cara.visits_delivered, cara.delivered), (3, 3))
+        self.assertEqual(cara.remaining_to_visit, 560 - 3)
+        # She holds two schools that take a training; one is trained.
+        self.assertEqual(
+            (cara.training_portfolio, cara.schools_trained, cara.remaining_to_train),
+            (2, 1, 1),
+        )
+        self.assertEqual(cara.training_progress, 50)
+        # Completed and not yet verified: with her Programme Lead.
+        self.assertEqual(cara.awaiting_pl, 2)
+        dan = self._row(people, self.dan)
+        self.assertEqual((dan.training_portfolio, dan.remaining_to_train), (0, 0))
+        self.assertEqual(dan.remaining_to_visit, 560)
+        team = next(t for t in monitor["teams"] if t.key == self.lead.id)
+        self.assertEqual(team.remaining_to_train, 1)
+        self.assertEqual(team.remaining_to_visit, 280 + 560 + 560 - 3)
+
+    def test_work_delivered_ahead_of_its_day_is_counted(self):
+        # Owner, 2026-10-14: "As long as the activity is completed, it should
+        # be counted irrespective of when they were planned." A core visit
+        # planned for 20 Oct and verified on the 14th read 2 of 18 delivered.
+        ahead = TODAY + timedelta(days=6)
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            planned_date=ahead,
+            salesforce_activity_id="SVE-267594",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="submitted_to_pl",
+            planned_date=ahead,
+            salesforce_activity_id="SV-51548",
+        )
+        self._work(
+            self.cara,
+            "school_visit",
+            status="ia_verified",
+            salesforce_activity_id="SV-51719",
+        )
+        self._work(self.cara, "school_visit", planned_date=ahead)  # not due yet
+        self._work(self.cara, "school_visit")  # past its day, not delivered
+        cara = self._row(self._people()[0], self.cara)
+        self.assertEqual((cara.delivered, cara.complete, cara.verified), (3, 3, 2))
+        self.assertEqual((cara.delivered_due, cara.due), (3, 4))
+        self.assertEqual((cara.due_progress, cara.overdue), (75, 1))
+        self.assertEqual(cara.visits_delivered, 3)
 
     def test_the_list_behind_a_count(self):
         late = self._work(self.cara, "school_visit")

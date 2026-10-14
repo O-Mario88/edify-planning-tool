@@ -152,8 +152,9 @@ def _ia_staff_queue(request, activities=None):
         base.filter(status=ActivityStatus.AWAITING_IA_VERIFICATION)
         .exclude(delivery_type="partner")
         .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
-        # A CCEO's field work is verified by their Programme Lead (owner,
-        # 2026-10-12), whichever path filed it: Completion Reviews lists it.
+        # A CCEO's and a lead's field work is verified by a Programme Lead
+        # (owner, 2026-10-12 and 2026-10-14), whichever path filed it:
+        # Completion Reviews lists it.
         .exclude(lead_verified_q())
     )
     own = _ia_own_ids(request)

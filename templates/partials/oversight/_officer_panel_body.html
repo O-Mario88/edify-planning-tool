@@ -76,7 +76,7 @@ and `forloop` from the including context.{% endcomment %}
           </thead>
           <tbody class="divide-y edify-border text-sm">
             {% for item in cv_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"{% if item.row_state == "done" %} data-done{% elif item.row_state == "overdue" %} data-overdue{% endif %}>
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {% firstof item.school_code item.school_id "—" %}
               </td>
@@ -123,6 +123,8 @@ and `forloop` from the including context.{% endcomment %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
                 {% elif item.completion_gap %}
                 <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
+                {% elif item.finished_early %}
+                <span class="pill pill-success text-xs font-semibold" title="Done on {{ item.early_on|date:'j M Y' }}, before its planned day">Completed Early</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -183,7 +185,7 @@ and `forloop` from the including context.{% endcomment %}
           </thead>
           <tbody class="divide-y edify-border text-sm">
             {% for item in kv_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"{% if item.row_state == "done" %} data-done{% elif item.row_state == "overdue" %} data-overdue{% endif %}>
               <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                 {% firstof item.school_code item.school_id "—" %}
               </td>
@@ -233,6 +235,8 @@ and `forloop` from the including context.{% endcomment %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
                 {% elif item.completion_gap %}
                 <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
+                {% elif item.finished_early %}
+                <span class="pill pill-success text-xs font-semibold" title="Done on {{ item.early_on|date:'j M Y' }}, before its planned day">Completed Early</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -292,7 +296,7 @@ and `forloop` from the including context.{% endcomment %}
           </thead>
           <tbody class="divide-y edify-border text-sm">
             {% for item in cm_pager.rows %}
-            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"{% if item.row_state == "done" %} data-done{% elif item.row_state == "overdue" %} data-overdue{% endif %}>
               <td class="px-4 py-2.5 font-semibold min-w-[200px]">
                 {% if item.cluster_id %}
                 <a href="/clusters/{{ item.cluster_id }}" class="hover:underline text-slate-900 dark:text-white">{% firstof item.cluster_name item.context_label %}</a>
@@ -331,6 +335,8 @@ and `forloop` from the including context.{% endcomment %}
                 <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
                 {% elif item.completion_gap %}
                 <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
+                {% elif item.finished_early %}
+                <span class="pill pill-success text-xs font-semibold" title="Done on {{ item.early_on|date:'j M Y' }}, before its planned day">Completed Early</span>
                 {% else %}
                 <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                   {{ item.activity_status|status_label }}
@@ -392,7 +398,7 @@ and `forloop` from the including context.{% endcomment %}
           </thead>
           <tbody class="divide-y edify-border text-sm">
               {% for item in pt_pager.rows %}
-              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"{% if item.row_state == "done" %} data-done{% elif item.row_state == "overdue" %} data-overdue{% endif %}>
                 <td class="px-4 py-2.5 font-mono text-xs text-slate-500">
                   {% if item.school_code and item.school_code != '—' %}{{ item.school_code }}{% elif item.school_id %}{{ item.school_id }}{% else %}—{% endif %}
                 </td>
@@ -452,6 +458,8 @@ and `forloop` from the including context.{% endcomment %}
                   <span class="pill pill-warn text-xs font-semibold">Partner yet to schedule</span>
                   {% elif item.completion_gap %}
                   <span class="pill pill-warn text-xs font-semibold" data-completion-gap>{{ item.completion_gap }}</span>
+                  {% elif item.finished_early %}
+                  <span class="pill pill-success text-xs font-semibold" title="Done on {{ item.early_on|date:'j M Y' }}, before its planned day">Completed Early</span>
                   {% else %}
                   <span class="pill {% if item.activity_status == 'completed' or item.activity_status == 'ia_verified' %}pill-success{% elif item.activity_status == 'scheduled' %}pill-info{% else %}pill-neutral{% endif %} text-xs font-semibold">
                     {{ item.activity_status|status_label }}

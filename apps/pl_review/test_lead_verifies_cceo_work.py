@@ -12,8 +12,10 @@ Pinned here:
      it: one an older path left with Impact Assessment is listed on Completion
      Reviews, cleared there, and gone from IA's queue and IA's Verify.
   3. Routing reads the owner: a completion somebody else submits for a CCEO
-     still goes to the CCEO's lead. Partner work, and a lead's own field work,
-     stay with Impact Assessment.
+     still goes to the CCEO's lead. Partner work stays with Impact Assessment.
+  4. A lead's own field work is the lead's to verify (owner, 2026-10-14: "IA
+     does not verify CCEO and PL work. it is the PL to verify everything";
+     asked who verifies a lead's own: "The PL verifies it").
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from django.utils import timezone
 
 from apps.activities.ia_models import IAVerification
 from apps.activities.models import Activity
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.pl_review import services
@@ -164,7 +166,7 @@ class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):
 
         queued = set(_ia_staff_queue(_Request()).values_list("id", flat=True))
         self.assertNotIn(work.id, queued, "a CCEO's completion is the lead's")
-        self.assertIn(own.id, queued, "a lead's own field work stays with IA")
+        self.assertNotIn(own.id, queued, "a lead's own field work is the lead's")
 
         client = self.as_user(self.ia_user)
         response = client.get(f"/ia/verification/{work.id}/")
@@ -178,7 +180,7 @@ class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):
         work.refresh_from_db()
         self.assertEqual(work.status, "awaiting_ia_verification")
 
-    def test_the_lead_cannot_take_partner_work_or_a_leads_own_work(self):
+    def test_the_lead_cannot_take_partner_work(self):
         partner_work = self._stuck(
             None,
             delivery_type="partner",
@@ -193,13 +195,33 @@ class TheLeadClearsWorkLeftWithIaTest(ReviewFixture):
             partner_work.id,
             [row["id"] for row in services.review_register(self.admin_user)["rows"]],
         )
-        own = self._stuck(self.rival_pl.id, salesforce_activity_id="SVE-9003")
-        self.assertNotIn(
-            own.id,
-            [row["id"] for row in services.review_register(self.admin_user)["rows"]],
+
+    def test_a_lead_verifies_their_own_work_and_no_other_lead_s(self):
+        own = self._completion(
+            self.pl.id, status="submitted_to_pl", salesforce_activity_id="SVE-9003"
         )
-        with self.assertRaises(BadRequest):
-            services.confirm(own.id, self.admin_user)
+        older = self._stuck(self.pl.id, salesforce_activity_id="SVE-9004")
+        listed = [row["id"] for row in services.review_register(self.pl_user)["rows"]]
+        self.assertIn(own.id, listed)
+        self.assertIn(older.id, listed)
+        # Another lead does not supervise this one.
+        with self.assertRaises(Forbidden):
+            services.confirm(own.id, self.rival_pl_user)
+        services.confirm(own.id, self.pl_user)
+        services.confirm(older.id, self.pl_user)
+        for work in (own, older):
+            work.refresh_from_db()
+            self.assertEqual(work.status, "ia_verified")
+            self.assertEqual(work.pl_reviewed_by, self.pl_user.id)
+
+    def test_an_officer_still_cannot_verify_their_own(self):
+        own = self._completion(
+            self.james.id, status="submitted_to_pl", salesforce_activity_id="SVE-9005"
+        )
+        with self.assertRaises(Forbidden):
+            services.confirm(own.id, self.james_user)
+        self.assertFalse(services.verifies_own_work(self.james_user))
+        self.assertTrue(services.verifies_own_work(self.pl_user))
 
 
 class RoutingReadsTheOwnerTest(ReviewFixture):
@@ -224,13 +246,13 @@ class RoutingReadsTheOwnerTest(ReviewFixture):
         work.refresh_from_db()
         self.assertEqual(work.status, "submitted_to_pl")
 
-    def test_a_leads_own_submission_goes_to_impact_assessment(self):
+    def test_a_leads_own_submission_goes_to_the_lead(self):
         from apps.activities.services import submit_for_review
 
         work = self._submittable(self.pl.id, salesforce_activity_id="SVE-7008")
         submit_for_review(work.id, self.pl_user)
         work.refresh_from_db()
-        self.assertEqual(work.status, "awaiting_ia_verification")
+        self.assertEqual(work.status, "submitted_to_pl")
 
     def test_the_rule_as_a_predicate(self):
         cceo_work = self._completion(self.james.id)
@@ -240,18 +262,13 @@ class RoutingReadsTheOwnerTest(ReviewFixture):
         )
         self.assertTrue(services.routes_to_lead(cceo_work, self.admin_user))
         self.assertTrue(services.routes_to_lead(lead_work, self.james_user))
-        self.assertFalse(services.routes_to_lead(lead_work, self.pl_user))
+        self.assertTrue(services.routes_to_lead(lead_work, self.pl_user))
+        self.assertTrue(services.routes_to_lead(lead_work, self.admin_user))
         self.assertFalse(services.routes_to_lead(partner_work, self.james_user))
         self.assertTrue(services.lead_verifies(cceo_work))
         self.assertFalse(services.lead_verifies(partner_work))
-        self.assertFalse(services.lead_verifies(lead_work))
-        self.assertTrue(
-            Activity.objects.filter(
-                services.lead_verified_q(), id=cceo_work.id
-            ).exists()
-        )
-        self.assertFalse(
-            Activity.objects.filter(
-                services.lead_verified_q(), id=lead_work.id
-            ).exists()
-        )
+        self.assertTrue(services.lead_verifies(lead_work))
+        for work in (cceo_work, lead_work):
+            self.assertTrue(
+                Activity.objects.filter(services.lead_verified_q(), id=work.id).exists()
+            )

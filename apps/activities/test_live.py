@@ -334,28 +334,31 @@ class LiveRegionsContract(SimpleTestCase):
         ).render(Context({}))
         self.assertIn('id="programme-schools-context" data-live-region', strip)
 
-    def test_the_listener_waits_for_ticked_rows_and_rests_between_reads(self):
-        """A page is not read again under a row somebody has ticked, in any
-        region's table. And an open page rests after a read: a second, as it
-        always did, so a person's own save is on their page at once; twice as
-        long each time a change arrives while it is still resting, to sixteen
-        seconds, so a busy day does not become every open page reading itself
-        without pause (tests/js/live-regions.test.js runs the clock)."""
+    def test_the_reader_waits_for_ticked_rows(self):
+        """A page finishing itself is not read again under a row somebody
+        has ticked, in any region's table (tests/js/live-regions.test.cjs
+        runs the clock)."""
         script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
         self.assertIn(
             "REGION + ' td input[type=\"checkbox\"]:checked:not(:disabled), '",
             script,
         )
-        # A read costs the server what it took: the rest is three times that,
-        # or a second (2026-10-12).
-        self.assertIn("Math.max(1000 << spell, 3 * (Date.now() - began))", script)
-        self.assertIn("spell = held ? Math.min(spell + 1, 4) : 0;", script)
 
-    def test_the_listener_is_loaded_by_the_shell_and_names_the_event(self):
+    def test_the_page_follows_nothing_until_refresh(self):
+        """Owner, 2026-10-14: "behave like salesforce where a user has to
+        refresh for the data to be updated ... everything is updated upon
+        refresh icon clicked". The shell still loads the script, for a page
+        finishing itself; it opens no stream and a save reads nothing."""
         self.assertIn("js/live-regions.js", (TEMPLATES / "base.html").read_text())
         script = (settings.BASE_DIR / "static/js/live-regions.js").read_text()
-        self.assertIn(f"'{live.EVENT}'", script)
-        self.assertIn("/api/realtime/stream", script)
+        code = "\n".join(
+            line
+            for line in script.splitlines()
+            if not line.lstrip().startswith(("*", "/*", "//"))
+        )
+        self.assertNotIn("EventSource", code)
+        self.assertNotIn("/api/realtime/stream", code)
+        self.assertIn("function saved() {}", code)
 
     def test_the_stream_says_on_connecting_when_the_plan_last_changed(self):
         view = (settings.BASE_DIR / "apps/realtime/views.py").read_text()

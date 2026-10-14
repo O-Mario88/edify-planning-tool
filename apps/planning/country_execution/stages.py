@@ -6,12 +6,14 @@ activity, PL-review, IA and closure services already make.
 
 The spine, as the platform runs it (2026-09-28):
 
-* **Staff work by a CCEO** — scheduled → started (``start_completion``) →
-  evidence → submitted to the Programme Lead (``submitted_to_pl``) → the Lead
-  approves, which verifies it (``pl_review.confirm`` sets ``ia_verified``), or
-  returns it (``returned_by_pl``) → closure.
-* **A Lead's own work, and other staff** — submitted straight to IA
-  (``awaiting_ia_verification``) → IA verifies or returns → closure.
+* **Staff work by a CCEO or a Lead** — scheduled → started
+  (``start_completion``) → submitted to the Programme Lead
+  (``submitted_to_pl``) → the Lead approves, which verifies it
+  (``pl_review.confirm`` sets ``ia_verified``), or returns it
+  (``returned_by_pl``) → closure. A Lead verifies their own work (owner,
+  2026-10-14: "IA does not verify CCEO and PL work").
+* **Other staff** — submitted straight to IA (``awaiting_ia_verification``)
+  → IA verifies or returns → closure.
 * **Partner work** — assigned → Partner-scheduled → started → evidence →
   straight to IA (no PL stage: the Partner branch goes direct) → IA verifies
   (payment follows) or returns it to the Partner (``returned_by_ia``).

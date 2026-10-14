@@ -54,7 +54,7 @@ to tick.{% endcomment %}
 </thead>
 <tbody>
 {% for row in group_trainings_pager.rows %}
-<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}>
+<tr{% if row.day_off %} class="mp-dayoff-row"{% endif %}{% if row.row_state == "done" %} data-done{% elif row.row_state == "overdue" %} data-overdue{% endif %}>
 {% if selectable %}{% if row.can_pick %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=row.cluster_name pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
 <td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{% cluster_link row.cluster_name row.cluster_id %}{% endif %}</td>
 <td class="text-slate-600 font-medium" data-label="District">{{ row.cluster_district|default:"—" }}</td>

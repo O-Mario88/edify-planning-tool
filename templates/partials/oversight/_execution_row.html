@@ -7,7 +7,10 @@ activities behind them.
 {% endcomment %}
 <tr{% if is_subtotal %} class="font-semibold" data-execution-subtotal{% endif %}>
   <th scope="row" class="px-3 py-2 text-left" data-record-title>{% if is_subtotal %}{{ label }}{% else %}{{ row.name }}{% if row.role_label %} <span class="edify-text-muted">{% if row.is_lead %}PL{% else %}{{ row.role_label }}{% endif %}</span>{% endif %}{% endif %}</th>
-  <td class="px-3 py-2 text-right tabular-nums" data-label="Visits delivered"><span class="edify-status-text" data-edify-tone="{{ row.target_tone }}">{{ row.visits_delivered|intcomma }}</span><span class="edify-text-muted"> / {{ row.visits_target|intcomma }}{% if row.target_progress is not None %} · {{ row.target_progress }}%{% endif %}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Visits Completed"><span class="edify-status-text" data-edify-tone="{{ row.target_tone }}">{{ row.visits_delivered|intcomma }}</span><span class="edify-text-muted"> / {{ row.visits_target|intcomma }}{% if row.target_progress is not None %} · {{ row.target_progress }}%{% endif %}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining to Visit">{{ row.remaining_to_visit|intcomma }}</td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Schools Trained"><span class="edify-status-text" data-edify-tone="{{ row.training_tone }}">{{ row.schools_trained|intcomma }}</span><span class="edify-text-muted"> / {{ row.training_portfolio|intcomma }}{% if row.training_progress is not None %} · {{ row.training_progress }}%{% endif %}</span></td>
+  <td class="px-3 py-2 text-right tabular-nums" data-label="Remaining to Train">{{ row.remaining_to_train|intcomma }}</td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Delivered of due"><span class="edify-status-text" data-edify-tone="{{ row.due_tone }}">{{ row.delivered_due|intcomma }}</span><span class="edify-text-muted"> / {{ row.due|intcomma }}{% if row.due_progress is not None %} · {{ row.due_progress }}%{% endif %}</span></td>
   <td class="px-3 py-2 text-right tabular-nums" data-label="Complete">{{ row.complete|intcomma }}<span class="edify-text-muted"> / {{ row.delivered|intcomma }}</span></td>
   {% for column, count in row.list_cells %}

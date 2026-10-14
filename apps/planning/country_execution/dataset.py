@@ -514,7 +514,9 @@ def build(
             due=due,
             start=start,
             pl_reviewed_at=row["pl_reviewed_at"],
-            reviewer_path="pl" if kind == "cceo" else "ia",
+            # A CCEO's work and a lead's own are verified by a Programme Lead
+            # (owner, 2026-10-14: "IA does not verify CCEO and PL work").
+            reviewer_path="pl" if kind in ("cceo", "pl_personal") else "ia",
             school_operating=(row["school__operational_status"] or "")
             not in st.NOT_OPERATING,
             funds_pending=row["id"] in funds,
