@@ -293,6 +293,11 @@ _CONFIRMABLE = (
 
 def confirm_advance(advance_id: str, principal) -> dict:
     """Responsible user requests an advance → CONFIRMED_FOR_ADVANCE (Accountant may disburse)."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     adv = _get_for_owner(advance_id, principal)
     if adv.status not in _CONFIRMABLE:
         raise BadRequest(f"Cannot confirm an advance in status '{adv.status}'.")
@@ -310,6 +315,11 @@ def confirm_advance(advance_id: str, principal) -> dict:
 def self_funded(advance_id: str, principal) -> dict:
     """Responsible user elects to use own funds → SELF_FUNDED_PENDING_REIMBURSEMENT
     (no advance disbursement; reimbursement opens after completion + approval)."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     adv = _get_for_owner(advance_id, principal)
     if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot change a {adv.status} advance to self-funded.")
@@ -327,6 +337,11 @@ def self_funded(advance_id: str, principal) -> dict:
 def not_requested(advance_id: str, principal) -> dict:
     """Responsible user declines funds → NOT_REQUESTED (budget stays visible for
     planning; Accountant does not disburse)."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     adv = _get_for_owner(advance_id, principal)
     if adv.status in MONEY_MOVED_ADVANCE_STATUSES:
         raise BadRequest(f"Cannot cancel a {adv.status} advance.")
@@ -1000,6 +1015,11 @@ def submit_reimbursement(advance_id: str, data: dict, principal) -> dict:
 
     select_for_update() + the status check inside this atomic block close the
     double-submit race the same way submit_accountability() does."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     with transaction.atomic():
         adv = AdvanceRequest.objects.select_for_update().filter(id=advance_id).first()
         if not adv:

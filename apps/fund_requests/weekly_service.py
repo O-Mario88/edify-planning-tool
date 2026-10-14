@@ -359,6 +359,11 @@ def request_advance(request_id: str, principal, *, funding_source="advance") -> 
     PL/PC/IA/Accountant -> submitted_to_cd, CD/Admin -> straight to
     confirmed_for_advance. Only an APPROVED request reaches the accountant
     queue — submission alone never does."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     if funding_source not in ("advance", "self_fund"):
         raise BadRequest("Unknown funding source.")
     with transaction.atomic():
@@ -657,11 +662,21 @@ def self_funded(request_id: str, principal) -> dict:
     claim. Linked advances follow the normal disbursement/receipt/accountability
     chain so this choice cannot bypass approval or cause a second payment.
     """
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     return request_advance(request_id, principal, funding_source="self_fund")
 
 
 def not_requested(request_id: str, principal) -> dict:
     """Mark request as not requested yet."""
+    # Figures a save left to be priced after its answer are settled before
+    # this reads or commits them (apps.daily_visit_batches.costs_follow).
+    from apps.daily_visit_batches.costs_follow import settled_first
+
+    settled_first()
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()

@@ -145,6 +145,11 @@ def take_back_for_plan_change(activity, principal, *, days=()) -> list:
     if not taken:
         return []
 
+    # What the owner is told below is read from the week as the change
+    # leaves it, so the change is priced inside this save.
+    from apps.daily_visit_batches.costs_follow import priced_in_this_save
+
+    priced_in_this_save()
     for wfr, _was in taken:
         # The freeze has lifted: repair a day's pool left over-allocated by a
         # cancellation made while the week was locked, as a return does.
@@ -350,6 +355,13 @@ def planner_change(principal=None, activity=None, *, what: str | None = None):
         _change_in_hand.reset(token)
     if change["totals"]:
         transaction.on_commit(lambda: _tell_monthly(change))
+
+
+def change_in_hand() -> dict | None:
+    """The planner's change being made now, or None: for a save that prices
+    after its answer and must price as that change
+    (`apps.daily_visit_batches.costs_follow`)."""
+    return _change_in_hand.get()
 
 
 def follows_plan_change(fund_request) -> bool:
