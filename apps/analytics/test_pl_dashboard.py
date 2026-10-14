@@ -639,12 +639,14 @@ class PLDashboardTest(TestCase):
         self.assertNotIn("School B1", urgent)
 
     def test_ssa_rollout_counts_each_school_once_in_its_furthest_state(self):
+        # Returned beside the year's confirmed one: one live SSA a school a
+        # year (owner, 2026-10-14).
         SsaRecord.objects.create(
             school=self.sch_a1,
             date_of_ssa=timezone.now(),
             fy=FY,
             quarter="Q1",
-            verification_status="pending",
+            verification_status="returned",
             uploaded_by="ia",
         )
         SsaRecord.objects.create(

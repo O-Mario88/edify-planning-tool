@@ -1,0 +1,25 @@
+{% comment %}
+"+ Add School" results in a completion drawer (register_school_search_view).
+Choosing one attaches it to this session's register, ticked as attended
+(owner, 2026-10-14); it can be unticked before submitting. A school from
+another cluster is marked visiting — its attendance is recorded against this
+session and it does not join the cluster.
+{% endcomment %}
+{% if too_short %}
+<p class="edify-text-caption text-slate-500 px-1">Type at least two letters of the name, or the school ID.</p>
+{% elif query and not schools %}
+<p class="edify-text-caption text-slate-500 px-1" role="status">No school in Edify matches &ldquo;{{ query }}&rdquo;.</p>
+{% elif schools %}
+<ul class="rounded-control border border-slate-200 divide-y divide-slate-100" aria-label="Schools found">
+{% for s in schools %}
+<li class="flex items-center gap-3 px-3 py-2">
+<span class="min-w-0 flex-1">
+<span class="block text-[13px] font-semibold text-slate-800 truncate">{{ s.name }}</span>
+<span class="block edify-text-caption font-semibold text-slate-500 truncate">{{ s.school_id }}{% if s.district %} &middot; {{ s.district.name }}{% endif %} &middot; {% if s.cluster_id == act_cluster_id %}this cluster{% elif s.cluster_name %}{{ s.cluster_name }}{% else %}no cluster{% endif %}</span>
+</span>
+<button type="button" class="btn btn-secondary h-8 shrink-0"
+@click="addSchool({ id: '{{ s.id|escapejs }}', name: '{{ s.name|escapejs }}', schoolId: '{{ s.school_id|escapejs }}', clusterId: '{{ s.cluster_id|default:''|escapejs }}', clusterName: '{{ s.cluster_name|escapejs }}', district: '{{ s.district.name|default:''|escapejs }}' })">Add</button>
+</li>
+{% endfor %}
+</ul>
+{% endif %}

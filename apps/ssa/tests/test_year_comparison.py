@@ -83,10 +83,12 @@ class YearComparisonTest(TestCase):
 
     def test_a_school_counts_its_latest_confirmed_record_of_the_year(self):
         school = self.schools[0]
-        self.record(school, self.this_fy, 3.0, day=1)
+        # One live SSA a school a year (owner, 2026-10-14): an earlier
+        # reading of the year that was returned, and a newer one also
+        # returned, are not the year's score.
+        self.record(school, self.this_fy, 3.0, day=1, status="returned")
         self.record(school, self.this_fy, 8.0, day=20)
-        # Newer still, and not confirmed: it is not the year's score yet.
-        self.record(school, self.this_fy, 1.0, day=25, status="pending")
+        self.record(school, self.this_fy, 1.0, day=25, status="returned")
 
         result = intervention_comparison([school.id], self.this_fy)
 

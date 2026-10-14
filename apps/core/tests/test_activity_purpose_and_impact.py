@@ -54,11 +54,12 @@ class ActivityPurposeAndImpactTest(TestCase):
         # impact, planning gates) is required to ignore unverified records —
         # see apps.ssa.services.latest_applicable_record. These fixtures
         # represent real decision-driving assessments, so they are confirmed.
-        # Pre SSA (before activity date: 2026-06-15)
+        # Pre SSA (before activity date: 2026-06-15), the year before: a
+        # school has one SSA a financial year (owner, 2026-10-14).
         self.pre_ssa = SsaRecord.objects.create(
             school=self.school,
-            date_of_ssa=datetime.datetime(2026, 6, 1, tzinfo=datetime.timezone.utc),
-            fy="2026",
+            date_of_ssa=datetime.datetime(2025, 6, 1, tzinfo=datetime.timezone.utc),
+            fy="2025",
             quarter="Q4",
             uploaded_by="STF-01",
             average_score=5.0,
@@ -123,11 +124,11 @@ class ActivityPurposeAndImpactTest(TestCase):
         self.assertEqual(impact["preScore"], 4.0)
         self.assertEqual(impact["postScore"], 6.0)
         self.assertEqual(impact["delta"], 2.0)
-        # The pre/post pair here is 29 days apart — real, but NOT an annual
-        # comparison. Callers must be able to tell the difference rather
-        # than presenting it as official annual impact (spec §12).
-        self.assertEqual(impact["intervalDays"], 29)
-        self.assertFalse(impact["annualComparison"])
+        # One SSA a school a year (owner, 2026-10-14): the pre reading is the
+        # year before, so the pair is an annual comparison (spec §12), 394
+        # days apart. A pair inside one year can no longer exist.
+        self.assertEqual(impact["intervalDays"], 394)
+        self.assertTrue(impact["annualComparison"])
 
     def test_activity_impact_ignores_unverified_ssa(self):
         """Official impact must be computed only from CONFIRMED SSA — a

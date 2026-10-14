@@ -230,8 +230,8 @@ def upload(data: dict, principal) -> dict:
 
     with transaction.atomic():
         # Serialize writes for one school so two simultaneous submissions
-        # cannot save the same assessment twice. Multiple assessment dates in
-        # one FY remain valid for before/after and monitoring trends.
+        # cannot both take the school's year: the second waits here, then
+        # reads the first's record below and is refused.
         school = School.objects.select_for_update().get(pk=school.pk)
 
         # Scores collected on a visit belong to that visit (IA review,
@@ -260,15 +260,14 @@ def upload(data: dict, principal) -> dict:
                 "The SSA scores recorded on this visit are already confirmed. "
                 "Ask Impact Assessment to return them if they need correcting."
             )
-        duplicates = SsaRecord.objects.filter(school=school, date_of_ssa=date)
-        if existing is not None:
-            duplicates = duplicates.exclude(pk=existing.pk)
-        if duplicates.exists():
-            raise BadRequest(
-                f"SSA score for {date.date().isoformat()} already exists for "
-                f"{school.name}. "
-                "Open the existing record instead of creating a duplicate."
-            )
+        # One SSA a school a year (owner, 2026-10-14; apps.ssa.creation): a
+        # pending or confirmed record of the assessment's year refuses a
+        # second. The visit's own record, corrected in place, keeps its year.
+        from apps.ssa.creation import assert_year_free, year_guard
+
+        assert_year_free(
+            school, fy, exclude_pk=existing.pk if existing is not None else None
+        )
 
         fields = {
             "date_of_ssa": date,
@@ -288,16 +287,21 @@ def upload(data: dict, principal) -> dict:
             "returned_by_user_id": None,
             "returned_at": None,
         }
-        if existing is not None:
-            for name, value in fields.items():
-                setattr(existing, name, value)
-            existing.save()
-            existing.scores.all().delete()
-            record = existing
-        else:
-            record = SsaRecord.objects.create(
-                school=school, source_activity_id=source_activity_id, **fields
-            )
+        # The database holds the rule as well: a write that loses a race the
+        # lock above did not see (another path, another process) is refused
+        # in the same words, and this savepoint leaves the caller's
+        # transaction usable.
+        with year_guard(fy), transaction.atomic():
+            if existing is not None:
+                for name, value in fields.items():
+                    setattr(existing, name, value)
+                existing.save()
+                existing.scores.all().delete()
+                record = existing
+            else:
+                record = SsaRecord.objects.create(
+                    school=school, source_activity_id=source_activity_id, **fields
+                )
         SsaScore.objects.bulk_create(
             [
                 SsaScore(
@@ -316,9 +320,32 @@ def upload(data: dict, principal) -> dict:
         # (`verify_record`), and only for a record of the current FY.
         _recompute_readiness(school)
 
-        if existing is not None:
-            from apps.audit.services import log as audit_log
+        from apps.audit.services import log as audit_log
 
+        if existing is None:
+            # Every SSA created by hand — a school profile, the manual entry
+            # page, the API, a visit — leaves who, as what, for which school
+            # and year, and the scores (owner, 2026-10-14).
+            audit_log(
+                action="ssa_create",
+                subject_kind="SsaRecord",
+                subject_id=record.id,
+                actor_id=getattr(principal, "user_id", None),
+                actor_role=getattr(principal, "active_role", None),
+                payload={
+                    "schoolId": school.id,
+                    "fy": fy,
+                    "dateOfSsa": date.date().isoformat(),
+                    "averageScore": average,
+                    "scores": {
+                        s["intervention"]: s["score"] for s in normalized_scores
+                    },
+                    "source": source,
+                    "channel": str(data.get("entryChannel") or ""),
+                    "sourceActivityId": source_activity_id,
+                },
+            )
+        else:
             audit_log(
                 action="ssa_rekeyed",
                 subject_kind="SsaRecord",
@@ -794,20 +821,27 @@ def verify_record(record, principal):
     if record.verification_status == VerificationStatus.CONFIRMED.value:
         return record
 
+    # A returned or flagged record does not hold its school's year, so
+    # another may have taken it meanwhile; confirming this one would give the
+    # school two (owner, 2026-10-14: one SSA a school a year).
+    from apps.ssa.creation import assert_year_free, year_guard
+
+    assert_year_free(record.school_id, record.fy, exclude_pk=record.pk)
     record.verification_status = VerificationStatus.CONFIRMED.value
     record.verified_by_user_id = _actor_id(principal)
     record.verified_at = timezone.now()
     # A save with update_fields still fires post_save, which is what carries a
     # confirmation to Business Transformation, recommendations and project
     # measurement (apps.business_transformation.signals, apps.projects.signals).
-    record.save(
-        update_fields=[
-            "verification_status",
-            "verified_by_user_id",
-            "verified_at",
-            "updated_at",
-        ]
-    )
+    with year_guard(record.fy), transaction.atomic():
+        record.save(
+            update_fields=[
+                "verification_status",
+                "verified_by_user_id",
+                "verified_at",
+                "updated_at",
+            ]
+        )
     _recompute_readiness(record.school)
 
     from apps.projects.baselines import enqueue_baseline_capture

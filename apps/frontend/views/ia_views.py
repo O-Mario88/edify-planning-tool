@@ -666,6 +666,7 @@ def ia_review_workspace_view(request, activity_id):
 
     # Fetch cluster schools for school-level attendance list verification
     cluster_schools = []
+    visiting_schools = []
     if a.cluster:
         from apps.schools.models import School
 
@@ -674,6 +675,19 @@ def ia_review_workspace_view(request, activity_id):
                 cluster_id=a.cluster_id, deleted_at__isnull=True
             ).order_by("name")
         )
+        # Schools from outside the cluster recorded as attending. They were
+        # never invited, so the reviewer sees them apart from the members
+        # rather than not at all (2026-10-14).
+        from apps.activities.models import ClusterActivityAttendance
+
+        member_ids = {s.id for s in cluster_schools}
+        visiting_schools = [
+            row.school
+            for row in ClusterActivityAttendance.objects.filter(
+                activity=a, is_guest=True, attended=True
+            ).select_related("school")
+            if row.school_id not in member_ids
+        ]
 
     from apps.activities.verification_analytics import _partner_names, _staff_names
     from apps.pl_review.services import lead_verifies
@@ -695,6 +709,7 @@ def ia_review_workspace_view(request, activity_id):
         "timeline": timeline,
         "comments": comments,
         "cluster_schools": cluster_schools,
+        "visiting_schools": visiting_schools,
         "ssa_scores": ssa_scores,
         # The most common reasons first, the owner's own example at the top
         # (2026-09-24: "the participants are not entered" in Salesforce).

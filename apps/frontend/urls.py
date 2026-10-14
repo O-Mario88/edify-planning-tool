@@ -548,6 +548,11 @@ urlpatterns = [
         name="school_onboard_drawer",
     ),
     path(
+        "schools/cluster-options",
+        school_views.school_onboard_cluster_options_view,
+        name="school_onboard_cluster_options",
+    ),
+    path(
         "schools/partial-intelligence/<str:school_id>",
         school_views.school_intelligence_partial,
         name="school_intelligence_partial",
@@ -596,6 +601,11 @@ urlpatterns = [
         "schools/<str:school_id>/add-to-cluster",
         school_views.add_to_cluster_drawer_view,
         name="add_to_cluster_drawer",
+    ),
+    path(
+        "schools/<str:school_id>/ssa-entry",
+        school_views.school_ssa_entry_view,
+        name="school_ssa_entry",
     ),
     path(
         "schools/<str:school_id>/edit-drawer",
@@ -1289,6 +1299,11 @@ urlpatterns = [
         "my-plan/<str:activity_id>/complete-drawer",
         my_plan_views.complete_drawer_view,
         name="complete_drawer",
+    ),
+    path(
+        "my-plan/<str:activity_id>/register-school-search",
+        my_plan_views.register_school_search_view,
+        name="register_school_search",
     ),
     path(
         "my-plan/<str:activity_id>/reschedule-drawer",

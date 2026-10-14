@@ -121,11 +121,17 @@ class CohortGuardrailTests(VisitEffectivenessTestBase):
         self.assertEqual(c.excluded["missing_followup_ssa"], 1)
 
     def test_duplicate_confirmed_records_resolve_to_latest_and_school_counts_once(self):
+        # A second confirmed record of a year is refused by the database (one
+        # SSA a school a year, owner 2026-10-14), so the school counts once on
+        # its one baseline.
+        from django.db import IntegrityError, transaction
+
         self._pair(self.core)
-        self._ssa(self.core, "2024", _aware(2024, 9, 1), 6.5)  # later duplicate
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self._ssa(self.core, "2024", _aware(2024, 9, 1), 6.5)
         c = S.build_cohort(self.cd)
         self.assertEqual(len(c.schools), 1)
-        self.assertEqual(float(c.schools.iloc[0]["baseline_avg"]), 6.5)
+        self.assertEqual(float(c.schools.iloc[0]["baseline_avg"]), 4.0)
 
     def test_fy2025_is_blocked_by_methodology(self):
         d = S.build_dashboard(self.cd, {"baseline_fy": "2025"})

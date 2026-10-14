@@ -701,9 +701,14 @@ class OutcomesAndProgressTests(EvidenceFixture):
         self._ssa(self.school, date(2026, 2, 1), {cb: 6, wog: 7}, fy="2026")
         self._ssa(self.school2, date(2025, 2, 1), {cb: 6, wog: 6}, fy="2025")
         self._ssa(self.school2, date(2026, 2, 1), {cb: 5, wog: 5}, fy="2026")
-        # A newer unconfirmed record changes nothing; another country is out.
+        # A newer unconfirmed (returned: one live SSA a school a year, owner
+        # 2026-10-14) record changes nothing; another country is out.
         self._ssa(
-            self.school2, date(2026, 3, 1), {cb: 9, wog: 9}, status="pending", fy="2026"
+            self.school2,
+            date(2026, 3, 1),
+            {cb: 9, wog: 9},
+            status="returned",
+            fy="2026",
         )
         self._ssa(self.ke_school, date(2025, 2, 1), {cb: 2, wog: 2}, fy="2025")
         self._ssa(self.ke_school, date(2026, 2, 1), {cb: 9, wog: 9}, fy="2026")
@@ -739,7 +744,7 @@ class OutcomesAndProgressTests(EvidenceFixture):
         cb = "christlike_behaviour"
         self._ssa(self.school, date(2025, 2, 1), {cb: 4}, fy="2025")
         confirmed = self._ssa(self.school, date(2026, 2, 1), {cb: 6}, fy="2026")
-        self._ssa(self.school, date(2026, 4, 1), {cb: 9}, status="pending", fy="2026")
+        self._ssa(self.school, date(2026, 4, 1), {cb: 9}, status="returned", fy="2026")
         from apps.analytics.ia_workflow import school_progress
 
         progress = school_progress(self.school)

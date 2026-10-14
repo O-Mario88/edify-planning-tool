@@ -94,7 +94,7 @@ class CDAnalyticsTest(TestCase):
         self._ssa(self.sch_b1, PREV, 5.0, {"leadership": 5.0}, "confirmed")
         self._ssa(self.sch_b1, FY, 5.5, {"leadership": 5.0}, "confirmed")
         # An UNCONFIRMED FY2026 record with a wild score → must be excluded everywhere.
-        self._ssa(self.sch_a1, FY, 1.0, {"leadership": 1.0}, "pending")
+        self._ssa(self.sch_a1, FY, 1.0, {"leadership": 1.0}, "returned")
 
         # Activities (staff-delivered) — a1 visit + training, b1 visit.
         self.act_a1_visit = self._act(

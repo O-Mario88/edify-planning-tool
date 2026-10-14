@@ -397,13 +397,16 @@ def ssa_upload_preview_view(request, batch_id):
         result = import_ssa_batch(batch, request.user)
         messages.success(
             request,
-            f"Import finalized: {result['created']} records wait for verification, {result['unmatched']} unmatched rows queued.",
+            f"Import finalized: {result['created']} records wait for verification, "
+            f"{result.get('duplicate', 0)} skipped because the school already has "
+            f"that year's SSA, {result['unmatched']} unmatched rows queued.",
         )
         return local_redirect(f"/ssa/upload/{batch.id}/result/")
 
     ready_rows = rows.filter(status="ready")
     unmatched_rows = rows.filter(status="unmatched")
     blocked_rows = rows.filter(status="blocked")
+    skipped_rows = rows.filter(status="duplicate")
 
     ready_count = ready_rows.count()
     unmatched_count = unmatched_rows.count()
@@ -417,6 +420,8 @@ def ssa_upload_preview_view(request, batch_id):
         "ready_count": ready_count,
         "unmatched_count": unmatched_count,
         "blocked_count": blocked_count,
+        "skipped_rows": skipped_rows,
+        "skipped_count": skipped_rows.count(),
         "total_count": ready_count + unmatched_count + blocked_count,
     }
     return render(request, "pages/ssa/upload_preview.html", context)
@@ -455,11 +460,30 @@ def ssa_upload_result_view(request, batch_id):
         }
         for row in blocked["rows"]
     ]
+    # Rows skipped because the school's year already holds an SSA, or an
+    # earlier row of the file gives it one (owner, 2026-10-14): listed, so
+    # the uploader sees the existing data was protected on purpose.
+    skipped = db_page(
+        rows.filter(status="duplicate").order_by("row_number"),
+        request.GET.get("skipped_page"),
+    )
+    skipped["rows"] = [
+        {
+            "row_number": row.row_number,
+            "school_id": row.school_id or "—",
+            "fy": (row.scores or {}).get("_fy") or "—",
+            "date": row.date_of_ssa or "—",
+            "reason": "; ".join(row.validation_errors or []) or "SSA already exists",
+        }
+        for row in skipped["rows"]
+    ]
     created = counts.get("ready", 0)
     context = {
         "batch": batch,
         "processed": sum(counts.values()),
         "created": created,
+        "duplicates": counts.get("duplicate", 0),
+        "skipped": skipped,
         "unmatched": counts.get("unmatched", 0),
         "failed": counts.get("blocked", 0),
         # Imported records land pending until a verifier other than the
@@ -544,16 +568,9 @@ def _collector_label(record, names) -> str:
 
 
 def _source_label(record) -> str:
-    from apps.ssa import services as svc
+    from apps.ssa.creation import source_label
 
-    return {
-        svc.SOURCE_STAFF_KEYED: "Keyed on a visit"
-        if record.source_activity_id
-        else "Keyed by staff",
-        svc.SOURCE_IA_KEYED: "Keyed by Impact Assessment",
-        svc.SOURCE_FILE_IMPORT: "File import",
-        svc.SOURCE_PARTNER: "Partner submission",
-    }.get(record.verification_source or "", "Recorded")
+    return source_label(record)
 
 
 @require_page_permission("ssa")

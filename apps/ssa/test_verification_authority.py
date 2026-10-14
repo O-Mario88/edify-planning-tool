@@ -56,7 +56,12 @@ class SsaVerificationAuthorityTests(TestCase):
         )
 
     def _record(self):
-        return SsaRecord.objects.create(
+        # The school's one SSA of the year (owner, 2026-10-14: one a school a
+        # year): a sub-test after a refused decision reads the same record.
+        existing = SsaRecord.objects.filter(
+            school=self.school, fy="2026", deleted_at__isnull=True
+        ).first()
+        return existing or SsaRecord.objects.create(
             school=self.school,
             date_of_ssa=date.today(),
             fy="2026",

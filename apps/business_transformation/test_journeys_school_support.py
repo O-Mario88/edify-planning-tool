@@ -99,10 +99,10 @@ class SchoolSupportJourneyFixture(TestCase):
         self.today = timezone.localdate()
 
     # ── Step 1, shared: a confirmed SSA that is genuinely weak ───────────
-    def _confirmed_ssa(self, intervention, score, *, on=None):
+    def _confirmed_ssa(self, intervention, score, *, on=None, fy="2026"):
         record = SsaRecord.objects.create(
             school=self.school,
-            fy="2026",
+            fy=fy,
             quarter="Q1",
             average_score=score,
             verification_status="confirmed",
@@ -200,10 +200,12 @@ class FinancialHealthJourneyTest(SchoolSupportJourneyFixture):
 
         # 7. Next SSA — the independent measure, which is not the same claim
         # as practice adoption and is deliberately kept separate from it.
+        # The next year's: a school has one SSA a year (owner, 2026-10-14).
         self._confirmed_ssa(
             SsaIntervention.FINANCIAL_HEALTH,
             STRONG,
             on=timezone.now() + datetime.timedelta(days=1),
+            fy="2027",
         )
         latest = (
             SsaRecord.objects.filter(school=self.school)

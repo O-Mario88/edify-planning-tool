@@ -206,6 +206,33 @@ def detect_duplicate_candidates(
     return {"candidates_created": created, "schools_flagged": len(flagged_ids)}
 
 
+def similar_schools(
+    name: str, district_id, *, limit: int = 3, threshold: float | None = None
+):
+    """Live schools in this district whose name is close to ``name``.
+
+    The same rule the nightly pass above proposes duplicate pairs with
+    (trigram similarity within a district, the same threshold), asked once,
+    before a school is added by hand: a school someone is about to add twice is
+    better caught on the form than proposed as a pair the next morning.
+    """
+    from django.contrib.postgres.search import TrigramSimilarity
+
+    from apps.schools.models import School
+
+    name = (name or "").strip()
+    if len(name) < 4 or not district_id:
+        return School.objects.none()
+    return (
+        School.objects.filter(deleted_at__isnull=True, district_id=district_id)
+        .exclude(duplicate_status__in=("merged",))
+        .annotate(similarity=TrigramSimilarity("name", name))
+        .filter(similarity__gte=threshold or DUPLICATE_SIMILARITY_THRESHOLD)
+        .select_related("district")
+        .order_by("-similarity", "name")[:limit]
+    )
+
+
 def over_capacity_staff() -> list[dict]:
     """Staff carrying more direct schools than their governed capacity.
 
