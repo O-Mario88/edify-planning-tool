@@ -6790,14 +6790,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4390,
+      "bytes": 5091,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 6,
+      "htmx_controls": 7,
       "kind": "application-partial",
       "name": " Week Action",
       "purpose": "Reusable  week action interface primitive",
@@ -6918,14 +6918,14 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3868,
+      "bytes": 4455,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": " Week Person",
       "purpose": "Reusable  week person interface primitive",
@@ -6937,9 +6937,8 @@
       "template": "partials/dashboards/pl/_week_person.html",
       "variants": [
         "danger",
-        "info",
-        "success",
-        "warning"
+        "warning",
+        "{{ fact.tone }}"
       ]
     },
     {
@@ -6965,7 +6964,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 17839,
+      "bytes": 18331,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"

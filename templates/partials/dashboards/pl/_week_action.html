@@ -2,7 +2,8 @@
 The Actions cell of the week's tables (owner, 2026-09-26): Verify when the
 officer has completed the work — Salesforce ID entered —
 or Send to <officer> when they have not. `row.action` is set by
-apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none;
+apps.analytics.pl_week_service.table_rows: verify, send, sent, own or none
+(View Details);
 `row.send_name` is the row's own officer, so Everyone's lists, which hold
 several, address each one.
 {% endcomment %}
@@ -52,5 +53,15 @@ several, address each one.
   </div>
 </div>
 {% else %}
-<span class="text-slate-400" aria-label="Nothing to do">—</span>
+{% comment %}Nothing asked of the lead — verified, with Impact Assessment, or
+not yet theirs to chase — and the record still opens (owner, 2026-10-14:
+"when clicked it can open the record").{% endcomment %}
+<button type="button"
+        hx-get="/my-plan/{{ row.id }}"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold edify-surface hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition-colors cursor-pointer"
+        aria-label="View details of {% firstof row.school_name row.cluster_name row.activity_type_label %}">
+  View Details
+</button>
 {% endif %}
