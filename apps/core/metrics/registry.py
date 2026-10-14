@@ -1958,12 +1958,12 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
     # 2026-09-29), beside the planning monitor and over the same people.
     MetricSpec(
         key="execution_visits_delivered_target",
-        label="Visits Delivered Against Target",
+        label="Visits Completed Against Target",
         definition=(
             "The visits that count toward a person's target — Follow up "
             "and In-school Training, by the planning rulebook — "
-            "each person delivered in the fiscal year (submitted, awaiting "
-            "verification or verified), against 280 for a Programme Lead and "
+            "each person completed in the fiscal year (submitted with the "
+            "visit ID, or verified), against 280 for a Programme Lead and "
             "560 for a CCEO, summed. Donor, story, invitation and social "
             "visits are named beside the figure and not counted."
         ),
@@ -1986,16 +1986,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="execution_due_delivered",
         label="Due Work Delivered",
         definition=(
-            "Staff work whose planned date has arrived and that is delivered, "
-            "against all staff work due to date. Future work is not late."
+            "Staff work delivered, whatever day it was planned for, against "
+            "all staff work due to date or already delivered. Future work is "
+            "not late; work delivered ahead of its day is counted."
         ),
         question="Is the plan happening on time?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
         service="apps.planning.execution_monitor.execution_monitor",
         source_models=("activities.Activity",),
-        numerator="Due staff work delivered",
-        denominator="Staff work with a planned date on or before today",
+        numerator="Staff work delivered",
+        denominator=(
+            "Staff work with a planned date on or before today, or already " "delivered"
+        ),
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
@@ -2050,24 +2053,26 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         refresh_events=("evidence_uploaded", "salesforce_id_entered"),
     ),
     MetricSpec(
-        key="execution_awaiting_ia",
-        label="Delivered Work Awaiting IA",
+        key="execution_awaiting_pl",
+        label="Completed Work Awaiting PL",
         definition=(
-            "Delivered staff work waiting on Impact Assessment's "
-            "verification, with the work already verified beside it."
+            "Completed staff work waiting on the Programme Lead's "
+            "verification, with the work already verified beside it. The "
+            "lead verifies every CCEO's and lead's staff work, never Impact "
+            "Assessment (owner, 2026-10-14)."
         ),
-        question="How much delivered work waits on verification?",
+        question="How much completed work waits on verification?",
         category=Category.QUALITY,
         unit=Unit.COUNT,
         service="apps.planning.execution_monitor.execution_monitor",
         source_models=("activities.Activity",),
-        numerator="Staff work awaiting IA verification",
+        numerator="Staff work awaiting PL verification",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The reader's oversight scope — team for a PL, country for a CD or IA",
         owner_page="planning_monitor",
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/planning-monitor/?view=execution&list=awaiting_ia",
+        drilldown="/planning-monitor/?view=execution&list=awaiting_pl",
         refresh_events=("activity_verified",),
     ),
     MetricSpec(

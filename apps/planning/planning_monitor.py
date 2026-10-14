@@ -1063,6 +1063,59 @@ def _school_states(base, fy: str) -> tuple[dict, dict]:
     return schools, outreach
 
 
+def training_reach(principal, fy: str) -> dict[str, tuple[int, int]]:
+    """Each holder's schools that take a training, and of those the schools
+    trained in ``fy``, by the school's account owner id (either id space).
+
+    What the Execution tab's "Remaining to Train" counts down from (owner,
+    2026-10-14: "The entire portfolio not the 560 for cceo and 280 for PL.
+    ... Training should be the entire portfolio"): the schools the Planning
+    tab reads training against (OfficerMonitor.training_schools), read the
+    same way. A school is trained once an in-school training at it, or a
+    group training it attended, is completed — submitted with its training
+    ID or verified (completion_columns.OFFICER_COMPLETED_STATUSES).
+    """
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
+    from apps.planning.country_oversight import rules
+    from apps.schools.lifecycle_service import active_schools
+
+    base = _monitored_schools(principal)
+    if base is None:
+        return {}
+    operating = active_schools(base).filter(
+        school_type__in=[t for t in MONITORED_TYPES if rules.takes_training(t)]
+    )
+    schools = {
+        school_id: SchoolState(
+            id=school_id,
+            code="",
+            name="",
+            school_type=school_type or "",
+            district="",
+            cluster_id="",
+            cluster_name="",
+            clustered=False,
+            officer_id=str(owner or ""),
+            officer_name="",
+            lead_id="",
+            lead_name="",
+        )
+        for school_id, school_type, owner in operating.values_list(
+            "id", "school_type", "account_owner_id"
+        )
+    }
+    if schools:
+        school_ids = operating.values("id")
+        done = frozenset(OFFICER_COMPLETED_STATUSES)
+        _count_activities(schools, school_ids, fy, delivered=done)
+        _count_cluster_sessions(schools, school_ids, fy, delivered=done)
+    reach: dict[str, tuple[int, int]] = {}
+    for school in schools.values():
+        held, trained = reach.get(school.officer_id, (0, 0))
+        reach[school.officer_id] = (held + 1, trained + int(school.training_done))
+    return reach
+
+
 def own_monitor(principal, fy: str) -> OfficerMonitor | None:
     """One Programme Lead's or CCEO's own year: the row the Planning Monitor
     shows their Lead and the Country Director, built for the person
@@ -1302,14 +1355,18 @@ def _delivered_statuses():
     return AWAITING_VERIFICATION_STATUSES | VERIFIED_STATUSES
 
 
-def _count_activities(schools: dict, school_ids, fy: str) -> None:
+def _count_activities(
+    schools: dict, school_ids, fy: str, *, delivered: frozenset | None = None
+) -> None:
     """Counted visits and in-school trainings at each school, planned and
-    delivered. A Partner's visit counts once the Partner has dated it."""
+    delivered. A Partner's visit counts once the Partner has dated it.
+    ``delivered`` is the statuses read as done (_delivered_statuses unless
+    given)."""
     from apps.activities.cluster_attendance import SCHOOL_TRAINING_TYPES
     from apps.activities.models import Activity
     from apps.planning.country_oversight import rules
 
-    delivered = _delivered_statuses()
+    delivered = delivered or _delivered_statuses()
     # The school's SSA-measured support. Alumni work (a project no SSA
     # intervention measures) is not a visit or a training here and does not
     # put the school in a Partner's hands.
@@ -1506,7 +1563,9 @@ def _count_partner_handovers(schools: dict, school_ids) -> None:
             schools[school_id].partner_pending += n
 
 
-def _count_cluster_sessions(schools: dict, school_ids, fy: str) -> None:
+def _count_cluster_sessions(
+    schools: dict, school_ids, fy: str, *, delivered: frozenset | None = None
+) -> None:
     """Group trainings and cluster meetings each school is invited to.
 
     By name — ClusterActivityAttendance, written when the session is
@@ -1518,7 +1577,7 @@ def _count_cluster_sessions(schools: dict, school_ids, fy: str) -> None:
     from apps.activities.models import Activity, ClusterActivityAttendance
     from apps.core.activity_types import CLUSTER_MEETING_TYPES
 
-    delivered = _delivered_statuses()
+    delivered = delivered or _delivered_statuses()
     sessions = _planned(Activity.objects.filter(fy=fy, cluster_id__isnull=False))
     meeting_types = {str(t) for t in CLUSTER_MEETING_TYPES}
     training_types = {str(t) for t in TRAINING_TYPES}

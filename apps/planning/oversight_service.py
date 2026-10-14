@@ -166,6 +166,12 @@ class PlanningOversightItem:
     is_complete: bool = False
     completion_gap: str = ""
     shows_complete: bool = False
+    # Complete before its planned day: the status reads "Completed Early"
+    # (owner, 2026-10-14), and early_on is the day it was done.
+    finished_early: bool = False
+    early_on: date | None = None
+    # done / overdue / "" — the whole row's ink (completion_columns.row_state).
+    row_state: str = ""
     ia_status: str = ""
     finance_status: str = ""
     # The moment the completion entered the Impact Assessment queue. Carried

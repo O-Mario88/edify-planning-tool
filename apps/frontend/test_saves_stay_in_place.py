@@ -1,10 +1,10 @@
 """A drawer save stays on the page (owner, 2026-10-12: "Saving everything
-takes too long").
+takes too long"), and 2026-10-14: "everything is updated upon refresh icon
+clicked".
 
 Every save answered with a whole-page reload, and the live stream then read
-the page a second time 400 ms later. A save now answers with a call to the
-page's live regions (static/js/live-regions.js ``EdifyLive.saved``): read
-once, swapped in place, the stream's echo skipped. Pinned here: the answer
+the page a second time 400 ms later. A save now closes its drawer and says it
+is saved; nothing is read until Refresh. Pinned here: the answer
 itself, the clock the server stamps a live read with, and that the two pages
 the field officer saves from carry a live region to read.
 """
@@ -17,7 +17,7 @@ from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity
-from apps.core.htmx_saved import SAVED_SCRIPT, saved_in_place
+from apps.core.htmx_saved import SAVED_MESSAGE, saved_in_place
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -53,14 +53,17 @@ class SavedInPlaceTest(TestCase):
             school=cls.school,
         )
 
-    def test_the_answer_reads_the_regions_and_reloads_only_without_them(self):
+    def test_the_answer_closes_the_drawer_says_saved_and_reads_nothing(self):
+        """Owner, 2026-10-14: "everything is updated upon refresh icon
+        clicked. so that the save, reschedule, schedule, complete, cancel...
+        functionalities can be fast"."""
         response = saved_in_place()
         self.assertEqual(response["HX-Trigger"], "close-drawer")
         body = response.content.decode()
-        self.assertEqual(body, SAVED_SCRIPT)
-        self.assertIn("window.EdifyLive.saved()", body)
-        # The fallback is the reload every page gave before.
-        self.assertIn(": window.location.reload()", body)
+        self.assertIn(SAVED_MESSAGE, body)
+        self.assertIn('hx-swap-oob="beforeend:#toast-container"', body)
+        self.assertNotIn("EdifyLive", body)
+        self.assertNotIn("location.reload", body)
 
     def test_a_reschedule_from_a_drawer_answers_in_place(self):
         self.client.force_login(self.user)
@@ -73,7 +76,7 @@ class SavedInPlaceTest(TestCase):
             headers={"HX-Request": "true"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode(), SAVED_SCRIPT)
+        self.assertIn(SAVED_MESSAGE, response.content.decode())
         self.assertEqual(response["HX-Trigger"], "close-drawer")
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "rescheduled")

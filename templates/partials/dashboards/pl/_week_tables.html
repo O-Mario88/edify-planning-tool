@@ -20,7 +20,9 @@ Actions asks one thing of the lead per row:
 Completed work — verified, or with Impact Assessment — is not listed at all:
 it leaves the table the moment it is verified (owner, 2026-09-26). A row past
 its day is overdue and drawn red, links and status included, bright red in
-the dark themes (static/css/components/pl-week.css).
+the dark themes (static/css/components/pl-week.css); a row the officer has
+completed is green, past its day or not (owner, 2026-10-14;
+components/row-state.css).
 {% endcomment %}
 {% comment %}The officer's own week draws only the tables that hold work
 (owner, 2026-09-26: polish): an empty one is one line fewer to read past.
@@ -92,7 +94,7 @@ week would push it down the page for nothing. With none, one line says so.
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
@@ -140,7 +142,7 @@ week would push it down the page for nothing. With none, one line says so.
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-mono text-slate-500">{{ row.school_id|default:"—" }}</td>
           <td class="px-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
@@ -188,7 +190,7 @@ week would push it down the page for nothing. With none, one line says so.
       </thead>
       <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
         {% for row in table_pager.rows %}
-        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.is_overdue %} data-overdue{% endif %}>
+        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors" data-activity="{{ row.id }}" data-action="{{ row.action }}"{% if row.done %} data-done{% elif row.is_overdue %} data-overdue{% endif %}>
           {% if selectable %}{% if row.can_pick %}{% firstof row.school_name row.cluster_name as pick_place %}{% include "partials/activities/pick_cell.html" with pick_id=row.id pick_kind=row.activity_type_label pick_name=pick_place pick_day=row.planned_date %}{% else %}{% include "partials/activities/pick_cell.html" with pick_id="" %}{% endif %}{% endif %}
           <td class="ps-5 pe-3 py-2.5 font-bold text-slate-800 dark:text-slate-100" data-record-title>
             {% if row.cluster_id %}

@@ -84,7 +84,9 @@ class SubmitForReviewActionTest(TestCase):
         self.assertNotEqual(activity.status, "submitted")
         self.assertIsNone(activity.submitted_to_ia_at)
 
-    def test_non_cceo_submission_routes_straight_to_ia_verification(self):
+    def test_a_programme_lead_s_own_submission_waits_on_the_lead_not_ia(self):
+        """Owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the
+        PL to verify everything"; a lead's own: "The PL verifies it"."""
         pl = User.objects.create_user(
             email="pl-submit@test.org",
             name="Submitting Program Lead",
@@ -100,13 +102,10 @@ class SubmitForReviewActionTest(TestCase):
         self.assertIn(resp.status_code, (200, 302))
 
         activity.refresh_from_db()
-        self.assertIn(activity.status, ActivityStatus.values)
-        self.assertEqual(activity.status, ActivityStatus.AWAITING_IA_VERIFICATION)
-        self.assertNotEqual(activity.status, "submitted")
-        self.assertIsNotNone(activity.submitted_to_ia_at)
+        self.assertEqual(activity.status, ActivityStatus.SUBMITTED_TO_PL)
+        self.assertIsNone(activity.submitted_to_ia_at)
 
-        # The real read-site consumer of this status: the IA verification
-        # queue must now actually pick the activity up.
+        # Impact Assessment's queue does not pick it up.
         ia = User.objects.create_user(
             email="ia-submit@test.org",
             name="Verifying IA",
@@ -118,7 +117,7 @@ class SubmitForReviewActionTest(TestCase):
         self.client.force_login(ia)
         queue_resp = self.client.get("/ia/verification/")
         self.assertEqual(queue_resp.status_code, 200)
-        self.assertContains(queue_resp, activity.id)
+        self.assertNotContains(queue_resp, activity.id)
 
 
 class ComputeNextActionPaymentStatusTest(TestCase):

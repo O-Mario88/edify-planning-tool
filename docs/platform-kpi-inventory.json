@@ -4026,7 +4026,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 862,
+   "line": 865,
    "label": null,
    "keys": [
     "count",
@@ -4045,7 +4045,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 870,
+   "line": 873,
    "label": null,
    "keys": [
     "count",
@@ -4064,7 +4064,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2399,
+   "line": 2402,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -4084,7 +4084,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3972,
+   "line": 3975,
    "label": null,
    "keys": [
     "label",
@@ -4101,7 +4101,7 @@
    "audit_id": "KPI-SOURCE-216",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4786,
+   "line": 4789,
    "label": null,
    "keys": [
     "count",
@@ -4120,7 +4120,7 @@
    "audit_id": "KPI-SOURCE-217",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 884,
+   "line": 887,
    "label": null,
    "keys": [
     "count",
@@ -4139,7 +4139,7 @@
    "audit_id": "KPI-SOURCE-218",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1360,
+   "line": 1363,
    "label": null,
    "keys": [
     "achieved",
@@ -4160,7 +4160,7 @@
    "audit_id": "KPI-SOURCE-219",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1467,
+   "line": 1470,
    "label": null,
    "keys": [
     "label",
@@ -4177,7 +4177,7 @@
    "audit_id": "KPI-SOURCE-220",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3878,
+   "line": 3881,
    "label": "About",
    "keys": [
     "label",
@@ -4194,7 +4194,7 @@
    "audit_id": "KPI-SOURCE-221",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3879,
+   "line": 3882,
    "label": "Raised by",
    "keys": [
     "label",
@@ -4211,7 +4211,7 @@
    "audit_id": "KPI-SOURCE-222",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3880,
+   "line": 3883,
    "label": "Flag",
    "keys": [
     "label",
@@ -4228,7 +4228,7 @@
    "audit_id": "KPI-SOURCE-223",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3881,
+   "line": 3884,
    "label": "Recommended action",
    "keys": [
     "label",
@@ -7917,7 +7917,7 @@
    "audit_id": "KPI-SOURCE-436",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 549,
+   "line": 550,
    "label": "Search the queue by school, School ID, Salesforce ID or owner",
    "keys": [
     "hx_get",
@@ -7940,7 +7940,7 @@
    "audit_id": "KPI-SOURCE-437",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1691,
+   "line": 1692,
    "label": "Schools Missing SSA",
    "keys": [
     "label",
@@ -7957,7 +7957,7 @@
    "audit_id": "KPI-SOURCE-438",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1692,
+   "line": 1693,
    "label": "Duplicate Records Detected",
    "keys": [
     "label",
@@ -7974,7 +7974,7 @@
    "audit_id": "KPI-SOURCE-439",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1696,
+   "line": 1697,
    "label": "Schools with Missing Fields",
    "keys": [
     "label",
@@ -7991,7 +7991,7 @@
    "audit_id": "KPI-SOURCE-440",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1697,
+   "line": 1698,
    "label": "Activities Missing Salesforce IDs",
    "keys": [
     "label",
@@ -8008,7 +8008,7 @@
    "audit_id": "KPI-SOURCE-441",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 533,
+   "line": 534,
    "label": null,
    "keys": [
     "clear_url",
@@ -8027,7 +8027,7 @@
    "audit_id": "KPI-SOURCE-442",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1754,
+   "line": 1755,
    "label": "SSA done",
    "keys": [
     "color",
@@ -8046,7 +8046,7 @@
    "audit_id": "KPI-SOURCE-443",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1760,
+   "line": 1761,
    "label": "Scheduled",
    "keys": [
     "color",
@@ -8065,7 +8065,7 @@
    "audit_id": "KPI-SOURCE-444",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1766,
+   "line": 1767,
    "label": "Not done",
    "keys": [
     "color",
@@ -8084,7 +8084,7 @@
    "audit_id": "KPI-SOURCE-445",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1791,
+   "line": 1792,
    "label": "Confirmed",
    "keys": [
     "color",
@@ -8103,7 +8103,7 @@
    "audit_id": "KPI-SOURCE-446",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1797,
+   "line": 1798,
    "label": "Pending",
    "keys": [
     "color",
@@ -8122,7 +8122,7 @@
    "audit_id": "KPI-SOURCE-447",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1803,
+   "line": 1804,
    "label": "Returned / flagged",
    "keys": [
     "color",
@@ -8141,7 +8141,7 @@
    "audit_id": "KPI-SOURCE-448",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 652,
+   "line": 653,
    "label": null,
    "keys": [
     "label",
@@ -8903,7 +8903,7 @@
    "audit_id": "KPI-SOURCE-491",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1451,
+   "line": 1453,
    "label": "Whole team",
    "keys": [
     "count",
@@ -8922,7 +8922,7 @@
    "audit_id": "KPI-SOURCE-492",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1461,
+   "line": 1463,
    "label": "My Work",
    "keys": [
     "count",
@@ -8941,7 +8941,7 @@
    "audit_id": "KPI-SOURCE-493",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3407,
+   "line": 3409,
    "label": null,
    "keys": [
     "count",
@@ -8997,7 +8997,7 @@
    "audit_id": "KPI-SOURCE-496",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1470,
+   "line": 1472,
    "label": null,
    "keys": [
     "count",
@@ -9016,7 +9016,7 @@
    "audit_id": "KPI-SOURCE-497",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1521,
+   "line": 1523,
    "label": null,
    "keys": [
     "count",
@@ -9035,7 +9035,7 @@
    "audit_id": "KPI-SOURCE-498",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1561,
+   "line": 1563,
    "label": null,
    "keys": [
     "count",
@@ -9054,7 +9054,7 @@
    "audit_id": "KPI-SOURCE-499",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3438,
+   "line": 3440,
    "label": "All team members",
    "keys": [
     "count",
@@ -9072,7 +9072,7 @@
    "audit_id": "KPI-SOURCE-500",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 3444,
+   "line": 3446,
    "label": null,
    "keys": [
     "count",
@@ -9090,7 +9090,7 @@
    "audit_id": "KPI-SOURCE-501",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 1546,
+   "line": 1548,
    "label": "Unassigned",
    "keys": [
     "count",
@@ -11344,7 +11344,7 @@
    "audit_id": "KPI-SOURCE-624",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1793,
+   "line": 1799,
    "label": "All Activities",
    "keys": [
     "count",
@@ -11363,7 +11363,7 @@
    "audit_id": "KPI-SOURCE-625",
    "kind": "breakdown-row",
    "module": "apps/planning/oversight_service.py",
-   "line": 1802,
+   "line": 1808,
    "label": null,
    "keys": [
     "count",
@@ -20723,8 +20723,8 @@
     "ImpactAssessment",
     "Admin"
    ],
-   "metric_name": "Visits Delivered Against Target",
-   "definition": "The visits that count toward a person's target \u2014 Follow up and In-school Training, by the planning rulebook \u2014 each person delivered in the fiscal year (submitted, awaiting verification or verified), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
+   "metric_name": "Visits Completed Against Target",
+   "definition": "The visits that count toward a person's target \u2014 Follow up and In-school Training, by the planning rulebook \u2014 each person completed in the fiscal year (submitted with the visit ID, or verified), against 280 for a Programme Lead and 560 for a CCEO, summed. Donor, story, invitation and social visits are named beside the figure and not counted.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
@@ -20764,13 +20764,13 @@
     "Admin"
    ],
    "metric_name": "Due Work Delivered",
-   "definition": "Staff work whose planned date has arrived and that is delivered, against all staff work due to date. Future work is not late.",
+   "definition": "Staff work delivered, whatever day it was planned for, against all staff work due to date or already delivered. Future work is not late; work delivered ahead of its day is counted.",
    "value_type": "percent",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Due staff work delivered",
-   "denominator": "Staff work with a planned date on or before today",
+   "numerator": "Staff work delivered",
+   "denominator": "Staff work with a planned date on or before today, or already delivered",
    "date_basis": "activity_planned_date",
    "finance_stage": null,
    "primary_home": "planning_monitor",
@@ -20875,8 +20875,8 @@
   },
   {
    "audit_id": "KPI-REG-091",
-   "kpi_id": "execution_awaiting_ia",
-   "metric_registry_id": "execution_awaiting_ia",
+   "kpi_id": "execution_awaiting_pl",
+   "metric_registry_id": "execution_awaiting_pl",
    "page": "planning_monitor",
    "roles": [
     "CountryDirector",
@@ -20884,25 +20884,25 @@
     "ImpactAssessment",
     "Admin"
    ],
-   "metric_name": "Delivered Work Awaiting IA",
-   "definition": "Delivered staff work waiting on Impact Assessment's verification, with the work already verified beside it.",
+   "metric_name": "Completed Work Awaiting PL",
+   "definition": "Completed staff work waiting on the Programme Lead's verification, with the work already verified beside it. The lead verifies every CCEO's and lead's staff work, never Impact Assessment (owner, 2026-10-14).",
    "value_type": "count",
    "period": "financial_year",
    "scope": "The reader's oversight scope \u2014 team for a PL, country for a CD or IA",
    "data_state": "measured-or-explicit-absence",
-   "numerator": "Staff work awaiting IA verification",
+   "numerator": "Staff work awaiting PL verification",
    "denominator": null,
    "date_basis": "activity_planned_date",
    "finance_stage": null,
    "primary_home": "planning_monitor",
    "approved_contextual_pages": [],
-   "user_question": "How much delivered work waits on verification?",
-   "user_decision": "How much delivered work waits on verification?",
-   "user_action": "/planning-monitor/?view=execution&list=awaiting_ia",
-   "drill_down": "/planning-monitor/?view=execution&list=awaiting_ia",
+   "user_question": "How much completed work waits on verification?",
+   "user_decision": "How much completed work waits on verification?",
+   "user_action": "/planning-monitor/?view=execution&list=awaiting_pl",
+   "drill_down": "/planning-monitor/?view=execution&list=awaiting_pl",
    "metric_class": "primary-decision-kpi",
    "recommendation": "retain",
-   "reason": "How much delivered work waits on verification?",
+   "reason": "How much completed work waits on verification?",
    "replacement_pattern": "primary KPI group",
    "priority": "high",
    "implementation_status": "completed",
@@ -42401,7 +42401,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3431,
+   "line": 3434,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -42423,7 +42423,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 4173,
+   "line": 4176,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

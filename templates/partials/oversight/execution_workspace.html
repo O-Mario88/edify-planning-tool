@@ -28,15 +28,18 @@ the activities behind it.
 
   {% data_table name="execution" %}
     {% slot title %}Execution &amp; completion · FY {{ fy }}{% endslot %}
-    {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} delivered · {{ execution_totals.complete|intcomma }} complete{% endslot %}
-    {% slot caption %}Each Programme Lead's and CCEO's visits delivered against their target, work delivered against what is due, completion, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.{% endslot %}
+    {% slot summary %}{{ execution_totals.person_count }} staff · {{ execution_totals.delivered|intcomma }} of {{ execution_totals.planned|intcomma }} completed · {{ execution_totals.complete|intcomma }} with their ID{% endslot %}
+    {% slot caption %}Each Programme Lead's and CCEO's visits completed against their target and what remains, schools trained against their portfolio and what remains, work completed against what is due, follow-ups, trainings, meetings and partner work, grouped by Programme Lead.{% endslot %}
     {% slot empty %}{% include "components/empty_state.html" with message="No Programme Lead or CCEO in your scope." %}{% endslot %}
     {% slot footer %}{% include "partials/oversight/_execution_about.html" %}{% endslot %}
     {% if execution.teams %}
         <thead>
           <tr>
             <th scope="col" class="px-3 py-2">Staff</th>
-            <th scope="col" class="px-3 py-2 text-right">Visits delivered</th>
+            <th scope="col" class="px-3 py-2 text-right">Visits Completed</th>
+            <th scope="col" class="px-3 py-2 text-right">Remaining to Visit</th>
+            <th scope="col" class="px-3 py-2 text-right">Schools Trained</th>
+            <th scope="col" class="px-3 py-2 text-right">Remaining to Train</th>
             <th scope="col" class="px-3 py-2 text-right">Delivered of due</th>
             <th scope="col" class="px-3 py-2 text-right">Complete</th>
             {% for key, label, tone in execution_columns %}
@@ -51,9 +54,9 @@ the activities behind it.
         <tbody>
           {% for team in execution.teams %}
           <tr class="edify-group-head">
-            <th colspan="13" scope="colgroup">
+            <th colspan="15" scope="colgroup">
               <span class="edify-group-head__label">{{ team.name }}</span>
-              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits delivered · {{ team.overdue|intcomma }} past date, not delivered</span>
+              <span class="edify-group-head__count">{{ team.person_count }} staff · {{ team.visits_delivered|intcomma }} of {{ team.visits_target|intcomma }} visits completed · {{ team.schools_trained|intcomma }} of {{ team.training_portfolio|intcomma }} schools trained · {{ team.overdue|intcomma }} past date, not completed</span>
             </th>
           </tr>
           {% for person in team.people %}

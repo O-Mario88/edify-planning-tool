@@ -1423,6 +1423,7 @@ def _calendar_activities(request, month_start):
     Scoped through the same audience helper the operations calendar uses, so
     the two pages never disagree about who may see whose work.
     """
+    from apps.activities.completion_columns import OFFICER_COMPLETED_STATUSES
     from apps.activities.models import Activity
     from apps.frontend.views.extended_views import _calendar_staff_audience
 
@@ -1443,6 +1444,9 @@ def _calendar_activities(request, month_start):
             )
         )
         .exclude(status__in=["cancelled", "rejected"])
+        # Completed work is off the calendar, as on the operations calendar
+        # (owner, 2026-10-14).
+        .exclude(status__in=OFFICER_COMPLETED_STATUSES)
         .select_related("school", "cluster")
         .order_by("planned_date", "scheduled_date", "created_at")
     )

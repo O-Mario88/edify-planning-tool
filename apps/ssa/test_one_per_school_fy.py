@@ -22,6 +22,7 @@ from apps.audit.models import AuditLog
 from apps.clusters.models import Cluster
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_fy_date_range
+from apps.core.htmx_saved import SAVED_MESSAGE
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -121,7 +122,9 @@ class OneSsaPerSchoolYearTest(TestCase):
             f"/schools/{self.school.id}/ssa-entry", self._form()
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("EdifyLive", response.content.decode())
+        # Answered in place: the drawer closes and says it is saved; the page
+        # is brought up to date by Refresh (apps.core.htmx_saved, 2026-10-14).
+        self.assertIn(SAVED_MESSAGE, response.content.decode())
 
         record = self._live().get()
         self.assertEqual(record.fy, self.fy)

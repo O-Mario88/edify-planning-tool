@@ -5,12 +5,11 @@ Executor, Purpose (Meeting Topic), SSA Intervention, Participants, Cost,
 Status and Actions. A verified session reads Complete in green. A CCEO's
 completion — evidence, attendance and training ID submitted — reads PL Pending
 in blue until their Programme Lead clicks Verify, and then Complete. A
-Programme Lead's own session is verified by Impact Assessment.
+Programme Lead's own session is verified by the lead (owner, 2026-10-14).
 """
 
 from __future__ import annotations
 
-import re
 from datetime import date
 
 from django.test import TestCase
@@ -125,7 +124,10 @@ class ClusterSessionStatusTest(TestCase):
             awaiting_pl.id: ("PL Pending", "pending"),
             verified.id: ("Complete", "complete"),
             unfinished.id: ("Missing Salesforce ID", "pending"),
-            awaiting_ia.id: ("IA Pending", "pending"),
+            # A lead's own session is the lead's to verify, whichever status
+            # filed it (owner, 2026-10-14: "IA does not verify CCEO and PL
+            # work").
+            awaiting_ia.id: ("PL Pending", "pending"),
             planned.id: ("Scheduled", "open"),
             returned.id: ("Returned by PL", "returned"),
         }
@@ -186,30 +188,22 @@ class ClusterSessionStatusTest(TestCase):
         )
         self.assertNotContains(response, confirm)
 
-    def test_impact_assessment_verifies_the_leads_own_session(self):
+    def test_the_lead_verifies_their_own_session_not_ia(self):
+        """Owner, 2026-10-14: "IA does not verify CCEO and PL work. it is the
+        PL to verify everything"; a lead's own: "The PL verifies it"."""
         own = self._session("cluster_meeting", "awaiting_ia_verification", self.pl)
         cceo_work = self._session("cluster_meeting", "submitted_to_pl", self.cceo)
 
         response = self._page(self.ia)
-        self.assertContains(response, f'href="/ia/verification/{own.id}/"')
-        self.assertContains(response, "IA Pending")
-        # Verified and Return are the row's one Actions menu (owner, 2026-09-26).
-        html = response.content.decode()
-        row = html[html.index(f'data-session-row="{own.id}"') :]
-        row = row[: row.index("</tr>")]
-        self.assertIn("data-row-actions", row)
-        self.assertEqual(
-            re.findall(r'role="menuitem"[^>]*>([^<]+)</', row), ["Verified", "Return"]
-        )
-        # A CCEO's completion is the Lead's to verify, never IA's.
-        self.assertContains(response, "PL Pending")
-        self.assertNotContains(response, f"/pl/review-queue/{cceo_work.id}/drawer")
-
-        # The Lead reads their own session as waiting on IA, with nothing to do.
-        response = self._page(self.pl)
-        self.assertContains(response, "IA Pending")
         self.assertNotContains(response, f"/ia/verification/{own.id}/")
-        self.assertNotContains(response, f"/pl/review-queue/{own.id}/drawer")
+        self.assertNotContains(response, f"/ia/verification/{cceo_work.id}/")
+        self.assertContains(response, "PL Pending")
+        self.assertNotContains(response, "IA Pending")
+
+        rows = _sessions(cluster_oversight_table_data(self.pl, fy=self.fy))
+        self.assertEqual(rows[own.id].session_status, "PL Pending")
+        self.assertTrue(rows[own.id].pl_verify)
+        self.assertEqual(rows[own.id].ia_verify_url, "")
 
     def test_a_cceo_completion_left_with_ia_is_still_the_leads(self):
         """An older path filed a CCEO's completion with Impact Assessment. It

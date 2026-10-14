@@ -220,6 +220,7 @@ class ColumnValuesTest(_Fixture):
                 "evidence_label": "",
                 "salesforce_ok": True,
                 "evidence_ok": True,
+                "early_on": None,
             },
         )
         self.assertEqual(
@@ -229,6 +230,7 @@ class ColumnValuesTest(_Fixture):
                 "evidence_label": "",
                 "salesforce_ok": True,
                 "evidence_ok": True,
+                "early_on": None,
             },
         )
         # Blank reads NOT_IN_SF on the page; no file is looked for.
@@ -237,6 +239,7 @@ class ColumnValuesTest(_Fixture):
             "evidence_label": "",
             "salesforce_ok": False,
             "evidence_ok": True,
+            "early_on": None,
         }
         self.assertEqual(columns[bare.id], empty)
         self.assertEqual(columns[hidden.id], empty)
@@ -262,6 +265,7 @@ class ColumnValuesTest(_Fixture):
                 "evidence_label": "Visit Form",
                 "salesforce_ok": True,
                 "evidence_ok": True,
+                "early_on": None,
             },
         )
         # A file that is there is named, though it is not the form.
@@ -277,6 +281,7 @@ class ColumnValuesTest(_Fixture):
             "evidence_label": "",
             "salesforce_ok": False,
             "evidence_ok": False,
+            "early_on": None,
         }
         self.assertEqual(columns[bare.id], empty)
         self.assertEqual(columns[hidden.id], empty)

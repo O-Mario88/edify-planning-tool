@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from apps.activities.completion_columns import (
     EMPTY as EMPTY_COLUMNS,
+    FINISHED_EARLY,
     completed_last_key,
+    row_state,
     completion_columns,
     completion_fields,
 )
@@ -17,6 +19,7 @@ from apps.core.activity_types import (
 import calendar
 from datetime import date, timedelta
 from django.db.models import Count, Q
+from django.utils import timezone
 from apps.activities.group_actions import may_tick
 from apps.activities.models import Activity
 from apps.activities.facilitation import (
@@ -2296,8 +2299,12 @@ def get_frontend_context(
     _district_types = district_type_labels(
         row["id"] for rows in _plan_tables for row in rows
     )
+    _today = timezone.localdate()
     for rows in _plan_tables:
         for row in rows:
+            # The whole row's ink: completed green, past its day red (owner,
+            # 2026-10-14; components/row-state.css).
+            row["row_state"] = row_state(row["status"], row["planned_date"], _today)
             row["district_type"] = label_of(_district_types, row["id"])
             row["district"] = plan_row_district(row)
             row.update(
@@ -2309,6 +2316,14 @@ def get_frontend_context(
                 row["status_label"] = row["completion_gap"]
                 row["status_class"] = "bg-amber-50 text-amber-700 border-amber-200"
                 row["status_tone"] = "amber"
+            elif row["finished_early"]:
+                # Done before its planned day: marked complete, so it can be
+                # tracked (owner, 2026-10-14). Verification has its own column.
+                row["status_label"] = FINISHED_EARLY
+                row["status_class"] = (
+                    "bg-emerald-50 text-emerald-700 border-emerald-200"
+                )
+                row["status_tone"] = "green"
             # A row still live carries a tick box for the group Reschedule
             # and Cancel (owner, 2026-10-05); finished work has neither.
             row["can_pick"] = may_tick(row["status"]) and not row["shows_complete"]

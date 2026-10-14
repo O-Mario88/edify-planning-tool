@@ -6,7 +6,7 @@
 <script defer src="{% static 'js/dashboard-embed.js' %}?v=20260929embed1"></script>
 <script defer src="{% static 'js/staff-activity.js' %}?v=20260929sal3"></script>
 {% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20261014facts1">{% comment %}The Planning Monitor and the Staff Activity Log ride on This Week (owner, 2026-09-29).{% endcomment %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15"><link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20261002tokens2">{% comment %}The page's order: one head row per section, strips on one row (owner, 2026-09-30).{% endcomment %}<link rel="stylesheet" href="{% static 'css/components/pl-dashboard.css' %}?v=20260930layout6">{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}<link rel="stylesheet" href="{% static 'css/components/pl-week.css' %}?v=20261014facts1"><link rel="stylesheet" href="{% static 'css/components/row-state.css' %}?v=20261014rows2">{% comment %}The Planning Monitor and the Staff Activity Log ride on This Week (owner, 2026-09-29).{% endcomment %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20261002tabs15"><link rel="stylesheet" href="{% static 'css/components/staff-activity.css' %}?v=20261002tokens2">{% comment %}The page's order: one head row per section, strips on one row (owner, 2026-09-30).{% endcomment %}<link rel="stylesheet" href="{% static 'css/components/pl-dashboard.css' %}?v=20260930layout6">{% endblock %}
 
 {% block shell_content %}
 {% comment %}

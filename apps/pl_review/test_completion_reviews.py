@@ -165,13 +165,17 @@ class OneReviewRuleTest(ReviewFixture):
         )
         self.assertTrue(services.may_review(self.pl_user, partner_work))
 
-    def test_own_work_and_another_team_are_refused(self):
+    def test_another_team_is_refused_and_a_lead_reviews_their_own(self):
         own = self._completion(self.pl.id)
         rival = self._completion(self.rival.id, school=self.rival_school)
+        james_own = self._completion(self.james.id)
 
-        self.assertFalse(services.may_review(self.pl_user, own))
+        # A lead verifies their own field work (owner, 2026-10-14: "The PL
+        # verifies it"); an officer never verifies theirs.
+        self.assertTrue(services.may_review(self.pl_user, own))
         self.assertFalse(services.may_review(self.pl_user, rival))
         self.assertFalse(services.may_review(self.james_user, own))
+        self.assertFalse(services.may_review(self.james_user, james_own))
 
     def test_the_page_permission_asks_the_same_rule(self):
         """The case that used to disagree: filed under the CCEO's User id."""
@@ -257,7 +261,7 @@ class ReturnNeedsAReasonTest(ReviewFixture):
 
 
 class CompletionReviewsPageTest(ReviewFixture):
-    def test_the_lead_sees_a_register_of_their_teams_completions_only(self):
+    def test_the_lead_sees_a_register_of_their_teams_and_their_own(self):
         session = self._completion(
             self.james.id,
             cluster=self.cluster,
@@ -290,7 +294,8 @@ class CompletionReviewsPageTest(ReviewFixture):
         # owner 2026-10-13).
         self.assertNotIn(">Evidence</th>", body)
         self.assertIn(f'data-review-row="{session.id}"', body)
-        self.assertNotIn(f'data-review-row="{mine.id}"', body)
+        # The lead's own work is theirs to verify (owner, 2026-10-14).
+        self.assertIn(f'data-review-row="{mine.id}"', body)
         self.assertNotIn(f'data-review-row="{rival.id}"', body)
         self.assertIn("Mukono North", body)
         self.assertIn("12 teachers · 3 leaders", body)
