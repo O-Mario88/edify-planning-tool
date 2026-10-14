@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **695**
+Components and application partials: **696**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -430,6 +430,7 @@ Components and application partials: **695**
 | `partials/my_plan/cluster_planning_status.html` | application-partial | Reusable cluster planning status interface primitive | {{ row.meeting.tone }}, {{ row.training.tone }}; default | inherits containing page contract | accessible name and label | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/cluster_trainings.html` | application-partial | Reusable cluster trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/complete_drawer.html` | application-partial | Reusable complete drawer interface primitive | danger; default, error, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /activities/<str:activity_id>/complete<br>/my-plan/<str:activity_id>/complete-drawer | 0 |
+| `partials/my_plan/completion_reviews_register.html` | application-partial | Reusable completion reviews register interface primitive | warning, {{ row.evidence_tone }}, {{ row.wait_tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | /pl/review-queue<br>/planning-monitor/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/my_plan/confirm_reimbursement_receipt_drawer.html` | application-partial | Reusable confirm reimbursement receipt drawer interface primitive | canonical; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | 0 |
 | `partials/my_plan/core_school_trainings.html` | application-partial | Reusable core school trainings interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |
 | `partials/my_plan/core_school_visits.html` | application-partial | Reusable core school visits interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan<br>/my-plan/ | 0 |

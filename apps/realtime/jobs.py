@@ -532,6 +532,21 @@ def day_off_alerts_job():
     run_tracked_job("day_off_alerts", _do_day_off_alerts)
 
 
+def _do_verification_reminders() -> int:
+    """Tell each Programme Lead, at the end of the day, how many of their
+    officers' completions wait on them (owner, 2026-10-14;
+    apps.pl_review.reminders.send_verification_reminders)."""
+    from apps.pl_review.reminders import send_verification_reminders
+
+    return send_verification_reminders()
+
+
+def verification_reminders_job():
+    if not _enabled():
+        return
+    run_tracked_job("verification_reminders", _do_verification_reminders)
+
+
 def _do_acting_lifecycle() -> int:
     """Record the reminder, start and end of acting leadership appointments
     (apps.acting.lifecycle). Access follows the appointment's dates; this

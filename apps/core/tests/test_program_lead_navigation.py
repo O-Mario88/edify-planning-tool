@@ -46,7 +46,6 @@ EXPECTED_PL_SIDEBAR = [
             ("Calendar", "/calendar"),
             ("Core Schools", "/core-schools"),
             ("Programme Schools", "/programme-schools"),
-            ("Completion Reviews", "/pl/review-queue"),
             ("To-Do", "/todos"),
             ("My Actions", "/actions/mine"),
         ],

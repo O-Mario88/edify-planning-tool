@@ -1753,17 +1753,19 @@ def _review_refusal(request, activity_id: str, verb: str):
     )
 
 
-@require_page_permission("pl_review_queue")
-def pl_queue_view(request):
-    """Completion Reviews: the team's completed work waiting on this lead.
+#: Where a Programme Lead reads Completion Reviews: the Execution &
+#: Completion tab of the Planning Monitor their dashboard carries (owner,
+#: 2026-10-14).
+def reviews_on_dashboard_url(**query) -> str:
+    from urllib.parse import urlencode
 
-    A register rather than a stack of cards: one row per completion with the
-    officer, the work, where and when it happened, the intervention, who
-    attended, the evidence, the Salesforce reference and how long it has
-    waited — oldest first. Open shows the whole completion in a drawer,
-    Approve sends it to Impact Assessment, Return sends it back with the
-    reason the officer will read.
-    """
+    carried = urlencode({"view": "execution", **{k: v for k, v in query.items() if v}})
+    return "/dashboard?" + urlencode({"pm": carried}) + "#planning-monitor"
+
+
+def completion_reviews_context(request) -> dict:
+    """The register's rows, its officer filter and the drawer a link asked
+    for, for whichever page draws it."""
     from apps.pl_review.services import review_register
 
     register = review_register(request.user, cceo=request.GET.get("cceo") or "")
@@ -1788,14 +1790,62 @@ def pl_queue_view(request):
         if wanted and any(row["id"] == wanted for row in register["rows"])
         else ""
     )
+    return {"rows": register["rows"], "filters": filters, "autoload": autoload}
+
+
+def _back_to_register(request):
+    """Back to where the decision was made. The shared `_back` drops a
+    fragment, so a decision from the dashboard is put back on its section
+    rather than at the top of the page."""
+    response = _back(request, PL_REVIEW_QUEUE_URL)
+    if response.url.startswith("/dashboard?pm=") and "#" not in response.url:
+        response["Location"] = response.url + "#planning-monitor"
+    return response
+
+
+def _review_next(request) -> str:
+    """Where a decision made in a drawer returns to: the tab the register is
+    on when it was opened from the dashboard, else the page it was on."""
+    from urllib.parse import urlparse
+
+    here = request.META.get("HTTP_HX_CURRENT_URL", "")
+    if urlparse(here).path.rstrip("/") == "/dashboard":
+        return reviews_on_dashboard_url()
+    return here
+
+
+@require_page_permission("pl_review_queue")
+def pl_queue_view(request):
+    """Completion Reviews: the team's completed work waiting on this lead.
+
+    A register rather than a stack of cards: one row per completion with the
+    officer, the work, where and when it happened, the intervention, who
+    attended, the evidence, the Salesforce reference and how long it has
+    waited — oldest first. Open shows the whole completion in a drawer,
+    Approve sends it to Impact Assessment, Return sends it back with the
+    reason the officer will read.
+    """
+    from apps.frontend.views import dashboard_embed
+
+    # A Programme Lead reads the register on their dashboard (owner,
+    # 2026-10-14): the page opened on its own — a notification, a To-Do, an
+    # old link — lands on that tab, on the same officer and completion.
+    if dashboard_embed.reads_on_dashboard(request):
+        return local_redirect(
+            reviews_on_dashboard_url(
+                cceo=(request.GET.get("cceo") or "").strip(),
+                open=(request.GET.get("open") or "").strip(),
+            )
+        )
+    reviews = completion_reviews_context(request)
     return render(
         request,
         "pages/my_plan/pl_queue.html",
         {
-            "rows": register["rows"],
-            "filters": filters,
+            "rows": reviews["rows"],
+            "filters": reviews["filters"],
             "queue_url": PL_REVIEW_QUEUE_URL,
-            "autoload_drawer": autoload,
+            "autoload_drawer": reviews["autoload"],
         },
     )
 
@@ -1977,7 +2027,7 @@ def pl_review_drawer(request, activity_id):
                 "it complete. Return sends it back to the officer with your "
                 "reason — for example, participants not entered in Salesforce."
             ),
-            "form_next": request.META.get("HTTP_HX_CURRENT_URL", ""),
+            "form_next": _review_next(request),
             "drawer_size": "md",
         },
     )
@@ -2015,6 +2065,7 @@ def pl_return_drawer(request, activity_id):
         facts=facts,
         action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return",
         submit="Return to officer",
+        next_url=_review_next(request),
         fields=[
             _field(
                 "reasons",
@@ -2066,7 +2117,7 @@ def pl_confirm_action(request, activity_id):
         except Exception as e:
             messages.error(request, str(getattr(e, "detail", e)))
 
-    return _back(request, PL_REVIEW_QUEUE_URL)
+    return _back_to_register(request)
 
 
 @require_page_permission("pl_review_queue")
@@ -2098,7 +2149,7 @@ def pl_return_action(request, activity_id):
             # act on; the page says so rather than returning silently.
             messages.error(request, str(getattr(e, "detail", e)))
 
-    return _back(request, PL_REVIEW_QUEUE_URL)
+    return _back_to_register(request)
 
 
 @require_page_permission("my_plan")

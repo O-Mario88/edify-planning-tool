@@ -1092,7 +1092,14 @@ def _execution_context(request, period: dict, *, base_url: str) -> dict:
         person_id=person or None,
     )
     execution_url = f"{base_url}?view=execution&fy={fy}"
+    # Completion Reviews ride on a Programme Lead's tab (owner, 2026-10-14).
+    reviews = None
+    if (request.user.active_role or "") == "Program Lead":
+        from apps.frontend.views.my_plan_views import completion_reviews_context
+
+        reviews = completion_reviews_context(request)
     return {
+        "completion_reviews": reviews,
         "fy": fy,
         "execution": monitor,
         "execution_totals": monitor["totals"],

@@ -169,7 +169,7 @@ class BothDecisionsOnEverySurfaceTest(ReviewFixture):
         posts nothing."""
         work = self._completion(self.james.id)
         client = self.as_user(self.pl_user)
-        response = client.get(QUEUE_URL)
+        response = self.register(client)
         self.assertContains(response, f'hx-get="{QUEUE_URL}/{work.id}/drawer"')
         self.assertContains(response, f"{QUEUE_URL}/{work.id}/return-drawer")
         self.assertNotContains(response, f'action="{QUEUE_URL}/{work.id}/confirm"')
