@@ -267,7 +267,7 @@ def _hand_over(kept: _Kept, days: dict, afterwards: list, waiting: dict) -> None
         asked = []
         _asked_here.set(asked)
     asked.append(row.id)
-    _when_the_save_commits(row.id)
+    _when_the_save_commits(row.id, asked_by or "")
 
 
 def _assert_days_can_follow(days: dict, *, together: bool) -> None:
@@ -339,34 +339,78 @@ def _assert_days_can_follow(days: dict, *, together: bool) -> None:
 
 
 class _SettleOnCommit:
-    """The rows to settle when the transaction in hand commits."""
+    """The rows to settle when the transaction in hand commits, and the
+    people to tell once they are settled.
 
-    def __init__(self) -> None:
+    A save announces itself to every open page that shows the plan
+    (`apps.activities.live`), and each such page reads itself again. Told at
+    the save's commit, a page read itself before the day was priced and once
+    more after. So what the save announces is kept here and told after the
+    pricing: one notice, and the page it brings shows the figures."""
+
+    def __init__(self, save) -> None:
+        #: The save these follow (`save_in_hand`).
+        self.save = save
         self.rows: list = []
+        self.tell: list = []
+        self.askers: set = set()
+        #: Set by `herald` when the transaction commits with this in it.
+        self.committed = False
+
+    def herald(self) -> None:
+        self.committed = True
 
     def __call__(self) -> None:
         rows, self.rows = list(self.rows), []
-        if rows:
-            _settle_in_a_thread(rows)
+        tell, self.tell = list(self.tell), []
+        if rows or tell:
+            _settle_in_a_thread(rows, tell=tell, askers=frozenset(self.askers))
 
 
-def _when_the_save_commits(row_id) -> None:
-    connection = transaction.get_connection()
-    waiting = next(
+def save_in_hand(connection):
+    """The save being made on this connection: its outermost transaction
+    block, or None outside one. A test's own transaction is not a save: the
+    saves a test makes one after another are each their own, as they are
+    when each commits."""
+    return next(
         (
-            callback
-            for _sids, callback, _robust in connection.run_on_commit
-            if isinstance(callback, _SettleOnCommit)
+            block
+            for block in connection.atomic_blocks
+            if not getattr(block, "_from_testcase", False)
         ),
         None,
     )
+
+
+def following(connection):
+    """The costs that follow the save in hand, or None."""
+    save = save_in_hand(connection)
+    return next(
+        (
+            callback
+            for _sids, callback, _robust in connection.run_on_commit
+            if isinstance(callback, _SettleOnCommit) and callback.save is save
+        ),
+        None,
+    )
+
+
+def _when_the_save_commits(row_id, asked_by: str = "") -> None:
+    connection = transaction.get_connection()
+    waiting = following(connection)
     if waiting is None:
-        waiting = _SettleOnCommit()
+        from apps.activities import live
+
+        save = save_in_hand(connection)
+        waiting = _SettleOnCommit(save)
+        live.wait_for_costs(connection, waiting, save)
         transaction.on_commit(waiting, robust=True)
     waiting.rows.append(row_id)
+    if asked_by:
+        waiting.askers.add(asked_by)
 
 
-def _settle_in_a_thread(row_ids) -> None:
+def _settle_in_a_thread(row_ids, *, tell=(), askers=frozenset()) -> None:
     def run() -> None:
         try:
             for attempt in range(3):
@@ -386,21 +430,34 @@ def _settle_in_a_thread(row_ids) -> None:
         except Exception:  # noqa: BLE001 — the sweep takes what is left
             logger.exception("Costs to follow %s were not settled", row_ids)
         finally:
+            # The save is announced now, settled or not: the plan changed.
+            try:
+                from apps.activities import live
+
+                live.publish(tell)
+            except Exception:  # noqa: BLE001 — a page left stale, no more
+                logger.warning("Costs to follow: announcing failed", exc_info=True)
             connections.close_all()
             with _running_lock:
                 if threading.current_thread() in _running:
                     _running.remove(threading.current_thread())
 
     thread = threading.Thread(target=run, name="edify-costs-follow", daemon=True)
+    thread.askers = askers
     with _running_lock:
         _running.append(thread)
     thread.start()
 
 
-def wait(timeout: float = 30.0) -> None:
-    """Let the settling still running finish (tests, scripts)."""
+def wait(timeout: float = 30.0, *, asked_by: str | None = None) -> None:
+    """Let the settling still running in this process finish: all of it
+    (tests, scripts), or what `asked_by` asked for."""
     with _running_lock:
-        threads = list(_running)
+        threads = [
+            thread
+            for thread in _running
+            if asked_by is None or asked_by in getattr(thread, "askers", ())
+        ]
     for thread in threads:
         thread.join(timeout)
 
@@ -414,13 +471,8 @@ def _settle_what_this_request_asked() -> None:
     asked = _asked_here.get()
     if not asked:
         return
-    connection = transaction.get_connection()
-    in_hand = {
-        row_id
-        for _sids, callback, _robust in connection.run_on_commit
-        if isinstance(callback, _SettleOnCommit)
-        for row_id in callback.rows
-    }
+    waiting = following(transaction.get_connection())
+    in_hand = set(waiting.rows) if waiting is not None else set()
     earlier = [row_id for row_id in asked if row_id not in in_hand]
     if earlier:
         settle(ids=earlier)
@@ -663,6 +715,11 @@ class CostsFollowMiddleware:
                 waited = True
                 try:
                     settle(user=user_id)
+                    # And for its notice to have gone out, where the thread
+                    # doing it is in this process: the page this request
+                    # brings is then known to be later than the notice, and
+                    # does not read itself again on hearing it.
+                    wait(5.0, asked_by=user_id)
                 except Exception:  # noqa: BLE001 — never blocks the page
                     logger.exception("Costs to follow: settling first failed")
         response = self.get_response(request)

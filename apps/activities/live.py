@@ -146,7 +146,64 @@ def announce(
         tuple(sorted({str(i) for i in partner_ids if i})),
         school_holder,
     )
-    transaction.on_commit(lambda: _publish(key))
+    connection = transaction.get_connection()
+    if not connection.in_atomic_block:
+        _publish(key)
+        return
+    # A save whose costs follow its answer is announced once they are in
+    # (apps.daily_visit_batches.costs_follow): a page told at the save's own
+    # commit read itself before the day was priced, and again after.
+    from apps.daily_visit_batches.costs_follow import following, save_in_hand
+
+    costs = following(connection)
+    if costs is not None:
+        costs.tell.append(key)
+        return
+    transaction.on_commit(_Tell(key, save_in_hand(connection)))
+
+
+class _Tell:
+    """One announcement, made when its transaction commits."""
+
+    def __init__(self, key: tuple, save) -> None:
+        self.key = key
+        #: The save it was asked in (`costs_follow.save_in_hand`).
+        self.save = save
+        #: The costs that follow that save (`wait_for_costs`), or None.
+        self.after = None
+
+    def __call__(self) -> None:
+        costs = self.after
+        if costs is not None and costs.committed:
+            # Told by whoever prices the days, when they are priced.
+            costs.tell.append(self.key)
+            return
+        _publish(self.key)
+
+
+def wait_for_costs(connection, costs, save) -> None:
+    """What `save` has asked to announce so far is left to `costs`, which
+    tells those people once the save's days are priced.
+
+    `costs.herald` is put in front of those announcements among the commit's
+    hooks: it says the costs' own part of the transaction was kept. Where
+    that part is undone (a savepoint), the herald goes with it and the
+    announcements are made at the commit, as they always were."""
+    hooks = connection.run_on_commit
+    first = None
+    for at, (_sids, callback, _robust) in enumerate(hooks):
+        if isinstance(callback, _Tell) and callback.save is save:
+            callback.after = costs
+            if first is None:
+                first = at
+    if first is not None:
+        hooks.insert(first, (set(connection.savepoint_ids), costs.herald, True))
+
+
+def publish(keys) -> None:
+    """Push ``plan.changed`` to each of these audiences, now."""
+    for key in keys:
+        _publish(key)
 
 
 def _line_users(staff: frozenset[str]) -> frozenset[str]:

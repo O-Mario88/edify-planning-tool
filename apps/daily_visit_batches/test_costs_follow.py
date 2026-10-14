@@ -441,7 +441,7 @@ class WhatIsKeptTest(_AnswerFirst):
         # Each save's transaction ends before the next begins, which a
         # test's own transaction hides: nothing is left "in hand".
         with mock.patch.object(
-            costs_follow, "_when_the_save_commits", lambda row_id: None
+            costs_follow, "_when_the_save_commits", lambda row_id, asked_by="": None
         ):
             created = self._moved()
             with override_settings(SAVES_ANSWER_FIRST=True):
@@ -604,3 +604,123 @@ class ThePersonWhoSavedWaitsForTheirFiguresTest(_AnswerFirst):
             response = middleware(self._request(cookie=False))
         self.assertEqual(len(queries), 0)
         self.assertNotIn(costs_follow.COOKIE, response.cookies)
+
+
+class EveryOpenPageIsToldOnceTheCostsAreInTest(_AnswerFirst):
+    """A save announces itself to every open page that shows the plan, and
+    each reads itself again (apps.activities.live). Owner, 2026-10-14: "I
+    hope everything you have done does not affect the live update of data
+    after clicking save or reschedule". Told at the save's own commit, a
+    Program Lead's page read itself before the day was priced and again
+    after (seen in two browsers with the pricing slowed to a second and a
+    half). The save's announcement now goes out with the pricing's."""
+
+    def setUp(self):
+        super().setUp()
+        from apps.activities import live
+
+        # Turned on here, not on the class: the fixture's frozen clock sets
+        # the class up as its base, and a class's own settings never apply.
+        self.enterContext(override_settings(LIVE_UPDATES_ENABLED=True))
+        live.reset()
+        self.addCleanup(live.reset)
+
+    def _moved(self, *, first: bool):
+        """A move with the commit's hooks run. Returns (what was pushed at
+        the commit, what the thread after the answer was handed)."""
+        created = self.plan(MON, self.near[:3])["created"]
+        self.plan(TUE, self.near[3:5])
+        with (
+            mock.patch("apps.realtime.bus.bus.publish_many") as pushed,
+            mock.patch.object(costs_follow, "_settle_in_a_thread") as thread,
+            override_settings(SAVES_ANSWER_FIRST=first),
+        ):
+            with self.captureOnCommitCallbacks(execute=True):
+                self.move(created[0], TUE)
+        return pushed, thread
+
+    def test_nothing_is_pushed_when_the_save_commits(self):
+        pushed, thread = self._moved(first=True)
+        pushed.assert_not_called()
+        thread.assert_called_once()
+        rows = thread.call_args.args[0]
+        self.assertEqual(rows, list(CostsToFollow.objects.values_list("id", flat=True)))
+        # What the save asked to announce went with the rows, to be told
+        # once they are settled, and the thread knows who asked.
+        self.assertTrue(thread.call_args.kwargs["tell"])
+        self.assertEqual(thread.call_args.kwargs["askers"], frozenset({self.user.id}))
+
+    def test_priced_inside_the_save_it_is_pushed_at_the_commit_as_before(self):
+        pushed, thread = self._moved(first=False)
+        pushed.assert_called()
+        thread.assert_not_called()
+
+    def test_the_pricing_pushes_when_it_commits(self):
+        """Settled by whoever gets there (the thread, the person's next
+        request, the sweep), the pricing saves each visit of the day and
+        that is announced with its commit."""
+        self._moved(first=True)
+        with mock.patch("apps.realtime.bus.bus.publish_many") as pushed:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.assertEqual(costs_follow.settle(), 1)
+        pushed.assert_called()
+        told = {user for call in pushed.call_args_list for user in call.args[0]}
+        self.assertIn(self.user.id, told)
+
+    def test_what_the_save_asked_is_told_after_the_pricing(self):
+        from apps.activities import live
+
+        _pushed, thread = self._moved(first=True)
+        with mock.patch("apps.realtime.bus.bus.publish_many") as pushed:
+            live.publish(thread.call_args.kwargs["tell"])
+        pushed.assert_called()
+        self.assertEqual(pushed.call_args.args[1]["type"], "plan.changed")
+
+    def test_a_save_undone_inside_a_larger_one_leaves_its_notice_at_the_commit(self):
+        """The costs' part of the transaction is undone to a savepoint and
+        the rest commits: nothing follows, so what the rest announced is
+        pushed at the commit, as it always was."""
+        created = self.plan(MON, self.near[:3])["created"]
+        self.plan(TUE, self.near[3:5])
+        with (
+            mock.patch("apps.realtime.bus.bus.publish_many") as pushed,
+            mock.patch.object(costs_follow, "_settle_in_a_thread") as thread,
+            override_settings(SAVES_ANSWER_FIRST=True),
+        ):
+            with self.captureOnCommitCallbacks(execute=True):
+                kept = Activity.objects.get(id=created[2])
+                kept.last_reason = "Noted"
+                kept.save(update_fields=["last_reason", "updated_at"])
+                try:
+                    with transaction.atomic():
+                        self.move(created[0], TUE)
+                        raise RuntimeError("the larger save gives this part up")
+                except RuntimeError:
+                    pass
+        self.assertFalse(CostsToFollow.objects.exists())
+        thread.assert_not_called()
+        pushed.assert_called()
+
+    def test_later_records_of_the_same_save_are_told_with_it(self):
+        """Whatever the transaction saves after its costs were written down
+        (the other half of a pair, a note on the record) is announced with
+        them, not at the commit."""
+        created = self.plan(MON, self.near[:3])["created"]
+        self.plan(TUE, self.near[3:5])
+        with (
+            mock.patch("apps.realtime.bus.bus.publish_many") as pushed,
+            mock.patch.object(costs_follow, "_settle_in_a_thread") as thread,
+            override_settings(SAVES_ANSWER_FIRST=True),
+        ):
+            with self.captureOnCommitCallbacks(execute=True):
+                with transaction.atomic():
+                    self.move(created[0], TUE)
+                    before = len(costs_follow.following(connection).tell)
+                    other = Activity.objects.get(id=created[1])
+                    other.last_reason = "Noted"
+                    other.save(update_fields=["last_reason", "updated_at"])
+                    self.assertGreater(
+                        len(costs_follow.following(connection).tell), before
+                    )
+        pushed.assert_not_called()
+        thread.assert_called_once()
