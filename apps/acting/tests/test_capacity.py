@@ -34,7 +34,10 @@ PL_PAGES = (
     "/team-planning-oversight/",
     "/team-planning-oversight/?view=trainings",
     "/my-team",
-    "/pl/review-queue",
+    # Completion Reviews: a lead's register is on their dashboard's Execution
+    # & Completion tab and the page sends them there (owner, 2026-10-14), so
+    # the gate is read at the drawer the register opens.
+    "/pl/review-queue/x/drawer",
     "/cluster-oversight/",
     "/core-schools-oversight/",
     "/staff-activity/follow-ups",

@@ -3137,10 +3137,14 @@ SIDEBAR_ITEMS = [
         "visible_to": {PL},
         "items": [
             {
+                # Off the Programme Lead's sidebar (owner, 2026-10-14): their
+                # register is on the Execution & Completion tab their
+                # dashboard carries, and /pl/review-queue lands there. The
+                # Admin, who has no such dashboard, keeps the page.
                 "label": "Completion Reviews",
                 "url": "/pl/review-queue",
                 "page_key": "pl_review_queue",
-                "visible_to": {PL},
+                "visible_to": {ADMIN},
             },
             {
                 "label": "Programme Rollout",

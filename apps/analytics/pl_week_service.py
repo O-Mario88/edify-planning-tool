@@ -24,6 +24,9 @@ A read: it owns no table and writes nothing. Three rules keep it honest.
   Group Trainings and Cluster Meetings, with the same columns. Completed work
   leaves both lists (owner, 2026-09-26): once verified, or with Impact
   Assessment, it is gone, so each list is only what still needs someone.
+  Overdue is the officer's unfinished work alone (owner, 2026-10-14): work
+  completed with its Salesforce ID waits in the lead's Completion Reviews,
+  on the Execution & Completion tab, and is not listed as overdue.
   Every row past its day is overdue and drawn in red. Older past-due work
   stays in the backlog, All overdue plans. Everyone's tab is the same two
   lists and three tables over the lead's and every officer's work together
@@ -580,9 +583,21 @@ class PLWeek:
             if day and day >= self.start:
                 this_week[key].append(row)
                 everyone_week.append(row)
-            elif row["open"] and day and day < self.today:
-                # Last week's work that is not verified or with IA: still the
-                # officer's to complete, or the lead's to verify.
+            elif (
+                row["open"]
+                and day
+                and day < self.today
+                and not (
+                    row["state"] == "awaiting_you"
+                    and columns.get(activity.id, EMPTY_COLUMNS)["salesforce_ok"]
+                )
+            ):
+                # Last week's work the officer has still to complete. Work
+                # completed with its Salesforce ID is not overdue: it has
+                # left for the lead's Completion Reviews (owner, 2026-10-14:
+                # "overdue should only have schools that dont have Salesforce
+                # ID any school completed should disappear from the overdue
+                # page and move to completion and review table").
                 overdue[key].append(row)
                 everyone_overdue.append(row)
 
